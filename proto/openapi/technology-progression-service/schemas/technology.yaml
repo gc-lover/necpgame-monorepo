@@ -1,0 +1,292 @@
+# Technology Progression Schemas
+
+Technology:
+  type: object
+  required:
+    - id
+    - name
+    - description
+    - category
+    - unlock_year
+    - unlock_phase
+    - availability_status
+  properties:
+    id:
+      type: string
+      description: Unique technology identifier
+      example: "cyberware-basic"
+      maxLength: 100
+    name:
+      type: string
+      description: Human-readable technology name
+      example: "Кибернетические имплантаты (базовые)"
+      maxLength: 255
+    description:
+      type: string
+      description: Detailed technology description
+      example: "Киберпротезы, базовые нейроинтерфейсы, простые кибернетические модификации"
+      maxLength: 2000
+    category:
+      type: string
+      enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
+      description: Technology category
+      example: "cyberware"
+    unlock_year:
+      type: integer
+      description: Year when technology becomes available
+      minimum: 2020
+      maximum: 2093
+      example: 2020
+    unlock_phase:
+      type: string
+      enum: [Start, Rise, Peak, Fall, End]
+      description: League phase when technology unlocks
+      example: "Start"
+    availability_status:
+      type: string
+      enum: [available, locked, upcoming]
+      description: Current availability status for the player
+      example: "available"
+    unlock_conditions:
+      type: array
+      items:
+        $ref: '#/UnlockCondition'
+      description: Conditions required to unlock this technology
+    availability:
+      $ref: '#/TechnologyAvailability'
+    examples:
+      type: array
+      items:
+        type: string
+      description: Specific examples of this technology
+      example: ["Базовые киберруки", "Простые нейроинтерфейсы"]
+    lore_context:
+      type: string
+      description: Lore context explaining this technology
+      maxLength: 1000
+      example: "Первое поколение кибернетики, доступное широкой публике после корпорационных войн"
+  description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+UnlockCondition:
+  type: object
+  required:
+    - type
+    - condition
+  properties:
+    type:
+      type: string
+      enum: [time, quest, reputation, event]
+      description: Type of unlock condition
+      example: "time"
+    condition:
+      type: string
+      description: Condition expression
+      example: "league_year >= 2020"
+    description:
+      type: string
+      description: Human-readable condition description
+      maxLength: 255
+      example: "Достигнуть 2020 года в лиге"
+
+TechnologyAvailability:
+  type: object
+  properties:
+    vendors:
+      type: string
+      enum: [all, elite_vendors, medical_vendors, tech_vendors, corporate_only, entertainment_vendors]
+      description: Available through vendor types
+      example: "all"
+    corporations:
+      type: array
+      items:
+        type: string
+      description: Corporations that provide this technology
+      example: ["Arasaka", "Militech", "Biotechnica"]
+    black_market:
+      type: boolean
+      description: Available on black market
+      example: false
+    restrictions:
+      type: array
+      items:
+        type: string
+      description: Special restrictions or requirements
+      example: ["Требуется лицензия", "Ограничено репутацией"]
+
+TechnologyListResponse:
+  type: object
+  required:
+    - technologies
+    - current_league_year
+    - total_available
+    - total_locked
+  properties:
+    technologies:
+      type: array
+      items:
+        $ref: '#/Technology'
+      description: List of technologies with their availability status
+    current_league_year:
+      type: integer
+      description: Current league year
+      example: 2025
+    total_available:
+      type: integer
+      description: Total number of available technologies
+      example: 15
+    total_locked:
+      type: integer
+      description: Total number of locked technologies
+      example: 45
+    next_unlock_year:
+      type: integer
+      description: Next year when technologies will unlock
+      example: 2030
+    upcoming_technologies:
+      type: integer
+      description: Number of technologies unlocking in next year
+      example: 8
+
+TechnologyAvailabilityResponse:
+  type: object
+  required:
+    - technology_id
+    - available
+    - availability_status
+  properties:
+    technology_id:
+      type: string
+      description: Technology identifier
+      example: "cyberware-basic"
+    available:
+      type: boolean
+      description: Whether technology is available for the character
+      example: true
+    availability_status:
+      type: string
+      enum: [available, locked_time, locked_quest, locked_reputation, locked_event]
+      description: Detailed availability status
+      example: "available"
+    reason:
+      type: string
+      description: Reason why technology is locked (if applicable)
+      maxLength: 500
+      example: "Требуется завершить квест 'Neurointerface Revolution'"
+    unlock_requirements:
+      type: array
+      items:
+        $ref: '#/UnlockCondition'
+      description: Requirements needed to unlock this technology
+    estimated_unlock_time:
+      type: string
+      description: Estimated time until unlock (if locked by time)
+      example: "2 года 3 месяца"
+
+TechnologyTimelineResponse:
+  type: object
+  required:
+    - current_year
+    - timeline
+  properties:
+    current_year:
+      type: integer
+      description: Current league year
+      example: 2025
+    timeline:
+      type: array
+      items:
+        $ref: '#/TimelineEntry'
+      description: Technology unlocks by year
+
+TimelineEntry:
+  type: object
+  required:
+    - year
+    - phase
+    - technologies
+  properties:
+    year:
+      type: integer
+      description: League year
+      example: 2030
+    phase:
+      type: string
+      enum: [Start, Rise, Peak, Fall, End]
+      description: League phase
+      example: "Rise"
+    technologies:
+      type: array
+      items:
+        $ref: '#/Technology'
+      description: Technologies unlocking this year
+    total_technologies:
+      type: integer
+      description: Total technologies in this year
+      example: 8
+
+TechnologyNotificationsResponse:
+  type: object
+  required:
+    - notifications
+    - total_count
+  properties:
+    notifications:
+      type: array
+      items:
+        $ref: '#/TechnologyNotification'
+      description: List of recent technology unlock notifications
+    total_count:
+      type: integer
+      description: Total number of notifications
+      example: 25
+
+TechnologyNotification:
+  type: object
+  required:
+    - id
+    - technology_id
+    - technology_name
+    - unlocked_at
+    - unlock_reason
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Notification unique identifier
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    technology_id:
+      type: string
+      description: Technology that was unlocked
+      example: "neurointerface-advanced"
+    technology_name:
+      type: string
+      description: Human-readable technology name
+      example: "Продвинутые нейроинтерфейсы"
+    unlocked_at:
+      type: string
+      format: date-time
+      description: When technology was unlocked
+      example: "2025-12-28T10:00:00Z"
+    unlock_reason:
+      type: string
+      enum: [time_progression, quest_completion, reputation_achieved, event_triggered]
+      description: Reason for unlock
+      example: "time_progression"
+    character_id:
+      type: string
+      format: uuid
+      description: Character that unlocked the technology
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    additional_info:
+      type: object
+      description: Additional context about the unlock
+      properties:
+        quest_name:
+          type: string
+          description: Name of completed quest (if applicable)
+          example: "Neurointerface Revolution"
+        reputation_gained:
+          type: integer
+          description: Reputation points gained (if applicable)
+          example: 50
+  description: "BACKEND NOTE: Fields ordered for struct alignment optimization."

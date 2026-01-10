@@ -7,8 +7,14 @@ type OperationName = string
 
 const (
 	AnalyticsServiceHealthCheckOperation OperationName = "AnalyticsServiceHealthCheck"
+	EconomyAnalyticsHealthCheckOperation OperationName = "EconomyAnalyticsHealthCheck"
 	GetCombatAnalyticsOverviewOperation  OperationName = "GetCombatAnalyticsOverview"
 	GetEconomyMarketAnalyticsOperation   OperationName = "GetEconomyMarketAnalytics"
+	GetFundamentalAnalysisOperation      OperationName = "GetFundamentalAnalysis"
+	GetMarketTrendsOperation             OperationName = "GetMarketTrends"
 	GetPlayerBehaviorAnalyticsOperation  OperationName = "GetPlayerBehaviorAnalytics"
 	GetSystemPerformanceMetricsOperation OperationName = "GetSystemPerformanceMetrics"
+	GetTechnicalAnalysisOperation        OperationName = "GetTechnicalAnalysis"
+	GetTradeVolumeStatisticsOperation    OperationName = "GetTradeVolumeStatistics"
+	MonitorMarketIntegrityOperation      OperationName = "MonitorMarketIntegrity"
 )

@@ -34,9 +34,7 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	BatchHealthCheckOperation:          []string{},
-	CosmeticDomainHealthCheckOperation: []string{},
-	HealthWebSocketOperation:           []string{},
+	CosmeticServiceHealthCheckOperation: []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

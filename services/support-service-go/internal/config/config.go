@@ -10,6 +10,7 @@ type Config struct {
 	Database DatabaseConfig `envconfig:"DATABASE"`
 	Logging  LoggingConfig  `envconfig:"LOGGING"`
 	SLA      SLAConfig      `envconfig:"SLA"`
+	JWT      JWTConfig      `envconfig:"JWT"`
 }
 
 // ServerConfig holds server-related configuration
@@ -49,6 +50,11 @@ type SLAConfig struct {
 	ResolutionTimeNormal string `envconfig:"RESOLUTION_TIME_NORMAL" default:"72h"`   // 3 days
 	ResolutionTimeHigh   string `envconfig:"RESOLUTION_TIME_HIGH" default:"24h"`     // 1 day
 	ResolutionTimeUrgent string `envconfig:"RESOLUTION_TIME_URGENT" default:"4h"`     // 4 hours
+}
+
+// JWTConfig holds JWT-related configuration
+type JWTConfig struct {
+	Secret string `envconfig:"SECRET" required:"true"`
 }
 
 // Load loads configuration from environment variables

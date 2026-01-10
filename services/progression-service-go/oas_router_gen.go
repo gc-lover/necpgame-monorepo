@@ -40,6 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
+	args := [1]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -48,28 +49,41 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/v1/progression-domain/health"
+		case '/': // Prefix: "/"
 
-			if l := len("/api/v1/progression-domain/health"); len(elem) >= l && elem[0:l] == "/api/v1/progression-domain/health" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch r.Method {
-				case "GET":
-					s.handleProgressionDomainHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "GET")
-				}
-
-				return
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 'h': // Prefix: "health"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
+			case 'm': // Prefix: "mastery/"
+
+				if l := len("mastery/"); len(elem) >= l && elem[0:l] == "mastery/" {
 					elem = elem[l:]
 				} else {
 					break
@@ -79,29 +93,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'b': // Prefix: "batch"
-
-					if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
-						}
-
-						return
-					}
-
-				case 'w': // Prefix: "ws"
-
-					if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
+				case 'l': // Prefix: "levels"
+					origElem := elem
+					if l := len("levels"); len(elem) >= l && elem[0:l] == "levels" {
 						elem = elem[l:]
 					} else {
 						break
@@ -111,7 +105,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						// Leaf node.
 						switch r.Method {
 						case "GET":
-							s.handleHealthWebSocketRequest([0]string{}, elemIsEscaped, w, r)
+							s.handleGetMasteryLevelsRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, "GET")
 						}
@@ -119,6 +113,243 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
+					elem = origElem
+				}
+				// Param: "mastery_type"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'p': // Prefix: "progress"
+
+						if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetMasteryProgressRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'r': // Prefix: "rewards"
+
+						if l := len("rewards"); len(elem) >= l && elem[0:l] == "rewards" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetMasteryRewardsRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					}
+
+				}
+
+			case 'p': // Prefix: "p"
+
+				if l := len("p"); len(elem) >= l && elem[0:l] == "p" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "aragon/"
+
+					if l := len("aragon/"); len(elem) >= l && elem[0:l] == "aragon/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'l': // Prefix: "levels"
+
+						if l := len("levels"); len(elem) >= l && elem[0:l] == "levels" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetParagonLevelsRequest([0]string{}, elemIsEscaped, w, r)
+							case "POST":
+								s.handleDistributeParagonPointsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET,POST")
+							}
+
+							return
+						}
+
+					case 's': // Prefix: "stats"
+
+						if l := len("stats"); len(elem) >= l && elem[0:l] == "stats" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetParagonStatsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					}
+
+				case 'r': // Prefix: "restige/"
+
+					if l := len("restige/"); len(elem) >= l && elem[0:l] == "restige/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'b': // Prefix: "bonuses"
+
+						if l := len("bonuses"); len(elem) >= l && elem[0:l] == "bonuses" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetPrestigeBonusesRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'i': // Prefix: "info"
+
+						if l := len("info"); len(elem) >= l && elem[0:l] == "info" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetPrestigeInfoRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'r': // Prefix: "reset"
+
+						if l := len("reset"); len(elem) >= l && elem[0:l] == "reset" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleResetPrestigeRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+					}
+
+				}
+
+			case 'r': // Prefix: "ready"
+
+				if l := len("ready"); len(elem) >= l && elem[0:l] == "ready" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleReadinessCheckRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
 				}
 
 			}
@@ -136,7 +367,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [0]string
+	args           [1]string
 }
 
 // Name returns ogen operation name.
@@ -209,33 +440,46 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/v1/progression-domain/health"
+		case '/': // Prefix: "/"
 
-			if l := len("/api/v1/progression-domain/health"); len(elem) >= l && elem[0:l] == "/api/v1/progression-domain/health" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch method {
-				case "GET":
-					r.name = ProgressionDomainHealthCheckOperation
-					r.summary = "progression domain domain health check"
-					r.operationID = "progression-domainHealthCheck"
-					r.operationGroup = ""
-					r.pathPattern = "/api/v1/progression-domain/health"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
-				}
+				break
 			}
 			switch elem[0] {
-			case '/': // Prefix: "/"
+			case 'h': // Prefix: "health"
 
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = HealthCheckOperation
+						r.summary = "Health check"
+						r.operationID = "healthCheck"
+						r.operationGroup = ""
+						r.pathPattern = "/health"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'm': // Prefix: "mastery/"
+
+				if l := len("mastery/"); len(elem) >= l && elem[0:l] == "mastery/" {
 					elem = elem[l:]
 				} else {
 					break
@@ -245,34 +489,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'b': // Prefix: "batch"
-
-					if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = BatchHealthCheckOperation
-							r.summary = "Batch health check for multiple domains"
-							r.operationID = "batchHealthCheck"
-							r.operationGroup = ""
-							r.pathPattern = "/api/v1/progression-domain/health/batch"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				case 'w': // Prefix: "ws"
-
-					if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
+				case 'l': // Prefix: "levels"
+					origElem := elem
+					if l := len("levels"); len(elem) >= l && elem[0:l] == "levels" {
 						elem = elem[l:]
 					} else {
 						break
@@ -282,11 +501,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						// Leaf node.
 						switch method {
 						case "GET":
-							r.name = HealthWebSocketOperation
-							r.summary = "Real-time health monitoring WebSocket"
-							r.operationID = "healthWebSocket"
+							r.name = GetMasteryLevelsOperation
+							r.summary = "Получить уровни мастерства"
+							r.operationID = "getMasteryLevels"
 							r.operationGroup = ""
-							r.pathPattern = "/api/v1/progression-domain/health/ws"
+							r.pathPattern = "/mastery/levels"
 							r.args = args
 							r.count = 0
 							return r, true
@@ -295,6 +514,286 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
+					elem = origElem
+				}
+				// Param: "mastery_type"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'p': // Prefix: "progress"
+
+						if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetMasteryProgressOperation
+								r.summary = "Получить прогресс мастерства"
+								r.operationID = "getMasteryProgress"
+								r.operationGroup = ""
+								r.pathPattern = "/mastery/{mastery_type}/progress"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'r': // Prefix: "rewards"
+
+						if l := len("rewards"); len(elem) >= l && elem[0:l] == "rewards" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetMasteryRewardsOperation
+								r.summary = "Получить награды мастерства"
+								r.operationID = "getMasteryRewards"
+								r.operationGroup = ""
+								r.pathPattern = "/mastery/{mastery_type}/rewards"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				}
+
+			case 'p': // Prefix: "p"
+
+				if l := len("p"); len(elem) >= l && elem[0:l] == "p" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'a': // Prefix: "aragon/"
+
+					if l := len("aragon/"); len(elem) >= l && elem[0:l] == "aragon/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'l': // Prefix: "levels"
+
+						if l := len("levels"); len(elem) >= l && elem[0:l] == "levels" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetParagonLevelsOperation
+								r.summary = "Получить Paragon Levels персонажа"
+								r.operationID = "getParagonLevels"
+								r.operationGroup = ""
+								r.pathPattern = "/paragon/levels"
+								r.args = args
+								r.count = 0
+								return r, true
+							case "POST":
+								r.name = DistributeParagonPointsOperation
+								r.summary = "Распределить Paragon Points"
+								r.operationID = "distributeParagonPoints"
+								r.operationGroup = ""
+								r.pathPattern = "/paragon/levels"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 's': // Prefix: "stats"
+
+						if l := len("stats"); len(elem) >= l && elem[0:l] == "stats" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetParagonStatsOperation
+								r.summary = "Получить Paragon статистику"
+								r.operationID = "getParagonStats"
+								r.operationGroup = ""
+								r.pathPattern = "/paragon/stats"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				case 'r': // Prefix: "restige/"
+
+					if l := len("restige/"); len(elem) >= l && elem[0:l] == "restige/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'b': // Prefix: "bonuses"
+
+						if l := len("bonuses"); len(elem) >= l && elem[0:l] == "bonuses" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetPrestigeBonusesOperation
+								r.summary = "Получить Prestige бонусы"
+								r.operationID = "getPrestigeBonuses"
+								r.operationGroup = ""
+								r.pathPattern = "/prestige/bonuses"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'i': // Prefix: "info"
+
+						if l := len("info"); len(elem) >= l && elem[0:l] == "info" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetPrestigeInfoOperation
+								r.summary = "Получить информацию о Prestige"
+								r.operationID = "getPrestigeInfo"
+								r.operationGroup = ""
+								r.pathPattern = "/prestige/info"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'r': // Prefix: "reset"
+
+						if l := len("reset"); len(elem) >= l && elem[0:l] == "reset" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = ResetPrestigeOperation
+								r.summary = "Сброс Prestige"
+								r.operationID = "resetPrestige"
+								r.operationGroup = ""
+								r.pathPattern = "/prestige/reset"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				}
+
+			case 'r': // Prefix: "ready"
+
+				if l := len("ready"); len(elem) >= l && elem[0:l] == "ready" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ReadinessCheckOperation
+						r.summary = "Readiness check"
+						r.operationID = "readinessCheck"
+						r.operationGroup = ""
+						r.pathPattern = "/ready"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			}

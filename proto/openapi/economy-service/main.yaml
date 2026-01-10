@@ -1,0 +1,428 @@
+openapi: 3.0.3
+info:
+  title: Economy Service API - Enterprise-Grade BazaarBot Integration
+  description: '**Enterprise-Grade Economic System API for NECPGAME**
+
+    This API manages the intelligent BazaarBot economic system, providing real-time
+    market simulation, player trading, and automated economic balancing.
+
+    ## Key Features
+
+    - **BazaarBot AI**: Intelligent trading agents with personality-based decision making
+    - **Real-Time Markets**: Live commodity trading with order book mechanics
+    - **Economic Simulation**: Hourly tick-based market evolution (#2281)
+    - **Player Trading**: Direct market participation and portfolio management
+    - **Anti-Cheat Protection**: Economic fraud detection and prevention
+    - **Performance Optimized**: MMOFPS-grade performance with <25ms P99 latency
+
+    ## BazaarBot Intelligence
+
+    The BazaarBot system implements advanced AI trading agents with:
+    - **Personality Traits**: Risk tolerance, impatience, social influence
+    - **Belief Systems**: Dynamic price belief adaptation based on market conditions
+    - **Learning Algorithms**: Reinforcement learning for optimal trading strategies
+    - **Market Psychology**: Herding behavior and sentiment analysis
+
+    ## Domain Purpose
+
+    The Economy domain handles all player economic interactions in Night City,
+    from basic trading to complex BazaarBot-driven market dynamics.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for trading operations
+    - Concurrent Traders: 10,000+ simultaneous market participants
+    - Memory: <512KB per active BazaarBot agent
+    - Market Clearing: <100ms for 1000+ concurrent orders
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME Economy Team
+    url: https://necpgame.com/economy
+    email: economy@combat-economy.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/economy
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy
+  description: Staging server
+- url: http://localhost:8083/api/v1/economy
+  description: Local development server
+tags:
+- name: Market Operations
+  description: Real-time market trading and order management
+- name: BazaarBot Intelligence
+  description: AI-powered economic simulation and automation
+- name: Player Economy
+  description: Player portfolio and trading operations
+- name: Market Analytics
+  description: Economic data analysis and reporting
+paths:
+  /health:
+    get:
+      summary: Health check for economy service
+      operationId: economyHealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /market/{commodity}/orders:
+    get:
+      summary: Get current order book for commodity
+      operationId: getOrderBook
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      responses:
+        '200':
+          description: Current order book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderBook'
+  /market/{commodity}/orders:
+    post:
+      summary: Place trading order
+      operationId: placeOrder
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+      responses:
+        '201':
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /market/{commodity}/price:
+    get:
+      summary: Get current market price for commodity
+      operationId: getMarketPrice
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      responses:
+        '200':
+          description: Current market price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketPrice'
+  /player/{playerId}/portfolio:
+    get:
+      summary: Get player economic portfolio
+      operationId: getPlayerPortfolio
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Player portfolio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerPortfolio'
+  /player/{playerId}/orders:
+    get:
+      summary: Get player active orders
+      operationId: getPlayerOrders
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Player orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrders'
+  /bazaarbot/status:
+    get:
+      summary: Get BazaarBot simulation status
+      operationId: getBazaarBotStatus
+      responses:
+        '200':
+          description: BazaarBot status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BazaarBotStatus'
+  /bazaarbot/agents:
+    get:
+      summary: Get BazaarBot agents information
+      operationId: getBazaarBotAgents
+      responses:
+        '200':
+          description: BazaarBot agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BazaarBotAgents'
+  /market/history/{commodity}:
+    get:
+      summary: Get market price history
+      operationId: getMarketHistory
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      - name: hours
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+      responses:
+        '200':
+          description: Market history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketHistory'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Uptime in seconds
+
+    Commodity:
+      type: string
+      enum: [food, water, medicine, weapons, cyberware, vehicles, real_estate]
+      description: Market commodities
+
+    OrderBook:
+      type: object
+      properties:
+        commodity:
+          $ref: '#/components/schemas/Commodity'
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        asks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        lastPrice:
+          type: number
+          format: float
+        volume24h:
+          type: integer
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [buy, sell]
+        commodity:
+          $ref: '#/components/schemas/Commodity'
+        price:
+          type: number
+          format: float
+          minimum: 0.01
+        quantity:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+
+    PlaceOrderRequest:
+      type: object
+      required: [type, price, quantity]
+      properties:
+        type:
+          type: string
+          enum: [buy, sell]
+        price:
+          type: number
+          format: float
+          minimum: 0.01
+        quantity:
+          type: integer
+          minimum: 1
+
+    OrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, filled, cancelled]
+        message:
+          type: string
+
+    MarketPrice:
+      type: object
+      properties:
+        commodity:
+          $ref: '#/components/schemas/Commodity'
+        price:
+          type: number
+          format: float
+        change24h:
+          type: number
+          format: float
+        volume24h:
+          type: integer
+        lastUpdate:
+          type: string
+          format: date-time
+
+    PlayerPortfolio:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        wealth:
+          type: number
+          format: float
+        inventory:
+          type: object
+          additionalProperties:
+            type: integer
+        activeOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+
+    PlayerOrders:
+      type: array
+      items:
+        $ref: '#/components/schemas/Order'
+
+    BazaarBotStatus:
+      type: object
+      properties:
+        active:
+          type: boolean
+        lastTick:
+          type: string
+          format: date-time
+        activeAgents:
+          type: integer
+        totalMarkets:
+          type: integer
+        simulationUptime:
+          type: integer
+          description: Uptime in seconds
+
+    BazaarBotAgents:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BazaarBotAgent'
+
+    BazaarBotAgent:
+      type: object
+      properties:
+        id:
+          type: string
+        wealth:
+          type: number
+          format: float
+        personality:
+          type: object
+          properties:
+            riskTolerance:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+            impatienceFactor:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+            socialInfluence:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+            learningRate:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+        inventory:
+          type: object
+          additionalProperties:
+            type: integer
+        lastActivity:
+          type: string
+          format: date-time
+
+    MarketHistory:
+      type: object
+      properties:
+        commodity:
+          $ref: '#/components/schemas/Commodity'
+        prices:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              price:
+                type: number
+                format: float
+              volume:
+                type: integer

@@ -8,24 +8,15 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// BatchHealthCheck implements batchHealthCheck operation.
+	// CosmeticServiceHealthCheck implements cosmeticServiceHealthCheck operation.
 	//
-	// Performance optimization: Check multiple domain health in single request.
+	// **Enterprise-grade health check endpoint**
+	// Provides real-time health status of the cosmetic service and all modules.
+	// Critical for service discovery, load balancing, and monitoring.
+	// **Performance:** <1ms response time, cached for 30 seconds.
 	//
-	// POST /api/v1/cosmetic-domain/health/batch
-	BatchHealthCheck(ctx context.Context, req *BatchHealthCheckReq) (BatchHealthCheckRes, error)
-	// CosmeticDomainHealthCheck implements cosmetic-domainHealthCheck operation.
-	//
-	// Cosmetic domain domain health check.
-	//
-	// GET /api/v1/cosmetic-domain/health
-	CosmeticDomainHealthCheck(ctx context.Context) (CosmeticDomainHealthCheckRes, error)
-	// HealthWebSocket implements healthWebSocket operation.
-	//
-	// Real-time health updates without polling.
-	//
-	// GET /api/v1/cosmetic-domain/health/ws
-	HealthWebSocket(ctx context.Context) (HealthWebSocketRes, error)
+	// GET /health
+	CosmeticServiceHealthCheck(ctx context.Context, params CosmeticServiceHealthCheckParams) (CosmeticServiceHealthCheckRes, error)
 	// NewError creates *ErrRespStatusCode from error returned by handler.
 	//
 	// Used for common default response.

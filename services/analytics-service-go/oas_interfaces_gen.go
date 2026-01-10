@@ -5,6 +5,10 @@ type AnalyticsServiceHealthCheckRes interface {
 	analyticsServiceHealthCheckRes()
 }
 
+type EconomyAnalyticsHealthCheckRes interface {
+	economyAnalyticsHealthCheckRes()
+}
+
 type GetCombatAnalyticsOverviewRes interface {
 	getCombatAnalyticsOverviewRes()
 }
@@ -13,10 +17,30 @@ type GetEconomyMarketAnalyticsRes interface {
 	getEconomyMarketAnalyticsRes()
 }
 
+type GetFundamentalAnalysisRes interface {
+	getFundamentalAnalysisRes()
+}
+
+type GetMarketTrendsRes interface {
+	getMarketTrendsRes()
+}
+
 type GetPlayerBehaviorAnalyticsRes interface {
 	getPlayerBehaviorAnalyticsRes()
 }
 
 type GetSystemPerformanceMetricsRes interface {
 	getSystemPerformanceMetricsRes()
+}
+
+type GetTechnicalAnalysisRes interface {
+	getTechnicalAnalysisRes()
+}
+
+type GetTradeVolumeStatisticsRes interface {
+	getTradeVolumeStatisticsRes()
+}
+
+type MonitorMarketIntegrityRes interface {
+	monitorMarketIntegrityRes()
 }

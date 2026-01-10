@@ -12,7 +12,7 @@ import (
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *models.Ticket) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Ticket, error)
-	GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]*models.Ticket, error)
+	GetByCharacterID(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]*models.Ticket, error)
 	GetByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) ([]*models.Ticket, error)
 	GetByStatus(ctx context.Context, status models.TicketStatus, limit, offset int) ([]*models.Ticket, error)
 	GetByCategory(ctx context.Context, category string, limit, offset int) ([]*models.Ticket, error)
@@ -59,6 +59,27 @@ type Transaction interface {
 	TicketRepository
 	TicketResponseRepository
 	SLARepository
+}
+
+// SupportRepository defines the complete support repository interface
+type SupportRepository interface {
+	CreateTicket(ctx context.Context, ticket *models.Ticket) error
+	GetTicket(ctx context.Context, id uuid.UUID) (*models.Ticket, error)
+	UpdateTicket(ctx context.Context, ticket *models.Ticket) error
+	DeleteTicket(ctx context.Context, id uuid.UUID) error
+	ListTickets(ctx context.Context, filter *models.TicketFilter, page, limit int) ([]*models.Ticket, int, error)
+	GetTicketsByCharacter(ctx context.Context, characterID uuid.UUID, page, limit int) ([]*models.Ticket, int, error)
+	GetTicketsByAgent(ctx context.Context, agentID uuid.UUID, page, limit int) ([]*models.Ticket, int, error)
+	GetTicketQueue(ctx context.Context, filter *models.QueueFilter, page, limit int) ([]*models.Ticket, *models.QueueStats, error)
+	AssignAgent(ctx context.Context, ticketID, agentID uuid.UUID) (*models.Ticket, error)
+	UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status models.TicketStatus) (*models.Ticket, error)
+	UpdateTicketPriority(ctx context.Context, ticketID uuid.UUID, priority models.TicketPriority) (*models.Ticket, error)
+	CreateTicketResponse(ctx context.Context, response *models.TicketResponse) error
+	GetTicketResponses(ctx context.Context, ticketID uuid.UUID, page, limit int) ([]*models.TicketResponse, int, error)
+	UpdateTicketRating(ctx context.Context, ticketID uuid.UUID, rating int, comment string) error
+	GetTicketSLAInfo(ctx context.Context, ticketID uuid.UUID) (*models.TicketSLAInfo, error)
+	GetSupportStats(ctx context.Context, period, category string) (*models.SupportStatsResponse, error)
+	IncrementTicketResponseCount(ctx context.Context, ticketID uuid.UUID) error
 }
 
 

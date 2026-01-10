@@ -25,6 +25,17 @@ func (UnimplementedHandler) AnalyticsServiceHealthCheck(ctx context.Context, par
 	return r, ht.ErrNotImplemented
 }
 
+// EconomyAnalyticsHealthCheck implements economyAnalyticsHealthCheck operation.
+//
+// **Enterprise-grade health check endpoint**
+// Provides real-time health status of the economy analytics microservice.
+// Critical for service discovery, load balancing, and monitoring.
+//
+// GET /analytics/economy/health
+func (UnimplementedHandler) EconomyAnalyticsHealthCheck(ctx context.Context) (r EconomyAnalyticsHealthCheckRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetCombatAnalyticsOverview implements getCombatAnalyticsOverview operation.
 //
 // Retrieve comprehensive combat analytics overview with metrics and trends.
@@ -42,6 +53,25 @@ func (UnimplementedHandler) GetCombatAnalyticsOverview(ctx context.Context, para
 //
 // GET /analytics/economy/market
 func (UnimplementedHandler) GetEconomyMarketAnalytics(ctx context.Context, params GetEconomyMarketAnalyticsParams) (r GetEconomyMarketAnalyticsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetFundamentalAnalysis implements getFundamentalAnalysis operation.
+//
+// Get fundamental analysis for a stock.
+//
+// GET /analytics/stock/fundamental/{symbol}
+func (UnimplementedHandler) GetFundamentalAnalysis(ctx context.Context, params GetFundamentalAnalysisParams) (r GetFundamentalAnalysisRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetMarketTrends implements getMarketTrends operation.
+//
+// Analyzes current market trends including price movements, volume changes, and market sentiment
+// across all economic sectors.
+//
+// GET /analytics/economy/market/trends
+func (UnimplementedHandler) GetMarketTrends(ctx context.Context, params GetMarketTrendsParams) (r GetMarketTrendsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -65,10 +95,33 @@ func (UnimplementedHandler) GetSystemPerformanceMetrics(ctx context.Context, par
 	return r, ht.ErrNotImplemented
 }
 
-// NewError creates *ErrRespStatusCode from error returned by handler.
+// GetTechnicalAnalysis implements getTechnicalAnalysis operation.
 //
-// Used for common default response.
-func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ErrRespStatusCode) {
-	r = new(ErrRespStatusCode)
-	return r
+// Get comprehensive technical analysis.
+//
+// GET /analytics/stock/technical/{symbol}
+func (UnimplementedHandler) GetTechnicalAnalysis(ctx context.Context, params GetTechnicalAnalysisParams) (r GetTechnicalAnalysisRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetTradeVolumeStatistics implements getTradeVolumeStatistics operation.
+//
+// Provides detailed trade volume statistics and analysis for economic transactions across all game
+// markets.
+//
+// GET /analytics/economy/trade/volume
+func (UnimplementedHandler) GetTradeVolumeStatistics(ctx context.Context, params GetTradeVolumeStatisticsParams) (r GetTradeVolumeStatisticsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// MonitorMarketIntegrity implements monitorMarketIntegrity operation.
+//
+// **Comprehensive market integrity monitoring**
+// Analyzes market state to detect potential integrity threats. Includes trade pattern analysis,
+// manipulation detection, and risk assessment.
+// **AI Integration:** Uses advanced algorithms for anomaly detection.
+//
+// GET /analytics/stock/protection/market-integrity
+func (UnimplementedHandler) MonitorMarketIntegrity(ctx context.Context, params MonitorMarketIntegrityParams) (r MonitorMarketIntegrityRes, _ error) {
+	return r, ht.ErrNotImplemented
 }

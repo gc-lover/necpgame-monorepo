@@ -3,21 +3,53 @@
 package api
 
 // setDefaults set default value of fields.
-func (s *CreateExampleRequest) setDefaults() {
+func (s *GenerateBracketRequest) setDefaults() {
 	{
-		val := int(5)
-		s.Priority.SetTo(val)
+		val := GenerateBracketRequestSeedingAlgorithm("random")
+		s.SeedingAlgorithm.SetTo(val)
+	}
+	{
+		val := GenerateBracketRequestBracketType("single-elimination")
+		s.BracketType.SetTo(val)
 	}
 }
 
 // setDefaults set default value of fields.
-func (s *Example) setDefaults() {
+func (s *Tournament) setDefaults() {
 	{
-		val := ExampleStatus("active")
-		s.Status = val
+		val := int(0)
+		s.CurrentParticipants.SetTo(val)
 	}
+}
+
+// setDefaults set default value of fields.
+func (s *TournamentBracketRoundsItemMatchesItem) setDefaults() {
 	{
-		val := int(5)
-		s.Priority.SetTo(val)
+		val := TournamentBracketRoundsItemMatchesItemStatus("pending")
+		s.Status.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *TournamentObjective) setDefaults() {
+	{
+		val := int(0)
+		s.CurrentValue.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *TournamentParticipant) setDefaults() {
+	{
+		val := TournamentParticipantStatus("registered")
+		s.Status.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *TournamentSpectatorsResponseSpectatorsItem) setDefaults() {
+	{
+		val := TournamentSpectatorsResponseSpectatorsItemActivityStatus("active")
+		s.ActivityStatus.SetTo(val)
 	}
 }

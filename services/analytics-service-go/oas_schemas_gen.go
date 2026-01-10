@@ -3,15 +3,11 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 )
-
-func (s *ErrRespStatusCode) Error() string {
-	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
-}
 
 type AnalyticsServiceHealthCheckAcceptEncoding string
 
@@ -60,6 +56,75 @@ func (s *AnalyticsServiceHealthCheckAcceptEncoding) UnmarshalText(data []byte) e
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Standard error response format.
+type AnalyticsServiceHealthCheckDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *AnalyticsServiceHealthCheckDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *AnalyticsServiceHealthCheckDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *AnalyticsServiceHealthCheckDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *AnalyticsServiceHealthCheckDef) GetDetails() *AnalyticsServiceHealthCheckDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *AnalyticsServiceHealthCheckDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *AnalyticsServiceHealthCheckDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *AnalyticsServiceHealthCheckDef) SetDetails(val *AnalyticsServiceHealthCheckDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type AnalyticsServiceHealthCheckDefDetails struct{}
+
+// AnalyticsServiceHealthCheckDefStatusCode wraps AnalyticsServiceHealthCheckDef with StatusCode.
+type AnalyticsServiceHealthCheckDefStatusCode struct {
+	StatusCode int
+	Response   AnalyticsServiceHealthCheckDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *AnalyticsServiceHealthCheckDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *AnalyticsServiceHealthCheckDefStatusCode) GetResponse() AnalyticsServiceHealthCheckDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *AnalyticsServiceHealthCheckDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AnalyticsServiceHealthCheckDefStatusCode) SetResponse(val AnalyticsServiceHealthCheckDef) {
+	s.Response = val
+}
+
+func (*AnalyticsServiceHealthCheckDefStatusCode) analyticsServiceHealthCheckRes() {}
 
 type AnalyticsServiceHealthCheckOKContentEncoding string
 
@@ -264,72 +329,224 @@ func (s *CombatAnalyticsOverviewTrendsItem) SetValue(val OptFloat64) {
 	s.Value = val
 }
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type EconomyAnalyticsHealthCheckOK struct {
+	Status            EconomyAnalyticsHealthCheckOKStatus `json:"status"`
+	Domain            OptString                           `json:"domain"`
+	Timestamp         time.Time                           `json:"timestamp"`
+	Version           OptString                           `json:"version"`
+	UptimeSeconds     OptInt                              `json:"uptime_seconds"`
+	ActiveConnections OptInt                              `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *EconomyAnalyticsHealthCheckOK) GetStatus() EconomyAnalyticsHealthCheckOKStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *EconomyAnalyticsHealthCheckOK) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *EconomyAnalyticsHealthCheckOK) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *EconomyAnalyticsHealthCheckOK) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *EconomyAnalyticsHealthCheckOK) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *EconomyAnalyticsHealthCheckOK) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *EconomyAnalyticsHealthCheckOK) SetStatus(val EconomyAnalyticsHealthCheckOKStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *EconomyAnalyticsHealthCheckOK) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *EconomyAnalyticsHealthCheckOK) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *EconomyAnalyticsHealthCheckOK) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *EconomyAnalyticsHealthCheckOK) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *EconomyAnalyticsHealthCheckOK) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+func (*EconomyAnalyticsHealthCheckOK) economyAnalyticsHealthCheckRes() {}
+
+type EconomyAnalyticsHealthCheckOKStatus string
+
+const (
+	EconomyAnalyticsHealthCheckOKStatusHealthy   EconomyAnalyticsHealthCheckOKStatus = "healthy"
+	EconomyAnalyticsHealthCheckOKStatusDegraded  EconomyAnalyticsHealthCheckOKStatus = "degraded"
+	EconomyAnalyticsHealthCheckOKStatusUnhealthy EconomyAnalyticsHealthCheckOKStatus = "unhealthy"
+)
+
+// AllValues returns all EconomyAnalyticsHealthCheckOKStatus values.
+func (EconomyAnalyticsHealthCheckOKStatus) AllValues() []EconomyAnalyticsHealthCheckOKStatus {
+	return []EconomyAnalyticsHealthCheckOKStatus{
+		EconomyAnalyticsHealthCheckOKStatusHealthy,
+		EconomyAnalyticsHealthCheckOKStatusDegraded,
+		EconomyAnalyticsHealthCheckOKStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EconomyAnalyticsHealthCheckOKStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case EconomyAnalyticsHealthCheckOKStatusHealthy:
+		return []byte(s), nil
+	case EconomyAnalyticsHealthCheckOKStatusDegraded:
+		return []byte(s), nil
+	case EconomyAnalyticsHealthCheckOKStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EconomyAnalyticsHealthCheckOKStatus) UnmarshalText(data []byte) error {
+	switch EconomyAnalyticsHealthCheckOKStatus(data) {
+	case EconomyAnalyticsHealthCheckOKStatusHealthy:
+		*s = EconomyAnalyticsHealthCheckOKStatusHealthy
+		return nil
+	case EconomyAnalyticsHealthCheckOKStatusDegraded:
+		*s = EconomyAnalyticsHealthCheckOKStatusDegraded
+		return nil
+	case EconomyAnalyticsHealthCheckOKStatusUnhealthy:
+		*s = EconomyAnalyticsHealthCheckOKStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Standard error response format.
-type ErrResp struct {
+type EconomyAnalyticsHealthCheckServiceUnavailable struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *ErrRespDetails `json:"details"`
+	Details *EconomyAnalyticsHealthCheckServiceUnavailableDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *ErrResp) GetCode() int32 {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *ErrResp) GetMessage() string {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *ErrResp) GetDetails() *ErrRespDetails {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) GetDetails() *EconomyAnalyticsHealthCheckServiceUnavailableDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *ErrResp) SetCode(val int32) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *ErrResp) SetMessage(val string) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *ErrResp) SetDetails(val *ErrRespDetails) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) SetDetails(val *EconomyAnalyticsHealthCheckServiceUnavailableDetails) {
 	s.Details = val
 }
 
+func (*EconomyAnalyticsHealthCheckServiceUnavailable) economyAnalyticsHealthCheckRes() {}
+
 // Additional error details.
-type ErrRespDetails struct{}
+type EconomyAnalyticsHealthCheckServiceUnavailableDetails struct{}
 
-// ErrRespStatusCode wraps ErrResp with StatusCode.
-type ErrRespStatusCode struct {
-	StatusCode int
-	Response   ErrResp
+// Merged schema.
+type EconomyAnalyticsHealthCheckTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *EconomyAnalyticsHealthCheckTooManyRequestsDetails `json:"details"`
+	// Seconds to wait before retrying.
+	RetryAfter OptInt `json:"retry_after"`
 }
 
-// GetStatusCode returns the value of StatusCode.
-func (s *ErrRespStatusCode) GetStatusCode() int {
-	return s.StatusCode
+// GetCode returns the value of Code.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) GetCode() int32 {
+	return s.Code
 }
 
-// GetResponse returns the value of Response.
-func (s *ErrRespStatusCode) GetResponse() ErrResp {
-	return s.Response
+// GetMessage returns the value of Message.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) GetMessage() string {
+	return s.Message
 }
 
-// SetStatusCode sets the value of StatusCode.
-func (s *ErrRespStatusCode) SetStatusCode(val int) {
-	s.StatusCode = val
+// GetDetails returns the value of Details.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) GetDetails() *EconomyAnalyticsHealthCheckTooManyRequestsDetails {
+	return s.Details
 }
 
-// SetResponse sets the value of Response.
-func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
-	s.Response = val
+// GetRetryAfter returns the value of RetryAfter.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) GetRetryAfter() OptInt {
+	return s.RetryAfter
 }
+
+// SetCode sets the value of Code.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) SetDetails(val *EconomyAnalyticsHealthCheckTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+func (*EconomyAnalyticsHealthCheckTooManyRequests) economyAnalyticsHealthCheckRes() {}
+
+// Additional error details.
+type EconomyAnalyticsHealthCheckTooManyRequestsDetails struct{}
 
 // Standard error response format.
 // Ref: #/components/schemas/Error
@@ -401,6 +618,329 @@ func (s *ErrorHeaders) SetResponse(val Error) {
 
 func (*ErrorHeaders) analyticsServiceHealthCheckRes() {}
 
+// BACKEND NOTE: Fundamental stock analysis with financial metrics.
+// Ref: #/components/schemas/FundamentalAnalysis
+type FundamentalAnalysis struct {
+	Symbol OptString `json:"symbol"`
+	// Basic company information.
+	CompanyInfo OptFundamentalAnalysisCompanyInfo `json:"company_info"`
+	// Key financial ratios.
+	FinancialRatios OptFundamentalAnalysisFinancialRatios `json:"financial_ratios"`
+	// Valuation analysis.
+	ValuationMetrics OptFundamentalAnalysisValuationMetrics `json:"valuation_metrics"`
+	// Analyst consensus.
+	AnalystRatings OptFundamentalAnalysisAnalystRatings `json:"analyst_ratings"`
+	LastUpdated    OptDateTime                          `json:"last_updated"`
+}
+
+// GetSymbol returns the value of Symbol.
+func (s *FundamentalAnalysis) GetSymbol() OptString {
+	return s.Symbol
+}
+
+// GetCompanyInfo returns the value of CompanyInfo.
+func (s *FundamentalAnalysis) GetCompanyInfo() OptFundamentalAnalysisCompanyInfo {
+	return s.CompanyInfo
+}
+
+// GetFinancialRatios returns the value of FinancialRatios.
+func (s *FundamentalAnalysis) GetFinancialRatios() OptFundamentalAnalysisFinancialRatios {
+	return s.FinancialRatios
+}
+
+// GetValuationMetrics returns the value of ValuationMetrics.
+func (s *FundamentalAnalysis) GetValuationMetrics() OptFundamentalAnalysisValuationMetrics {
+	return s.ValuationMetrics
+}
+
+// GetAnalystRatings returns the value of AnalystRatings.
+func (s *FundamentalAnalysis) GetAnalystRatings() OptFundamentalAnalysisAnalystRatings {
+	return s.AnalystRatings
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *FundamentalAnalysis) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetSymbol sets the value of Symbol.
+func (s *FundamentalAnalysis) SetSymbol(val OptString) {
+	s.Symbol = val
+}
+
+// SetCompanyInfo sets the value of CompanyInfo.
+func (s *FundamentalAnalysis) SetCompanyInfo(val OptFundamentalAnalysisCompanyInfo) {
+	s.CompanyInfo = val
+}
+
+// SetFinancialRatios sets the value of FinancialRatios.
+func (s *FundamentalAnalysis) SetFinancialRatios(val OptFundamentalAnalysisFinancialRatios) {
+	s.FinancialRatios = val
+}
+
+// SetValuationMetrics sets the value of ValuationMetrics.
+func (s *FundamentalAnalysis) SetValuationMetrics(val OptFundamentalAnalysisValuationMetrics) {
+	s.ValuationMetrics = val
+}
+
+// SetAnalystRatings sets the value of AnalystRatings.
+func (s *FundamentalAnalysis) SetAnalystRatings(val OptFundamentalAnalysisAnalystRatings) {
+	s.AnalystRatings = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *FundamentalAnalysis) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+func (*FundamentalAnalysis) getFundamentalAnalysisRes() {}
+
+// Analyst consensus.
+type FundamentalAnalysisAnalystRatings struct {
+	AverageRating    OptFloat64                                         `json:"average_rating"`
+	Recommendation   OptFundamentalAnalysisAnalystRatingsRecommendation `json:"recommendation"`
+	NumberOfAnalysts OptInt                                             `json:"number_of_analysts"`
+}
+
+// GetAverageRating returns the value of AverageRating.
+func (s *FundamentalAnalysisAnalystRatings) GetAverageRating() OptFloat64 {
+	return s.AverageRating
+}
+
+// GetRecommendation returns the value of Recommendation.
+func (s *FundamentalAnalysisAnalystRatings) GetRecommendation() OptFundamentalAnalysisAnalystRatingsRecommendation {
+	return s.Recommendation
+}
+
+// GetNumberOfAnalysts returns the value of NumberOfAnalysts.
+func (s *FundamentalAnalysisAnalystRatings) GetNumberOfAnalysts() OptInt {
+	return s.NumberOfAnalysts
+}
+
+// SetAverageRating sets the value of AverageRating.
+func (s *FundamentalAnalysisAnalystRatings) SetAverageRating(val OptFloat64) {
+	s.AverageRating = val
+}
+
+// SetRecommendation sets the value of Recommendation.
+func (s *FundamentalAnalysisAnalystRatings) SetRecommendation(val OptFundamentalAnalysisAnalystRatingsRecommendation) {
+	s.Recommendation = val
+}
+
+// SetNumberOfAnalysts sets the value of NumberOfAnalysts.
+func (s *FundamentalAnalysisAnalystRatings) SetNumberOfAnalysts(val OptInt) {
+	s.NumberOfAnalysts = val
+}
+
+type FundamentalAnalysisAnalystRatingsRecommendation string
+
+const (
+	FundamentalAnalysisAnalystRatingsRecommendationStrongBuy  FundamentalAnalysisAnalystRatingsRecommendation = "strong_buy"
+	FundamentalAnalysisAnalystRatingsRecommendationBuy        FundamentalAnalysisAnalystRatingsRecommendation = "buy"
+	FundamentalAnalysisAnalystRatingsRecommendationHold       FundamentalAnalysisAnalystRatingsRecommendation = "hold"
+	FundamentalAnalysisAnalystRatingsRecommendationSell       FundamentalAnalysisAnalystRatingsRecommendation = "sell"
+	FundamentalAnalysisAnalystRatingsRecommendationStrongSell FundamentalAnalysisAnalystRatingsRecommendation = "strong_sell"
+)
+
+// AllValues returns all FundamentalAnalysisAnalystRatingsRecommendation values.
+func (FundamentalAnalysisAnalystRatingsRecommendation) AllValues() []FundamentalAnalysisAnalystRatingsRecommendation {
+	return []FundamentalAnalysisAnalystRatingsRecommendation{
+		FundamentalAnalysisAnalystRatingsRecommendationStrongBuy,
+		FundamentalAnalysisAnalystRatingsRecommendationBuy,
+		FundamentalAnalysisAnalystRatingsRecommendationHold,
+		FundamentalAnalysisAnalystRatingsRecommendationSell,
+		FundamentalAnalysisAnalystRatingsRecommendationStrongSell,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FundamentalAnalysisAnalystRatingsRecommendation) MarshalText() ([]byte, error) {
+	switch s {
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongBuy:
+		return []byte(s), nil
+	case FundamentalAnalysisAnalystRatingsRecommendationBuy:
+		return []byte(s), nil
+	case FundamentalAnalysisAnalystRatingsRecommendationHold:
+		return []byte(s), nil
+	case FundamentalAnalysisAnalystRatingsRecommendationSell:
+		return []byte(s), nil
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongSell:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FundamentalAnalysisAnalystRatingsRecommendation) UnmarshalText(data []byte) error {
+	switch FundamentalAnalysisAnalystRatingsRecommendation(data) {
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongBuy:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationStrongBuy
+		return nil
+	case FundamentalAnalysisAnalystRatingsRecommendationBuy:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationBuy
+		return nil
+	case FundamentalAnalysisAnalystRatingsRecommendationHold:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationHold
+		return nil
+	case FundamentalAnalysisAnalystRatingsRecommendationSell:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationSell
+		return nil
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongSell:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationStrongSell
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Basic company information.
+type FundamentalAnalysisCompanyInfo struct {
+	Name      OptString  `json:"name"`
+	Sector    OptString  `json:"sector"`
+	Industry  OptString  `json:"industry"`
+	MarketCap OptFloat64 `json:"market_cap"`
+}
+
+// GetName returns the value of Name.
+func (s *FundamentalAnalysisCompanyInfo) GetName() OptString {
+	return s.Name
+}
+
+// GetSector returns the value of Sector.
+func (s *FundamentalAnalysisCompanyInfo) GetSector() OptString {
+	return s.Sector
+}
+
+// GetIndustry returns the value of Industry.
+func (s *FundamentalAnalysisCompanyInfo) GetIndustry() OptString {
+	return s.Industry
+}
+
+// GetMarketCap returns the value of MarketCap.
+func (s *FundamentalAnalysisCompanyInfo) GetMarketCap() OptFloat64 {
+	return s.MarketCap
+}
+
+// SetName sets the value of Name.
+func (s *FundamentalAnalysisCompanyInfo) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSector sets the value of Sector.
+func (s *FundamentalAnalysisCompanyInfo) SetSector(val OptString) {
+	s.Sector = val
+}
+
+// SetIndustry sets the value of Industry.
+func (s *FundamentalAnalysisCompanyInfo) SetIndustry(val OptString) {
+	s.Industry = val
+}
+
+// SetMarketCap sets the value of MarketCap.
+func (s *FundamentalAnalysisCompanyInfo) SetMarketCap(val OptFloat64) {
+	s.MarketCap = val
+}
+
+// Key financial ratios.
+type FundamentalAnalysisFinancialRatios struct {
+	PeRatio      OptFloat64 `json:"pe_ratio"`
+	PbRatio      OptFloat64 `json:"pb_ratio"`
+	DebtToEquity OptFloat64 `json:"debt_to_equity"`
+	Roe          OptFloat64 `json:"roe"`
+}
+
+// GetPeRatio returns the value of PeRatio.
+func (s *FundamentalAnalysisFinancialRatios) GetPeRatio() OptFloat64 {
+	return s.PeRatio
+}
+
+// GetPbRatio returns the value of PbRatio.
+func (s *FundamentalAnalysisFinancialRatios) GetPbRatio() OptFloat64 {
+	return s.PbRatio
+}
+
+// GetDebtToEquity returns the value of DebtToEquity.
+func (s *FundamentalAnalysisFinancialRatios) GetDebtToEquity() OptFloat64 {
+	return s.DebtToEquity
+}
+
+// GetRoe returns the value of Roe.
+func (s *FundamentalAnalysisFinancialRatios) GetRoe() OptFloat64 {
+	return s.Roe
+}
+
+// SetPeRatio sets the value of PeRatio.
+func (s *FundamentalAnalysisFinancialRatios) SetPeRatio(val OptFloat64) {
+	s.PeRatio = val
+}
+
+// SetPbRatio sets the value of PbRatio.
+func (s *FundamentalAnalysisFinancialRatios) SetPbRatio(val OptFloat64) {
+	s.PbRatio = val
+}
+
+// SetDebtToEquity sets the value of DebtToEquity.
+func (s *FundamentalAnalysisFinancialRatios) SetDebtToEquity(val OptFloat64) {
+	s.DebtToEquity = val
+}
+
+// SetRoe sets the value of Roe.
+func (s *FundamentalAnalysisFinancialRatios) SetRoe(val OptFloat64) {
+	s.Roe = val
+}
+
+// Valuation analysis.
+type FundamentalAnalysisValuationMetrics struct {
+	IntrinsicValue OptFloat64                                           `json:"intrinsic_value"`
+	FairValueRange OptFundamentalAnalysisValuationMetricsFairValueRange `json:"fair_value_range"`
+}
+
+// GetIntrinsicValue returns the value of IntrinsicValue.
+func (s *FundamentalAnalysisValuationMetrics) GetIntrinsicValue() OptFloat64 {
+	return s.IntrinsicValue
+}
+
+// GetFairValueRange returns the value of FairValueRange.
+func (s *FundamentalAnalysisValuationMetrics) GetFairValueRange() OptFundamentalAnalysisValuationMetricsFairValueRange {
+	return s.FairValueRange
+}
+
+// SetIntrinsicValue sets the value of IntrinsicValue.
+func (s *FundamentalAnalysisValuationMetrics) SetIntrinsicValue(val OptFloat64) {
+	s.IntrinsicValue = val
+}
+
+// SetFairValueRange sets the value of FairValueRange.
+func (s *FundamentalAnalysisValuationMetrics) SetFairValueRange(val OptFundamentalAnalysisValuationMetricsFairValueRange) {
+	s.FairValueRange = val
+}
+
+type FundamentalAnalysisValuationMetricsFairValueRange struct {
+	Low  OptFloat64 `json:"low"`
+	High OptFloat64 `json:"high"`
+}
+
+// GetLow returns the value of Low.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) GetLow() OptFloat64 {
+	return s.Low
+}
+
+// GetHigh returns the value of High.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) GetHigh() OptFloat64 {
+	return s.High
+}
+
+// SetLow sets the value of Low.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) SetLow(val OptFloat64) {
+	s.Low = val
+}
+
+// SetHigh sets the value of High.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) SetHigh(val OptFloat64) {
+	s.High = val
+}
+
 // Standard error response format.
 type GetCombatAnalyticsOverviewBadRequest struct {
 	Code    int32  `json:"code"`
@@ -443,6 +983,75 @@ func (*GetCombatAnalyticsOverviewBadRequest) getCombatAnalyticsOverviewRes() {}
 
 // Additional error details.
 type GetCombatAnalyticsOverviewBadRequestDetails struct{}
+
+// Standard error response format.
+type GetCombatAnalyticsOverviewDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetCombatAnalyticsOverviewDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetCombatAnalyticsOverviewDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetCombatAnalyticsOverviewDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetCombatAnalyticsOverviewDef) GetDetails() *GetCombatAnalyticsOverviewDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetCombatAnalyticsOverviewDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetCombatAnalyticsOverviewDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetCombatAnalyticsOverviewDef) SetDetails(val *GetCombatAnalyticsOverviewDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetCombatAnalyticsOverviewDefDetails struct{}
+
+// GetCombatAnalyticsOverviewDefStatusCode wraps GetCombatAnalyticsOverviewDef with StatusCode.
+type GetCombatAnalyticsOverviewDefStatusCode struct {
+	StatusCode int
+	Response   GetCombatAnalyticsOverviewDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetCombatAnalyticsOverviewDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetCombatAnalyticsOverviewDefStatusCode) GetResponse() GetCombatAnalyticsOverviewDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetCombatAnalyticsOverviewDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetCombatAnalyticsOverviewDefStatusCode) SetResponse(val GetCombatAnalyticsOverviewDef) {
+	s.Response = val
+}
+
+func (*GetCombatAnalyticsOverviewDefStatusCode) getCombatAnalyticsOverviewRes() {}
 
 type GetCombatAnalyticsOverviewGameMode string
 
@@ -695,6 +1304,75 @@ func (*GetEconomyMarketAnalyticsBadRequest) getEconomyMarketAnalyticsRes() {}
 // Additional error details.
 type GetEconomyMarketAnalyticsBadRequestDetails struct{}
 
+// Standard error response format.
+type GetEconomyMarketAnalyticsDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetEconomyMarketAnalyticsDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetEconomyMarketAnalyticsDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetEconomyMarketAnalyticsDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetEconomyMarketAnalyticsDef) GetDetails() *GetEconomyMarketAnalyticsDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetEconomyMarketAnalyticsDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetEconomyMarketAnalyticsDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetEconomyMarketAnalyticsDef) SetDetails(val *GetEconomyMarketAnalyticsDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetEconomyMarketAnalyticsDefDetails struct{}
+
+// GetEconomyMarketAnalyticsDefStatusCode wraps GetEconomyMarketAnalyticsDef with StatusCode.
+type GetEconomyMarketAnalyticsDefStatusCode struct {
+	StatusCode int
+	Response   GetEconomyMarketAnalyticsDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetEconomyMarketAnalyticsDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetEconomyMarketAnalyticsDefStatusCode) GetResponse() GetEconomyMarketAnalyticsDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetEconomyMarketAnalyticsDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetEconomyMarketAnalyticsDefStatusCode) SetResponse(val GetEconomyMarketAnalyticsDef) {
+	s.Response = val
+}
+
+func (*GetEconomyMarketAnalyticsDefStatusCode) getEconomyMarketAnalyticsRes() {}
+
 type GetEconomyMarketAnalyticsTimeframe string
 
 const (
@@ -787,6 +1465,345 @@ func (*GetEconomyMarketAnalyticsUnauthorized) getEconomyMarketAnalyticsRes() {}
 type GetEconomyMarketAnalyticsUnauthorizedDetails struct{}
 
 // Standard error response format.
+type GetFundamentalAnalysisBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetFundamentalAnalysisBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetFundamentalAnalysisBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetFundamentalAnalysisBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetFundamentalAnalysisBadRequest) GetDetails() *GetFundamentalAnalysisBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetFundamentalAnalysisBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetFundamentalAnalysisBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetFundamentalAnalysisBadRequest) SetDetails(val *GetFundamentalAnalysisBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GetFundamentalAnalysisBadRequest) getFundamentalAnalysisRes() {}
+
+// Additional error details.
+type GetFundamentalAnalysisBadRequestDetails struct{}
+
+// Standard error response format.
+type GetFundamentalAnalysisNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetFundamentalAnalysisNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetFundamentalAnalysisNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetFundamentalAnalysisNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetFundamentalAnalysisNotFound) GetDetails() *GetFundamentalAnalysisNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetFundamentalAnalysisNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetFundamentalAnalysisNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetFundamentalAnalysisNotFound) SetDetails(val *GetFundamentalAnalysisNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetFundamentalAnalysisNotFound) getFundamentalAnalysisRes() {}
+
+// Additional error details.
+type GetFundamentalAnalysisNotFoundDetails struct{}
+
+// Standard error response format.
+type GetFundamentalAnalysisUnauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetFundamentalAnalysisUnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetFundamentalAnalysisUnauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetFundamentalAnalysisUnauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetFundamentalAnalysisUnauthorized) GetDetails() *GetFundamentalAnalysisUnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetFundamentalAnalysisUnauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetFundamentalAnalysisUnauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetFundamentalAnalysisUnauthorized) SetDetails(val *GetFundamentalAnalysisUnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*GetFundamentalAnalysisUnauthorized) getFundamentalAnalysisRes() {}
+
+// Additional error details.
+type GetFundamentalAnalysisUnauthorizedDetails struct{}
+
+// Standard error response format.
+type GetMarketTrendsBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetMarketTrendsBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetMarketTrendsBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetMarketTrendsBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetMarketTrendsBadRequest) GetDetails() *GetMarketTrendsBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetMarketTrendsBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetMarketTrendsBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetMarketTrendsBadRequest) SetDetails(val *GetMarketTrendsBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GetMarketTrendsBadRequest) getMarketTrendsRes() {}
+
+// Additional error details.
+type GetMarketTrendsBadRequestDetails struct{}
+
+type GetMarketTrendsSector string
+
+const (
+	GetMarketTrendsSectorTechnology  GetMarketTrendsSector = "technology"
+	GetMarketTrendsSectorRealEstate  GetMarketTrendsSector = "real_estate"
+	GetMarketTrendsSectorCommodities GetMarketTrendsSector = "commodities"
+	GetMarketTrendsSectorServices    GetMarketTrendsSector = "services"
+	GetMarketTrendsSectorAll         GetMarketTrendsSector = "all"
+)
+
+// AllValues returns all GetMarketTrendsSector values.
+func (GetMarketTrendsSector) AllValues() []GetMarketTrendsSector {
+	return []GetMarketTrendsSector{
+		GetMarketTrendsSectorTechnology,
+		GetMarketTrendsSectorRealEstate,
+		GetMarketTrendsSectorCommodities,
+		GetMarketTrendsSectorServices,
+		GetMarketTrendsSectorAll,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetMarketTrendsSector) MarshalText() ([]byte, error) {
+	switch s {
+	case GetMarketTrendsSectorTechnology:
+		return []byte(s), nil
+	case GetMarketTrendsSectorRealEstate:
+		return []byte(s), nil
+	case GetMarketTrendsSectorCommodities:
+		return []byte(s), nil
+	case GetMarketTrendsSectorServices:
+		return []byte(s), nil
+	case GetMarketTrendsSectorAll:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetMarketTrendsSector) UnmarshalText(data []byte) error {
+	switch GetMarketTrendsSector(data) {
+	case GetMarketTrendsSectorTechnology:
+		*s = GetMarketTrendsSectorTechnology
+		return nil
+	case GetMarketTrendsSectorRealEstate:
+		*s = GetMarketTrendsSectorRealEstate
+		return nil
+	case GetMarketTrendsSectorCommodities:
+		*s = GetMarketTrendsSectorCommodities
+		return nil
+	case GetMarketTrendsSectorServices:
+		*s = GetMarketTrendsSectorServices
+		return nil
+	case GetMarketTrendsSectorAll:
+		*s = GetMarketTrendsSectorAll
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetMarketTrendsTimeframe string
+
+const (
+	GetMarketTrendsTimeframe1h  GetMarketTrendsTimeframe = "1h"
+	GetMarketTrendsTimeframe4h  GetMarketTrendsTimeframe = "4h"
+	GetMarketTrendsTimeframe24h GetMarketTrendsTimeframe = "24h"
+	GetMarketTrendsTimeframe7d  GetMarketTrendsTimeframe = "7d"
+	GetMarketTrendsTimeframe30d GetMarketTrendsTimeframe = "30d"
+)
+
+// AllValues returns all GetMarketTrendsTimeframe values.
+func (GetMarketTrendsTimeframe) AllValues() []GetMarketTrendsTimeframe {
+	return []GetMarketTrendsTimeframe{
+		GetMarketTrendsTimeframe1h,
+		GetMarketTrendsTimeframe4h,
+		GetMarketTrendsTimeframe24h,
+		GetMarketTrendsTimeframe7d,
+		GetMarketTrendsTimeframe30d,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetMarketTrendsTimeframe) MarshalText() ([]byte, error) {
+	switch s {
+	case GetMarketTrendsTimeframe1h:
+		return []byte(s), nil
+	case GetMarketTrendsTimeframe4h:
+		return []byte(s), nil
+	case GetMarketTrendsTimeframe24h:
+		return []byte(s), nil
+	case GetMarketTrendsTimeframe7d:
+		return []byte(s), nil
+	case GetMarketTrendsTimeframe30d:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetMarketTrendsTimeframe) UnmarshalText(data []byte) error {
+	switch GetMarketTrendsTimeframe(data) {
+	case GetMarketTrendsTimeframe1h:
+		*s = GetMarketTrendsTimeframe1h
+		return nil
+	case GetMarketTrendsTimeframe4h:
+		*s = GetMarketTrendsTimeframe4h
+		return nil
+	case GetMarketTrendsTimeframe24h:
+		*s = GetMarketTrendsTimeframe24h
+		return nil
+	case GetMarketTrendsTimeframe7d:
+		*s = GetMarketTrendsTimeframe7d
+		return nil
+	case GetMarketTrendsTimeframe30d:
+		*s = GetMarketTrendsTimeframe30d
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type GetMarketTrendsUnauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetMarketTrendsUnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetMarketTrendsUnauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetMarketTrendsUnauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetMarketTrendsUnauthorized) GetDetails() *GetMarketTrendsUnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetMarketTrendsUnauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetMarketTrendsUnauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetMarketTrendsUnauthorized) SetDetails(val *GetMarketTrendsUnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*GetMarketTrendsUnauthorized) getMarketTrendsRes() {}
+
+// Additional error details.
+type GetMarketTrendsUnauthorizedDetails struct{}
+
+// Standard error response format.
 type GetPlayerBehaviorAnalyticsBadRequest struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
@@ -828,6 +1845,75 @@ func (*GetPlayerBehaviorAnalyticsBadRequest) getPlayerBehaviorAnalyticsRes() {}
 
 // Additional error details.
 type GetPlayerBehaviorAnalyticsBadRequestDetails struct{}
+
+// Standard error response format.
+type GetPlayerBehaviorAnalyticsDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetPlayerBehaviorAnalyticsDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetPlayerBehaviorAnalyticsDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetPlayerBehaviorAnalyticsDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetPlayerBehaviorAnalyticsDef) GetDetails() *GetPlayerBehaviorAnalyticsDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetPlayerBehaviorAnalyticsDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetPlayerBehaviorAnalyticsDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetPlayerBehaviorAnalyticsDef) SetDetails(val *GetPlayerBehaviorAnalyticsDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetPlayerBehaviorAnalyticsDefDetails struct{}
+
+// GetPlayerBehaviorAnalyticsDefStatusCode wraps GetPlayerBehaviorAnalyticsDef with StatusCode.
+type GetPlayerBehaviorAnalyticsDefStatusCode struct {
+	StatusCode int
+	Response   GetPlayerBehaviorAnalyticsDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetPlayerBehaviorAnalyticsDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetPlayerBehaviorAnalyticsDefStatusCode) GetResponse() GetPlayerBehaviorAnalyticsDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetPlayerBehaviorAnalyticsDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetPlayerBehaviorAnalyticsDefStatusCode) SetResponse(val GetPlayerBehaviorAnalyticsDef) {
+	s.Response = val
+}
+
+func (*GetPlayerBehaviorAnalyticsDefStatusCode) getPlayerBehaviorAnalyticsRes() {}
 
 type GetPlayerBehaviorAnalyticsMetric string
 
@@ -1081,6 +2167,75 @@ func (s *GetSystemPerformanceMetricsComponent) UnmarshalText(data []byte) error 
 }
 
 // Standard error response format.
+type GetSystemPerformanceMetricsDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetSystemPerformanceMetricsDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetSystemPerformanceMetricsDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetSystemPerformanceMetricsDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetSystemPerformanceMetricsDef) GetDetails() *GetSystemPerformanceMetricsDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetSystemPerformanceMetricsDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetSystemPerformanceMetricsDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetSystemPerformanceMetricsDef) SetDetails(val *GetSystemPerformanceMetricsDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetSystemPerformanceMetricsDefDetails struct{}
+
+// GetSystemPerformanceMetricsDefStatusCode wraps GetSystemPerformanceMetricsDef with StatusCode.
+type GetSystemPerformanceMetricsDefStatusCode struct {
+	StatusCode int
+	Response   GetSystemPerformanceMetricsDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetSystemPerformanceMetricsDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetSystemPerformanceMetricsDefStatusCode) GetResponse() GetSystemPerformanceMetricsDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetSystemPerformanceMetricsDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetSystemPerformanceMetricsDefStatusCode) SetResponse(val GetSystemPerformanceMetricsDef) {
+	s.Response = val
+}
+
+func (*GetSystemPerformanceMetricsDefStatusCode) getSystemPerformanceMetricsRes() {}
+
+// Standard error response format.
 type GetSystemPerformanceMetricsUnauthorized struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
@@ -1122,6 +2277,407 @@ func (*GetSystemPerformanceMetricsUnauthorized) getSystemPerformanceMetricsRes()
 
 // Additional error details.
 type GetSystemPerformanceMetricsUnauthorizedDetails struct{}
+
+// Standard error response format.
+type GetTechnicalAnalysisBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTechnicalAnalysisBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTechnicalAnalysisBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTechnicalAnalysisBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTechnicalAnalysisBadRequest) GetDetails() *GetTechnicalAnalysisBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTechnicalAnalysisBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTechnicalAnalysisBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTechnicalAnalysisBadRequest) SetDetails(val *GetTechnicalAnalysisBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GetTechnicalAnalysisBadRequest) getTechnicalAnalysisRes() {}
+
+// Additional error details.
+type GetTechnicalAnalysisBadRequestDetails struct{}
+
+// Standard error response format.
+type GetTechnicalAnalysisNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTechnicalAnalysisNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTechnicalAnalysisNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTechnicalAnalysisNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTechnicalAnalysisNotFound) GetDetails() *GetTechnicalAnalysisNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTechnicalAnalysisNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTechnicalAnalysisNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTechnicalAnalysisNotFound) SetDetails(val *GetTechnicalAnalysisNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetTechnicalAnalysisNotFound) getTechnicalAnalysisRes() {}
+
+// Additional error details.
+type GetTechnicalAnalysisNotFoundDetails struct{}
+
+type GetTechnicalAnalysisTimeframe string
+
+const (
+	GetTechnicalAnalysisTimeframe1d GetTechnicalAnalysisTimeframe = "1d"
+	GetTechnicalAnalysisTimeframe1w GetTechnicalAnalysisTimeframe = "1w"
+	GetTechnicalAnalysisTimeframe1M GetTechnicalAnalysisTimeframe = "1M"
+	GetTechnicalAnalysisTimeframe3M GetTechnicalAnalysisTimeframe = "3M"
+	GetTechnicalAnalysisTimeframe6M GetTechnicalAnalysisTimeframe = "6M"
+	GetTechnicalAnalysisTimeframe1y GetTechnicalAnalysisTimeframe = "1y"
+)
+
+// AllValues returns all GetTechnicalAnalysisTimeframe values.
+func (GetTechnicalAnalysisTimeframe) AllValues() []GetTechnicalAnalysisTimeframe {
+	return []GetTechnicalAnalysisTimeframe{
+		GetTechnicalAnalysisTimeframe1d,
+		GetTechnicalAnalysisTimeframe1w,
+		GetTechnicalAnalysisTimeframe1M,
+		GetTechnicalAnalysisTimeframe3M,
+		GetTechnicalAnalysisTimeframe6M,
+		GetTechnicalAnalysisTimeframe1y,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTechnicalAnalysisTimeframe) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTechnicalAnalysisTimeframe1d:
+		return []byte(s), nil
+	case GetTechnicalAnalysisTimeframe1w:
+		return []byte(s), nil
+	case GetTechnicalAnalysisTimeframe1M:
+		return []byte(s), nil
+	case GetTechnicalAnalysisTimeframe3M:
+		return []byte(s), nil
+	case GetTechnicalAnalysisTimeframe6M:
+		return []byte(s), nil
+	case GetTechnicalAnalysisTimeframe1y:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTechnicalAnalysisTimeframe) UnmarshalText(data []byte) error {
+	switch GetTechnicalAnalysisTimeframe(data) {
+	case GetTechnicalAnalysisTimeframe1d:
+		*s = GetTechnicalAnalysisTimeframe1d
+		return nil
+	case GetTechnicalAnalysisTimeframe1w:
+		*s = GetTechnicalAnalysisTimeframe1w
+		return nil
+	case GetTechnicalAnalysisTimeframe1M:
+		*s = GetTechnicalAnalysisTimeframe1M
+		return nil
+	case GetTechnicalAnalysisTimeframe3M:
+		*s = GetTechnicalAnalysisTimeframe3M
+		return nil
+	case GetTechnicalAnalysisTimeframe6M:
+		*s = GetTechnicalAnalysisTimeframe6M
+		return nil
+	case GetTechnicalAnalysisTimeframe1y:
+		*s = GetTechnicalAnalysisTimeframe1y
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type GetTechnicalAnalysisUnauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTechnicalAnalysisUnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTechnicalAnalysisUnauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTechnicalAnalysisUnauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTechnicalAnalysisUnauthorized) GetDetails() *GetTechnicalAnalysisUnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTechnicalAnalysisUnauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTechnicalAnalysisUnauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTechnicalAnalysisUnauthorized) SetDetails(val *GetTechnicalAnalysisUnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*GetTechnicalAnalysisUnauthorized) getTechnicalAnalysisRes() {}
+
+// Additional error details.
+type GetTechnicalAnalysisUnauthorizedDetails struct{}
+
+type GetTradeVolumeStatisticsAssetType string
+
+const (
+	GetTradeVolumeStatisticsAssetTypeCurrency   GetTradeVolumeStatisticsAssetType = "currency"
+	GetTradeVolumeStatisticsAssetTypeItem       GetTradeVolumeStatisticsAssetType = "item"
+	GetTradeVolumeStatisticsAssetTypeStock      GetTradeVolumeStatisticsAssetType = "stock"
+	GetTradeVolumeStatisticsAssetTypeRealEstate GetTradeVolumeStatisticsAssetType = "real_estate"
+	GetTradeVolumeStatisticsAssetTypeService    GetTradeVolumeStatisticsAssetType = "service"
+)
+
+// AllValues returns all GetTradeVolumeStatisticsAssetType values.
+func (GetTradeVolumeStatisticsAssetType) AllValues() []GetTradeVolumeStatisticsAssetType {
+	return []GetTradeVolumeStatisticsAssetType{
+		GetTradeVolumeStatisticsAssetTypeCurrency,
+		GetTradeVolumeStatisticsAssetTypeItem,
+		GetTradeVolumeStatisticsAssetTypeStock,
+		GetTradeVolumeStatisticsAssetTypeRealEstate,
+		GetTradeVolumeStatisticsAssetTypeService,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTradeVolumeStatisticsAssetType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTradeVolumeStatisticsAssetTypeCurrency:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsAssetTypeItem:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsAssetTypeStock:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsAssetTypeRealEstate:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsAssetTypeService:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTradeVolumeStatisticsAssetType) UnmarshalText(data []byte) error {
+	switch GetTradeVolumeStatisticsAssetType(data) {
+	case GetTradeVolumeStatisticsAssetTypeCurrency:
+		*s = GetTradeVolumeStatisticsAssetTypeCurrency
+		return nil
+	case GetTradeVolumeStatisticsAssetTypeItem:
+		*s = GetTradeVolumeStatisticsAssetTypeItem
+		return nil
+	case GetTradeVolumeStatisticsAssetTypeStock:
+		*s = GetTradeVolumeStatisticsAssetTypeStock
+		return nil
+	case GetTradeVolumeStatisticsAssetTypeRealEstate:
+		*s = GetTradeVolumeStatisticsAssetTypeRealEstate
+		return nil
+	case GetTradeVolumeStatisticsAssetTypeService:
+		*s = GetTradeVolumeStatisticsAssetTypeService
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type GetTradeVolumeStatisticsBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTradeVolumeStatisticsBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTradeVolumeStatisticsBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTradeVolumeStatisticsBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTradeVolumeStatisticsBadRequest) GetDetails() *GetTradeVolumeStatisticsBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTradeVolumeStatisticsBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTradeVolumeStatisticsBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTradeVolumeStatisticsBadRequest) SetDetails(val *GetTradeVolumeStatisticsBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GetTradeVolumeStatisticsBadRequest) getTradeVolumeStatisticsRes() {}
+
+// Additional error details.
+type GetTradeVolumeStatisticsBadRequestDetails struct{}
+
+type GetTradeVolumeStatisticsPeriod string
+
+const (
+	GetTradeVolumeStatisticsPeriodHour  GetTradeVolumeStatisticsPeriod = "hour"
+	GetTradeVolumeStatisticsPeriodDay   GetTradeVolumeStatisticsPeriod = "day"
+	GetTradeVolumeStatisticsPeriodWeek  GetTradeVolumeStatisticsPeriod = "week"
+	GetTradeVolumeStatisticsPeriodMonth GetTradeVolumeStatisticsPeriod = "month"
+)
+
+// AllValues returns all GetTradeVolumeStatisticsPeriod values.
+func (GetTradeVolumeStatisticsPeriod) AllValues() []GetTradeVolumeStatisticsPeriod {
+	return []GetTradeVolumeStatisticsPeriod{
+		GetTradeVolumeStatisticsPeriodHour,
+		GetTradeVolumeStatisticsPeriodDay,
+		GetTradeVolumeStatisticsPeriodWeek,
+		GetTradeVolumeStatisticsPeriodMonth,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTradeVolumeStatisticsPeriod) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTradeVolumeStatisticsPeriodHour:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsPeriodDay:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsPeriodWeek:
+		return []byte(s), nil
+	case GetTradeVolumeStatisticsPeriodMonth:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTradeVolumeStatisticsPeriod) UnmarshalText(data []byte) error {
+	switch GetTradeVolumeStatisticsPeriod(data) {
+	case GetTradeVolumeStatisticsPeriodHour:
+		*s = GetTradeVolumeStatisticsPeriodHour
+		return nil
+	case GetTradeVolumeStatisticsPeriodDay:
+		*s = GetTradeVolumeStatisticsPeriodDay
+		return nil
+	case GetTradeVolumeStatisticsPeriodWeek:
+		*s = GetTradeVolumeStatisticsPeriodWeek
+		return nil
+	case GetTradeVolumeStatisticsPeriodMonth:
+		*s = GetTradeVolumeStatisticsPeriodMonth
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type GetTradeVolumeStatisticsUnauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTradeVolumeStatisticsUnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTradeVolumeStatisticsUnauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTradeVolumeStatisticsUnauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTradeVolumeStatisticsUnauthorized) GetDetails() *GetTradeVolumeStatisticsUnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTradeVolumeStatisticsUnauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTradeVolumeStatisticsUnauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTradeVolumeStatisticsUnauthorized) SetDetails(val *GetTradeVolumeStatisticsUnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*GetTradeVolumeStatisticsUnauthorized) getTradeVolumeStatisticsRes() {}
+
+// Additional error details.
+type GetTradeVolumeStatisticsUnauthorizedDetails struct{}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
@@ -1411,6 +2967,763 @@ func (s *MarketAnalyticsResponsePredictions) SetConfidence(val OptFloat64) {
 	s.Confidence = val
 }
 
+// BACKEND NOTE: Market integrity monitoring with AI-powered anomaly detection.
+// Ref: #/components/schemas/MarketIntegrityStatus
+type MarketIntegrityStatus struct {
+	Timestamp OptDateTime `json:"timestamp"`
+	// Overall market integrity score (0-1).
+	OverallIntegrityScore OptFloat64                                   `json:"overall_integrity_score"`
+	RiskLevel             OptMarketIntegrityStatusRiskLevel            `json:"risk_level"`
+	DetectedAnomalies     []MarketIntegrityStatusDetectedAnomaliesItem `json:"detected_anomalies"`
+	// Market health indicators.
+	MarketHealthIndicators OptMarketIntegrityStatusMarketHealthIndicators `json:"market_health_indicators"`
+	// Automated recommendations for risk mitigation.
+	Recommendations []string `json:"recommendations"`
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *MarketIntegrityStatus) GetTimestamp() OptDateTime {
+	return s.Timestamp
+}
+
+// GetOverallIntegrityScore returns the value of OverallIntegrityScore.
+func (s *MarketIntegrityStatus) GetOverallIntegrityScore() OptFloat64 {
+	return s.OverallIntegrityScore
+}
+
+// GetRiskLevel returns the value of RiskLevel.
+func (s *MarketIntegrityStatus) GetRiskLevel() OptMarketIntegrityStatusRiskLevel {
+	return s.RiskLevel
+}
+
+// GetDetectedAnomalies returns the value of DetectedAnomalies.
+func (s *MarketIntegrityStatus) GetDetectedAnomalies() []MarketIntegrityStatusDetectedAnomaliesItem {
+	return s.DetectedAnomalies
+}
+
+// GetMarketHealthIndicators returns the value of MarketHealthIndicators.
+func (s *MarketIntegrityStatus) GetMarketHealthIndicators() OptMarketIntegrityStatusMarketHealthIndicators {
+	return s.MarketHealthIndicators
+}
+
+// GetRecommendations returns the value of Recommendations.
+func (s *MarketIntegrityStatus) GetRecommendations() []string {
+	return s.Recommendations
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *MarketIntegrityStatus) SetTimestamp(val OptDateTime) {
+	s.Timestamp = val
+}
+
+// SetOverallIntegrityScore sets the value of OverallIntegrityScore.
+func (s *MarketIntegrityStatus) SetOverallIntegrityScore(val OptFloat64) {
+	s.OverallIntegrityScore = val
+}
+
+// SetRiskLevel sets the value of RiskLevel.
+func (s *MarketIntegrityStatus) SetRiskLevel(val OptMarketIntegrityStatusRiskLevel) {
+	s.RiskLevel = val
+}
+
+// SetDetectedAnomalies sets the value of DetectedAnomalies.
+func (s *MarketIntegrityStatus) SetDetectedAnomalies(val []MarketIntegrityStatusDetectedAnomaliesItem) {
+	s.DetectedAnomalies = val
+}
+
+// SetMarketHealthIndicators sets the value of MarketHealthIndicators.
+func (s *MarketIntegrityStatus) SetMarketHealthIndicators(val OptMarketIntegrityStatusMarketHealthIndicators) {
+	s.MarketHealthIndicators = val
+}
+
+// SetRecommendations sets the value of Recommendations.
+func (s *MarketIntegrityStatus) SetRecommendations(val []string) {
+	s.Recommendations = val
+}
+
+func (*MarketIntegrityStatus) monitorMarketIntegrityRes() {}
+
+// Detected market anomalies.
+type MarketIntegrityStatusDetectedAnomaliesItem struct {
+	Type        OptMarketIntegrityStatusDetectedAnomaliesItemType     `json:"type"`
+	Severity    OptMarketIntegrityStatusDetectedAnomaliesItemSeverity `json:"severity"`
+	Confidence  OptFloat64                                            `json:"confidence"`
+	Description OptString                                             `json:"description"`
+}
+
+// GetType returns the value of Type.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) GetType() OptMarketIntegrityStatusDetectedAnomaliesItemType {
+	return s.Type
+}
+
+// GetSeverity returns the value of Severity.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) GetSeverity() OptMarketIntegrityStatusDetectedAnomaliesItemSeverity {
+	return s.Severity
+}
+
+// GetConfidence returns the value of Confidence.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) GetConfidence() OptFloat64 {
+	return s.Confidence
+}
+
+// GetDescription returns the value of Description.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) GetDescription() OptString {
+	return s.Description
+}
+
+// SetType sets the value of Type.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) SetType(val OptMarketIntegrityStatusDetectedAnomaliesItemType) {
+	s.Type = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) SetSeverity(val OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) {
+	s.Severity = val
+}
+
+// SetConfidence sets the value of Confidence.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) SetConfidence(val OptFloat64) {
+	s.Confidence = val
+}
+
+// SetDescription sets the value of Description.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) SetDescription(val OptString) {
+	s.Description = val
+}
+
+type MarketIntegrityStatusDetectedAnomaliesItemSeverity string
+
+const (
+	MarketIntegrityStatusDetectedAnomaliesItemSeverityLow    MarketIntegrityStatusDetectedAnomaliesItemSeverity = "low"
+	MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium MarketIntegrityStatusDetectedAnomaliesItemSeverity = "medium"
+	MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh   MarketIntegrityStatusDetectedAnomaliesItemSeverity = "high"
+)
+
+// AllValues returns all MarketIntegrityStatusDetectedAnomaliesItemSeverity values.
+func (MarketIntegrityStatusDetectedAnomaliesItemSeverity) AllValues() []MarketIntegrityStatusDetectedAnomaliesItemSeverity {
+	return []MarketIntegrityStatusDetectedAnomaliesItemSeverity{
+		MarketIntegrityStatusDetectedAnomaliesItemSeverityLow,
+		MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium,
+		MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketIntegrityStatusDetectedAnomaliesItemSeverity) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityLow:
+		return []byte(s), nil
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium:
+		return []byte(s), nil
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemSeverity) UnmarshalText(data []byte) error {
+	switch MarketIntegrityStatusDetectedAnomaliesItemSeverity(data) {
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityLow:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityLow
+		return nil
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium
+		return nil
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type MarketIntegrityStatusDetectedAnomaliesItemType string
+
+const (
+	MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation   MarketIntegrityStatusDetectedAnomaliesItemType = "manipulation"
+	MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading MarketIntegrityStatusDetectedAnomaliesItemType = "insider_trading"
+	MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump       MarketIntegrityStatusDetectedAnomaliesItemType = "pump_dump"
+	MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing       MarketIntegrityStatusDetectedAnomaliesItemType = "spoofing"
+)
+
+// AllValues returns all MarketIntegrityStatusDetectedAnomaliesItemType values.
+func (MarketIntegrityStatusDetectedAnomaliesItemType) AllValues() []MarketIntegrityStatusDetectedAnomaliesItemType {
+	return []MarketIntegrityStatusDetectedAnomaliesItemType{
+		MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation,
+		MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading,
+		MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump,
+		MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketIntegrityStatusDetectedAnomaliesItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation:
+		return []byte(s), nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading:
+		return []byte(s), nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump:
+		return []byte(s), nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemType) UnmarshalText(data []byte) error {
+	switch MarketIntegrityStatusDetectedAnomaliesItemType(data) {
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation
+		return nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading
+		return nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump
+		return nil
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Market health indicators.
+type MarketIntegrityStatusMarketHealthIndicators struct {
+	VolumeAnomalyScore   OptFloat64 `json:"volume_anomaly_score"`
+	PriceVolatilityScore OptFloat64 `json:"price_volatility_score"`
+	OrderBookImbalance   OptFloat64 `json:"order_book_imbalance"`
+}
+
+// GetVolumeAnomalyScore returns the value of VolumeAnomalyScore.
+func (s *MarketIntegrityStatusMarketHealthIndicators) GetVolumeAnomalyScore() OptFloat64 {
+	return s.VolumeAnomalyScore
+}
+
+// GetPriceVolatilityScore returns the value of PriceVolatilityScore.
+func (s *MarketIntegrityStatusMarketHealthIndicators) GetPriceVolatilityScore() OptFloat64 {
+	return s.PriceVolatilityScore
+}
+
+// GetOrderBookImbalance returns the value of OrderBookImbalance.
+func (s *MarketIntegrityStatusMarketHealthIndicators) GetOrderBookImbalance() OptFloat64 {
+	return s.OrderBookImbalance
+}
+
+// SetVolumeAnomalyScore sets the value of VolumeAnomalyScore.
+func (s *MarketIntegrityStatusMarketHealthIndicators) SetVolumeAnomalyScore(val OptFloat64) {
+	s.VolumeAnomalyScore = val
+}
+
+// SetPriceVolatilityScore sets the value of PriceVolatilityScore.
+func (s *MarketIntegrityStatusMarketHealthIndicators) SetPriceVolatilityScore(val OptFloat64) {
+	s.PriceVolatilityScore = val
+}
+
+// SetOrderBookImbalance sets the value of OrderBookImbalance.
+func (s *MarketIntegrityStatusMarketHealthIndicators) SetOrderBookImbalance(val OptFloat64) {
+	s.OrderBookImbalance = val
+}
+
+type MarketIntegrityStatusRiskLevel string
+
+const (
+	MarketIntegrityStatusRiskLevelLow      MarketIntegrityStatusRiskLevel = "low"
+	MarketIntegrityStatusRiskLevelMedium   MarketIntegrityStatusRiskLevel = "medium"
+	MarketIntegrityStatusRiskLevelHigh     MarketIntegrityStatusRiskLevel = "high"
+	MarketIntegrityStatusRiskLevelCritical MarketIntegrityStatusRiskLevel = "critical"
+)
+
+// AllValues returns all MarketIntegrityStatusRiskLevel values.
+func (MarketIntegrityStatusRiskLevel) AllValues() []MarketIntegrityStatusRiskLevel {
+	return []MarketIntegrityStatusRiskLevel{
+		MarketIntegrityStatusRiskLevelLow,
+		MarketIntegrityStatusRiskLevelMedium,
+		MarketIntegrityStatusRiskLevelHigh,
+		MarketIntegrityStatusRiskLevelCritical,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketIntegrityStatusRiskLevel) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketIntegrityStatusRiskLevelLow:
+		return []byte(s), nil
+	case MarketIntegrityStatusRiskLevelMedium:
+		return []byte(s), nil
+	case MarketIntegrityStatusRiskLevelHigh:
+		return []byte(s), nil
+	case MarketIntegrityStatusRiskLevelCritical:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketIntegrityStatusRiskLevel) UnmarshalText(data []byte) error {
+	switch MarketIntegrityStatusRiskLevel(data) {
+	case MarketIntegrityStatusRiskLevelLow:
+		*s = MarketIntegrityStatusRiskLevelLow
+		return nil
+	case MarketIntegrityStatusRiskLevelMedium:
+		*s = MarketIntegrityStatusRiskLevelMedium
+		return nil
+	case MarketIntegrityStatusRiskLevelHigh:
+		*s = MarketIntegrityStatusRiskLevelHigh
+		return nil
+	case MarketIntegrityStatusRiskLevelCritical:
+		*s = MarketIntegrityStatusRiskLevelCritical
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Market trends analysis with AI predictions.
+// Ref: #/components/schemas/MarketTrendsAnalysis
+type MarketTrendsAnalysis struct {
+	Sector    OptMarketTrendsAnalysisSector    `json:"sector"`
+	Timeframe OptString                        `json:"timeframe"`
+	Trends    []MarketTrendsAnalysisTrendsItem `json:"trends"`
+	// AI-powered market predictions.
+	Predictions OptMarketTrendsAnalysisPredictions `json:"predictions"`
+}
+
+// GetSector returns the value of Sector.
+func (s *MarketTrendsAnalysis) GetSector() OptMarketTrendsAnalysisSector {
+	return s.Sector
+}
+
+// GetTimeframe returns the value of Timeframe.
+func (s *MarketTrendsAnalysis) GetTimeframe() OptString {
+	return s.Timeframe
+}
+
+// GetTrends returns the value of Trends.
+func (s *MarketTrendsAnalysis) GetTrends() []MarketTrendsAnalysisTrendsItem {
+	return s.Trends
+}
+
+// GetPredictions returns the value of Predictions.
+func (s *MarketTrendsAnalysis) GetPredictions() OptMarketTrendsAnalysisPredictions {
+	return s.Predictions
+}
+
+// SetSector sets the value of Sector.
+func (s *MarketTrendsAnalysis) SetSector(val OptMarketTrendsAnalysisSector) {
+	s.Sector = val
+}
+
+// SetTimeframe sets the value of Timeframe.
+func (s *MarketTrendsAnalysis) SetTimeframe(val OptString) {
+	s.Timeframe = val
+}
+
+// SetTrends sets the value of Trends.
+func (s *MarketTrendsAnalysis) SetTrends(val []MarketTrendsAnalysisTrendsItem) {
+	s.Trends = val
+}
+
+// SetPredictions sets the value of Predictions.
+func (s *MarketTrendsAnalysis) SetPredictions(val OptMarketTrendsAnalysisPredictions) {
+	s.Predictions = val
+}
+
+func (*MarketTrendsAnalysis) getMarketTrendsRes() {}
+
+// AI-powered market predictions.
+type MarketTrendsAnalysisPredictions struct {
+	ConfidenceScore OptFloat64                                       `json:"confidence_score"`
+	PredictedTrend  OptMarketTrendsAnalysisPredictionsPredictedTrend `json:"predicted_trend"`
+	TimeHorizon     OptString                                        `json:"time_horizon"`
+}
+
+// GetConfidenceScore returns the value of ConfidenceScore.
+func (s *MarketTrendsAnalysisPredictions) GetConfidenceScore() OptFloat64 {
+	return s.ConfidenceScore
+}
+
+// GetPredictedTrend returns the value of PredictedTrend.
+func (s *MarketTrendsAnalysisPredictions) GetPredictedTrend() OptMarketTrendsAnalysisPredictionsPredictedTrend {
+	return s.PredictedTrend
+}
+
+// GetTimeHorizon returns the value of TimeHorizon.
+func (s *MarketTrendsAnalysisPredictions) GetTimeHorizon() OptString {
+	return s.TimeHorizon
+}
+
+// SetConfidenceScore sets the value of ConfidenceScore.
+func (s *MarketTrendsAnalysisPredictions) SetConfidenceScore(val OptFloat64) {
+	s.ConfidenceScore = val
+}
+
+// SetPredictedTrend sets the value of PredictedTrend.
+func (s *MarketTrendsAnalysisPredictions) SetPredictedTrend(val OptMarketTrendsAnalysisPredictionsPredictedTrend) {
+	s.PredictedTrend = val
+}
+
+// SetTimeHorizon sets the value of TimeHorizon.
+func (s *MarketTrendsAnalysisPredictions) SetTimeHorizon(val OptString) {
+	s.TimeHorizon = val
+}
+
+type MarketTrendsAnalysisPredictionsPredictedTrend string
+
+const (
+	MarketTrendsAnalysisPredictionsPredictedTrendUp       MarketTrendsAnalysisPredictionsPredictedTrend = "up"
+	MarketTrendsAnalysisPredictionsPredictedTrendDown     MarketTrendsAnalysisPredictionsPredictedTrend = "down"
+	MarketTrendsAnalysisPredictionsPredictedTrendSideways MarketTrendsAnalysisPredictionsPredictedTrend = "sideways"
+)
+
+// AllValues returns all MarketTrendsAnalysisPredictionsPredictedTrend values.
+func (MarketTrendsAnalysisPredictionsPredictedTrend) AllValues() []MarketTrendsAnalysisPredictionsPredictedTrend {
+	return []MarketTrendsAnalysisPredictionsPredictedTrend{
+		MarketTrendsAnalysisPredictionsPredictedTrendUp,
+		MarketTrendsAnalysisPredictionsPredictedTrendDown,
+		MarketTrendsAnalysisPredictionsPredictedTrendSideways,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketTrendsAnalysisPredictionsPredictedTrend) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketTrendsAnalysisPredictionsPredictedTrendUp:
+		return []byte(s), nil
+	case MarketTrendsAnalysisPredictionsPredictedTrendDown:
+		return []byte(s), nil
+	case MarketTrendsAnalysisPredictionsPredictedTrendSideways:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketTrendsAnalysisPredictionsPredictedTrend) UnmarshalText(data []byte) error {
+	switch MarketTrendsAnalysisPredictionsPredictedTrend(data) {
+	case MarketTrendsAnalysisPredictionsPredictedTrendUp:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendUp
+		return nil
+	case MarketTrendsAnalysisPredictionsPredictedTrendDown:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendDown
+		return nil
+	case MarketTrendsAnalysisPredictionsPredictedTrendSideways:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendSideways
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type MarketTrendsAnalysisSector string
+
+const (
+	MarketTrendsAnalysisSectorTechnology  MarketTrendsAnalysisSector = "technology"
+	MarketTrendsAnalysisSectorRealEstate  MarketTrendsAnalysisSector = "real_estate"
+	MarketTrendsAnalysisSectorCommodities MarketTrendsAnalysisSector = "commodities"
+	MarketTrendsAnalysisSectorServices    MarketTrendsAnalysisSector = "services"
+	MarketTrendsAnalysisSectorAll         MarketTrendsAnalysisSector = "all"
+)
+
+// AllValues returns all MarketTrendsAnalysisSector values.
+func (MarketTrendsAnalysisSector) AllValues() []MarketTrendsAnalysisSector {
+	return []MarketTrendsAnalysisSector{
+		MarketTrendsAnalysisSectorTechnology,
+		MarketTrendsAnalysisSectorRealEstate,
+		MarketTrendsAnalysisSectorCommodities,
+		MarketTrendsAnalysisSectorServices,
+		MarketTrendsAnalysisSectorAll,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketTrendsAnalysisSector) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketTrendsAnalysisSectorTechnology:
+		return []byte(s), nil
+	case MarketTrendsAnalysisSectorRealEstate:
+		return []byte(s), nil
+	case MarketTrendsAnalysisSectorCommodities:
+		return []byte(s), nil
+	case MarketTrendsAnalysisSectorServices:
+		return []byte(s), nil
+	case MarketTrendsAnalysisSectorAll:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketTrendsAnalysisSector) UnmarshalText(data []byte) error {
+	switch MarketTrendsAnalysisSector(data) {
+	case MarketTrendsAnalysisSectorTechnology:
+		*s = MarketTrendsAnalysisSectorTechnology
+		return nil
+	case MarketTrendsAnalysisSectorRealEstate:
+		*s = MarketTrendsAnalysisSectorRealEstate
+		return nil
+	case MarketTrendsAnalysisSectorCommodities:
+		*s = MarketTrendsAnalysisSectorCommodities
+		return nil
+	case MarketTrendsAnalysisSectorServices:
+		*s = MarketTrendsAnalysisSectorServices
+		return nil
+	case MarketTrendsAnalysisSectorAll:
+		*s = MarketTrendsAnalysisSectorAll
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Individual asset trends.
+type MarketTrendsAnalysisTrendsItem struct {
+	Asset OptString `json:"asset"`
+	// Price change percentage.
+	PriceMovement OptFloat64 `json:"price_movement"`
+	// Volume change percentage.
+	VolumeChange OptFloat64                                 `json:"volume_change"`
+	Sentiment    OptMarketTrendsAnalysisTrendsItemSentiment `json:"sentiment"`
+}
+
+// GetAsset returns the value of Asset.
+func (s *MarketTrendsAnalysisTrendsItem) GetAsset() OptString {
+	return s.Asset
+}
+
+// GetPriceMovement returns the value of PriceMovement.
+func (s *MarketTrendsAnalysisTrendsItem) GetPriceMovement() OptFloat64 {
+	return s.PriceMovement
+}
+
+// GetVolumeChange returns the value of VolumeChange.
+func (s *MarketTrendsAnalysisTrendsItem) GetVolumeChange() OptFloat64 {
+	return s.VolumeChange
+}
+
+// GetSentiment returns the value of Sentiment.
+func (s *MarketTrendsAnalysisTrendsItem) GetSentiment() OptMarketTrendsAnalysisTrendsItemSentiment {
+	return s.Sentiment
+}
+
+// SetAsset sets the value of Asset.
+func (s *MarketTrendsAnalysisTrendsItem) SetAsset(val OptString) {
+	s.Asset = val
+}
+
+// SetPriceMovement sets the value of PriceMovement.
+func (s *MarketTrendsAnalysisTrendsItem) SetPriceMovement(val OptFloat64) {
+	s.PriceMovement = val
+}
+
+// SetVolumeChange sets the value of VolumeChange.
+func (s *MarketTrendsAnalysisTrendsItem) SetVolumeChange(val OptFloat64) {
+	s.VolumeChange = val
+}
+
+// SetSentiment sets the value of Sentiment.
+func (s *MarketTrendsAnalysisTrendsItem) SetSentiment(val OptMarketTrendsAnalysisTrendsItemSentiment) {
+	s.Sentiment = val
+}
+
+type MarketTrendsAnalysisTrendsItemSentiment string
+
+const (
+	MarketTrendsAnalysisTrendsItemSentimentBullish MarketTrendsAnalysisTrendsItemSentiment = "bullish"
+	MarketTrendsAnalysisTrendsItemSentimentBearish MarketTrendsAnalysisTrendsItemSentiment = "bearish"
+	MarketTrendsAnalysisTrendsItemSentimentNeutral MarketTrendsAnalysisTrendsItemSentiment = "neutral"
+)
+
+// AllValues returns all MarketTrendsAnalysisTrendsItemSentiment values.
+func (MarketTrendsAnalysisTrendsItemSentiment) AllValues() []MarketTrendsAnalysisTrendsItemSentiment {
+	return []MarketTrendsAnalysisTrendsItemSentiment{
+		MarketTrendsAnalysisTrendsItemSentimentBullish,
+		MarketTrendsAnalysisTrendsItemSentimentBearish,
+		MarketTrendsAnalysisTrendsItemSentimentNeutral,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MarketTrendsAnalysisTrendsItemSentiment) MarshalText() ([]byte, error) {
+	switch s {
+	case MarketTrendsAnalysisTrendsItemSentimentBullish:
+		return []byte(s), nil
+	case MarketTrendsAnalysisTrendsItemSentimentBearish:
+		return []byte(s), nil
+	case MarketTrendsAnalysisTrendsItemSentimentNeutral:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MarketTrendsAnalysisTrendsItemSentiment) UnmarshalText(data []byte) error {
+	switch MarketTrendsAnalysisTrendsItemSentiment(data) {
+	case MarketTrendsAnalysisTrendsItemSentimentBullish:
+		*s = MarketTrendsAnalysisTrendsItemSentimentBullish
+		return nil
+	case MarketTrendsAnalysisTrendsItemSentimentBearish:
+		*s = MarketTrendsAnalysisTrendsItemSentimentBearish
+		return nil
+	case MarketTrendsAnalysisTrendsItemSentimentNeutral:
+		*s = MarketTrendsAnalysisTrendsItemSentimentNeutral
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type MonitorMarketIntegrityBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *MonitorMarketIntegrityBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *MonitorMarketIntegrityBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *MonitorMarketIntegrityBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *MonitorMarketIntegrityBadRequest) GetDetails() *MonitorMarketIntegrityBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *MonitorMarketIntegrityBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *MonitorMarketIntegrityBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *MonitorMarketIntegrityBadRequest) SetDetails(val *MonitorMarketIntegrityBadRequestDetails) {
+	s.Details = val
+}
+
+func (*MonitorMarketIntegrityBadRequest) monitorMarketIntegrityRes() {}
+
+// Additional error details.
+type MonitorMarketIntegrityBadRequestDetails struct{}
+
+type MonitorMarketIntegrityTimeWindow string
+
+const (
+	MonitorMarketIntegrityTimeWindow1h  MonitorMarketIntegrityTimeWindow = "1h"
+	MonitorMarketIntegrityTimeWindow4h  MonitorMarketIntegrityTimeWindow = "4h"
+	MonitorMarketIntegrityTimeWindow24h MonitorMarketIntegrityTimeWindow = "24h"
+	MonitorMarketIntegrityTimeWindow7d  MonitorMarketIntegrityTimeWindow = "7d"
+)
+
+// AllValues returns all MonitorMarketIntegrityTimeWindow values.
+func (MonitorMarketIntegrityTimeWindow) AllValues() []MonitorMarketIntegrityTimeWindow {
+	return []MonitorMarketIntegrityTimeWindow{
+		MonitorMarketIntegrityTimeWindow1h,
+		MonitorMarketIntegrityTimeWindow4h,
+		MonitorMarketIntegrityTimeWindow24h,
+		MonitorMarketIntegrityTimeWindow7d,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MonitorMarketIntegrityTimeWindow) MarshalText() ([]byte, error) {
+	switch s {
+	case MonitorMarketIntegrityTimeWindow1h:
+		return []byte(s), nil
+	case MonitorMarketIntegrityTimeWindow4h:
+		return []byte(s), nil
+	case MonitorMarketIntegrityTimeWindow24h:
+		return []byte(s), nil
+	case MonitorMarketIntegrityTimeWindow7d:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MonitorMarketIntegrityTimeWindow) UnmarshalText(data []byte) error {
+	switch MonitorMarketIntegrityTimeWindow(data) {
+	case MonitorMarketIntegrityTimeWindow1h:
+		*s = MonitorMarketIntegrityTimeWindow1h
+		return nil
+	case MonitorMarketIntegrityTimeWindow4h:
+		*s = MonitorMarketIntegrityTimeWindow4h
+		return nil
+	case MonitorMarketIntegrityTimeWindow24h:
+		*s = MonitorMarketIntegrityTimeWindow24h
+		return nil
+	case MonitorMarketIntegrityTimeWindow7d:
+		*s = MonitorMarketIntegrityTimeWindow7d
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type MonitorMarketIntegrityUnauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *MonitorMarketIntegrityUnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *MonitorMarketIntegrityUnauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *MonitorMarketIntegrityUnauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *MonitorMarketIntegrityUnauthorized) GetDetails() *MonitorMarketIntegrityUnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *MonitorMarketIntegrityUnauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *MonitorMarketIntegrityUnauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *MonitorMarketIntegrityUnauthorized) SetDetails(val *MonitorMarketIntegrityUnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*MonitorMarketIntegrityUnauthorized) monitorMarketIntegrityRes() {}
+
+// Additional error details.
+type MonitorMarketIntegrityUnauthorizedDetails struct{}
+
 // NewOptAnalyticsServiceHealthCheckAcceptEncoding returns new OptAnalyticsServiceHealthCheckAcceptEncoding with value set to v.
 func NewOptAnalyticsServiceHealthCheckAcceptEncoding(v AnalyticsServiceHealthCheckAcceptEncoding) OptAnalyticsServiceHealthCheckAcceptEncoding {
 	return OptAnalyticsServiceHealthCheckAcceptEncoding{
@@ -1497,6 +3810,52 @@ func (o OptAnalyticsServiceHealthCheckOKContentEncoding) Get() (v AnalyticsServi
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAnalyticsServiceHealthCheckOKContentEncoding) Or(d AnalyticsServiceHealthCheckOKContentEncoding) AnalyticsServiceHealthCheckOKContentEncoding {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1635,6 +3994,282 @@ func (o OptFloat64) Get() (v float64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisAnalystRatings returns new OptFundamentalAnalysisAnalystRatings with value set to v.
+func NewOptFundamentalAnalysisAnalystRatings(v FundamentalAnalysisAnalystRatings) OptFundamentalAnalysisAnalystRatings {
+	return OptFundamentalAnalysisAnalystRatings{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisAnalystRatings is optional FundamentalAnalysisAnalystRatings.
+type OptFundamentalAnalysisAnalystRatings struct {
+	Value FundamentalAnalysisAnalystRatings
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisAnalystRatings was set.
+func (o OptFundamentalAnalysisAnalystRatings) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisAnalystRatings) Reset() {
+	var v FundamentalAnalysisAnalystRatings
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisAnalystRatings) SetTo(v FundamentalAnalysisAnalystRatings) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisAnalystRatings) Get() (v FundamentalAnalysisAnalystRatings, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisAnalystRatings) Or(d FundamentalAnalysisAnalystRatings) FundamentalAnalysisAnalystRatings {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisAnalystRatingsRecommendation returns new OptFundamentalAnalysisAnalystRatingsRecommendation with value set to v.
+func NewOptFundamentalAnalysisAnalystRatingsRecommendation(v FundamentalAnalysisAnalystRatingsRecommendation) OptFundamentalAnalysisAnalystRatingsRecommendation {
+	return OptFundamentalAnalysisAnalystRatingsRecommendation{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisAnalystRatingsRecommendation is optional FundamentalAnalysisAnalystRatingsRecommendation.
+type OptFundamentalAnalysisAnalystRatingsRecommendation struct {
+	Value FundamentalAnalysisAnalystRatingsRecommendation
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisAnalystRatingsRecommendation was set.
+func (o OptFundamentalAnalysisAnalystRatingsRecommendation) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisAnalystRatingsRecommendation) Reset() {
+	var v FundamentalAnalysisAnalystRatingsRecommendation
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisAnalystRatingsRecommendation) SetTo(v FundamentalAnalysisAnalystRatingsRecommendation) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisAnalystRatingsRecommendation) Get() (v FundamentalAnalysisAnalystRatingsRecommendation, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisAnalystRatingsRecommendation) Or(d FundamentalAnalysisAnalystRatingsRecommendation) FundamentalAnalysisAnalystRatingsRecommendation {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisCompanyInfo returns new OptFundamentalAnalysisCompanyInfo with value set to v.
+func NewOptFundamentalAnalysisCompanyInfo(v FundamentalAnalysisCompanyInfo) OptFundamentalAnalysisCompanyInfo {
+	return OptFundamentalAnalysisCompanyInfo{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisCompanyInfo is optional FundamentalAnalysisCompanyInfo.
+type OptFundamentalAnalysisCompanyInfo struct {
+	Value FundamentalAnalysisCompanyInfo
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisCompanyInfo was set.
+func (o OptFundamentalAnalysisCompanyInfo) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisCompanyInfo) Reset() {
+	var v FundamentalAnalysisCompanyInfo
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisCompanyInfo) SetTo(v FundamentalAnalysisCompanyInfo) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisCompanyInfo) Get() (v FundamentalAnalysisCompanyInfo, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisCompanyInfo) Or(d FundamentalAnalysisCompanyInfo) FundamentalAnalysisCompanyInfo {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisFinancialRatios returns new OptFundamentalAnalysisFinancialRatios with value set to v.
+func NewOptFundamentalAnalysisFinancialRatios(v FundamentalAnalysisFinancialRatios) OptFundamentalAnalysisFinancialRatios {
+	return OptFundamentalAnalysisFinancialRatios{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisFinancialRatios is optional FundamentalAnalysisFinancialRatios.
+type OptFundamentalAnalysisFinancialRatios struct {
+	Value FundamentalAnalysisFinancialRatios
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisFinancialRatios was set.
+func (o OptFundamentalAnalysisFinancialRatios) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisFinancialRatios) Reset() {
+	var v FundamentalAnalysisFinancialRatios
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisFinancialRatios) SetTo(v FundamentalAnalysisFinancialRatios) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisFinancialRatios) Get() (v FundamentalAnalysisFinancialRatios, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisFinancialRatios) Or(d FundamentalAnalysisFinancialRatios) FundamentalAnalysisFinancialRatios {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisValuationMetrics returns new OptFundamentalAnalysisValuationMetrics with value set to v.
+func NewOptFundamentalAnalysisValuationMetrics(v FundamentalAnalysisValuationMetrics) OptFundamentalAnalysisValuationMetrics {
+	return OptFundamentalAnalysisValuationMetrics{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisValuationMetrics is optional FundamentalAnalysisValuationMetrics.
+type OptFundamentalAnalysisValuationMetrics struct {
+	Value FundamentalAnalysisValuationMetrics
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisValuationMetrics was set.
+func (o OptFundamentalAnalysisValuationMetrics) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisValuationMetrics) Reset() {
+	var v FundamentalAnalysisValuationMetrics
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisValuationMetrics) SetTo(v FundamentalAnalysisValuationMetrics) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisValuationMetrics) Get() (v FundamentalAnalysisValuationMetrics, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisValuationMetrics) Or(d FundamentalAnalysisValuationMetrics) FundamentalAnalysisValuationMetrics {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFundamentalAnalysisValuationMetricsFairValueRange returns new OptFundamentalAnalysisValuationMetricsFairValueRange with value set to v.
+func NewOptFundamentalAnalysisValuationMetricsFairValueRange(v FundamentalAnalysisValuationMetricsFairValueRange) OptFundamentalAnalysisValuationMetricsFairValueRange {
+	return OptFundamentalAnalysisValuationMetricsFairValueRange{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFundamentalAnalysisValuationMetricsFairValueRange is optional FundamentalAnalysisValuationMetricsFairValueRange.
+type OptFundamentalAnalysisValuationMetricsFairValueRange struct {
+	Value FundamentalAnalysisValuationMetricsFairValueRange
+	Set   bool
+}
+
+// IsSet returns true if OptFundamentalAnalysisValuationMetricsFairValueRange was set.
+func (o OptFundamentalAnalysisValuationMetricsFairValueRange) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFundamentalAnalysisValuationMetricsFairValueRange) Reset() {
+	var v FundamentalAnalysisValuationMetricsFairValueRange
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFundamentalAnalysisValuationMetricsFairValueRange) SetTo(v FundamentalAnalysisValuationMetricsFairValueRange) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFundamentalAnalysisValuationMetricsFairValueRange) Get() (v FundamentalAnalysisValuationMetricsFairValueRange, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFundamentalAnalysisValuationMetricsFairValueRange) Or(d FundamentalAnalysisValuationMetricsFairValueRange) FundamentalAnalysisValuationMetricsFairValueRange {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1825,6 +4460,98 @@ func (o OptGetEconomyMarketAnalyticsTimeframe) Or(d GetEconomyMarketAnalyticsTim
 	return d
 }
 
+// NewOptGetMarketTrendsSector returns new OptGetMarketTrendsSector with value set to v.
+func NewOptGetMarketTrendsSector(v GetMarketTrendsSector) OptGetMarketTrendsSector {
+	return OptGetMarketTrendsSector{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetMarketTrendsSector is optional GetMarketTrendsSector.
+type OptGetMarketTrendsSector struct {
+	Value GetMarketTrendsSector
+	Set   bool
+}
+
+// IsSet returns true if OptGetMarketTrendsSector was set.
+func (o OptGetMarketTrendsSector) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetMarketTrendsSector) Reset() {
+	var v GetMarketTrendsSector
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetMarketTrendsSector) SetTo(v GetMarketTrendsSector) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetMarketTrendsSector) Get() (v GetMarketTrendsSector, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetMarketTrendsSector) Or(d GetMarketTrendsSector) GetMarketTrendsSector {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetMarketTrendsTimeframe returns new OptGetMarketTrendsTimeframe with value set to v.
+func NewOptGetMarketTrendsTimeframe(v GetMarketTrendsTimeframe) OptGetMarketTrendsTimeframe {
+	return OptGetMarketTrendsTimeframe{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetMarketTrendsTimeframe is optional GetMarketTrendsTimeframe.
+type OptGetMarketTrendsTimeframe struct {
+	Value GetMarketTrendsTimeframe
+	Set   bool
+}
+
+// IsSet returns true if OptGetMarketTrendsTimeframe was set.
+func (o OptGetMarketTrendsTimeframe) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetMarketTrendsTimeframe) Reset() {
+	var v GetMarketTrendsTimeframe
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetMarketTrendsTimeframe) SetTo(v GetMarketTrendsTimeframe) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetMarketTrendsTimeframe) Get() (v GetMarketTrendsTimeframe, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetMarketTrendsTimeframe) Or(d GetMarketTrendsTimeframe) GetMarketTrendsTimeframe {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptGetPlayerBehaviorAnalyticsMetric returns new OptGetPlayerBehaviorAnalyticsMetric with value set to v.
 func NewOptGetPlayerBehaviorAnalyticsMetric(v GetPlayerBehaviorAnalyticsMetric) OptGetPlayerBehaviorAnalyticsMetric {
 	return OptGetPlayerBehaviorAnalyticsMetric{
@@ -1963,6 +4690,144 @@ func (o OptGetSystemPerformanceMetricsComponent) Or(d GetSystemPerformanceMetric
 	return d
 }
 
+// NewOptGetTechnicalAnalysisTimeframe returns new OptGetTechnicalAnalysisTimeframe with value set to v.
+func NewOptGetTechnicalAnalysisTimeframe(v GetTechnicalAnalysisTimeframe) OptGetTechnicalAnalysisTimeframe {
+	return OptGetTechnicalAnalysisTimeframe{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTechnicalAnalysisTimeframe is optional GetTechnicalAnalysisTimeframe.
+type OptGetTechnicalAnalysisTimeframe struct {
+	Value GetTechnicalAnalysisTimeframe
+	Set   bool
+}
+
+// IsSet returns true if OptGetTechnicalAnalysisTimeframe was set.
+func (o OptGetTechnicalAnalysisTimeframe) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTechnicalAnalysisTimeframe) Reset() {
+	var v GetTechnicalAnalysisTimeframe
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTechnicalAnalysisTimeframe) SetTo(v GetTechnicalAnalysisTimeframe) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTechnicalAnalysisTimeframe) Get() (v GetTechnicalAnalysisTimeframe, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTechnicalAnalysisTimeframe) Or(d GetTechnicalAnalysisTimeframe) GetTechnicalAnalysisTimeframe {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetTradeVolumeStatisticsAssetType returns new OptGetTradeVolumeStatisticsAssetType with value set to v.
+func NewOptGetTradeVolumeStatisticsAssetType(v GetTradeVolumeStatisticsAssetType) OptGetTradeVolumeStatisticsAssetType {
+	return OptGetTradeVolumeStatisticsAssetType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTradeVolumeStatisticsAssetType is optional GetTradeVolumeStatisticsAssetType.
+type OptGetTradeVolumeStatisticsAssetType struct {
+	Value GetTradeVolumeStatisticsAssetType
+	Set   bool
+}
+
+// IsSet returns true if OptGetTradeVolumeStatisticsAssetType was set.
+func (o OptGetTradeVolumeStatisticsAssetType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTradeVolumeStatisticsAssetType) Reset() {
+	var v GetTradeVolumeStatisticsAssetType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTradeVolumeStatisticsAssetType) SetTo(v GetTradeVolumeStatisticsAssetType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTradeVolumeStatisticsAssetType) Get() (v GetTradeVolumeStatisticsAssetType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTradeVolumeStatisticsAssetType) Or(d GetTradeVolumeStatisticsAssetType) GetTradeVolumeStatisticsAssetType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetTradeVolumeStatisticsPeriod returns new OptGetTradeVolumeStatisticsPeriod with value set to v.
+func NewOptGetTradeVolumeStatisticsPeriod(v GetTradeVolumeStatisticsPeriod) OptGetTradeVolumeStatisticsPeriod {
+	return OptGetTradeVolumeStatisticsPeriod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTradeVolumeStatisticsPeriod is optional GetTradeVolumeStatisticsPeriod.
+type OptGetTradeVolumeStatisticsPeriod struct {
+	Value GetTradeVolumeStatisticsPeriod
+	Set   bool
+}
+
+// IsSet returns true if OptGetTradeVolumeStatisticsPeriod was set.
+func (o OptGetTradeVolumeStatisticsPeriod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTradeVolumeStatisticsPeriod) Reset() {
+	var v GetTradeVolumeStatisticsPeriod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTradeVolumeStatisticsPeriod) SetTo(v GetTradeVolumeStatisticsPeriod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTradeVolumeStatisticsPeriod) Get() (v GetTradeVolumeStatisticsPeriod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTradeVolumeStatisticsPeriod) Or(d GetTradeVolumeStatisticsPeriod) GetTradeVolumeStatisticsPeriod {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptInt returns new OptInt with value set to v.
 func NewOptInt(v int) OptInt {
 	return OptInt{
@@ -2055,6 +4920,420 @@ func (o OptMarketAnalyticsResponsePredictions) Or(d MarketAnalyticsResponsePredi
 	return d
 }
 
+// NewOptMarketIntegrityStatusDetectedAnomaliesItemSeverity returns new OptMarketIntegrityStatusDetectedAnomaliesItemSeverity with value set to v.
+func NewOptMarketIntegrityStatusDetectedAnomaliesItemSeverity(v MarketIntegrityStatusDetectedAnomaliesItemSeverity) OptMarketIntegrityStatusDetectedAnomaliesItemSeverity {
+	return OptMarketIntegrityStatusDetectedAnomaliesItemSeverity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketIntegrityStatusDetectedAnomaliesItemSeverity is optional MarketIntegrityStatusDetectedAnomaliesItemSeverity.
+type OptMarketIntegrityStatusDetectedAnomaliesItemSeverity struct {
+	Value MarketIntegrityStatusDetectedAnomaliesItemSeverity
+	Set   bool
+}
+
+// IsSet returns true if OptMarketIntegrityStatusDetectedAnomaliesItemSeverity was set.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) Reset() {
+	var v MarketIntegrityStatusDetectedAnomaliesItemSeverity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) SetTo(v MarketIntegrityStatusDetectedAnomaliesItemSeverity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) Get() (v MarketIntegrityStatusDetectedAnomaliesItemSeverity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) Or(d MarketIntegrityStatusDetectedAnomaliesItemSeverity) MarketIntegrityStatusDetectedAnomaliesItemSeverity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketIntegrityStatusDetectedAnomaliesItemType returns new OptMarketIntegrityStatusDetectedAnomaliesItemType with value set to v.
+func NewOptMarketIntegrityStatusDetectedAnomaliesItemType(v MarketIntegrityStatusDetectedAnomaliesItemType) OptMarketIntegrityStatusDetectedAnomaliesItemType {
+	return OptMarketIntegrityStatusDetectedAnomaliesItemType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketIntegrityStatusDetectedAnomaliesItemType is optional MarketIntegrityStatusDetectedAnomaliesItemType.
+type OptMarketIntegrityStatusDetectedAnomaliesItemType struct {
+	Value MarketIntegrityStatusDetectedAnomaliesItemType
+	Set   bool
+}
+
+// IsSet returns true if OptMarketIntegrityStatusDetectedAnomaliesItemType was set.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemType) Reset() {
+	var v MarketIntegrityStatusDetectedAnomaliesItemType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemType) SetTo(v MarketIntegrityStatusDetectedAnomaliesItemType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemType) Get() (v MarketIntegrityStatusDetectedAnomaliesItemType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemType) Or(d MarketIntegrityStatusDetectedAnomaliesItemType) MarketIntegrityStatusDetectedAnomaliesItemType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketIntegrityStatusMarketHealthIndicators returns new OptMarketIntegrityStatusMarketHealthIndicators with value set to v.
+func NewOptMarketIntegrityStatusMarketHealthIndicators(v MarketIntegrityStatusMarketHealthIndicators) OptMarketIntegrityStatusMarketHealthIndicators {
+	return OptMarketIntegrityStatusMarketHealthIndicators{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketIntegrityStatusMarketHealthIndicators is optional MarketIntegrityStatusMarketHealthIndicators.
+type OptMarketIntegrityStatusMarketHealthIndicators struct {
+	Value MarketIntegrityStatusMarketHealthIndicators
+	Set   bool
+}
+
+// IsSet returns true if OptMarketIntegrityStatusMarketHealthIndicators was set.
+func (o OptMarketIntegrityStatusMarketHealthIndicators) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketIntegrityStatusMarketHealthIndicators) Reset() {
+	var v MarketIntegrityStatusMarketHealthIndicators
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketIntegrityStatusMarketHealthIndicators) SetTo(v MarketIntegrityStatusMarketHealthIndicators) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketIntegrityStatusMarketHealthIndicators) Get() (v MarketIntegrityStatusMarketHealthIndicators, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketIntegrityStatusMarketHealthIndicators) Or(d MarketIntegrityStatusMarketHealthIndicators) MarketIntegrityStatusMarketHealthIndicators {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketIntegrityStatusRiskLevel returns new OptMarketIntegrityStatusRiskLevel with value set to v.
+func NewOptMarketIntegrityStatusRiskLevel(v MarketIntegrityStatusRiskLevel) OptMarketIntegrityStatusRiskLevel {
+	return OptMarketIntegrityStatusRiskLevel{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketIntegrityStatusRiskLevel is optional MarketIntegrityStatusRiskLevel.
+type OptMarketIntegrityStatusRiskLevel struct {
+	Value MarketIntegrityStatusRiskLevel
+	Set   bool
+}
+
+// IsSet returns true if OptMarketIntegrityStatusRiskLevel was set.
+func (o OptMarketIntegrityStatusRiskLevel) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketIntegrityStatusRiskLevel) Reset() {
+	var v MarketIntegrityStatusRiskLevel
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketIntegrityStatusRiskLevel) SetTo(v MarketIntegrityStatusRiskLevel) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketIntegrityStatusRiskLevel) Get() (v MarketIntegrityStatusRiskLevel, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketIntegrityStatusRiskLevel) Or(d MarketIntegrityStatusRiskLevel) MarketIntegrityStatusRiskLevel {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketTrendsAnalysisPredictions returns new OptMarketTrendsAnalysisPredictions with value set to v.
+func NewOptMarketTrendsAnalysisPredictions(v MarketTrendsAnalysisPredictions) OptMarketTrendsAnalysisPredictions {
+	return OptMarketTrendsAnalysisPredictions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketTrendsAnalysisPredictions is optional MarketTrendsAnalysisPredictions.
+type OptMarketTrendsAnalysisPredictions struct {
+	Value MarketTrendsAnalysisPredictions
+	Set   bool
+}
+
+// IsSet returns true if OptMarketTrendsAnalysisPredictions was set.
+func (o OptMarketTrendsAnalysisPredictions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketTrendsAnalysisPredictions) Reset() {
+	var v MarketTrendsAnalysisPredictions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketTrendsAnalysisPredictions) SetTo(v MarketTrendsAnalysisPredictions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketTrendsAnalysisPredictions) Get() (v MarketTrendsAnalysisPredictions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketTrendsAnalysisPredictions) Or(d MarketTrendsAnalysisPredictions) MarketTrendsAnalysisPredictions {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketTrendsAnalysisPredictionsPredictedTrend returns new OptMarketTrendsAnalysisPredictionsPredictedTrend with value set to v.
+func NewOptMarketTrendsAnalysisPredictionsPredictedTrend(v MarketTrendsAnalysisPredictionsPredictedTrend) OptMarketTrendsAnalysisPredictionsPredictedTrend {
+	return OptMarketTrendsAnalysisPredictionsPredictedTrend{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketTrendsAnalysisPredictionsPredictedTrend is optional MarketTrendsAnalysisPredictionsPredictedTrend.
+type OptMarketTrendsAnalysisPredictionsPredictedTrend struct {
+	Value MarketTrendsAnalysisPredictionsPredictedTrend
+	Set   bool
+}
+
+// IsSet returns true if OptMarketTrendsAnalysisPredictionsPredictedTrend was set.
+func (o OptMarketTrendsAnalysisPredictionsPredictedTrend) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketTrendsAnalysisPredictionsPredictedTrend) Reset() {
+	var v MarketTrendsAnalysisPredictionsPredictedTrend
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketTrendsAnalysisPredictionsPredictedTrend) SetTo(v MarketTrendsAnalysisPredictionsPredictedTrend) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketTrendsAnalysisPredictionsPredictedTrend) Get() (v MarketTrendsAnalysisPredictionsPredictedTrend, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketTrendsAnalysisPredictionsPredictedTrend) Or(d MarketTrendsAnalysisPredictionsPredictedTrend) MarketTrendsAnalysisPredictionsPredictedTrend {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketTrendsAnalysisSector returns new OptMarketTrendsAnalysisSector with value set to v.
+func NewOptMarketTrendsAnalysisSector(v MarketTrendsAnalysisSector) OptMarketTrendsAnalysisSector {
+	return OptMarketTrendsAnalysisSector{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketTrendsAnalysisSector is optional MarketTrendsAnalysisSector.
+type OptMarketTrendsAnalysisSector struct {
+	Value MarketTrendsAnalysisSector
+	Set   bool
+}
+
+// IsSet returns true if OptMarketTrendsAnalysisSector was set.
+func (o OptMarketTrendsAnalysisSector) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketTrendsAnalysisSector) Reset() {
+	var v MarketTrendsAnalysisSector
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketTrendsAnalysisSector) SetTo(v MarketTrendsAnalysisSector) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketTrendsAnalysisSector) Get() (v MarketTrendsAnalysisSector, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketTrendsAnalysisSector) Or(d MarketTrendsAnalysisSector) MarketTrendsAnalysisSector {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMarketTrendsAnalysisTrendsItemSentiment returns new OptMarketTrendsAnalysisTrendsItemSentiment with value set to v.
+func NewOptMarketTrendsAnalysisTrendsItemSentiment(v MarketTrendsAnalysisTrendsItemSentiment) OptMarketTrendsAnalysisTrendsItemSentiment {
+	return OptMarketTrendsAnalysisTrendsItemSentiment{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMarketTrendsAnalysisTrendsItemSentiment is optional MarketTrendsAnalysisTrendsItemSentiment.
+type OptMarketTrendsAnalysisTrendsItemSentiment struct {
+	Value MarketTrendsAnalysisTrendsItemSentiment
+	Set   bool
+}
+
+// IsSet returns true if OptMarketTrendsAnalysisTrendsItemSentiment was set.
+func (o OptMarketTrendsAnalysisTrendsItemSentiment) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMarketTrendsAnalysisTrendsItemSentiment) Reset() {
+	var v MarketTrendsAnalysisTrendsItemSentiment
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMarketTrendsAnalysisTrendsItemSentiment) SetTo(v MarketTrendsAnalysisTrendsItemSentiment) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMarketTrendsAnalysisTrendsItemSentiment) Get() (v MarketTrendsAnalysisTrendsItemSentiment, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMarketTrendsAnalysisTrendsItemSentiment) Or(d MarketTrendsAnalysisTrendsItemSentiment) MarketTrendsAnalysisTrendsItemSentiment {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMonitorMarketIntegrityTimeWindow returns new OptMonitorMarketIntegrityTimeWindow with value set to v.
+func NewOptMonitorMarketIntegrityTimeWindow(v MonitorMarketIntegrityTimeWindow) OptMonitorMarketIntegrityTimeWindow {
+	return OptMonitorMarketIntegrityTimeWindow{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMonitorMarketIntegrityTimeWindow is optional MonitorMarketIntegrityTimeWindow.
+type OptMonitorMarketIntegrityTimeWindow struct {
+	Value MonitorMarketIntegrityTimeWindow
+	Set   bool
+}
+
+// IsSet returns true if OptMonitorMarketIntegrityTimeWindow was set.
+func (o OptMonitorMarketIntegrityTimeWindow) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMonitorMarketIntegrityTimeWindow) Reset() {
+	var v MonitorMarketIntegrityTimeWindow
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMonitorMarketIntegrityTimeWindow) SetTo(v MonitorMarketIntegrityTimeWindow) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMonitorMarketIntegrityTimeWindow) Get() (v MonitorMarketIntegrityTimeWindow, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMonitorMarketIntegrityTimeWindow) Or(d MonitorMarketIntegrityTimeWindow) MonitorMarketIntegrityTimeWindow {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -2141,6 +5420,650 @@ func (o OptSystemPerformanceMetricsResourceUtilization) Get() (v SystemPerforman
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSystemPerformanceMetricsResourceUtilization) Or(d SystemPerformanceMetricsResourceUtilization) SystemPerformanceMetricsResourceUtilization {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisMomentumIndicators returns new OptTechnicalAnalysisMomentumIndicators with value set to v.
+func NewOptTechnicalAnalysisMomentumIndicators(v TechnicalAnalysisMomentumIndicators) OptTechnicalAnalysisMomentumIndicators {
+	return OptTechnicalAnalysisMomentumIndicators{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisMomentumIndicators is optional TechnicalAnalysisMomentumIndicators.
+type OptTechnicalAnalysisMomentumIndicators struct {
+	Value TechnicalAnalysisMomentumIndicators
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisMomentumIndicators was set.
+func (o OptTechnicalAnalysisMomentumIndicators) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisMomentumIndicators) Reset() {
+	var v TechnicalAnalysisMomentumIndicators
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisMomentumIndicators) SetTo(v TechnicalAnalysisMomentumIndicators) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisMomentumIndicators) Get() (v TechnicalAnalysisMomentumIndicators, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisMomentumIndicators) Or(d TechnicalAnalysisMomentumIndicators) TechnicalAnalysisMomentumIndicators {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisMomentumIndicatorsMacd returns new OptTechnicalAnalysisMomentumIndicatorsMacd with value set to v.
+func NewOptTechnicalAnalysisMomentumIndicatorsMacd(v TechnicalAnalysisMomentumIndicatorsMacd) OptTechnicalAnalysisMomentumIndicatorsMacd {
+	return OptTechnicalAnalysisMomentumIndicatorsMacd{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisMomentumIndicatorsMacd is optional TechnicalAnalysisMomentumIndicatorsMacd.
+type OptTechnicalAnalysisMomentumIndicatorsMacd struct {
+	Value TechnicalAnalysisMomentumIndicatorsMacd
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisMomentumIndicatorsMacd was set.
+func (o OptTechnicalAnalysisMomentumIndicatorsMacd) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisMomentumIndicatorsMacd) Reset() {
+	var v TechnicalAnalysisMomentumIndicatorsMacd
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisMomentumIndicatorsMacd) SetTo(v TechnicalAnalysisMomentumIndicatorsMacd) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisMomentumIndicatorsMacd) Get() (v TechnicalAnalysisMomentumIndicatorsMacd, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisMomentumIndicatorsMacd) Or(d TechnicalAnalysisMomentumIndicatorsMacd) TechnicalAnalysisMomentumIndicatorsMacd {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisMomentumIndicatorsStochastic returns new OptTechnicalAnalysisMomentumIndicatorsStochastic with value set to v.
+func NewOptTechnicalAnalysisMomentumIndicatorsStochastic(v TechnicalAnalysisMomentumIndicatorsStochastic) OptTechnicalAnalysisMomentumIndicatorsStochastic {
+	return OptTechnicalAnalysisMomentumIndicatorsStochastic{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisMomentumIndicatorsStochastic is optional TechnicalAnalysisMomentumIndicatorsStochastic.
+type OptTechnicalAnalysisMomentumIndicatorsStochastic struct {
+	Value TechnicalAnalysisMomentumIndicatorsStochastic
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisMomentumIndicatorsStochastic was set.
+func (o OptTechnicalAnalysisMomentumIndicatorsStochastic) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisMomentumIndicatorsStochastic) Reset() {
+	var v TechnicalAnalysisMomentumIndicatorsStochastic
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisMomentumIndicatorsStochastic) SetTo(v TechnicalAnalysisMomentumIndicatorsStochastic) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisMomentumIndicatorsStochastic) Get() (v TechnicalAnalysisMomentumIndicatorsStochastic, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisMomentumIndicatorsStochastic) Or(d TechnicalAnalysisMomentumIndicatorsStochastic) TechnicalAnalysisMomentumIndicatorsStochastic {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisSupportResistance returns new OptTechnicalAnalysisSupportResistance with value set to v.
+func NewOptTechnicalAnalysisSupportResistance(v TechnicalAnalysisSupportResistance) OptTechnicalAnalysisSupportResistance {
+	return OptTechnicalAnalysisSupportResistance{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisSupportResistance is optional TechnicalAnalysisSupportResistance.
+type OptTechnicalAnalysisSupportResistance struct {
+	Value TechnicalAnalysisSupportResistance
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisSupportResistance was set.
+func (o OptTechnicalAnalysisSupportResistance) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisSupportResistance) Reset() {
+	var v TechnicalAnalysisSupportResistance
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisSupportResistance) SetTo(v TechnicalAnalysisSupportResistance) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisSupportResistance) Get() (v TechnicalAnalysisSupportResistance, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisSupportResistance) Or(d TechnicalAnalysisSupportResistance) TechnicalAnalysisSupportResistance {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisTrendAnalysis returns new OptTechnicalAnalysisTrendAnalysis with value set to v.
+func NewOptTechnicalAnalysisTrendAnalysis(v TechnicalAnalysisTrendAnalysis) OptTechnicalAnalysisTrendAnalysis {
+	return OptTechnicalAnalysisTrendAnalysis{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisTrendAnalysis is optional TechnicalAnalysisTrendAnalysis.
+type OptTechnicalAnalysisTrendAnalysis struct {
+	Value TechnicalAnalysisTrendAnalysis
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisTrendAnalysis was set.
+func (o OptTechnicalAnalysisTrendAnalysis) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisTrendAnalysis) Reset() {
+	var v TechnicalAnalysisTrendAnalysis
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisTrendAnalysis) SetTo(v TechnicalAnalysisTrendAnalysis) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisTrendAnalysis) Get() (v TechnicalAnalysisTrendAnalysis, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisTrendAnalysis) Or(d TechnicalAnalysisTrendAnalysis) TechnicalAnalysisTrendAnalysis {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisTrendAnalysisPrimaryTrend returns new OptTechnicalAnalysisTrendAnalysisPrimaryTrend with value set to v.
+func NewOptTechnicalAnalysisTrendAnalysisPrimaryTrend(v TechnicalAnalysisTrendAnalysisPrimaryTrend) OptTechnicalAnalysisTrendAnalysisPrimaryTrend {
+	return OptTechnicalAnalysisTrendAnalysisPrimaryTrend{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisTrendAnalysisPrimaryTrend is optional TechnicalAnalysisTrendAnalysisPrimaryTrend.
+type OptTechnicalAnalysisTrendAnalysisPrimaryTrend struct {
+	Value TechnicalAnalysisTrendAnalysisPrimaryTrend
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisTrendAnalysisPrimaryTrend was set.
+func (o OptTechnicalAnalysisTrendAnalysisPrimaryTrend) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisTrendAnalysisPrimaryTrend) Reset() {
+	var v TechnicalAnalysisTrendAnalysisPrimaryTrend
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisTrendAnalysisPrimaryTrend) SetTo(v TechnicalAnalysisTrendAnalysisPrimaryTrend) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisTrendAnalysisPrimaryTrend) Get() (v TechnicalAnalysisTrendAnalysisPrimaryTrend, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisTrendAnalysisPrimaryTrend) Or(d TechnicalAnalysisTrendAnalysisPrimaryTrend) TechnicalAnalysisTrendAnalysisPrimaryTrend {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisTrendAnalysisSecondaryTrend returns new OptTechnicalAnalysisTrendAnalysisSecondaryTrend with value set to v.
+func NewOptTechnicalAnalysisTrendAnalysisSecondaryTrend(v TechnicalAnalysisTrendAnalysisSecondaryTrend) OptTechnicalAnalysisTrendAnalysisSecondaryTrend {
+	return OptTechnicalAnalysisTrendAnalysisSecondaryTrend{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisTrendAnalysisSecondaryTrend is optional TechnicalAnalysisTrendAnalysisSecondaryTrend.
+type OptTechnicalAnalysisTrendAnalysisSecondaryTrend struct {
+	Value TechnicalAnalysisTrendAnalysisSecondaryTrend
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisTrendAnalysisSecondaryTrend was set.
+func (o OptTechnicalAnalysisTrendAnalysisSecondaryTrend) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisTrendAnalysisSecondaryTrend) Reset() {
+	var v TechnicalAnalysisTrendAnalysisSecondaryTrend
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisTrendAnalysisSecondaryTrend) SetTo(v TechnicalAnalysisTrendAnalysisSecondaryTrend) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisTrendAnalysisSecondaryTrend) Get() (v TechnicalAnalysisTrendAnalysisSecondaryTrend, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisTrendAnalysisSecondaryTrend) Or(d TechnicalAnalysisTrendAnalysisSecondaryTrend) TechnicalAnalysisTrendAnalysisSecondaryTrend {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisVolatilityIndicators returns new OptTechnicalAnalysisVolatilityIndicators with value set to v.
+func NewOptTechnicalAnalysisVolatilityIndicators(v TechnicalAnalysisVolatilityIndicators) OptTechnicalAnalysisVolatilityIndicators {
+	return OptTechnicalAnalysisVolatilityIndicators{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisVolatilityIndicators is optional TechnicalAnalysisVolatilityIndicators.
+type OptTechnicalAnalysisVolatilityIndicators struct {
+	Value TechnicalAnalysisVolatilityIndicators
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisVolatilityIndicators was set.
+func (o OptTechnicalAnalysisVolatilityIndicators) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisVolatilityIndicators) Reset() {
+	var v TechnicalAnalysisVolatilityIndicators
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisVolatilityIndicators) SetTo(v TechnicalAnalysisVolatilityIndicators) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisVolatilityIndicators) Get() (v TechnicalAnalysisVolatilityIndicators, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisVolatilityIndicators) Or(d TechnicalAnalysisVolatilityIndicators) TechnicalAnalysisVolatilityIndicators {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisVolatilityIndicatorsBollingerBands returns new OptTechnicalAnalysisVolatilityIndicatorsBollingerBands with value set to v.
+func NewOptTechnicalAnalysisVolatilityIndicatorsBollingerBands(v TechnicalAnalysisVolatilityIndicatorsBollingerBands) OptTechnicalAnalysisVolatilityIndicatorsBollingerBands {
+	return OptTechnicalAnalysisVolatilityIndicatorsBollingerBands{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisVolatilityIndicatorsBollingerBands is optional TechnicalAnalysisVolatilityIndicatorsBollingerBands.
+type OptTechnicalAnalysisVolatilityIndicatorsBollingerBands struct {
+	Value TechnicalAnalysisVolatilityIndicatorsBollingerBands
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisVolatilityIndicatorsBollingerBands was set.
+func (o OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) Reset() {
+	var v TechnicalAnalysisVolatilityIndicatorsBollingerBands
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) SetTo(v TechnicalAnalysisVolatilityIndicatorsBollingerBands) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) Get() (v TechnicalAnalysisVolatilityIndicatorsBollingerBands, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) Or(d TechnicalAnalysisVolatilityIndicatorsBollingerBands) TechnicalAnalysisVolatilityIndicatorsBollingerBands {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisVolumeAnalysis returns new OptTechnicalAnalysisVolumeAnalysis with value set to v.
+func NewOptTechnicalAnalysisVolumeAnalysis(v TechnicalAnalysisVolumeAnalysis) OptTechnicalAnalysisVolumeAnalysis {
+	return OptTechnicalAnalysisVolumeAnalysis{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisVolumeAnalysis is optional TechnicalAnalysisVolumeAnalysis.
+type OptTechnicalAnalysisVolumeAnalysis struct {
+	Value TechnicalAnalysisVolumeAnalysis
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisVolumeAnalysis was set.
+func (o OptTechnicalAnalysisVolumeAnalysis) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisVolumeAnalysis) Reset() {
+	var v TechnicalAnalysisVolumeAnalysis
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisVolumeAnalysis) SetTo(v TechnicalAnalysisVolumeAnalysis) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisVolumeAnalysis) Get() (v TechnicalAnalysisVolumeAnalysis, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisVolumeAnalysis) Or(d TechnicalAnalysisVolumeAnalysis) TechnicalAnalysisVolumeAnalysis {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTechnicalAnalysisVolumeAnalysisVolumeTrend returns new OptTechnicalAnalysisVolumeAnalysisVolumeTrend with value set to v.
+func NewOptTechnicalAnalysisVolumeAnalysisVolumeTrend(v TechnicalAnalysisVolumeAnalysisVolumeTrend) OptTechnicalAnalysisVolumeAnalysisVolumeTrend {
+	return OptTechnicalAnalysisVolumeAnalysisVolumeTrend{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTechnicalAnalysisVolumeAnalysisVolumeTrend is optional TechnicalAnalysisVolumeAnalysisVolumeTrend.
+type OptTechnicalAnalysisVolumeAnalysisVolumeTrend struct {
+	Value TechnicalAnalysisVolumeAnalysisVolumeTrend
+	Set   bool
+}
+
+// IsSet returns true if OptTechnicalAnalysisVolumeAnalysisVolumeTrend was set.
+func (o OptTechnicalAnalysisVolumeAnalysisVolumeTrend) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTechnicalAnalysisVolumeAnalysisVolumeTrend) Reset() {
+	var v TechnicalAnalysisVolumeAnalysisVolumeTrend
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTechnicalAnalysisVolumeAnalysisVolumeTrend) SetTo(v TechnicalAnalysisVolumeAnalysisVolumeTrend) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTechnicalAnalysisVolumeAnalysisVolumeTrend) Get() (v TechnicalAnalysisVolumeAnalysisVolumeTrend, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTechnicalAnalysisVolumeAnalysisVolumeTrend) Or(d TechnicalAnalysisVolumeAnalysisVolumeTrend) TechnicalAnalysisVolumeAnalysisVolumeTrend {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTradeVolumeStatisticsAssetType returns new OptTradeVolumeStatisticsAssetType with value set to v.
+func NewOptTradeVolumeStatisticsAssetType(v TradeVolumeStatisticsAssetType) OptTradeVolumeStatisticsAssetType {
+	return OptTradeVolumeStatisticsAssetType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTradeVolumeStatisticsAssetType is optional TradeVolumeStatisticsAssetType.
+type OptTradeVolumeStatisticsAssetType struct {
+	Value TradeVolumeStatisticsAssetType
+	Set   bool
+}
+
+// IsSet returns true if OptTradeVolumeStatisticsAssetType was set.
+func (o OptTradeVolumeStatisticsAssetType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTradeVolumeStatisticsAssetType) Reset() {
+	var v TradeVolumeStatisticsAssetType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTradeVolumeStatisticsAssetType) SetTo(v TradeVolumeStatisticsAssetType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTradeVolumeStatisticsAssetType) Get() (v TradeVolumeStatisticsAssetType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTradeVolumeStatisticsAssetType) Or(d TradeVolumeStatisticsAssetType) TradeVolumeStatisticsAssetType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTradeVolumeStatisticsPeriod returns new OptTradeVolumeStatisticsPeriod with value set to v.
+func NewOptTradeVolumeStatisticsPeriod(v TradeVolumeStatisticsPeriod) OptTradeVolumeStatisticsPeriod {
+	return OptTradeVolumeStatisticsPeriod{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTradeVolumeStatisticsPeriod is optional TradeVolumeStatisticsPeriod.
+type OptTradeVolumeStatisticsPeriod struct {
+	Value TradeVolumeStatisticsPeriod
+	Set   bool
+}
+
+// IsSet returns true if OptTradeVolumeStatisticsPeriod was set.
+func (o OptTradeVolumeStatisticsPeriod) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTradeVolumeStatisticsPeriod) Reset() {
+	var v TradeVolumeStatisticsPeriod
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTradeVolumeStatisticsPeriod) SetTo(v TradeVolumeStatisticsPeriod) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTradeVolumeStatisticsPeriod) Get() (v TradeVolumeStatisticsPeriod, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTradeVolumeStatisticsPeriod) Or(d TradeVolumeStatisticsPeriod) TradeVolumeStatisticsPeriod {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
+	Value uuid.UUID
+	Set   bool
+}
+
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2358,4 +6281,763 @@ func (s *SystemPerformanceMetricsResourceUtilization) SetMemoryMB(val OptInt) {
 // SetDiskIo sets the value of DiskIo.
 func (s *SystemPerformanceMetricsResourceUtilization) SetDiskIo(val OptFloat64) {
 	s.DiskIo = val
+}
+
+// BACKEND NOTE: Comprehensive technical analysis with indicators and patterns.
+// Ref: #/components/schemas/TechnicalAnalysis
+type TechnicalAnalysis struct {
+	Symbol OptString `json:"symbol"`
+	// Trend direction and strength analysis.
+	TrendAnalysis OptTechnicalAnalysisTrendAnalysis `json:"trend_analysis"`
+	// Momentum and oscillator indicators.
+	MomentumIndicators OptTechnicalAnalysisMomentumIndicators `json:"momentum_indicators"`
+	// Volatility and range indicators.
+	VolatilityIndicators OptTechnicalAnalysisVolatilityIndicators `json:"volatility_indicators"`
+	// Volume-based analysis.
+	VolumeAnalysis OptTechnicalAnalysisVolumeAnalysis `json:"volume_analysis"`
+	// Key price levels.
+	SupportResistance OptTechnicalAnalysisSupportResistance `json:"support_resistance"`
+	// Recognized chart patterns.
+	PatternRecognition []string `json:"pattern_recognition"`
+}
+
+// GetSymbol returns the value of Symbol.
+func (s *TechnicalAnalysis) GetSymbol() OptString {
+	return s.Symbol
+}
+
+// GetTrendAnalysis returns the value of TrendAnalysis.
+func (s *TechnicalAnalysis) GetTrendAnalysis() OptTechnicalAnalysisTrendAnalysis {
+	return s.TrendAnalysis
+}
+
+// GetMomentumIndicators returns the value of MomentumIndicators.
+func (s *TechnicalAnalysis) GetMomentumIndicators() OptTechnicalAnalysisMomentumIndicators {
+	return s.MomentumIndicators
+}
+
+// GetVolatilityIndicators returns the value of VolatilityIndicators.
+func (s *TechnicalAnalysis) GetVolatilityIndicators() OptTechnicalAnalysisVolatilityIndicators {
+	return s.VolatilityIndicators
+}
+
+// GetVolumeAnalysis returns the value of VolumeAnalysis.
+func (s *TechnicalAnalysis) GetVolumeAnalysis() OptTechnicalAnalysisVolumeAnalysis {
+	return s.VolumeAnalysis
+}
+
+// GetSupportResistance returns the value of SupportResistance.
+func (s *TechnicalAnalysis) GetSupportResistance() OptTechnicalAnalysisSupportResistance {
+	return s.SupportResistance
+}
+
+// GetPatternRecognition returns the value of PatternRecognition.
+func (s *TechnicalAnalysis) GetPatternRecognition() []string {
+	return s.PatternRecognition
+}
+
+// SetSymbol sets the value of Symbol.
+func (s *TechnicalAnalysis) SetSymbol(val OptString) {
+	s.Symbol = val
+}
+
+// SetTrendAnalysis sets the value of TrendAnalysis.
+func (s *TechnicalAnalysis) SetTrendAnalysis(val OptTechnicalAnalysisTrendAnalysis) {
+	s.TrendAnalysis = val
+}
+
+// SetMomentumIndicators sets the value of MomentumIndicators.
+func (s *TechnicalAnalysis) SetMomentumIndicators(val OptTechnicalAnalysisMomentumIndicators) {
+	s.MomentumIndicators = val
+}
+
+// SetVolatilityIndicators sets the value of VolatilityIndicators.
+func (s *TechnicalAnalysis) SetVolatilityIndicators(val OptTechnicalAnalysisVolatilityIndicators) {
+	s.VolatilityIndicators = val
+}
+
+// SetVolumeAnalysis sets the value of VolumeAnalysis.
+func (s *TechnicalAnalysis) SetVolumeAnalysis(val OptTechnicalAnalysisVolumeAnalysis) {
+	s.VolumeAnalysis = val
+}
+
+// SetSupportResistance sets the value of SupportResistance.
+func (s *TechnicalAnalysis) SetSupportResistance(val OptTechnicalAnalysisSupportResistance) {
+	s.SupportResistance = val
+}
+
+// SetPatternRecognition sets the value of PatternRecognition.
+func (s *TechnicalAnalysis) SetPatternRecognition(val []string) {
+	s.PatternRecognition = val
+}
+
+func (*TechnicalAnalysis) getTechnicalAnalysisRes() {}
+
+// Momentum and oscillator indicators.
+type TechnicalAnalysisMomentumIndicators struct {
+	Rsi        OptFloat64                                       `json:"rsi"`
+	Macd       OptTechnicalAnalysisMomentumIndicatorsMacd       `json:"macd"`
+	Stochastic OptTechnicalAnalysisMomentumIndicatorsStochastic `json:"stochastic"`
+}
+
+// GetRsi returns the value of Rsi.
+func (s *TechnicalAnalysisMomentumIndicators) GetRsi() OptFloat64 {
+	return s.Rsi
+}
+
+// GetMacd returns the value of Macd.
+func (s *TechnicalAnalysisMomentumIndicators) GetMacd() OptTechnicalAnalysisMomentumIndicatorsMacd {
+	return s.Macd
+}
+
+// GetStochastic returns the value of Stochastic.
+func (s *TechnicalAnalysisMomentumIndicators) GetStochastic() OptTechnicalAnalysisMomentumIndicatorsStochastic {
+	return s.Stochastic
+}
+
+// SetRsi sets the value of Rsi.
+func (s *TechnicalAnalysisMomentumIndicators) SetRsi(val OptFloat64) {
+	s.Rsi = val
+}
+
+// SetMacd sets the value of Macd.
+func (s *TechnicalAnalysisMomentumIndicators) SetMacd(val OptTechnicalAnalysisMomentumIndicatorsMacd) {
+	s.Macd = val
+}
+
+// SetStochastic sets the value of Stochastic.
+func (s *TechnicalAnalysisMomentumIndicators) SetStochastic(val OptTechnicalAnalysisMomentumIndicatorsStochastic) {
+	s.Stochastic = val
+}
+
+type TechnicalAnalysisMomentumIndicatorsMacd struct {
+	Value     OptFloat64 `json:"value"`
+	Signal    OptFloat64 `json:"signal"`
+	Histogram OptFloat64 `json:"histogram"`
+}
+
+// GetValue returns the value of Value.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) GetValue() OptFloat64 {
+	return s.Value
+}
+
+// GetSignal returns the value of Signal.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) GetSignal() OptFloat64 {
+	return s.Signal
+}
+
+// GetHistogram returns the value of Histogram.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) GetHistogram() OptFloat64 {
+	return s.Histogram
+}
+
+// SetValue sets the value of Value.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) SetValue(val OptFloat64) {
+	s.Value = val
+}
+
+// SetSignal sets the value of Signal.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) SetSignal(val OptFloat64) {
+	s.Signal = val
+}
+
+// SetHistogram sets the value of Histogram.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) SetHistogram(val OptFloat64) {
+	s.Histogram = val
+}
+
+type TechnicalAnalysisMomentumIndicatorsStochastic struct {
+	K OptFloat64 `json:"k"`
+	D OptFloat64 `json:"d"`
+}
+
+// GetK returns the value of K.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) GetK() OptFloat64 {
+	return s.K
+}
+
+// GetD returns the value of D.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) GetD() OptFloat64 {
+	return s.D
+}
+
+// SetK sets the value of K.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) SetK(val OptFloat64) {
+	s.K = val
+}
+
+// SetD sets the value of D.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) SetD(val OptFloat64) {
+	s.D = val
+}
+
+// Key price levels.
+type TechnicalAnalysisSupportResistance struct {
+	SupportLevels    []float64 `json:"support_levels"`
+	ResistanceLevels []float64 `json:"resistance_levels"`
+}
+
+// GetSupportLevels returns the value of SupportLevels.
+func (s *TechnicalAnalysisSupportResistance) GetSupportLevels() []float64 {
+	return s.SupportLevels
+}
+
+// GetResistanceLevels returns the value of ResistanceLevels.
+func (s *TechnicalAnalysisSupportResistance) GetResistanceLevels() []float64 {
+	return s.ResistanceLevels
+}
+
+// SetSupportLevels sets the value of SupportLevels.
+func (s *TechnicalAnalysisSupportResistance) SetSupportLevels(val []float64) {
+	s.SupportLevels = val
+}
+
+// SetResistanceLevels sets the value of ResistanceLevels.
+func (s *TechnicalAnalysisSupportResistance) SetResistanceLevels(val []float64) {
+	s.ResistanceLevels = val
+}
+
+// Trend direction and strength analysis.
+type TechnicalAnalysisTrendAnalysis struct {
+	PrimaryTrend   OptTechnicalAnalysisTrendAnalysisPrimaryTrend   `json:"primary_trend"`
+	SecondaryTrend OptTechnicalAnalysisTrendAnalysisSecondaryTrend `json:"secondary_trend"`
+	TrendStrength  OptFloat64                                      `json:"trend_strength"`
+}
+
+// GetPrimaryTrend returns the value of PrimaryTrend.
+func (s *TechnicalAnalysisTrendAnalysis) GetPrimaryTrend() OptTechnicalAnalysisTrendAnalysisPrimaryTrend {
+	return s.PrimaryTrend
+}
+
+// GetSecondaryTrend returns the value of SecondaryTrend.
+func (s *TechnicalAnalysisTrendAnalysis) GetSecondaryTrend() OptTechnicalAnalysisTrendAnalysisSecondaryTrend {
+	return s.SecondaryTrend
+}
+
+// GetTrendStrength returns the value of TrendStrength.
+func (s *TechnicalAnalysisTrendAnalysis) GetTrendStrength() OptFloat64 {
+	return s.TrendStrength
+}
+
+// SetPrimaryTrend sets the value of PrimaryTrend.
+func (s *TechnicalAnalysisTrendAnalysis) SetPrimaryTrend(val OptTechnicalAnalysisTrendAnalysisPrimaryTrend) {
+	s.PrimaryTrend = val
+}
+
+// SetSecondaryTrend sets the value of SecondaryTrend.
+func (s *TechnicalAnalysisTrendAnalysis) SetSecondaryTrend(val OptTechnicalAnalysisTrendAnalysisSecondaryTrend) {
+	s.SecondaryTrend = val
+}
+
+// SetTrendStrength sets the value of TrendStrength.
+func (s *TechnicalAnalysisTrendAnalysis) SetTrendStrength(val OptFloat64) {
+	s.TrendStrength = val
+}
+
+type TechnicalAnalysisTrendAnalysisPrimaryTrend string
+
+const (
+	TechnicalAnalysisTrendAnalysisPrimaryTrendBullish  TechnicalAnalysisTrendAnalysisPrimaryTrend = "bullish"
+	TechnicalAnalysisTrendAnalysisPrimaryTrendBearish  TechnicalAnalysisTrendAnalysisPrimaryTrend = "bearish"
+	TechnicalAnalysisTrendAnalysisPrimaryTrendSideways TechnicalAnalysisTrendAnalysisPrimaryTrend = "sideways"
+)
+
+// AllValues returns all TechnicalAnalysisTrendAnalysisPrimaryTrend values.
+func (TechnicalAnalysisTrendAnalysisPrimaryTrend) AllValues() []TechnicalAnalysisTrendAnalysisPrimaryTrend {
+	return []TechnicalAnalysisTrendAnalysisPrimaryTrend{
+		TechnicalAnalysisTrendAnalysisPrimaryTrendBullish,
+		TechnicalAnalysisTrendAnalysisPrimaryTrendBearish,
+		TechnicalAnalysisTrendAnalysisPrimaryTrendSideways,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TechnicalAnalysisTrendAnalysisPrimaryTrend) MarshalText() ([]byte, error) {
+	switch s {
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBullish:
+		return []byte(s), nil
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBearish:
+		return []byte(s), nil
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendSideways:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TechnicalAnalysisTrendAnalysisPrimaryTrend) UnmarshalText(data []byte) error {
+	switch TechnicalAnalysisTrendAnalysisPrimaryTrend(data) {
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBullish:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendBullish
+		return nil
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBearish:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendBearish
+		return nil
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendSideways:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendSideways
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type TechnicalAnalysisTrendAnalysisSecondaryTrend string
+
+const (
+	TechnicalAnalysisTrendAnalysisSecondaryTrendBullish  TechnicalAnalysisTrendAnalysisSecondaryTrend = "bullish"
+	TechnicalAnalysisTrendAnalysisSecondaryTrendBearish  TechnicalAnalysisTrendAnalysisSecondaryTrend = "bearish"
+	TechnicalAnalysisTrendAnalysisSecondaryTrendSideways TechnicalAnalysisTrendAnalysisSecondaryTrend = "sideways"
+)
+
+// AllValues returns all TechnicalAnalysisTrendAnalysisSecondaryTrend values.
+func (TechnicalAnalysisTrendAnalysisSecondaryTrend) AllValues() []TechnicalAnalysisTrendAnalysisSecondaryTrend {
+	return []TechnicalAnalysisTrendAnalysisSecondaryTrend{
+		TechnicalAnalysisTrendAnalysisSecondaryTrendBullish,
+		TechnicalAnalysisTrendAnalysisSecondaryTrendBearish,
+		TechnicalAnalysisTrendAnalysisSecondaryTrendSideways,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TechnicalAnalysisTrendAnalysisSecondaryTrend) MarshalText() ([]byte, error) {
+	switch s {
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBullish:
+		return []byte(s), nil
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBearish:
+		return []byte(s), nil
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendSideways:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TechnicalAnalysisTrendAnalysisSecondaryTrend) UnmarshalText(data []byte) error {
+	switch TechnicalAnalysisTrendAnalysisSecondaryTrend(data) {
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBullish:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendBullish
+		return nil
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBearish:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendBearish
+		return nil
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendSideways:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendSideways
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Volatility and range indicators.
+type TechnicalAnalysisVolatilityIndicators struct {
+	BollingerBands OptTechnicalAnalysisVolatilityIndicatorsBollingerBands `json:"bollinger_bands"`
+	Atr            OptFloat64                                             `json:"atr"`
+}
+
+// GetBollingerBands returns the value of BollingerBands.
+func (s *TechnicalAnalysisVolatilityIndicators) GetBollingerBands() OptTechnicalAnalysisVolatilityIndicatorsBollingerBands {
+	return s.BollingerBands
+}
+
+// GetAtr returns the value of Atr.
+func (s *TechnicalAnalysisVolatilityIndicators) GetAtr() OptFloat64 {
+	return s.Atr
+}
+
+// SetBollingerBands sets the value of BollingerBands.
+func (s *TechnicalAnalysisVolatilityIndicators) SetBollingerBands(val OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) {
+	s.BollingerBands = val
+}
+
+// SetAtr sets the value of Atr.
+func (s *TechnicalAnalysisVolatilityIndicators) SetAtr(val OptFloat64) {
+	s.Atr = val
+}
+
+type TechnicalAnalysisVolatilityIndicatorsBollingerBands struct {
+	Upper  OptFloat64 `json:"upper"`
+	Middle OptFloat64 `json:"middle"`
+	Lower  OptFloat64 `json:"lower"`
+}
+
+// GetUpper returns the value of Upper.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) GetUpper() OptFloat64 {
+	return s.Upper
+}
+
+// GetMiddle returns the value of Middle.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) GetMiddle() OptFloat64 {
+	return s.Middle
+}
+
+// GetLower returns the value of Lower.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) GetLower() OptFloat64 {
+	return s.Lower
+}
+
+// SetUpper sets the value of Upper.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) SetUpper(val OptFloat64) {
+	s.Upper = val
+}
+
+// SetMiddle sets the value of Middle.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) SetMiddle(val OptFloat64) {
+	s.Middle = val
+}
+
+// SetLower sets the value of Lower.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) SetLower(val OptFloat64) {
+	s.Lower = val
+}
+
+// Volume-based analysis.
+type TechnicalAnalysisVolumeAnalysis struct {
+	VolumeTrend      OptTechnicalAnalysisVolumeAnalysisVolumeTrend `json:"volume_trend"`
+	Obv              OptFloat64                                    `json:"obv"`
+	VolumePriceTrend OptFloat64                                    `json:"volume_price_trend"`
+}
+
+// GetVolumeTrend returns the value of VolumeTrend.
+func (s *TechnicalAnalysisVolumeAnalysis) GetVolumeTrend() OptTechnicalAnalysisVolumeAnalysisVolumeTrend {
+	return s.VolumeTrend
+}
+
+// GetObv returns the value of Obv.
+func (s *TechnicalAnalysisVolumeAnalysis) GetObv() OptFloat64 {
+	return s.Obv
+}
+
+// GetVolumePriceTrend returns the value of VolumePriceTrend.
+func (s *TechnicalAnalysisVolumeAnalysis) GetVolumePriceTrend() OptFloat64 {
+	return s.VolumePriceTrend
+}
+
+// SetVolumeTrend sets the value of VolumeTrend.
+func (s *TechnicalAnalysisVolumeAnalysis) SetVolumeTrend(val OptTechnicalAnalysisVolumeAnalysisVolumeTrend) {
+	s.VolumeTrend = val
+}
+
+// SetObv sets the value of Obv.
+func (s *TechnicalAnalysisVolumeAnalysis) SetObv(val OptFloat64) {
+	s.Obv = val
+}
+
+// SetVolumePriceTrend sets the value of VolumePriceTrend.
+func (s *TechnicalAnalysisVolumeAnalysis) SetVolumePriceTrend(val OptFloat64) {
+	s.VolumePriceTrend = val
+}
+
+type TechnicalAnalysisVolumeAnalysisVolumeTrend string
+
+const (
+	TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing TechnicalAnalysisVolumeAnalysisVolumeTrend = "increasing"
+	TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing TechnicalAnalysisVolumeAnalysisVolumeTrend = "decreasing"
+	TechnicalAnalysisVolumeAnalysisVolumeTrendStable     TechnicalAnalysisVolumeAnalysisVolumeTrend = "stable"
+)
+
+// AllValues returns all TechnicalAnalysisVolumeAnalysisVolumeTrend values.
+func (TechnicalAnalysisVolumeAnalysisVolumeTrend) AllValues() []TechnicalAnalysisVolumeAnalysisVolumeTrend {
+	return []TechnicalAnalysisVolumeAnalysisVolumeTrend{
+		TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing,
+		TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing,
+		TechnicalAnalysisVolumeAnalysisVolumeTrendStable,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TechnicalAnalysisVolumeAnalysisVolumeTrend) MarshalText() ([]byte, error) {
+	switch s {
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing:
+		return []byte(s), nil
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing:
+		return []byte(s), nil
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendStable:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TechnicalAnalysisVolumeAnalysisVolumeTrend) UnmarshalText(data []byte) error {
+	switch TechnicalAnalysisVolumeAnalysisVolumeTrend(data) {
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing
+		return nil
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing
+		return nil
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendStable:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendStable
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Trade volume statistics with memory-aligned structure.
+// Ref: #/components/schemas/TradeVolumeStatistics
+type TradeVolumeStatistics struct {
+	AssetType OptTradeVolumeStatisticsAssetType `json:"asset_type"`
+	Period    OptTradeVolumeStatisticsPeriod    `json:"period"`
+	// Total trading volume.
+	TotalVolume            OptFloat64                                 `json:"total_volume"`
+	TransactionCount       OptInt                                     `json:"transaction_count"`
+	AverageTransactionSize OptFloat64                                 `json:"average_transaction_size"`
+	TopTraders             []TradeVolumeStatisticsTopTradersItem      `json:"top_traders"`
+	HourlyBreakdown        []TradeVolumeStatisticsHourlyBreakdownItem `json:"hourly_breakdown"`
+}
+
+// GetAssetType returns the value of AssetType.
+func (s *TradeVolumeStatistics) GetAssetType() OptTradeVolumeStatisticsAssetType {
+	return s.AssetType
+}
+
+// GetPeriod returns the value of Period.
+func (s *TradeVolumeStatistics) GetPeriod() OptTradeVolumeStatisticsPeriod {
+	return s.Period
+}
+
+// GetTotalVolume returns the value of TotalVolume.
+func (s *TradeVolumeStatistics) GetTotalVolume() OptFloat64 {
+	return s.TotalVolume
+}
+
+// GetTransactionCount returns the value of TransactionCount.
+func (s *TradeVolumeStatistics) GetTransactionCount() OptInt {
+	return s.TransactionCount
+}
+
+// GetAverageTransactionSize returns the value of AverageTransactionSize.
+func (s *TradeVolumeStatistics) GetAverageTransactionSize() OptFloat64 {
+	return s.AverageTransactionSize
+}
+
+// GetTopTraders returns the value of TopTraders.
+func (s *TradeVolumeStatistics) GetTopTraders() []TradeVolumeStatisticsTopTradersItem {
+	return s.TopTraders
+}
+
+// GetHourlyBreakdown returns the value of HourlyBreakdown.
+func (s *TradeVolumeStatistics) GetHourlyBreakdown() []TradeVolumeStatisticsHourlyBreakdownItem {
+	return s.HourlyBreakdown
+}
+
+// SetAssetType sets the value of AssetType.
+func (s *TradeVolumeStatistics) SetAssetType(val OptTradeVolumeStatisticsAssetType) {
+	s.AssetType = val
+}
+
+// SetPeriod sets the value of Period.
+func (s *TradeVolumeStatistics) SetPeriod(val OptTradeVolumeStatisticsPeriod) {
+	s.Period = val
+}
+
+// SetTotalVolume sets the value of TotalVolume.
+func (s *TradeVolumeStatistics) SetTotalVolume(val OptFloat64) {
+	s.TotalVolume = val
+}
+
+// SetTransactionCount sets the value of TransactionCount.
+func (s *TradeVolumeStatistics) SetTransactionCount(val OptInt) {
+	s.TransactionCount = val
+}
+
+// SetAverageTransactionSize sets the value of AverageTransactionSize.
+func (s *TradeVolumeStatistics) SetAverageTransactionSize(val OptFloat64) {
+	s.AverageTransactionSize = val
+}
+
+// SetTopTraders sets the value of TopTraders.
+func (s *TradeVolumeStatistics) SetTopTraders(val []TradeVolumeStatisticsTopTradersItem) {
+	s.TopTraders = val
+}
+
+// SetHourlyBreakdown sets the value of HourlyBreakdown.
+func (s *TradeVolumeStatistics) SetHourlyBreakdown(val []TradeVolumeStatisticsHourlyBreakdownItem) {
+	s.HourlyBreakdown = val
+}
+
+func (*TradeVolumeStatistics) getTradeVolumeStatisticsRes() {}
+
+type TradeVolumeStatisticsAssetType string
+
+const (
+	TradeVolumeStatisticsAssetTypeCurrency   TradeVolumeStatisticsAssetType = "currency"
+	TradeVolumeStatisticsAssetTypeItem       TradeVolumeStatisticsAssetType = "item"
+	TradeVolumeStatisticsAssetTypeStock      TradeVolumeStatisticsAssetType = "stock"
+	TradeVolumeStatisticsAssetTypeRealEstate TradeVolumeStatisticsAssetType = "real_estate"
+	TradeVolumeStatisticsAssetTypeService    TradeVolumeStatisticsAssetType = "service"
+)
+
+// AllValues returns all TradeVolumeStatisticsAssetType values.
+func (TradeVolumeStatisticsAssetType) AllValues() []TradeVolumeStatisticsAssetType {
+	return []TradeVolumeStatisticsAssetType{
+		TradeVolumeStatisticsAssetTypeCurrency,
+		TradeVolumeStatisticsAssetTypeItem,
+		TradeVolumeStatisticsAssetTypeStock,
+		TradeVolumeStatisticsAssetTypeRealEstate,
+		TradeVolumeStatisticsAssetTypeService,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TradeVolumeStatisticsAssetType) MarshalText() ([]byte, error) {
+	switch s {
+	case TradeVolumeStatisticsAssetTypeCurrency:
+		return []byte(s), nil
+	case TradeVolumeStatisticsAssetTypeItem:
+		return []byte(s), nil
+	case TradeVolumeStatisticsAssetTypeStock:
+		return []byte(s), nil
+	case TradeVolumeStatisticsAssetTypeRealEstate:
+		return []byte(s), nil
+	case TradeVolumeStatisticsAssetTypeService:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TradeVolumeStatisticsAssetType) UnmarshalText(data []byte) error {
+	switch TradeVolumeStatisticsAssetType(data) {
+	case TradeVolumeStatisticsAssetTypeCurrency:
+		*s = TradeVolumeStatisticsAssetTypeCurrency
+		return nil
+	case TradeVolumeStatisticsAssetTypeItem:
+		*s = TradeVolumeStatisticsAssetTypeItem
+		return nil
+	case TradeVolumeStatisticsAssetTypeStock:
+		*s = TradeVolumeStatisticsAssetTypeStock
+		return nil
+	case TradeVolumeStatisticsAssetTypeRealEstate:
+		*s = TradeVolumeStatisticsAssetTypeRealEstate
+		return nil
+	case TradeVolumeStatisticsAssetTypeService:
+		*s = TradeVolumeStatisticsAssetTypeService
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Volume breakdown by hour.
+type TradeVolumeStatisticsHourlyBreakdownItem struct {
+	Hour   OptInt     `json:"hour"`
+	Volume OptFloat64 `json:"volume"`
+}
+
+// GetHour returns the value of Hour.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) GetHour() OptInt {
+	return s.Hour
+}
+
+// GetVolume returns the value of Volume.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) GetVolume() OptFloat64 {
+	return s.Volume
+}
+
+// SetHour sets the value of Hour.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) SetHour(val OptInt) {
+	s.Hour = val
+}
+
+// SetVolume sets the value of Volume.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) SetVolume(val OptFloat64) {
+	s.Volume = val
+}
+
+type TradeVolumeStatisticsPeriod string
+
+const (
+	TradeVolumeStatisticsPeriodHour  TradeVolumeStatisticsPeriod = "hour"
+	TradeVolumeStatisticsPeriodDay   TradeVolumeStatisticsPeriod = "day"
+	TradeVolumeStatisticsPeriodWeek  TradeVolumeStatisticsPeriod = "week"
+	TradeVolumeStatisticsPeriodMonth TradeVolumeStatisticsPeriod = "month"
+)
+
+// AllValues returns all TradeVolumeStatisticsPeriod values.
+func (TradeVolumeStatisticsPeriod) AllValues() []TradeVolumeStatisticsPeriod {
+	return []TradeVolumeStatisticsPeriod{
+		TradeVolumeStatisticsPeriodHour,
+		TradeVolumeStatisticsPeriodDay,
+		TradeVolumeStatisticsPeriodWeek,
+		TradeVolumeStatisticsPeriodMonth,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TradeVolumeStatisticsPeriod) MarshalText() ([]byte, error) {
+	switch s {
+	case TradeVolumeStatisticsPeriodHour:
+		return []byte(s), nil
+	case TradeVolumeStatisticsPeriodDay:
+		return []byte(s), nil
+	case TradeVolumeStatisticsPeriodWeek:
+		return []byte(s), nil
+	case TradeVolumeStatisticsPeriodMonth:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TradeVolumeStatisticsPeriod) UnmarshalText(data []byte) error {
+	switch TradeVolumeStatisticsPeriod(data) {
+	case TradeVolumeStatisticsPeriodHour:
+		*s = TradeVolumeStatisticsPeriodHour
+		return nil
+	case TradeVolumeStatisticsPeriodDay:
+		*s = TradeVolumeStatisticsPeriodDay
+		return nil
+	case TradeVolumeStatisticsPeriodWeek:
+		*s = TradeVolumeStatisticsPeriodWeek
+		return nil
+	case TradeVolumeStatisticsPeriodMonth:
+		*s = TradeVolumeStatisticsPeriodMonth
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Top traders by volume.
+type TradeVolumeStatisticsTopTradersItem struct {
+	PlayerID         OptUUID    `json:"player_id"`
+	Volume           OptFloat64 `json:"volume"`
+	TransactionCount OptInt     `json:"transaction_count"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *TradeVolumeStatisticsTopTradersItem) GetPlayerID() OptUUID {
+	return s.PlayerID
+}
+
+// GetVolume returns the value of Volume.
+func (s *TradeVolumeStatisticsTopTradersItem) GetVolume() OptFloat64 {
+	return s.Volume
+}
+
+// GetTransactionCount returns the value of TransactionCount.
+func (s *TradeVolumeStatisticsTopTradersItem) GetTransactionCount() OptInt {
+	return s.TransactionCount
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *TradeVolumeStatisticsTopTradersItem) SetPlayerID(val OptUUID) {
+	s.PlayerID = val
+}
+
+// SetVolume sets the value of Volume.
+func (s *TradeVolumeStatisticsTopTradersItem) SetVolume(val OptFloat64) {
+	s.Volume = val
+}
+
+// SetTransactionCount sets the value of TransactionCount.
+func (s *TradeVolumeStatisticsTopTradersItem) SetTransactionCount(val OptInt) {
+	s.TransactionCount = val
 }

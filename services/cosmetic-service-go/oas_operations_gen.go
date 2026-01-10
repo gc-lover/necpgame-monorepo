@@ -6,7 +6,5 @@ package api
 type OperationName = string
 
 const (
-	BatchHealthCheckOperation          OperationName = "BatchHealthCheck"
-	CosmeticDomainHealthCheckOperation OperationName = "CosmeticDomainHealthCheck"
-	HealthWebSocketOperation           OperationName = "HealthWebSocket"
+	CosmeticServiceHealthCheckOperation OperationName = "CosmeticServiceHealthCheck"
 )

@@ -25,7 +25,10 @@ class PerformanceChecker:
         if not service_file.exists():
             return False
 
-        content = service_file.read_text()
+        try:
+            content = service_file.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            content = service_file.read_text(encoding='latin-1')
         # Check for connection pool settings
         patterns = [
             r"MaxConns\s*=\s*\d+",
@@ -45,7 +48,10 @@ class PerformanceChecker:
         files_to_check = [f for f in [handler_file, service_file] if f.exists()]
 
         for file_path in files_to_check:
-            content = file_path.read_text()
+            try:
+                content = file_path.read_text(encoding='utf-8')
+            except UnicodeDecodeError:
+                content = file_path.read_text(encoding='latin-1')
             if re.search(r"context\.WithTimeout|WithDeadline|withTimeout", content):
                 return True
         return False
@@ -56,7 +62,10 @@ class PerformanceChecker:
         if not service_file.exists():
             return False
 
-        content = service_file.read_text()
+        try:
+            content = service_file.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            content = service_file.read_text(encoding='latin-1')
         patterns = [
             r"PoolSize\s*=\s*\d+",
             r"MinIdleConns\s*=\s*\d+",
@@ -72,7 +81,10 @@ class PerformanceChecker:
         if not main_file.exists():
             return False
 
-        content = main_file.read_text()
+        try:
+            content = main_file.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            content = main_file.read_text(encoding='latin-1')
         patterns = [
             r"ReadTimeout.*time\.Second",
             r"WriteTimeout.*time\.Second",
@@ -87,7 +99,10 @@ class PerformanceChecker:
         # Check generated ogen files for struct alignment hints
         ogen_files = list(service_path.glob("oas_*.go"))
         for ogen_file in ogen_files:
-            content = ogen_file.read_text()
+            try:
+                content = ogen_file.read_text(encoding='utf-8')
+            except UnicodeDecodeError:
+                content = ogen_file.read_text(encoding='latin-1')
             if "BACKEND NOTE" in content and "struct alignment" in content:
                 return True
         return False
@@ -117,13 +132,13 @@ class PerformanceChecker:
 
     def print_summary(self, results: Dict[str, Dict[str, bool]]):
         """Print optimization summary"""
-        print("🔧 MASS PERFORMANCE OPTIMIZATION ANALYSIS")
+        print("[ANALYSIS] MASS PERFORMANCE OPTIMIZATION ANALYSIS")
         print("=" * 50)
 
         total_services = len(results)
         optimized_services = 0
 
-        print(f"📊 Total services analyzed: {total_services}")
+        print(f"[INFO] Total services analyzed: {total_services}")
         print()
 
         # Count optimizations per type
@@ -144,14 +159,14 @@ class PerformanceChecker:
                 if has_opt:
                     optimization_counts[opt_type] += 1
 
-        print("🎯 Optimization Coverage:")
+        print("[TARGET] Optimization Coverage:")
         for opt_type, count in optimization_counts.items():
             percentage = (count / total_services) * 100
-            status = "✅" if percentage >= 80 else "⚠️" if percentage >= 50 else "❌"
-            print(".1f")
+            status = "[OK]" if percentage >= 80 else "[WARNING]" if percentage >= 50 else "[ERROR]"
+            print(f"  {status} {opt_type}: {count}/{total_services} ({percentage:.1f}%)")
 
         print()
-        print(f"🚀 Fully Optimized Services: {optimized_services}/{total_services} ({(optimized_services/total_services)*100:.1f}%)")
+        print(f"[SUCCESS] Fully Optimized Services: {optimized_services}/{total_services} ({(optimized_services/total_services)*100:.1f}%)")
         print()
 
         # Show services needing optimization
@@ -162,20 +177,20 @@ class PerformanceChecker:
                 needs_optimization.append((service_name, missing_opts))
 
         if needs_optimization:
-            print("🔧 Services Needing Optimization:")
+            print("[TASK] Services Needing Optimization:")
             for service_name, missing in needs_optimization[:10]:  # Show first 10
-                print(f"  • {service_name}: missing {', '.join(missing)}")
+                print(f"  - {service_name}: missing {', '.join(missing)}")
             if len(needs_optimization) > 10:
                 print(f"  ... and {len(needs_optimization) - 10} more")
         else:
-            print("🎉 All services are fully optimized!")
+            print("[SUCCESS] All services are fully optimized!")
 
         print()
-        print("🎯 PERFORMANCE TARGETS:")
-        print("  • P99 Latency: <30ms for operations")
-        print("  • Memory: <35KB per active session")
-        print("  • Concurrent users: 100,000+ simultaneous operations")
-        print("  • Throughput: 30,000+ operations per second")
+        print("[TARGET] PERFORMANCE TARGETS:")
+        print("  - P99 Latency: <30ms for operations")
+        print("  - Memory: <35KB per active session")
+        print("  - Concurrent users: 100,000+ simultaneous operations")
+        print("  - Throughput: 30,000+ operations per second")
 
 def main():
     checker = PerformanceChecker()

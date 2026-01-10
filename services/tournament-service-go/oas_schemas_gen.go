@@ -3,17 +3,54 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
-func (s *ErrRespStatusCode) Error() string {
-	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
+// Standard error response format.
+type BadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *BadRequestDetails `json:"details"`
 }
+
+// GetCode returns the value of Code.
+func (s *BadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *BadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *BadRequest) GetDetails() *BadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *BadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *BadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *BadRequest) SetDetails(val *BadRequestDetails) {
+	s.Details = val
+}
+
+func (*BadRequest) getGlobalLeaderboardsRes() {}
+
+// Additional error details.
+type BadRequestDetails struct{}
 
 type BearerAuth struct {
 	Token string
@@ -41,852 +78,344 @@ func (s *BearerAuth) SetRoles(val []string) {
 }
 
 // Standard error response format.
-type CreateExampleBadRequest struct {
+type CreateTournamentBadRequest struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *CreateExampleBadRequestDetails `json:"details"`
+	Details *CreateTournamentBadRequestDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *CreateExampleBadRequest) GetCode() int32 {
+func (s *CreateTournamentBadRequest) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *CreateExampleBadRequest) GetMessage() string {
+func (s *CreateTournamentBadRequest) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *CreateExampleBadRequest) GetDetails() *CreateExampleBadRequestDetails {
+func (s *CreateTournamentBadRequest) GetDetails() *CreateTournamentBadRequestDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *CreateExampleBadRequest) SetCode(val int32) {
+func (s *CreateTournamentBadRequest) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *CreateExampleBadRequest) SetMessage(val string) {
+func (s *CreateTournamentBadRequest) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *CreateExampleBadRequest) SetDetails(val *CreateExampleBadRequestDetails) {
+func (s *CreateTournamentBadRequest) SetDetails(val *CreateTournamentBadRequestDetails) {
 	s.Details = val
 }
 
-func (*CreateExampleBadRequest) createExampleRes() {}
+func (*CreateTournamentBadRequest) createTournamentRes() {}
 
 // Additional error details.
-type CreateExampleBadRequestDetails struct{}
+type CreateTournamentBadRequestDetails struct{}
 
 // Standard error response format.
-type CreateExampleConflict struct {
+type CreateTournamentConflict struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *CreateExampleConflictDetails `json:"details"`
+	Details *CreateTournamentConflictDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *CreateExampleConflict) GetCode() int32 {
+func (s *CreateTournamentConflict) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *CreateExampleConflict) GetMessage() string {
+func (s *CreateTournamentConflict) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *CreateExampleConflict) GetDetails() *CreateExampleConflictDetails {
+func (s *CreateTournamentConflict) GetDetails() *CreateTournamentConflictDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *CreateExampleConflict) SetCode(val int32) {
+func (s *CreateTournamentConflict) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *CreateExampleConflict) SetMessage(val string) {
+func (s *CreateTournamentConflict) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *CreateExampleConflict) SetDetails(val *CreateExampleConflictDetails) {
+func (s *CreateTournamentConflict) SetDetails(val *CreateTournamentConflictDetails) {
 	s.Details = val
 }
 
-func (*CreateExampleConflict) createExampleRes() {}
+func (*CreateTournamentConflict) createTournamentRes() {}
 
 // Additional error details.
-type CreateExampleConflictDetails struct{}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/CreateExampleRequest
-type CreateExampleRequest struct {
-	// Desired example name.
-	Name string `json:"name"`
-	// Example description.
-	Description string `json:"description"`
-	// Initial tags.
-	Tags []string `json:"tags"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
-}
-
-// GetName returns the value of Name.
-func (s *CreateExampleRequest) GetName() string {
-	return s.Name
-}
-
-// GetDescription returns the value of Description.
-func (s *CreateExampleRequest) GetDescription() string {
-	return s.Description
-}
-
-// GetTags returns the value of Tags.
-func (s *CreateExampleRequest) GetTags() []string {
-	return s.Tags
-}
-
-// GetPriority returns the value of Priority.
-func (s *CreateExampleRequest) GetPriority() OptInt {
-	return s.Priority
-}
-
-// SetName sets the value of Name.
-func (s *CreateExampleRequest) SetName(val string) {
-	s.Name = val
-}
-
-// SetDescription sets the value of Description.
-func (s *CreateExampleRequest) SetDescription(val string) {
-	s.Description = val
-}
-
-// SetTags sets the value of Tags.
-func (s *CreateExampleRequest) SetTags(val []string) {
-	s.Tags = val
-}
-
-// SetPriority sets the value of Priority.
-func (s *CreateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
-}
+type CreateTournamentConflictDetails struct{}
 
 // Standard error response format.
-type CreateExampleTooManyRequests struct {
+type CreateTournamentDef struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *CreateExampleTooManyRequestsDetails `json:"details"`
+	Details *CreateTournamentDefDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *CreateExampleTooManyRequests) GetCode() int32 {
+func (s *CreateTournamentDef) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *CreateExampleTooManyRequests) GetMessage() string {
+func (s *CreateTournamentDef) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *CreateExampleTooManyRequests) GetDetails() *CreateExampleTooManyRequestsDetails {
+func (s *CreateTournamentDef) GetDetails() *CreateTournamentDefDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *CreateExampleTooManyRequests) SetCode(val int32) {
+func (s *CreateTournamentDef) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *CreateExampleTooManyRequests) SetMessage(val string) {
+func (s *CreateTournamentDef) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *CreateExampleTooManyRequests) SetDetails(val *CreateExampleTooManyRequestsDetails) {
+func (s *CreateTournamentDef) SetDetails(val *CreateTournamentDefDetails) {
 	s.Details = val
 }
 
 // Additional error details.
-type CreateExampleTooManyRequestsDetails struct{}
+type CreateTournamentDefDetails struct{}
 
-// CreateExampleTooManyRequestsHeaders wraps CreateExampleTooManyRequests with response headers.
-type CreateExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   CreateExampleTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *CreateExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *CreateExampleTooManyRequestsHeaders) GetResponse() CreateExampleTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *CreateExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *CreateExampleTooManyRequestsHeaders) SetResponse(val CreateExampleTooManyRequests) {
-	s.Response = val
-}
-
-func (*CreateExampleTooManyRequestsHeaders) createExampleRes() {}
-
-// Standard error response format.
-type CreateExampleUnprocessableEntity struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *CreateExampleUnprocessableEntityDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *CreateExampleUnprocessableEntity) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *CreateExampleUnprocessableEntity) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *CreateExampleUnprocessableEntity) GetDetails() *CreateExampleUnprocessableEntityDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *CreateExampleUnprocessableEntity) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *CreateExampleUnprocessableEntity) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *CreateExampleUnprocessableEntity) SetDetails(val *CreateExampleUnprocessableEntityDetails) {
-	s.Details = val
-}
-
-func (*CreateExampleUnprocessableEntity) createExampleRes() {}
-
-// Additional error details.
-type CreateExampleUnprocessableEntityDetails struct{}
-
-// Standard error response format.
-type DeleteExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleBadRequest) GetDetails() *DeleteExampleBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleBadRequest) SetDetails(val *DeleteExampleBadRequestDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleBadRequest) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type DeleteExampleConflict struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleConflictDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleConflict) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleConflict) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleConflict) GetDetails() *DeleteExampleConflictDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleConflict) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleConflict) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleConflict) SetDetails(val *DeleteExampleConflictDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleConflict) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleConflictDetails struct{}
-
-// Standard error response format.
-type DeleteExampleNotFound struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleNotFoundDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleNotFound) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleNotFound) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleNotFound) GetDetails() *DeleteExampleNotFoundDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleNotFound) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleNotFound) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleNotFound) SetDetails(val *DeleteExampleNotFoundDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleNotFound) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleNotFoundDetails struct{}
-
-// Standard error response format.
-type DeleteExampleTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleTooManyRequestsDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleTooManyRequests) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleTooManyRequests) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleTooManyRequests) GetDetails() *DeleteExampleTooManyRequestsDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleTooManyRequests) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleTooManyRequests) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleTooManyRequests) SetDetails(val *DeleteExampleTooManyRequestsDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type DeleteExampleTooManyRequestsDetails struct{}
-
-// DeleteExampleTooManyRequestsHeaders wraps DeleteExampleTooManyRequests with response headers.
-type DeleteExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   DeleteExampleTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *DeleteExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *DeleteExampleTooManyRequestsHeaders) GetResponse() DeleteExampleTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *DeleteExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *DeleteExampleTooManyRequestsHeaders) SetResponse(val DeleteExampleTooManyRequests) {
-	s.Response = val
-}
-
-func (*DeleteExampleTooManyRequestsHeaders) deleteExampleRes() {}
-
-// Standard error response format.
-type ErrResp struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ErrRespDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ErrResp) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ErrResp) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ErrResp) GetDetails() *ErrRespDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ErrResp) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ErrResp) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ErrResp) SetDetails(val *ErrRespDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type ErrRespDetails struct{}
-
-// ErrRespStatusCode wraps ErrResp with StatusCode.
-type ErrRespStatusCode struct {
+// CreateTournamentDefStatusCode wraps CreateTournamentDef with StatusCode.
+type CreateTournamentDefStatusCode struct {
 	StatusCode int
-	Response   ErrResp
+	Response   CreateTournamentDef
 }
 
 // GetStatusCode returns the value of StatusCode.
-func (s *ErrRespStatusCode) GetStatusCode() int {
+func (s *CreateTournamentDefStatusCode) GetStatusCode() int {
 	return s.StatusCode
 }
 
 // GetResponse returns the value of Response.
-func (s *ErrRespStatusCode) GetResponse() ErrResp {
+func (s *CreateTournamentDefStatusCode) GetResponse() CreateTournamentDef {
 	return s.Response
 }
 
 // SetStatusCode sets the value of StatusCode.
-func (s *ErrRespStatusCode) SetStatusCode(val int) {
+func (s *CreateTournamentDefStatusCode) SetStatusCode(val int) {
 	s.StatusCode = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
+func (s *CreateTournamentDefStatusCode) SetResponse(val CreateTournamentDef) {
 	s.Response = val
 }
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%. Hot path optimization required.
-// Ref: #/components/schemas/Example
-type Example struct {
-	// Example unique identifier.
-	ID uuid.UUID `json:"id"`
-	// Example display name.
-	Name string `json:"name"`
-	// Detailed description.
-	Description OptString `json:"description"`
-	// Creation timestamp.
-	CreatedAt time.Time `json:"created_at"`
-	// Last update timestamp.
-	UpdatedAt OptDateTime `json:"updated_at"`
-	// Current status.
-	Status ExampleStatus `json:"status"`
-	// Associated tags.
-	Tags []string `json:"tags"`
-	// Whether this example is active.
-	IsActive bool `json:"is_active"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
-}
+func (*CreateTournamentDefStatusCode) createTournamentRes() {}
 
-// GetID returns the value of ID.
-func (s *Example) GetID() uuid.UUID {
-	return s.ID
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/CreateTournamentRequest
+type CreateTournamentRequest struct {
+	// Tournament display name.
+	Name string `json:"name"`
+	// Tournament description.
+	Description OptString `json:"description"`
+	// Tournament game mode format.
+	GameMode CreateTournamentRequestGameMode `json:"game_mode"`
+	// Type of tournament.
+	TournamentType CreateTournamentRequestTournamentType `json:"tournament_type"`
+	// Tournament difficulty level.
+	TournamentDifficulty OptCreateTournamentRequestTournamentDifficulty `json:"tournament_difficulty"`
+	// Maximum number of participants.
+	MaxParticipants OptInt `json:"max_participants"`
+	// Tournament start date and time.
+	StartDate time.Time `json:"start_date"`
+	// Tournament end date and time.
+	EndDate time.Time `json:"end_date"`
+	// Geographic region for the tournament.
+	Region OptString `json:"region"`
+	// Entry fee in game currency.
+	EntryFee OptInt `json:"entry_fee"`
+	// Total prize pool in game currency.
+	PrizePool OptInt `json:"prize_pool"`
+	// Tournament objectives to complete.
+	Objectives []TournamentObjective `json:"objectives"`
 }
 
 // GetName returns the value of Name.
-func (s *Example) GetName() string {
+func (s *CreateTournamentRequest) GetName() string {
 	return s.Name
 }
 
 // GetDescription returns the value of Description.
-func (s *Example) GetDescription() OptString {
+func (s *CreateTournamentRequest) GetDescription() OptString {
 	return s.Description
 }
 
-// GetCreatedAt returns the value of CreatedAt.
-func (s *Example) GetCreatedAt() time.Time {
-	return s.CreatedAt
+// GetGameMode returns the value of GameMode.
+func (s *CreateTournamentRequest) GetGameMode() CreateTournamentRequestGameMode {
+	return s.GameMode
 }
 
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *Example) GetUpdatedAt() OptDateTime {
-	return s.UpdatedAt
+// GetTournamentType returns the value of TournamentType.
+func (s *CreateTournamentRequest) GetTournamentType() CreateTournamentRequestTournamentType {
+	return s.TournamentType
 }
 
-// GetStatus returns the value of Status.
-func (s *Example) GetStatus() ExampleStatus {
-	return s.Status
+// GetTournamentDifficulty returns the value of TournamentDifficulty.
+func (s *CreateTournamentRequest) GetTournamentDifficulty() OptCreateTournamentRequestTournamentDifficulty {
+	return s.TournamentDifficulty
 }
 
-// GetTags returns the value of Tags.
-func (s *Example) GetTags() []string {
-	return s.Tags
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *CreateTournamentRequest) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
 }
 
-// GetIsActive returns the value of IsActive.
-func (s *Example) GetIsActive() bool {
-	return s.IsActive
+// GetStartDate returns the value of StartDate.
+func (s *CreateTournamentRequest) GetStartDate() time.Time {
+	return s.StartDate
 }
 
-// GetPriority returns the value of Priority.
-func (s *Example) GetPriority() OptInt {
-	return s.Priority
+// GetEndDate returns the value of EndDate.
+func (s *CreateTournamentRequest) GetEndDate() time.Time {
+	return s.EndDate
 }
 
-// SetID sets the value of ID.
-func (s *Example) SetID(val uuid.UUID) {
-	s.ID = val
+// GetRegion returns the value of Region.
+func (s *CreateTournamentRequest) GetRegion() OptString {
+	return s.Region
+}
+
+// GetEntryFee returns the value of EntryFee.
+func (s *CreateTournamentRequest) GetEntryFee() OptInt {
+	return s.EntryFee
+}
+
+// GetPrizePool returns the value of PrizePool.
+func (s *CreateTournamentRequest) GetPrizePool() OptInt {
+	return s.PrizePool
+}
+
+// GetObjectives returns the value of Objectives.
+func (s *CreateTournamentRequest) GetObjectives() []TournamentObjective {
+	return s.Objectives
 }
 
 // SetName sets the value of Name.
-func (s *Example) SetName(val string) {
+func (s *CreateTournamentRequest) SetName(val string) {
 	s.Name = val
 }
 
 // SetDescription sets the value of Description.
-func (s *Example) SetDescription(val OptString) {
+func (s *CreateTournamentRequest) SetDescription(val OptString) {
 	s.Description = val
 }
 
-// SetCreatedAt sets the value of CreatedAt.
-func (s *Example) SetCreatedAt(val time.Time) {
-	s.CreatedAt = val
+// SetGameMode sets the value of GameMode.
+func (s *CreateTournamentRequest) SetGameMode(val CreateTournamentRequestGameMode) {
+	s.GameMode = val
 }
 
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *Example) SetUpdatedAt(val OptDateTime) {
-	s.UpdatedAt = val
+// SetTournamentType sets the value of TournamentType.
+func (s *CreateTournamentRequest) SetTournamentType(val CreateTournamentRequestTournamentType) {
+	s.TournamentType = val
 }
 
-// SetStatus sets the value of Status.
-func (s *Example) SetStatus(val ExampleStatus) {
-	s.Status = val
+// SetTournamentDifficulty sets the value of TournamentDifficulty.
+func (s *CreateTournamentRequest) SetTournamentDifficulty(val OptCreateTournamentRequestTournamentDifficulty) {
+	s.TournamentDifficulty = val
 }
 
-// SetTags sets the value of Tags.
-func (s *Example) SetTags(val []string) {
-	s.Tags = val
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *CreateTournamentRequest) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
 }
 
-// SetIsActive sets the value of IsActive.
-func (s *Example) SetIsActive(val bool) {
-	s.IsActive = val
+// SetStartDate sets the value of StartDate.
+func (s *CreateTournamentRequest) SetStartDate(val time.Time) {
+	s.StartDate = val
 }
 
-// SetPriority sets the value of Priority.
-func (s *Example) SetPriority(val OptInt) {
-	s.Priority = val
+// SetEndDate sets the value of EndDate.
+func (s *CreateTournamentRequest) SetEndDate(val time.Time) {
+	s.EndDate = val
 }
 
-// ExampleCreatedHeaders wraps ExampleResponse with response headers.
-type ExampleCreatedHeaders struct {
-	CacheControl OptString
-	ETag         OptString
-	Location     OptString
-	Response     ExampleResponse
+// SetRegion sets the value of Region.
+func (s *CreateTournamentRequest) SetRegion(val OptString) {
+	s.Region = val
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleCreatedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+// SetEntryFee sets the value of EntryFee.
+func (s *CreateTournamentRequest) SetEntryFee(val OptInt) {
+	s.EntryFee = val
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleCreatedHeaders) GetETag() OptString {
-	return s.ETag
+// SetPrizePool sets the value of PrizePool.
+func (s *CreateTournamentRequest) SetPrizePool(val OptInt) {
+	s.PrizePool = val
 }
 
-// GetLocation returns the value of Location.
-func (s *ExampleCreatedHeaders) GetLocation() OptString {
-	return s.Location
+// SetObjectives sets the value of Objectives.
+func (s *CreateTournamentRequest) SetObjectives(val []TournamentObjective) {
+	s.Objectives = val
 }
 
-// GetResponse returns the value of Response.
-func (s *ExampleCreatedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleCreatedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleCreatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLocation sets the value of Location.
-func (s *ExampleCreatedHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleCreatedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleCreatedHeaders) createExampleRes() {}
-
-// Ref: #/components/responses/ExampleDeleted
-type ExampleDeleted struct {
-	XProcessingTime OptInt
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleDeleted) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleDeleted) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-func (*ExampleDeleted) deleteExampleRes() {}
-
-// Standard error response format.
-type ExampleDomainBatchHealthCheckBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ExampleDomainBatchHealthCheckBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetDetails() *ExampleDomainBatchHealthCheckBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetDetails(val *ExampleDomainBatchHealthCheckBadRequestDetails) {
-	s.Details = val
-}
-
-func (*ExampleDomainBatchHealthCheckBadRequest) exampleDomainBatchHealthCheckRes() {}
-
-// Additional error details.
-type ExampleDomainBatchHealthCheckBadRequestDetails struct{}
-
-type ExampleDomainBatchHealthCheckOK struct {
-	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
-	// Total processing time in milliseconds.
-	TotalTimeMs int `json:"total_time_ms"`
-}
-
-// GetResults returns the value of Results.
-func (s *ExampleDomainBatchHealthCheckOK) GetResults() []jx.Raw {
-	return s.Results
-}
-
-// GetTotalTimeMs returns the value of TotalTimeMs.
-func (s *ExampleDomainBatchHealthCheckOK) GetTotalTimeMs() int {
-	return s.TotalTimeMs
-}
-
-// SetResults sets the value of Results.
-func (s *ExampleDomainBatchHealthCheckOK) SetResults(val []jx.Raw) {
-	s.Results = val
-}
-
-// SetTotalTimeMs sets the value of TotalTimeMs.
-func (s *ExampleDomainBatchHealthCheckOK) SetTotalTimeMs(val int) {
-	s.TotalTimeMs = val
-}
-
-// ExampleDomainBatchHealthCheckOKHeaders wraps ExampleDomainBatchHealthCheckOK with response headers.
-type ExampleDomainBatchHealthCheckOKHeaders struct {
-	CacheControl    OptString
-	XProcessingTime OptInt
-	Response        ExampleDomainBatchHealthCheckOK
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetResponse() ExampleDomainBatchHealthCheckOK {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetResponse(val ExampleDomainBatchHealthCheckOK) {
-	s.Response = val
-}
-
-func (*ExampleDomainBatchHealthCheckOKHeaders) exampleDomainBatchHealthCheckRes() {}
-
-type ExampleDomainBatchHealthCheckReq struct {
-	// List of services to check.
-	Services []ExampleDomainBatchHealthCheckReqServicesItem `json:"services"`
-}
-
-// GetServices returns the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) GetServices() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return s.Services
-}
-
-// SetServices sets the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) SetServices(val []ExampleDomainBatchHealthCheckReqServicesItem) {
-	s.Services = val
-}
-
-type ExampleDomainBatchHealthCheckReqServicesItem string
+// Tournament game mode format.
+type CreateTournamentRequestGameMode string
 
 const (
-	ExampleDomainBatchHealthCheckReqServicesItemExampleDomain     ExampleDomainBatchHealthCheckReqServicesItem = "example-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSystemDomain      ExampleDomainBatchHealthCheckReqServicesItem = "system-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain ExampleDomainBatchHealthCheckReqServicesItem = "specialized-domain"
+	CreateTournamentRequestGameModeElimination       CreateTournamentRequestGameMode = "elimination"
+	CreateTournamentRequestGameModeRoundRobin        CreateTournamentRequestGameMode = "round-robin"
+	CreateTournamentRequestGameModeSwissSystem       CreateTournamentRequestGameMode = "swiss-system"
+	CreateTournamentRequestGameModeSingleElimination CreateTournamentRequestGameMode = "single-elimination"
+	CreateTournamentRequestGameModeDoubleElimination CreateTournamentRequestGameMode = "double-elimination"
 )
 
-// AllValues returns all ExampleDomainBatchHealthCheckReqServicesItem values.
-func (ExampleDomainBatchHealthCheckReqServicesItem) AllValues() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return []ExampleDomainBatchHealthCheckReqServicesItem{
-		ExampleDomainBatchHealthCheckReqServicesItemExampleDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSystemDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain,
+// AllValues returns all CreateTournamentRequestGameMode values.
+func (CreateTournamentRequestGameMode) AllValues() []CreateTournamentRequestGameMode {
+	return []CreateTournamentRequestGameMode{
+		CreateTournamentRequestGameModeElimination,
+		CreateTournamentRequestGameModeRoundRobin,
+		CreateTournamentRequestGameModeSwissSystem,
+		CreateTournamentRequestGameModeSingleElimination,
+		CreateTournamentRequestGameModeDoubleElimination,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalText() ([]byte, error) {
+func (s CreateTournamentRequestGameMode) MarshalText() ([]byte, error) {
 	switch s {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
+	case CreateTournamentRequestGameModeElimination:
 		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
+	case CreateTournamentRequestGameModeRoundRobin:
 		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
+	case CreateTournamentRequestGameModeSwissSystem:
+		return []byte(s), nil
+	case CreateTournamentRequestGameModeSingleElimination:
+		return []byte(s), nil
+	case CreateTournamentRequestGameModeDoubleElimination:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -894,16 +423,148 @@ func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalText() ([]byte, err
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleDomainBatchHealthCheckReqServicesItem) UnmarshalText(data []byte) error {
-	switch ExampleDomainBatchHealthCheckReqServicesItem(data) {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemExampleDomain
+func (s *CreateTournamentRequestGameMode) UnmarshalText(data []byte) error {
+	switch CreateTournamentRequestGameMode(data) {
+	case CreateTournamentRequestGameModeElimination:
+		*s = CreateTournamentRequestGameModeElimination
 		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSystemDomain
+	case CreateTournamentRequestGameModeRoundRobin:
+		*s = CreateTournamentRequestGameModeRoundRobin
 		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain
+	case CreateTournamentRequestGameModeSwissSystem:
+		*s = CreateTournamentRequestGameModeSwissSystem
+		return nil
+	case CreateTournamentRequestGameModeSingleElimination:
+		*s = CreateTournamentRequestGameModeSingleElimination
+		return nil
+	case CreateTournamentRequestGameModeDoubleElimination:
+		*s = CreateTournamentRequestGameModeDoubleElimination
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Tournament difficulty level.
+type CreateTournamentRequestTournamentDifficulty string
+
+const (
+	CreateTournamentRequestTournamentDifficultyBeginner     CreateTournamentRequestTournamentDifficulty = "beginner"
+	CreateTournamentRequestTournamentDifficultyIntermediate CreateTournamentRequestTournamentDifficulty = "intermediate"
+	CreateTournamentRequestTournamentDifficultyAdvanced     CreateTournamentRequestTournamentDifficulty = "advanced"
+	CreateTournamentRequestTournamentDifficultyExpert       CreateTournamentRequestTournamentDifficulty = "expert"
+	CreateTournamentRequestTournamentDifficultyMaster       CreateTournamentRequestTournamentDifficulty = "master"
+)
+
+// AllValues returns all CreateTournamentRequestTournamentDifficulty values.
+func (CreateTournamentRequestTournamentDifficulty) AllValues() []CreateTournamentRequestTournamentDifficulty {
+	return []CreateTournamentRequestTournamentDifficulty{
+		CreateTournamentRequestTournamentDifficultyBeginner,
+		CreateTournamentRequestTournamentDifficultyIntermediate,
+		CreateTournamentRequestTournamentDifficultyAdvanced,
+		CreateTournamentRequestTournamentDifficultyExpert,
+		CreateTournamentRequestTournamentDifficultyMaster,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateTournamentRequestTournamentDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateTournamentRequestTournamentDifficultyBeginner:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentDifficultyIntermediate:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentDifficultyAdvanced:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentDifficultyExpert:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentDifficultyMaster:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateTournamentRequestTournamentDifficulty) UnmarshalText(data []byte) error {
+	switch CreateTournamentRequestTournamentDifficulty(data) {
+	case CreateTournamentRequestTournamentDifficultyBeginner:
+		*s = CreateTournamentRequestTournamentDifficultyBeginner
+		return nil
+	case CreateTournamentRequestTournamentDifficultyIntermediate:
+		*s = CreateTournamentRequestTournamentDifficultyIntermediate
+		return nil
+	case CreateTournamentRequestTournamentDifficultyAdvanced:
+		*s = CreateTournamentRequestTournamentDifficultyAdvanced
+		return nil
+	case CreateTournamentRequestTournamentDifficultyExpert:
+		*s = CreateTournamentRequestTournamentDifficultyExpert
+		return nil
+	case CreateTournamentRequestTournamentDifficultyMaster:
+		*s = CreateTournamentRequestTournamentDifficultyMaster
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Type of tournament.
+type CreateTournamentRequestTournamentType string
+
+const (
+	CreateTournamentRequestTournamentTypeRanked       CreateTournamentRequestTournamentType = "ranked"
+	CreateTournamentRequestTournamentTypeCasual       CreateTournamentRequestTournamentType = "casual"
+	CreateTournamentRequestTournamentTypeChampionship CreateTournamentRequestTournamentType = "championship"
+	CreateTournamentRequestTournamentTypeSeasonal     CreateTournamentRequestTournamentType = "seasonal"
+	CreateTournamentRequestTournamentTypeSpecialEvent CreateTournamentRequestTournamentType = "special-event"
+)
+
+// AllValues returns all CreateTournamentRequestTournamentType values.
+func (CreateTournamentRequestTournamentType) AllValues() []CreateTournamentRequestTournamentType {
+	return []CreateTournamentRequestTournamentType{
+		CreateTournamentRequestTournamentTypeRanked,
+		CreateTournamentRequestTournamentTypeCasual,
+		CreateTournamentRequestTournamentTypeChampionship,
+		CreateTournamentRequestTournamentTypeSeasonal,
+		CreateTournamentRequestTournamentTypeSpecialEvent,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateTournamentRequestTournamentType) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateTournamentRequestTournamentTypeRanked:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentTypeCasual:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentTypeChampionship:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentTypeSeasonal:
+		return []byte(s), nil
+	case CreateTournamentRequestTournamentTypeSpecialEvent:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateTournamentRequestTournamentType) UnmarshalText(data []byte) error {
+	switch CreateTournamentRequestTournamentType(data) {
+	case CreateTournamentRequestTournamentTypeRanked:
+		*s = CreateTournamentRequestTournamentTypeRanked
+		return nil
+	case CreateTournamentRequestTournamentTypeCasual:
+		*s = CreateTournamentRequestTournamentTypeCasual
+		return nil
+	case CreateTournamentRequestTournamentTypeChampionship:
+		*s = CreateTournamentRequestTournamentTypeChampionship
+		return nil
+	case CreateTournamentRequestTournamentTypeSeasonal:
+		*s = CreateTournamentRequestTournamentTypeSeasonal
+		return nil
+	case CreateTournamentRequestTournamentTypeSpecialEvent:
+		*s = CreateTournamentRequestTournamentTypeSpecialEvent
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -911,298 +572,445 @@ func (s *ExampleDomainBatchHealthCheckReqServicesItem) UnmarshalText(data []byte
 }
 
 // Standard error response format.
-type ExampleDomainBatchHealthCheckTooManyRequests struct {
+type CreateTournamentTooManyRequests struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *ExampleDomainBatchHealthCheckTooManyRequestsDetails `json:"details"`
+	Details *CreateTournamentTooManyRequestsDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetCode() int32 {
+func (s *CreateTournamentTooManyRequests) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetMessage() string {
+func (s *CreateTournamentTooManyRequests) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetDetails() *ExampleDomainBatchHealthCheckTooManyRequestsDetails {
+func (s *CreateTournamentTooManyRequests) GetDetails() *CreateTournamentTooManyRequestsDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetCode(val int32) {
+func (s *CreateTournamentTooManyRequests) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetMessage(val string) {
+func (s *CreateTournamentTooManyRequests) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetDetails(val *ExampleDomainBatchHealthCheckTooManyRequestsDetails) {
+func (s *CreateTournamentTooManyRequests) SetDetails(val *CreateTournamentTooManyRequestsDetails) {
 	s.Details = val
 }
 
 // Additional error details.
-type ExampleDomainBatchHealthCheckTooManyRequestsDetails struct{}
+type CreateTournamentTooManyRequestsDetails struct{}
 
-// ExampleDomainBatchHealthCheckTooManyRequestsHeaders wraps ExampleDomainBatchHealthCheckTooManyRequests with response headers.
-type ExampleDomainBatchHealthCheckTooManyRequestsHeaders struct {
+// CreateTournamentTooManyRequestsHeaders wraps CreateTournamentTooManyRequests with response headers.
+type CreateTournamentTooManyRequestsHeaders struct {
 	RetryAfter OptInt
-	Response   ExampleDomainBatchHealthCheckTooManyRequests
+	Response   CreateTournamentTooManyRequests
 }
 
 // GetRetryAfter returns the value of RetryAfter.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) GetRetryAfter() OptInt {
+func (s *CreateTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
 	return s.RetryAfter
 }
 
 // GetResponse returns the value of Response.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) GetResponse() ExampleDomainBatchHealthCheckTooManyRequests {
+func (s *CreateTournamentTooManyRequestsHeaders) GetResponse() CreateTournamentTooManyRequests {
 	return s.Response
 }
 
 // SetRetryAfter sets the value of RetryAfter.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+func (s *CreateTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
 	s.RetryAfter = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) SetResponse(val ExampleDomainBatchHealthCheckTooManyRequests) {
+func (s *CreateTournamentTooManyRequestsHeaders) SetResponse(val CreateTournamentTooManyRequests) {
 	s.Response = val
 }
 
-func (*ExampleDomainBatchHealthCheckTooManyRequestsHeaders) exampleDomainBatchHealthCheckRes() {}
+func (*CreateTournamentTooManyRequestsHeaders) createTournamentRes() {}
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%. Paginated responses optimized for memory efficiency.
-// Ref: #/components/schemas/ExampleListResponse
-type ExampleListResponse struct {
-	// List of examples.
-	Examples []Example `json:"examples"`
-	// Whether there are more results available.
-	HasMore bool `json:"has_more"`
-	// Total number of examples matching criteria.
-	TotalCount int `json:"total_count"`
-	// Current page number.
-	Page OptInt `json:"page"`
-	// Items per page.
-	Limit OptInt `json:"limit"`
+// Standard error response format.
+type CreateTournamentUnprocessableEntity struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *CreateTournamentUnprocessableEntityDetails `json:"details"`
 }
 
-// GetExamples returns the value of Examples.
-func (s *ExampleListResponse) GetExamples() []Example {
-	return s.Examples
+// GetCode returns the value of Code.
+func (s *CreateTournamentUnprocessableEntity) GetCode() int32 {
+	return s.Code
 }
 
-// GetHasMore returns the value of HasMore.
-func (s *ExampleListResponse) GetHasMore() bool {
-	return s.HasMore
+// GetMessage returns the value of Message.
+func (s *CreateTournamentUnprocessableEntity) GetMessage() string {
+	return s.Message
 }
 
-// GetTotalCount returns the value of TotalCount.
-func (s *ExampleListResponse) GetTotalCount() int {
-	return s.TotalCount
+// GetDetails returns the value of Details.
+func (s *CreateTournamentUnprocessableEntity) GetDetails() *CreateTournamentUnprocessableEntityDetails {
+	return s.Details
 }
 
-// GetPage returns the value of Page.
-func (s *ExampleListResponse) GetPage() OptInt {
-	return s.Page
+// SetCode sets the value of Code.
+func (s *CreateTournamentUnprocessableEntity) SetCode(val int32) {
+	s.Code = val
 }
 
-// GetLimit returns the value of Limit.
-func (s *ExampleListResponse) GetLimit() OptInt {
-	return s.Limit
+// SetMessage sets the value of Message.
+func (s *CreateTournamentUnprocessableEntity) SetMessage(val string) {
+	s.Message = val
 }
 
-// SetExamples sets the value of Examples.
-func (s *ExampleListResponse) SetExamples(val []Example) {
-	s.Examples = val
+// SetDetails sets the value of Details.
+func (s *CreateTournamentUnprocessableEntity) SetDetails(val *CreateTournamentUnprocessableEntityDetails) {
+	s.Details = val
 }
 
-// SetHasMore sets the value of HasMore.
-func (s *ExampleListResponse) SetHasMore(val bool) {
-	s.HasMore = val
+func (*CreateTournamentUnprocessableEntity) createTournamentRes() {}
+
+// Additional error details.
+type CreateTournamentUnprocessableEntityDetails struct{}
+
+// Standard error response format.
+type DeleteTournamentBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *DeleteTournamentBadRequestDetails `json:"details"`
 }
 
-// SetTotalCount sets the value of TotalCount.
-func (s *ExampleListResponse) SetTotalCount(val int) {
-	s.TotalCount = val
+// GetCode returns the value of Code.
+func (s *DeleteTournamentBadRequest) GetCode() int32 {
+	return s.Code
 }
 
-// SetPage sets the value of Page.
-func (s *ExampleListResponse) SetPage(val OptInt) {
-	s.Page = val
+// GetMessage returns the value of Message.
+func (s *DeleteTournamentBadRequest) GetMessage() string {
+	return s.Message
 }
 
-// SetLimit sets the value of Limit.
-func (s *ExampleListResponse) SetLimit(val OptInt) {
-	s.Limit = val
+// GetDetails returns the value of Details.
+func (s *DeleteTournamentBadRequest) GetDetails() *DeleteTournamentBadRequestDetails {
+	return s.Details
 }
 
-// ExampleListSuccessHeaders wraps ExampleListResponse with response headers.
-type ExampleListSuccessHeaders struct {
-	CacheControl OptString
-	XPageCount   OptInt
-	XTotalCount  OptInt
-	Response     ExampleListResponse
+// SetCode sets the value of Code.
+func (s *DeleteTournamentBadRequest) SetCode(val int32) {
+	s.Code = val
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleListSuccessHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+// SetMessage sets the value of Message.
+func (s *DeleteTournamentBadRequest) SetMessage(val string) {
+	s.Message = val
 }
 
-// GetXPageCount returns the value of XPageCount.
-func (s *ExampleListSuccessHeaders) GetXPageCount() OptInt {
-	return s.XPageCount
+// SetDetails sets the value of Details.
+func (s *DeleteTournamentBadRequest) SetDetails(val *DeleteTournamentBadRequestDetails) {
+	s.Details = val
 }
 
-// GetXTotalCount returns the value of XTotalCount.
-func (s *ExampleListSuccessHeaders) GetXTotalCount() OptInt {
-	return s.XTotalCount
+func (*DeleteTournamentBadRequest) deleteTournamentRes() {}
+
+// Additional error details.
+type DeleteTournamentBadRequestDetails struct{}
+
+// Standard error response format.
+type DeleteTournamentConflict struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *DeleteTournamentConflictDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *DeleteTournamentConflict) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *DeleteTournamentConflict) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *DeleteTournamentConflict) GetDetails() *DeleteTournamentConflictDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *DeleteTournamentConflict) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *DeleteTournamentConflict) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *DeleteTournamentConflict) SetDetails(val *DeleteTournamentConflictDetails) {
+	s.Details = val
+}
+
+func (*DeleteTournamentConflict) deleteTournamentRes() {}
+
+// Additional error details.
+type DeleteTournamentConflictDetails struct{}
+
+// Standard error response format.
+type DeleteTournamentDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *DeleteTournamentDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *DeleteTournamentDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *DeleteTournamentDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *DeleteTournamentDef) GetDetails() *DeleteTournamentDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *DeleteTournamentDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *DeleteTournamentDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *DeleteTournamentDef) SetDetails(val *DeleteTournamentDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type DeleteTournamentDefDetails struct{}
+
+// DeleteTournamentDefStatusCode wraps DeleteTournamentDef with StatusCode.
+type DeleteTournamentDefStatusCode struct {
+	StatusCode int
+	Response   DeleteTournamentDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *DeleteTournamentDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
 }
 
 // GetResponse returns the value of Response.
-func (s *ExampleListSuccessHeaders) GetResponse() ExampleListResponse {
+func (s *DeleteTournamentDefStatusCode) GetResponse() DeleteTournamentDef {
 	return s.Response
 }
 
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleListSuccessHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetXPageCount sets the value of XPageCount.
-func (s *ExampleListSuccessHeaders) SetXPageCount(val OptInt) {
-	s.XPageCount = val
-}
-
-// SetXTotalCount sets the value of XTotalCount.
-func (s *ExampleListSuccessHeaders) SetXTotalCount(val OptInt) {
-	s.XTotalCount = val
+// SetStatusCode sets the value of StatusCode.
+func (s *DeleteTournamentDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ExampleListSuccessHeaders) SetResponse(val ExampleListResponse) {
+func (s *DeleteTournamentDefStatusCode) SetResponse(val DeleteTournamentDef) {
 	s.Response = val
 }
 
-func (*ExampleListSuccessHeaders) listTournamentsRes() {}
+func (*DeleteTournamentDefStatusCode) deleteTournamentRes() {}
+
+// DeleteTournamentNoContent is response for DeleteTournament operation.
+type DeleteTournamentNoContent struct{}
+
+func (*DeleteTournamentNoContent) deleteTournamentRes() {}
+
+// Standard error response format.
+type DeleteTournamentNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *DeleteTournamentNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *DeleteTournamentNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *DeleteTournamentNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *DeleteTournamentNotFound) GetDetails() *DeleteTournamentNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *DeleteTournamentNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *DeleteTournamentNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *DeleteTournamentNotFound) SetDetails(val *DeleteTournamentNotFoundDetails) {
+	s.Details = val
+}
+
+func (*DeleteTournamentNotFound) deleteTournamentRes() {}
+
+// Additional error details.
+type DeleteTournamentNotFoundDetails struct{}
+
+// Standard error response format.
+type DeleteTournamentTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *DeleteTournamentTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *DeleteTournamentTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *DeleteTournamentTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *DeleteTournamentTooManyRequests) GetDetails() *DeleteTournamentTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *DeleteTournamentTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *DeleteTournamentTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *DeleteTournamentTooManyRequests) SetDetails(val *DeleteTournamentTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type DeleteTournamentTooManyRequestsDetails struct{}
+
+// DeleteTournamentTooManyRequestsHeaders wraps DeleteTournamentTooManyRequests with response headers.
+type DeleteTournamentTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   DeleteTournamentTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *DeleteTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *DeleteTournamentTooManyRequestsHeaders) GetResponse() DeleteTournamentTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *DeleteTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *DeleteTournamentTooManyRequestsHeaders) SetResponse(val DeleteTournamentTooManyRequests) {
+	s.Response = val
+}
+
+func (*DeleteTournamentTooManyRequestsHeaders) deleteTournamentRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
-// Ref: #/components/schemas/ExampleResponse
-type ExampleResponse struct {
-	Example Example `json:"example"`
+// Ref: #/components/schemas/GenerateBracketRequest
+type GenerateBracketRequest struct {
+	// Algorithm for participant seeding.
+	SeedingAlgorithm OptGenerateBracketRequestSeedingAlgorithm `json:"seeding_algorithm"`
+	// Type of bracket to generate.
+	BracketType OptGenerateBracketRequestBracketType `json:"bracket_type"`
 }
 
-// GetExample returns the value of Example.
-func (s *ExampleResponse) GetExample() Example {
-	return s.Example
+// GetSeedingAlgorithm returns the value of SeedingAlgorithm.
+func (s *GenerateBracketRequest) GetSeedingAlgorithm() OptGenerateBracketRequestSeedingAlgorithm {
+	return s.SeedingAlgorithm
 }
 
-// SetExample sets the value of Example.
-func (s *ExampleResponse) SetExample(val Example) {
-	s.Example = val
+// GetBracketType returns the value of BracketType.
+func (s *GenerateBracketRequest) GetBracketType() OptGenerateBracketRequestBracketType {
+	return s.BracketType
 }
 
-// ExampleRetrievedHeaders wraps ExampleResponse with response headers.
-type ExampleRetrievedHeaders struct {
-	CacheControl    OptString
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
+// SetSeedingAlgorithm sets the value of SeedingAlgorithm.
+func (s *GenerateBracketRequest) SetSeedingAlgorithm(val OptGenerateBracketRequestSeedingAlgorithm) {
+	s.SeedingAlgorithm = val
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleRetrievedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+// SetBracketType sets the value of BracketType.
+func (s *GenerateBracketRequest) SetBracketType(val OptGenerateBracketRequestBracketType) {
+	s.BracketType = val
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleRetrievedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLastModified returns the value of LastModified.
-func (s *ExampleRetrievedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleRetrievedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleRetrievedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleRetrievedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleRetrievedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleRetrievedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleRetrievedHeaders) getExampleRes() {}
-
-// Current status.
-type ExampleStatus string
+// Type of bracket to generate.
+type GenerateBracketRequestBracketType string
 
 const (
-	ExampleStatusActive   ExampleStatus = "active"
-	ExampleStatusInactive ExampleStatus = "inactive"
-	ExampleStatusPending  ExampleStatus = "pending"
-	ExampleStatusArchived ExampleStatus = "archived"
+	GenerateBracketRequestBracketTypeSingleElimination GenerateBracketRequestBracketType = "single-elimination"
+	GenerateBracketRequestBracketTypeDoubleElimination GenerateBracketRequestBracketType = "double-elimination"
+	GenerateBracketRequestBracketTypeRoundRobin        GenerateBracketRequestBracketType = "round-robin"
 )
 
-// AllValues returns all ExampleStatus values.
-func (ExampleStatus) AllValues() []ExampleStatus {
-	return []ExampleStatus{
-		ExampleStatusActive,
-		ExampleStatusInactive,
-		ExampleStatusPending,
-		ExampleStatusArchived,
+// AllValues returns all GenerateBracketRequestBracketType values.
+func (GenerateBracketRequestBracketType) AllValues() []GenerateBracketRequestBracketType {
+	return []GenerateBracketRequestBracketType{
+		GenerateBracketRequestBracketTypeSingleElimination,
+		GenerateBracketRequestBracketTypeDoubleElimination,
+		GenerateBracketRequestBracketTypeRoundRobin,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ExampleStatus) MarshalText() ([]byte, error) {
+func (s GenerateBracketRequestBracketType) MarshalText() ([]byte, error) {
 	switch s {
-	case ExampleStatusActive:
+	case GenerateBracketRequestBracketTypeSingleElimination:
 		return []byte(s), nil
-	case ExampleStatusInactive:
+	case GenerateBracketRequestBracketTypeDoubleElimination:
 		return []byte(s), nil
-	case ExampleStatusPending:
-		return []byte(s), nil
-	case ExampleStatusArchived:
+	case GenerateBracketRequestBracketTypeRoundRobin:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1210,257 +1018,1884 @@ func (s ExampleStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleStatus) UnmarshalText(data []byte) error {
-	switch ExampleStatus(data) {
-	case ExampleStatusActive:
-		*s = ExampleStatusActive
+func (s *GenerateBracketRequestBracketType) UnmarshalText(data []byte) error {
+	switch GenerateBracketRequestBracketType(data) {
+	case GenerateBracketRequestBracketTypeSingleElimination:
+		*s = GenerateBracketRequestBracketTypeSingleElimination
 		return nil
-	case ExampleStatusInactive:
-		*s = ExampleStatusInactive
+	case GenerateBracketRequestBracketTypeDoubleElimination:
+		*s = GenerateBracketRequestBracketTypeDoubleElimination
 		return nil
-	case ExampleStatusPending:
-		*s = ExampleStatusPending
-		return nil
-	case ExampleStatusArchived:
-		*s = ExampleStatusArchived
+	case GenerateBracketRequestBracketTypeRoundRobin:
+		*s = GenerateBracketRequestBracketTypeRoundRobin
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// ExampleUpdatedHeaders wraps ExampleResponse with response headers.
-type ExampleUpdatedHeaders struct {
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
+// Algorithm for participant seeding.
+type GenerateBracketRequestSeedingAlgorithm string
+
+const (
+	GenerateBracketRequestSeedingAlgorithmRandom     GenerateBracketRequestSeedingAlgorithm = "random"
+	GenerateBracketRequestSeedingAlgorithmSkillBased GenerateBracketRequestSeedingAlgorithm = "skill_based"
+	GenerateBracketRequestSeedingAlgorithmManual     GenerateBracketRequestSeedingAlgorithm = "manual"
+)
+
+// AllValues returns all GenerateBracketRequestSeedingAlgorithm values.
+func (GenerateBracketRequestSeedingAlgorithm) AllValues() []GenerateBracketRequestSeedingAlgorithm {
+	return []GenerateBracketRequestSeedingAlgorithm{
+		GenerateBracketRequestSeedingAlgorithmRandom,
+		GenerateBracketRequestSeedingAlgorithmSkillBased,
+		GenerateBracketRequestSeedingAlgorithmManual,
+	}
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleUpdatedHeaders) GetETag() OptString {
-	return s.ETag
+// MarshalText implements encoding.TextMarshaler.
+func (s GenerateBracketRequestSeedingAlgorithm) MarshalText() ([]byte, error) {
+	switch s {
+	case GenerateBracketRequestSeedingAlgorithmRandom:
+		return []byte(s), nil
+	case GenerateBracketRequestSeedingAlgorithmSkillBased:
+		return []byte(s), nil
+	case GenerateBracketRequestSeedingAlgorithmManual:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetLastModified returns the value of LastModified.
-func (s *ExampleUpdatedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GenerateBracketRequestSeedingAlgorithm) UnmarshalText(data []byte) error {
+	switch GenerateBracketRequestSeedingAlgorithm(data) {
+	case GenerateBracketRequestSeedingAlgorithmRandom:
+		*s = GenerateBracketRequestSeedingAlgorithmRandom
+		return nil
+	case GenerateBracketRequestSeedingAlgorithmSkillBased:
+		*s = GenerateBracketRequestSeedingAlgorithmSkillBased
+		return nil
+	case GenerateBracketRequestSeedingAlgorithmManual:
+		*s = GenerateBracketRequestSeedingAlgorithmManual
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
+// Standard error response format.
+type GenerateTournamentBracketBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GenerateTournamentBracketBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GenerateTournamentBracketBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GenerateTournamentBracketBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GenerateTournamentBracketBadRequest) GetDetails() *GenerateTournamentBracketBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GenerateTournamentBracketBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GenerateTournamentBracketBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GenerateTournamentBracketBadRequest) SetDetails(val *GenerateTournamentBracketBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GenerateTournamentBracketBadRequest) generateTournamentBracketRes() {}
+
+// Additional error details.
+type GenerateTournamentBracketBadRequestDetails struct{}
+
+// Standard error response format.
+type GenerateTournamentBracketConflict struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GenerateTournamentBracketConflictDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GenerateTournamentBracketConflict) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GenerateTournamentBracketConflict) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GenerateTournamentBracketConflict) GetDetails() *GenerateTournamentBracketConflictDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GenerateTournamentBracketConflict) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GenerateTournamentBracketConflict) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GenerateTournamentBracketConflict) SetDetails(val *GenerateTournamentBracketConflictDetails) {
+	s.Details = val
+}
+
+func (*GenerateTournamentBracketConflict) generateTournamentBracketRes() {}
+
+// Additional error details.
+type GenerateTournamentBracketConflictDetails struct{}
+
+// Standard error response format.
+type GenerateTournamentBracketDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GenerateTournamentBracketDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GenerateTournamentBracketDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GenerateTournamentBracketDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GenerateTournamentBracketDef) GetDetails() *GenerateTournamentBracketDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GenerateTournamentBracketDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GenerateTournamentBracketDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GenerateTournamentBracketDef) SetDetails(val *GenerateTournamentBracketDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GenerateTournamentBracketDefDetails struct{}
+
+// GenerateTournamentBracketDefStatusCode wraps GenerateTournamentBracketDef with StatusCode.
+type GenerateTournamentBracketDefStatusCode struct {
+	StatusCode int
+	Response   GenerateTournamentBracketDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GenerateTournamentBracketDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
 }
 
 // GetResponse returns the value of Response.
-func (s *ExampleUpdatedHeaders) GetResponse() ExampleResponse {
+func (s *GenerateTournamentBracketDefStatusCode) GetResponse() GenerateTournamentBracketDef {
 	return s.Response
 }
 
-// SetETag sets the value of ETag.
-func (s *ExampleUpdatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleUpdatedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
+// SetStatusCode sets the value of StatusCode.
+func (s *GenerateTournamentBracketDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ExampleUpdatedHeaders) SetResponse(val ExampleResponse) {
+func (s *GenerateTournamentBracketDefStatusCode) SetResponse(val GenerateTournamentBracketDef) {
 	s.Response = val
 }
 
-func (*ExampleUpdatedHeaders) updateExampleRes() {}
+func (*GenerateTournamentBracketDefStatusCode) generateTournamentBracketRes() {}
 
 // Standard error response format.
-type GetExampleBadRequest struct {
+type GenerateTournamentBracketNotFound struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *GetExampleBadRequestDetails `json:"details"`
+	Details *GenerateTournamentBracketNotFoundDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *GetExampleBadRequest) GetCode() int32 {
+func (s *GenerateTournamentBracketNotFound) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *GetExampleBadRequest) GetMessage() string {
+func (s *GenerateTournamentBracketNotFound) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *GetExampleBadRequest) GetDetails() *GetExampleBadRequestDetails {
+func (s *GenerateTournamentBracketNotFound) GetDetails() *GenerateTournamentBracketNotFoundDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *GetExampleBadRequest) SetCode(val int32) {
+func (s *GenerateTournamentBracketNotFound) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *GetExampleBadRequest) SetMessage(val string) {
+func (s *GenerateTournamentBracketNotFound) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *GetExampleBadRequest) SetDetails(val *GetExampleBadRequestDetails) {
+func (s *GenerateTournamentBracketNotFound) SetDetails(val *GenerateTournamentBracketNotFoundDetails) {
 	s.Details = val
 }
 
-func (*GetExampleBadRequest) getExampleRes() {}
+func (*GenerateTournamentBracketNotFound) generateTournamentBracketRes() {}
 
 // Additional error details.
-type GetExampleBadRequestDetails struct{}
+type GenerateTournamentBracketNotFoundDetails struct{}
 
 // Standard error response format.
-type GetExampleNotFound struct {
+type GenerateTournamentBracketTooManyRequests struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *GetExampleNotFoundDetails `json:"details"`
+	Details *GenerateTournamentBracketTooManyRequestsDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *GetExampleNotFound) GetCode() int32 {
+func (s *GenerateTournamentBracketTooManyRequests) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *GetExampleNotFound) GetMessage() string {
+func (s *GenerateTournamentBracketTooManyRequests) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *GetExampleNotFound) GetDetails() *GetExampleNotFoundDetails {
+func (s *GenerateTournamentBracketTooManyRequests) GetDetails() *GenerateTournamentBracketTooManyRequestsDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *GetExampleNotFound) SetCode(val int32) {
+func (s *GenerateTournamentBracketTooManyRequests) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *GetExampleNotFound) SetMessage(val string) {
+func (s *GenerateTournamentBracketTooManyRequests) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *GetExampleNotFound) SetDetails(val *GetExampleNotFoundDetails) {
+func (s *GenerateTournamentBracketTooManyRequests) SetDetails(val *GenerateTournamentBracketTooManyRequestsDetails) {
 	s.Details = val
 }
 
-func (*GetExampleNotFound) getExampleRes() {}
+// Additional error details.
+type GenerateTournamentBracketTooManyRequestsDetails struct{}
+
+// GenerateTournamentBracketTooManyRequestsHeaders wraps GenerateTournamentBracketTooManyRequests with response headers.
+type GenerateTournamentBracketTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   GenerateTournamentBracketTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *GenerateTournamentBracketTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *GenerateTournamentBracketTooManyRequestsHeaders) GetResponse() GenerateTournamentBracketTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *GenerateTournamentBracketTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GenerateTournamentBracketTooManyRequestsHeaders) SetResponse(val GenerateTournamentBracketTooManyRequests) {
+	s.Response = val
+}
+
+func (*GenerateTournamentBracketTooManyRequestsHeaders) generateTournamentBracketRes() {}
+
+type GetGlobalLeaderboardsSortBy string
+
+const (
+	GetGlobalLeaderboardsSortByTotalScore     GetGlobalLeaderboardsSortBy = "total_score"
+	GetGlobalLeaderboardsSortByWinRate        GetGlobalLeaderboardsSortBy = "win_rate"
+	GetGlobalLeaderboardsSortByTournamentsWon GetGlobalLeaderboardsSortBy = "tournaments_won"
+	GetGlobalLeaderboardsSortByAvgPlacement   GetGlobalLeaderboardsSortBy = "avg_placement"
+)
+
+// AllValues returns all GetGlobalLeaderboardsSortBy values.
+func (GetGlobalLeaderboardsSortBy) AllValues() []GetGlobalLeaderboardsSortBy {
+	return []GetGlobalLeaderboardsSortBy{
+		GetGlobalLeaderboardsSortByTotalScore,
+		GetGlobalLeaderboardsSortByWinRate,
+		GetGlobalLeaderboardsSortByTournamentsWon,
+		GetGlobalLeaderboardsSortByAvgPlacement,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetGlobalLeaderboardsSortBy) MarshalText() ([]byte, error) {
+	switch s {
+	case GetGlobalLeaderboardsSortByTotalScore:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsSortByWinRate:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsSortByTournamentsWon:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsSortByAvgPlacement:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetGlobalLeaderboardsSortBy) UnmarshalText(data []byte) error {
+	switch GetGlobalLeaderboardsSortBy(data) {
+	case GetGlobalLeaderboardsSortByTotalScore:
+		*s = GetGlobalLeaderboardsSortByTotalScore
+		return nil
+	case GetGlobalLeaderboardsSortByWinRate:
+		*s = GetGlobalLeaderboardsSortByWinRate
+		return nil
+	case GetGlobalLeaderboardsSortByTournamentsWon:
+		*s = GetGlobalLeaderboardsSortByTournamentsWon
+		return nil
+	case GetGlobalLeaderboardsSortByAvgPlacement:
+		*s = GetGlobalLeaderboardsSortByAvgPlacement
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetGlobalLeaderboardsTimeRange string
+
+const (
+	GetGlobalLeaderboardsTimeRangeAllTime   GetGlobalLeaderboardsTimeRange = "all_time"
+	GetGlobalLeaderboardsTimeRangeThisMonth GetGlobalLeaderboardsTimeRange = "this_month"
+	GetGlobalLeaderboardsTimeRangeThisWeek  GetGlobalLeaderboardsTimeRange = "this_week"
+	GetGlobalLeaderboardsTimeRangeToday     GetGlobalLeaderboardsTimeRange = "today"
+)
+
+// AllValues returns all GetGlobalLeaderboardsTimeRange values.
+func (GetGlobalLeaderboardsTimeRange) AllValues() []GetGlobalLeaderboardsTimeRange {
+	return []GetGlobalLeaderboardsTimeRange{
+		GetGlobalLeaderboardsTimeRangeAllTime,
+		GetGlobalLeaderboardsTimeRangeThisMonth,
+		GetGlobalLeaderboardsTimeRangeThisWeek,
+		GetGlobalLeaderboardsTimeRangeToday,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetGlobalLeaderboardsTimeRange) MarshalText() ([]byte, error) {
+	switch s {
+	case GetGlobalLeaderboardsTimeRangeAllTime:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTimeRangeThisMonth:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTimeRangeThisWeek:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTimeRangeToday:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetGlobalLeaderboardsTimeRange) UnmarshalText(data []byte) error {
+	switch GetGlobalLeaderboardsTimeRange(data) {
+	case GetGlobalLeaderboardsTimeRangeAllTime:
+		*s = GetGlobalLeaderboardsTimeRangeAllTime
+		return nil
+	case GetGlobalLeaderboardsTimeRangeThisMonth:
+		*s = GetGlobalLeaderboardsTimeRangeThisMonth
+		return nil
+	case GetGlobalLeaderboardsTimeRangeThisWeek:
+		*s = GetGlobalLeaderboardsTimeRangeThisWeek
+		return nil
+	case GetGlobalLeaderboardsTimeRangeToday:
+		*s = GetGlobalLeaderboardsTimeRangeToday
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetGlobalLeaderboardsTournamentType string
+
+const (
+	GetGlobalLeaderboardsTournamentTypeAll          GetGlobalLeaderboardsTournamentType = "all"
+	GetGlobalLeaderboardsTournamentTypeRanked       GetGlobalLeaderboardsTournamentType = "ranked"
+	GetGlobalLeaderboardsTournamentTypeCasual       GetGlobalLeaderboardsTournamentType = "casual"
+	GetGlobalLeaderboardsTournamentTypeChampionship GetGlobalLeaderboardsTournamentType = "championship"
+)
+
+// AllValues returns all GetGlobalLeaderboardsTournamentType values.
+func (GetGlobalLeaderboardsTournamentType) AllValues() []GetGlobalLeaderboardsTournamentType {
+	return []GetGlobalLeaderboardsTournamentType{
+		GetGlobalLeaderboardsTournamentTypeAll,
+		GetGlobalLeaderboardsTournamentTypeRanked,
+		GetGlobalLeaderboardsTournamentTypeCasual,
+		GetGlobalLeaderboardsTournamentTypeChampionship,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetGlobalLeaderboardsTournamentType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetGlobalLeaderboardsTournamentTypeAll:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTournamentTypeRanked:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTournamentTypeCasual:
+		return []byte(s), nil
+	case GetGlobalLeaderboardsTournamentTypeChampionship:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetGlobalLeaderboardsTournamentType) UnmarshalText(data []byte) error {
+	switch GetGlobalLeaderboardsTournamentType(data) {
+	case GetGlobalLeaderboardsTournamentTypeAll:
+		*s = GetGlobalLeaderboardsTournamentTypeAll
+		return nil
+	case GetGlobalLeaderboardsTournamentTypeRanked:
+		*s = GetGlobalLeaderboardsTournamentTypeRanked
+		return nil
+	case GetGlobalLeaderboardsTournamentTypeCasual:
+		*s = GetGlobalLeaderboardsTournamentTypeCasual
+		return nil
+	case GetGlobalLeaderboardsTournamentTypeChampionship:
+		*s = GetGlobalLeaderboardsTournamentTypeChampionship
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type GetTournamentBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentBadRequest) GetDetails() *GetTournamentBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentBadRequest) SetDetails(val *GetTournamentBadRequestDetails) {
+	s.Details = val
+}
+
+func (*GetTournamentBadRequest) getTournamentRes() {}
 
 // Additional error details.
-type GetExampleNotFoundDetails struct{}
+type GetTournamentBadRequestDetails struct{}
 
-// GetExampleNotModified is response for GetExample operation.
-type GetExampleNotModified struct {
+// Standard error response format.
+type GetTournamentBracketDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentBracketDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentBracketDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentBracketDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentBracketDef) GetDetails() *GetTournamentBracketDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentBracketDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentBracketDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentBracketDef) SetDetails(val *GetTournamentBracketDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentBracketDefDetails struct{}
+
+// GetTournamentBracketDefStatusCode wraps GetTournamentBracketDef with StatusCode.
+type GetTournamentBracketDefStatusCode struct {
+	StatusCode int
+	Response   GetTournamentBracketDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetTournamentBracketDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentBracketDefStatusCode) GetResponse() GetTournamentBracketDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetTournamentBracketDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentBracketDefStatusCode) SetResponse(val GetTournamentBracketDef) {
+	s.Response = val
+}
+
+func (*GetTournamentBracketDefStatusCode) getTournamentBracketRes() {}
+
+// Standard error response format.
+type GetTournamentBracketNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentBracketNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentBracketNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentBracketNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentBracketNotFound) GetDetails() *GetTournamentBracketNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentBracketNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentBracketNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentBracketNotFound) SetDetails(val *GetTournamentBracketNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetTournamentBracketNotFound) getTournamentBracketRes() {}
+
+// Additional error details.
+type GetTournamentBracketNotFoundDetails struct{}
+
+// Standard error response format.
+type GetTournamentBracketTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentBracketTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentBracketTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentBracketTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentBracketTooManyRequests) GetDetails() *GetTournamentBracketTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentBracketTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentBracketTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentBracketTooManyRequests) SetDetails(val *GetTournamentBracketTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentBracketTooManyRequestsDetails struct{}
+
+// GetTournamentBracketTooManyRequestsHeaders wraps GetTournamentBracketTooManyRequests with response headers.
+type GetTournamentBracketTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   GetTournamentBracketTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *GetTournamentBracketTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentBracketTooManyRequestsHeaders) GetResponse() GetTournamentBracketTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *GetTournamentBracketTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentBracketTooManyRequestsHeaders) SetResponse(val GetTournamentBracketTooManyRequests) {
+	s.Response = val
+}
+
+func (*GetTournamentBracketTooManyRequestsHeaders) getTournamentBracketRes() {}
+
+// Standard error response format.
+type GetTournamentDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentDef) GetDetails() *GetTournamentDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentDef) SetDetails(val *GetTournamentDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentDefDetails struct{}
+
+// GetTournamentDefStatusCode wraps GetTournamentDef with StatusCode.
+type GetTournamentDefStatusCode struct {
+	StatusCode int
+	Response   GetTournamentDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetTournamentDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentDefStatusCode) GetResponse() GetTournamentDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetTournamentDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentDefStatusCode) SetResponse(val GetTournamentDef) {
+	s.Response = val
+}
+
+func (*GetTournamentDefStatusCode) getTournamentRes() {}
+
+// Standard error response format.
+type GetTournamentLeaderboardDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentLeaderboardDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentLeaderboardDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentLeaderboardDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentLeaderboardDef) GetDetails() *GetTournamentLeaderboardDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentLeaderboardDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentLeaderboardDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentLeaderboardDef) SetDetails(val *GetTournamentLeaderboardDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentLeaderboardDefDetails struct{}
+
+// GetTournamentLeaderboardDefStatusCode wraps GetTournamentLeaderboardDef with StatusCode.
+type GetTournamentLeaderboardDefStatusCode struct {
+	StatusCode int
+	Response   GetTournamentLeaderboardDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetTournamentLeaderboardDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentLeaderboardDefStatusCode) GetResponse() GetTournamentLeaderboardDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetTournamentLeaderboardDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentLeaderboardDefStatusCode) SetResponse(val GetTournamentLeaderboardDef) {
+	s.Response = val
+}
+
+func (*GetTournamentLeaderboardDefStatusCode) getTournamentLeaderboardRes() {}
+
+// Standard error response format.
+type GetTournamentLeaderboardNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentLeaderboardNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentLeaderboardNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentLeaderboardNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentLeaderboardNotFound) GetDetails() *GetTournamentLeaderboardNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentLeaderboardNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentLeaderboardNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentLeaderboardNotFound) SetDetails(val *GetTournamentLeaderboardNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetTournamentLeaderboardNotFound) getTournamentLeaderboardRes() {}
+
+// Additional error details.
+type GetTournamentLeaderboardNotFoundDetails struct{}
+
+// Standard error response format.
+type GetTournamentLeaderboardTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentLeaderboardTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentLeaderboardTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentLeaderboardTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentLeaderboardTooManyRequests) GetDetails() *GetTournamentLeaderboardTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentLeaderboardTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentLeaderboardTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentLeaderboardTooManyRequests) SetDetails(val *GetTournamentLeaderboardTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentLeaderboardTooManyRequestsDetails struct{}
+
+// GetTournamentLeaderboardTooManyRequestsHeaders wraps GetTournamentLeaderboardTooManyRequests with response headers.
+type GetTournamentLeaderboardTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   GetTournamentLeaderboardTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *GetTournamentLeaderboardTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentLeaderboardTooManyRequestsHeaders) GetResponse() GetTournamentLeaderboardTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *GetTournamentLeaderboardTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentLeaderboardTooManyRequestsHeaders) SetResponse(val GetTournamentLeaderboardTooManyRequests) {
+	s.Response = val
+}
+
+func (*GetTournamentLeaderboardTooManyRequestsHeaders) getTournamentLeaderboardRes() {}
+
+// Standard error response format.
+type GetTournamentNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentNotFound) GetDetails() *GetTournamentNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentNotFound) SetDetails(val *GetTournamentNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetTournamentNotFound) getTournamentRes() {}
+
+// Additional error details.
+type GetTournamentNotFoundDetails struct{}
+
+// GetTournamentNotModified is response for GetTournament operation.
+type GetTournamentNotModified struct {
 	CacheControl OptString
 	ETag         OptString
 }
 
 // GetCacheControl returns the value of CacheControl.
-func (s *GetExampleNotModified) GetCacheControl() OptString {
+func (s *GetTournamentNotModified) GetCacheControl() OptString {
 	return s.CacheControl
 }
 
 // GetETag returns the value of ETag.
-func (s *GetExampleNotModified) GetETag() OptString {
+func (s *GetTournamentNotModified) GetETag() OptString {
 	return s.ETag
 }
 
 // SetCacheControl sets the value of CacheControl.
-func (s *GetExampleNotModified) SetCacheControl(val OptString) {
+func (s *GetTournamentNotModified) SetCacheControl(val OptString) {
 	s.CacheControl = val
 }
 
 // SetETag sets the value of ETag.
-func (s *GetExampleNotModified) SetETag(val OptString) {
+func (s *GetTournamentNotModified) SetETag(val OptString) {
 	s.ETag = val
 }
 
-func (*GetExampleNotModified) getExampleRes() {}
+func (*GetTournamentNotModified) getTournamentRes() {}
 
 // Standard error response format.
-type GetExampleTooManyRequests struct {
+type GetTournamentSpectatorsDef struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *GetExampleTooManyRequestsDetails `json:"details"`
+	Details *GetTournamentSpectatorsDefDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *GetExampleTooManyRequests) GetCode() int32 {
+func (s *GetTournamentSpectatorsDef) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *GetExampleTooManyRequests) GetMessage() string {
+func (s *GetTournamentSpectatorsDef) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *GetExampleTooManyRequests) GetDetails() *GetExampleTooManyRequestsDetails {
+func (s *GetTournamentSpectatorsDef) GetDetails() *GetTournamentSpectatorsDefDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *GetExampleTooManyRequests) SetCode(val int32) {
+func (s *GetTournamentSpectatorsDef) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *GetExampleTooManyRequests) SetMessage(val string) {
+func (s *GetTournamentSpectatorsDef) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *GetExampleTooManyRequests) SetDetails(val *GetExampleTooManyRequestsDetails) {
+func (s *GetTournamentSpectatorsDef) SetDetails(val *GetTournamentSpectatorsDefDetails) {
 	s.Details = val
 }
 
 // Additional error details.
-type GetExampleTooManyRequestsDetails struct{}
+type GetTournamentSpectatorsDefDetails struct{}
 
-// GetExampleTooManyRequestsHeaders wraps GetExampleTooManyRequests with response headers.
-type GetExampleTooManyRequestsHeaders struct {
+// GetTournamentSpectatorsDefStatusCode wraps GetTournamentSpectatorsDef with StatusCode.
+type GetTournamentSpectatorsDefStatusCode struct {
+	StatusCode int
+	Response   GetTournamentSpectatorsDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *GetTournamentSpectatorsDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentSpectatorsDefStatusCode) GetResponse() GetTournamentSpectatorsDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *GetTournamentSpectatorsDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentSpectatorsDefStatusCode) SetResponse(val GetTournamentSpectatorsDef) {
+	s.Response = val
+}
+
+func (*GetTournamentSpectatorsDefStatusCode) getTournamentSpectatorsRes() {}
+
+// Standard error response format.
+type GetTournamentSpectatorsNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentSpectatorsNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentSpectatorsNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentSpectatorsNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentSpectatorsNotFound) GetDetails() *GetTournamentSpectatorsNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentSpectatorsNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentSpectatorsNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentSpectatorsNotFound) SetDetails(val *GetTournamentSpectatorsNotFoundDetails) {
+	s.Details = val
+}
+
+func (*GetTournamentSpectatorsNotFound) getTournamentSpectatorsRes() {}
+
+// Additional error details.
+type GetTournamentSpectatorsNotFoundDetails struct{}
+
+// Standard error response format.
+type GetTournamentSpectatorsTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentSpectatorsTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentSpectatorsTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentSpectatorsTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentSpectatorsTooManyRequests) GetDetails() *GetTournamentSpectatorsTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentSpectatorsTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentSpectatorsTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentSpectatorsTooManyRequests) SetDetails(val *GetTournamentSpectatorsTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentSpectatorsTooManyRequestsDetails struct{}
+
+// GetTournamentSpectatorsTooManyRequestsHeaders wraps GetTournamentSpectatorsTooManyRequests with response headers.
+type GetTournamentSpectatorsTooManyRequestsHeaders struct {
 	RetryAfter OptInt
-	Response   GetExampleTooManyRequests
+	Response   GetTournamentSpectatorsTooManyRequests
 }
 
 // GetRetryAfter returns the value of RetryAfter.
-func (s *GetExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
+func (s *GetTournamentSpectatorsTooManyRequestsHeaders) GetRetryAfter() OptInt {
 	return s.RetryAfter
 }
 
 // GetResponse returns the value of Response.
-func (s *GetExampleTooManyRequestsHeaders) GetResponse() GetExampleTooManyRequests {
+func (s *GetTournamentSpectatorsTooManyRequestsHeaders) GetResponse() GetTournamentSpectatorsTooManyRequests {
 	return s.Response
 }
 
 // SetRetryAfter sets the value of RetryAfter.
-func (s *GetExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+func (s *GetTournamentSpectatorsTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
 	s.RetryAfter = val
 }
 
 // SetResponse sets the value of Response.
-func (s *GetExampleTooManyRequestsHeaders) SetResponse(val GetExampleTooManyRequests) {
+func (s *GetTournamentSpectatorsTooManyRequestsHeaders) SetResponse(val GetTournamentSpectatorsTooManyRequests) {
 	s.Response = val
 }
 
-func (*GetExampleTooManyRequestsHeaders) getExampleRes() {}
+func (*GetTournamentSpectatorsTooManyRequestsHeaders) getTournamentSpectatorsRes() {}
+
+// Standard error response format.
+type GetTournamentTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *GetTournamentTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *GetTournamentTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *GetTournamentTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *GetTournamentTooManyRequests) GetDetails() *GetTournamentTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *GetTournamentTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *GetTournamentTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *GetTournamentTooManyRequests) SetDetails(val *GetTournamentTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type GetTournamentTooManyRequestsDetails struct{}
+
+// GetTournamentTooManyRequestsHeaders wraps GetTournamentTooManyRequests with response headers.
+type GetTournamentTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   GetTournamentTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *GetTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *GetTournamentTooManyRequestsHeaders) GetResponse() GetTournamentTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *GetTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetTournamentTooManyRequestsHeaders) SetResponse(val GetTournamentTooManyRequests) {
+	s.Response = val
+}
+
+func (*GetTournamentTooManyRequestsHeaders) getTournamentRes() {}
+
+// Standard error response format.
+type InternalServerError struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *InternalServerErrorDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *InternalServerError) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *InternalServerError) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *InternalServerError) GetDetails() *InternalServerErrorDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *InternalServerError) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *InternalServerError) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *InternalServerError) SetDetails(val *InternalServerErrorDetails) {
+	s.Details = val
+}
+
+func (*InternalServerError) getGlobalLeaderboardsRes() {}
+
+// Additional error details.
+type InternalServerErrorDetails struct{}
+
+// Standard error response format.
+type JoinTournamentBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *JoinTournamentBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *JoinTournamentBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *JoinTournamentBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *JoinTournamentBadRequest) GetDetails() *JoinTournamentBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *JoinTournamentBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *JoinTournamentBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *JoinTournamentBadRequest) SetDetails(val *JoinTournamentBadRequestDetails) {
+	s.Details = val
+}
+
+func (*JoinTournamentBadRequest) joinTournamentRes() {}
+
+// Additional error details.
+type JoinTournamentBadRequestDetails struct{}
+
+// Standard error response format.
+type JoinTournamentConflict struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *JoinTournamentConflictDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *JoinTournamentConflict) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *JoinTournamentConflict) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *JoinTournamentConflict) GetDetails() *JoinTournamentConflictDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *JoinTournamentConflict) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *JoinTournamentConflict) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *JoinTournamentConflict) SetDetails(val *JoinTournamentConflictDetails) {
+	s.Details = val
+}
+
+func (*JoinTournamentConflict) joinTournamentRes() {}
+
+// Additional error details.
+type JoinTournamentConflictDetails struct{}
+
+// Standard error response format.
+type JoinTournamentDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *JoinTournamentDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *JoinTournamentDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *JoinTournamentDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *JoinTournamentDef) GetDetails() *JoinTournamentDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *JoinTournamentDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *JoinTournamentDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *JoinTournamentDef) SetDetails(val *JoinTournamentDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type JoinTournamentDefDetails struct{}
+
+// JoinTournamentDefStatusCode wraps JoinTournamentDef with StatusCode.
+type JoinTournamentDefStatusCode struct {
+	StatusCode int
+	Response   JoinTournamentDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *JoinTournamentDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *JoinTournamentDefStatusCode) GetResponse() JoinTournamentDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *JoinTournamentDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *JoinTournamentDefStatusCode) SetResponse(val JoinTournamentDef) {
+	s.Response = val
+}
+
+func (*JoinTournamentDefStatusCode) joinTournamentRes() {}
+
+// Standard error response format.
+type JoinTournamentNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *JoinTournamentNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *JoinTournamentNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *JoinTournamentNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *JoinTournamentNotFound) GetDetails() *JoinTournamentNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *JoinTournamentNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *JoinTournamentNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *JoinTournamentNotFound) SetDetails(val *JoinTournamentNotFoundDetails) {
+	s.Details = val
+}
+
+func (*JoinTournamentNotFound) joinTournamentRes() {}
+
+// Additional error details.
+type JoinTournamentNotFoundDetails struct{}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/JoinTournamentRequest
+type JoinTournamentRequest struct {
+	// Tournament to join.
+	TournamentID uuid.UUID `json:"tournament_id"`
+	// Requested seeding position.
+	Seed OptInt `json:"seed"`
+}
+
+// GetTournamentID returns the value of TournamentID.
+func (s *JoinTournamentRequest) GetTournamentID() uuid.UUID {
+	return s.TournamentID
+}
+
+// GetSeed returns the value of Seed.
+func (s *JoinTournamentRequest) GetSeed() OptInt {
+	return s.Seed
+}
+
+// SetTournamentID sets the value of TournamentID.
+func (s *JoinTournamentRequest) SetTournamentID(val uuid.UUID) {
+	s.TournamentID = val
+}
+
+// SetSeed sets the value of Seed.
+func (s *JoinTournamentRequest) SetSeed(val OptInt) {
+	s.Seed = val
+}
+
+// Standard error response format.
+type JoinTournamentTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *JoinTournamentTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *JoinTournamentTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *JoinTournamentTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *JoinTournamentTooManyRequests) GetDetails() *JoinTournamentTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *JoinTournamentTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *JoinTournamentTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *JoinTournamentTooManyRequests) SetDetails(val *JoinTournamentTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type JoinTournamentTooManyRequestsDetails struct{}
+
+// JoinTournamentTooManyRequestsHeaders wraps JoinTournamentTooManyRequests with response headers.
+type JoinTournamentTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   JoinTournamentTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *JoinTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *JoinTournamentTooManyRequestsHeaders) GetResponse() JoinTournamentTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *JoinTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *JoinTournamentTooManyRequestsHeaders) SetResponse(val JoinTournamentTooManyRequests) {
+	s.Response = val
+}
+
+func (*JoinTournamentTooManyRequestsHeaders) joinTournamentRes() {}
+
+// Standard error response format.
+type LeaveTournamentBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *LeaveTournamentBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *LeaveTournamentBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *LeaveTournamentBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *LeaveTournamentBadRequest) GetDetails() *LeaveTournamentBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *LeaveTournamentBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *LeaveTournamentBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *LeaveTournamentBadRequest) SetDetails(val *LeaveTournamentBadRequestDetails) {
+	s.Details = val
+}
+
+func (*LeaveTournamentBadRequest) leaveTournamentRes() {}
+
+// Additional error details.
+type LeaveTournamentBadRequestDetails struct{}
+
+// Standard error response format.
+type LeaveTournamentDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *LeaveTournamentDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *LeaveTournamentDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *LeaveTournamentDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *LeaveTournamentDef) GetDetails() *LeaveTournamentDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *LeaveTournamentDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *LeaveTournamentDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *LeaveTournamentDef) SetDetails(val *LeaveTournamentDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type LeaveTournamentDefDetails struct{}
+
+// LeaveTournamentDefStatusCode wraps LeaveTournamentDef with StatusCode.
+type LeaveTournamentDefStatusCode struct {
+	StatusCode int
+	Response   LeaveTournamentDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *LeaveTournamentDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *LeaveTournamentDefStatusCode) GetResponse() LeaveTournamentDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *LeaveTournamentDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *LeaveTournamentDefStatusCode) SetResponse(val LeaveTournamentDef) {
+	s.Response = val
+}
+
+func (*LeaveTournamentDefStatusCode) leaveTournamentRes() {}
+
+// Standard error response format.
+type LeaveTournamentNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *LeaveTournamentNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *LeaveTournamentNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *LeaveTournamentNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *LeaveTournamentNotFound) GetDetails() *LeaveTournamentNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *LeaveTournamentNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *LeaveTournamentNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *LeaveTournamentNotFound) SetDetails(val *LeaveTournamentNotFoundDetails) {
+	s.Details = val
+}
+
+func (*LeaveTournamentNotFound) leaveTournamentRes() {}
+
+// Additional error details.
+type LeaveTournamentNotFoundDetails struct{}
+
+// LeaveTournamentOK is response for LeaveTournament operation.
+type LeaveTournamentOK struct{}
+
+func (*LeaveTournamentOK) leaveTournamentRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/LeaveTournamentRequest
+type LeaveTournamentRequest struct {
+	// Tournament to leave.
+	TournamentID uuid.UUID `json:"tournament_id"`
+}
+
+// GetTournamentID returns the value of TournamentID.
+func (s *LeaveTournamentRequest) GetTournamentID() uuid.UUID {
+	return s.TournamentID
+}
+
+// SetTournamentID sets the value of TournamentID.
+func (s *LeaveTournamentRequest) SetTournamentID(val uuid.UUID) {
+	s.TournamentID = val
+}
+
+// Standard error response format.
+type LeaveTournamentTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *LeaveTournamentTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *LeaveTournamentTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *LeaveTournamentTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *LeaveTournamentTooManyRequests) GetDetails() *LeaveTournamentTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *LeaveTournamentTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *LeaveTournamentTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *LeaveTournamentTooManyRequests) SetDetails(val *LeaveTournamentTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type LeaveTournamentTooManyRequestsDetails struct{}
+
+// LeaveTournamentTooManyRequestsHeaders wraps LeaveTournamentTooManyRequests with response headers.
+type LeaveTournamentTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   LeaveTournamentTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *LeaveTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *LeaveTournamentTooManyRequestsHeaders) GetResponse() LeaveTournamentTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *LeaveTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *LeaveTournamentTooManyRequestsHeaders) SetResponse(val LeaveTournamentTooManyRequests) {
+	s.Response = val
+}
+
+func (*LeaveTournamentTooManyRequestsHeaders) leaveTournamentRes() {}
 
 // Standard error response format.
 type ListTournamentsBadRequest struct {
@@ -1505,31 +2940,108 @@ func (*ListTournamentsBadRequest) listTournamentsRes() {}
 // Additional error details.
 type ListTournamentsBadRequestDetails struct{}
 
-type ListTournamentsFilterStatus string
+// Standard error response format.
+type ListTournamentsDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *ListTournamentsDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *ListTournamentsDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *ListTournamentsDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *ListTournamentsDef) GetDetails() *ListTournamentsDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *ListTournamentsDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *ListTournamentsDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *ListTournamentsDef) SetDetails(val *ListTournamentsDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type ListTournamentsDefDetails struct{}
+
+// ListTournamentsDefStatusCode wraps ListTournamentsDef with StatusCode.
+type ListTournamentsDefStatusCode struct {
+	StatusCode int
+	Response   ListTournamentsDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *ListTournamentsDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *ListTournamentsDefStatusCode) GetResponse() ListTournamentsDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *ListTournamentsDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ListTournamentsDefStatusCode) SetResponse(val ListTournamentsDef) {
+	s.Response = val
+}
+
+func (*ListTournamentsDefStatusCode) listTournamentsRes() {}
+
+type ListTournamentsGameMode string
 
 const (
-	ListTournamentsFilterStatusActive   ListTournamentsFilterStatus = "active"
-	ListTournamentsFilterStatusInactive ListTournamentsFilterStatus = "inactive"
-	ListTournamentsFilterStatusPending  ListTournamentsFilterStatus = "pending"
+	ListTournamentsGameModeDeathmatch     ListTournamentsGameMode = "deathmatch"
+	ListTournamentsGameModeTeamDeathmatch ListTournamentsGameMode = "team_deathmatch"
+	ListTournamentsGameModeCaptureTheFlag ListTournamentsGameMode = "capture_the_flag"
+	ListTournamentsGameModeKingOfTheHill  ListTournamentsGameMode = "king_of_the_hill"
+	ListTournamentsGameModeBattleRoyale   ListTournamentsGameMode = "battle_royale"
 )
 
-// AllValues returns all ListTournamentsFilterStatus values.
-func (ListTournamentsFilterStatus) AllValues() []ListTournamentsFilterStatus {
-	return []ListTournamentsFilterStatus{
-		ListTournamentsFilterStatusActive,
-		ListTournamentsFilterStatusInactive,
-		ListTournamentsFilterStatusPending,
+// AllValues returns all ListTournamentsGameMode values.
+func (ListTournamentsGameMode) AllValues() []ListTournamentsGameMode {
+	return []ListTournamentsGameMode{
+		ListTournamentsGameModeDeathmatch,
+		ListTournamentsGameModeTeamDeathmatch,
+		ListTournamentsGameModeCaptureTheFlag,
+		ListTournamentsGameModeKingOfTheHill,
+		ListTournamentsGameModeBattleRoyale,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ListTournamentsFilterStatus) MarshalText() ([]byte, error) {
+func (s ListTournamentsGameMode) MarshalText() ([]byte, error) {
 	switch s {
-	case ListTournamentsFilterStatusActive:
+	case ListTournamentsGameModeDeathmatch:
 		return []byte(s), nil
-	case ListTournamentsFilterStatusInactive:
+	case ListTournamentsGameModeTeamDeathmatch:
 		return []byte(s), nil
-	case ListTournamentsFilterStatusPending:
+	case ListTournamentsGameModeCaptureTheFlag:
+		return []byte(s), nil
+	case ListTournamentsGameModeKingOfTheHill:
+		return []byte(s), nil
+	case ListTournamentsGameModeBattleRoyale:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1537,16 +3049,84 @@ func (s ListTournamentsFilterStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ListTournamentsFilterStatus) UnmarshalText(data []byte) error {
-	switch ListTournamentsFilterStatus(data) {
-	case ListTournamentsFilterStatusActive:
-		*s = ListTournamentsFilterStatusActive
+func (s *ListTournamentsGameMode) UnmarshalText(data []byte) error {
+	switch ListTournamentsGameMode(data) {
+	case ListTournamentsGameModeDeathmatch:
+		*s = ListTournamentsGameModeDeathmatch
 		return nil
-	case ListTournamentsFilterStatusInactive:
-		*s = ListTournamentsFilterStatusInactive
+	case ListTournamentsGameModeTeamDeathmatch:
+		*s = ListTournamentsGameModeTeamDeathmatch
 		return nil
-	case ListTournamentsFilterStatusPending:
-		*s = ListTournamentsFilterStatusPending
+	case ListTournamentsGameModeCaptureTheFlag:
+		*s = ListTournamentsGameModeCaptureTheFlag
+		return nil
+	case ListTournamentsGameModeKingOfTheHill:
+		*s = ListTournamentsGameModeKingOfTheHill
+		return nil
+	case ListTournamentsGameModeBattleRoyale:
+		*s = ListTournamentsGameModeBattleRoyale
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ListTournamentsSkillLevel string
+
+const (
+	ListTournamentsSkillLevelBeginner     ListTournamentsSkillLevel = "beginner"
+	ListTournamentsSkillLevelIntermediate ListTournamentsSkillLevel = "intermediate"
+	ListTournamentsSkillLevelAdvanced     ListTournamentsSkillLevel = "advanced"
+	ListTournamentsSkillLevelExpert       ListTournamentsSkillLevel = "expert"
+	ListTournamentsSkillLevelLegendary    ListTournamentsSkillLevel = "legendary"
+)
+
+// AllValues returns all ListTournamentsSkillLevel values.
+func (ListTournamentsSkillLevel) AllValues() []ListTournamentsSkillLevel {
+	return []ListTournamentsSkillLevel{
+		ListTournamentsSkillLevelBeginner,
+		ListTournamentsSkillLevelIntermediate,
+		ListTournamentsSkillLevelAdvanced,
+		ListTournamentsSkillLevelExpert,
+		ListTournamentsSkillLevelLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ListTournamentsSkillLevel) MarshalText() ([]byte, error) {
+	switch s {
+	case ListTournamentsSkillLevelBeginner:
+		return []byte(s), nil
+	case ListTournamentsSkillLevelIntermediate:
+		return []byte(s), nil
+	case ListTournamentsSkillLevelAdvanced:
+		return []byte(s), nil
+	case ListTournamentsSkillLevelExpert:
+		return []byte(s), nil
+	case ListTournamentsSkillLevelLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ListTournamentsSkillLevel) UnmarshalText(data []byte) error {
+	switch ListTournamentsSkillLevel(data) {
+	case ListTournamentsSkillLevelBeginner:
+		*s = ListTournamentsSkillLevelBeginner
+		return nil
+	case ListTournamentsSkillLevelIntermediate:
+		*s = ListTournamentsSkillLevelIntermediate
+		return nil
+	case ListTournamentsSkillLevelAdvanced:
+		*s = ListTournamentsSkillLevelAdvanced
+		return nil
+	case ListTournamentsSkillLevelExpert:
+		*s = ListTournamentsSkillLevelExpert
+		return nil
+	case ListTournamentsSkillLevelLegendary:
+		*s = ListTournamentsSkillLevelLegendary
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1556,17 +3136,19 @@ func (s *ListTournamentsFilterStatus) UnmarshalText(data []byte) error {
 type ListTournamentsSortBy string
 
 const (
-	ListTournamentsSortByCreatedAt ListTournamentsSortBy = "created_at"
-	ListTournamentsSortByName      ListTournamentsSortBy = "name"
-	ListTournamentsSortByPriority  ListTournamentsSortBy = "priority"
+	ListTournamentsSortByCreatedAt        ListTournamentsSortBy = "created_at"
+	ListTournamentsSortByStartTime        ListTournamentsSortBy = "start_time"
+	ListTournamentsSortByPrizePool        ListTournamentsSortBy = "prize_pool"
+	ListTournamentsSortByParticipantCount ListTournamentsSortBy = "participant_count"
 )
 
 // AllValues returns all ListTournamentsSortBy values.
 func (ListTournamentsSortBy) AllValues() []ListTournamentsSortBy {
 	return []ListTournamentsSortBy{
 		ListTournamentsSortByCreatedAt,
-		ListTournamentsSortByName,
-		ListTournamentsSortByPriority,
+		ListTournamentsSortByStartTime,
+		ListTournamentsSortByPrizePool,
+		ListTournamentsSortByParticipantCount,
 	}
 }
 
@@ -1575,9 +3157,11 @@ func (s ListTournamentsSortBy) MarshalText() ([]byte, error) {
 	switch s {
 	case ListTournamentsSortByCreatedAt:
 		return []byte(s), nil
-	case ListTournamentsSortByName:
+	case ListTournamentsSortByStartTime:
 		return []byte(s), nil
-	case ListTournamentsSortByPriority:
+	case ListTournamentsSortByPrizePool:
+		return []byte(s), nil
+	case ListTournamentsSortByParticipantCount:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1590,11 +3174,14 @@ func (s *ListTournamentsSortBy) UnmarshalText(data []byte) error {
 	case ListTournamentsSortByCreatedAt:
 		*s = ListTournamentsSortByCreatedAt
 		return nil
-	case ListTournamentsSortByName:
-		*s = ListTournamentsSortByName
+	case ListTournamentsSortByStartTime:
+		*s = ListTournamentsSortByStartTime
 		return nil
-	case ListTournamentsSortByPriority:
-		*s = ListTournamentsSortByPriority
+	case ListTournamentsSortByPrizePool:
+		*s = ListTournamentsSortByPrizePool
+		return nil
+	case ListTournamentsSortByParticipantCount:
+		*s = ListTournamentsSortByParticipantCount
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1636,6 +3223,68 @@ func (s *ListTournamentsSortOrder) UnmarshalText(data []byte) error {
 		return nil
 	case ListTournamentsSortOrderDesc:
 		*s = ListTournamentsSortOrderDesc
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ListTournamentsStatus string
+
+const (
+	ListTournamentsStatusUpcoming         ListTournamentsStatus = "upcoming"
+	ListTournamentsStatusRegistrationOpen ListTournamentsStatus = "registration_open"
+	ListTournamentsStatusInProgress       ListTournamentsStatus = "in_progress"
+	ListTournamentsStatusCompleted        ListTournamentsStatus = "completed"
+	ListTournamentsStatusCancelled        ListTournamentsStatus = "cancelled"
+)
+
+// AllValues returns all ListTournamentsStatus values.
+func (ListTournamentsStatus) AllValues() []ListTournamentsStatus {
+	return []ListTournamentsStatus{
+		ListTournamentsStatusUpcoming,
+		ListTournamentsStatusRegistrationOpen,
+		ListTournamentsStatusInProgress,
+		ListTournamentsStatusCompleted,
+		ListTournamentsStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ListTournamentsStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ListTournamentsStatusUpcoming:
+		return []byte(s), nil
+	case ListTournamentsStatusRegistrationOpen:
+		return []byte(s), nil
+	case ListTournamentsStatusInProgress:
+		return []byte(s), nil
+	case ListTournamentsStatusCompleted:
+		return []byte(s), nil
+	case ListTournamentsStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ListTournamentsStatus) UnmarshalText(data []byte) error {
+	switch ListTournamentsStatus(data) {
+	case ListTournamentsStatusUpcoming:
+		*s = ListTournamentsStatusUpcoming
+		return nil
+	case ListTournamentsStatusRegistrationOpen:
+		*s = ListTournamentsStatusRegistrationOpen
+		return nil
+	case ListTournamentsStatusInProgress:
+		*s = ListTournamentsStatusInProgress
+		return nil
+	case ListTournamentsStatusCompleted:
+		*s = ListTournamentsStatusCompleted
+		return nil
+	case ListTournamentsStatusCancelled:
+		*s = ListTournamentsStatusCancelled
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1731,6 +3380,52 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
+// NewOptCreateTournamentRequestTournamentDifficulty returns new OptCreateTournamentRequestTournamentDifficulty with value set to v.
+func NewOptCreateTournamentRequestTournamentDifficulty(v CreateTournamentRequestTournamentDifficulty) OptCreateTournamentRequestTournamentDifficulty {
+	return OptCreateTournamentRequestTournamentDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateTournamentRequestTournamentDifficulty is optional CreateTournamentRequestTournamentDifficulty.
+type OptCreateTournamentRequestTournamentDifficulty struct {
+	Value CreateTournamentRequestTournamentDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptCreateTournamentRequestTournamentDifficulty was set.
+func (o OptCreateTournamentRequestTournamentDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateTournamentRequestTournamentDifficulty) Reset() {
+	var v CreateTournamentRequestTournamentDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateTournamentRequestTournamentDifficulty) SetTo(v CreateTournamentRequestTournamentDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateTournamentRequestTournamentDifficulty) Get() (v CreateTournamentRequestTournamentDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateTournamentRequestTournamentDifficulty) Or(d CreateTournamentRequestTournamentDifficulty) CreateTournamentRequestTournamentDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -1771,6 +3466,328 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFloat64 returns new OptFloat64 with value set to v.
+func NewOptFloat64(v float64) OptFloat64 {
+	return OptFloat64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFloat64 is optional float64.
+type OptFloat64 struct {
+	Value float64
+	Set   bool
+}
+
+// IsSet returns true if OptFloat64 was set.
+func (o OptFloat64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFloat64) Reset() {
+	var v float64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFloat64) SetTo(v float64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFloat64) Get() (v float64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGenerateBracketRequest returns new OptGenerateBracketRequest with value set to v.
+func NewOptGenerateBracketRequest(v GenerateBracketRequest) OptGenerateBracketRequest {
+	return OptGenerateBracketRequest{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGenerateBracketRequest is optional GenerateBracketRequest.
+type OptGenerateBracketRequest struct {
+	Value GenerateBracketRequest
+	Set   bool
+}
+
+// IsSet returns true if OptGenerateBracketRequest was set.
+func (o OptGenerateBracketRequest) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGenerateBracketRequest) Reset() {
+	var v GenerateBracketRequest
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGenerateBracketRequest) SetTo(v GenerateBracketRequest) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGenerateBracketRequest) Get() (v GenerateBracketRequest, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGenerateBracketRequest) Or(d GenerateBracketRequest) GenerateBracketRequest {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGenerateBracketRequestBracketType returns new OptGenerateBracketRequestBracketType with value set to v.
+func NewOptGenerateBracketRequestBracketType(v GenerateBracketRequestBracketType) OptGenerateBracketRequestBracketType {
+	return OptGenerateBracketRequestBracketType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGenerateBracketRequestBracketType is optional GenerateBracketRequestBracketType.
+type OptGenerateBracketRequestBracketType struct {
+	Value GenerateBracketRequestBracketType
+	Set   bool
+}
+
+// IsSet returns true if OptGenerateBracketRequestBracketType was set.
+func (o OptGenerateBracketRequestBracketType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGenerateBracketRequestBracketType) Reset() {
+	var v GenerateBracketRequestBracketType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGenerateBracketRequestBracketType) SetTo(v GenerateBracketRequestBracketType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGenerateBracketRequestBracketType) Get() (v GenerateBracketRequestBracketType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGenerateBracketRequestBracketType) Or(d GenerateBracketRequestBracketType) GenerateBracketRequestBracketType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGenerateBracketRequestSeedingAlgorithm returns new OptGenerateBracketRequestSeedingAlgorithm with value set to v.
+func NewOptGenerateBracketRequestSeedingAlgorithm(v GenerateBracketRequestSeedingAlgorithm) OptGenerateBracketRequestSeedingAlgorithm {
+	return OptGenerateBracketRequestSeedingAlgorithm{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGenerateBracketRequestSeedingAlgorithm is optional GenerateBracketRequestSeedingAlgorithm.
+type OptGenerateBracketRequestSeedingAlgorithm struct {
+	Value GenerateBracketRequestSeedingAlgorithm
+	Set   bool
+}
+
+// IsSet returns true if OptGenerateBracketRequestSeedingAlgorithm was set.
+func (o OptGenerateBracketRequestSeedingAlgorithm) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGenerateBracketRequestSeedingAlgorithm) Reset() {
+	var v GenerateBracketRequestSeedingAlgorithm
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGenerateBracketRequestSeedingAlgorithm) SetTo(v GenerateBracketRequestSeedingAlgorithm) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGenerateBracketRequestSeedingAlgorithm) Get() (v GenerateBracketRequestSeedingAlgorithm, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGenerateBracketRequestSeedingAlgorithm) Or(d GenerateBracketRequestSeedingAlgorithm) GenerateBracketRequestSeedingAlgorithm {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetGlobalLeaderboardsSortBy returns new OptGetGlobalLeaderboardsSortBy with value set to v.
+func NewOptGetGlobalLeaderboardsSortBy(v GetGlobalLeaderboardsSortBy) OptGetGlobalLeaderboardsSortBy {
+	return OptGetGlobalLeaderboardsSortBy{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetGlobalLeaderboardsSortBy is optional GetGlobalLeaderboardsSortBy.
+type OptGetGlobalLeaderboardsSortBy struct {
+	Value GetGlobalLeaderboardsSortBy
+	Set   bool
+}
+
+// IsSet returns true if OptGetGlobalLeaderboardsSortBy was set.
+func (o OptGetGlobalLeaderboardsSortBy) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetGlobalLeaderboardsSortBy) Reset() {
+	var v GetGlobalLeaderboardsSortBy
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetGlobalLeaderboardsSortBy) SetTo(v GetGlobalLeaderboardsSortBy) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetGlobalLeaderboardsSortBy) Get() (v GetGlobalLeaderboardsSortBy, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetGlobalLeaderboardsSortBy) Or(d GetGlobalLeaderboardsSortBy) GetGlobalLeaderboardsSortBy {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetGlobalLeaderboardsTimeRange returns new OptGetGlobalLeaderboardsTimeRange with value set to v.
+func NewOptGetGlobalLeaderboardsTimeRange(v GetGlobalLeaderboardsTimeRange) OptGetGlobalLeaderboardsTimeRange {
+	return OptGetGlobalLeaderboardsTimeRange{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetGlobalLeaderboardsTimeRange is optional GetGlobalLeaderboardsTimeRange.
+type OptGetGlobalLeaderboardsTimeRange struct {
+	Value GetGlobalLeaderboardsTimeRange
+	Set   bool
+}
+
+// IsSet returns true if OptGetGlobalLeaderboardsTimeRange was set.
+func (o OptGetGlobalLeaderboardsTimeRange) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetGlobalLeaderboardsTimeRange) Reset() {
+	var v GetGlobalLeaderboardsTimeRange
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetGlobalLeaderboardsTimeRange) SetTo(v GetGlobalLeaderboardsTimeRange) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetGlobalLeaderboardsTimeRange) Get() (v GetGlobalLeaderboardsTimeRange, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetGlobalLeaderboardsTimeRange) Or(d GetGlobalLeaderboardsTimeRange) GetGlobalLeaderboardsTimeRange {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetGlobalLeaderboardsTournamentType returns new OptGetGlobalLeaderboardsTournamentType with value set to v.
+func NewOptGetGlobalLeaderboardsTournamentType(v GetGlobalLeaderboardsTournamentType) OptGetGlobalLeaderboardsTournamentType {
+	return OptGetGlobalLeaderboardsTournamentType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetGlobalLeaderboardsTournamentType is optional GetGlobalLeaderboardsTournamentType.
+type OptGetGlobalLeaderboardsTournamentType struct {
+	Value GetGlobalLeaderboardsTournamentType
+	Set   bool
+}
+
+// IsSet returns true if OptGetGlobalLeaderboardsTournamentType was set.
+func (o OptGetGlobalLeaderboardsTournamentType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetGlobalLeaderboardsTournamentType) Reset() {
+	var v GetGlobalLeaderboardsTournamentType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetGlobalLeaderboardsTournamentType) SetTo(v GetGlobalLeaderboardsTournamentType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetGlobalLeaderboardsTournamentType) Get() (v GetGlobalLeaderboardsTournamentType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetGlobalLeaderboardsTournamentType) Or(d GetGlobalLeaderboardsTournamentType) GetGlobalLeaderboardsTournamentType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1823,38 +3840,38 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
-// NewOptListTournamentsFilterStatus returns new OptListTournamentsFilterStatus with value set to v.
-func NewOptListTournamentsFilterStatus(v ListTournamentsFilterStatus) OptListTournamentsFilterStatus {
-	return OptListTournamentsFilterStatus{
+// NewOptListTournamentsGameMode returns new OptListTournamentsGameMode with value set to v.
+func NewOptListTournamentsGameMode(v ListTournamentsGameMode) OptListTournamentsGameMode {
+	return OptListTournamentsGameMode{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptListTournamentsFilterStatus is optional ListTournamentsFilterStatus.
-type OptListTournamentsFilterStatus struct {
-	Value ListTournamentsFilterStatus
+// OptListTournamentsGameMode is optional ListTournamentsGameMode.
+type OptListTournamentsGameMode struct {
+	Value ListTournamentsGameMode
 	Set   bool
 }
 
-// IsSet returns true if OptListTournamentsFilterStatus was set.
-func (o OptListTournamentsFilterStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptListTournamentsGameMode was set.
+func (o OptListTournamentsGameMode) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptListTournamentsFilterStatus) Reset() {
-	var v ListTournamentsFilterStatus
+func (o *OptListTournamentsGameMode) Reset() {
+	var v ListTournamentsGameMode
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptListTournamentsFilterStatus) SetTo(v ListTournamentsFilterStatus) {
+func (o *OptListTournamentsGameMode) SetTo(v ListTournamentsGameMode) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptListTournamentsFilterStatus) Get() (v ListTournamentsFilterStatus, ok bool) {
+func (o OptListTournamentsGameMode) Get() (v ListTournamentsGameMode, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1862,7 +3879,53 @@ func (o OptListTournamentsFilterStatus) Get() (v ListTournamentsFilterStatus, ok
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptListTournamentsFilterStatus) Or(d ListTournamentsFilterStatus) ListTournamentsFilterStatus {
+func (o OptListTournamentsGameMode) Or(d ListTournamentsGameMode) ListTournamentsGameMode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptListTournamentsSkillLevel returns new OptListTournamentsSkillLevel with value set to v.
+func NewOptListTournamentsSkillLevel(v ListTournamentsSkillLevel) OptListTournamentsSkillLevel {
+	return OptListTournamentsSkillLevel{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListTournamentsSkillLevel is optional ListTournamentsSkillLevel.
+type OptListTournamentsSkillLevel struct {
+	Value ListTournamentsSkillLevel
+	Set   bool
+}
+
+// IsSet returns true if OptListTournamentsSkillLevel was set.
+func (o OptListTournamentsSkillLevel) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListTournamentsSkillLevel) Reset() {
+	var v ListTournamentsSkillLevel
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListTournamentsSkillLevel) SetTo(v ListTournamentsSkillLevel) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListTournamentsSkillLevel) Get() (v ListTournamentsSkillLevel, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListTournamentsSkillLevel) Or(d ListTournamentsSkillLevel) ListTournamentsSkillLevel {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1961,6 +4024,224 @@ func (o OptListTournamentsSortOrder) Or(d ListTournamentsSortOrder) ListTourname
 	return d
 }
 
+// NewOptListTournamentsStatus returns new OptListTournamentsStatus with value set to v.
+func NewOptListTournamentsStatus(v ListTournamentsStatus) OptListTournamentsStatus {
+	return OptListTournamentsStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListTournamentsStatus is optional ListTournamentsStatus.
+type OptListTournamentsStatus struct {
+	Value ListTournamentsStatus
+	Set   bool
+}
+
+// IsSet returns true if OptListTournamentsStatus was set.
+func (o OptListTournamentsStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListTournamentsStatus) Reset() {
+	var v ListTournamentsStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListTournamentsStatus) SetTo(v ListTournamentsStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListTournamentsStatus) Get() (v ListTournamentsStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListTournamentsStatus) Or(d ListTournamentsStatus) ListTournamentsStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilInt returns new OptNilInt with value set to v.
+func NewOptNilInt(v int) OptNilInt {
+	return OptNilInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt is optional nullable int.
+type OptNilInt struct {
+	Value int
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt was set.
+func (o OptNilInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt) SetTo(v int) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt) Get() (v int, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilUUID returns new OptNilUUID with value set to v.
+func NewOptNilUUID(v uuid.UUID) OptNilUUID {
+	return OptNilUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilUUID is optional nullable uuid.UUID.
+type OptNilUUID struct {
+	Value uuid.UUID
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilUUID was set.
+func (o OptNilUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilUUID) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilUUID) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v uuid.UUID
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRegisterTournamentScoreRequestMetadata returns new OptRegisterTournamentScoreRequestMetadata with value set to v.
+func NewOptRegisterTournamentScoreRequestMetadata(v RegisterTournamentScoreRequestMetadata) OptRegisterTournamentScoreRequestMetadata {
+	return OptRegisterTournamentScoreRequestMetadata{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRegisterTournamentScoreRequestMetadata is optional RegisterTournamentScoreRequestMetadata.
+type OptRegisterTournamentScoreRequestMetadata struct {
+	Value RegisterTournamentScoreRequestMetadata
+	Set   bool
+}
+
+// IsSet returns true if OptRegisterTournamentScoreRequestMetadata was set.
+func (o OptRegisterTournamentScoreRequestMetadata) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRegisterTournamentScoreRequestMetadata) Reset() {
+	var v RegisterTournamentScoreRequestMetadata
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRegisterTournamentScoreRequestMetadata) SetTo(v RegisterTournamentScoreRequestMetadata) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRegisterTournamentScoreRequestMetadata) Get() (v RegisterTournamentScoreRequestMetadata, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRegisterTournamentScoreRequestMetadata) Or(d RegisterTournamentScoreRequestMetadata) RegisterTournamentScoreRequestMetadata {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -2001,6 +4282,190 @@ func (o OptString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentBracketRoundsItemMatchesItemStatus returns new OptTournamentBracketRoundsItemMatchesItemStatus with value set to v.
+func NewOptTournamentBracketRoundsItemMatchesItemStatus(v TournamentBracketRoundsItemMatchesItemStatus) OptTournamentBracketRoundsItemMatchesItemStatus {
+	return OptTournamentBracketRoundsItemMatchesItemStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentBracketRoundsItemMatchesItemStatus is optional TournamentBracketRoundsItemMatchesItemStatus.
+type OptTournamentBracketRoundsItemMatchesItemStatus struct {
+	Value TournamentBracketRoundsItemMatchesItemStatus
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentBracketRoundsItemMatchesItemStatus was set.
+func (o OptTournamentBracketRoundsItemMatchesItemStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentBracketRoundsItemMatchesItemStatus) Reset() {
+	var v TournamentBracketRoundsItemMatchesItemStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentBracketRoundsItemMatchesItemStatus) SetTo(v TournamentBracketRoundsItemMatchesItemStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentBracketRoundsItemMatchesItemStatus) Get() (v TournamentBracketRoundsItemMatchesItemStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentBracketRoundsItemMatchesItemStatus) Or(d TournamentBracketRoundsItemMatchesItemStatus) TournamentBracketRoundsItemMatchesItemStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentParticipantStatus returns new OptTournamentParticipantStatus with value set to v.
+func NewOptTournamentParticipantStatus(v TournamentParticipantStatus) OptTournamentParticipantStatus {
+	return OptTournamentParticipantStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentParticipantStatus is optional TournamentParticipantStatus.
+type OptTournamentParticipantStatus struct {
+	Value TournamentParticipantStatus
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentParticipantStatus was set.
+func (o OptTournamentParticipantStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentParticipantStatus) Reset() {
+	var v TournamentParticipantStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentParticipantStatus) SetTo(v TournamentParticipantStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentParticipantStatus) Get() (v TournamentParticipantStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentParticipantStatus) Or(d TournamentParticipantStatus) TournamentParticipantStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentReward returns new OptTournamentReward with value set to v.
+func NewOptTournamentReward(v TournamentReward) OptTournamentReward {
+	return OptTournamentReward{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentReward is optional TournamentReward.
+type OptTournamentReward struct {
+	Value TournamentReward
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentReward was set.
+func (o OptTournamentReward) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentReward) Reset() {
+	var v TournamentReward
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentReward) SetTo(v TournamentReward) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentReward) Get() (v TournamentReward, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentReward) Or(d TournamentReward) TournamentReward {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentScoreMetadata returns new OptTournamentScoreMetadata with value set to v.
+func NewOptTournamentScoreMetadata(v TournamentScoreMetadata) OptTournamentScoreMetadata {
+	return OptTournamentScoreMetadata{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentScoreMetadata is optional TournamentScoreMetadata.
+type OptTournamentScoreMetadata struct {
+	Value TournamentScoreMetadata
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentScoreMetadata was set.
+func (o OptTournamentScoreMetadata) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentScoreMetadata) Reset() {
+	var v TournamentScoreMetadata
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentScoreMetadata) SetTo(v TournamentScoreMetadata) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentScoreMetadata) Get() (v TournamentScoreMetadata, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentScoreMetadata) Or(d TournamentScoreMetadata) TournamentScoreMetadata {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2099,38 +4564,38 @@ func (o OptTournamentServiceHealthCheckOKContentEncoding) Or(d TournamentService
 	return d
 }
 
-// NewOptUpdateExampleRequestStatus returns new OptUpdateExampleRequestStatus with value set to v.
-func NewOptUpdateExampleRequestStatus(v UpdateExampleRequestStatus) OptUpdateExampleRequestStatus {
-	return OptUpdateExampleRequestStatus{
+// NewOptTournamentSpectatorsResponseSpectatorsItemActivityStatus returns new OptTournamentSpectatorsResponseSpectatorsItemActivityStatus with value set to v.
+func NewOptTournamentSpectatorsResponseSpectatorsItemActivityStatus(v TournamentSpectatorsResponseSpectatorsItemActivityStatus) OptTournamentSpectatorsResponseSpectatorsItemActivityStatus {
+	return OptTournamentSpectatorsResponseSpectatorsItemActivityStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptUpdateExampleRequestStatus is optional UpdateExampleRequestStatus.
-type OptUpdateExampleRequestStatus struct {
-	Value UpdateExampleRequestStatus
+// OptTournamentSpectatorsResponseSpectatorsItemActivityStatus is optional TournamentSpectatorsResponseSpectatorsItemActivityStatus.
+type OptTournamentSpectatorsResponseSpectatorsItemActivityStatus struct {
+	Value TournamentSpectatorsResponseSpectatorsItemActivityStatus
 	Set   bool
 }
 
-// IsSet returns true if OptUpdateExampleRequestStatus was set.
-func (o OptUpdateExampleRequestStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptTournamentSpectatorsResponseSpectatorsItemActivityStatus was set.
+func (o OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptUpdateExampleRequestStatus) Reset() {
-	var v UpdateExampleRequestStatus
+func (o *OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) Reset() {
+	var v TournamentSpectatorsResponseSpectatorsItemActivityStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptUpdateExampleRequestStatus) SetTo(v UpdateExampleRequestStatus) {
+func (o *OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) SetTo(v TournamentSpectatorsResponseSpectatorsItemActivityStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok bool) {
+func (o OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) Get() (v TournamentSpectatorsResponseSpectatorsItemActivityStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -2138,11 +4603,2533 @@ func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok b
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptUpdateExampleRequestStatus) Or(d UpdateExampleRequestStatus) UpdateExampleRequestStatus {
+func (o OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) Or(d TournamentSpectatorsResponseSpectatorsItemActivityStatus) TournamentSpectatorsResponseSpectatorsItemActivityStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
+}
+
+// NewOptTournamentStatus returns new OptTournamentStatus with value set to v.
+func NewOptTournamentStatus(v TournamentStatus) OptTournamentStatus {
+	return OptTournamentStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentStatus is optional TournamentStatus.
+type OptTournamentStatus struct {
+	Value TournamentStatus
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentStatus was set.
+func (o OptTournamentStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentStatus) Reset() {
+	var v TournamentStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentStatus) SetTo(v TournamentStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentStatus) Get() (v TournamentStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentStatus) Or(d TournamentStatus) TournamentStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentTournamentDifficulty returns new OptTournamentTournamentDifficulty with value set to v.
+func NewOptTournamentTournamentDifficulty(v TournamentTournamentDifficulty) OptTournamentTournamentDifficulty {
+	return OptTournamentTournamentDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentTournamentDifficulty is optional TournamentTournamentDifficulty.
+type OptTournamentTournamentDifficulty struct {
+	Value TournamentTournamentDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentTournamentDifficulty was set.
+func (o OptTournamentTournamentDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentTournamentDifficulty) Reset() {
+	var v TournamentTournamentDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentTournamentDifficulty) SetTo(v TournamentTournamentDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentTournamentDifficulty) Get() (v TournamentTournamentDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentTournamentDifficulty) Or(d TournamentTournamentDifficulty) TournamentTournamentDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptTournamentTournamentType returns new OptTournamentTournamentType with value set to v.
+func NewOptTournamentTournamentType(v TournamentTournamentType) OptTournamentTournamentType {
+	return OptTournamentTournamentType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTournamentTournamentType is optional TournamentTournamentType.
+type OptTournamentTournamentType struct {
+	Value TournamentTournamentType
+	Set   bool
+}
+
+// IsSet returns true if OptTournamentTournamentType was set.
+func (o OptTournamentTournamentType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTournamentTournamentType) Reset() {
+	var v TournamentTournamentType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTournamentTournamentType) SetTo(v TournamentTournamentType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTournamentTournamentType) Get() (v TournamentTournamentType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTournamentTournamentType) Or(d TournamentTournamentType) TournamentTournamentType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
+	Value uuid.UUID
+	Set   bool
+}
+
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUpdateTournamentRequestTournamentDifficulty returns new OptUpdateTournamentRequestTournamentDifficulty with value set to v.
+func NewOptUpdateTournamentRequestTournamentDifficulty(v UpdateTournamentRequestTournamentDifficulty) OptUpdateTournamentRequestTournamentDifficulty {
+	return OptUpdateTournamentRequestTournamentDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUpdateTournamentRequestTournamentDifficulty is optional UpdateTournamentRequestTournamentDifficulty.
+type OptUpdateTournamentRequestTournamentDifficulty struct {
+	Value UpdateTournamentRequestTournamentDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptUpdateTournamentRequestTournamentDifficulty was set.
+func (o OptUpdateTournamentRequestTournamentDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUpdateTournamentRequestTournamentDifficulty) Reset() {
+	var v UpdateTournamentRequestTournamentDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUpdateTournamentRequestTournamentDifficulty) SetTo(v UpdateTournamentRequestTournamentDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUpdateTournamentRequestTournamentDifficulty) Get() (v UpdateTournamentRequestTournamentDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUpdateTournamentRequestTournamentDifficulty) Or(d UpdateTournamentRequestTournamentDifficulty) UpdateTournamentRequestTournamentDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// Standard error response format.
+type RegisterTournamentScoreBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *RegisterTournamentScoreBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *RegisterTournamentScoreBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *RegisterTournamentScoreBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *RegisterTournamentScoreBadRequest) GetDetails() *RegisterTournamentScoreBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *RegisterTournamentScoreBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RegisterTournamentScoreBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *RegisterTournamentScoreBadRequest) SetDetails(val *RegisterTournamentScoreBadRequestDetails) {
+	s.Details = val
+}
+
+func (*RegisterTournamentScoreBadRequest) registerTournamentScoreRes() {}
+
+// Additional error details.
+type RegisterTournamentScoreBadRequestDetails struct{}
+
+// Standard error response format.
+type RegisterTournamentScoreConflict struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *RegisterTournamentScoreConflictDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *RegisterTournamentScoreConflict) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *RegisterTournamentScoreConflict) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *RegisterTournamentScoreConflict) GetDetails() *RegisterTournamentScoreConflictDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *RegisterTournamentScoreConflict) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RegisterTournamentScoreConflict) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *RegisterTournamentScoreConflict) SetDetails(val *RegisterTournamentScoreConflictDetails) {
+	s.Details = val
+}
+
+func (*RegisterTournamentScoreConflict) registerTournamentScoreRes() {}
+
+// Additional error details.
+type RegisterTournamentScoreConflictDetails struct{}
+
+// Standard error response format.
+type RegisterTournamentScoreDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *RegisterTournamentScoreDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *RegisterTournamentScoreDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *RegisterTournamentScoreDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *RegisterTournamentScoreDef) GetDetails() *RegisterTournamentScoreDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *RegisterTournamentScoreDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RegisterTournamentScoreDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *RegisterTournamentScoreDef) SetDetails(val *RegisterTournamentScoreDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type RegisterTournamentScoreDefDetails struct{}
+
+// RegisterTournamentScoreDefStatusCode wraps RegisterTournamentScoreDef with StatusCode.
+type RegisterTournamentScoreDefStatusCode struct {
+	StatusCode int
+	Response   RegisterTournamentScoreDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *RegisterTournamentScoreDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *RegisterTournamentScoreDefStatusCode) GetResponse() RegisterTournamentScoreDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *RegisterTournamentScoreDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *RegisterTournamentScoreDefStatusCode) SetResponse(val RegisterTournamentScoreDef) {
+	s.Response = val
+}
+
+func (*RegisterTournamentScoreDefStatusCode) registerTournamentScoreRes() {}
+
+// Standard error response format.
+type RegisterTournamentScoreNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *RegisterTournamentScoreNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *RegisterTournamentScoreNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *RegisterTournamentScoreNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *RegisterTournamentScoreNotFound) GetDetails() *RegisterTournamentScoreNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *RegisterTournamentScoreNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RegisterTournamentScoreNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *RegisterTournamentScoreNotFound) SetDetails(val *RegisterTournamentScoreNotFoundDetails) {
+	s.Details = val
+}
+
+func (*RegisterTournamentScoreNotFound) registerTournamentScoreRes() {}
+
+// Additional error details.
+type RegisterTournamentScoreNotFoundDetails struct{}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/RegisterTournamentScoreRequest
+type RegisterTournamentScoreRequest struct {
+	// Participant unique identifier.
+	ParticipantID uuid.UUID `json:"participant_id"`
+	// Match unique identifier.
+	MatchID uuid.UUID `json:"match_id"`
+	// Points scored in the match.
+	Score int `json:"score"`
+	// Final rank in the match.
+	Rank OptInt `json:"rank"`
+	// Additional match statistics.
+	Metadata OptRegisterTournamentScoreRequestMetadata `json:"metadata"`
+}
+
+// GetParticipantID returns the value of ParticipantID.
+func (s *RegisterTournamentScoreRequest) GetParticipantID() uuid.UUID {
+	return s.ParticipantID
+}
+
+// GetMatchID returns the value of MatchID.
+func (s *RegisterTournamentScoreRequest) GetMatchID() uuid.UUID {
+	return s.MatchID
+}
+
+// GetScore returns the value of Score.
+func (s *RegisterTournamentScoreRequest) GetScore() int {
+	return s.Score
+}
+
+// GetRank returns the value of Rank.
+func (s *RegisterTournamentScoreRequest) GetRank() OptInt {
+	return s.Rank
+}
+
+// GetMetadata returns the value of Metadata.
+func (s *RegisterTournamentScoreRequest) GetMetadata() OptRegisterTournamentScoreRequestMetadata {
+	return s.Metadata
+}
+
+// SetParticipantID sets the value of ParticipantID.
+func (s *RegisterTournamentScoreRequest) SetParticipantID(val uuid.UUID) {
+	s.ParticipantID = val
+}
+
+// SetMatchID sets the value of MatchID.
+func (s *RegisterTournamentScoreRequest) SetMatchID(val uuid.UUID) {
+	s.MatchID = val
+}
+
+// SetScore sets the value of Score.
+func (s *RegisterTournamentScoreRequest) SetScore(val int) {
+	s.Score = val
+}
+
+// SetRank sets the value of Rank.
+func (s *RegisterTournamentScoreRequest) SetRank(val OptInt) {
+	s.Rank = val
+}
+
+// SetMetadata sets the value of Metadata.
+func (s *RegisterTournamentScoreRequest) SetMetadata(val OptRegisterTournamentScoreRequestMetadata) {
+	s.Metadata = val
+}
+
+// Additional match statistics.
+type RegisterTournamentScoreRequestMetadata map[string]string
+
+func (s *RegisterTournamentScoreRequestMetadata) init() RegisterTournamentScoreRequestMetadata {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+// Standard error response format.
+type RegisterTournamentScoreTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *RegisterTournamentScoreTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *RegisterTournamentScoreTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *RegisterTournamentScoreTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *RegisterTournamentScoreTooManyRequests) GetDetails() *RegisterTournamentScoreTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *RegisterTournamentScoreTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *RegisterTournamentScoreTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *RegisterTournamentScoreTooManyRequests) SetDetails(val *RegisterTournamentScoreTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type RegisterTournamentScoreTooManyRequestsDetails struct{}
+
+// RegisterTournamentScoreTooManyRequestsHeaders wraps RegisterTournamentScoreTooManyRequests with response headers.
+type RegisterTournamentScoreTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   RegisterTournamentScoreTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *RegisterTournamentScoreTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *RegisterTournamentScoreTooManyRequestsHeaders) GetResponse() RegisterTournamentScoreTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *RegisterTournamentScoreTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *RegisterTournamentScoreTooManyRequestsHeaders) SetResponse(val RegisterTournamentScoreTooManyRequests) {
+	s.Response = val
+}
+
+func (*RegisterTournamentScoreTooManyRequestsHeaders) registerTournamentScoreRes() {}
+
+type ServiceAuth struct {
+	Token string
+	Roles []string
+}
+
+// GetToken returns the value of Token.
+func (s *ServiceAuth) GetToken() string {
+	return s.Token
+}
+
+// GetRoles returns the value of Roles.
+func (s *ServiceAuth) GetRoles() []string {
+	return s.Roles
+}
+
+// SetToken sets the value of Token.
+func (s *ServiceAuth) SetToken(val string) {
+	s.Token = val
+}
+
+// SetRoles sets the value of Roles.
+func (s *ServiceAuth) SetRoles(val []string) {
+	s.Roles = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Hot path optimization required.
+// Ref: #/components/schemas/Tournament
+type Tournament struct {
+	// Tournament unique identifier.
+	ID uuid.UUID `json:"id"`
+	// Tournament display name.
+	Name string `json:"name"`
+	// Detailed tournament description.
+	Description OptString `json:"description"`
+	// Creation timestamp.
+	CreatedAt time.Time `json:"created_at"`
+	// Last update timestamp.
+	UpdatedAt OptDateTime `json:"updated_at"`
+	// Tournament game mode format.
+	GameMode TournamentGameMode `json:"game_mode"`
+	// Type of tournament.
+	TournamentType OptTournamentTournamentType `json:"tournament_type"`
+	// Tournament difficulty level.
+	TournamentDifficulty OptTournamentTournamentDifficulty `json:"tournament_difficulty"`
+	// Maximum number of participants.
+	MaxParticipants OptInt `json:"max_participants"`
+	// Current number of registered participants.
+	CurrentParticipants OptInt `json:"current_participants"`
+	// Tournament start date and time.
+	StartDate OptDateTime `json:"start_date"`
+	// Tournament end date and time.
+	EndDate OptDateTime         `json:"end_date"`
+	Status  TournamentStatus    `json:"status"`
+	Reward  OptTournamentReward `json:"reward"`
+	// Tournament objectives to complete.
+	Objectives []TournamentObjective `json:"objectives"`
+	// Geographic region for the tournament.
+	Region OptString `json:"region"`
+	// Entry fee in game currency.
+	EntryFee OptInt `json:"entry_fee"`
+	// Total prize pool in game currency.
+	PrizePool OptInt `json:"prize_pool"`
+}
+
+// GetID returns the value of ID.
+func (s *Tournament) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *Tournament) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *Tournament) GetDescription() OptString {
+	return s.Description
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Tournament) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *Tournament) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// GetGameMode returns the value of GameMode.
+func (s *Tournament) GetGameMode() TournamentGameMode {
+	return s.GameMode
+}
+
+// GetTournamentType returns the value of TournamentType.
+func (s *Tournament) GetTournamentType() OptTournamentTournamentType {
+	return s.TournamentType
+}
+
+// GetTournamentDifficulty returns the value of TournamentDifficulty.
+func (s *Tournament) GetTournamentDifficulty() OptTournamentTournamentDifficulty {
+	return s.TournamentDifficulty
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *Tournament) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetCurrentParticipants returns the value of CurrentParticipants.
+func (s *Tournament) GetCurrentParticipants() OptInt {
+	return s.CurrentParticipants
+}
+
+// GetStartDate returns the value of StartDate.
+func (s *Tournament) GetStartDate() OptDateTime {
+	return s.StartDate
+}
+
+// GetEndDate returns the value of EndDate.
+func (s *Tournament) GetEndDate() OptDateTime {
+	return s.EndDate
+}
+
+// GetStatus returns the value of Status.
+func (s *Tournament) GetStatus() TournamentStatus {
+	return s.Status
+}
+
+// GetReward returns the value of Reward.
+func (s *Tournament) GetReward() OptTournamentReward {
+	return s.Reward
+}
+
+// GetObjectives returns the value of Objectives.
+func (s *Tournament) GetObjectives() []TournamentObjective {
+	return s.Objectives
+}
+
+// GetRegion returns the value of Region.
+func (s *Tournament) GetRegion() OptString {
+	return s.Region
+}
+
+// GetEntryFee returns the value of EntryFee.
+func (s *Tournament) GetEntryFee() OptInt {
+	return s.EntryFee
+}
+
+// GetPrizePool returns the value of PrizePool.
+func (s *Tournament) GetPrizePool() OptInt {
+	return s.PrizePool
+}
+
+// SetID sets the value of ID.
+func (s *Tournament) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *Tournament) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *Tournament) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Tournament) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *Tournament) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetGameMode sets the value of GameMode.
+func (s *Tournament) SetGameMode(val TournamentGameMode) {
+	s.GameMode = val
+}
+
+// SetTournamentType sets the value of TournamentType.
+func (s *Tournament) SetTournamentType(val OptTournamentTournamentType) {
+	s.TournamentType = val
+}
+
+// SetTournamentDifficulty sets the value of TournamentDifficulty.
+func (s *Tournament) SetTournamentDifficulty(val OptTournamentTournamentDifficulty) {
+	s.TournamentDifficulty = val
+}
+
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *Tournament) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// SetCurrentParticipants sets the value of CurrentParticipants.
+func (s *Tournament) SetCurrentParticipants(val OptInt) {
+	s.CurrentParticipants = val
+}
+
+// SetStartDate sets the value of StartDate.
+func (s *Tournament) SetStartDate(val OptDateTime) {
+	s.StartDate = val
+}
+
+// SetEndDate sets the value of EndDate.
+func (s *Tournament) SetEndDate(val OptDateTime) {
+	s.EndDate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Tournament) SetStatus(val TournamentStatus) {
+	s.Status = val
+}
+
+// SetReward sets the value of Reward.
+func (s *Tournament) SetReward(val OptTournamentReward) {
+	s.Reward = val
+}
+
+// SetObjectives sets the value of Objectives.
+func (s *Tournament) SetObjectives(val []TournamentObjective) {
+	s.Objectives = val
+}
+
+// SetRegion sets the value of Region.
+func (s *Tournament) SetRegion(val OptString) {
+	s.Region = val
+}
+
+// SetEntryFee sets the value of EntryFee.
+func (s *Tournament) SetEntryFee(val OptInt) {
+	s.EntryFee = val
+}
+
+// SetPrizePool sets the value of PrizePool.
+func (s *Tournament) SetPrizePool(val OptInt) {
+	s.PrizePool = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Bracket optimized for tournament visualization.
+// Ref: #/components/schemas/TournamentBracket
+type TournamentBracket struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID `json:"tournament_id"`
+	// All rounds in tournament bracket.
+	Rounds []TournamentBracketRoundsItem `json:"rounds"`
+	// Current active round (null if bracket not started).
+	CurrentRound OptNilInt `json:"current_round"`
+	// Total number of rounds.
+	TotalRounds int `json:"total_rounds"`
+	// Type of tournament bracket.
+	BracketType TournamentBracketBracketType `json:"bracket_type"`
+}
+
+// GetTournamentID returns the value of TournamentID.
+func (s *TournamentBracket) GetTournamentID() uuid.UUID {
+	return s.TournamentID
+}
+
+// GetRounds returns the value of Rounds.
+func (s *TournamentBracket) GetRounds() []TournamentBracketRoundsItem {
+	return s.Rounds
+}
+
+// GetCurrentRound returns the value of CurrentRound.
+func (s *TournamentBracket) GetCurrentRound() OptNilInt {
+	return s.CurrentRound
+}
+
+// GetTotalRounds returns the value of TotalRounds.
+func (s *TournamentBracket) GetTotalRounds() int {
+	return s.TotalRounds
+}
+
+// GetBracketType returns the value of BracketType.
+func (s *TournamentBracket) GetBracketType() TournamentBracketBracketType {
+	return s.BracketType
+}
+
+// SetTournamentID sets the value of TournamentID.
+func (s *TournamentBracket) SetTournamentID(val uuid.UUID) {
+	s.TournamentID = val
+}
+
+// SetRounds sets the value of Rounds.
+func (s *TournamentBracket) SetRounds(val []TournamentBracketRoundsItem) {
+	s.Rounds = val
+}
+
+// SetCurrentRound sets the value of CurrentRound.
+func (s *TournamentBracket) SetCurrentRound(val OptNilInt) {
+	s.CurrentRound = val
+}
+
+// SetTotalRounds sets the value of TotalRounds.
+func (s *TournamentBracket) SetTotalRounds(val int) {
+	s.TotalRounds = val
+}
+
+// SetBracketType sets the value of BracketType.
+func (s *TournamentBracket) SetBracketType(val TournamentBracketBracketType) {
+	s.BracketType = val
+}
+
+// Type of tournament bracket.
+type TournamentBracketBracketType string
+
+const (
+	TournamentBracketBracketTypeSingleElimination TournamentBracketBracketType = "single-elimination"
+	TournamentBracketBracketTypeDoubleElimination TournamentBracketBracketType = "double-elimination"
+	TournamentBracketBracketTypeRoundRobin        TournamentBracketBracketType = "round-robin"
+)
+
+// AllValues returns all TournamentBracketBracketType values.
+func (TournamentBracketBracketType) AllValues() []TournamentBracketBracketType {
+	return []TournamentBracketBracketType{
+		TournamentBracketBracketTypeSingleElimination,
+		TournamentBracketBracketTypeDoubleElimination,
+		TournamentBracketBracketTypeRoundRobin,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentBracketBracketType) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentBracketBracketTypeSingleElimination:
+		return []byte(s), nil
+	case TournamentBracketBracketTypeDoubleElimination:
+		return []byte(s), nil
+	case TournamentBracketBracketTypeRoundRobin:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentBracketBracketType) UnmarshalText(data []byte) error {
+	switch TournamentBracketBracketType(data) {
+	case TournamentBracketBracketTypeSingleElimination:
+		*s = TournamentBracketBracketTypeSingleElimination
+		return nil
+	case TournamentBracketBracketTypeDoubleElimination:
+		*s = TournamentBracketBracketTypeDoubleElimination
+		return nil
+	case TournamentBracketBracketTypeRoundRobin:
+		*s = TournamentBracketBracketTypeRoundRobin
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Bracket response optimized for tournament visualization.
+// Ref: #/components/schemas/TournamentBracketResponse
+type TournamentBracketResponse struct {
+	Bracket TournamentBracket `json:"bracket"`
+	// Whether detailed match information was included.
+	IncludeMatches OptBool `json:"include_matches"`
+}
+
+// GetBracket returns the value of Bracket.
+func (s *TournamentBracketResponse) GetBracket() TournamentBracket {
+	return s.Bracket
+}
+
+// GetIncludeMatches returns the value of IncludeMatches.
+func (s *TournamentBracketResponse) GetIncludeMatches() OptBool {
+	return s.IncludeMatches
+}
+
+// SetBracket sets the value of Bracket.
+func (s *TournamentBracketResponse) SetBracket(val TournamentBracket) {
+	s.Bracket = val
+}
+
+// SetIncludeMatches sets the value of IncludeMatches.
+func (s *TournamentBracketResponse) SetIncludeMatches(val OptBool) {
+	s.IncludeMatches = val
+}
+
+func (*TournamentBracketResponse) generateTournamentBracketRes() {}
+
+// TournamentBracketResponseHeaders wraps TournamentBracketResponse with response headers.
+type TournamentBracketResponseHeaders struct {
+	CacheControl OptString
+	ETag         OptString
+	Response     TournamentBracketResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentBracketResponseHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetETag returns the value of ETag.
+func (s *TournamentBracketResponseHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentBracketResponseHeaders) GetResponse() TournamentBracketResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentBracketResponseHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetETag sets the value of ETag.
+func (s *TournamentBracketResponseHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentBracketResponseHeaders) SetResponse(val TournamentBracketResponse) {
+	s.Response = val
+}
+
+func (*TournamentBracketResponseHeaders) getTournamentBracketRes() {}
+
+// Tournament round in bracket.
+type TournamentBracketRoundsItem struct {
+	// Round number in bracket.
+	RoundNumber OptInt `json:"round_number"`
+	// Matches in this round.
+	Matches []TournamentBracketRoundsItemMatchesItem `json:"matches"`
+}
+
+// GetRoundNumber returns the value of RoundNumber.
+func (s *TournamentBracketRoundsItem) GetRoundNumber() OptInt {
+	return s.RoundNumber
+}
+
+// GetMatches returns the value of Matches.
+func (s *TournamentBracketRoundsItem) GetMatches() []TournamentBracketRoundsItemMatchesItem {
+	return s.Matches
+}
+
+// SetRoundNumber sets the value of RoundNumber.
+func (s *TournamentBracketRoundsItem) SetRoundNumber(val OptInt) {
+	s.RoundNumber = val
+}
+
+// SetMatches sets the value of Matches.
+func (s *TournamentBracketRoundsItem) SetMatches(val []TournamentBracketRoundsItemMatchesItem) {
+	s.Matches = val
+}
+
+// Match in tournament bracket.
+type TournamentBracketRoundsItemMatchesItem struct {
+	// Match unique identifier.
+	MatchID OptUUID `json:"match_id"`
+	// First participant ID.
+	Participant1 OptUUID `json:"participant_1"`
+	// Second participant ID.
+	Participant2 OptUUID `json:"participant_2"`
+	// Winner participant ID (null if match not completed).
+	Winner OptNilUUID `json:"winner"`
+	// Match status.
+	Status OptTournamentBracketRoundsItemMatchesItemStatus `json:"status"`
+}
+
+// GetMatchID returns the value of MatchID.
+func (s *TournamentBracketRoundsItemMatchesItem) GetMatchID() OptUUID {
+	return s.MatchID
+}
+
+// GetParticipant1 returns the value of Participant1.
+func (s *TournamentBracketRoundsItemMatchesItem) GetParticipant1() OptUUID {
+	return s.Participant1
+}
+
+// GetParticipant2 returns the value of Participant2.
+func (s *TournamentBracketRoundsItemMatchesItem) GetParticipant2() OptUUID {
+	return s.Participant2
+}
+
+// GetWinner returns the value of Winner.
+func (s *TournamentBracketRoundsItemMatchesItem) GetWinner() OptNilUUID {
+	return s.Winner
+}
+
+// GetStatus returns the value of Status.
+func (s *TournamentBracketRoundsItemMatchesItem) GetStatus() OptTournamentBracketRoundsItemMatchesItemStatus {
+	return s.Status
+}
+
+// SetMatchID sets the value of MatchID.
+func (s *TournamentBracketRoundsItemMatchesItem) SetMatchID(val OptUUID) {
+	s.MatchID = val
+}
+
+// SetParticipant1 sets the value of Participant1.
+func (s *TournamentBracketRoundsItemMatchesItem) SetParticipant1(val OptUUID) {
+	s.Participant1 = val
+}
+
+// SetParticipant2 sets the value of Participant2.
+func (s *TournamentBracketRoundsItemMatchesItem) SetParticipant2(val OptUUID) {
+	s.Participant2 = val
+}
+
+// SetWinner sets the value of Winner.
+func (s *TournamentBracketRoundsItemMatchesItem) SetWinner(val OptNilUUID) {
+	s.Winner = val
+}
+
+// SetStatus sets the value of Status.
+func (s *TournamentBracketRoundsItemMatchesItem) SetStatus(val OptTournamentBracketRoundsItemMatchesItemStatus) {
+	s.Status = val
+}
+
+// Match status.
+type TournamentBracketRoundsItemMatchesItemStatus string
+
+const (
+	TournamentBracketRoundsItemMatchesItemStatusPending    TournamentBracketRoundsItemMatchesItemStatus = "pending"
+	TournamentBracketRoundsItemMatchesItemStatusInProgress TournamentBracketRoundsItemMatchesItemStatus = "in_progress"
+	TournamentBracketRoundsItemMatchesItemStatusCompleted  TournamentBracketRoundsItemMatchesItemStatus = "completed"
+	TournamentBracketRoundsItemMatchesItemStatusCancelled  TournamentBracketRoundsItemMatchesItemStatus = "cancelled"
+)
+
+// AllValues returns all TournamentBracketRoundsItemMatchesItemStatus values.
+func (TournamentBracketRoundsItemMatchesItemStatus) AllValues() []TournamentBracketRoundsItemMatchesItemStatus {
+	return []TournamentBracketRoundsItemMatchesItemStatus{
+		TournamentBracketRoundsItemMatchesItemStatusPending,
+		TournamentBracketRoundsItemMatchesItemStatusInProgress,
+		TournamentBracketRoundsItemMatchesItemStatusCompleted,
+		TournamentBracketRoundsItemMatchesItemStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentBracketRoundsItemMatchesItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentBracketRoundsItemMatchesItemStatusPending:
+		return []byte(s), nil
+	case TournamentBracketRoundsItemMatchesItemStatusInProgress:
+		return []byte(s), nil
+	case TournamentBracketRoundsItemMatchesItemStatusCompleted:
+		return []byte(s), nil
+	case TournamentBracketRoundsItemMatchesItemStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentBracketRoundsItemMatchesItemStatus) UnmarshalText(data []byte) error {
+	switch TournamentBracketRoundsItemMatchesItemStatus(data) {
+	case TournamentBracketRoundsItemMatchesItemStatusPending:
+		*s = TournamentBracketRoundsItemMatchesItemStatusPending
+		return nil
+	case TournamentBracketRoundsItemMatchesItemStatusInProgress:
+		*s = TournamentBracketRoundsItemMatchesItemStatusInProgress
+		return nil
+	case TournamentBracketRoundsItemMatchesItemStatusCompleted:
+		*s = TournamentBracketRoundsItemMatchesItemStatusCompleted
+		return nil
+	case TournamentBracketRoundsItemMatchesItemStatusCancelled:
+		*s = TournamentBracketRoundsItemMatchesItemStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// TournamentCreatedHeaders wraps TournamentResponse with response headers.
+type TournamentCreatedHeaders struct {
+	CacheControl OptString
+	ETag         OptString
+	Location     OptString
+	Response     TournamentResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentCreatedHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetETag returns the value of ETag.
+func (s *TournamentCreatedHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetLocation returns the value of Location.
+func (s *TournamentCreatedHeaders) GetLocation() OptString {
+	return s.Location
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentCreatedHeaders) GetResponse() TournamentResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentCreatedHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetETag sets the value of ETag.
+func (s *TournamentCreatedHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetLocation sets the value of Location.
+func (s *TournamentCreatedHeaders) SetLocation(val OptString) {
+	s.Location = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentCreatedHeaders) SetResponse(val TournamentResponse) {
+	s.Response = val
+}
+
+func (*TournamentCreatedHeaders) createTournamentRes() {}
+
+// Tournament game mode format.
+type TournamentGameMode string
+
+const (
+	TournamentGameModeElimination       TournamentGameMode = "elimination"
+	TournamentGameModeRoundRobin        TournamentGameMode = "round-robin"
+	TournamentGameModeSwissSystem       TournamentGameMode = "swiss-system"
+	TournamentGameModeSingleElimination TournamentGameMode = "single-elimination"
+	TournamentGameModeDoubleElimination TournamentGameMode = "double-elimination"
+)
+
+// AllValues returns all TournamentGameMode values.
+func (TournamentGameMode) AllValues() []TournamentGameMode {
+	return []TournamentGameMode{
+		TournamentGameModeElimination,
+		TournamentGameModeRoundRobin,
+		TournamentGameModeSwissSystem,
+		TournamentGameModeSingleElimination,
+		TournamentGameModeDoubleElimination,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentGameMode) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentGameModeElimination:
+		return []byte(s), nil
+	case TournamentGameModeRoundRobin:
+		return []byte(s), nil
+	case TournamentGameModeSwissSystem:
+		return []byte(s), nil
+	case TournamentGameModeSingleElimination:
+		return []byte(s), nil
+	case TournamentGameModeDoubleElimination:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentGameMode) UnmarshalText(data []byte) error {
+	switch TournamentGameMode(data) {
+	case TournamentGameModeElimination:
+		*s = TournamentGameModeElimination
+		return nil
+	case TournamentGameModeRoundRobin:
+		*s = TournamentGameModeRoundRobin
+		return nil
+	case TournamentGameModeSwissSystem:
+		*s = TournamentGameModeSwissSystem
+		return nil
+	case TournamentGameModeSingleElimination:
+		*s = TournamentGameModeSingleElimination
+		return nil
+	case TournamentGameModeDoubleElimination:
+		*s = TournamentGameModeDoubleElimination
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Leaderboard optimized for fast lookups.
+// Ref: #/components/schemas/TournamentLeaderboardResponse
+type TournamentLeaderboardResponse struct {
+	// Tournament leaderboard entries.
+	Leaderboard []TournamentLeaderboardResponseLeaderboardItem `json:"leaderboard"`
+	// Total number of participants.
+	TotalParticipants int `json:"total_participants"`
+	// Last leaderboard update timestamp.
+	LastUpdated OptDateTime `json:"last_updated"`
+}
+
+// GetLeaderboard returns the value of Leaderboard.
+func (s *TournamentLeaderboardResponse) GetLeaderboard() []TournamentLeaderboardResponseLeaderboardItem {
+	return s.Leaderboard
+}
+
+// GetTotalParticipants returns the value of TotalParticipants.
+func (s *TournamentLeaderboardResponse) GetTotalParticipants() int {
+	return s.TotalParticipants
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *TournamentLeaderboardResponse) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetLeaderboard sets the value of Leaderboard.
+func (s *TournamentLeaderboardResponse) SetLeaderboard(val []TournamentLeaderboardResponseLeaderboardItem) {
+	s.Leaderboard = val
+}
+
+// SetTotalParticipants sets the value of TotalParticipants.
+func (s *TournamentLeaderboardResponse) SetTotalParticipants(val int) {
+	s.TotalParticipants = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *TournamentLeaderboardResponse) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+// TournamentLeaderboardResponseHeaders wraps TournamentLeaderboardResponse with response headers.
+type TournamentLeaderboardResponseHeaders struct {
+	CacheControl OptString
+	ETag         OptString
+	LastModified OptDateTime
+	XTotalCount  OptInt
+	Response     TournamentLeaderboardResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentLeaderboardResponseHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetETag returns the value of ETag.
+func (s *TournamentLeaderboardResponseHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetLastModified returns the value of LastModified.
+func (s *TournamentLeaderboardResponseHeaders) GetLastModified() OptDateTime {
+	return s.LastModified
+}
+
+// GetXTotalCount returns the value of XTotalCount.
+func (s *TournamentLeaderboardResponseHeaders) GetXTotalCount() OptInt {
+	return s.XTotalCount
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentLeaderboardResponseHeaders) GetResponse() TournamentLeaderboardResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentLeaderboardResponseHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetETag sets the value of ETag.
+func (s *TournamentLeaderboardResponseHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetLastModified sets the value of LastModified.
+func (s *TournamentLeaderboardResponseHeaders) SetLastModified(val OptDateTime) {
+	s.LastModified = val
+}
+
+// SetXTotalCount sets the value of XTotalCount.
+func (s *TournamentLeaderboardResponseHeaders) SetXTotalCount(val OptInt) {
+	s.XTotalCount = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentLeaderboardResponseHeaders) SetResponse(val TournamentLeaderboardResponse) {
+	s.Response = val
+}
+
+func (*TournamentLeaderboardResponseHeaders) getGlobalLeaderboardsRes()    {}
+func (*TournamentLeaderboardResponseHeaders) getTournamentLeaderboardRes() {}
+
+type TournamentLeaderboardResponseLeaderboardItem struct {
+	// Participant unique identifier.
+	ParticipantID OptUUID `json:"participant_id"`
+	// Player display name.
+	PlayerName OptString `json:"player_name"`
+	// Total tournament score.
+	TotalScore OptInt `json:"total_score"`
+	// Current leaderboard rank.
+	Rank OptInt `json:"rank"`
+	// Number of matches completed.
+	MatchesPlayed OptInt `json:"matches_played"`
+	// Win rate percentage.
+	WinRate OptFloat64 `json:"win_rate"`
+}
+
+// GetParticipantID returns the value of ParticipantID.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetParticipantID() OptUUID {
+	return s.ParticipantID
+}
+
+// GetPlayerName returns the value of PlayerName.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetPlayerName() OptString {
+	return s.PlayerName
+}
+
+// GetTotalScore returns the value of TotalScore.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetTotalScore() OptInt {
+	return s.TotalScore
+}
+
+// GetRank returns the value of Rank.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetRank() OptInt {
+	return s.Rank
+}
+
+// GetMatchesPlayed returns the value of MatchesPlayed.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetMatchesPlayed() OptInt {
+	return s.MatchesPlayed
+}
+
+// GetWinRate returns the value of WinRate.
+func (s *TournamentLeaderboardResponseLeaderboardItem) GetWinRate() OptFloat64 {
+	return s.WinRate
+}
+
+// SetParticipantID sets the value of ParticipantID.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetParticipantID(val OptUUID) {
+	s.ParticipantID = val
+}
+
+// SetPlayerName sets the value of PlayerName.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetPlayerName(val OptString) {
+	s.PlayerName = val
+}
+
+// SetTotalScore sets the value of TotalScore.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetTotalScore(val OptInt) {
+	s.TotalScore = val
+}
+
+// SetRank sets the value of Rank.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetRank(val OptInt) {
+	s.Rank = val
+}
+
+// SetMatchesPlayed sets the value of MatchesPlayed.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetMatchesPlayed(val OptInt) {
+	s.MatchesPlayed = val
+}
+
+// SetWinRate sets the value of WinRate.
+func (s *TournamentLeaderboardResponseLeaderboardItem) SetWinRate(val OptFloat64) {
+	s.WinRate = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Paginated responses optimized for memory efficiency.
+// Ref: #/components/schemas/TournamentListResponse
+type TournamentListResponse struct {
+	// List of tournaments.
+	Tournaments []Tournament `json:"tournaments"`
+	// Whether there are more results available.
+	HasMore bool `json:"has_more"`
+	// Total number of tournaments matching criteria.
+	TotalCount int `json:"total_count"`
+	// Current page number.
+	Page OptInt `json:"page"`
+	// Items per page.
+	Limit OptInt `json:"limit"`
+}
+
+// GetTournaments returns the value of Tournaments.
+func (s *TournamentListResponse) GetTournaments() []Tournament {
+	return s.Tournaments
+}
+
+// GetHasMore returns the value of HasMore.
+func (s *TournamentListResponse) GetHasMore() bool {
+	return s.HasMore
+}
+
+// GetTotalCount returns the value of TotalCount.
+func (s *TournamentListResponse) GetTotalCount() int {
+	return s.TotalCount
+}
+
+// GetPage returns the value of Page.
+func (s *TournamentListResponse) GetPage() OptInt {
+	return s.Page
+}
+
+// GetLimit returns the value of Limit.
+func (s *TournamentListResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// SetTournaments sets the value of Tournaments.
+func (s *TournamentListResponse) SetTournaments(val []Tournament) {
+	s.Tournaments = val
+}
+
+// SetHasMore sets the value of HasMore.
+func (s *TournamentListResponse) SetHasMore(val bool) {
+	s.HasMore = val
+}
+
+// SetTotalCount sets the value of TotalCount.
+func (s *TournamentListResponse) SetTotalCount(val int) {
+	s.TotalCount = val
+}
+
+// SetPage sets the value of Page.
+func (s *TournamentListResponse) SetPage(val OptInt) {
+	s.Page = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *TournamentListResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// TournamentListSuccessHeaders wraps TournamentListResponse with response headers.
+type TournamentListSuccessHeaders struct {
+	CacheControl OptString
+	XPageCount   OptInt
+	XTotalCount  OptInt
+	Response     TournamentListResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentListSuccessHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetXPageCount returns the value of XPageCount.
+func (s *TournamentListSuccessHeaders) GetXPageCount() OptInt {
+	return s.XPageCount
+}
+
+// GetXTotalCount returns the value of XTotalCount.
+func (s *TournamentListSuccessHeaders) GetXTotalCount() OptInt {
+	return s.XTotalCount
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentListSuccessHeaders) GetResponse() TournamentListResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentListSuccessHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetXPageCount sets the value of XPageCount.
+func (s *TournamentListSuccessHeaders) SetXPageCount(val OptInt) {
+	s.XPageCount = val
+}
+
+// SetXTotalCount sets the value of XTotalCount.
+func (s *TournamentListSuccessHeaders) SetXTotalCount(val OptInt) {
+	s.XTotalCount = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentListSuccessHeaders) SetResponse(val TournamentListResponse) {
+	s.Response = val
+}
+
+func (*TournamentListSuccessHeaders) listTournamentsRes() {}
+
+// Individual tournament objective.
+// Ref: #/components/schemas/TournamentObjective
+type TournamentObjective struct {
+	// Type of tournament objective.
+	Type TournamentObjectiveType `json:"type"`
+	// Objective description.
+	Description string `json:"description"`
+	// Target value to achieve.
+	TargetValue OptInt `json:"target_value"`
+	// Current progress value.
+	CurrentValue OptInt `json:"current_value"`
+}
+
+// GetType returns the value of Type.
+func (s *TournamentObjective) GetType() TournamentObjectiveType {
+	return s.Type
+}
+
+// GetDescription returns the value of Description.
+func (s *TournamentObjective) GetDescription() string {
+	return s.Description
+}
+
+// GetTargetValue returns the value of TargetValue.
+func (s *TournamentObjective) GetTargetValue() OptInt {
+	return s.TargetValue
+}
+
+// GetCurrentValue returns the value of CurrentValue.
+func (s *TournamentObjective) GetCurrentValue() OptInt {
+	return s.CurrentValue
+}
+
+// SetType sets the value of Type.
+func (s *TournamentObjective) SetType(val TournamentObjectiveType) {
+	s.Type = val
+}
+
+// SetDescription sets the value of Description.
+func (s *TournamentObjective) SetDescription(val string) {
+	s.Description = val
+}
+
+// SetTargetValue sets the value of TargetValue.
+func (s *TournamentObjective) SetTargetValue(val OptInt) {
+	s.TargetValue = val
+}
+
+// SetCurrentValue sets the value of CurrentValue.
+func (s *TournamentObjective) SetCurrentValue(val OptInt) {
+	s.CurrentValue = val
+}
+
+// Type of tournament objective.
+type TournamentObjectiveType string
+
+const (
+	TournamentObjectiveTypeWinMatches         TournamentObjectiveType = "win_matches"
+	TournamentObjectiveTypeScorePoints        TournamentObjectiveType = "score_points"
+	TournamentObjectiveTypeSurviveRounds      TournamentObjectiveType = "survive_rounds"
+	TournamentObjectiveTypeCompleteChallenges TournamentObjectiveType = "complete_challenges"
+)
+
+// AllValues returns all TournamentObjectiveType values.
+func (TournamentObjectiveType) AllValues() []TournamentObjectiveType {
+	return []TournamentObjectiveType{
+		TournamentObjectiveTypeWinMatches,
+		TournamentObjectiveTypeScorePoints,
+		TournamentObjectiveTypeSurviveRounds,
+		TournamentObjectiveTypeCompleteChallenges,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentObjectiveType) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentObjectiveTypeWinMatches:
+		return []byte(s), nil
+	case TournamentObjectiveTypeScorePoints:
+		return []byte(s), nil
+	case TournamentObjectiveTypeSurviveRounds:
+		return []byte(s), nil
+	case TournamentObjectiveTypeCompleteChallenges:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentObjectiveType) UnmarshalText(data []byte) error {
+	switch TournamentObjectiveType(data) {
+	case TournamentObjectiveTypeWinMatches:
+		*s = TournamentObjectiveTypeWinMatches
+		return nil
+	case TournamentObjectiveTypeScorePoints:
+		*s = TournamentObjectiveTypeScorePoints
+		return nil
+	case TournamentObjectiveTypeSurviveRounds:
+		*s = TournamentObjectiveTypeSurviveRounds
+		return nil
+	case TournamentObjectiveTypeCompleteChallenges:
+		*s = TournamentObjectiveTypeCompleteChallenges
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Tournament participant information.
+// Ref: #/components/schemas/TournamentParticipant
+type TournamentParticipant struct {
+	// Participant unique identifier.
+	ID OptUUID `json:"id"`
+	// Associated tournament ID.
+	TournamentID uuid.UUID `json:"tournament_id"`
+	// Player unique identifier.
+	PlayerID uuid.UUID `json:"player_id"`
+	// Registration timestamp.
+	RegisteredAt time.Time `json:"registered_at"`
+	// Participation status.
+	Status OptTournamentParticipantStatus `json:"status"`
+	// Tournament seeding position.
+	Seed OptInt `json:"seed"`
+	// Current bracket position.
+	BracketPosition OptString `json:"bracket_position"`
+}
+
+// GetID returns the value of ID.
+func (s *TournamentParticipant) GetID() OptUUID {
+	return s.ID
+}
+
+// GetTournamentID returns the value of TournamentID.
+func (s *TournamentParticipant) GetTournamentID() uuid.UUID {
+	return s.TournamentID
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *TournamentParticipant) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetRegisteredAt returns the value of RegisteredAt.
+func (s *TournamentParticipant) GetRegisteredAt() time.Time {
+	return s.RegisteredAt
+}
+
+// GetStatus returns the value of Status.
+func (s *TournamentParticipant) GetStatus() OptTournamentParticipantStatus {
+	return s.Status
+}
+
+// GetSeed returns the value of Seed.
+func (s *TournamentParticipant) GetSeed() OptInt {
+	return s.Seed
+}
+
+// GetBracketPosition returns the value of BracketPosition.
+func (s *TournamentParticipant) GetBracketPosition() OptString {
+	return s.BracketPosition
+}
+
+// SetID sets the value of ID.
+func (s *TournamentParticipant) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetTournamentID sets the value of TournamentID.
+func (s *TournamentParticipant) SetTournamentID(val uuid.UUID) {
+	s.TournamentID = val
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *TournamentParticipant) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetRegisteredAt sets the value of RegisteredAt.
+func (s *TournamentParticipant) SetRegisteredAt(val time.Time) {
+	s.RegisteredAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *TournamentParticipant) SetStatus(val OptTournamentParticipantStatus) {
+	s.Status = val
+}
+
+// SetSeed sets the value of Seed.
+func (s *TournamentParticipant) SetSeed(val OptInt) {
+	s.Seed = val
+}
+
+// SetBracketPosition sets the value of BracketPosition.
+func (s *TournamentParticipant) SetBracketPosition(val OptString) {
+	s.BracketPosition = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TournamentParticipantResponse
+type TournamentParticipantResponse struct {
+	Participant TournamentParticipant `json:"participant"`
+}
+
+// GetParticipant returns the value of Participant.
+func (s *TournamentParticipantResponse) GetParticipant() TournamentParticipant {
+	return s.Participant
+}
+
+// SetParticipant sets the value of Participant.
+func (s *TournamentParticipantResponse) SetParticipant(val TournamentParticipant) {
+	s.Participant = val
+}
+
+func (*TournamentParticipantResponse) joinTournamentRes() {}
+
+// Participation status.
+type TournamentParticipantStatus string
+
+const (
+	TournamentParticipantStatusRegistered   TournamentParticipantStatus = "registered"
+	TournamentParticipantStatusActive       TournamentParticipantStatus = "active"
+	TournamentParticipantStatusEliminated   TournamentParticipantStatus = "eliminated"
+	TournamentParticipantStatusDisqualified TournamentParticipantStatus = "disqualified"
+	TournamentParticipantStatusWinner       TournamentParticipantStatus = "winner"
+)
+
+// AllValues returns all TournamentParticipantStatus values.
+func (TournamentParticipantStatus) AllValues() []TournamentParticipantStatus {
+	return []TournamentParticipantStatus{
+		TournamentParticipantStatusRegistered,
+		TournamentParticipantStatusActive,
+		TournamentParticipantStatusEliminated,
+		TournamentParticipantStatusDisqualified,
+		TournamentParticipantStatusWinner,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentParticipantStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentParticipantStatusRegistered:
+		return []byte(s), nil
+	case TournamentParticipantStatusActive:
+		return []byte(s), nil
+	case TournamentParticipantStatusEliminated:
+		return []byte(s), nil
+	case TournamentParticipantStatusDisqualified:
+		return []byte(s), nil
+	case TournamentParticipantStatusWinner:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentParticipantStatus) UnmarshalText(data []byte) error {
+	switch TournamentParticipantStatus(data) {
+	case TournamentParticipantStatusRegistered:
+		*s = TournamentParticipantStatusRegistered
+		return nil
+	case TournamentParticipantStatusActive:
+		*s = TournamentParticipantStatusActive
+		return nil
+	case TournamentParticipantStatusEliminated:
+		*s = TournamentParticipantStatusEliminated
+		return nil
+	case TournamentParticipantStatusDisqualified:
+		*s = TournamentParticipantStatusDisqualified
+		return nil
+	case TournamentParticipantStatusWinner:
+		*s = TournamentParticipantStatusWinner
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TournamentResponse
+type TournamentResponse struct {
+	Tournament Tournament `json:"tournament"`
+}
+
+// GetTournament returns the value of Tournament.
+func (s *TournamentResponse) GetTournament() Tournament {
+	return s.Tournament
+}
+
+// SetTournament sets the value of Tournament.
+func (s *TournamentResponse) SetTournament(val Tournament) {
+	s.Tournament = val
+}
+
+// TournamentRetrievedHeaders wraps TournamentResponse with response headers.
+type TournamentRetrievedHeaders struct {
+	CacheControl    OptString
+	ETag            OptString
+	LastModified    OptDateTime
+	XProcessingTime OptInt
+	Response        TournamentResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentRetrievedHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetETag returns the value of ETag.
+func (s *TournamentRetrievedHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetLastModified returns the value of LastModified.
+func (s *TournamentRetrievedHeaders) GetLastModified() OptDateTime {
+	return s.LastModified
+}
+
+// GetXProcessingTime returns the value of XProcessingTime.
+func (s *TournamentRetrievedHeaders) GetXProcessingTime() OptInt {
+	return s.XProcessingTime
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentRetrievedHeaders) GetResponse() TournamentResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentRetrievedHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetETag sets the value of ETag.
+func (s *TournamentRetrievedHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetLastModified sets the value of LastModified.
+func (s *TournamentRetrievedHeaders) SetLastModified(val OptDateTime) {
+	s.LastModified = val
+}
+
+// SetXProcessingTime sets the value of XProcessingTime.
+func (s *TournamentRetrievedHeaders) SetXProcessingTime(val OptInt) {
+	s.XProcessingTime = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentRetrievedHeaders) SetResponse(val TournamentResponse) {
+	s.Response = val
+}
+
+func (*TournamentRetrievedHeaders) getTournamentRes() {}
+
+// Tournament completion rewards.
+// Ref: #/components/schemas/TournamentReward
+type TournamentReward struct {
+	// Reward amount in game currency.
+	CurrencyAmount OptInt `json:"currency_amount"`
+	// List of reward items.
+	Items []string `json:"items"`
+	// Experience points reward.
+	ExperiencePoints OptInt `json:"experience_points"`
+	// Tournament title/achievement.
+	Title OptString `json:"title"`
+}
+
+// GetCurrencyAmount returns the value of CurrencyAmount.
+func (s *TournamentReward) GetCurrencyAmount() OptInt {
+	return s.CurrencyAmount
+}
+
+// GetItems returns the value of Items.
+func (s *TournamentReward) GetItems() []string {
+	return s.Items
+}
+
+// GetExperiencePoints returns the value of ExperiencePoints.
+func (s *TournamentReward) GetExperiencePoints() OptInt {
+	return s.ExperiencePoints
+}
+
+// GetTitle returns the value of Title.
+func (s *TournamentReward) GetTitle() OptString {
+	return s.Title
+}
+
+// SetCurrencyAmount sets the value of CurrencyAmount.
+func (s *TournamentReward) SetCurrencyAmount(val OptInt) {
+	s.CurrencyAmount = val
+}
+
+// SetItems sets the value of Items.
+func (s *TournamentReward) SetItems(val []string) {
+	s.Items = val
+}
+
+// SetExperiencePoints sets the value of ExperiencePoints.
+func (s *TournamentReward) SetExperiencePoints(val OptInt) {
+	s.ExperiencePoints = val
+}
+
+// SetTitle sets the value of Title.
+func (s *TournamentReward) SetTitle(val OptString) {
+	s.Title = val
+}
+
+// Tournament match score record.
+// Ref: #/components/schemas/TournamentScore
+type TournamentScore struct {
+	// Score record unique identifier.
+	ID OptUUID `json:"id"`
+	// Associated participant ID.
+	ParticipantID uuid.UUID `json:"participant_id"`
+	// Associated match ID.
+	MatchID uuid.UUID `json:"match_id"`
+	// Points scored in the match.
+	Score int `json:"score"`
+	// Final rank in the match.
+	Rank OptInt `json:"rank"`
+	// Score recording timestamp.
+	RecordedAt time.Time `json:"recorded_at"`
+	// Additional match statistics.
+	Metadata OptTournamentScoreMetadata `json:"metadata"`
+}
+
+// GetID returns the value of ID.
+func (s *TournamentScore) GetID() OptUUID {
+	return s.ID
+}
+
+// GetParticipantID returns the value of ParticipantID.
+func (s *TournamentScore) GetParticipantID() uuid.UUID {
+	return s.ParticipantID
+}
+
+// GetMatchID returns the value of MatchID.
+func (s *TournamentScore) GetMatchID() uuid.UUID {
+	return s.MatchID
+}
+
+// GetScore returns the value of Score.
+func (s *TournamentScore) GetScore() int {
+	return s.Score
+}
+
+// GetRank returns the value of Rank.
+func (s *TournamentScore) GetRank() OptInt {
+	return s.Rank
+}
+
+// GetRecordedAt returns the value of RecordedAt.
+func (s *TournamentScore) GetRecordedAt() time.Time {
+	return s.RecordedAt
+}
+
+// GetMetadata returns the value of Metadata.
+func (s *TournamentScore) GetMetadata() OptTournamentScoreMetadata {
+	return s.Metadata
+}
+
+// SetID sets the value of ID.
+func (s *TournamentScore) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetParticipantID sets the value of ParticipantID.
+func (s *TournamentScore) SetParticipantID(val uuid.UUID) {
+	s.ParticipantID = val
+}
+
+// SetMatchID sets the value of MatchID.
+func (s *TournamentScore) SetMatchID(val uuid.UUID) {
+	s.MatchID = val
+}
+
+// SetScore sets the value of Score.
+func (s *TournamentScore) SetScore(val int) {
+	s.Score = val
+}
+
+// SetRank sets the value of Rank.
+func (s *TournamentScore) SetRank(val OptInt) {
+	s.Rank = val
+}
+
+// SetRecordedAt sets the value of RecordedAt.
+func (s *TournamentScore) SetRecordedAt(val time.Time) {
+	s.RecordedAt = val
+}
+
+// SetMetadata sets the value of Metadata.
+func (s *TournamentScore) SetMetadata(val OptTournamentScoreMetadata) {
+	s.Metadata = val
+}
+
+// Additional match statistics.
+type TournamentScoreMetadata map[string]string
+
+func (s *TournamentScoreMetadata) init() TournamentScoreMetadata {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/TournamentScoreResponse
+type TournamentScoreResponse struct {
+	Score TournamentScore `json:"score"`
+}
+
+// GetScore returns the value of Score.
+func (s *TournamentScoreResponse) GetScore() TournamentScore {
+	return s.Score
+}
+
+// SetScore sets the value of Score.
+func (s *TournamentScoreResponse) SetScore(val TournamentScore) {
+	s.Score = val
+}
+
+func (*TournamentScoreResponse) registerTournamentScoreRes() {}
+
+// Standard error response format.
+type TournamentServiceBatchHealthCheckBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentServiceBatchHealthCheckBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentServiceBatchHealthCheckBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentServiceBatchHealthCheckBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentServiceBatchHealthCheckBadRequest) GetDetails() *TournamentServiceBatchHealthCheckBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentServiceBatchHealthCheckBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentServiceBatchHealthCheckBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentServiceBatchHealthCheckBadRequest) SetDetails(val *TournamentServiceBatchHealthCheckBadRequestDetails) {
+	s.Details = val
+}
+
+func (*TournamentServiceBatchHealthCheckBadRequest) tournamentServiceBatchHealthCheckRes() {}
+
+// Additional error details.
+type TournamentServiceBatchHealthCheckBadRequestDetails struct{}
+
+// Standard error response format.
+type TournamentServiceBatchHealthCheckDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentServiceBatchHealthCheckDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentServiceBatchHealthCheckDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentServiceBatchHealthCheckDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentServiceBatchHealthCheckDef) GetDetails() *TournamentServiceBatchHealthCheckDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentServiceBatchHealthCheckDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentServiceBatchHealthCheckDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentServiceBatchHealthCheckDef) SetDetails(val *TournamentServiceBatchHealthCheckDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type TournamentServiceBatchHealthCheckDefDetails struct{}
+
+// TournamentServiceBatchHealthCheckDefStatusCode wraps TournamentServiceBatchHealthCheckDef with StatusCode.
+type TournamentServiceBatchHealthCheckDefStatusCode struct {
+	StatusCode int
+	Response   TournamentServiceBatchHealthCheckDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *TournamentServiceBatchHealthCheckDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentServiceBatchHealthCheckDefStatusCode) GetResponse() TournamentServiceBatchHealthCheckDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *TournamentServiceBatchHealthCheckDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentServiceBatchHealthCheckDefStatusCode) SetResponse(val TournamentServiceBatchHealthCheckDef) {
+	s.Response = val
+}
+
+func (*TournamentServiceBatchHealthCheckDefStatusCode) tournamentServiceBatchHealthCheckRes() {}
+
+type TournamentServiceBatchHealthCheckOK struct {
+	// Health status for each requested service.
+	Results []TournamentServiceBatchHealthCheckOKResultsItem `json:"results"`
+	// Total processing time in milliseconds.
+	TotalTimeMs int `json:"total_time_ms"`
+}
+
+// GetResults returns the value of Results.
+func (s *TournamentServiceBatchHealthCheckOK) GetResults() []TournamentServiceBatchHealthCheckOKResultsItem {
+	return s.Results
+}
+
+// GetTotalTimeMs returns the value of TotalTimeMs.
+func (s *TournamentServiceBatchHealthCheckOK) GetTotalTimeMs() int {
+	return s.TotalTimeMs
+}
+
+// SetResults sets the value of Results.
+func (s *TournamentServiceBatchHealthCheckOK) SetResults(val []TournamentServiceBatchHealthCheckOKResultsItem) {
+	s.Results = val
+}
+
+// SetTotalTimeMs sets the value of TotalTimeMs.
+func (s *TournamentServiceBatchHealthCheckOK) SetTotalTimeMs(val int) {
+	s.TotalTimeMs = val
+}
+
+// TournamentServiceBatchHealthCheckOKHeaders wraps TournamentServiceBatchHealthCheckOK with response headers.
+type TournamentServiceBatchHealthCheckOKHeaders struct {
+	CacheControl    OptString
+	XProcessingTime OptInt
+	Response        TournamentServiceBatchHealthCheckOK
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetXProcessingTime returns the value of XProcessingTime.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) GetXProcessingTime() OptInt {
+	return s.XProcessingTime
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) GetResponse() TournamentServiceBatchHealthCheckOK {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetXProcessingTime sets the value of XProcessingTime.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) SetXProcessingTime(val OptInt) {
+	s.XProcessingTime = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentServiceBatchHealthCheckOKHeaders) SetResponse(val TournamentServiceBatchHealthCheckOK) {
+	s.Response = val
+}
+
+func (*TournamentServiceBatchHealthCheckOKHeaders) tournamentServiceBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type TournamentServiceBatchHealthCheckOKResultsItem struct {
+	Status            TournamentServiceBatchHealthCheckOKResultsItemStatus `json:"status"`
+	Domain            OptString                                            `json:"domain"`
+	Timestamp         time.Time                                            `json:"timestamp"`
+	Version           OptString                                            `json:"version"`
+	UptimeSeconds     OptInt                                               `json:"uptime_seconds"`
+	ActiveConnections OptInt                                               `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetStatus() TournamentServiceBatchHealthCheckOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetStatus(val TournamentServiceBatchHealthCheckOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type TournamentServiceBatchHealthCheckOKResultsItemStatus string
+
+const (
+	TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy   TournamentServiceBatchHealthCheckOKResultsItemStatus = "healthy"
+	TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded  TournamentServiceBatchHealthCheckOKResultsItemStatus = "degraded"
+	TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy TournamentServiceBatchHealthCheckOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all TournamentServiceBatchHealthCheckOKResultsItemStatus values.
+func (TournamentServiceBatchHealthCheckOKResultsItemStatus) AllValues() []TournamentServiceBatchHealthCheckOKResultsItemStatus {
+	return []TournamentServiceBatchHealthCheckOKResultsItemStatus{
+		TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy,
+		TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded,
+		TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentServiceBatchHealthCheckOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentServiceBatchHealthCheckOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch TournamentServiceBatchHealthCheckOKResultsItemStatus(data) {
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy
+		return nil
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded
+		return nil
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type TournamentServiceBatchHealthCheckReq struct {
+	// List of services to check.
+	Services []TournamentServiceBatchHealthCheckReqServicesItem `json:"services"`
+}
+
+// GetServices returns the value of Services.
+func (s *TournamentServiceBatchHealthCheckReq) GetServices() []TournamentServiceBatchHealthCheckReqServicesItem {
+	return s.Services
+}
+
+// SetServices sets the value of Services.
+func (s *TournamentServiceBatchHealthCheckReq) SetServices(val []TournamentServiceBatchHealthCheckReqServicesItem) {
+	s.Services = val
+}
+
+type TournamentServiceBatchHealthCheckReqServicesItem string
+
+const (
+	TournamentServiceBatchHealthCheckReqServicesItemTournamentService TournamentServiceBatchHealthCheckReqServicesItem = "tournament-service"
+	TournamentServiceBatchHealthCheckReqServicesItemSystemDomain      TournamentServiceBatchHealthCheckReqServicesItem = "system-domain"
+	TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain TournamentServiceBatchHealthCheckReqServicesItem = "specialized-domain"
+)
+
+// AllValues returns all TournamentServiceBatchHealthCheckReqServicesItem values.
+func (TournamentServiceBatchHealthCheckReqServicesItem) AllValues() []TournamentServiceBatchHealthCheckReqServicesItem {
+	return []TournamentServiceBatchHealthCheckReqServicesItem{
+		TournamentServiceBatchHealthCheckReqServicesItemTournamentService,
+		TournamentServiceBatchHealthCheckReqServicesItemSystemDomain,
+		TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentServiceBatchHealthCheckReqServicesItem) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentServiceBatchHealthCheckReqServicesItemTournamentService:
+		return []byte(s), nil
+	case TournamentServiceBatchHealthCheckReqServicesItemSystemDomain:
+		return []byte(s), nil
+	case TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentServiceBatchHealthCheckReqServicesItem) UnmarshalText(data []byte) error {
+	switch TournamentServiceBatchHealthCheckReqServicesItem(data) {
+	case TournamentServiceBatchHealthCheckReqServicesItemTournamentService:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemTournamentService
+		return nil
+	case TournamentServiceBatchHealthCheckReqServicesItemSystemDomain:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemSystemDomain
+		return nil
+	case TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type TournamentServiceBatchHealthCheckTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentServiceBatchHealthCheckTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) GetDetails() *TournamentServiceBatchHealthCheckTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) SetDetails(val *TournamentServiceBatchHealthCheckTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type TournamentServiceBatchHealthCheckTooManyRequestsDetails struct{}
+
+// TournamentServiceBatchHealthCheckTooManyRequestsHeaders wraps TournamentServiceBatchHealthCheckTooManyRequests with response headers.
+type TournamentServiceBatchHealthCheckTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   TournamentServiceBatchHealthCheckTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsHeaders) GetResponse() TournamentServiceBatchHealthCheckTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsHeaders) SetResponse(val TournamentServiceBatchHealthCheckTooManyRequests) {
+	s.Response = val
+}
+
+func (*TournamentServiceBatchHealthCheckTooManyRequestsHeaders) tournamentServiceBatchHealthCheckRes() {
 }
 
 type TournamentServiceHealthCheckAcceptEncoding string
@@ -2192,6 +7179,75 @@ func (s *TournamentServiceHealthCheckAcceptEncoding) UnmarshalText(data []byte) 
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Standard error response format.
+type TournamentServiceHealthCheckDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentServiceHealthCheckDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentServiceHealthCheckDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentServiceHealthCheckDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentServiceHealthCheckDef) GetDetails() *TournamentServiceHealthCheckDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentServiceHealthCheckDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentServiceHealthCheckDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentServiceHealthCheckDef) SetDetails(val *TournamentServiceHealthCheckDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type TournamentServiceHealthCheckDefDetails struct{}
+
+// TournamentServiceHealthCheckDefStatusCode wraps TournamentServiceHealthCheckDef with StatusCode.
+type TournamentServiceHealthCheckDefStatusCode struct {
+	StatusCode int
+	Response   TournamentServiceHealthCheckDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *TournamentServiceHealthCheckDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentServiceHealthCheckDefStatusCode) GetResponse() TournamentServiceHealthCheckDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *TournamentServiceHealthCheckDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentServiceHealthCheckDefStatusCode) SetResponse(val TournamentServiceHealthCheckDef) {
+	s.Response = val
+}
+
+func (*TournamentServiceHealthCheckDefStatusCode) tournamentServiceHealthCheckRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
@@ -2643,6 +7699,75 @@ func (*TournamentServiceHealthWebSocketBadRequest) tournamentServiceHealthWebSoc
 // Additional error details.
 type TournamentServiceHealthWebSocketBadRequestDetails struct{}
 
+// Standard error response format.
+type TournamentServiceHealthWebSocketDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentServiceHealthWebSocketDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentServiceHealthWebSocketDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentServiceHealthWebSocketDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentServiceHealthWebSocketDef) GetDetails() *TournamentServiceHealthWebSocketDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentServiceHealthWebSocketDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentServiceHealthWebSocketDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentServiceHealthWebSocketDef) SetDetails(val *TournamentServiceHealthWebSocketDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type TournamentServiceHealthWebSocketDefDetails struct{}
+
+// TournamentServiceHealthWebSocketDefStatusCode wraps TournamentServiceHealthWebSocketDef with StatusCode.
+type TournamentServiceHealthWebSocketDefStatusCode struct {
+	StatusCode int
+	Response   TournamentServiceHealthWebSocketDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *TournamentServiceHealthWebSocketDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentServiceHealthWebSocketDefStatusCode) GetResponse() TournamentServiceHealthWebSocketDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *TournamentServiceHealthWebSocketDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentServiceHealthWebSocketDefStatusCode) SetResponse(val TournamentServiceHealthWebSocketDef) {
+	s.Response = val
+}
+
+func (*TournamentServiceHealthWebSocketDefStatusCode) tournamentServiceHealthWebSocketRes() {}
+
 type TournamentServiceHealthWebSocketOK struct {
 	WebsocketURL       OptString `json:"websocket_url"`
 	SupportedProtocols []string  `json:"supported_protocols"`
@@ -2673,7 +7798,7 @@ func (*TournamentServiceHealthWebSocketOK) tournamentServiceHealthWebSocketRes()
 type TournamentServiceHealthWebSocketServicesItem string
 
 const (
-	TournamentServiceHealthWebSocketServicesItemExampleDomain     TournamentServiceHealthWebSocketServicesItem = "example-domain"
+	TournamentServiceHealthWebSocketServicesItemTournamentService TournamentServiceHealthWebSocketServicesItem = "tournament-service"
 	TournamentServiceHealthWebSocketServicesItemSystemDomain      TournamentServiceHealthWebSocketServicesItem = "system-domain"
 	TournamentServiceHealthWebSocketServicesItemSpecializedDomain TournamentServiceHealthWebSocketServicesItem = "specialized-domain"
 )
@@ -2681,7 +7806,7 @@ const (
 // AllValues returns all TournamentServiceHealthWebSocketServicesItem values.
 func (TournamentServiceHealthWebSocketServicesItem) AllValues() []TournamentServiceHealthWebSocketServicesItem {
 	return []TournamentServiceHealthWebSocketServicesItem{
-		TournamentServiceHealthWebSocketServicesItemExampleDomain,
+		TournamentServiceHealthWebSocketServicesItemTournamentService,
 		TournamentServiceHealthWebSocketServicesItemSystemDomain,
 		TournamentServiceHealthWebSocketServicesItemSpecializedDomain,
 	}
@@ -2690,7 +7815,7 @@ func (TournamentServiceHealthWebSocketServicesItem) AllValues() []TournamentServ
 // MarshalText implements encoding.TextMarshaler.
 func (s TournamentServiceHealthWebSocketServicesItem) MarshalText() ([]byte, error) {
 	switch s {
-	case TournamentServiceHealthWebSocketServicesItemExampleDomain:
+	case TournamentServiceHealthWebSocketServicesItemTournamentService:
 		return []byte(s), nil
 	case TournamentServiceHealthWebSocketServicesItemSystemDomain:
 		return []byte(s), nil
@@ -2704,8 +7829,8 @@ func (s TournamentServiceHealthWebSocketServicesItem) MarshalText() ([]byte, err
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *TournamentServiceHealthWebSocketServicesItem) UnmarshalText(data []byte) error {
 	switch TournamentServiceHealthWebSocketServicesItem(data) {
-	case TournamentServiceHealthWebSocketServicesItemExampleDomain:
-		*s = TournamentServiceHealthWebSocketServicesItemExampleDomain
+	case TournamentServiceHealthWebSocketServicesItemTournamentService:
+		*s = TournamentServiceHealthWebSocketServicesItemTournamentService
 		return nil
 	case TournamentServiceHealthWebSocketServicesItemSystemDomain:
 		*s = TournamentServiceHealthWebSocketServicesItemSystemDomain
@@ -2831,338 +7956,211 @@ func (*TournamentServiceHealthWebSocketUnauthorized) tournamentServiceHealthWebS
 // Additional error details.
 type TournamentServiceHealthWebSocketUnauthorizedDetails struct{}
 
-// Standard error response format.
-type UpdateExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExampleBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleBadRequest) GetDetails() *UpdateExampleBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleBadRequest) SetDetails(val *UpdateExampleBadRequestDetails) {
-	s.Details = val
-}
-
-func (*UpdateExampleBadRequest) updateExampleRes() {}
-
-// Additional error details.
-type UpdateExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type UpdateExampleConflict struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleConflictDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExampleConflict) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExampleConflict) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleConflict) GetDetails() *UpdateExampleConflictDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleConflict) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleConflict) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleConflict) SetDetails(val *UpdateExampleConflictDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type UpdateExampleConflictDetails struct{}
-
-// UpdateExampleConflictHeaders wraps UpdateExampleConflict with response headers.
-type UpdateExampleConflictHeaders struct {
-	ETag     OptString
-	Response UpdateExampleConflict
-}
-
-// GetETag returns the value of ETag.
-func (s *UpdateExampleConflictHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetResponse returns the value of Response.
-func (s *UpdateExampleConflictHeaders) GetResponse() UpdateExampleConflict {
-	return s.Response
-}
-
-// SetETag sets the value of ETag.
-func (s *UpdateExampleConflictHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetResponse sets the value of Response.
-func (s *UpdateExampleConflictHeaders) SetResponse(val UpdateExampleConflict) {
-	s.Response = val
-}
-
-func (*UpdateExampleConflictHeaders) updateExampleRes() {}
-
-// Standard error response format.
-type UpdateExampleNotFound struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleNotFoundDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExampleNotFound) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExampleNotFound) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleNotFound) GetDetails() *UpdateExampleNotFoundDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleNotFound) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleNotFound) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleNotFound) SetDetails(val *UpdateExampleNotFoundDetails) {
-	s.Details = val
-}
-
-func (*UpdateExampleNotFound) updateExampleRes() {}
-
-// Additional error details.
-type UpdateExampleNotFoundDetails struct{}
-
-// Standard error response format.
-type UpdateExamplePreconditionFailed struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExamplePreconditionFailedDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExamplePreconditionFailed) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExamplePreconditionFailed) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExamplePreconditionFailed) GetDetails() *UpdateExamplePreconditionFailedDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExamplePreconditionFailed) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExamplePreconditionFailed) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExamplePreconditionFailed) SetDetails(val *UpdateExamplePreconditionFailedDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type UpdateExamplePreconditionFailedDetails struct{}
-
-// UpdateExamplePreconditionFailedHeaders wraps UpdateExamplePreconditionFailed with response headers.
-type UpdateExamplePreconditionFailedHeaders struct {
-	ETag     OptString
-	Response UpdateExamplePreconditionFailed
-}
-
-// GetETag returns the value of ETag.
-func (s *UpdateExamplePreconditionFailedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetResponse returns the value of Response.
-func (s *UpdateExamplePreconditionFailedHeaders) GetResponse() UpdateExamplePreconditionFailed {
-	return s.Response
-}
-
-// SetETag sets the value of ETag.
-func (s *UpdateExamplePreconditionFailedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetResponse sets the value of Response.
-func (s *UpdateExamplePreconditionFailedHeaders) SetResponse(val UpdateExamplePreconditionFailed) {
-	s.Response = val
-}
-
-func (*UpdateExamplePreconditionFailedHeaders) updateExampleRes() {}
-
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/UpdateExampleRequest
-type UpdateExampleRequest struct {
-	// New example name.
-	Name OptString `json:"name"`
-	// New description.
-	Description OptString `json:"description"`
-	// New status.
-	Status OptUpdateExampleRequestStatus `json:"status"`
-	// Replace all tags.
-	Tags []string `json:"tags"`
-	// Update active status.
-	IsActive OptBool `json:"is_active"`
-	// New priority.
-	Priority OptInt `json:"priority"`
+// 30-50%. WebSocket messages optimized for real-time spectator updates.
+// Ref: #/components/schemas/TournamentSpectatorMessage
+type TournamentSpectatorMessage struct {
+	// Type of spectator event.
+	Type      TournamentSpectatorMessageType `json:"type"`
+	Timestamp time.Time                      `json:"timestamp"`
+	// Timestamp of the spectator message.
+	MessageTimestamp OptDateTime `json:"message_timestamp"`
+	// Associated match ID (if applicable).
+	MatchID OptUUID `json:"match_id"`
+	// Score of participant 1.
+	Participant1Score OptInt `json:"participant_1_score"`
+	// Score of participant 2.
+	Participant2Score OptInt `json:"participant_2_score"`
+	// Winner participant ID.
+	WinnerID OptUUID `json:"winner_id"`
+	// Updated bracket position.
+	BracketPosition OptString `json:"bracket_position"`
+	// Current spectator count.
+	SpectatorCount OptInt `json:"spectator_count"`
 }
 
-// GetName returns the value of Name.
-func (s *UpdateExampleRequest) GetName() OptString {
-	return s.Name
+// GetType returns the value of Type.
+func (s *TournamentSpectatorMessage) GetType() TournamentSpectatorMessageType {
+	return s.Type
 }
 
-// GetDescription returns the value of Description.
-func (s *UpdateExampleRequest) GetDescription() OptString {
-	return s.Description
+// GetTimestamp returns the value of Timestamp.
+func (s *TournamentSpectatorMessage) GetTimestamp() time.Time {
+	return s.Timestamp
 }
 
-// GetStatus returns the value of Status.
-func (s *UpdateExampleRequest) GetStatus() OptUpdateExampleRequestStatus {
-	return s.Status
+// GetMessageTimestamp returns the value of MessageTimestamp.
+func (s *TournamentSpectatorMessage) GetMessageTimestamp() OptDateTime {
+	return s.MessageTimestamp
 }
 
-// GetTags returns the value of Tags.
-func (s *UpdateExampleRequest) GetTags() []string {
-	return s.Tags
+// GetMatchID returns the value of MatchID.
+func (s *TournamentSpectatorMessage) GetMatchID() OptUUID {
+	return s.MatchID
 }
 
-// GetIsActive returns the value of IsActive.
-func (s *UpdateExampleRequest) GetIsActive() OptBool {
-	return s.IsActive
+// GetParticipant1Score returns the value of Participant1Score.
+func (s *TournamentSpectatorMessage) GetParticipant1Score() OptInt {
+	return s.Participant1Score
 }
 
-// GetPriority returns the value of Priority.
-func (s *UpdateExampleRequest) GetPriority() OptInt {
-	return s.Priority
+// GetParticipant2Score returns the value of Participant2Score.
+func (s *TournamentSpectatorMessage) GetParticipant2Score() OptInt {
+	return s.Participant2Score
 }
 
-// SetName sets the value of Name.
-func (s *UpdateExampleRequest) SetName(val OptString) {
-	s.Name = val
+// GetWinnerID returns the value of WinnerID.
+func (s *TournamentSpectatorMessage) GetWinnerID() OptUUID {
+	return s.WinnerID
 }
 
-// SetDescription sets the value of Description.
-func (s *UpdateExampleRequest) SetDescription(val OptString) {
-	s.Description = val
+// GetBracketPosition returns the value of BracketPosition.
+func (s *TournamentSpectatorMessage) GetBracketPosition() OptString {
+	return s.BracketPosition
 }
 
-// SetStatus sets the value of Status.
-func (s *UpdateExampleRequest) SetStatus(val OptUpdateExampleRequestStatus) {
-	s.Status = val
+// GetSpectatorCount returns the value of SpectatorCount.
+func (s *TournamentSpectatorMessage) GetSpectatorCount() OptInt {
+	return s.SpectatorCount
 }
 
-// SetTags sets the value of Tags.
-func (s *UpdateExampleRequest) SetTags(val []string) {
-	s.Tags = val
+// SetType sets the value of Type.
+func (s *TournamentSpectatorMessage) SetType(val TournamentSpectatorMessageType) {
+	s.Type = val
 }
 
-// SetIsActive sets the value of IsActive.
-func (s *UpdateExampleRequest) SetIsActive(val OptBool) {
-	s.IsActive = val
+// SetTimestamp sets the value of Timestamp.
+func (s *TournamentSpectatorMessage) SetTimestamp(val time.Time) {
+	s.Timestamp = val
 }
 
-// SetPriority sets the value of Priority.
-func (s *UpdateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
+// SetMessageTimestamp sets the value of MessageTimestamp.
+func (s *TournamentSpectatorMessage) SetMessageTimestamp(val OptDateTime) {
+	s.MessageTimestamp = val
 }
 
-// New status.
-type UpdateExampleRequestStatus string
+// SetMatchID sets the value of MatchID.
+func (s *TournamentSpectatorMessage) SetMatchID(val OptUUID) {
+	s.MatchID = val
+}
+
+// SetParticipant1Score sets the value of Participant1Score.
+func (s *TournamentSpectatorMessage) SetParticipant1Score(val OptInt) {
+	s.Participant1Score = val
+}
+
+// SetParticipant2Score sets the value of Participant2Score.
+func (s *TournamentSpectatorMessage) SetParticipant2Score(val OptInt) {
+	s.Participant2Score = val
+}
+
+// SetWinnerID sets the value of WinnerID.
+func (s *TournamentSpectatorMessage) SetWinnerID(val OptUUID) {
+	s.WinnerID = val
+}
+
+// SetBracketPosition sets the value of BracketPosition.
+func (s *TournamentSpectatorMessage) SetBracketPosition(val OptString) {
+	s.BracketPosition = val
+}
+
+// SetSpectatorCount sets the value of SpectatorCount.
+func (s *TournamentSpectatorMessage) SetSpectatorCount(val OptInt) {
+	s.SpectatorCount = val
+}
+
+// TournamentSpectatorMessageHeaders wraps TournamentSpectatorMessage with response headers.
+type TournamentSpectatorMessageHeaders struct {
+	Connection         OptString
+	SecWebSocketAccept OptString
+	Upgrade            OptString
+	Response           TournamentSpectatorMessage
+}
+
+// GetConnection returns the value of Connection.
+func (s *TournamentSpectatorMessageHeaders) GetConnection() OptString {
+	return s.Connection
+}
+
+// GetSecWebSocketAccept returns the value of SecWebSocketAccept.
+func (s *TournamentSpectatorMessageHeaders) GetSecWebSocketAccept() OptString {
+	return s.SecWebSocketAccept
+}
+
+// GetUpgrade returns the value of Upgrade.
+func (s *TournamentSpectatorMessageHeaders) GetUpgrade() OptString {
+	return s.Upgrade
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentSpectatorMessageHeaders) GetResponse() TournamentSpectatorMessage {
+	return s.Response
+}
+
+// SetConnection sets the value of Connection.
+func (s *TournamentSpectatorMessageHeaders) SetConnection(val OptString) {
+	s.Connection = val
+}
+
+// SetSecWebSocketAccept sets the value of SecWebSocketAccept.
+func (s *TournamentSpectatorMessageHeaders) SetSecWebSocketAccept(val OptString) {
+	s.SecWebSocketAccept = val
+}
+
+// SetUpgrade sets the value of Upgrade.
+func (s *TournamentSpectatorMessageHeaders) SetUpgrade(val OptString) {
+	s.Upgrade = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentSpectatorMessageHeaders) SetResponse(val TournamentSpectatorMessage) {
+	s.Response = val
+}
+
+func (*TournamentSpectatorMessageHeaders) tournamentSpectatorWebSocketRes() {}
+
+// Type of spectator event.
+type TournamentSpectatorMessageType string
 
 const (
-	UpdateExampleRequestStatusActive   UpdateExampleRequestStatus = "active"
-	UpdateExampleRequestStatusInactive UpdateExampleRequestStatus = "inactive"
-	UpdateExampleRequestStatusPending  UpdateExampleRequestStatus = "pending"
-	UpdateExampleRequestStatusArchived UpdateExampleRequestStatus = "archived"
+	TournamentSpectatorMessageTypeSpectatorJoined TournamentSpectatorMessageType = "spectator_joined"
+	TournamentSpectatorMessageTypeSpectatorLeft   TournamentSpectatorMessageType = "spectator_left"
+	TournamentSpectatorMessageTypeMatchStarted    TournamentSpectatorMessageType = "match_started"
+	TournamentSpectatorMessageTypeMatchEnded      TournamentSpectatorMessageType = "match_ended"
+	TournamentSpectatorMessageTypeScoreUpdated    TournamentSpectatorMessageType = "score_updated"
+	TournamentSpectatorMessageTypeBracketUpdated  TournamentSpectatorMessageType = "bracket_updated"
+	TournamentSpectatorMessageTypeTournamentEnded TournamentSpectatorMessageType = "tournament_ended"
 )
 
-// AllValues returns all UpdateExampleRequestStatus values.
-func (UpdateExampleRequestStatus) AllValues() []UpdateExampleRequestStatus {
-	return []UpdateExampleRequestStatus{
-		UpdateExampleRequestStatusActive,
-		UpdateExampleRequestStatusInactive,
-		UpdateExampleRequestStatusPending,
-		UpdateExampleRequestStatusArchived,
+// AllValues returns all TournamentSpectatorMessageType values.
+func (TournamentSpectatorMessageType) AllValues() []TournamentSpectatorMessageType {
+	return []TournamentSpectatorMessageType{
+		TournamentSpectatorMessageTypeSpectatorJoined,
+		TournamentSpectatorMessageTypeSpectatorLeft,
+		TournamentSpectatorMessageTypeMatchStarted,
+		TournamentSpectatorMessageTypeMatchEnded,
+		TournamentSpectatorMessageTypeScoreUpdated,
+		TournamentSpectatorMessageTypeBracketUpdated,
+		TournamentSpectatorMessageTypeTournamentEnded,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
+func (s TournamentSpectatorMessageType) MarshalText() ([]byte, error) {
 	switch s {
-	case UpdateExampleRequestStatusActive:
+	case TournamentSpectatorMessageTypeSpectatorJoined:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusInactive:
+	case TournamentSpectatorMessageTypeSpectatorLeft:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusPending:
+	case TournamentSpectatorMessageTypeMatchStarted:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusArchived:
+	case TournamentSpectatorMessageTypeMatchEnded:
+		return []byte(s), nil
+	case TournamentSpectatorMessageTypeScoreUpdated:
+		return []byte(s), nil
+	case TournamentSpectatorMessageTypeBracketUpdated:
+		return []byte(s), nil
+	case TournamentSpectatorMessageTypeTournamentEnded:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3170,19 +8168,28 @@ func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *UpdateExampleRequestStatus) UnmarshalText(data []byte) error {
-	switch UpdateExampleRequestStatus(data) {
-	case UpdateExampleRequestStatusActive:
-		*s = UpdateExampleRequestStatusActive
+func (s *TournamentSpectatorMessageType) UnmarshalText(data []byte) error {
+	switch TournamentSpectatorMessageType(data) {
+	case TournamentSpectatorMessageTypeSpectatorJoined:
+		*s = TournamentSpectatorMessageTypeSpectatorJoined
 		return nil
-	case UpdateExampleRequestStatusInactive:
-		*s = UpdateExampleRequestStatusInactive
+	case TournamentSpectatorMessageTypeSpectatorLeft:
+		*s = TournamentSpectatorMessageTypeSpectatorLeft
 		return nil
-	case UpdateExampleRequestStatusPending:
-		*s = UpdateExampleRequestStatusPending
+	case TournamentSpectatorMessageTypeMatchStarted:
+		*s = TournamentSpectatorMessageTypeMatchStarted
 		return nil
-	case UpdateExampleRequestStatusArchived:
-		*s = UpdateExampleRequestStatusArchived
+	case TournamentSpectatorMessageTypeMatchEnded:
+		*s = TournamentSpectatorMessageTypeMatchEnded
+		return nil
+	case TournamentSpectatorMessageTypeScoreUpdated:
+		*s = TournamentSpectatorMessageTypeScoreUpdated
+		return nil
+	case TournamentSpectatorMessageTypeBracketUpdated:
+		*s = TournamentSpectatorMessageTypeBracketUpdated
+		return nil
+	case TournamentSpectatorMessageTypeTournamentEnded:
+		*s = TournamentSpectatorMessageTypeTournamentEnded
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -3190,116 +8197,1364 @@ func (s *UpdateExampleRequestStatus) UnmarshalText(data []byte) error {
 }
 
 // Standard error response format.
-type UpdateExampleTooManyRequests struct {
+type TournamentSpectatorWebSocketBadRequest struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *UpdateExampleTooManyRequestsDetails `json:"details"`
+	Details *TournamentSpectatorWebSocketBadRequestDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *UpdateExampleTooManyRequests) GetCode() int32 {
+func (s *TournamentSpectatorWebSocketBadRequest) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *UpdateExampleTooManyRequests) GetMessage() string {
+func (s *TournamentSpectatorWebSocketBadRequest) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *UpdateExampleTooManyRequests) GetDetails() *UpdateExampleTooManyRequestsDetails {
+func (s *TournamentSpectatorWebSocketBadRequest) GetDetails() *TournamentSpectatorWebSocketBadRequestDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *UpdateExampleTooManyRequests) SetCode(val int32) {
+func (s *TournamentSpectatorWebSocketBadRequest) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *UpdateExampleTooManyRequests) SetMessage(val string) {
+func (s *TournamentSpectatorWebSocketBadRequest) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *UpdateExampleTooManyRequests) SetDetails(val *UpdateExampleTooManyRequestsDetails) {
+func (s *TournamentSpectatorWebSocketBadRequest) SetDetails(val *TournamentSpectatorWebSocketBadRequestDetails) {
+	s.Details = val
+}
+
+func (*TournamentSpectatorWebSocketBadRequest) tournamentSpectatorWebSocketRes() {}
+
+// Additional error details.
+type TournamentSpectatorWebSocketBadRequestDetails struct{}
+
+// Standard error response format.
+type TournamentSpectatorWebSocketDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentSpectatorWebSocketDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentSpectatorWebSocketDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentSpectatorWebSocketDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentSpectatorWebSocketDef) GetDetails() *TournamentSpectatorWebSocketDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentSpectatorWebSocketDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentSpectatorWebSocketDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentSpectatorWebSocketDef) SetDetails(val *TournamentSpectatorWebSocketDefDetails) {
 	s.Details = val
 }
 
 // Additional error details.
-type UpdateExampleTooManyRequestsDetails struct{}
+type TournamentSpectatorWebSocketDefDetails struct{}
 
-// UpdateExampleTooManyRequestsHeaders wraps UpdateExampleTooManyRequests with response headers.
-type UpdateExampleTooManyRequestsHeaders struct {
+// TournamentSpectatorWebSocketDefStatusCode wraps TournamentSpectatorWebSocketDef with StatusCode.
+type TournamentSpectatorWebSocketDefStatusCode struct {
+	StatusCode int
+	Response   TournamentSpectatorWebSocketDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *TournamentSpectatorWebSocketDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentSpectatorWebSocketDefStatusCode) GetResponse() TournamentSpectatorWebSocketDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *TournamentSpectatorWebSocketDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentSpectatorWebSocketDefStatusCode) SetResponse(val TournamentSpectatorWebSocketDef) {
+	s.Response = val
+}
+
+func (*TournamentSpectatorWebSocketDefStatusCode) tournamentSpectatorWebSocketRes() {}
+
+// Standard error response format.
+type TournamentSpectatorWebSocketNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentSpectatorWebSocketNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentSpectatorWebSocketNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentSpectatorWebSocketNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentSpectatorWebSocketNotFound) GetDetails() *TournamentSpectatorWebSocketNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentSpectatorWebSocketNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentSpectatorWebSocketNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentSpectatorWebSocketNotFound) SetDetails(val *TournamentSpectatorWebSocketNotFoundDetails) {
+	s.Details = val
+}
+
+func (*TournamentSpectatorWebSocketNotFound) tournamentSpectatorWebSocketRes() {}
+
+// Additional error details.
+type TournamentSpectatorWebSocketNotFoundDetails struct{}
+
+type TournamentSpectatorWebSocketOK struct {
+	WebsocketURL       OptString `json:"websocket_url"`
+	SupportedProtocols []string  `json:"supported_protocols"`
+}
+
+// GetWebsocketURL returns the value of WebsocketURL.
+func (s *TournamentSpectatorWebSocketOK) GetWebsocketURL() OptString {
+	return s.WebsocketURL
+}
+
+// GetSupportedProtocols returns the value of SupportedProtocols.
+func (s *TournamentSpectatorWebSocketOK) GetSupportedProtocols() []string {
+	return s.SupportedProtocols
+}
+
+// SetWebsocketURL sets the value of WebsocketURL.
+func (s *TournamentSpectatorWebSocketOK) SetWebsocketURL(val OptString) {
+	s.WebsocketURL = val
+}
+
+// SetSupportedProtocols sets the value of SupportedProtocols.
+func (s *TournamentSpectatorWebSocketOK) SetSupportedProtocols(val []string) {
+	s.SupportedProtocols = val
+}
+
+func (*TournamentSpectatorWebSocketOK) tournamentSpectatorWebSocketRes() {}
+
+// Standard error response format.
+type TournamentSpectatorWebSocketTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *TournamentSpectatorWebSocketTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *TournamentSpectatorWebSocketTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *TournamentSpectatorWebSocketTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *TournamentSpectatorWebSocketTooManyRequests) GetDetails() *TournamentSpectatorWebSocketTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *TournamentSpectatorWebSocketTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *TournamentSpectatorWebSocketTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *TournamentSpectatorWebSocketTooManyRequests) SetDetails(val *TournamentSpectatorWebSocketTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type TournamentSpectatorWebSocketTooManyRequestsDetails struct{}
+
+// TournamentSpectatorWebSocketTooManyRequestsHeaders wraps TournamentSpectatorWebSocketTooManyRequests with response headers.
+type TournamentSpectatorWebSocketTooManyRequestsHeaders struct {
 	RetryAfter OptInt
-	Response   UpdateExampleTooManyRequests
+	Response   TournamentSpectatorWebSocketTooManyRequests
 }
 
 // GetRetryAfter returns the value of RetryAfter.
-func (s *UpdateExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
+func (s *TournamentSpectatorWebSocketTooManyRequestsHeaders) GetRetryAfter() OptInt {
 	return s.RetryAfter
 }
 
 // GetResponse returns the value of Response.
-func (s *UpdateExampleTooManyRequestsHeaders) GetResponse() UpdateExampleTooManyRequests {
+func (s *TournamentSpectatorWebSocketTooManyRequestsHeaders) GetResponse() TournamentSpectatorWebSocketTooManyRequests {
 	return s.Response
 }
 
 // SetRetryAfter sets the value of RetryAfter.
-func (s *UpdateExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+func (s *TournamentSpectatorWebSocketTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
 	s.RetryAfter = val
 }
 
 // SetResponse sets the value of Response.
-func (s *UpdateExampleTooManyRequestsHeaders) SetResponse(val UpdateExampleTooManyRequests) {
+func (s *TournamentSpectatorWebSocketTooManyRequestsHeaders) SetResponse(val TournamentSpectatorWebSocketTooManyRequests) {
 	s.Response = val
 }
 
-func (*UpdateExampleTooManyRequestsHeaders) updateExampleRes() {}
+func (*TournamentSpectatorWebSocketTooManyRequestsHeaders) tournamentSpectatorWebSocketRes() {}
 
 // Standard error response format.
-type UpdateExampleUnprocessableEntity struct {
+type TournamentSpectatorWebSocketUnauthorized struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *UpdateExampleUnprocessableEntityDetails `json:"details"`
+	Details *TournamentSpectatorWebSocketUnauthorizedDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *UpdateExampleUnprocessableEntity) GetCode() int32 {
+func (s *TournamentSpectatorWebSocketUnauthorized) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *UpdateExampleUnprocessableEntity) GetMessage() string {
+func (s *TournamentSpectatorWebSocketUnauthorized) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *UpdateExampleUnprocessableEntity) GetDetails() *UpdateExampleUnprocessableEntityDetails {
+func (s *TournamentSpectatorWebSocketUnauthorized) GetDetails() *TournamentSpectatorWebSocketUnauthorizedDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *UpdateExampleUnprocessableEntity) SetCode(val int32) {
+func (s *TournamentSpectatorWebSocketUnauthorized) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *UpdateExampleUnprocessableEntity) SetMessage(val string) {
+func (s *TournamentSpectatorWebSocketUnauthorized) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *UpdateExampleUnprocessableEntity) SetDetails(val *UpdateExampleUnprocessableEntityDetails) {
+func (s *TournamentSpectatorWebSocketUnauthorized) SetDetails(val *TournamentSpectatorWebSocketUnauthorizedDetails) {
 	s.Details = val
 }
 
-func (*UpdateExampleUnprocessableEntity) updateExampleRes() {}
+func (*TournamentSpectatorWebSocketUnauthorized) tournamentSpectatorWebSocketRes() {}
 
 // Additional error details.
-type UpdateExampleUnprocessableEntityDetails struct{}
+type TournamentSpectatorWebSocketUnauthorizedDetails struct{}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%. Spectator list optimized for live updates.
+// Ref: #/components/schemas/TournamentSpectatorsResponse
+type TournamentSpectatorsResponse struct {
+	// List of current spectators.
+	Spectators []TournamentSpectatorsResponseSpectatorsItem `json:"spectators"`
+	// Total number of spectators.
+	TotalCount int `json:"total_count"`
+	// Last spectator list update.
+	LastUpdated OptDateTime `json:"last_updated"`
+}
+
+// GetSpectators returns the value of Spectators.
+func (s *TournamentSpectatorsResponse) GetSpectators() []TournamentSpectatorsResponseSpectatorsItem {
+	return s.Spectators
+}
+
+// GetTotalCount returns the value of TotalCount.
+func (s *TournamentSpectatorsResponse) GetTotalCount() int {
+	return s.TotalCount
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *TournamentSpectatorsResponse) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetSpectators sets the value of Spectators.
+func (s *TournamentSpectatorsResponse) SetSpectators(val []TournamentSpectatorsResponseSpectatorsItem) {
+	s.Spectators = val
+}
+
+// SetTotalCount sets the value of TotalCount.
+func (s *TournamentSpectatorsResponse) SetTotalCount(val int) {
+	s.TotalCount = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *TournamentSpectatorsResponse) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+// TournamentSpectatorsResponseHeaders wraps TournamentSpectatorsResponse with response headers.
+type TournamentSpectatorsResponseHeaders struct {
+	CacheControl OptString
+	Response     TournamentSpectatorsResponse
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *TournamentSpectatorsResponseHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentSpectatorsResponseHeaders) GetResponse() TournamentSpectatorsResponse {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *TournamentSpectatorsResponseHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentSpectatorsResponseHeaders) SetResponse(val TournamentSpectatorsResponse) {
+	s.Response = val
+}
+
+func (*TournamentSpectatorsResponseHeaders) getTournamentSpectatorsRes() {}
+
+// Tournament spectator.
+type TournamentSpectatorsResponseSpectatorsItem struct {
+	// Spectator unique identifier.
+	SpectatorID OptUUID `json:"spectator_id"`
+	// Spectator display name.
+	PlayerName OptString `json:"player_name"`
+	// When spectator joined.
+	JoinedAt OptDateTime `json:"joined_at"`
+	// Current spectator activity.
+	ActivityStatus OptTournamentSpectatorsResponseSpectatorsItemActivityStatus `json:"activity_status"`
+}
+
+// GetSpectatorID returns the value of SpectatorID.
+func (s *TournamentSpectatorsResponseSpectatorsItem) GetSpectatorID() OptUUID {
+	return s.SpectatorID
+}
+
+// GetPlayerName returns the value of PlayerName.
+func (s *TournamentSpectatorsResponseSpectatorsItem) GetPlayerName() OptString {
+	return s.PlayerName
+}
+
+// GetJoinedAt returns the value of JoinedAt.
+func (s *TournamentSpectatorsResponseSpectatorsItem) GetJoinedAt() OptDateTime {
+	return s.JoinedAt
+}
+
+// GetActivityStatus returns the value of ActivityStatus.
+func (s *TournamentSpectatorsResponseSpectatorsItem) GetActivityStatus() OptTournamentSpectatorsResponseSpectatorsItemActivityStatus {
+	return s.ActivityStatus
+}
+
+// SetSpectatorID sets the value of SpectatorID.
+func (s *TournamentSpectatorsResponseSpectatorsItem) SetSpectatorID(val OptUUID) {
+	s.SpectatorID = val
+}
+
+// SetPlayerName sets the value of PlayerName.
+func (s *TournamentSpectatorsResponseSpectatorsItem) SetPlayerName(val OptString) {
+	s.PlayerName = val
+}
+
+// SetJoinedAt sets the value of JoinedAt.
+func (s *TournamentSpectatorsResponseSpectatorsItem) SetJoinedAt(val OptDateTime) {
+	s.JoinedAt = val
+}
+
+// SetActivityStatus sets the value of ActivityStatus.
+func (s *TournamentSpectatorsResponseSpectatorsItem) SetActivityStatus(val OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) {
+	s.ActivityStatus = val
+}
+
+// Current spectator activity.
+type TournamentSpectatorsResponseSpectatorsItemActivityStatus string
+
+const (
+	TournamentSpectatorsResponseSpectatorsItemActivityStatusActive   TournamentSpectatorsResponseSpectatorsItemActivityStatus = "active"
+	TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive TournamentSpectatorsResponseSpectatorsItemActivityStatus = "inactive"
+	TournamentSpectatorsResponseSpectatorsItemActivityStatusAway     TournamentSpectatorsResponseSpectatorsItemActivityStatus = "away"
+)
+
+// AllValues returns all TournamentSpectatorsResponseSpectatorsItemActivityStatus values.
+func (TournamentSpectatorsResponseSpectatorsItemActivityStatus) AllValues() []TournamentSpectatorsResponseSpectatorsItemActivityStatus {
+	return []TournamentSpectatorsResponseSpectatorsItemActivityStatus{
+		TournamentSpectatorsResponseSpectatorsItemActivityStatusActive,
+		TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive,
+		TournamentSpectatorsResponseSpectatorsItemActivityStatusAway,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentSpectatorsResponseSpectatorsItemActivityStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusActive:
+		return []byte(s), nil
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive:
+		return []byte(s), nil
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusAway:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentSpectatorsResponseSpectatorsItemActivityStatus) UnmarshalText(data []byte) error {
+	switch TournamentSpectatorsResponseSpectatorsItemActivityStatus(data) {
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusActive:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusActive
+		return nil
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive
+		return nil
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusAway:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusAway
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Current tournament status.
+// Ref: #/components/schemas/TournamentStatus
+type TournamentStatus string
+
+const (
+	TournamentStatusUpcoming           TournamentStatus = "upcoming"
+	TournamentStatusRegistrationOpen   TournamentStatus = "registration_open"
+	TournamentStatusRegistrationClosed TournamentStatus = "registration_closed"
+	TournamentStatusInProgress         TournamentStatus = "in_progress"
+	TournamentStatusCompleted          TournamentStatus = "completed"
+	TournamentStatusCancelled          TournamentStatus = "cancelled"
+)
+
+// AllValues returns all TournamentStatus values.
+func (TournamentStatus) AllValues() []TournamentStatus {
+	return []TournamentStatus{
+		TournamentStatusUpcoming,
+		TournamentStatusRegistrationOpen,
+		TournamentStatusRegistrationClosed,
+		TournamentStatusInProgress,
+		TournamentStatusCompleted,
+		TournamentStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentStatusUpcoming:
+		return []byte(s), nil
+	case TournamentStatusRegistrationOpen:
+		return []byte(s), nil
+	case TournamentStatusRegistrationClosed:
+		return []byte(s), nil
+	case TournamentStatusInProgress:
+		return []byte(s), nil
+	case TournamentStatusCompleted:
+		return []byte(s), nil
+	case TournamentStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentStatus) UnmarshalText(data []byte) error {
+	switch TournamentStatus(data) {
+	case TournamentStatusUpcoming:
+		*s = TournamentStatusUpcoming
+		return nil
+	case TournamentStatusRegistrationOpen:
+		*s = TournamentStatusRegistrationOpen
+		return nil
+	case TournamentStatusRegistrationClosed:
+		*s = TournamentStatusRegistrationClosed
+		return nil
+	case TournamentStatusInProgress:
+		*s = TournamentStatusInProgress
+		return nil
+	case TournamentStatusCompleted:
+		*s = TournamentStatusCompleted
+		return nil
+	case TournamentStatusCancelled:
+		*s = TournamentStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Tournament difficulty level.
+type TournamentTournamentDifficulty string
+
+const (
+	TournamentTournamentDifficultyBeginner     TournamentTournamentDifficulty = "beginner"
+	TournamentTournamentDifficultyIntermediate TournamentTournamentDifficulty = "intermediate"
+	TournamentTournamentDifficultyAdvanced     TournamentTournamentDifficulty = "advanced"
+	TournamentTournamentDifficultyExpert       TournamentTournamentDifficulty = "expert"
+	TournamentTournamentDifficultyMaster       TournamentTournamentDifficulty = "master"
+)
+
+// AllValues returns all TournamentTournamentDifficulty values.
+func (TournamentTournamentDifficulty) AllValues() []TournamentTournamentDifficulty {
+	return []TournamentTournamentDifficulty{
+		TournamentTournamentDifficultyBeginner,
+		TournamentTournamentDifficultyIntermediate,
+		TournamentTournamentDifficultyAdvanced,
+		TournamentTournamentDifficultyExpert,
+		TournamentTournamentDifficultyMaster,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentTournamentDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentTournamentDifficultyBeginner:
+		return []byte(s), nil
+	case TournamentTournamentDifficultyIntermediate:
+		return []byte(s), nil
+	case TournamentTournamentDifficultyAdvanced:
+		return []byte(s), nil
+	case TournamentTournamentDifficultyExpert:
+		return []byte(s), nil
+	case TournamentTournamentDifficultyMaster:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentTournamentDifficulty) UnmarshalText(data []byte) error {
+	switch TournamentTournamentDifficulty(data) {
+	case TournamentTournamentDifficultyBeginner:
+		*s = TournamentTournamentDifficultyBeginner
+		return nil
+	case TournamentTournamentDifficultyIntermediate:
+		*s = TournamentTournamentDifficultyIntermediate
+		return nil
+	case TournamentTournamentDifficultyAdvanced:
+		*s = TournamentTournamentDifficultyAdvanced
+		return nil
+	case TournamentTournamentDifficultyExpert:
+		*s = TournamentTournamentDifficultyExpert
+		return nil
+	case TournamentTournamentDifficultyMaster:
+		*s = TournamentTournamentDifficultyMaster
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Type of tournament.
+type TournamentTournamentType string
+
+const (
+	TournamentTournamentTypeRanked       TournamentTournamentType = "ranked"
+	TournamentTournamentTypeCasual       TournamentTournamentType = "casual"
+	TournamentTournamentTypeChampionship TournamentTournamentType = "championship"
+	TournamentTournamentTypeSeasonal     TournamentTournamentType = "seasonal"
+	TournamentTournamentTypeSpecialEvent TournamentTournamentType = "special-event"
+)
+
+// AllValues returns all TournamentTournamentType values.
+func (TournamentTournamentType) AllValues() []TournamentTournamentType {
+	return []TournamentTournamentType{
+		TournamentTournamentTypeRanked,
+		TournamentTournamentTypeCasual,
+		TournamentTournamentTypeChampionship,
+		TournamentTournamentTypeSeasonal,
+		TournamentTournamentTypeSpecialEvent,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TournamentTournamentType) MarshalText() ([]byte, error) {
+	switch s {
+	case TournamentTournamentTypeRanked:
+		return []byte(s), nil
+	case TournamentTournamentTypeCasual:
+		return []byte(s), nil
+	case TournamentTournamentTypeChampionship:
+		return []byte(s), nil
+	case TournamentTournamentTypeSeasonal:
+		return []byte(s), nil
+	case TournamentTournamentTypeSpecialEvent:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TournamentTournamentType) UnmarshalText(data []byte) error {
+	switch TournamentTournamentType(data) {
+	case TournamentTournamentTypeRanked:
+		*s = TournamentTournamentTypeRanked
+		return nil
+	case TournamentTournamentTypeCasual:
+		*s = TournamentTournamentTypeCasual
+		return nil
+	case TournamentTournamentTypeChampionship:
+		*s = TournamentTournamentTypeChampionship
+		return nil
+	case TournamentTournamentTypeSeasonal:
+		*s = TournamentTournamentTypeSeasonal
+		return nil
+	case TournamentTournamentTypeSpecialEvent:
+		*s = TournamentTournamentTypeSpecialEvent
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// TournamentUpdatedHeaders wraps TournamentResponse with response headers.
+type TournamentUpdatedHeaders struct {
+	ETag            OptString
+	LastModified    OptDateTime
+	XProcessingTime OptInt
+	Response        TournamentResponse
+}
+
+// GetETag returns the value of ETag.
+func (s *TournamentUpdatedHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetLastModified returns the value of LastModified.
+func (s *TournamentUpdatedHeaders) GetLastModified() OptDateTime {
+	return s.LastModified
+}
+
+// GetXProcessingTime returns the value of XProcessingTime.
+func (s *TournamentUpdatedHeaders) GetXProcessingTime() OptInt {
+	return s.XProcessingTime
+}
+
+// GetResponse returns the value of Response.
+func (s *TournamentUpdatedHeaders) GetResponse() TournamentResponse {
+	return s.Response
+}
+
+// SetETag sets the value of ETag.
+func (s *TournamentUpdatedHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetLastModified sets the value of LastModified.
+func (s *TournamentUpdatedHeaders) SetLastModified(val OptDateTime) {
+	s.LastModified = val
+}
+
+// SetXProcessingTime sets the value of XProcessingTime.
+func (s *TournamentUpdatedHeaders) SetXProcessingTime(val OptInt) {
+	s.XProcessingTime = val
+}
+
+// SetResponse sets the value of Response.
+func (s *TournamentUpdatedHeaders) SetResponse(val TournamentResponse) {
+	s.Response = val
+}
+
+func (*TournamentUpdatedHeaders) updateTournamentRes() {}
+
+// Standard error response format.
+type Unauthorized struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UnauthorizedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *Unauthorized) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *Unauthorized) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *Unauthorized) GetDetails() *UnauthorizedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *Unauthorized) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *Unauthorized) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *Unauthorized) SetDetails(val *UnauthorizedDetails) {
+	s.Details = val
+}
+
+func (*Unauthorized) getGlobalLeaderboardsRes() {}
+
+// Additional error details.
+type UnauthorizedDetails struct{}
+
+// Standard error response format.
+type UpdateTournamentBadRequest struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentBadRequestDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentBadRequest) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentBadRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentBadRequest) GetDetails() *UpdateTournamentBadRequestDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentBadRequest) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentBadRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentBadRequest) SetDetails(val *UpdateTournamentBadRequestDetails) {
+	s.Details = val
+}
+
+func (*UpdateTournamentBadRequest) updateTournamentRes() {}
+
+// Additional error details.
+type UpdateTournamentBadRequestDetails struct{}
+
+// Standard error response format.
+type UpdateTournamentConflict struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentConflictDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentConflict) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentConflict) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentConflict) GetDetails() *UpdateTournamentConflictDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentConflict) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentConflict) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentConflict) SetDetails(val *UpdateTournamentConflictDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type UpdateTournamentConflictDetails struct{}
+
+// UpdateTournamentConflictHeaders wraps UpdateTournamentConflict with response headers.
+type UpdateTournamentConflictHeaders struct {
+	ETag     OptString
+	Response UpdateTournamentConflict
+}
+
+// GetETag returns the value of ETag.
+func (s *UpdateTournamentConflictHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetResponse returns the value of Response.
+func (s *UpdateTournamentConflictHeaders) GetResponse() UpdateTournamentConflict {
+	return s.Response
+}
+
+// SetETag sets the value of ETag.
+func (s *UpdateTournamentConflictHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UpdateTournamentConflictHeaders) SetResponse(val UpdateTournamentConflict) {
+	s.Response = val
+}
+
+func (*UpdateTournamentConflictHeaders) updateTournamentRes() {}
+
+// Standard error response format.
+type UpdateTournamentDef struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentDefDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentDef) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentDef) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentDef) GetDetails() *UpdateTournamentDefDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentDef) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentDef) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentDef) SetDetails(val *UpdateTournamentDefDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type UpdateTournamentDefDetails struct{}
+
+// UpdateTournamentDefStatusCode wraps UpdateTournamentDef with StatusCode.
+type UpdateTournamentDefStatusCode struct {
+	StatusCode int
+	Response   UpdateTournamentDef
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *UpdateTournamentDefStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *UpdateTournamentDefStatusCode) GetResponse() UpdateTournamentDef {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *UpdateTournamentDefStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UpdateTournamentDefStatusCode) SetResponse(val UpdateTournamentDef) {
+	s.Response = val
+}
+
+func (*UpdateTournamentDefStatusCode) updateTournamentRes() {}
+
+// Standard error response format.
+type UpdateTournamentNotFound struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentNotFoundDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentNotFound) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentNotFound) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentNotFound) GetDetails() *UpdateTournamentNotFoundDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentNotFound) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentNotFound) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentNotFound) SetDetails(val *UpdateTournamentNotFoundDetails) {
+	s.Details = val
+}
+
+func (*UpdateTournamentNotFound) updateTournamentRes() {}
+
+// Additional error details.
+type UpdateTournamentNotFoundDetails struct{}
+
+// Standard error response format.
+type UpdateTournamentPreconditionFailed struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentPreconditionFailedDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentPreconditionFailed) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentPreconditionFailed) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentPreconditionFailed) GetDetails() *UpdateTournamentPreconditionFailedDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentPreconditionFailed) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentPreconditionFailed) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentPreconditionFailed) SetDetails(val *UpdateTournamentPreconditionFailedDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type UpdateTournamentPreconditionFailedDetails struct{}
+
+// UpdateTournamentPreconditionFailedHeaders wraps UpdateTournamentPreconditionFailed with response headers.
+type UpdateTournamentPreconditionFailedHeaders struct {
+	ETag     OptString
+	Response UpdateTournamentPreconditionFailed
+}
+
+// GetETag returns the value of ETag.
+func (s *UpdateTournamentPreconditionFailedHeaders) GetETag() OptString {
+	return s.ETag
+}
+
+// GetResponse returns the value of Response.
+func (s *UpdateTournamentPreconditionFailedHeaders) GetResponse() UpdateTournamentPreconditionFailed {
+	return s.Response
+}
+
+// SetETag sets the value of ETag.
+func (s *UpdateTournamentPreconditionFailedHeaders) SetETag(val OptString) {
+	s.ETag = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UpdateTournamentPreconditionFailedHeaders) SetResponse(val UpdateTournamentPreconditionFailed) {
+	s.Response = val
+}
+
+func (*UpdateTournamentPreconditionFailedHeaders) updateTournamentRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/UpdateTournamentRequest
+type UpdateTournamentRequest struct {
+	// Updated tournament name.
+	Name OptString `json:"name"`
+	// Updated tournament description.
+	Description OptString `json:"description"`
+	// Updated tournament difficulty level.
+	TournamentDifficulty OptUpdateTournamentRequestTournamentDifficulty `json:"tournament_difficulty"`
+	// Updated maximum participants.
+	MaxParticipants OptInt `json:"max_participants"`
+	// Updated start date and time.
+	StartDate OptDateTime `json:"start_date"`
+	// Updated end date and time.
+	EndDate OptDateTime         `json:"end_date"`
+	Status  OptTournamentStatus `json:"status"`
+	// Updated geographic region.
+	Region OptString `json:"region"`
+	// Updated entry fee.
+	EntryFee OptInt `json:"entry_fee"`
+	// Updated prize pool.
+	PrizePool OptInt `json:"prize_pool"`
+	// Replace tournament objectives.
+	Objectives []TournamentObjective `json:"objectives"`
+}
+
+// GetName returns the value of Name.
+func (s *UpdateTournamentRequest) GetName() OptString {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *UpdateTournamentRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// GetTournamentDifficulty returns the value of TournamentDifficulty.
+func (s *UpdateTournamentRequest) GetTournamentDifficulty() OptUpdateTournamentRequestTournamentDifficulty {
+	return s.TournamentDifficulty
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *UpdateTournamentRequest) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetStartDate returns the value of StartDate.
+func (s *UpdateTournamentRequest) GetStartDate() OptDateTime {
+	return s.StartDate
+}
+
+// GetEndDate returns the value of EndDate.
+func (s *UpdateTournamentRequest) GetEndDate() OptDateTime {
+	return s.EndDate
+}
+
+// GetStatus returns the value of Status.
+func (s *UpdateTournamentRequest) GetStatus() OptTournamentStatus {
+	return s.Status
+}
+
+// GetRegion returns the value of Region.
+func (s *UpdateTournamentRequest) GetRegion() OptString {
+	return s.Region
+}
+
+// GetEntryFee returns the value of EntryFee.
+func (s *UpdateTournamentRequest) GetEntryFee() OptInt {
+	return s.EntryFee
+}
+
+// GetPrizePool returns the value of PrizePool.
+func (s *UpdateTournamentRequest) GetPrizePool() OptInt {
+	return s.PrizePool
+}
+
+// GetObjectives returns the value of Objectives.
+func (s *UpdateTournamentRequest) GetObjectives() []TournamentObjective {
+	return s.Objectives
+}
+
+// SetName sets the value of Name.
+func (s *UpdateTournamentRequest) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *UpdateTournamentRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetTournamentDifficulty sets the value of TournamentDifficulty.
+func (s *UpdateTournamentRequest) SetTournamentDifficulty(val OptUpdateTournamentRequestTournamentDifficulty) {
+	s.TournamentDifficulty = val
+}
+
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *UpdateTournamentRequest) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// SetStartDate sets the value of StartDate.
+func (s *UpdateTournamentRequest) SetStartDate(val OptDateTime) {
+	s.StartDate = val
+}
+
+// SetEndDate sets the value of EndDate.
+func (s *UpdateTournamentRequest) SetEndDate(val OptDateTime) {
+	s.EndDate = val
+}
+
+// SetStatus sets the value of Status.
+func (s *UpdateTournamentRequest) SetStatus(val OptTournamentStatus) {
+	s.Status = val
+}
+
+// SetRegion sets the value of Region.
+func (s *UpdateTournamentRequest) SetRegion(val OptString) {
+	s.Region = val
+}
+
+// SetEntryFee sets the value of EntryFee.
+func (s *UpdateTournamentRequest) SetEntryFee(val OptInt) {
+	s.EntryFee = val
+}
+
+// SetPrizePool sets the value of PrizePool.
+func (s *UpdateTournamentRequest) SetPrizePool(val OptInt) {
+	s.PrizePool = val
+}
+
+// SetObjectives sets the value of Objectives.
+func (s *UpdateTournamentRequest) SetObjectives(val []TournamentObjective) {
+	s.Objectives = val
+}
+
+// Updated tournament difficulty level.
+type UpdateTournamentRequestTournamentDifficulty string
+
+const (
+	UpdateTournamentRequestTournamentDifficultyBeginner     UpdateTournamentRequestTournamentDifficulty = "beginner"
+	UpdateTournamentRequestTournamentDifficultyIntermediate UpdateTournamentRequestTournamentDifficulty = "intermediate"
+	UpdateTournamentRequestTournamentDifficultyAdvanced     UpdateTournamentRequestTournamentDifficulty = "advanced"
+	UpdateTournamentRequestTournamentDifficultyExpert       UpdateTournamentRequestTournamentDifficulty = "expert"
+	UpdateTournamentRequestTournamentDifficultyMaster       UpdateTournamentRequestTournamentDifficulty = "master"
+)
+
+// AllValues returns all UpdateTournamentRequestTournamentDifficulty values.
+func (UpdateTournamentRequestTournamentDifficulty) AllValues() []UpdateTournamentRequestTournamentDifficulty {
+	return []UpdateTournamentRequestTournamentDifficulty{
+		UpdateTournamentRequestTournamentDifficultyBeginner,
+		UpdateTournamentRequestTournamentDifficultyIntermediate,
+		UpdateTournamentRequestTournamentDifficultyAdvanced,
+		UpdateTournamentRequestTournamentDifficultyExpert,
+		UpdateTournamentRequestTournamentDifficultyMaster,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s UpdateTournamentRequestTournamentDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case UpdateTournamentRequestTournamentDifficultyBeginner:
+		return []byte(s), nil
+	case UpdateTournamentRequestTournamentDifficultyIntermediate:
+		return []byte(s), nil
+	case UpdateTournamentRequestTournamentDifficultyAdvanced:
+		return []byte(s), nil
+	case UpdateTournamentRequestTournamentDifficultyExpert:
+		return []byte(s), nil
+	case UpdateTournamentRequestTournamentDifficultyMaster:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UpdateTournamentRequestTournamentDifficulty) UnmarshalText(data []byte) error {
+	switch UpdateTournamentRequestTournamentDifficulty(data) {
+	case UpdateTournamentRequestTournamentDifficultyBeginner:
+		*s = UpdateTournamentRequestTournamentDifficultyBeginner
+		return nil
+	case UpdateTournamentRequestTournamentDifficultyIntermediate:
+		*s = UpdateTournamentRequestTournamentDifficultyIntermediate
+		return nil
+	case UpdateTournamentRequestTournamentDifficultyAdvanced:
+		*s = UpdateTournamentRequestTournamentDifficultyAdvanced
+		return nil
+	case UpdateTournamentRequestTournamentDifficultyExpert:
+		*s = UpdateTournamentRequestTournamentDifficultyExpert
+		return nil
+	case UpdateTournamentRequestTournamentDifficultyMaster:
+		*s = UpdateTournamentRequestTournamentDifficultyMaster
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Standard error response format.
+type UpdateTournamentTooManyRequests struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentTooManyRequestsDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentTooManyRequests) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentTooManyRequests) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentTooManyRequests) GetDetails() *UpdateTournamentTooManyRequestsDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentTooManyRequests) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentTooManyRequests) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentTooManyRequests) SetDetails(val *UpdateTournamentTooManyRequestsDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type UpdateTournamentTooManyRequestsDetails struct{}
+
+// UpdateTournamentTooManyRequestsHeaders wraps UpdateTournamentTooManyRequests with response headers.
+type UpdateTournamentTooManyRequestsHeaders struct {
+	RetryAfter OptInt
+	Response   UpdateTournamentTooManyRequests
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *UpdateTournamentTooManyRequestsHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *UpdateTournamentTooManyRequestsHeaders) GetResponse() UpdateTournamentTooManyRequests {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *UpdateTournamentTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UpdateTournamentTooManyRequestsHeaders) SetResponse(val UpdateTournamentTooManyRequests) {
+	s.Response = val
+}
+
+func (*UpdateTournamentTooManyRequestsHeaders) updateTournamentRes() {}
+
+// Standard error response format.
+type UpdateTournamentUnprocessableEntity struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *UpdateTournamentUnprocessableEntityDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *UpdateTournamentUnprocessableEntity) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateTournamentUnprocessableEntity) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *UpdateTournamentUnprocessableEntity) GetDetails() *UpdateTournamentUnprocessableEntityDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *UpdateTournamentUnprocessableEntity) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateTournamentUnprocessableEntity) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *UpdateTournamentUnprocessableEntity) SetDetails(val *UpdateTournamentUnprocessableEntityDetails) {
+	s.Details = val
+}
+
+func (*UpdateTournamentUnprocessableEntity) updateTournamentRes() {}
+
+// Additional error details.
+type UpdateTournamentUnprocessableEntityDetails struct{}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.

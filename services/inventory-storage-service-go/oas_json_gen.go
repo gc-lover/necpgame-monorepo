@@ -4291,9 +4291,7 @@ func (s *InventoryStorageBatchHealthCheckOK) encodeFields(e *jx.Encoder) {
 		e.FieldStart("results")
 		e.ArrStart()
 		for _, elem := range s.Results {
-			if len(elem) != 0 {
-				e.Raw(elem)
-			}
+			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
@@ -4320,12 +4318,10 @@ func (s *InventoryStorageBatchHealthCheckOK) Decode(d *jx.Decoder) error {
 		case "results":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Results = make([]jx.Raw, 0)
+				s.Results = make([]InventoryStorageBatchHealthCheckOKResultsItem, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem jx.Raw
-					v, err := d.RawAppend(nil)
-					elem = jx.Raw(v)
-					if err != nil {
+					var elem InventoryStorageBatchHealthCheckOKResultsItem
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
 					s.Results = append(s.Results, elem)
@@ -4401,6 +4397,227 @@ func (s *InventoryStorageBatchHealthCheckOK) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *InventoryStorageBatchHealthCheckOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.Domain.Set {
+			e.FieldStart("domain")
+			s.Domain.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("timestamp")
+		json.EncodeDateTime(e, s.Timestamp)
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.UptimeSeconds.Set {
+			e.FieldStart("uptime_seconds")
+			s.UptimeSeconds.Encode(e)
+		}
+	}
+	{
+		if s.ActiveConnections.Set {
+			e.FieldStart("active_connections")
+			s.ActiveConnections.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfInventoryStorageBatchHealthCheckOKResultsItem = [6]string{
+	0: "status",
+	1: "domain",
+	2: "timestamp",
+	3: "version",
+	4: "uptime_seconds",
+	5: "active_connections",
+}
+
+// Decode decodes InventoryStorageBatchHealthCheckOKResultsItem from json.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode InventoryStorageBatchHealthCheckOKResultsItem to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "status":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "domain":
+			if err := func() error {
+				s.Domain.Reset()
+				if err := s.Domain.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"domain\"")
+			}
+		case "timestamp":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.Timestamp = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "uptime_seconds":
+			if err := func() error {
+				s.UptimeSeconds.Reset()
+				if err := s.UptimeSeconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"uptime_seconds\"")
+			}
+		case "active_connections":
+			if err := func() error {
+				s.ActiveConnections.Reset()
+				if err := s.ActiveConnections.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"active_connections\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode InventoryStorageBatchHealthCheckOKResultsItem")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000101,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfInventoryStorageBatchHealthCheckOKResultsItem) {
+					name = jsonFieldsNameOfInventoryStorageBatchHealthCheckOKResultsItem[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes InventoryStorageBatchHealthCheckOKResultsItemStatus as json.
+func (s InventoryStorageBatchHealthCheckOKResultsItemStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes InventoryStorageBatchHealthCheckOKResultsItemStatus from json.
+func (s *InventoryStorageBatchHealthCheckOKResultsItemStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode InventoryStorageBatchHealthCheckOKResultsItemStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch InventoryStorageBatchHealthCheckOKResultsItemStatus(v) {
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy
+	default:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s InventoryStorageBatchHealthCheckOKResultsItemStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *InventoryStorageBatchHealthCheckOKResultsItemStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

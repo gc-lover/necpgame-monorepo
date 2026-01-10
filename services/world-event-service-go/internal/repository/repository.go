@@ -429,3 +429,261 @@ func (r *Repository) GetActiveEvents(ctx context.Context) ([]*WorldEvent, error)
 
 	return events, nil
 }
+
+// GetEventParticipants retrieves participants for a specific event
+func (r *Repository) GetEventParticipants(ctx context.Context, eventID uuid.UUID, filter *ParticipationFilter) ([]*EventParticipation, error) {
+	query := `
+		SELECT id, player_id, event_id, status, joined_at, last_activity_at,
+			   completed_at, failed_at, abandoned_at, progress_data, rewards_claimed,
+			   score, rank, metadata, created_at, updated_at
+		FROM world_events.event_participation WHERE event_id = $1`
+	args := []interface{}{eventID}
+	argIndex := 2
+
+	if filter.Status != nil {
+		query += ` AND status = $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Status)
+		argIndex++
+	}
+
+	query += ` ORDER BY joined_at DESC`
+
+	if filter.Limit != nil {
+		query += ` LIMIT $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Limit)
+		argIndex++
+	}
+
+	if filter.Offset != nil {
+		query += ` OFFSET $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Offset)
+	}
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		r.logger.Error("Failed to get event participants", zap.String("eventID", eventID.String()), zap.Error(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var participants []*EventParticipation
+	for rows.Next() {
+		p := &EventParticipation{}
+		err := rows.Scan(
+			&p.ID, &p.PlayerID, &p.EventID, &p.Status, &p.JoinedAt, &p.LastActivityAt,
+			&p.CompletedAt, &p.FailedAt, &p.AbandonedAt, &p.ProgressData, &p.RewardsClaimed,
+			&p.Score, &p.Rank, &p.Metadata, &p.CreatedAt, &p.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan event participant", zap.Error(err))
+			continue
+		}
+		participants = append(participants, p)
+	}
+
+	return participants, nil
+}
+
+// GetPlayerParticipation retrieves player's participation in an event
+func (r *Repository) GetPlayerParticipation(ctx context.Context, playerID, eventID uuid.UUID) (*EventParticipation, error) {
+	query := `
+		SELECT id, player_id, event_id, status, joined_at, last_activity_at,
+			   completed_at, failed_at, abandoned_at, progress_data, rewards_claimed,
+			   score, rank, metadata, created_at, updated_at
+		FROM world_events.event_participation
+		WHERE player_id = $1 AND event_id = $2`
+
+	participation := &EventParticipation{}
+	err := r.pool.QueryRow(ctx, query, playerID, eventID).Scan(
+		&participation.ID, &participation.PlayerID, &participation.EventID, &participation.Status,
+		&participation.JoinedAt, &participation.LastActivityAt, &participation.CompletedAt,
+		&participation.FailedAt, &participation.AbandonedAt, &participation.ProgressData,
+		&participation.RewardsClaimed, &participation.Score, &participation.Rank,
+		&participation.Metadata, &participation.CreatedAt, &participation.UpdatedAt,
+	)
+
+	if err != nil {
+		r.logger.Error("Failed to get player participation",
+			zap.String("playerID", playerID.String()),
+			zap.String("eventID", eventID.String()),
+			zap.Error(err))
+		return nil, err
+	}
+
+	return participation, nil
+}
+
+// GetPlayerRewards retrieves rewards for a player in an event
+func (r *Repository) GetPlayerRewards(ctx context.Context, playerID string, eventID uuid.UUID) ([]*EventReward, error) {
+	query := `
+		SELECT id, event_id, player_id, participation_id, reward_type, reward_id,
+			   amount, claimed, claimed_at, expires_at, metadata, created_at, updated_at
+		FROM world_events.event_rewards
+		WHERE player_id = $1 AND event_id = $2
+		ORDER BY created_at DESC`
+
+	rows, err := r.pool.Query(ctx, query, playerID, eventID)
+	if err != nil {
+		r.logger.Error("Failed to get player rewards",
+			zap.String("playerID", playerID),
+			zap.String("eventID", eventID.String()),
+			zap.Error(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rewards []*EventReward
+	for rows.Next() {
+		reward := &EventReward{}
+		err := rows.Scan(
+			&reward.ID, &reward.EventID, &reward.PlayerID, &reward.RewardID,
+			&reward.RewardType, &reward.RewardID, &reward.Amount, &reward.Claimed,
+			&reward.ClaimedAt, &reward.ExpiresAt, &reward.Metadata, &reward.CreatedAt, &reward.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan event reward", zap.Error(err))
+			continue
+		}
+		rewards = append(rewards, reward)
+	}
+
+	return rewards, nil
+}
+
+// ClaimReward marks a reward as claimed
+func (r *Repository) ClaimReward(ctx context.Context, rewardID uuid.UUID) error {
+	query := `
+		UPDATE world_events.event_rewards
+		SET claimed = true, claimed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND claimed = false`
+
+	result, err := r.pool.Exec(ctx, query, rewardID)
+	if err != nil {
+		r.logger.Error("Failed to claim reward", zap.String("rewardID", rewardID.String()), zap.Error(err))
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("reward not found or already claimed")
+	}
+
+	r.logger.Info("Reward claimed", zap.String("rewardID", rewardID.String()))
+	return nil
+}
+
+// ListEventTemplates retrieves event templates with filtering
+func (r *Repository) ListEventTemplates(ctx context.Context, filter *TemplateFilter) ([]*EventTemplate, error) {
+	query := `
+		SELECT id, name, type, difficulty, description, objectives_template, rewards_template,
+			   duration_minutes, max_participants, min_level, max_level, region_restrictions,
+			   faction_restrictions, event_data_template, is_active, usage_count, success_rate,
+			   created_by, created_at, updated_at
+		FROM world_events.event_templates WHERE 1=1`
+	args := []interface{}{}
+	argIndex := 1
+
+	if filter.Type != nil {
+		query += ` AND type = $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Type)
+		argIndex++
+	}
+
+	if filter.IsActive != nil {
+		query += ` AND is_active = $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.IsActive)
+		argIndex++
+	}
+
+	query += ` ORDER BY usage_count DESC, created_at DESC`
+
+	if filter.Limit != nil {
+		query += ` LIMIT $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Limit)
+		argIndex++
+	}
+
+	if filter.Offset != nil {
+		query += ` OFFSET $` + fmt.Sprintf("%d", argIndex)
+		args = append(args, *filter.Offset)
+	}
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		r.logger.Error("Failed to list event templates", zap.Error(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var templates []*EventTemplate
+	for rows.Next() {
+		template := &EventTemplate{}
+		err := rows.Scan(
+			&template.ID, &template.Name, &template.Type, &template.Difficulty, &template.Description,
+			&template.ObjectivesTemplate, &template.RewardsTemplate, &template.DurationMinutes,
+			&template.MaxParticipants, &template.MinLevel, &template.MaxLevel, &template.RegionRestrictions,
+			&template.FactionRestrictions, &template.EventDataTemplate, &template.IsActive,
+			&template.UsageCount, &template.SuccessRate, &template.CreatedBy, &template.CreatedAt, &template.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan event template", zap.Error(err))
+			continue
+		}
+		templates = append(templates, template)
+	}
+
+	return templates, nil
+}
+
+// CreateEventTemplate creates a new event template
+func (r *Repository) CreateEventTemplate(ctx context.Context, template *EventTemplate) (*EventTemplate, error) {
+	query := `
+		INSERT INTO world_events.event_templates (
+			name, type, difficulty, description, objectives_template, rewards_template,
+			duration_minutes, max_participants, min_level, max_level, region_restrictions,
+			faction_restrictions, event_data_template, is_active, created_by
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		RETURNING id, created_at, updated_at`
+
+	err := r.pool.QueryRow(ctx, query,
+		template.Name, template.Type, template.Difficulty, template.Description,
+		template.ObjectivesTemplate, template.RewardsTemplate, template.DurationMinutes,
+		template.MaxParticipants, template.MinLevel, template.MaxLevel, template.RegionRestrictions,
+		template.FactionRestrictions, template.EventDataTemplate, template.IsActive, template.CreatedBy,
+	).Scan(&template.ID, &template.CreatedAt, &template.UpdatedAt)
+
+	if err != nil {
+		r.logger.Error("Failed to create event template", zap.String("name", template.Name), zap.Error(err))
+		return nil, err
+	}
+
+	r.logger.Info("Created event template", zap.String("name", template.Name), zap.String("id", template.ID.String()))
+	return template, nil
+}
+
+// GetEventAnalytics retrieves analytics for an event
+func (r *Repository) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (*EventAnalytics, error) {
+	query := `
+		SELECT event_id, total_participants, completed_participants, failed_participants,
+			   abandoned_participants, average_completion_time, average_score,
+			   average_participation_time, participation_rate, completion_rate,
+			   satisfaction_rating, revenue_generated, engagement_score,
+			   peak_concurrent_users, total_rewards_claimed, last_updated
+		FROM world_events.event_analytics WHERE event_id = $1`
+
+	analytics := &EventAnalytics{}
+	err := r.pool.QueryRow(ctx, query, eventID).Scan(
+		&analytics.EventID, &analytics.TotalParticipants, &analytics.CompletedParticipants,
+		&analytics.FailedParticipants, &analytics.AbandonedParticipants, &analytics.AverageCompletionTime,
+		&analytics.AverageScore, &analytics.AverageParticipationTime, &analytics.ParticipationRate,
+		&analytics.CompletionRate, &analytics.SatisfactionRating, &analytics.RevenueGenerated,
+		&analytics.EngagementScore, &analytics.PeakConcurrentUsers, &analytics.TotalRewardsClaimed,
+		&analytics.LastUpdated,
+	)
+
+	if err != nil {
+		r.logger.Error("Failed to get event analytics", zap.String("eventID", eventID.String()), zap.Error(err))
+		return nil, err
+	}
+
+	return analytics, nil
+}

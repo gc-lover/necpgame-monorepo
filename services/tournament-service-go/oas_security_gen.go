@@ -16,6 +16,9 @@ type SecurityHandler interface {
 	// HandleBearerAuth handles BearerAuth security.
 	// JWT Bearer token authentication.
 	HandleBearerAuth(ctx context.Context, operationName OperationName, t BearerAuth) (context.Context, error)
+	// HandleServiceAuth handles ServiceAuth security.
+	// Service-to-service authentication token.
+	HandleServiceAuth(ctx context.Context, operationName OperationName, t ServiceAuth) (context.Context, error)
 }
 
 func findAuthorization(h http.Header, prefix string) (string, bool) {
@@ -34,14 +37,22 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	CreateExampleOperation:                    []string{},
-	DeleteExampleOperation:                    []string{},
-	ExampleDomainBatchHealthCheckOperation:    []string{},
-	GetExampleOperation:                       []string{},
-	ListTournamentsOperation:                  []string{},
-	TournamentServiceHealthCheckOperation:     []string{},
-	TournamentServiceHealthWebSocketOperation: []string{},
-	UpdateExampleOperation:                    []string{},
+	CreateTournamentOperation:                  []string{},
+	DeleteTournamentOperation:                  []string{},
+	GenerateTournamentBracketOperation:         []string{},
+	GetGlobalLeaderboardsOperation:             []string{},
+	GetTournamentOperation:                     []string{},
+	GetTournamentBracketOperation:              []string{},
+	GetTournamentLeaderboardOperation:          []string{},
+	GetTournamentSpectatorsOperation:           []string{},
+	JoinTournamentOperation:                    []string{},
+	LeaveTournamentOperation:                   []string{},
+	ListTournamentsOperation:                   []string{},
+	TournamentServiceBatchHealthCheckOperation: []string{},
+	TournamentServiceHealthCheckOperation:      []string{},
+	TournamentServiceHealthWebSocketOperation:  []string{},
+	TournamentSpectatorWebSocketOperation:      []string{},
+	UpdateTournamentOperation:                  []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
@@ -61,17 +72,49 @@ func (s *Server) securityBearerAuth(ctx context.Context, operationName Operation
 	return rctx, true, err
 }
 
+var operationRolesServiceAuth = map[string][]string{
+	RegisterTournamentScoreOperation: []string{},
+}
+
+func (s *Server) securityServiceAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
+	var t ServiceAuth
+	token, ok := findAuthorization(req.Header, "Bearer")
+	if !ok {
+		return ctx, false, nil
+	}
+	t.Token = token
+	t.Roles = operationRolesServiceAuth[operationName]
+	rctx, err := s.sec.HandleServiceAuth(ctx, operationName, t)
+	if errors.Is(err, ogenerrors.ErrSkipServerSecurity) {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	return rctx, true, err
+}
+
 // SecuritySource is provider of security values (tokens, passwords, etc.).
 type SecuritySource interface {
 	// BearerAuth provides BearerAuth security value.
 	// JWT Bearer token authentication.
 	BearerAuth(ctx context.Context, operationName OperationName) (BearerAuth, error)
+	// ServiceAuth provides ServiceAuth security value.
+	// Service-to-service authentication token.
+	ServiceAuth(ctx context.Context, operationName OperationName) (ServiceAuth, error)
 }
 
 func (s *Client) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) error {
 	t, err := s.sec.BearerAuth(ctx, operationName)
 	if err != nil {
 		return errors.Wrap(err, "security source \"BearerAuth\"")
+	}
+	req.Header.Set("Authorization", "Bearer "+t.Token)
+	return nil
+}
+func (s *Client) securityServiceAuth(ctx context.Context, operationName OperationName, req *http.Request) error {
+	t, err := s.sec.ServiceAuth(ctx, operationName)
+	if err != nil {
+		return errors.Wrap(err, "security source \"ServiceAuth\"")
 	}
 	req.Header.Set("Authorization", "Bearer "+t.Token)
 	return nil

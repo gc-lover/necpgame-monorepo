@@ -13,92 +13,6 @@ func (s *ErrRespStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
-// Standard error response format.
-type BadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *BadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *BadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *BadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *BadRequest) GetDetails() *BadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *BadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *BadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *BadRequest) SetDetails(val *BadRequestDetails) {
-	s.Details = val
-}
-
-func (*BadRequest) batchHealthCheckRes() {}
-func (*BadRequest) healthWebSocketRes()  {}
-
-// Additional error details.
-type BadRequestDetails struct{}
-
-type BatchHealthCheckOK struct {
-	Results []HealthResponse `json:"results"`
-	// Total processing time.
-	TotalTimeMs OptInt `json:"total_time_ms"`
-}
-
-// GetResults returns the value of Results.
-func (s *BatchHealthCheckOK) GetResults() []HealthResponse {
-	return s.Results
-}
-
-// GetTotalTimeMs returns the value of TotalTimeMs.
-func (s *BatchHealthCheckOK) GetTotalTimeMs() OptInt {
-	return s.TotalTimeMs
-}
-
-// SetResults sets the value of Results.
-func (s *BatchHealthCheckOK) SetResults(val []HealthResponse) {
-	s.Results = val
-}
-
-// SetTotalTimeMs sets the value of TotalTimeMs.
-func (s *BatchHealthCheckOK) SetTotalTimeMs(val OptInt) {
-	s.TotalTimeMs = val
-}
-
-func (*BatchHealthCheckOK) batchHealthCheckRes() {}
-
-type BatchHealthCheckReq struct {
-	Domains []string `json:"domains"`
-}
-
-// GetDomains returns the value of Domains.
-func (s *BatchHealthCheckReq) GetDomains() []string {
-	return s.Domains
-}
-
-// SetDomains sets the value of Domains.
-func (s *BatchHealthCheckReq) SetDomains(val []string) {
-	s.Domains = val
-}
-
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -124,31 +38,31 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-type CosmeticDomainHealthCheckOKContentEncoding string
+type CosmeticServiceHealthCheckAcceptEncoding string
 
 const (
-	CosmeticDomainHealthCheckOKContentEncodingGzip    CosmeticDomainHealthCheckOKContentEncoding = "gzip"
-	CosmeticDomainHealthCheckOKContentEncodingDeflate CosmeticDomainHealthCheckOKContentEncoding = "deflate"
-	CosmeticDomainHealthCheckOKContentEncodingBr      CosmeticDomainHealthCheckOKContentEncoding = "br"
+	CosmeticServiceHealthCheckAcceptEncodingGzip    CosmeticServiceHealthCheckAcceptEncoding = "gzip"
+	CosmeticServiceHealthCheckAcceptEncodingDeflate CosmeticServiceHealthCheckAcceptEncoding = "deflate"
+	CosmeticServiceHealthCheckAcceptEncodingBr      CosmeticServiceHealthCheckAcceptEncoding = "br"
 )
 
-// AllValues returns all CosmeticDomainHealthCheckOKContentEncoding values.
-func (CosmeticDomainHealthCheckOKContentEncoding) AllValues() []CosmeticDomainHealthCheckOKContentEncoding {
-	return []CosmeticDomainHealthCheckOKContentEncoding{
-		CosmeticDomainHealthCheckOKContentEncodingGzip,
-		CosmeticDomainHealthCheckOKContentEncodingDeflate,
-		CosmeticDomainHealthCheckOKContentEncodingBr,
+// AllValues returns all CosmeticServiceHealthCheckAcceptEncoding values.
+func (CosmeticServiceHealthCheckAcceptEncoding) AllValues() []CosmeticServiceHealthCheckAcceptEncoding {
+	return []CosmeticServiceHealthCheckAcceptEncoding{
+		CosmeticServiceHealthCheckAcceptEncodingGzip,
+		CosmeticServiceHealthCheckAcceptEncodingDeflate,
+		CosmeticServiceHealthCheckAcceptEncodingBr,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s CosmeticDomainHealthCheckOKContentEncoding) MarshalText() ([]byte, error) {
+func (s CosmeticServiceHealthCheckAcceptEncoding) MarshalText() ([]byte, error) {
 	switch s {
-	case CosmeticDomainHealthCheckOKContentEncodingGzip:
+	case CosmeticServiceHealthCheckAcceptEncodingGzip:
 		return []byte(s), nil
-	case CosmeticDomainHealthCheckOKContentEncodingDeflate:
+	case CosmeticServiceHealthCheckAcceptEncodingDeflate:
 		return []byte(s), nil
-	case CosmeticDomainHealthCheckOKContentEncodingBr:
+	case CosmeticServiceHealthCheckAcceptEncodingBr:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -156,16 +70,64 @@ func (s CosmeticDomainHealthCheckOKContentEncoding) MarshalText() ([]byte, error
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *CosmeticDomainHealthCheckOKContentEncoding) UnmarshalText(data []byte) error {
-	switch CosmeticDomainHealthCheckOKContentEncoding(data) {
-	case CosmeticDomainHealthCheckOKContentEncodingGzip:
-		*s = CosmeticDomainHealthCheckOKContentEncodingGzip
+func (s *CosmeticServiceHealthCheckAcceptEncoding) UnmarshalText(data []byte) error {
+	switch CosmeticServiceHealthCheckAcceptEncoding(data) {
+	case CosmeticServiceHealthCheckAcceptEncodingGzip:
+		*s = CosmeticServiceHealthCheckAcceptEncodingGzip
 		return nil
-	case CosmeticDomainHealthCheckOKContentEncodingDeflate:
-		*s = CosmeticDomainHealthCheckOKContentEncodingDeflate
+	case CosmeticServiceHealthCheckAcceptEncodingDeflate:
+		*s = CosmeticServiceHealthCheckAcceptEncodingDeflate
 		return nil
-	case CosmeticDomainHealthCheckOKContentEncodingBr:
-		*s = CosmeticDomainHealthCheckOKContentEncodingBr
+	case CosmeticServiceHealthCheckAcceptEncodingBr:
+		*s = CosmeticServiceHealthCheckAcceptEncodingBr
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CosmeticServiceHealthCheckOKContentEncoding string
+
+const (
+	CosmeticServiceHealthCheckOKContentEncodingGzip    CosmeticServiceHealthCheckOKContentEncoding = "gzip"
+	CosmeticServiceHealthCheckOKContentEncodingDeflate CosmeticServiceHealthCheckOKContentEncoding = "deflate"
+	CosmeticServiceHealthCheckOKContentEncodingBr      CosmeticServiceHealthCheckOKContentEncoding = "br"
+)
+
+// AllValues returns all CosmeticServiceHealthCheckOKContentEncoding values.
+func (CosmeticServiceHealthCheckOKContentEncoding) AllValues() []CosmeticServiceHealthCheckOKContentEncoding {
+	return []CosmeticServiceHealthCheckOKContentEncoding{
+		CosmeticServiceHealthCheckOKContentEncodingGzip,
+		CosmeticServiceHealthCheckOKContentEncodingDeflate,
+		CosmeticServiceHealthCheckOKContentEncodingBr,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CosmeticServiceHealthCheckOKContentEncoding) MarshalText() ([]byte, error) {
+	switch s {
+	case CosmeticServiceHealthCheckOKContentEncodingGzip:
+		return []byte(s), nil
+	case CosmeticServiceHealthCheckOKContentEncodingDeflate:
+		return []byte(s), nil
+	case CosmeticServiceHealthCheckOKContentEncodingBr:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CosmeticServiceHealthCheckOKContentEncoding) UnmarshalText(data []byte) error {
+	switch CosmeticServiceHealthCheckOKContentEncoding(data) {
+	case CosmeticServiceHealthCheckOKContentEncodingGzip:
+		*s = CosmeticServiceHealthCheckOKContentEncodingGzip
+		return nil
+	case CosmeticServiceHealthCheckOKContentEncodingDeflate:
+		*s = CosmeticServiceHealthCheckOKContentEncodingDeflate
+		return nil
+	case CosmeticServiceHealthCheckOKContentEncodingBr:
+		*s = CosmeticServiceHealthCheckOKContentEncodingBr
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -240,58 +202,85 @@ func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
 }
 
 // Standard error response format.
-type Forbidden struct {
+// Ref: #/components/schemas/Error
+type Error struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
-	Details *ForbiddenDetails `json:"details"`
+	Details *ErrorDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *Forbidden) GetCode() int32 {
+func (s *Error) GetCode() int32 {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *Forbidden) GetMessage() string {
+func (s *Error) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *Forbidden) GetDetails() *ForbiddenDetails {
+func (s *Error) GetDetails() *ErrorDetails {
 	return s.Details
 }
 
 // SetCode sets the value of Code.
-func (s *Forbidden) SetCode(val int32) {
+func (s *Error) SetCode(val int32) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *Forbidden) SetMessage(val string) {
+func (s *Error) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *Forbidden) SetDetails(val *ForbiddenDetails) {
+func (s *Error) SetDetails(val *ErrorDetails) {
 	s.Details = val
 }
 
-func (*Forbidden) cosmeticDomainHealthCheckRes() {}
-
 // Additional error details.
-type ForbiddenDetails struct{}
+type ErrorDetails struct{}
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
+// ErrorHeaders wraps Error with response headers.
+type ErrorHeaders struct {
+	RetryAfter OptInt
+	Response   Error
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ErrorHeaders) GetRetryAfter() OptInt {
+	return s.RetryAfter
+}
+
+// GetResponse returns the value of Response.
+func (s *ErrorHeaders) GetResponse() Error {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ErrorHeaders) SetRetryAfter(val OptInt) {
+	s.RetryAfter = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ErrorHeaders) SetResponse(val Error) {
+	s.Response = val
+}
+
+func (*ErrorHeaders) cosmeticServiceHealthCheckRes() {}
+
+// Comprehensive health response including module statuses.
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
-	Status            HealthResponseStatus `json:"status"`
-	Domain            OptString            `json:"domain"`
-	Timestamp         time.Time            `json:"timestamp"`
-	Version           OptString            `json:"version"`
-	UptimeSeconds     OptInt               `json:"uptime_seconds"`
-	ActiveConnections OptInt               `json:"active_connections"`
+	Status    HealthResponseStatus `json:"status"`
+	Timestamp time.Time            `json:"timestamp"`
+	Service   string               `json:"service"`
+	Version   OptString            `json:"version"`
+	// Uptime in seconds.
+	Uptime            OptInt `json:"uptime"`
+	ActiveConnections OptInt `json:"active_connections"`
 }
 
 // GetStatus returns the value of Status.
@@ -299,14 +288,14 @@ func (s *HealthResponse) GetStatus() HealthResponseStatus {
 	return s.Status
 }
 
-// GetDomain returns the value of Domain.
-func (s *HealthResponse) GetDomain() OptString {
-	return s.Domain
-}
-
 // GetTimestamp returns the value of Timestamp.
 func (s *HealthResponse) GetTimestamp() time.Time {
 	return s.Timestamp
+}
+
+// GetService returns the value of Service.
+func (s *HealthResponse) GetService() string {
+	return s.Service
 }
 
 // GetVersion returns the value of Version.
@@ -314,9 +303,9 @@ func (s *HealthResponse) GetVersion() OptString {
 	return s.Version
 }
 
-// GetUptimeSeconds returns the value of UptimeSeconds.
-func (s *HealthResponse) GetUptimeSeconds() OptInt {
-	return s.UptimeSeconds
+// GetUptime returns the value of Uptime.
+func (s *HealthResponse) GetUptime() OptInt {
+	return s.Uptime
 }
 
 // GetActiveConnections returns the value of ActiveConnections.
@@ -329,14 +318,14 @@ func (s *HealthResponse) SetStatus(val HealthResponseStatus) {
 	s.Status = val
 }
 
-// SetDomain sets the value of Domain.
-func (s *HealthResponse) SetDomain(val OptString) {
-	s.Domain = val
-}
-
 // SetTimestamp sets the value of Timestamp.
 func (s *HealthResponse) SetTimestamp(val time.Time) {
 	s.Timestamp = val
+}
+
+// SetService sets the value of Service.
+func (s *HealthResponse) SetService(val string) {
+	s.Service = val
 }
 
 // SetVersion sets the value of Version.
@@ -344,9 +333,9 @@ func (s *HealthResponse) SetVersion(val OptString) {
 	s.Version = val
 }
 
-// SetUptimeSeconds sets the value of UptimeSeconds.
-func (s *HealthResponse) SetUptimeSeconds(val OptInt) {
-	s.UptimeSeconds = val
+// SetUptime sets the value of Uptime.
+func (s *HealthResponse) SetUptime(val OptInt) {
+	s.Uptime = val
 }
 
 // SetActiveConnections sets the value of ActiveConnections.
@@ -354,10 +343,12 @@ func (s *HealthResponse) SetActiveConnections(val OptInt) {
 	s.ActiveConnections = val
 }
 
+func (*HealthResponse) cosmeticServiceHealthCheckRes() {}
+
 // HealthResponseHeaders wraps HealthResponse with response headers.
 type HealthResponseHeaders struct {
 	CacheControl    OptString
-	ContentEncoding OptCosmeticDomainHealthCheckOKContentEncoding
+	ContentEncoding OptCosmeticServiceHealthCheckOKContentEncoding
 	ETag            OptString
 	Response        HealthResponse
 }
@@ -368,7 +359,7 @@ func (s *HealthResponseHeaders) GetCacheControl() OptString {
 }
 
 // GetContentEncoding returns the value of ContentEncoding.
-func (s *HealthResponseHeaders) GetContentEncoding() OptCosmeticDomainHealthCheckOKContentEncoding {
+func (s *HealthResponseHeaders) GetContentEncoding() OptCosmeticServiceHealthCheckOKContentEncoding {
 	return s.ContentEncoding
 }
 
@@ -388,7 +379,7 @@ func (s *HealthResponseHeaders) SetCacheControl(val OptString) {
 }
 
 // SetContentEncoding sets the value of ContentEncoding.
-func (s *HealthResponseHeaders) SetContentEncoding(val OptCosmeticDomainHealthCheckOKContentEncoding) {
+func (s *HealthResponseHeaders) SetContentEncoding(val OptCosmeticServiceHealthCheckOKContentEncoding) {
 	s.ContentEncoding = val
 }
 
@@ -402,22 +393,22 @@ func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
 	s.Response = val
 }
 
-func (*HealthResponseHeaders) cosmeticDomainHealthCheckRes() {}
+func (*HealthResponseHeaders) cosmeticServiceHealthCheckRes() {}
 
 type HealthResponseStatus string
 
 const (
 	HealthResponseStatusHealthy   HealthResponseStatus = "healthy"
-	HealthResponseStatusDegraded  HealthResponseStatus = "degraded"
 	HealthResponseStatusUnhealthy HealthResponseStatus = "unhealthy"
+	HealthResponseStatusDegraded  HealthResponseStatus = "degraded"
 )
 
 // AllValues returns all HealthResponseStatus values.
 func (HealthResponseStatus) AllValues() []HealthResponseStatus {
 	return []HealthResponseStatus{
 		HealthResponseStatusHealthy,
-		HealthResponseStatusDegraded,
 		HealthResponseStatusUnhealthy,
+		HealthResponseStatusDegraded,
 	}
 }
 
@@ -426,9 +417,9 @@ func (s HealthResponseStatus) MarshalText() ([]byte, error) {
 	switch s {
 	case HealthResponseStatusHealthy:
 		return []byte(s), nil
-	case HealthResponseStatusDegraded:
-		return []byte(s), nil
 	case HealthResponseStatusUnhealthy:
+		return []byte(s), nil
+	case HealthResponseStatusDegraded:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -441,59 +432,49 @@ func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
 	case HealthResponseStatusHealthy:
 		*s = HealthResponseStatusHealthy
 		return nil
-	case HealthResponseStatusDegraded:
-		*s = HealthResponseStatusDegraded
-		return nil
 	case HealthResponseStatusUnhealthy:
 		*s = HealthResponseStatusUnhealthy
+		return nil
+	case HealthResponseStatusDegraded:
+		*s = HealthResponseStatusDegraded
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// HealthWebSocketOK is response for HealthWebSocket operation.
-type HealthWebSocketOK struct{}
-
-func (*HealthWebSocketOK) healthWebSocketRes() {}
-
-// HealthWebSocketSwitchingProtocols is response for HealthWebSocket operation.
-type HealthWebSocketSwitchingProtocols struct{}
-
-func (*HealthWebSocketSwitchingProtocols) healthWebSocketRes() {}
-
-// NewOptCosmeticDomainHealthCheckOKContentEncoding returns new OptCosmeticDomainHealthCheckOKContentEncoding with value set to v.
-func NewOptCosmeticDomainHealthCheckOKContentEncoding(v CosmeticDomainHealthCheckOKContentEncoding) OptCosmeticDomainHealthCheckOKContentEncoding {
-	return OptCosmeticDomainHealthCheckOKContentEncoding{
+// NewOptCosmeticServiceHealthCheckAcceptEncoding returns new OptCosmeticServiceHealthCheckAcceptEncoding with value set to v.
+func NewOptCosmeticServiceHealthCheckAcceptEncoding(v CosmeticServiceHealthCheckAcceptEncoding) OptCosmeticServiceHealthCheckAcceptEncoding {
+	return OptCosmeticServiceHealthCheckAcceptEncoding{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptCosmeticDomainHealthCheckOKContentEncoding is optional CosmeticDomainHealthCheckOKContentEncoding.
-type OptCosmeticDomainHealthCheckOKContentEncoding struct {
-	Value CosmeticDomainHealthCheckOKContentEncoding
+// OptCosmeticServiceHealthCheckAcceptEncoding is optional CosmeticServiceHealthCheckAcceptEncoding.
+type OptCosmeticServiceHealthCheckAcceptEncoding struct {
+	Value CosmeticServiceHealthCheckAcceptEncoding
 	Set   bool
 }
 
-// IsSet returns true if OptCosmeticDomainHealthCheckOKContentEncoding was set.
-func (o OptCosmeticDomainHealthCheckOKContentEncoding) IsSet() bool { return o.Set }
+// IsSet returns true if OptCosmeticServiceHealthCheckAcceptEncoding was set.
+func (o OptCosmeticServiceHealthCheckAcceptEncoding) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptCosmeticDomainHealthCheckOKContentEncoding) Reset() {
-	var v CosmeticDomainHealthCheckOKContentEncoding
+func (o *OptCosmeticServiceHealthCheckAcceptEncoding) Reset() {
+	var v CosmeticServiceHealthCheckAcceptEncoding
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptCosmeticDomainHealthCheckOKContentEncoding) SetTo(v CosmeticDomainHealthCheckOKContentEncoding) {
+func (o *OptCosmeticServiceHealthCheckAcceptEncoding) SetTo(v CosmeticServiceHealthCheckAcceptEncoding) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptCosmeticDomainHealthCheckOKContentEncoding) Get() (v CosmeticDomainHealthCheckOKContentEncoding, ok bool) {
+func (o OptCosmeticServiceHealthCheckAcceptEncoding) Get() (v CosmeticServiceHealthCheckAcceptEncoding, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -501,7 +482,53 @@ func (o OptCosmeticDomainHealthCheckOKContentEncoding) Get() (v CosmeticDomainHe
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptCosmeticDomainHealthCheckOKContentEncoding) Or(d CosmeticDomainHealthCheckOKContentEncoding) CosmeticDomainHealthCheckOKContentEncoding {
+func (o OptCosmeticServiceHealthCheckAcceptEncoding) Or(d CosmeticServiceHealthCheckAcceptEncoding) CosmeticServiceHealthCheckAcceptEncoding {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCosmeticServiceHealthCheckOKContentEncoding returns new OptCosmeticServiceHealthCheckOKContentEncoding with value set to v.
+func NewOptCosmeticServiceHealthCheckOKContentEncoding(v CosmeticServiceHealthCheckOKContentEncoding) OptCosmeticServiceHealthCheckOKContentEncoding {
+	return OptCosmeticServiceHealthCheckOKContentEncoding{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCosmeticServiceHealthCheckOKContentEncoding is optional CosmeticServiceHealthCheckOKContentEncoding.
+type OptCosmeticServiceHealthCheckOKContentEncoding struct {
+	Value CosmeticServiceHealthCheckOKContentEncoding
+	Set   bool
+}
+
+// IsSet returns true if OptCosmeticServiceHealthCheckOKContentEncoding was set.
+func (o OptCosmeticServiceHealthCheckOKContentEncoding) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCosmeticServiceHealthCheckOKContentEncoding) Reset() {
+	var v CosmeticServiceHealthCheckOKContentEncoding
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCosmeticServiceHealthCheckOKContentEncoding) SetTo(v CosmeticServiceHealthCheckOKContentEncoding) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCosmeticServiceHealthCheckOKContentEncoding) Get() (v CosmeticServiceHealthCheckOKContentEncoding, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCosmeticServiceHealthCheckOKContentEncoding) Or(d CosmeticServiceHealthCheckOKContentEncoding) CosmeticServiceHealthCheckOKContentEncoding {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -599,48 +626,3 @@ func (o OptString) Or(d string) string {
 	}
 	return d
 }
-
-// Standard error response format.
-type Unauthorized struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UnauthorizedDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *Unauthorized) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *Unauthorized) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *Unauthorized) GetDetails() *UnauthorizedDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *Unauthorized) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *Unauthorized) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *Unauthorized) SetDetails(val *UnauthorizedDetails) {
-	s.Details = val
-}
-
-func (*Unauthorized) batchHealthCheckRes()          {}
-func (*Unauthorized) cosmeticDomainHealthCheckRes() {}
-func (*Unauthorized) healthWebSocketRes()           {}
-
-// Additional error details.
-type UnauthorizedDetails struct{}

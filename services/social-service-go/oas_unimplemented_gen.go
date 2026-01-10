@@ -13,42 +13,14 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// CreateGuild implements createGuild operation.
-//
-// Create a new player guild with customizable settings and permissions.
-// **Community:** Foundation for social gameplay and cooperation.
-//
-// POST /social/guilds
-func (UnimplementedHandler) CreateGuild(ctx context.Context, req *CreateGuildRequest) (r CreateGuildRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CreateParty implements createParty operation.
-//
-// Create a temporary player party for cooperative gameplay.
-// **Dynamic:** Short-lived groups for specific missions or activities.
-//
-// POST /social/parties
-func (UnimplementedHandler) CreateParty(ctx context.Context, req *CreatePartyRequest) (r CreatePartyRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// SendChatMessage implements sendChatMessage operation.
-//
-// Send a real-time chat message with moderation and anti-spam filtering.
-// **Real-time:** WebSocket-based delivery for instant messaging.
-//
-// POST /social/chat/messages
-func (UnimplementedHandler) SendChatMessage(ctx context.Context, req *SendMessageRequest) (r SendChatMessageRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // SocialServiceHealthCheck implements socialServiceHealthCheck operation.
 //
 // **Enterprise-grade health check endpoint**
-// Provides real-time health status of the social service.
+// Provides real-time health status of the social service and all modules.
 // Critical for service discovery, load balancing, and monitoring.
-// **Performance:** <1ms response time, cached for 30 seconds.
+// **Performance:** <1ms response time, cached for 30 seconds
+// ## BACKEND NOTE - Health checks all modules: chat, guilds, parties - Cached responses with ETag
+// validation - Circuit breaker pattern for module failures.
 //
 // GET /health
 func (UnimplementedHandler) SocialServiceHealthCheck(ctx context.Context, params SocialServiceHealthCheckParams) (r SocialServiceHealthCheckRes, _ error) {

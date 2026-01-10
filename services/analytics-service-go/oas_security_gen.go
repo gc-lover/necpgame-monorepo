@@ -37,8 +37,13 @@ var operationRolesBearerAuth = map[string][]string{
 	AnalyticsServiceHealthCheckOperation: []string{},
 	GetCombatAnalyticsOverviewOperation:  []string{},
 	GetEconomyMarketAnalyticsOperation:   []string{},
+	GetFundamentalAnalysisOperation:      []string{},
+	GetMarketTrendsOperation:             []string{},
 	GetPlayerBehaviorAnalyticsOperation:  []string{},
 	GetSystemPerformanceMetricsOperation: []string{},
+	GetTechnicalAnalysisOperation:        []string{},
+	GetTradeVolumeStatisticsOperation:    []string{},
+	MonitorMarketIntegrityOperation:      []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

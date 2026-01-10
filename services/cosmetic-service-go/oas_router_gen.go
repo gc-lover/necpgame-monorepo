@@ -48,79 +48,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/v1/cosmetic-domain/health"
+		case '/': // Prefix: "/health"
 
-			if l := len("/api/v1/cosmetic-domain/health"); len(elem) >= l && elem[0:l] == "/api/v1/cosmetic-domain/health" {
+			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
+				// Leaf node.
 				switch r.Method {
 				case "GET":
-					s.handleCosmeticDomainHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+					s.handleCosmeticServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 				default:
 					s.notAllowed(w, r, "GET")
 				}
 
 				return
-			}
-			switch elem[0] {
-			case '/': // Prefix: "/"
-
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'b': // Prefix: "batch"
-
-					if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
-						}
-
-						return
-					}
-
-				case 'w': // Prefix: "ws"
-
-					if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleHealthWebSocketRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
-						}
-
-						return
-					}
-
-				}
-
 			}
 
 		}
@@ -209,94 +154,29 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/v1/cosmetic-domain/health"
+		case '/': // Prefix: "/health"
 
-			if l := len("/api/v1/cosmetic-domain/health"); len(elem) >= l && elem[0:l] == "/api/v1/cosmetic-domain/health" {
+			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
+				// Leaf node.
 				switch method {
 				case "GET":
-					r.name = CosmeticDomainHealthCheckOperation
-					r.summary = "cosmetic domain domain health check"
-					r.operationID = "cosmetic-domainHealthCheck"
+					r.name = CosmeticServiceHealthCheckOperation
+					r.summary = "Cosmetic Service Health Check"
+					r.operationID = "cosmeticServiceHealthCheck"
 					r.operationGroup = ""
-					r.pathPattern = "/api/v1/cosmetic-domain/health"
+					r.pathPattern = "/health"
 					r.args = args
 					r.count = 0
 					return r, true
 				default:
 					return
 				}
-			}
-			switch elem[0] {
-			case '/': // Prefix: "/"
-
-				if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'b': // Prefix: "batch"
-
-					if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = BatchHealthCheckOperation
-							r.summary = "Batch health check for multiple domains"
-							r.operationID = "batchHealthCheck"
-							r.operationGroup = ""
-							r.pathPattern = "/api/v1/cosmetic-domain/health/batch"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				case 'w': // Prefix: "ws"
-
-					if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = HealthWebSocketOperation
-							r.summary = "Real-time health monitoring WebSocket"
-							r.operationID = "healthWebSocket"
-							r.operationGroup = ""
-							r.pathPattern = "/api/v1/cosmetic-domain/health/ws"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				}
-
 			}
 
 		}

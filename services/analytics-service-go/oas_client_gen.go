@@ -37,6 +37,14 @@ type Invoker interface {
 	//
 	// GET /health
 	AnalyticsServiceHealthCheck(ctx context.Context, params AnalyticsServiceHealthCheckParams) (AnalyticsServiceHealthCheckRes, error)
+	// EconomyAnalyticsHealthCheck invokes economyAnalyticsHealthCheck operation.
+	//
+	// **Enterprise-grade health check endpoint**
+	// Provides real-time health status of the economy analytics microservice.
+	// Critical for service discovery, load balancing, and monitoring.
+	//
+	// GET /analytics/economy/health
+	EconomyAnalyticsHealthCheck(ctx context.Context) (EconomyAnalyticsHealthCheckRes, error)
 	// GetCombatAnalyticsOverview invokes getCombatAnalyticsOverview operation.
 	//
 	// Retrieve comprehensive combat analytics overview with metrics and trends.
@@ -51,6 +59,19 @@ type Invoker interface {
 	//
 	// GET /analytics/economy/market
 	GetEconomyMarketAnalytics(ctx context.Context, params GetEconomyMarketAnalyticsParams) (GetEconomyMarketAnalyticsRes, error)
+	// GetFundamentalAnalysis invokes getFundamentalAnalysis operation.
+	//
+	// Get fundamental analysis for a stock.
+	//
+	// GET /analytics/stock/fundamental/{symbol}
+	GetFundamentalAnalysis(ctx context.Context, params GetFundamentalAnalysisParams) (GetFundamentalAnalysisRes, error)
+	// GetMarketTrends invokes getMarketTrends operation.
+	//
+	// Analyzes current market trends including price movements, volume changes, and market sentiment
+	// across all economic sectors.
+	//
+	// GET /analytics/economy/market/trends
+	GetMarketTrends(ctx context.Context, params GetMarketTrendsParams) (GetMarketTrendsRes, error)
 	// GetPlayerBehaviorAnalytics invokes getPlayerBehaviorAnalytics operation.
 	//
 	// Analyze player behavior patterns, engagement metrics, and retention data.
@@ -65,6 +86,28 @@ type Invoker interface {
 	//
 	// GET /analytics/system/performance
 	GetSystemPerformanceMetrics(ctx context.Context, params GetSystemPerformanceMetricsParams) (GetSystemPerformanceMetricsRes, error)
+	// GetTechnicalAnalysis invokes getTechnicalAnalysis operation.
+	//
+	// Get comprehensive technical analysis.
+	//
+	// GET /analytics/stock/technical/{symbol}
+	GetTechnicalAnalysis(ctx context.Context, params GetTechnicalAnalysisParams) (GetTechnicalAnalysisRes, error)
+	// GetTradeVolumeStatistics invokes getTradeVolumeStatistics operation.
+	//
+	// Provides detailed trade volume statistics and analysis for economic transactions across all game
+	// markets.
+	//
+	// GET /analytics/economy/trade/volume
+	GetTradeVolumeStatistics(ctx context.Context, params GetTradeVolumeStatisticsParams) (GetTradeVolumeStatisticsRes, error)
+	// MonitorMarketIntegrity invokes monitorMarketIntegrity operation.
+	//
+	// **Comprehensive market integrity monitoring**
+	// Analyzes market state to detect potential integrity threats. Includes trade pattern analysis,
+	// manipulation detection, and risk assessment.
+	// **AI Integration:** Uses advanced algorithms for anomaly detection.
+	//
+	// GET /analytics/stock/protection/market-integrity
+	MonitorMarketIntegrity(ctx context.Context, params MonitorMarketIntegrityParams) (MonitorMarketIntegrityRes, error)
 }
 
 // Client implements OAS client.
@@ -73,12 +116,8 @@ type Client struct {
 	sec       SecuritySource
 	baseClient
 }
-type errorHandler interface {
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
-}
 
 var _ Handler = struct {
-	errorHandler
 	*Client
 }{}
 
@@ -235,6 +274,81 @@ func (c *Client) sendAnalyticsServiceHealthCheck(ctx context.Context, params Ana
 
 	stage = "DecodeResponse"
 	result, err := decodeAnalyticsServiceHealthCheckResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// EconomyAnalyticsHealthCheck invokes economyAnalyticsHealthCheck operation.
+//
+// **Enterprise-grade health check endpoint**
+// Provides real-time health status of the economy analytics microservice.
+// Critical for service discovery, load balancing, and monitoring.
+//
+// GET /analytics/economy/health
+func (c *Client) EconomyAnalyticsHealthCheck(ctx context.Context) (EconomyAnalyticsHealthCheckRes, error) {
+	res, err := c.sendEconomyAnalyticsHealthCheck(ctx)
+	return res, err
+}
+
+func (c *Client) sendEconomyAnalyticsHealthCheck(ctx context.Context) (res EconomyAnalyticsHealthCheckRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("economyAnalyticsHealthCheck"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/economy/health"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, EconomyAnalyticsHealthCheckOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/analytics/economy/health"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeEconomyAnalyticsHealthCheckResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -532,6 +646,292 @@ func (c *Client) sendGetEconomyMarketAnalytics(ctx context.Context, params GetEc
 	return result, nil
 }
 
+// GetFundamentalAnalysis invokes getFundamentalAnalysis operation.
+//
+// Get fundamental analysis for a stock.
+//
+// GET /analytics/stock/fundamental/{symbol}
+func (c *Client) GetFundamentalAnalysis(ctx context.Context, params GetFundamentalAnalysisParams) (GetFundamentalAnalysisRes, error) {
+	res, err := c.sendGetFundamentalAnalysis(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetFundamentalAnalysis(ctx context.Context, params GetFundamentalAnalysisParams) (res GetFundamentalAnalysisRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getFundamentalAnalysis"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/stock/fundamental/{symbol}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetFundamentalAnalysisOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/analytics/stock/fundamental/"
+	{
+		// Encode "symbol" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "symbol",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Symbol))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetFundamentalAnalysisOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetFundamentalAnalysisResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetMarketTrends invokes getMarketTrends operation.
+//
+// Analyzes current market trends including price movements, volume changes, and market sentiment
+// across all economic sectors.
+//
+// GET /analytics/economy/market/trends
+func (c *Client) GetMarketTrends(ctx context.Context, params GetMarketTrendsParams) (GetMarketTrendsRes, error) {
+	res, err := c.sendGetMarketTrends(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetMarketTrends(ctx context.Context, params GetMarketTrendsParams) (res GetMarketTrendsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getMarketTrends"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/economy/market/trends"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetMarketTrendsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/analytics/economy/market/trends"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "sector" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "sector",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Sector.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "timeframe" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Timeframe.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "include_predictions" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "include_predictions",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IncludePredictions.Get(); ok {
+				return e.EncodeValue(conv.BoolToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetMarketTrendsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetMarketTrendsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetPlayerBehaviorAnalytics invokes getPlayerBehaviorAnalytics operation.
 //
 // Analyze player behavior patterns, engagement metrics, and retention data.
@@ -798,6 +1198,460 @@ func (c *Client) sendGetSystemPerformanceMetrics(ctx context.Context, params Get
 
 	stage = "DecodeResponse"
 	result, err := decodeGetSystemPerformanceMetricsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTechnicalAnalysis invokes getTechnicalAnalysis operation.
+//
+// Get comprehensive technical analysis.
+//
+// GET /analytics/stock/technical/{symbol}
+func (c *Client) GetTechnicalAnalysis(ctx context.Context, params GetTechnicalAnalysisParams) (GetTechnicalAnalysisRes, error) {
+	res, err := c.sendGetTechnicalAnalysis(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetTechnicalAnalysis(ctx context.Context, params GetTechnicalAnalysisParams) (res GetTechnicalAnalysisRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTechnicalAnalysis"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/stock/technical/{symbol}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTechnicalAnalysisOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/analytics/stock/technical/"
+	{
+		// Encode "symbol" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "symbol",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Symbol))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "timeframe" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Timeframe.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetTechnicalAnalysisOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetTechnicalAnalysisResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTradeVolumeStatistics invokes getTradeVolumeStatistics operation.
+//
+// Provides detailed trade volume statistics and analysis for economic transactions across all game
+// markets.
+//
+// GET /analytics/economy/trade/volume
+func (c *Client) GetTradeVolumeStatistics(ctx context.Context, params GetTradeVolumeStatisticsParams) (GetTradeVolumeStatisticsRes, error) {
+	res, err := c.sendGetTradeVolumeStatistics(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetTradeVolumeStatistics(ctx context.Context, params GetTradeVolumeStatisticsParams) (res GetTradeVolumeStatisticsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTradeVolumeStatistics"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/economy/trade/volume"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTradeVolumeStatisticsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/analytics/economy/trade/volume"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "asset_type" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "asset_type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.AssetType.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "period" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "period",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Period.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetTradeVolumeStatisticsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetTradeVolumeStatisticsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// MonitorMarketIntegrity invokes monitorMarketIntegrity operation.
+//
+// **Comprehensive market integrity monitoring**
+// Analyzes market state to detect potential integrity threats. Includes trade pattern analysis,
+// manipulation detection, and risk assessment.
+// **AI Integration:** Uses advanced algorithms for anomaly detection.
+//
+// GET /analytics/stock/protection/market-integrity
+func (c *Client) MonitorMarketIntegrity(ctx context.Context, params MonitorMarketIntegrityParams) (MonitorMarketIntegrityRes, error) {
+	res, err := c.sendMonitorMarketIntegrity(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendMonitorMarketIntegrity(ctx context.Context, params MonitorMarketIntegrityParams) (res MonitorMarketIntegrityRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("monitorMarketIntegrity"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/analytics/stock/protection/market-integrity"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, MonitorMarketIntegrityOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/analytics/stock/protection/market-integrity"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "time_window" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "time_window",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TimeWindow.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "risk_threshold" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "risk_threshold",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.RiskThreshold.Get(); ok {
+				return e.EncodeValue(conv.Float64ToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "include_historical" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "include_historical",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IncludeHistorical.Get(); ok {
+				return e.EncodeValue(conv.BoolToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, MonitorMarketIntegrityOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeMonitorMarketIntegrityResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: Technology Progression domain API
+  description: |
+    Technology Progression domain API for NECPGAME.
+
+    This domain manages technology unlocking based on league timeline (2020-2093).
+    Technologies are unlocked automatically by time, quests, and reputation requirements.
+
+    **Key Features:**
+    - Timeline-based technology unlocking (2020-2093)
+    - Quest and reputation requirements for advanced tech
+    - Integration with League, Inventory, Character, Quest, World services
+    - Visual indicators for locked/unlocked technologies
+
+    **Performance Notes:**
+    - Uses optimized queries with time-based filtering
+    - Cached technology availability checks
+    - Struct alignment optimization for memory efficiency
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
+security:
+- BearerAuth: []
+tags:
+- name: Technology Progression domain
+  description: Technology progression domain endpoints
+- name: Technology Management
+  description: Technology availability and unlocking
+- name: Timeline Integration
+  description: League timeline integration
+paths:
+  /api/v1/technology-progression/health:
+    get:
+      summary: Technology progression domain health check
+      operationId: technologyProgressionHealthCheck
+      tags:
+      - Technology Progression domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-technology-progression-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+  /api/v1/technology-progression/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+  /api/v1/technology-progression/technologies:
+    get:
+      summary: Get available technologies for current league year
+      operationId: getAvailableTechnologies
+      tags:
+      - Technology Management
+      description: |
+        Returns all technologies available for the current league year.
+        Filters out locked technologies based on timeline, quests, and reputation.
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: include_locked
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: Include locked technologies in response
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
+        description: Filter by technology category
+      responses:
+        '200':
+          description: Available technologies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyListResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=60, s-maxage=120
+            ETag:
+              schema:
+                type: string
+                example: '"tech-list-v1.0"'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+  /api/v1/technology-progression/technologies/{technology_id}/check:
+    get:
+      summary: Check technology availability
+      operationId: checkTechnologyAvailability
+      tags:
+      - Technology Management
+      description: Check if specific technology is available for character
+      parameters:
+      - name: technology_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Technology identifier
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      responses:
+        '200':
+          description: Technology availability status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyAvailabilityResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+  /api/v1/technology-progression/timeline:
+    get:
+      summary: Get technology timeline for current league
+      operationId: getTechnologyTimeline
+      tags:
+      - Timeline Integration
+      description: Get upcoming technology unlocks for current league year
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: future_years
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        description: How many future years to include
+      responses:
+        '200':
+          description: Technology timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyTimelineResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+  /api/v1/technology-progression/notifications:
+    get:
+      summary: Get technology unlock notifications
+      operationId: getTechnologyNotifications
+      tags:
+      - Technology Management
+      description: Get recent technology unlock notifications for character
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Maximum number of notifications to return
+      responses:
+        '200':
+          description: Technology notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyNotificationsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+
+    TechnologyListResponse:
+      $ref: './schemas/technology.yaml#/TechnologyListResponse'
+
+    TechnologyAvailabilityResponse:
+      $ref: './schemas/technology.yaml#/TechnologyAvailabilityResponse'
+
+    TechnologyTimelineResponse:
+      $ref: './schemas/technology.yaml#/TechnologyTimelineResponse'
+
+    TechnologyNotificationsResponse:
+      $ref: './schemas/technology.yaml#/TechnologyNotificationsResponse'

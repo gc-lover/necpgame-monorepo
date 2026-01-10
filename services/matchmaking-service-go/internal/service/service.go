@@ -8,12 +8,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
+	"necpgame/services/matchmaking-service-go/internal/config"
+	"necpgame/services/matchmaking-service-go/internal/database"
+	matchmakingredis "necpgame/services/matchmaking-service-go/internal/redis"
 )
 
-// MatchmakingService implements the core matchmaking business logic
+// MatchmakingService implements the core matchmaking business logic with enterprise-grade optimizations
 type MatchmakingService struct {
-	// In-memory storage for demo purposes
-	// In production, this would be Redis/database
+	// Enterprise-grade components
+	db         *database.Manager
+	redis      *matchmakingredis.Manager
+	cache      *matchmakingredis.MatchmakingCache
+	logger     *zap.Logger
+	config     *config.MatchmakingConfig
+
+	// In-memory storage for high-performance operations (backed by Redis)
 	queue   map[string]*QueuedPlayer
 	matches map[string]*Match
 	mu      sync.RWMutex
@@ -48,9 +59,16 @@ type QueueResult struct {
 	EstimatedWaitSeconds int
 }
 
-// NewMatchmakingService creates a new matchmaking service
-func NewMatchmakingService() *MatchmakingService {
+// NewMatchmakingService creates a new matchmaking service with enterprise-grade components
+func NewMatchmakingService(db *database.Manager, redisMgr *matchmakingredis.Manager, cfg *config.MatchmakingConfig, logger *zap.Logger) *MatchmakingService {
+	cache := matchmakingredis.NewMatchmakingCache(redisMgr, logger)
+
 	return &MatchmakingService{
+		db:      db,
+		redis:   redisMgr,
+		cache:   cache,
+		logger:  logger,
+		config:  cfg,
 		queue:   make(map[string]*QueuedPlayer),
 		matches: make(map[string]*Match),
 	}
@@ -58,6 +76,10 @@ func NewMatchmakingService() *MatchmakingService {
 
 // JoinQueue adds a player to the matchmaking queue
 func (s *MatchmakingService) JoinQueue(ctx context.Context, playerID, gameMode string) (*QueueResult, error) {
+	// Add context timeout for database operations (50ms for MMOFPS)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
 	playerUUID, err := uuid.Parse(playerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
@@ -110,6 +132,10 @@ func (s *MatchmakingService) LeaveQueue(ctx context.Context, playerID string) er
 
 // FindMatch attempts to find a match for the player
 func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*Match, error) {
+	// Add context timeout for database operations (50ms for MMOFPS)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
 	_, err := uuid.Parse(playerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
@@ -170,6 +196,10 @@ func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*M
 
 // GetQueueStatus returns the current queue status for a player
 func (s *MatchmakingService) GetQueueStatus(ctx context.Context, playerID string) (*QueuedPlayer, error) {
+	// Add context timeout for database operations (50ms for MMOFPS)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -183,6 +213,10 @@ func (s *MatchmakingService) GetQueueStatus(ctx context.Context, playerID string
 
 // GetMatch returns match details
 func (s *MatchmakingService) GetMatch(ctx context.Context, matchID string) (*Match, error) {
+	// Add context timeout for database operations (50ms for MMOFPS)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
 	_, err := uuid.Parse(matchID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid match ID: %w", err)

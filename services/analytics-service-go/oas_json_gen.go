@@ -14,6 +14,182 @@ import (
 )
 
 // Encode implements json.Marshaler.
+func (s *AnalyticsServiceHealthCheckDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AnalyticsServiceHealthCheckDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfAnalyticsServiceHealthCheckDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes AnalyticsServiceHealthCheckDef from json.
+func (s *AnalyticsServiceHealthCheckDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AnalyticsServiceHealthCheckDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem AnalyticsServiceHealthCheckDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AnalyticsServiceHealthCheckDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAnalyticsServiceHealthCheckDef) {
+					name = jsonFieldsNameOfAnalyticsServiceHealthCheckDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AnalyticsServiceHealthCheckDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AnalyticsServiceHealthCheckDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *AnalyticsServiceHealthCheckDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AnalyticsServiceHealthCheckDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfAnalyticsServiceHealthCheckDefDetails = [0]string{}
+
+// Decode decodes AnalyticsServiceHealthCheckDefDetails from json.
+func (s *AnalyticsServiceHealthCheckDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AnalyticsServiceHealthCheckDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode AnalyticsServiceHealthCheckDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AnalyticsServiceHealthCheckDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AnalyticsServiceHealthCheckDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *CombatAnalyticsOverview) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -333,14 +509,235 @@ func (s *CombatAnalyticsOverviewTrendsItem) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *ErrResp) Encode(e *jx.Encoder) {
+func (s *EconomyAnalyticsHealthCheckOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ErrResp) encodeFields(e *jx.Encoder) {
+func (s *EconomyAnalyticsHealthCheckOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.Domain.Set {
+			e.FieldStart("domain")
+			s.Domain.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("timestamp")
+		json.EncodeDateTime(e, s.Timestamp)
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.UptimeSeconds.Set {
+			e.FieldStart("uptime_seconds")
+			s.UptimeSeconds.Encode(e)
+		}
+	}
+	{
+		if s.ActiveConnections.Set {
+			e.FieldStart("active_connections")
+			s.ActiveConnections.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfEconomyAnalyticsHealthCheckOK = [6]string{
+	0: "status",
+	1: "domain",
+	2: "timestamp",
+	3: "version",
+	4: "uptime_seconds",
+	5: "active_connections",
+}
+
+// Decode decodes EconomyAnalyticsHealthCheckOK from json.
+func (s *EconomyAnalyticsHealthCheckOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "status":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "domain":
+			if err := func() error {
+				s.Domain.Reset()
+				if err := s.Domain.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"domain\"")
+			}
+		case "timestamp":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.Timestamp = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "uptime_seconds":
+			if err := func() error {
+				s.UptimeSeconds.Reset()
+				if err := s.UptimeSeconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"uptime_seconds\"")
+			}
+		case "active_connections":
+			if err := func() error {
+				s.ActiveConnections.Reset()
+				if err := s.ActiveConnections.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"active_connections\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode EconomyAnalyticsHealthCheckOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000101,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfEconomyAnalyticsHealthCheckOK) {
+					name = jsonFieldsNameOfEconomyAnalyticsHealthCheckOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *EconomyAnalyticsHealthCheckOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *EconomyAnalyticsHealthCheckOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes EconomyAnalyticsHealthCheckOKStatus as json.
+func (s EconomyAnalyticsHealthCheckOKStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes EconomyAnalyticsHealthCheckOKStatus from json.
+func (s *EconomyAnalyticsHealthCheckOKStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckOKStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch EconomyAnalyticsHealthCheckOKStatus(v) {
+	case EconomyAnalyticsHealthCheckOKStatusHealthy:
+		*s = EconomyAnalyticsHealthCheckOKStatusHealthy
+	case EconomyAnalyticsHealthCheckOKStatusDegraded:
+		*s = EconomyAnalyticsHealthCheckOKStatusDegraded
+	case EconomyAnalyticsHealthCheckOKStatusUnhealthy:
+		*s = EconomyAnalyticsHealthCheckOKStatusUnhealthy
+	default:
+		*s = EconomyAnalyticsHealthCheckOKStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s EconomyAnalyticsHealthCheckOKStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *EconomyAnalyticsHealthCheckOKStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -357,16 +754,16 @@ func (s *ErrResp) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfErrResp = [3]string{
+var jsonFieldsNameOfEconomyAnalyticsHealthCheckServiceUnavailable = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes ErrResp from json.
-func (s *ErrResp) Decode(d *jx.Decoder) error {
+// Decode decodes EconomyAnalyticsHealthCheckServiceUnavailable from json.
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ErrResp to nil")
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckServiceUnavailable to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -399,7 +796,7 @@ func (s *ErrResp) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem ErrRespDetails
+				var elem EconomyAnalyticsHealthCheckServiceUnavailableDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -413,7 +810,7 @@ func (s *ErrResp) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ErrResp")
+		return errors.Wrap(err, "decode EconomyAnalyticsHealthCheckServiceUnavailable")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -430,8 +827,8 @@ func (s *ErrResp) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfErrResp) {
-					name = jsonFieldsNameOfErrResp[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfEconomyAnalyticsHealthCheckServiceUnavailable) {
+					name = jsonFieldsNameOfEconomyAnalyticsHealthCheckServiceUnavailable[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -452,35 +849,35 @@ func (s *ErrResp) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ErrResp) MarshalJSON() ([]byte, error) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ErrResp) UnmarshalJSON(data []byte) error {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailable) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ErrRespDetails) Encode(e *jx.Encoder) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailableDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ErrRespDetails) encodeFields(e *jx.Encoder) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailableDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfErrRespDetails = [0]string{}
+var jsonFieldsNameOfEconomyAnalyticsHealthCheckServiceUnavailableDetails = [0]string{}
 
-// Decode decodes ErrRespDetails from json.
-func (s *ErrRespDetails) Decode(d *jx.Decoder) error {
+// Decode decodes EconomyAnalyticsHealthCheckServiceUnavailableDetails from json.
+func (s *EconomyAnalyticsHealthCheckServiceUnavailableDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ErrRespDetails to nil")
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckServiceUnavailableDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -489,21 +886,214 @@ func (s *ErrRespDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode ErrRespDetails")
+		return errors.Wrap(err, "decode EconomyAnalyticsHealthCheckServiceUnavailableDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ErrRespDetails) MarshalJSON() ([]byte, error) {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailableDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ErrRespDetails) UnmarshalJSON(data []byte) error {
+func (s *EconomyAnalyticsHealthCheckServiceUnavailableDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+	{
+		if s.RetryAfter.Set {
+			e.FieldStart("retry_after")
+			s.RetryAfter.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfEconomyAnalyticsHealthCheckTooManyRequests = [4]string{
+	0: "code",
+	1: "message",
+	2: "details",
+	3: "retry_after",
+}
+
+// Decode decodes EconomyAnalyticsHealthCheckTooManyRequests from json.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem EconomyAnalyticsHealthCheckTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		case "retry_after":
+			if err := func() error {
+				s.RetryAfter.Reset()
+				if err := s.RetryAfter.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"retry_after\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode EconomyAnalyticsHealthCheckTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfEconomyAnalyticsHealthCheckTooManyRequests) {
+					name = jsonFieldsNameOfEconomyAnalyticsHealthCheckTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *EconomyAnalyticsHealthCheckTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfEconomyAnalyticsHealthCheckTooManyRequestsDetails = [0]string{}
+
+// Decode decodes EconomyAnalyticsHealthCheckTooManyRequestsDetails from json.
+func (s *EconomyAnalyticsHealthCheckTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode EconomyAnalyticsHealthCheckTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode EconomyAnalyticsHealthCheckTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *EconomyAnalyticsHealthCheckTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -685,6 +1275,685 @@ func (s *ErrorDetails) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *FundamentalAnalysis) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysis) encodeFields(e *jx.Encoder) {
+	{
+		if s.Symbol.Set {
+			e.FieldStart("symbol")
+			s.Symbol.Encode(e)
+		}
+	}
+	{
+		if s.CompanyInfo.Set {
+			e.FieldStart("company_info")
+			s.CompanyInfo.Encode(e)
+		}
+	}
+	{
+		if s.FinancialRatios.Set {
+			e.FieldStart("financial_ratios")
+			s.FinancialRatios.Encode(e)
+		}
+	}
+	{
+		if s.ValuationMetrics.Set {
+			e.FieldStart("valuation_metrics")
+			s.ValuationMetrics.Encode(e)
+		}
+	}
+	{
+		if s.AnalystRatings.Set {
+			e.FieldStart("analyst_ratings")
+			s.AnalystRatings.Encode(e)
+		}
+	}
+	{
+		if s.LastUpdated.Set {
+			e.FieldStart("last_updated")
+			s.LastUpdated.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysis = [6]string{
+	0: "symbol",
+	1: "company_info",
+	2: "financial_ratios",
+	3: "valuation_metrics",
+	4: "analyst_ratings",
+	5: "last_updated",
+}
+
+// Decode decodes FundamentalAnalysis from json.
+func (s *FundamentalAnalysis) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysis to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "symbol":
+			if err := func() error {
+				s.Symbol.Reset()
+				if err := s.Symbol.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"symbol\"")
+			}
+		case "company_info":
+			if err := func() error {
+				s.CompanyInfo.Reset()
+				if err := s.CompanyInfo.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"company_info\"")
+			}
+		case "financial_ratios":
+			if err := func() error {
+				s.FinancialRatios.Reset()
+				if err := s.FinancialRatios.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"financial_ratios\"")
+			}
+		case "valuation_metrics":
+			if err := func() error {
+				s.ValuationMetrics.Reset()
+				if err := s.ValuationMetrics.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"valuation_metrics\"")
+			}
+		case "analyst_ratings":
+			if err := func() error {
+				s.AnalystRatings.Reset()
+				if err := s.AnalystRatings.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"analyst_ratings\"")
+			}
+		case "last_updated":
+			if err := func() error {
+				s.LastUpdated.Reset()
+				if err := s.LastUpdated.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"last_updated\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysis")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FundamentalAnalysisAnalystRatings) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysisAnalystRatings) encodeFields(e *jx.Encoder) {
+	{
+		if s.AverageRating.Set {
+			e.FieldStart("average_rating")
+			s.AverageRating.Encode(e)
+		}
+	}
+	{
+		if s.Recommendation.Set {
+			e.FieldStart("recommendation")
+			s.Recommendation.Encode(e)
+		}
+	}
+	{
+		if s.NumberOfAnalysts.Set {
+			e.FieldStart("number_of_analysts")
+			s.NumberOfAnalysts.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysisAnalystRatings = [3]string{
+	0: "average_rating",
+	1: "recommendation",
+	2: "number_of_analysts",
+}
+
+// Decode decodes FundamentalAnalysisAnalystRatings from json.
+func (s *FundamentalAnalysisAnalystRatings) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisAnalystRatings to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "average_rating":
+			if err := func() error {
+				s.AverageRating.Reset()
+				if err := s.AverageRating.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"average_rating\"")
+			}
+		case "recommendation":
+			if err := func() error {
+				s.Recommendation.Reset()
+				if err := s.Recommendation.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recommendation\"")
+			}
+		case "number_of_analysts":
+			if err := func() error {
+				s.NumberOfAnalysts.Reset()
+				if err := s.NumberOfAnalysts.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"number_of_analysts\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysisAnalystRatings")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysisAnalystRatings) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisAnalystRatings) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisAnalystRatingsRecommendation as json.
+func (s FundamentalAnalysisAnalystRatingsRecommendation) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes FundamentalAnalysisAnalystRatingsRecommendation from json.
+func (s *FundamentalAnalysisAnalystRatingsRecommendation) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisAnalystRatingsRecommendation to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch FundamentalAnalysisAnalystRatingsRecommendation(v) {
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongBuy:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationStrongBuy
+	case FundamentalAnalysisAnalystRatingsRecommendationBuy:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationBuy
+	case FundamentalAnalysisAnalystRatingsRecommendationHold:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationHold
+	case FundamentalAnalysisAnalystRatingsRecommendationSell:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationSell
+	case FundamentalAnalysisAnalystRatingsRecommendationStrongSell:
+		*s = FundamentalAnalysisAnalystRatingsRecommendationStrongSell
+	default:
+		*s = FundamentalAnalysisAnalystRatingsRecommendation(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FundamentalAnalysisAnalystRatingsRecommendation) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisAnalystRatingsRecommendation) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FundamentalAnalysisCompanyInfo) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysisCompanyInfo) encodeFields(e *jx.Encoder) {
+	{
+		if s.Name.Set {
+			e.FieldStart("name")
+			s.Name.Encode(e)
+		}
+	}
+	{
+		if s.Sector.Set {
+			e.FieldStart("sector")
+			s.Sector.Encode(e)
+		}
+	}
+	{
+		if s.Industry.Set {
+			e.FieldStart("industry")
+			s.Industry.Encode(e)
+		}
+	}
+	{
+		if s.MarketCap.Set {
+			e.FieldStart("market_cap")
+			s.MarketCap.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysisCompanyInfo = [4]string{
+	0: "name",
+	1: "sector",
+	2: "industry",
+	3: "market_cap",
+}
+
+// Decode decodes FundamentalAnalysisCompanyInfo from json.
+func (s *FundamentalAnalysisCompanyInfo) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisCompanyInfo to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			if err := func() error {
+				s.Name.Reset()
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "sector":
+			if err := func() error {
+				s.Sector.Reset()
+				if err := s.Sector.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sector\"")
+			}
+		case "industry":
+			if err := func() error {
+				s.Industry.Reset()
+				if err := s.Industry.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"industry\"")
+			}
+		case "market_cap":
+			if err := func() error {
+				s.MarketCap.Reset()
+				if err := s.MarketCap.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"market_cap\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysisCompanyInfo")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysisCompanyInfo) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisCompanyInfo) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FundamentalAnalysisFinancialRatios) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysisFinancialRatios) encodeFields(e *jx.Encoder) {
+	{
+		if s.PeRatio.Set {
+			e.FieldStart("pe_ratio")
+			s.PeRatio.Encode(e)
+		}
+	}
+	{
+		if s.PbRatio.Set {
+			e.FieldStart("pb_ratio")
+			s.PbRatio.Encode(e)
+		}
+	}
+	{
+		if s.DebtToEquity.Set {
+			e.FieldStart("debt_to_equity")
+			s.DebtToEquity.Encode(e)
+		}
+	}
+	{
+		if s.Roe.Set {
+			e.FieldStart("roe")
+			s.Roe.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysisFinancialRatios = [4]string{
+	0: "pe_ratio",
+	1: "pb_ratio",
+	2: "debt_to_equity",
+	3: "roe",
+}
+
+// Decode decodes FundamentalAnalysisFinancialRatios from json.
+func (s *FundamentalAnalysisFinancialRatios) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisFinancialRatios to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "pe_ratio":
+			if err := func() error {
+				s.PeRatio.Reset()
+				if err := s.PeRatio.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pe_ratio\"")
+			}
+		case "pb_ratio":
+			if err := func() error {
+				s.PbRatio.Reset()
+				if err := s.PbRatio.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pb_ratio\"")
+			}
+		case "debt_to_equity":
+			if err := func() error {
+				s.DebtToEquity.Reset()
+				if err := s.DebtToEquity.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"debt_to_equity\"")
+			}
+		case "roe":
+			if err := func() error {
+				s.Roe.Reset()
+				if err := s.Roe.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"roe\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysisFinancialRatios")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysisFinancialRatios) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisFinancialRatios) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FundamentalAnalysisValuationMetrics) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysisValuationMetrics) encodeFields(e *jx.Encoder) {
+	{
+		if s.IntrinsicValue.Set {
+			e.FieldStart("intrinsic_value")
+			s.IntrinsicValue.Encode(e)
+		}
+	}
+	{
+		if s.FairValueRange.Set {
+			e.FieldStart("fair_value_range")
+			s.FairValueRange.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysisValuationMetrics = [2]string{
+	0: "intrinsic_value",
+	1: "fair_value_range",
+}
+
+// Decode decodes FundamentalAnalysisValuationMetrics from json.
+func (s *FundamentalAnalysisValuationMetrics) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisValuationMetrics to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "intrinsic_value":
+			if err := func() error {
+				s.IntrinsicValue.Reset()
+				if err := s.IntrinsicValue.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"intrinsic_value\"")
+			}
+		case "fair_value_range":
+			if err := func() error {
+				s.FairValueRange.Reset()
+				if err := s.FairValueRange.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fair_value_range\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysisValuationMetrics")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysisValuationMetrics) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisValuationMetrics) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) encodeFields(e *jx.Encoder) {
+	{
+		if s.Low.Set {
+			e.FieldStart("low")
+			s.Low.Encode(e)
+		}
+	}
+	{
+		if s.High.Set {
+			e.FieldStart("high")
+			s.High.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfFundamentalAnalysisValuationMetricsFairValueRange = [2]string{
+	0: "low",
+	1: "high",
+}
+
+// Decode decodes FundamentalAnalysisValuationMetricsFairValueRange from json.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FundamentalAnalysisValuationMetricsFairValueRange to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "low":
+			if err := func() error {
+				s.Low.Reset()
+				if err := s.Low.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"low\"")
+			}
+		case "high":
+			if err := func() error {
+				s.High.Reset()
+				if err := s.High.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"high\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FundamentalAnalysisValuationMetricsFairValueRange")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FundamentalAnalysisValuationMetricsFairValueRange) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *GetCombatAnalyticsOverviewBadRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -856,6 +2125,182 @@ func (s *GetCombatAnalyticsOverviewBadRequestDetails) MarshalJSON() ([]byte, err
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *GetCombatAnalyticsOverviewBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetCombatAnalyticsOverviewDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetCombatAnalyticsOverviewDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetCombatAnalyticsOverviewDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetCombatAnalyticsOverviewDef from json.
+func (s *GetCombatAnalyticsOverviewDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetCombatAnalyticsOverviewDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetCombatAnalyticsOverviewDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetCombatAnalyticsOverviewDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetCombatAnalyticsOverviewDef) {
+					name = jsonFieldsNameOfGetCombatAnalyticsOverviewDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetCombatAnalyticsOverviewDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetCombatAnalyticsOverviewDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetCombatAnalyticsOverviewDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetCombatAnalyticsOverviewDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetCombatAnalyticsOverviewDefDetails = [0]string{}
+
+// Decode decodes GetCombatAnalyticsOverviewDefDetails from json.
+func (s *GetCombatAnalyticsOverviewDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetCombatAnalyticsOverviewDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetCombatAnalyticsOverviewDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetCombatAnalyticsOverviewDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetCombatAnalyticsOverviewDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1213,6 +2658,182 @@ func (s *GetEconomyMarketAnalyticsBadRequestDetails) UnmarshalJSON(data []byte) 
 }
 
 // Encode implements json.Marshaler.
+func (s *GetEconomyMarketAnalyticsDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetEconomyMarketAnalyticsDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetEconomyMarketAnalyticsDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetEconomyMarketAnalyticsDef from json.
+func (s *GetEconomyMarketAnalyticsDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetEconomyMarketAnalyticsDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetEconomyMarketAnalyticsDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetEconomyMarketAnalyticsDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetEconomyMarketAnalyticsDef) {
+					name = jsonFieldsNameOfGetEconomyMarketAnalyticsDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetEconomyMarketAnalyticsDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetEconomyMarketAnalyticsDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetEconomyMarketAnalyticsDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetEconomyMarketAnalyticsDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetEconomyMarketAnalyticsDefDetails = [0]string{}
+
+// Decode decodes GetEconomyMarketAnalyticsDefDetails from json.
+func (s *GetEconomyMarketAnalyticsDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetEconomyMarketAnalyticsDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetEconomyMarketAnalyticsDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetEconomyMarketAnalyticsDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetEconomyMarketAnalyticsDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *GetEconomyMarketAnalyticsUnauthorized) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -1389,6 +3010,886 @@ func (s *GetEconomyMarketAnalyticsUnauthorizedDetails) UnmarshalJSON(data []byte
 }
 
 // Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetFundamentalAnalysisBadRequest from json.
+func (s *GetFundamentalAnalysisBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetFundamentalAnalysisBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetFundamentalAnalysisBadRequest) {
+					name = jsonFieldsNameOfGetFundamentalAnalysisBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisBadRequestDetails = [0]string{}
+
+// Decode decodes GetFundamentalAnalysisBadRequestDetails from json.
+func (s *GetFundamentalAnalysisBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetFundamentalAnalysisNotFound from json.
+func (s *GetFundamentalAnalysisNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetFundamentalAnalysisNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetFundamentalAnalysisNotFound) {
+					name = jsonFieldsNameOfGetFundamentalAnalysisNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisNotFoundDetails = [0]string{}
+
+// Decode decodes GetFundamentalAnalysisNotFoundDetails from json.
+func (s *GetFundamentalAnalysisNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisUnauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetFundamentalAnalysisUnauthorized from json.
+func (s *GetFundamentalAnalysisUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetFundamentalAnalysisUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetFundamentalAnalysisUnauthorized) {
+					name = jsonFieldsNameOfGetFundamentalAnalysisUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetFundamentalAnalysisUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetFundamentalAnalysisUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetFundamentalAnalysisUnauthorizedDetails = [0]string{}
+
+// Decode decodes GetFundamentalAnalysisUnauthorizedDetails from json.
+func (s *GetFundamentalAnalysisUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetFundamentalAnalysisUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetFundamentalAnalysisUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetFundamentalAnalysisUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetFundamentalAnalysisUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetMarketTrendsBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetMarketTrendsBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetMarketTrendsBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetMarketTrendsBadRequest from json.
+func (s *GetMarketTrendsBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetMarketTrendsBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetMarketTrendsBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetMarketTrendsBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetMarketTrendsBadRequest) {
+					name = jsonFieldsNameOfGetMarketTrendsBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetMarketTrendsBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetMarketTrendsBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetMarketTrendsBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetMarketTrendsBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetMarketTrendsBadRequestDetails = [0]string{}
+
+// Decode decodes GetMarketTrendsBadRequestDetails from json.
+func (s *GetMarketTrendsBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetMarketTrendsBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetMarketTrendsBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetMarketTrendsBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetMarketTrendsBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetMarketTrendsUnauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetMarketTrendsUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetMarketTrendsUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetMarketTrendsUnauthorized from json.
+func (s *GetMarketTrendsUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetMarketTrendsUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetMarketTrendsUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetMarketTrendsUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetMarketTrendsUnauthorized) {
+					name = jsonFieldsNameOfGetMarketTrendsUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetMarketTrendsUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetMarketTrendsUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetMarketTrendsUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetMarketTrendsUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetMarketTrendsUnauthorizedDetails = [0]string{}
+
+// Decode decodes GetMarketTrendsUnauthorizedDetails from json.
+func (s *GetMarketTrendsUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetMarketTrendsUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetMarketTrendsUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetMarketTrendsUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetMarketTrendsUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *GetPlayerBehaviorAnalyticsBadRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -1560,6 +4061,182 @@ func (s *GetPlayerBehaviorAnalyticsBadRequestDetails) MarshalJSON() ([]byte, err
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *GetPlayerBehaviorAnalyticsBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetPlayerBehaviorAnalyticsDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetPlayerBehaviorAnalyticsDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetPlayerBehaviorAnalyticsDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetPlayerBehaviorAnalyticsDef from json.
+func (s *GetPlayerBehaviorAnalyticsDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerBehaviorAnalyticsDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetPlayerBehaviorAnalyticsDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetPlayerBehaviorAnalyticsDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetPlayerBehaviorAnalyticsDef) {
+					name = jsonFieldsNameOfGetPlayerBehaviorAnalyticsDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerBehaviorAnalyticsDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerBehaviorAnalyticsDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetPlayerBehaviorAnalyticsDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetPlayerBehaviorAnalyticsDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetPlayerBehaviorAnalyticsDefDetails = [0]string{}
+
+// Decode decodes GetPlayerBehaviorAnalyticsDefDetails from json.
+func (s *GetPlayerBehaviorAnalyticsDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerBehaviorAnalyticsDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetPlayerBehaviorAnalyticsDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerBehaviorAnalyticsDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerBehaviorAnalyticsDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1917,6 +4594,182 @@ func (s *GetSystemPerformanceMetricsBadRequestDetails) UnmarshalJSON(data []byte
 }
 
 // Encode implements json.Marshaler.
+func (s *GetSystemPerformanceMetricsDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetSystemPerformanceMetricsDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetSystemPerformanceMetricsDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetSystemPerformanceMetricsDef from json.
+func (s *GetSystemPerformanceMetricsDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSystemPerformanceMetricsDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetSystemPerformanceMetricsDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetSystemPerformanceMetricsDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetSystemPerformanceMetricsDef) {
+					name = jsonFieldsNameOfGetSystemPerformanceMetricsDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSystemPerformanceMetricsDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSystemPerformanceMetricsDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetSystemPerformanceMetricsDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetSystemPerformanceMetricsDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetSystemPerformanceMetricsDefDetails = [0]string{}
+
+// Decode decodes GetSystemPerformanceMetricsDefDetails from json.
+func (s *GetSystemPerformanceMetricsDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetSystemPerformanceMetricsDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetSystemPerformanceMetricsDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetSystemPerformanceMetricsDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetSystemPerformanceMetricsDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *GetSystemPerformanceMetricsUnauthorized) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -2088,6 +4941,886 @@ func (s *GetSystemPerformanceMetricsUnauthorizedDetails) MarshalJSON() ([]byte, 
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *GetSystemPerformanceMetricsUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTechnicalAnalysisBadRequest from json.
+func (s *GetTechnicalAnalysisBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTechnicalAnalysisBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTechnicalAnalysisBadRequest) {
+					name = jsonFieldsNameOfGetTechnicalAnalysisBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisBadRequestDetails = [0]string{}
+
+// Decode decodes GetTechnicalAnalysisBadRequestDetails from json.
+func (s *GetTechnicalAnalysisBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTechnicalAnalysisNotFound from json.
+func (s *GetTechnicalAnalysisNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTechnicalAnalysisNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTechnicalAnalysisNotFound) {
+					name = jsonFieldsNameOfGetTechnicalAnalysisNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisNotFoundDetails = [0]string{}
+
+// Decode decodes GetTechnicalAnalysisNotFoundDetails from json.
+func (s *GetTechnicalAnalysisNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisUnauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTechnicalAnalysisUnauthorized from json.
+func (s *GetTechnicalAnalysisUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTechnicalAnalysisUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTechnicalAnalysisUnauthorized) {
+					name = jsonFieldsNameOfGetTechnicalAnalysisUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTechnicalAnalysisUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTechnicalAnalysisUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTechnicalAnalysisUnauthorizedDetails = [0]string{}
+
+// Decode decodes GetTechnicalAnalysisUnauthorizedDetails from json.
+func (s *GetTechnicalAnalysisUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTechnicalAnalysisUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTechnicalAnalysisUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTechnicalAnalysisUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTechnicalAnalysisUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTradeVolumeStatisticsBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTradeVolumeStatisticsBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTradeVolumeStatisticsBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTradeVolumeStatisticsBadRequest from json.
+func (s *GetTradeVolumeStatisticsBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTradeVolumeStatisticsBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTradeVolumeStatisticsBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTradeVolumeStatisticsBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTradeVolumeStatisticsBadRequest) {
+					name = jsonFieldsNameOfGetTradeVolumeStatisticsBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTradeVolumeStatisticsBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTradeVolumeStatisticsBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTradeVolumeStatisticsBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTradeVolumeStatisticsBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTradeVolumeStatisticsBadRequestDetails = [0]string{}
+
+// Decode decodes GetTradeVolumeStatisticsBadRequestDetails from json.
+func (s *GetTradeVolumeStatisticsBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTradeVolumeStatisticsBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTradeVolumeStatisticsBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTradeVolumeStatisticsBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTradeVolumeStatisticsBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTradeVolumeStatisticsUnauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTradeVolumeStatisticsUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTradeVolumeStatisticsUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTradeVolumeStatisticsUnauthorized from json.
+func (s *GetTradeVolumeStatisticsUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTradeVolumeStatisticsUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTradeVolumeStatisticsUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTradeVolumeStatisticsUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTradeVolumeStatisticsUnauthorized) {
+					name = jsonFieldsNameOfGetTradeVolumeStatisticsUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTradeVolumeStatisticsUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTradeVolumeStatisticsUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTradeVolumeStatisticsUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTradeVolumeStatisticsUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTradeVolumeStatisticsUnauthorizedDetails = [0]string{}
+
+// Decode decodes GetTradeVolumeStatisticsUnauthorizedDetails from json.
+func (s *GetTradeVolumeStatisticsUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTradeVolumeStatisticsUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTradeVolumeStatisticsUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTradeVolumeStatisticsUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTradeVolumeStatisticsUnauthorizedDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2558,6 +6291,1337 @@ func (s *MarketAnalyticsResponsePredictions) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode implements json.Marshaler.
+func (s *MarketIntegrityStatus) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketIntegrityStatus) encodeFields(e *jx.Encoder) {
+	{
+		if s.Timestamp.Set {
+			e.FieldStart("timestamp")
+			s.Timestamp.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.OverallIntegrityScore.Set {
+			e.FieldStart("overall_integrity_score")
+			s.OverallIntegrityScore.Encode(e)
+		}
+	}
+	{
+		if s.RiskLevel.Set {
+			e.FieldStart("risk_level")
+			s.RiskLevel.Encode(e)
+		}
+	}
+	{
+		if s.DetectedAnomalies != nil {
+			e.FieldStart("detected_anomalies")
+			e.ArrStart()
+			for _, elem := range s.DetectedAnomalies {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.MarketHealthIndicators.Set {
+			e.FieldStart("market_health_indicators")
+			s.MarketHealthIndicators.Encode(e)
+		}
+	}
+	{
+		if s.Recommendations != nil {
+			e.FieldStart("recommendations")
+			e.ArrStart()
+			for _, elem := range s.Recommendations {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketIntegrityStatus = [6]string{
+	0: "timestamp",
+	1: "overall_integrity_score",
+	2: "risk_level",
+	3: "detected_anomalies",
+	4: "market_health_indicators",
+	5: "recommendations",
+}
+
+// Decode decodes MarketIntegrityStatus from json.
+func (s *MarketIntegrityStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatus to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "timestamp":
+			if err := func() error {
+				s.Timestamp.Reset()
+				if err := s.Timestamp.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "overall_integrity_score":
+			if err := func() error {
+				s.OverallIntegrityScore.Reset()
+				if err := s.OverallIntegrityScore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"overall_integrity_score\"")
+			}
+		case "risk_level":
+			if err := func() error {
+				s.RiskLevel.Reset()
+				if err := s.RiskLevel.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"risk_level\"")
+			}
+		case "detected_anomalies":
+			if err := func() error {
+				s.DetectedAnomalies = make([]MarketIntegrityStatusDetectedAnomaliesItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem MarketIntegrityStatusDetectedAnomaliesItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.DetectedAnomalies = append(s.DetectedAnomalies, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"detected_anomalies\"")
+			}
+		case "market_health_indicators":
+			if err := func() error {
+				s.MarketHealthIndicators.Reset()
+				if err := s.MarketHealthIndicators.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"market_health_indicators\"")
+			}
+		case "recommendations":
+			if err := func() error {
+				s.Recommendations = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Recommendations = append(s.Recommendations, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recommendations\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketIntegrityStatus")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketIntegrityStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+	{
+		if s.Severity.Set {
+			e.FieldStart("severity")
+			s.Severity.Encode(e)
+		}
+	}
+	{
+		if s.Confidence.Set {
+			e.FieldStart("confidence")
+			s.Confidence.Encode(e)
+		}
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketIntegrityStatusDetectedAnomaliesItem = [4]string{
+	0: "type",
+	1: "severity",
+	2: "confidence",
+	3: "description",
+}
+
+// Decode decodes MarketIntegrityStatusDetectedAnomaliesItem from json.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatusDetectedAnomaliesItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "severity":
+			if err := func() error {
+				s.Severity.Reset()
+				if err := s.Severity.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"severity\"")
+			}
+		case "confidence":
+			if err := func() error {
+				s.Confidence.Reset()
+				if err := s.Confidence.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"confidence\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketIntegrityStatusDetectedAnomaliesItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusDetectedAnomaliesItemSeverity as json.
+func (s MarketIntegrityStatusDetectedAnomaliesItemSeverity) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketIntegrityStatusDetectedAnomaliesItemSeverity from json.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemSeverity) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatusDetectedAnomaliesItemSeverity to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketIntegrityStatusDetectedAnomaliesItemSeverity(v) {
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityLow:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityLow
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityMedium
+	case MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverityHigh
+	default:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemSeverity(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketIntegrityStatusDetectedAnomaliesItemSeverity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemSeverity) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusDetectedAnomaliesItemType as json.
+func (s MarketIntegrityStatusDetectedAnomaliesItemType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketIntegrityStatusDetectedAnomaliesItemType from json.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatusDetectedAnomaliesItemType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketIntegrityStatusDetectedAnomaliesItemType(v) {
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeManipulation
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeInsiderTrading
+	case MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypePumpDump
+	case MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemTypeSpoofing
+	default:
+		*s = MarketIntegrityStatusDetectedAnomaliesItemType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketIntegrityStatusDetectedAnomaliesItemType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatusDetectedAnomaliesItemType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MarketIntegrityStatusMarketHealthIndicators) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketIntegrityStatusMarketHealthIndicators) encodeFields(e *jx.Encoder) {
+	{
+		if s.VolumeAnomalyScore.Set {
+			e.FieldStart("volume_anomaly_score")
+			s.VolumeAnomalyScore.Encode(e)
+		}
+	}
+	{
+		if s.PriceVolatilityScore.Set {
+			e.FieldStart("price_volatility_score")
+			s.PriceVolatilityScore.Encode(e)
+		}
+	}
+	{
+		if s.OrderBookImbalance.Set {
+			e.FieldStart("order_book_imbalance")
+			s.OrderBookImbalance.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketIntegrityStatusMarketHealthIndicators = [3]string{
+	0: "volume_anomaly_score",
+	1: "price_volatility_score",
+	2: "order_book_imbalance",
+}
+
+// Decode decodes MarketIntegrityStatusMarketHealthIndicators from json.
+func (s *MarketIntegrityStatusMarketHealthIndicators) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatusMarketHealthIndicators to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "volume_anomaly_score":
+			if err := func() error {
+				s.VolumeAnomalyScore.Reset()
+				if err := s.VolumeAnomalyScore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume_anomaly_score\"")
+			}
+		case "price_volatility_score":
+			if err := func() error {
+				s.PriceVolatilityScore.Reset()
+				if err := s.PriceVolatilityScore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"price_volatility_score\"")
+			}
+		case "order_book_imbalance":
+			if err := func() error {
+				s.OrderBookImbalance.Reset()
+				if err := s.OrderBookImbalance.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"order_book_imbalance\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketIntegrityStatusMarketHealthIndicators")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketIntegrityStatusMarketHealthIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatusMarketHealthIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusRiskLevel as json.
+func (s MarketIntegrityStatusRiskLevel) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketIntegrityStatusRiskLevel from json.
+func (s *MarketIntegrityStatusRiskLevel) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketIntegrityStatusRiskLevel to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketIntegrityStatusRiskLevel(v) {
+	case MarketIntegrityStatusRiskLevelLow:
+		*s = MarketIntegrityStatusRiskLevelLow
+	case MarketIntegrityStatusRiskLevelMedium:
+		*s = MarketIntegrityStatusRiskLevelMedium
+	case MarketIntegrityStatusRiskLevelHigh:
+		*s = MarketIntegrityStatusRiskLevelHigh
+	case MarketIntegrityStatusRiskLevelCritical:
+		*s = MarketIntegrityStatusRiskLevelCritical
+	default:
+		*s = MarketIntegrityStatusRiskLevel(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketIntegrityStatusRiskLevel) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketIntegrityStatusRiskLevel) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MarketTrendsAnalysis) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketTrendsAnalysis) encodeFields(e *jx.Encoder) {
+	{
+		if s.Sector.Set {
+			e.FieldStart("sector")
+			s.Sector.Encode(e)
+		}
+	}
+	{
+		if s.Timeframe.Set {
+			e.FieldStart("timeframe")
+			s.Timeframe.Encode(e)
+		}
+	}
+	{
+		if s.Trends != nil {
+			e.FieldStart("trends")
+			e.ArrStart()
+			for _, elem := range s.Trends {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Predictions.Set {
+			e.FieldStart("predictions")
+			s.Predictions.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketTrendsAnalysis = [4]string{
+	0: "sector",
+	1: "timeframe",
+	2: "trends",
+	3: "predictions",
+}
+
+// Decode decodes MarketTrendsAnalysis from json.
+func (s *MarketTrendsAnalysis) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysis to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "sector":
+			if err := func() error {
+				s.Sector.Reset()
+				if err := s.Sector.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sector\"")
+			}
+		case "timeframe":
+			if err := func() error {
+				s.Timeframe.Reset()
+				if err := s.Timeframe.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timeframe\"")
+			}
+		case "trends":
+			if err := func() error {
+				s.Trends = make([]MarketTrendsAnalysisTrendsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem MarketTrendsAnalysisTrendsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Trends = append(s.Trends, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trends\"")
+			}
+		case "predictions":
+			if err := func() error {
+				s.Predictions.Reset()
+				if err := s.Predictions.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"predictions\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketTrendsAnalysis")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketTrendsAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MarketTrendsAnalysisPredictions) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketTrendsAnalysisPredictions) encodeFields(e *jx.Encoder) {
+	{
+		if s.ConfidenceScore.Set {
+			e.FieldStart("confidence_score")
+			s.ConfidenceScore.Encode(e)
+		}
+	}
+	{
+		if s.PredictedTrend.Set {
+			e.FieldStart("predicted_trend")
+			s.PredictedTrend.Encode(e)
+		}
+	}
+	{
+		if s.TimeHorizon.Set {
+			e.FieldStart("time_horizon")
+			s.TimeHorizon.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketTrendsAnalysisPredictions = [3]string{
+	0: "confidence_score",
+	1: "predicted_trend",
+	2: "time_horizon",
+}
+
+// Decode decodes MarketTrendsAnalysisPredictions from json.
+func (s *MarketTrendsAnalysisPredictions) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysisPredictions to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "confidence_score":
+			if err := func() error {
+				s.ConfidenceScore.Reset()
+				if err := s.ConfidenceScore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"confidence_score\"")
+			}
+		case "predicted_trend":
+			if err := func() error {
+				s.PredictedTrend.Reset()
+				if err := s.PredictedTrend.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"predicted_trend\"")
+			}
+		case "time_horizon":
+			if err := func() error {
+				s.TimeHorizon.Reset()
+				if err := s.TimeHorizon.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"time_horizon\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketTrendsAnalysisPredictions")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketTrendsAnalysisPredictions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysisPredictions) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisPredictionsPredictedTrend as json.
+func (s MarketTrendsAnalysisPredictionsPredictedTrend) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketTrendsAnalysisPredictionsPredictedTrend from json.
+func (s *MarketTrendsAnalysisPredictionsPredictedTrend) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysisPredictionsPredictedTrend to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketTrendsAnalysisPredictionsPredictedTrend(v) {
+	case MarketTrendsAnalysisPredictionsPredictedTrendUp:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendUp
+	case MarketTrendsAnalysisPredictionsPredictedTrendDown:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendDown
+	case MarketTrendsAnalysisPredictionsPredictedTrendSideways:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrendSideways
+	default:
+		*s = MarketTrendsAnalysisPredictionsPredictedTrend(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketTrendsAnalysisPredictionsPredictedTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysisPredictionsPredictedTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisSector as json.
+func (s MarketTrendsAnalysisSector) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketTrendsAnalysisSector from json.
+func (s *MarketTrendsAnalysisSector) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysisSector to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketTrendsAnalysisSector(v) {
+	case MarketTrendsAnalysisSectorTechnology:
+		*s = MarketTrendsAnalysisSectorTechnology
+	case MarketTrendsAnalysisSectorRealEstate:
+		*s = MarketTrendsAnalysisSectorRealEstate
+	case MarketTrendsAnalysisSectorCommodities:
+		*s = MarketTrendsAnalysisSectorCommodities
+	case MarketTrendsAnalysisSectorServices:
+		*s = MarketTrendsAnalysisSectorServices
+	case MarketTrendsAnalysisSectorAll:
+		*s = MarketTrendsAnalysisSectorAll
+	default:
+		*s = MarketTrendsAnalysisSector(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketTrendsAnalysisSector) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysisSector) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MarketTrendsAnalysisTrendsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MarketTrendsAnalysisTrendsItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.Asset.Set {
+			e.FieldStart("asset")
+			s.Asset.Encode(e)
+		}
+	}
+	{
+		if s.PriceMovement.Set {
+			e.FieldStart("price_movement")
+			s.PriceMovement.Encode(e)
+		}
+	}
+	{
+		if s.VolumeChange.Set {
+			e.FieldStart("volume_change")
+			s.VolumeChange.Encode(e)
+		}
+	}
+	{
+		if s.Sentiment.Set {
+			e.FieldStart("sentiment")
+			s.Sentiment.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMarketTrendsAnalysisTrendsItem = [4]string{
+	0: "asset",
+	1: "price_movement",
+	2: "volume_change",
+	3: "sentiment",
+}
+
+// Decode decodes MarketTrendsAnalysisTrendsItem from json.
+func (s *MarketTrendsAnalysisTrendsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysisTrendsItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "asset":
+			if err := func() error {
+				s.Asset.Reset()
+				if err := s.Asset.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"asset\"")
+			}
+		case "price_movement":
+			if err := func() error {
+				s.PriceMovement.Reset()
+				if err := s.PriceMovement.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"price_movement\"")
+			}
+		case "volume_change":
+			if err := func() error {
+				s.VolumeChange.Reset()
+				if err := s.VolumeChange.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume_change\"")
+			}
+		case "sentiment":
+			if err := func() error {
+				s.Sentiment.Reset()
+				if err := s.Sentiment.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sentiment\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MarketTrendsAnalysisTrendsItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MarketTrendsAnalysisTrendsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysisTrendsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisTrendsItemSentiment as json.
+func (s MarketTrendsAnalysisTrendsItemSentiment) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes MarketTrendsAnalysisTrendsItemSentiment from json.
+func (s *MarketTrendsAnalysisTrendsItemSentiment) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MarketTrendsAnalysisTrendsItemSentiment to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch MarketTrendsAnalysisTrendsItemSentiment(v) {
+	case MarketTrendsAnalysisTrendsItemSentimentBullish:
+		*s = MarketTrendsAnalysisTrendsItemSentimentBullish
+	case MarketTrendsAnalysisTrendsItemSentimentBearish:
+		*s = MarketTrendsAnalysisTrendsItemSentimentBearish
+	case MarketTrendsAnalysisTrendsItemSentimentNeutral:
+		*s = MarketTrendsAnalysisTrendsItemSentimentNeutral
+	default:
+		*s = MarketTrendsAnalysisTrendsItemSentiment(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s MarketTrendsAnalysisTrendsItemSentiment) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MarketTrendsAnalysisTrendsItemSentiment) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MonitorMarketIntegrityBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MonitorMarketIntegrityBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMonitorMarketIntegrityBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes MonitorMarketIntegrityBadRequest from json.
+func (s *MonitorMarketIntegrityBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MonitorMarketIntegrityBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem MonitorMarketIntegrityBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MonitorMarketIntegrityBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfMonitorMarketIntegrityBadRequest) {
+					name = jsonFieldsNameOfMonitorMarketIntegrityBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MonitorMarketIntegrityBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MonitorMarketIntegrityBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MonitorMarketIntegrityBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MonitorMarketIntegrityBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfMonitorMarketIntegrityBadRequestDetails = [0]string{}
+
+// Decode decodes MonitorMarketIntegrityBadRequestDetails from json.
+func (s *MonitorMarketIntegrityBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MonitorMarketIntegrityBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode MonitorMarketIntegrityBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MonitorMarketIntegrityBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MonitorMarketIntegrityBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MonitorMarketIntegrityUnauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MonitorMarketIntegrityUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMonitorMarketIntegrityUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes MonitorMarketIntegrityUnauthorized from json.
+func (s *MonitorMarketIntegrityUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MonitorMarketIntegrityUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem MonitorMarketIntegrityUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode MonitorMarketIntegrityUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfMonitorMarketIntegrityUnauthorized) {
+					name = jsonFieldsNameOfMonitorMarketIntegrityUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MonitorMarketIntegrityUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MonitorMarketIntegrityUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *MonitorMarketIntegrityUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *MonitorMarketIntegrityUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfMonitorMarketIntegrityUnauthorizedDetails = [0]string{}
+
+// Decode decodes MonitorMarketIntegrityUnauthorizedDetails from json.
+func (s *MonitorMarketIntegrityUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode MonitorMarketIntegrityUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode MonitorMarketIntegrityUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *MonitorMarketIntegrityUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *MonitorMarketIntegrityUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes CombatAnalyticsOverviewMetrics as json.
 func (o OptCombatAnalyticsOverviewMetrics) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2661,6 +7725,204 @@ func (s *OptFloat64) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes FundamentalAnalysisAnalystRatings as json.
+func (o OptFundamentalAnalysisAnalystRatings) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FundamentalAnalysisAnalystRatings from json.
+func (o *OptFundamentalAnalysisAnalystRatings) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisAnalystRatings to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisAnalystRatings) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisAnalystRatings) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisAnalystRatingsRecommendation as json.
+func (o OptFundamentalAnalysisAnalystRatingsRecommendation) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes FundamentalAnalysisAnalystRatingsRecommendation from json.
+func (o *OptFundamentalAnalysisAnalystRatingsRecommendation) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisAnalystRatingsRecommendation to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisAnalystRatingsRecommendation) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisAnalystRatingsRecommendation) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisCompanyInfo as json.
+func (o OptFundamentalAnalysisCompanyInfo) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FundamentalAnalysisCompanyInfo from json.
+func (o *OptFundamentalAnalysisCompanyInfo) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisCompanyInfo to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisCompanyInfo) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisCompanyInfo) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisFinancialRatios as json.
+func (o OptFundamentalAnalysisFinancialRatios) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FundamentalAnalysisFinancialRatios from json.
+func (o *OptFundamentalAnalysisFinancialRatios) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisFinancialRatios to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisFinancialRatios) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisFinancialRatios) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisValuationMetrics as json.
+func (o OptFundamentalAnalysisValuationMetrics) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FundamentalAnalysisValuationMetrics from json.
+func (o *OptFundamentalAnalysisValuationMetrics) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisValuationMetrics to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisValuationMetrics) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisValuationMetrics) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FundamentalAnalysisValuationMetricsFairValueRange as json.
+func (o OptFundamentalAnalysisValuationMetricsFairValueRange) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes FundamentalAnalysisValuationMetricsFairValueRange from json.
+func (o *OptFundamentalAnalysisValuationMetricsFairValueRange) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFundamentalAnalysisValuationMetricsFairValueRange to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFundamentalAnalysisValuationMetricsFairValueRange) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFundamentalAnalysisValuationMetricsFairValueRange) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes int as json.
 func (o OptInt) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2729,6 +7991,270 @@ func (s *OptMarketAnalyticsResponsePredictions) UnmarshalJSON(data []byte) error
 	return s.Decode(d)
 }
 
+// Encode encodes MarketIntegrityStatusDetectedAnomaliesItemSeverity as json.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketIntegrityStatusDetectedAnomaliesItemSeverity from json.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketIntegrityStatusDetectedAnomaliesItemSeverity to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketIntegrityStatusDetectedAnomaliesItemSeverity) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusDetectedAnomaliesItemType as json.
+func (o OptMarketIntegrityStatusDetectedAnomaliesItemType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketIntegrityStatusDetectedAnomaliesItemType from json.
+func (o *OptMarketIntegrityStatusDetectedAnomaliesItemType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketIntegrityStatusDetectedAnomaliesItemType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketIntegrityStatusDetectedAnomaliesItemType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketIntegrityStatusDetectedAnomaliesItemType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusMarketHealthIndicators as json.
+func (o OptMarketIntegrityStatusMarketHealthIndicators) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes MarketIntegrityStatusMarketHealthIndicators from json.
+func (o *OptMarketIntegrityStatusMarketHealthIndicators) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketIntegrityStatusMarketHealthIndicators to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketIntegrityStatusMarketHealthIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketIntegrityStatusMarketHealthIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketIntegrityStatusRiskLevel as json.
+func (o OptMarketIntegrityStatusRiskLevel) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketIntegrityStatusRiskLevel from json.
+func (o *OptMarketIntegrityStatusRiskLevel) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketIntegrityStatusRiskLevel to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketIntegrityStatusRiskLevel) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketIntegrityStatusRiskLevel) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisPredictions as json.
+func (o OptMarketTrendsAnalysisPredictions) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes MarketTrendsAnalysisPredictions from json.
+func (o *OptMarketTrendsAnalysisPredictions) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketTrendsAnalysisPredictions to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketTrendsAnalysisPredictions) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketTrendsAnalysisPredictions) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisPredictionsPredictedTrend as json.
+func (o OptMarketTrendsAnalysisPredictionsPredictedTrend) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketTrendsAnalysisPredictionsPredictedTrend from json.
+func (o *OptMarketTrendsAnalysisPredictionsPredictedTrend) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketTrendsAnalysisPredictionsPredictedTrend to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketTrendsAnalysisPredictionsPredictedTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketTrendsAnalysisPredictionsPredictedTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisSector as json.
+func (o OptMarketTrendsAnalysisSector) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketTrendsAnalysisSector from json.
+func (o *OptMarketTrendsAnalysisSector) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketTrendsAnalysisSector to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketTrendsAnalysisSector) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketTrendsAnalysisSector) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes MarketTrendsAnalysisTrendsItemSentiment as json.
+func (o OptMarketTrendsAnalysisTrendsItemSentiment) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes MarketTrendsAnalysisTrendsItemSentiment from json.
+func (o *OptMarketTrendsAnalysisTrendsItemSentiment) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMarketTrendsAnalysisTrendsItemSentiment to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMarketTrendsAnalysisTrendsItemSentiment) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMarketTrendsAnalysisTrendsItemSentiment) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes string as json.
 func (o OptString) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2793,6 +8319,470 @@ func (s OptSystemPerformanceMetricsResourceUtilization) MarshalJSON() ([]byte, e
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptSystemPerformanceMetricsResourceUtilization) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisMomentumIndicators as json.
+func (o OptTechnicalAnalysisMomentumIndicators) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicators from json.
+func (o *OptTechnicalAnalysisMomentumIndicators) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisMomentumIndicators to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisMomentumIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisMomentumIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisMomentumIndicatorsMacd as json.
+func (o OptTechnicalAnalysisMomentumIndicatorsMacd) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicatorsMacd from json.
+func (o *OptTechnicalAnalysisMomentumIndicatorsMacd) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisMomentumIndicatorsMacd to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisMomentumIndicatorsMacd) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisMomentumIndicatorsMacd) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisMomentumIndicatorsStochastic as json.
+func (o OptTechnicalAnalysisMomentumIndicatorsStochastic) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicatorsStochastic from json.
+func (o *OptTechnicalAnalysisMomentumIndicatorsStochastic) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisMomentumIndicatorsStochastic to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisMomentumIndicatorsStochastic) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisMomentumIndicatorsStochastic) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisSupportResistance as json.
+func (o OptTechnicalAnalysisSupportResistance) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisSupportResistance from json.
+func (o *OptTechnicalAnalysisSupportResistance) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisSupportResistance to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisSupportResistance) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisSupportResistance) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisTrendAnalysis as json.
+func (o OptTechnicalAnalysisTrendAnalysis) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysis from json.
+func (o *OptTechnicalAnalysisTrendAnalysis) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisTrendAnalysis to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisTrendAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisTrendAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisTrendAnalysisPrimaryTrend as json.
+func (o OptTechnicalAnalysisTrendAnalysisPrimaryTrend) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysisPrimaryTrend from json.
+func (o *OptTechnicalAnalysisTrendAnalysisPrimaryTrend) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisTrendAnalysisPrimaryTrend to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisTrendAnalysisPrimaryTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisTrendAnalysisPrimaryTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisTrendAnalysisSecondaryTrend as json.
+func (o OptTechnicalAnalysisTrendAnalysisSecondaryTrend) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysisSecondaryTrend from json.
+func (o *OptTechnicalAnalysisTrendAnalysisSecondaryTrend) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisTrendAnalysisSecondaryTrend to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisTrendAnalysisSecondaryTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisTrendAnalysisSecondaryTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisVolatilityIndicators as json.
+func (o OptTechnicalAnalysisVolatilityIndicators) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisVolatilityIndicators from json.
+func (o *OptTechnicalAnalysisVolatilityIndicators) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisVolatilityIndicators to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisVolatilityIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisVolatilityIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisVolatilityIndicatorsBollingerBands as json.
+func (o OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisVolatilityIndicatorsBollingerBands from json.
+func (o *OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisVolatilityIndicatorsBollingerBands to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisVolatilityIndicatorsBollingerBands) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisVolumeAnalysis as json.
+func (o OptTechnicalAnalysisVolumeAnalysis) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TechnicalAnalysisVolumeAnalysis from json.
+func (o *OptTechnicalAnalysisVolumeAnalysis) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisVolumeAnalysis to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisVolumeAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisVolumeAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisVolumeAnalysisVolumeTrend as json.
+func (o OptTechnicalAnalysisVolumeAnalysisVolumeTrend) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TechnicalAnalysisVolumeAnalysisVolumeTrend from json.
+func (o *OptTechnicalAnalysisVolumeAnalysisVolumeTrend) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTechnicalAnalysisVolumeAnalysisVolumeTrend to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTechnicalAnalysisVolumeAnalysisVolumeTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTechnicalAnalysisVolumeAnalysisVolumeTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TradeVolumeStatisticsAssetType as json.
+func (o OptTradeVolumeStatisticsAssetType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TradeVolumeStatisticsAssetType from json.
+func (o *OptTradeVolumeStatisticsAssetType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTradeVolumeStatisticsAssetType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTradeVolumeStatisticsAssetType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTradeVolumeStatisticsAssetType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TradeVolumeStatisticsPeriod as json.
+func (o OptTradeVolumeStatisticsPeriod) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TradeVolumeStatisticsPeriod from json.
+func (o *OptTradeVolumeStatisticsPeriod) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTradeVolumeStatisticsPeriod to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTradeVolumeStatisticsPeriod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTradeVolumeStatisticsPeriod) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes uuid.UUID as json.
+func (o OptUUID) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	json.EncodeUUID(e, o.Value)
+}
+
+// Decode decodes uuid.UUID from json.
+func (o *OptUUID) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptUUID to nil")
+	}
+	o.Set = true
+	v, err := json.DecodeUUID(d)
+	if err != nil {
+		return err
+	}
+	o.Value = v
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptUUID) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptUUID) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3220,6 +9210,1515 @@ func (s *SystemPerformanceMetricsResourceUtilization) MarshalJSON() ([]byte, err
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SystemPerformanceMetricsResourceUtilization) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysis) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysis) encodeFields(e *jx.Encoder) {
+	{
+		if s.Symbol.Set {
+			e.FieldStart("symbol")
+			s.Symbol.Encode(e)
+		}
+	}
+	{
+		if s.TrendAnalysis.Set {
+			e.FieldStart("trend_analysis")
+			s.TrendAnalysis.Encode(e)
+		}
+	}
+	{
+		if s.MomentumIndicators.Set {
+			e.FieldStart("momentum_indicators")
+			s.MomentumIndicators.Encode(e)
+		}
+	}
+	{
+		if s.VolatilityIndicators.Set {
+			e.FieldStart("volatility_indicators")
+			s.VolatilityIndicators.Encode(e)
+		}
+	}
+	{
+		if s.VolumeAnalysis.Set {
+			e.FieldStart("volume_analysis")
+			s.VolumeAnalysis.Encode(e)
+		}
+	}
+	{
+		if s.SupportResistance.Set {
+			e.FieldStart("support_resistance")
+			s.SupportResistance.Encode(e)
+		}
+	}
+	{
+		if s.PatternRecognition != nil {
+			e.FieldStart("pattern_recognition")
+			e.ArrStart()
+			for _, elem := range s.PatternRecognition {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysis = [7]string{
+	0: "symbol",
+	1: "trend_analysis",
+	2: "momentum_indicators",
+	3: "volatility_indicators",
+	4: "volume_analysis",
+	5: "support_resistance",
+	6: "pattern_recognition",
+}
+
+// Decode decodes TechnicalAnalysis from json.
+func (s *TechnicalAnalysis) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysis to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "symbol":
+			if err := func() error {
+				s.Symbol.Reset()
+				if err := s.Symbol.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"symbol\"")
+			}
+		case "trend_analysis":
+			if err := func() error {
+				s.TrendAnalysis.Reset()
+				if err := s.TrendAnalysis.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trend_analysis\"")
+			}
+		case "momentum_indicators":
+			if err := func() error {
+				s.MomentumIndicators.Reset()
+				if err := s.MomentumIndicators.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"momentum_indicators\"")
+			}
+		case "volatility_indicators":
+			if err := func() error {
+				s.VolatilityIndicators.Reset()
+				if err := s.VolatilityIndicators.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volatility_indicators\"")
+			}
+		case "volume_analysis":
+			if err := func() error {
+				s.VolumeAnalysis.Reset()
+				if err := s.VolumeAnalysis.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume_analysis\"")
+			}
+		case "support_resistance":
+			if err := func() error {
+				s.SupportResistance.Reset()
+				if err := s.SupportResistance.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"support_resistance\"")
+			}
+		case "pattern_recognition":
+			if err := func() error {
+				s.PatternRecognition = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PatternRecognition = append(s.PatternRecognition, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pattern_recognition\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysis")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicators) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisMomentumIndicators) encodeFields(e *jx.Encoder) {
+	{
+		if s.Rsi.Set {
+			e.FieldStart("rsi")
+			s.Rsi.Encode(e)
+		}
+	}
+	{
+		if s.Macd.Set {
+			e.FieldStart("macd")
+			s.Macd.Encode(e)
+		}
+	}
+	{
+		if s.Stochastic.Set {
+			e.FieldStart("stochastic")
+			s.Stochastic.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisMomentumIndicators = [3]string{
+	0: "rsi",
+	1: "macd",
+	2: "stochastic",
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicators from json.
+func (s *TechnicalAnalysisMomentumIndicators) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisMomentumIndicators to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "rsi":
+			if err := func() error {
+				s.Rsi.Reset()
+				if err := s.Rsi.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rsi\"")
+			}
+		case "macd":
+			if err := func() error {
+				s.Macd.Reset()
+				if err := s.Macd.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"macd\"")
+			}
+		case "stochastic":
+			if err := func() error {
+				s.Stochastic.Reset()
+				if err := s.Stochastic.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"stochastic\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisMomentumIndicators")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisMomentumIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) encodeFields(e *jx.Encoder) {
+	{
+		if s.Value.Set {
+			e.FieldStart("value")
+			s.Value.Encode(e)
+		}
+	}
+	{
+		if s.Signal.Set {
+			e.FieldStart("signal")
+			s.Signal.Encode(e)
+		}
+	}
+	{
+		if s.Histogram.Set {
+			e.FieldStart("histogram")
+			s.Histogram.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisMomentumIndicatorsMacd = [3]string{
+	0: "value",
+	1: "signal",
+	2: "histogram",
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicatorsMacd from json.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisMomentumIndicatorsMacd to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "value":
+			if err := func() error {
+				s.Value.Reset()
+				if err := s.Value.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		case "signal":
+			if err := func() error {
+				s.Signal.Reset()
+				if err := s.Signal.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"signal\"")
+			}
+		case "histogram":
+			if err := func() error {
+				s.Histogram.Reset()
+				if err := s.Histogram.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"histogram\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisMomentumIndicatorsMacd")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsMacd) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) encodeFields(e *jx.Encoder) {
+	{
+		if s.K.Set {
+			e.FieldStart("k")
+			s.K.Encode(e)
+		}
+	}
+	{
+		if s.D.Set {
+			e.FieldStart("d")
+			s.D.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisMomentumIndicatorsStochastic = [2]string{
+	0: "k",
+	1: "d",
+}
+
+// Decode decodes TechnicalAnalysisMomentumIndicatorsStochastic from json.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisMomentumIndicatorsStochastic to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "k":
+			if err := func() error {
+				s.K.Reset()
+				if err := s.K.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"k\"")
+			}
+		case "d":
+			if err := func() error {
+				s.D.Reset()
+				if err := s.D.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"d\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisMomentumIndicatorsStochastic")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisMomentumIndicatorsStochastic) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisSupportResistance) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisSupportResistance) encodeFields(e *jx.Encoder) {
+	{
+		if s.SupportLevels != nil {
+			e.FieldStart("support_levels")
+			e.ArrStart()
+			for _, elem := range s.SupportLevels {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ResistanceLevels != nil {
+			e.FieldStart("resistance_levels")
+			e.ArrStart()
+			for _, elem := range s.ResistanceLevels {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisSupportResistance = [2]string{
+	0: "support_levels",
+	1: "resistance_levels",
+}
+
+// Decode decodes TechnicalAnalysisSupportResistance from json.
+func (s *TechnicalAnalysisSupportResistance) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisSupportResistance to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "support_levels":
+			if err := func() error {
+				s.SupportLevels = make([]float64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem float64
+					v, err := d.Float64()
+					elem = float64(v)
+					if err != nil {
+						return err
+					}
+					s.SupportLevels = append(s.SupportLevels, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"support_levels\"")
+			}
+		case "resistance_levels":
+			if err := func() error {
+				s.ResistanceLevels = make([]float64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem float64
+					v, err := d.Float64()
+					elem = float64(v)
+					if err != nil {
+						return err
+					}
+					s.ResistanceLevels = append(s.ResistanceLevels, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resistance_levels\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisSupportResistance")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisSupportResistance) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisSupportResistance) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisTrendAnalysis) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisTrendAnalysis) encodeFields(e *jx.Encoder) {
+	{
+		if s.PrimaryTrend.Set {
+			e.FieldStart("primary_trend")
+			s.PrimaryTrend.Encode(e)
+		}
+	}
+	{
+		if s.SecondaryTrend.Set {
+			e.FieldStart("secondary_trend")
+			s.SecondaryTrend.Encode(e)
+		}
+	}
+	{
+		if s.TrendStrength.Set {
+			e.FieldStart("trend_strength")
+			s.TrendStrength.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisTrendAnalysis = [3]string{
+	0: "primary_trend",
+	1: "secondary_trend",
+	2: "trend_strength",
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysis from json.
+func (s *TechnicalAnalysisTrendAnalysis) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisTrendAnalysis to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "primary_trend":
+			if err := func() error {
+				s.PrimaryTrend.Reset()
+				if err := s.PrimaryTrend.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"primary_trend\"")
+			}
+		case "secondary_trend":
+			if err := func() error {
+				s.SecondaryTrend.Reset()
+				if err := s.SecondaryTrend.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"secondary_trend\"")
+			}
+		case "trend_strength":
+			if err := func() error {
+				s.TrendStrength.Reset()
+				if err := s.TrendStrength.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trend_strength\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisTrendAnalysis")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisTrendAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisTrendAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisTrendAnalysisPrimaryTrend as json.
+func (s TechnicalAnalysisTrendAnalysisPrimaryTrend) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysisPrimaryTrend from json.
+func (s *TechnicalAnalysisTrendAnalysisPrimaryTrend) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisTrendAnalysisPrimaryTrend to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TechnicalAnalysisTrendAnalysisPrimaryTrend(v) {
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBullish:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendBullish
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendBearish:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendBearish
+	case TechnicalAnalysisTrendAnalysisPrimaryTrendSideways:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrendSideways
+	default:
+		*s = TechnicalAnalysisTrendAnalysisPrimaryTrend(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TechnicalAnalysisTrendAnalysisPrimaryTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisTrendAnalysisPrimaryTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisTrendAnalysisSecondaryTrend as json.
+func (s TechnicalAnalysisTrendAnalysisSecondaryTrend) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TechnicalAnalysisTrendAnalysisSecondaryTrend from json.
+func (s *TechnicalAnalysisTrendAnalysisSecondaryTrend) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisTrendAnalysisSecondaryTrend to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TechnicalAnalysisTrendAnalysisSecondaryTrend(v) {
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBullish:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendBullish
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendBearish:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendBearish
+	case TechnicalAnalysisTrendAnalysisSecondaryTrendSideways:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrendSideways
+	default:
+		*s = TechnicalAnalysisTrendAnalysisSecondaryTrend(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TechnicalAnalysisTrendAnalysisSecondaryTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisTrendAnalysisSecondaryTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisVolatilityIndicators) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisVolatilityIndicators) encodeFields(e *jx.Encoder) {
+	{
+		if s.BollingerBands.Set {
+			e.FieldStart("bollinger_bands")
+			s.BollingerBands.Encode(e)
+		}
+	}
+	{
+		if s.Atr.Set {
+			e.FieldStart("atr")
+			s.Atr.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisVolatilityIndicators = [2]string{
+	0: "bollinger_bands",
+	1: "atr",
+}
+
+// Decode decodes TechnicalAnalysisVolatilityIndicators from json.
+func (s *TechnicalAnalysisVolatilityIndicators) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisVolatilityIndicators to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "bollinger_bands":
+			if err := func() error {
+				s.BollingerBands.Reset()
+				if err := s.BollingerBands.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bollinger_bands\"")
+			}
+		case "atr":
+			if err := func() error {
+				s.Atr.Reset()
+				if err := s.Atr.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"atr\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisVolatilityIndicators")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisVolatilityIndicators) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisVolatilityIndicators) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) encodeFields(e *jx.Encoder) {
+	{
+		if s.Upper.Set {
+			e.FieldStart("upper")
+			s.Upper.Encode(e)
+		}
+	}
+	{
+		if s.Middle.Set {
+			e.FieldStart("middle")
+			s.Middle.Encode(e)
+		}
+	}
+	{
+		if s.Lower.Set {
+			e.FieldStart("lower")
+			s.Lower.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisVolatilityIndicatorsBollingerBands = [3]string{
+	0: "upper",
+	1: "middle",
+	2: "lower",
+}
+
+// Decode decodes TechnicalAnalysisVolatilityIndicatorsBollingerBands from json.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisVolatilityIndicatorsBollingerBands to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "upper":
+			if err := func() error {
+				s.Upper.Reset()
+				if err := s.Upper.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"upper\"")
+			}
+		case "middle":
+			if err := func() error {
+				s.Middle.Reset()
+				if err := s.Middle.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"middle\"")
+			}
+		case "lower":
+			if err := func() error {
+				s.Lower.Reset()
+				if err := s.Lower.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lower\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisVolatilityIndicatorsBollingerBands")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisVolatilityIndicatorsBollingerBands) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TechnicalAnalysisVolumeAnalysis) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TechnicalAnalysisVolumeAnalysis) encodeFields(e *jx.Encoder) {
+	{
+		if s.VolumeTrend.Set {
+			e.FieldStart("volume_trend")
+			s.VolumeTrend.Encode(e)
+		}
+	}
+	{
+		if s.Obv.Set {
+			e.FieldStart("obv")
+			s.Obv.Encode(e)
+		}
+	}
+	{
+		if s.VolumePriceTrend.Set {
+			e.FieldStart("volume_price_trend")
+			s.VolumePriceTrend.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTechnicalAnalysisVolumeAnalysis = [3]string{
+	0: "volume_trend",
+	1: "obv",
+	2: "volume_price_trend",
+}
+
+// Decode decodes TechnicalAnalysisVolumeAnalysis from json.
+func (s *TechnicalAnalysisVolumeAnalysis) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisVolumeAnalysis to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "volume_trend":
+			if err := func() error {
+				s.VolumeTrend.Reset()
+				if err := s.VolumeTrend.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume_trend\"")
+			}
+		case "obv":
+			if err := func() error {
+				s.Obv.Reset()
+				if err := s.Obv.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"obv\"")
+			}
+		case "volume_price_trend":
+			if err := func() error {
+				s.VolumePriceTrend.Reset()
+				if err := s.VolumePriceTrend.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume_price_trend\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TechnicalAnalysisVolumeAnalysis")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TechnicalAnalysisVolumeAnalysis) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisVolumeAnalysis) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TechnicalAnalysisVolumeAnalysisVolumeTrend as json.
+func (s TechnicalAnalysisVolumeAnalysisVolumeTrend) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TechnicalAnalysisVolumeAnalysisVolumeTrend from json.
+func (s *TechnicalAnalysisVolumeAnalysisVolumeTrend) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TechnicalAnalysisVolumeAnalysisVolumeTrend to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TechnicalAnalysisVolumeAnalysisVolumeTrend(v) {
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendIncreasing
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendDecreasing
+	case TechnicalAnalysisVolumeAnalysisVolumeTrendStable:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrendStable
+	default:
+		*s = TechnicalAnalysisVolumeAnalysisVolumeTrend(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TechnicalAnalysisVolumeAnalysisVolumeTrend) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TechnicalAnalysisVolumeAnalysisVolumeTrend) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TradeVolumeStatistics) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TradeVolumeStatistics) encodeFields(e *jx.Encoder) {
+	{
+		if s.AssetType.Set {
+			e.FieldStart("asset_type")
+			s.AssetType.Encode(e)
+		}
+	}
+	{
+		if s.Period.Set {
+			e.FieldStart("period")
+			s.Period.Encode(e)
+		}
+	}
+	{
+		if s.TotalVolume.Set {
+			e.FieldStart("total_volume")
+			s.TotalVolume.Encode(e)
+		}
+	}
+	{
+		if s.TransactionCount.Set {
+			e.FieldStart("transaction_count")
+			s.TransactionCount.Encode(e)
+		}
+	}
+	{
+		if s.AverageTransactionSize.Set {
+			e.FieldStart("average_transaction_size")
+			s.AverageTransactionSize.Encode(e)
+		}
+	}
+	{
+		if s.TopTraders != nil {
+			e.FieldStart("top_traders")
+			e.ArrStart()
+			for _, elem := range s.TopTraders {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.HourlyBreakdown != nil {
+			e.FieldStart("hourly_breakdown")
+			e.ArrStart()
+			for _, elem := range s.HourlyBreakdown {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfTradeVolumeStatistics = [7]string{
+	0: "asset_type",
+	1: "period",
+	2: "total_volume",
+	3: "transaction_count",
+	4: "average_transaction_size",
+	5: "top_traders",
+	6: "hourly_breakdown",
+}
+
+// Decode decodes TradeVolumeStatistics from json.
+func (s *TradeVolumeStatistics) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TradeVolumeStatistics to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "asset_type":
+			if err := func() error {
+				s.AssetType.Reset()
+				if err := s.AssetType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"asset_type\"")
+			}
+		case "period":
+			if err := func() error {
+				s.Period.Reset()
+				if err := s.Period.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"period\"")
+			}
+		case "total_volume":
+			if err := func() error {
+				s.TotalVolume.Reset()
+				if err := s.TotalVolume.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_volume\"")
+			}
+		case "transaction_count":
+			if err := func() error {
+				s.TransactionCount.Reset()
+				if err := s.TransactionCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"transaction_count\"")
+			}
+		case "average_transaction_size":
+			if err := func() error {
+				s.AverageTransactionSize.Reset()
+				if err := s.AverageTransactionSize.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"average_transaction_size\"")
+			}
+		case "top_traders":
+			if err := func() error {
+				s.TopTraders = make([]TradeVolumeStatisticsTopTradersItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TradeVolumeStatisticsTopTradersItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.TopTraders = append(s.TopTraders, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"top_traders\"")
+			}
+		case "hourly_breakdown":
+			if err := func() error {
+				s.HourlyBreakdown = make([]TradeVolumeStatisticsHourlyBreakdownItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TradeVolumeStatisticsHourlyBreakdownItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.HourlyBreakdown = append(s.HourlyBreakdown, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"hourly_breakdown\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TradeVolumeStatistics")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TradeVolumeStatistics) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TradeVolumeStatistics) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TradeVolumeStatisticsAssetType as json.
+func (s TradeVolumeStatisticsAssetType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TradeVolumeStatisticsAssetType from json.
+func (s *TradeVolumeStatisticsAssetType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TradeVolumeStatisticsAssetType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TradeVolumeStatisticsAssetType(v) {
+	case TradeVolumeStatisticsAssetTypeCurrency:
+		*s = TradeVolumeStatisticsAssetTypeCurrency
+	case TradeVolumeStatisticsAssetTypeItem:
+		*s = TradeVolumeStatisticsAssetTypeItem
+	case TradeVolumeStatisticsAssetTypeStock:
+		*s = TradeVolumeStatisticsAssetTypeStock
+	case TradeVolumeStatisticsAssetTypeRealEstate:
+		*s = TradeVolumeStatisticsAssetTypeRealEstate
+	case TradeVolumeStatisticsAssetTypeService:
+		*s = TradeVolumeStatisticsAssetTypeService
+	default:
+		*s = TradeVolumeStatisticsAssetType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TradeVolumeStatisticsAssetType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TradeVolumeStatisticsAssetType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.Hour.Set {
+			e.FieldStart("hour")
+			s.Hour.Encode(e)
+		}
+	}
+	{
+		if s.Volume.Set {
+			e.FieldStart("volume")
+			s.Volume.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTradeVolumeStatisticsHourlyBreakdownItem = [2]string{
+	0: "hour",
+	1: "volume",
+}
+
+// Decode decodes TradeVolumeStatisticsHourlyBreakdownItem from json.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TradeVolumeStatisticsHourlyBreakdownItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "hour":
+			if err := func() error {
+				s.Hour.Reset()
+				if err := s.Hour.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"hour\"")
+			}
+		case "volume":
+			if err := func() error {
+				s.Volume.Reset()
+				if err := s.Volume.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TradeVolumeStatisticsHourlyBreakdownItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TradeVolumeStatisticsHourlyBreakdownItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TradeVolumeStatisticsPeriod as json.
+func (s TradeVolumeStatisticsPeriod) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TradeVolumeStatisticsPeriod from json.
+func (s *TradeVolumeStatisticsPeriod) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TradeVolumeStatisticsPeriod to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TradeVolumeStatisticsPeriod(v) {
+	case TradeVolumeStatisticsPeriodHour:
+		*s = TradeVolumeStatisticsPeriodHour
+	case TradeVolumeStatisticsPeriodDay:
+		*s = TradeVolumeStatisticsPeriodDay
+	case TradeVolumeStatisticsPeriodWeek:
+		*s = TradeVolumeStatisticsPeriodWeek
+	case TradeVolumeStatisticsPeriodMonth:
+		*s = TradeVolumeStatisticsPeriodMonth
+	default:
+		*s = TradeVolumeStatisticsPeriod(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TradeVolumeStatisticsPeriod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TradeVolumeStatisticsPeriod) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TradeVolumeStatisticsTopTradersItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TradeVolumeStatisticsTopTradersItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.PlayerID.Set {
+			e.FieldStart("player_id")
+			s.PlayerID.Encode(e)
+		}
+	}
+	{
+		if s.Volume.Set {
+			e.FieldStart("volume")
+			s.Volume.Encode(e)
+		}
+	}
+	{
+		if s.TransactionCount.Set {
+			e.FieldStart("transaction_count")
+			s.TransactionCount.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTradeVolumeStatisticsTopTradersItem = [3]string{
+	0: "player_id",
+	1: "volume",
+	2: "transaction_count",
+}
+
+// Decode decodes TradeVolumeStatisticsTopTradersItem from json.
+func (s *TradeVolumeStatisticsTopTradersItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TradeVolumeStatisticsTopTradersItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "player_id":
+			if err := func() error {
+				s.PlayerID.Reset()
+				if err := s.PlayerID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "volume":
+			if err := func() error {
+				s.Volume.Reset()
+				if err := s.Volume.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume\"")
+			}
+		case "transaction_count":
+			if err := func() error {
+				s.TransactionCount.Reset()
+				if err := s.TransactionCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"transaction_count\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TradeVolumeStatisticsTopTradersItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TradeVolumeStatisticsTopTradersItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TradeVolumeStatisticsTopTradersItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

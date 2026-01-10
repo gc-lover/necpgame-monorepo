@@ -53,20 +53,24 @@ type EventParticipation struct {
 	UpdatedAt      time.Time   `json:"updated_at" db:"updated_at"`
 }
 
-// EventReward represents rewards earned by players - matches V1_85 schema
+// EventReward represents rewards earned by players - matches V1_115 schema
 type EventReward struct {
-	ID         uuid.UUID   `json:"id" db:"id"`
-	EventID    uuid.UUID   `json:"event_id" db:"event_id"`
-	PlayerID   string      `json:"player_id" db:"player_id"`
-	RewardType string      `json:"reward_type" db:"reward_type"`
-	RewardID   *string     `json:"reward_id" db:"reward_id"`
-	Amount     int         `json:"amount" db:"amount"`
-	Claimed    bool        `json:"claimed" db:"claimed"`
-	ClaimedAt  *time.Time  `json:"claimed_at" db:"claimed_at"`
-	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
+	ID             uuid.UUID   `json:"id" db:"id"`
+	EventID        uuid.UUID   `json:"event_id" db:"event_id"`
+	PlayerID       string      `json:"player_id" db:"player_id"`
+	ParticipationID *uuid.UUID  `json:"participation_id" db:"participation_id"`
+	RewardType     string      `json:"reward_type" db:"reward_type"`
+	RewardID       *string     `json:"reward_id" db:"reward_id"`
+	Amount         int         `json:"amount" db:"amount"`
+	Claimed        bool        `json:"claimed" db:"claimed"`
+	ClaimedAt      *time.Time  `json:"claimed_at" db:"claimed_at"`
+	ExpiresAt      *time.Time  `json:"expires_at" db:"expires_at"`
+	Metadata       interface{} `json:"metadata" db:"metadata"` // JSONB
+	CreatedAt      time.Time   `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at" db:"updated_at"`
 }
 
-// EventTemplate represents reusable event templates - matches V1_85 schema
+// EventTemplate represents reusable event templates - matches V1_115 schema
 type EventTemplate struct {
 	ID                   uuid.UUID   `json:"id" db:"id"`
 	Name                 string      `json:"name" db:"name"`
@@ -77,23 +81,37 @@ type EventTemplate struct {
 	RewardsTemplate      interface{} `json:"rewards_template" db:"rewards_template"`         // JSONB
 	DurationMinutes      *int        `json:"duration_minutes" db:"duration_minutes"`
 	MaxParticipants      *int        `json:"max_participants" db:"max_participants"`
-	RegionRestrictions   interface{} `json:"region_restrictions" db:"region_restrictions"` // JSONB
-	EventDataTemplate    interface{} `json:"event_data_template" db:"event_data_template"` // JSONB
+	MinLevel             *int        `json:"min_level" db:"min_level"`
+	MaxLevel             *int        `json:"max_level" db:"max_level"`
+	RegionRestrictions   interface{} `json:"region_restrictions" db:"region_restrictions"`   // JSONB
+	FactionRestrictions  interface{} `json:"faction_restrictions" db:"faction_restrictions"` // JSONB
+	EventDataTemplate    interface{} `json:"event_data_template" db:"event_data_template"`   // JSONB
 	IsActive             bool        `json:"is_active" db:"is_active"`
+	UsageCount           int         `json:"usage_count" db:"usage_count"`
+	SuccessRate          *float64    `json:"success_rate" db:"success_rate"`
+	CreatedBy            *uuid.UUID  `json:"created_by" db:"created_by"`
 	CreatedAt            time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time   `json:"updated_at" db:"updated_at"`
 }
 
-// EventAnalytics represents event analytics data - matches V1_85 schema
+// EventAnalytics represents event analytics data - matches V1_115 schema
 type EventAnalytics struct {
-	EventID               uuid.UUID  `json:"event_id" db:"event_id"`
-	TotalParticipants     int        `json:"total_participants" db:"total_participants"`
-	CompletedParticipants int        `json:"completed_participants" db:"completed_participants"`
-	AverageCompletionTime *string    `json:"average_completion_time" db:"average_completion_time"` // INTERVAL
-	AverageScore          *float64   `json:"average_score" db:"average_score"`
-	ParticipationRate     *float64   `json:"participation_rate" db:"participation_rate"`
-	SatisfactionRating    *float64   `json:"satisfaction_rating" db:"satisfaction_rating"`
-	LastUpdated           time.Time  `json:"last_updated" db:"last_updated"`
+	EventID                    uuid.UUID  `json:"event_id" db:"event_id"`
+	TotalParticipants          int        `json:"total_participants" db:"total_participants"`
+	CompletedParticipants      int        `json:"completed_participants" db:"completed_participants"`
+	FailedParticipants         int        `json:"failed_participants" db:"failed_participants"`
+	AbandonedParticipants      int        `json:"abandoned_participants" db:"abandoned_participants"`
+	AverageCompletionTime      *string    `json:"average_completion_time" db:"average_completion_time"` // INTERVAL
+	AverageScore               *float64   `json:"average_score" db:"average_score"`
+	AverageParticipationTime   *string    `json:"average_participation_time" db:"average_participation_time"` // INTERVAL
+	ParticipationRate          *float64   `json:"participation_rate" db:"participation_rate"`
+	CompletionRate             *float64   `json:"completion_rate" db:"completion_rate"`
+	SatisfactionRating         *float64   `json:"satisfaction_rating" db:"satisfaction_rating"`
+	RevenueGenerated           *float64   `json:"revenue_generated" db:"revenue_generated"`
+	EngagementScore            *float64   `json:"engagement_score" db:"engagement_score"`
+	PeakConcurrentUsers        int        `json:"peak_concurrent_users" db:"peak_concurrent_users"`
+	TotalRewardsClaimed        int        `json:"total_rewards_claimed" db:"total_rewards_claimed"`
+	LastUpdated                time.Time  `json:"last_updated" db:"last_updated"`
 }
 
 // EventFilter represents filters for querying events

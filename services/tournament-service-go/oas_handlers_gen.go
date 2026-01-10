@@ -33,25 +33,25 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 	return c.ResponseWriter
 }
 
-// handleCreateExampleRequest handles createExample operation.
+// handleCreateTournamentRequest handles createTournament operation.
 //
 // **Enterprise-grade creation endpoint**
 // Validates business rules, applies security checks, and ensures data consistency.
 // Supports optimistic locking for concurrent operations.
 // **Performance:** <50ms P95, includes validation and business logic.
 //
-// POST /examples
-func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /tournaments
+func (s *Server) handleCreateTournamentRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createExample"),
+		otelogen.OperationID("createTournament"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/examples"),
+		semconv.HTTPRouteKey.String("/tournaments"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), CreateExampleOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), CreateTournamentOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -106,24 +106,23 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: CreateExampleOperation,
-			ID:   "createExample",
+			Name: CreateTournamentOperation,
+			ID:   "createTournament",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, CreateExampleOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, CreateTournamentOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -150,15 +149,14 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeCreateExampleRequest(r)
+	request, rawBody, close, err := s.decodeCreateTournamentRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -174,13 +172,13 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 		}
 	}()
 
-	var response CreateExampleRes
+	var response CreateTournamentRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    CreateExampleOperation,
-			OperationSummary: "Create new example",
-			OperationID:      "createExample",
+			OperationName:    CreateTournamentOperation,
+			OperationSummary: "Create new tournament",
+			OperationID:      "createTournament",
 			Body:             request,
 			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
@@ -188,9 +186,9 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 		}
 
 		type (
-			Request  = *CreateExampleRequest
+			Request  = *CreateTournamentRequest
 			Params   = struct{}
-			Response = CreateExampleRes
+			Response = CreateTournamentRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -201,31 +199,20 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.CreateExample(ctx, request)
+				response, err = s.h.CreateTournament(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.CreateExample(ctx, request)
+		response, err = s.h.CreateTournament(ctx, request)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	if err := encodeCreateExampleResponse(response, w, span); err != nil {
+	if err := encodeCreateTournamentResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -234,25 +221,25 @@ func (s *Server) handleCreateExampleRequest(args [0]string, argsEscaped bool, w 
 	}
 }
 
-// handleDeleteExampleRequest handles deleteExample operation.
+// handleDeleteTournamentRequest handles deleteTournament operation.
 //
 // **Enterprise-grade deletion endpoint**
 // Supports soft deletes with audit trails and cleanup scheduling.
 // Ensures referential integrity and cascading deletes.
 // **Performance:** <15ms P95, includes cleanup operations.
 //
-// DELETE /examples/{example_id}
-func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// DELETE /tournaments/{tournament_id}
+func (s *Server) handleDeleteTournamentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("deleteExample"),
+		otelogen.OperationID("deleteTournament"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/examples/{example_id}"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), DeleteExampleOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), DeleteTournamentOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -307,24 +294,23 @@ func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w 
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: DeleteExampleOperation,
-			ID:   "deleteExample",
+			Name: DeleteTournamentOperation,
+			ID:   "deleteTournament",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, DeleteExampleOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, DeleteTournamentOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -351,13 +337,12 @@ func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
-	params, err := decodeDeleteExampleParams(args, argsEscaped, r)
+	params, err := decodeDeleteTournamentParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -370,28 +355,28 @@ func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w 
 
 	var rawBody []byte
 
-	var response DeleteExampleRes
+	var response DeleteTournamentRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    DeleteExampleOperation,
-			OperationSummary: "Delete example",
-			OperationID:      "deleteExample",
+			OperationName:    DeleteTournamentOperation,
+			OperationSummary: "Delete tournament",
+			OperationID:      "deleteTournament",
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "example_id",
+					Name: "tournament_id",
 					In:   "path",
-				}: params.ExampleID,
+				}: params.TournamentID,
 			},
 			Raw: r,
 		}
 
 		type (
 			Request  = struct{}
-			Params   = DeleteExampleParams
-			Response = DeleteExampleRes
+			Params   = DeleteTournamentParams
+			Response = DeleteTournamentRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -400,33 +385,22 @@ func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w 
 		](
 			m,
 			mreq,
-			unpackDeleteExampleParams,
+			unpackDeleteTournamentParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.DeleteExample(ctx, params)
+				response, err = s.h.DeleteTournament(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.DeleteExample(ctx, params)
+		response, err = s.h.DeleteTournament(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	if err := encodeDeleteExampleResponse(response, w, span); err != nil {
+	if err := encodeDeleteTournamentResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -435,25 +409,28 @@ func (s *Server) handleDeleteExampleRequest(args [1]string, argsEscaped bool, w 
 	}
 }
 
-// handleExampleDomainBatchHealthCheckRequest handles exampleDomainBatchHealthCheck operation.
+// handleGenerateTournamentBracketRequest handles generateTournamentBracket operation.
 //
-// **Performance optimization:** Check multiple domain health in single request
-// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-// Eliminates network overhead in health monitoring scenarios.
-// **Use case:** Service mesh health checks, Kubernetes readiness probes.
+// **Bracket generation for tournament start**
+// Generates tournament bracket structure based on registered participants and tournament format.
+// Supports automatic seeding and bracket distribution algorithms.
+// **Business Logic:** - Validates tournament status (must have sufficient participants) - Generates
+// bracket based on tournament format (single/double elimination, round-robin) - Applies seeding
+// algorithm if participants have seed values - Distributes participants across bracket positions
+// **Performance:** <100ms for bracket generation with up to 128 participants.
 //
-// POST /health/batch
-func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /tournaments/{tournament_id}/bracket
+func (s *Server) handleGenerateTournamentBracketRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("exampleDomainBatchHealthCheck"),
+		otelogen.OperationID("generateTournamentBracket"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/health/batch"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/bracket"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), ExampleDomainBatchHealthCheckOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GenerateTournamentBracketOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -508,24 +485,23 @@ func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, args
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: ExampleDomainBatchHealthCheckOperation,
-			ID:   "exampleDomainBatchHealthCheck",
+			Name: GenerateTournamentBracketOperation,
+			ID:   "generateTournamentBracket",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, ExampleDomainBatchHealthCheckOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, GenerateTournamentBracketOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -552,15 +528,24 @@ func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, args
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
+	params, err := decodeGenerateTournamentBracketParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeExampleDomainBatchHealthCheckRequest(r)
+	request, rawBody, close, err := s.decodeGenerateTournamentBracketRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -576,23 +561,28 @@ func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, args
 		}
 	}()
 
-	var response ExampleDomainBatchHealthCheckRes
+	var response GenerateTournamentBracketRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    ExampleDomainBatchHealthCheckOperation,
-			OperationSummary: "Batch health check for multiple domain services",
-			OperationID:      "exampleDomainBatchHealthCheck",
+			OperationName:    GenerateTournamentBracketOperation,
+			OperationSummary: "Generate tournament bracket",
+			OperationID:      "generateTournamentBracket",
 			Body:             request,
 			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+			},
+			Raw: r,
 		}
 
 		type (
-			Request  = *ExampleDomainBatchHealthCheckReq
-			Params   = struct{}
-			Response = ExampleDomainBatchHealthCheckRes
+			Request  = OptGenerateBracketRequest
+			Params   = GenerateTournamentBracketParams
+			Response = GenerateTournamentBracketRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -601,33 +591,22 @@ func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, args
 		](
 			m,
 			mreq,
-			nil,
+			unpackGenerateTournamentBracketParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.ExampleDomainBatchHealthCheck(ctx, request)
+				response, err = s.h.GenerateTournamentBracket(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.ExampleDomainBatchHealthCheck(ctx, request)
+		response, err = s.h.GenerateTournamentBracket(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	if err := encodeExampleDomainBatchHealthCheckResponse(response, w, span); err != nil {
+	if err := encodeGenerateTournamentBracketResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -636,25 +615,27 @@ func (s *Server) handleExampleDomainBatchHealthCheckRequest(args [0]string, args
 	}
 }
 
-// handleGetExampleRequest handles getExample operation.
+// handleGetGlobalLeaderboardsRequest handles getGlobalLeaderboards operation.
 //
-// **Enterprise-grade retrieval endpoint**
-// Optimized with proper caching strategies and database indexing.
-// Supports conditional requests with ETags.
-// **Performance:** <5ms P95 with Redis caching.
+// **Enterprise-grade leaderboard retrieval endpoint**
+// Retrieves global tournament leaderboards across all tournaments and time periods. Supports
+// filtering by tournament type, time range, and ranking criteria.
+// **Performance:** <50ms P99 latency, cached for 5 minutes, supports 10,000+ concurrent requests
+// **Use Cases:** - Global player rankings - Tournament statistics - Historical performance analysis
+// - Competitive insights.
 //
-// GET /examples/{example_id}
-func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /leaderboards
+func (s *Server) handleGetGlobalLeaderboardsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getExample"),
+		otelogen.OperationID("getGlobalLeaderboards"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/examples/{example_id}"),
+		semconv.HTTPRouteKey.String("/leaderboards"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), GetExampleOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetGlobalLeaderboardsOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -709,24 +690,23 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: GetExampleOperation,
-			ID:   "getExample",
+			Name: GetGlobalLeaderboardsOperation,
+			ID:   "getGlobalLeaderboards",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, GetExampleOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, GetGlobalLeaderboardsOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -753,13 +733,12 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
-	params, err := decodeGetExampleParams(args, argsEscaped, r)
+	params, err := decodeGetGlobalLeaderboardsParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -772,20 +751,224 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 
 	var rawBody []byte
 
-	var response GetExampleRes
+	var response GetGlobalLeaderboardsRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    GetExampleOperation,
-			OperationSummary: "Get specific example by ID",
-			OperationID:      "getExample",
+			OperationName:    GetGlobalLeaderboardsOperation,
+			OperationSummary: "Get global tournament leaderboards",
+			OperationID:      "getGlobalLeaderboards",
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "example_id",
+					Name: "tournament_type",
+					In:   "query",
+				}: params.TournamentType,
+				{
+					Name: "time_range",
+					In:   "query",
+				}: params.TimeRange,
+				{
+					Name: "limit",
+					In:   "query",
+				}: params.Limit,
+				{
+					Name: "offset",
+					In:   "query",
+				}: params.Offset,
+				{
+					Name: "sort_by",
+					In:   "query",
+				}: params.SortBy,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetGlobalLeaderboardsParams
+			Response = GetGlobalLeaderboardsRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetGlobalLeaderboardsParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetGlobalLeaderboards(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetGlobalLeaderboards(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetGlobalLeaderboardsResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTournamentRequest handles getTournament operation.
+//
+// **Enterprise-grade retrieval endpoint**
+// Optimized with proper caching strategies and database indexing.
+// Supports conditional requests with ETags.
+// **Performance:** <5ms P95 with Redis caching.
+//
+// GET /tournaments/{tournament_id}
+func (s *Server) handleGetTournamentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTournament"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTournamentOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTournamentOperation,
+			ID:   "getTournament",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTournamentOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTournamentParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTournamentRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTournamentOperation,
+			OperationSummary: "Get specific tournament by ID",
+			OperationID:      "getTournament",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
 					In:   "path",
-				}: params.ExampleID,
+				}: params.TournamentID,
 				{
 					Name: "include_related",
 					In:   "query",
@@ -804,8 +987,8 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 
 		type (
 			Request  = struct{}
-			Params   = GetExampleParams
-			Response = GetExampleRes
+			Params   = GetTournamentParams
+			Response = GetTournamentRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -814,33 +997,1010 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 		](
 			m,
 			mreq,
-			unpackGetExampleParams,
+			unpackGetTournamentParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.GetExample(ctx, params)
+				response, err = s.h.GetTournament(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.GetExample(ctx, params)
+		response, err = s.h.GetTournament(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	if err := encodeGetExampleResponse(response, w, span); err != nil {
+	if err := encodeGetTournamentResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTournamentBracketRequest handles getTournamentBracket operation.
+//
+// **Tournament bracket visualization and management**
+// Retrieves the current tournament bracket structure with all matches, rounds, and participant
+// positions. Supports real-time bracket updates during tournament progression.
+// **Business Logic:** - Returns bracket structure based on tournament format (single/double
+// elimination, round-robin) - Includes match status, participant positions, and next round
+// information - Real-time updates during match progression
+// **Performance:** <10ms response time with cached bracket structure.
+//
+// GET /tournaments/{tournament_id}/bracket
+func (s *Server) handleGetTournamentBracketRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTournamentBracket"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/bracket"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTournamentBracketOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTournamentBracketOperation,
+			ID:   "getTournamentBracket",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTournamentBracketOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTournamentBracketParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTournamentBracketRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTournamentBracketOperation,
+			OperationSummary: "Get tournament bracket structure",
+			OperationID:      "getTournamentBracket",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+				{
+					Name: "include_matches",
+					In:   "query",
+				}: params.IncludeMatches,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetTournamentBracketParams
+			Response = GetTournamentBracketRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetTournamentBracketParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetTournamentBracket(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetTournamentBracket(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetTournamentBracketResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTournamentLeaderboardRequest handles getTournamentLeaderboard operation.
+//
+// **Real-time tournament standings and rankings**
+// Provides current tournament leaderboard with player rankings, scores, and progression statistics.
+// **Performance:** <5ms response time with cached rankings **Caching:** 30-second cache with
+// real-time invalidation on score updates.
+//
+// GET /tournaments/{tournament_id}/leaderboard
+func (s *Server) handleGetTournamentLeaderboardRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTournamentLeaderboard"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/leaderboard"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTournamentLeaderboardOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTournamentLeaderboardOperation,
+			ID:   "getTournamentLeaderboard",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTournamentLeaderboardOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTournamentLeaderboardParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTournamentLeaderboardRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTournamentLeaderboardOperation,
+			OperationSummary: "Get tournament leaderboard",
+			OperationID:      "getTournamentLeaderboard",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+				{
+					Name: "limit",
+					In:   "query",
+				}: params.Limit,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetTournamentLeaderboardParams
+			Response = GetTournamentLeaderboardRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetTournamentLeaderboardParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetTournamentLeaderboard(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetTournamentLeaderboard(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetTournamentLeaderboardResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTournamentSpectatorsRequest handles getTournamentSpectators operation.
+//
+// **Live spectator management for tournament viewing**
+// Retrieves list of current spectators watching the tournament, with spectator count and spectator
+// activity statistics.
+// **Business Logic:** - Returns current spectator count - Includes spectator activity metrics -
+// Supports pagination for large spectator lists
+// **Performance:** <5ms response time with cached spectator data.
+//
+// GET /tournaments/{tournament_id}/spectators
+func (s *Server) handleGetTournamentSpectatorsRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTournamentSpectators"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/spectators"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTournamentSpectatorsOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTournamentSpectatorsOperation,
+			ID:   "getTournamentSpectators",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTournamentSpectatorsOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTournamentSpectatorsParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTournamentSpectatorsRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTournamentSpectatorsOperation,
+			OperationSummary: "Get tournament spectator list",
+			OperationID:      "getTournamentSpectators",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+				{
+					Name: "limit",
+					In:   "query",
+				}: params.Limit,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetTournamentSpectatorsParams
+			Response = GetTournamentSpectatorsRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetTournamentSpectatorsParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetTournamentSpectators(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetTournamentSpectators(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetTournamentSpectatorsResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleJoinTournamentRequest handles joinTournament operation.
+//
+// **Player registration for tournament participation**
+// Handles tournament registration with validation of entry requirements, participant limits, and
+// registration deadlines.
+// **Business Logic:** - Validates tournament status (must be registration_open) - Checks participant
+// capacity - Verifies player eligibility - Reserves participant slot.
+//
+// POST /tournaments/{tournament_id}/join
+func (s *Server) handleJoinTournamentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("joinTournament"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/join"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), JoinTournamentOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: JoinTournamentOperation,
+			ID:   "joinTournament",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, JoinTournamentOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeJoinTournamentParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeJoinTournamentRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response JoinTournamentRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    JoinTournamentOperation,
+			OperationSummary: "Join a tournament",
+			OperationID:      "joinTournament",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *JoinTournamentRequest
+			Params   = JoinTournamentParams
+			Response = JoinTournamentRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackJoinTournamentParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.JoinTournament(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.JoinTournament(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeJoinTournamentResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleLeaveTournamentRequest handles leaveTournament operation.
+//
+// **Player withdrawal from tournament participation**
+// Handles tournament withdrawal with proper cleanup of participant records and slot release.
+// **Business Logic:** - Validates tournament status (must not be completed) - Removes participant
+// record - Releases participant slot - Updates tournament statistics.
+//
+// POST /tournaments/{tournament_id}/leave
+func (s *Server) handleLeaveTournamentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("leaveTournament"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/leave"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), LeaveTournamentOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: LeaveTournamentOperation,
+			ID:   "leaveTournament",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, LeaveTournamentOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeLeaveTournamentParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeLeaveTournamentRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response LeaveTournamentRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    LeaveTournamentOperation,
+			OperationSummary: "Leave a tournament",
+			OperationID:      "leaveTournament",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *LeaveTournamentRequest
+			Params   = LeaveTournamentParams
+			Response = LeaveTournamentRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackLeaveTournamentParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.LeaveTournament(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.LeaveTournament(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeLeaveTournamentResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -851,19 +2011,19 @@ func (s *Server) handleGetExampleRequest(args [1]string, argsEscaped bool, w htt
 
 // handleListTournamentsRequest handles listTournaments operation.
 //
-// **Enterprise-grade listing endpoint**
-// Supports complex filtering, sorting, and pagination patterns.
-// Optimized for high-throughput scenarios with proper indexing.
-// **Performance:** <10ms P95, supports 1000+ concurrent requests.
+// **Enterprise-grade tournament listing endpoint**
+// Supports complex filtering by type, status, skill level, and pagination.
+// Optimized for high-throughput tournament browsing with proper indexing.
+// **Performance:** <10ms P95, supports 1000+ concurrent tournament searches.
 //
-// GET /examples
+// GET /tournaments
 func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("listTournaments"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/examples"),
+		semconv.HTTPRouteKey.String("/tournaments"),
 	}
 
 	// Start a span for this request.
@@ -937,9 +2097,8 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -966,9 +2125,8 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
@@ -990,7 +2148,7 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 		mreq := middleware.Request{
 			Context:          ctx,
 			OperationName:    ListTournamentsOperation,
-			OperationSummary: "List examples with filtering and pagination",
+			OperationSummary: "List tournaments with filtering and pagination",
 			OperationID:      "listTournaments",
 			Body:             nil,
 			RawBody:          rawBody,
@@ -1012,9 +2170,17 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 					In:   "query",
 				}: params.SortOrder,
 				{
-					Name: "filter_status",
+					Name: "status",
 					In:   "query",
-				}: params.FilterStatus,
+				}: params.Status,
+				{
+					Name: "game_mode",
+					In:   "query",
+				}: params.GameMode,
+				{
+					Name: "skill_level",
+					In:   "query",
+				}: params.SkillLevel,
 			},
 			Raw: r,
 		}
@@ -1041,19 +2207,8 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 		response, err = s.h.ListTournaments(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
@@ -1066,10 +2221,402 @@ func (s *Server) handleListTournamentsRequest(args [0]string, argsEscaped bool, 
 	}
 }
 
+// handleRegisterTournamentScoreRequest handles registerTournamentScore operation.
+//
+// **Match result registration for tournament progression**
+// Records match outcomes with validation and automatic tournament bracket advancement calculation.
+// **Business Logic:** - Validates match authenticity - Updates participant scores - Calculates
+// tournament standings - Advances tournament bracket - Triggers elimination logic
+// **Performance:** Sub-millisecond score validation and ranking updates.
+//
+// POST /tournaments/{tournament_id}/scores
+func (s *Server) handleRegisterTournamentScoreRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("registerTournamentScore"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/scores"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), RegisterTournamentScoreOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: RegisterTournamentScoreOperation,
+			ID:   "registerTournamentScore",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityServiceAuth(ctx, RegisterTournamentScoreOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "ServiceAuth",
+					Err:              err,
+				}
+				defer recordError("Security:ServiceAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeRegisterTournamentScoreParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeRegisterTournamentScoreRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response RegisterTournamentScoreRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    RegisterTournamentScoreOperation,
+			OperationSummary: "Register tournament match score",
+			OperationID:      "registerTournamentScore",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *RegisterTournamentScoreRequest
+			Params   = RegisterTournamentScoreParams
+			Response = RegisterTournamentScoreRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackRegisterTournamentScoreParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.RegisterTournamentScore(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.RegisterTournamentScore(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeRegisterTournamentScoreResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleTournamentServiceBatchHealthCheckRequest handles tournamentServiceBatchHealthCheck operation.
+//
+// **Performance optimization:** Check multiple tournament service health in single request
+// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+// Eliminates network overhead in health monitoring scenarios.
+// **Use case:** Service mesh health checks, Kubernetes readiness probes.
+//
+// POST /health/batch
+func (s *Server) handleTournamentServiceBatchHealthCheckRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("tournamentServiceBatchHealthCheck"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/health/batch"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), TournamentServiceBatchHealthCheckOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: TournamentServiceBatchHealthCheckOperation,
+			ID:   "tournamentServiceBatchHealthCheck",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, TournamentServiceBatchHealthCheckOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeTournamentServiceBatchHealthCheckRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response TournamentServiceBatchHealthCheckRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    TournamentServiceBatchHealthCheckOperation,
+			OperationSummary: "Batch health check for tournament services",
+			OperationID:      "tournamentServiceBatchHealthCheck",
+			Body:             request,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = *TournamentServiceBatchHealthCheckReq
+			Params   = struct{}
+			Response = TournamentServiceBatchHealthCheckRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.TournamentServiceBatchHealthCheck(ctx, request)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.TournamentServiceBatchHealthCheck(ctx, request)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeTournamentServiceBatchHealthCheckResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
 // handleTournamentServiceHealthCheckRequest handles tournamentServiceHealthCheck operation.
 //
 // **Enterprise-grade health check endpoint**
-// Provides real-time health status of the example domain microservice.
+// Provides real-time health status of the tournament service microservice.
 // Critical for service discovery, load balancing, and monitoring.
 // **Performance:** <1ms response time, cached for 30 seconds.
 //
@@ -1154,9 +2701,8 @@ func (s *Server) handleTournamentServiceHealthCheckRequest(args [0]string, argsE
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -1183,9 +2729,8 @@ func (s *Server) handleTournamentServiceHealthCheckRequest(args [0]string, argsE
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
@@ -1207,7 +2752,7 @@ func (s *Server) handleTournamentServiceHealthCheckRequest(args [0]string, argsE
 		mreq := middleware.Request{
 			Context:          ctx,
 			OperationName:    TournamentServiceHealthCheckOperation,
-			OperationSummary: "Example domain health check",
+			OperationSummary: "Tournament service health check",
 			OperationID:      "tournamentServiceHealthCheck",
 			Body:             nil,
 			RawBody:          rawBody,
@@ -1242,19 +2787,8 @@ func (s *Server) handleTournamentServiceHealthCheckRequest(args [0]string, argsE
 		response, err = s.h.TournamentServiceHealthCheck(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
@@ -1357,9 +2891,8 @@ func (s *Server) handleTournamentServiceHealthWebSocketRequest(args [0]string, a
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -1386,9 +2919,8 @@ func (s *Server) handleTournamentServiceHealthWebSocketRequest(args [0]string, a
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
@@ -1445,19 +2977,8 @@ func (s *Server) handleTournamentServiceHealthWebSocketRequest(args [0]string, a
 		response, err = s.h.TournamentServiceHealthWebSocket(ctx, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
@@ -1470,25 +2991,30 @@ func (s *Server) handleTournamentServiceHealthWebSocketRequest(args [0]string, a
 	}
 }
 
-// handleUpdateExampleRequest handles updateExample operation.
+// handleTournamentSpectatorWebSocketRequest handles tournamentSpectatorWebSocket operation.
 //
-// **Enterprise-grade update endpoint**
-// Supports partial updates, optimistic locking, and audit trails.
-// Ensures data consistency with event sourcing patterns.
-// **Performance:** <25ms P95, includes validation and conflict resolution.
+// **Live tournament viewing with real-time updates**
+// WebSocket endpoint for real-time tournament spectator mode. Provides live match updates, bracket
+// progression, and tournament statistics without polling.
+// **Protocol:** WebSocket with JSON payloads **Heartbeat:** 30 second intervals **Reconnection:**
+// Automatic with exponential backoff
+// **Message Types:** - match_start: Match has started - match_update: Match score/status update -
+// match_end: Match has completed - bracket_update: Bracket structure has changed -
+// tournament_update: Tournament status change
+// **Performance:** Sub-millisecond message delivery, supports 10,000+ concurrent spectators.
 //
-// PUT /examples/{example_id}
-func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /tournaments/{tournament_id}/spectate
+func (s *Server) handleTournamentSpectatorWebSocketRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("updateExample"),
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/examples/{example_id}"),
+		otelogen.OperationID("tournamentSpectatorWebSocket"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}/spectate"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), UpdateExampleOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), TournamentSpectatorWebSocketOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -1543,24 +3069,23 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: UpdateExampleOperation,
-			ID:   "updateExample",
+			Name: TournamentSpectatorWebSocketOperation,
+			ID:   "tournamentSpectatorWebSocket",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, UpdateExampleOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, TournamentSpectatorWebSocketOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
 					Security:         "BearerAuth",
 					Err:              err,
 				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-					defer recordError("Security:BearerAuth", err)
-				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
 				return
 			}
 			if ok {
@@ -1587,13 +3112,12 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 				OperationContext: opErrContext,
 				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
 			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w, span); encodeErr != nil {
-				defer recordError("Security", err)
-			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
 			return
 		}
 	}
-	params, err := decodeUpdateExampleParams(args, argsEscaped, r)
+	params, err := decodeTournamentSpectatorWebSocketParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -1605,7 +3129,195 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeUpdateExampleRequest(r)
+
+	var response TournamentSpectatorWebSocketRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    TournamentSpectatorWebSocketOperation,
+			OperationSummary: "Real-time tournament spectator WebSocket",
+			OperationID:      "tournamentSpectatorWebSocket",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "tournament_id",
+					In:   "path",
+				}: params.TournamentID,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = TournamentSpectatorWebSocketParams
+			Response = TournamentSpectatorWebSocketRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackTournamentSpectatorWebSocketParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.TournamentSpectatorWebSocket(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.TournamentSpectatorWebSocket(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeTournamentSpectatorWebSocketResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleUpdateTournamentRequest handles updateTournament operation.
+//
+// **Enterprise-grade update endpoint**
+// Supports partial updates, optimistic locking, and audit trails.
+// Ensures data consistency with event sourcing patterns.
+// **Performance:** <25ms P95, includes validation and conflict resolution.
+//
+// PUT /tournaments/{tournament_id}
+func (s *Server) handleUpdateTournamentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateTournament"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.HTTPRouteKey.String("/tournaments/{tournament_id}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), UpdateTournamentOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: UpdateTournamentOperation,
+			ID:   "updateTournament",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, UpdateTournamentOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeUpdateTournamentParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeUpdateTournamentRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -1621,20 +3333,20 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 		}
 	}()
 
-	var response UpdateExampleRes
+	var response UpdateTournamentRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    UpdateExampleOperation,
-			OperationSummary: "Update existing example",
-			OperationID:      "updateExample",
+			OperationName:    UpdateTournamentOperation,
+			OperationSummary: "Update existing tournament",
+			OperationID:      "updateTournament",
 			Body:             request,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "example_id",
+					Name: "tournament_id",
 					In:   "path",
-				}: params.ExampleID,
+				}: params.TournamentID,
 				{
 					Name: "If-Match",
 					In:   "header",
@@ -1648,9 +3360,9 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 		}
 
 		type (
-			Request  = *UpdateExampleRequest
-			Params   = UpdateExampleParams
-			Response = UpdateExampleRes
+			Request  = *UpdateTournamentRequest
+			Params   = UpdateTournamentParams
+			Response = UpdateTournamentRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1659,33 +3371,22 @@ func (s *Server) handleUpdateExampleRequest(args [1]string, argsEscaped bool, w 
 		](
 			m,
 			mreq,
-			unpackUpdateExampleParams,
+			unpackUpdateTournamentParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.UpdateExample(ctx, request, params)
+				response, err = s.h.UpdateTournament(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.UpdateExample(ctx, request, params)
+		response, err = s.h.UpdateTournament(ctx, request, params)
 	}
 	if err != nil {
-		if errRes, ok := errors.Into[*ErrRespStatusCode](err); ok {
-			if err := encodeErrorResponse(errRes, w, span); err != nil {
-				defer recordError("Internal", err)
-			}
-			return
-		}
-		if errors.Is(err, ht.ErrNotImplemented) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
-			defer recordError("Internal", err)
-		}
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	if err := encodeUpdateExampleResponse(response, w, span); err != nil {
+	if err := encodeUpdateTournamentResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

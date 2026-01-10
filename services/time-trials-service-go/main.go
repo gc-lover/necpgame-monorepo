@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"necpgame/services/time-trials-service-go/internal/service"
-	"necpgame/services/time-trials-service-go/pkg/api"
+	"necpgame/services/time-trials-service-go/api"
 )
 
 func main() {

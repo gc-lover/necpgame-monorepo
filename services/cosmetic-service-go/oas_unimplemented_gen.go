@@ -13,30 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// BatchHealthCheck implements batchHealthCheck operation.
+// CosmeticServiceHealthCheck implements cosmeticServiceHealthCheck operation.
 //
-// Performance optimization: Check multiple domain health in single request.
+// **Enterprise-grade health check endpoint**
+// Provides real-time health status of the cosmetic service and all modules.
+// Critical for service discovery, load balancing, and monitoring.
+// **Performance:** <1ms response time, cached for 30 seconds.
 //
-// POST /api/v1/cosmetic-domain/health/batch
-func (UnimplementedHandler) BatchHealthCheck(ctx context.Context, req *BatchHealthCheckReq) (r BatchHealthCheckRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CosmeticDomainHealthCheck implements cosmetic-domainHealthCheck operation.
-//
-// Cosmetic domain domain health check.
-//
-// GET /api/v1/cosmetic-domain/health
-func (UnimplementedHandler) CosmeticDomainHealthCheck(ctx context.Context) (r CosmeticDomainHealthCheckRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// HealthWebSocket implements healthWebSocket operation.
-//
-// Real-time health updates without polling.
-//
-// GET /api/v1/cosmetic-domain/health/ws
-func (UnimplementedHandler) HealthWebSocket(ctx context.Context) (r HealthWebSocketRes, _ error) {
+// GET /health
+func (UnimplementedHandler) CosmeticServiceHealthCheck(ctx context.Context, params CosmeticServiceHealthCheckParams) (r CosmeticServiceHealthCheckRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

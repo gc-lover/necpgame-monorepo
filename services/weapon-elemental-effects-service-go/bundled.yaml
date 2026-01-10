@@ -1,0 +1,2653 @@
+openapi: 3.0.3
+info:
+  title: Weapon Elemental Effects Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Weapon Elemental Effects API for NECPGAME**
+
+    This API manages weapon elemental effects, damage calculations, and visual effects
+    in the Night City universe, providing comprehensive elemental system management,
+    real-time effect processing, and performance-optimized damage calculations.
+
+    ## Key Features
+
+    - **Elemental Effects**: Real-time processing of fire, ice, electric, poison effects
+    - **Damage Calculation**: Advanced damage formulas with elemental interactions
+    - **Visual Effects**: Particle systems and visual effect management - **Effect
+    Stacking**: Complex effect combinations and synergies - **Performance Optimized**:
+    MMOFPS-grade performance with <12ms P99 latency - **Struct Alignment**: 40-60%
+    memory savings for effect structs
+
+    ## Domain Purpose
+
+    The Weapon Elemental Effects domain handles all elemental weapon mechanics in
+    Night City. Players equip weapons with elemental effects that define their combat
+    style and tactical capabilities in dynamic gameplay scenarios.
+
+    ## Performance Targets
+
+    - P99 Latency: <12ms for elemental operations - Memory: <8KB per active elemental
+    effect session - Concurrent users: 50,000+ simultaneous effect calculations -
+    Update frequency: 2000+ effect updates per second
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@weapon-effects.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/weapon-effects
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/weapon-effects
+  description: Staging server
+- url: http://localhost:8080/api/v1/weapon-effects
+  description: Local development server
+tags:
+- name: Elemental Effects
+  description: Core elemental effect operations
+- name: Effect Management
+  description: Effect lifecycle and configuration
+- name: Damage Calculation
+  description: Elemental damage computation
+- name: Visual Effects
+  description: Particle and visual effect systems
+- name: Effect Synergies
+  description: Effect combinations and interactions
+- name: Anti-Cheat
+  description: Effect validation and cheat prevention
+- name: AI Training
+  description: AI-powered effect learning and adaptation
+- name: AI Recommendations
+  description: Personalized effect recommendations
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: weaponEffectsHealthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          $ref: '#/components/responses/OK'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects:
+    post:
+      summary: Create elemental effect
+      operationId: weaponEffectsCreateEffect
+      description: 'Create a new elemental effect configuration.
+
+        **BACKEND NOTE:** Admin-only operation, cached for performance. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEffectRequest'
+      responses:
+        '201':
+          description: Effect created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List elemental effects
+      operationId: weaponEffectsListEffects
+      description: Get list of available elemental effects with filtering.
+      tags:
+      - Effect Management
+      parameters:
+      - name: element_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+        description: Filter by element type
+      - name: effect_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - damage_over_time
+          - status_effect
+          - damage_boost
+          - defense_reduction
+          - movement_impairment
+          - healing_reduction
+          - energy_drain
+          - attribute_boost
+        description: Filter by effect type
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
+        description: Filter by effect rarity
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of effects to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of effects to skip
+      responses:
+        '200':
+          description: List of elemental effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEffectsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/{effect_id}:
+    get:
+      summary: Get effect details
+      operationId: weaponEffectsGetEffect
+      description: Get detailed information about a specific elemental effect.
+      tags:
+      - Effect Management
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      responses:
+        '200':
+          description: Effect details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update elemental effect
+      operationId: weaponEffectsUpdateEffect
+      description: 'Update effect configuration and properties.
+
+        **BACKEND NOTE:** Admin-only, cache invalidation required. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEffectRequest'
+      responses:
+        '200':
+          description: Effect updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Delete elemental effect
+      operationId: weaponEffectsDeleteEffect
+      description: 'Delete an elemental effect configuration.
+
+        **BACKEND NOTE:** Admin-only, cascade cleanup required. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      responses:
+        '204':
+          description: Effect deleted successfully
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/{effect_id}/apply:
+    post:
+      summary: Apply effect to weapon
+      operationId: weaponEffectsApplyEffect
+      description: 'Apply elemental effect to a weapon configuration.
+
+        **BACKEND NOTE:** Validates effect compatibility and weapon constraints. '
+      tags:
+      - Elemental Effects
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectRequest'
+      responses:
+        '200':
+          description: Effect applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyEffectResponse'
+        '400':
+          description: Effect incompatible or weapon constraints violated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Effect or weapon not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/{effect_id}/remove:
+    post:
+      summary: Remove effect from weapon
+      operationId: weaponEffectsRemoveEffect
+      description: Remove elemental effect from a weapon.
+      tags:
+      - Elemental Effects
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveEffectRequest'
+      responses:
+        '200':
+          description: Effect removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveEffectResponse'
+        '404':
+          description: Effect or weapon not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/calculate/damage:
+    post:
+      summary: Calculate elemental damage
+      operationId: weaponEffectsCalculateDamage
+      description: 'Calculate damage from elemental effects with synergies.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
+      tags:
+      - Damage Calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateDamageRequest'
+      responses:
+        '200':
+          description: Damage calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateDamageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/calculate/synergies:
+    post:
+      summary: Calculate effect synergies
+      operationId: weaponEffectsCalculateSynergies
+      description: Calculate damage multipliers from effect combinations.
+      tags:
+      - Effect Synergies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateSynergiesRequest'
+      responses:
+        '200':
+          description: Synergy calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateSynergiesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/validate:
+    post:
+      summary: Validate effect configuration
+      operationId: weaponEffectsValidateEffect
+      description: 'Validate elemental effect for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention. '
+      tags:
+      - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateEffectRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateEffectResponse'
+        '400':
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/visual/config:
+    post:
+      summary: Configure visual effects
+      operationId: weaponEffectsConfigureVisual
+      description: Configure particle systems and visual effects for elemental effects.
+      tags:
+      - Visual Effects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigureVisualRequest'
+      responses:
+        '200':
+          description: Visual effects configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigureVisualResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/batch/calculate:
+    post:
+      summary: Batch damage calculations
+      operationId: weaponEffectsBatchCalculate
+      description: 'Calculate damage for multiple effect combinations.
+
+        **BACKEND NOTE:** Optimized for bulk combat calculations. '
+      tags:
+      - Damage Calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCalculateRequest'
+      responses:
+        '200':
+          description: Batch calculations completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCalculateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/analytics/summary:
+    get:
+      summary: Get effects analytics
+      operationId: weaponEffectsGetAnalytics
+      description: Get analytics on elemental effect usage and performance.
+      tags:
+      - Effect Management
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          default: day
+        description: Time period for analytics
+      - name: element_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+        description: Filter by element type
+      responses:
+        '200':
+          description: Effects analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectsAnalyticsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/adaptive/train:
+    post:
+      summary: Submit effect usage data for AI training
+      operationId: trainWeaponEffectsAI
+      description: 'Submit effect usage patterns for adaptive AI learning.
+
+        **AI Integration:** Trains models for effect balancing and personalization.
+
+        **BACKEND NOTE:** Hot path for AI training data, batched processing.'
+      tags:
+      - AI Training
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json: null
+          schema:
+            $ref: '#/components/schemas/EffectTrainingData'
+      responses:
+        '200':
+          description: Training data accepted
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/TrainingResponse'
+        '400':
+          description: Invalid training data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /effects/adaptive/recommend:
+    get:
+      summary: Get AI-powered effect recommendations
+      operationId: getWeaponEffectRecommendations
+      description: 'Get personalized elemental effect recommendations based on playstyle.
+
+        **AI Integration:** Uses trained models for tactical effect suggestions.'
+      tags:
+      - AI Recommendations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for personalization
+      - name: weapon_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - pistol
+          - rifle
+          - shotgun
+          - sniper
+          - smg
+          - melee
+          - heavy
+        description: Weapon type for recommendations
+      - name: combat_style
+        in: query
+        schema:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - stealth
+          - support
+          - control
+        description: Combat style preference
+      responses:
+        '200':
+          description: Effect recommendations
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/EffectRecommendations'
+        '404':
+          description: Character not found
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/Error'
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of updated resource
+              updated_at:
+                type: string
+                format: date-time
+                description: Last modification timestamp
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of deleted resource
+              deleted_at:
+                type: string
+                format: date-time
+                description: Deletion timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+    AdminAuth:
+      type: http
+      scheme: bearer
+      description: Admin JWT Bearer token authentication
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    ElementalEffect:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          created_at:
+            type: string
+            format: date-time
+            description: Creation timestamp (ISO 8601)
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp (ISO 8601)
+            example: '2025-12-28T10:30:00Z'
+            maxLength: 30
+        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+          Memory savings: 30-50%. All domain entities should extend this.'
+      - type: object
+        required:
+        - name
+        - element_type
+        - effect_type
+        - base_damage
+        properties:
+          name:
+            type: string
+            description: Effect display name
+            example: Plasma Burn
+            maxLength: 100
+          description:
+            type: string
+            description: Effect description
+            example: Deals plasma damage over time, ignoring 50% of armor
+          element_type:
+            type: string
+            enum:
+            - fire
+            - ice
+            - electric
+            - poison
+            - acid
+            - radiation
+            - plasma
+            - cyber
+            - nano
+            - quantum
+            description: Primary element type
+            example: plasma
+          effect_type:
+            type: string
+            enum:
+            - damage_over_time
+            - status_effect
+            - damage_boost
+            - defense_reduction
+            - movement_impairment
+            - healing_reduction
+            - energy_drain
+            - attribute_boost
+            description: Effect category
+            example: damage_over_time
+          base_damage:
+            type: integer
+            minimum: 0
+            description: Base damage per tick/second
+            example: 25
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - cybernetic
+            - quantum
+            description: Damage type for armor calculations
+            example: energy
+          duration_ms:
+            type: integer
+            minimum: 0
+            description: Effect duration in milliseconds
+            example: 5000
+          tick_interval_ms:
+            type: integer
+            minimum: 100
+            description: Time between damage ticks (for DoT effects)
+            example: 1000
+          max_stacks:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: Maximum number of effect stacks
+            example: 3
+          stack_decay_ms:
+            type: integer
+            minimum: 0
+            description: Time for stack to decay (0 = permanent)
+            example: 3000
+          proc_chance:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: Chance to proc effect (0-1)
+            example: 0.15
+          rarity:
+            type: string
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            - mythic
+            description: Effect rarity tier
+            example: rare
+          visual_config:
+            $ref: '#/components/schemas/VisualEffectConfig'
+          synergies:
+            type: array
+            items:
+              $ref: '#/components/schemas/EffectSynergy'
+            description: Compatible element synergies
+            maxItems: 5
+          anti_cheat_token:
+            type: string
+            description: Token for anti-cheat validation
+          is_active:
+            type: boolean
+            description: Whether effect is currently enabled
+      description: 'BACKEND NOTE: Elemental effect entity with domain inheritance
+        (SOLID/DRY).'
+    VisualEffectConfig:
+      type: object
+      properties:
+        particle_system:
+          type: string
+          description: Particle system asset identifier
+          example: plasma_burn_particles
+        color_primary:
+          type: object
+          properties:
+            r:
+              type: number
+              minimum: 0
+              maximum: 1
+            g:
+              type: number
+              minimum: 0
+              maximum: 1
+            b:
+              type: number
+              minimum: 0
+              maximum: 1
+          description: Primary effect color (RGB 0-1)
+        color_secondary:
+          type: object
+          properties:
+            r:
+              type: number
+              minimum: 0
+              maximum: 1
+            g:
+              type: number
+              minimum: 0
+              maximum: 1
+            b:
+              type: number
+              minimum: 0
+              maximum: 1
+          description: Secondary effect color
+        scale:
+          type: number
+          minimum: 0.1
+          maximum: 5.0
+          description: Visual effect scale multiplier
+        intensity:
+          type: number
+          minimum: 0.1
+          maximum: 2.0
+          description: Effect intensity multiplier
+        sound_effect:
+          type: string
+          description: Associated sound effect asset
+      description: 'BACKEND NOTE: Visual configuration for effects.'
+    EffectSynergy:
+      type: object
+      required:
+      - partner_element
+      - multiplier
+      properties:
+        partner_element:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+          description: Element that creates synergy
+        multiplier:
+          type: number
+          minimum: 0.1
+          maximum: 3.0
+          description: Damage multiplier when combined
+          example: 1.5
+        bonus_effects:
+          type: array
+          items:
+            type: string
+          description: Additional effects from synergy
+          example:
+          - stun
+          - slow
+        condition:
+          type: string
+          description: Condition for synergy activation
+      description: 'BACKEND NOTE: Synergy configuration between elements.'
+    CreateEffectRequest:
+      type: object
+      required:
+      - name
+      - element_type
+      - effect_type
+      - base_damage
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        element_type:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+        effect_type:
+          type: string
+          enum:
+          - damage_over_time
+          - status_effect
+          - damage_boost
+          - defense_reduction
+          - movement_impairment
+          - healing_reduction
+          - energy_drain
+          - attribute_boost
+        base_damage:
+          type: integer
+          minimum: 0
+        damage_type:
+          type: string
+          enum:
+          - physical
+          - energy
+          - chemical
+          - cybernetic
+          - quantum
+        duration_ms:
+          type: integer
+          minimum: 0
+          default: 0
+        tick_interval_ms:
+          type: integer
+          minimum: 100
+          default: 1000
+        max_stacks:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+        stack_decay_ms:
+          type: integer
+          minimum: 0
+          default: 0
+        proc_chance:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1.0
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
+          default: common
+        visual_config:
+          $ref: '#/components/schemas/VisualEffectConfig'
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectSynergy'
+          maxItems: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (strings → integers
+        → arrays).'
+    UpdateEffectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        element_type:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+        effect_type:
+          type: string
+          enum:
+          - damage_over_time
+          - status_effect
+          - damage_boost
+          - defense_reduction
+          - movement_impairment
+          - healing_reduction
+          - energy_drain
+          - attribute_boost
+        base_damage:
+          type: integer
+          minimum: 0
+        damage_type:
+          type: string
+          enum:
+          - physical
+          - energy
+          - chemical
+          - cybernetic
+          - quantum
+        duration_ms:
+          type: integer
+          minimum: 0
+        tick_interval_ms:
+          type: integer
+          minimum: 100
+        max_stacks:
+          type: integer
+          minimum: 1
+          maximum: 10
+        stack_decay_ms:
+          type: integer
+          minimum: 0
+        proc_chance:
+          type: number
+          minimum: 0
+          maximum: 1
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
+        visual_config:
+          $ref: '#/components/schemas/VisualEffectConfig'
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectSynergy'
+        is_active:
+          type: boolean
+      description: 'BACKEND NOTE: Partial update request with optional fields.'
+    EffectResponse:
+      type: object
+      required:
+      - effect
+      properties:
+        effect:
+          $ref: '#/components/schemas/ElementalEffect'
+        usage_stats:
+          type: object
+          properties:
+            total_applications:
+              type: integer
+              format: int32
+            success_rate:
+              type: number
+              format: float
+            average_damage:
+              type: number
+              format: float
+          description: Usage statistics for the effect
+      description: 'BACKEND NOTE: Response with effect and metadata.'
+    ListEffectsResponse:
+      type: object
+      required:
+      - effects
+      - total_count
+      properties:
+        pagination:
+          type: object
+          properties:
+            offset:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+            has_more:
+              type: boolean
+          description: Pagination information
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ElementalEffect'
+          description: 'BACKEND NOTE: Array of effects, ordered for optimal struct
+            layout'
+        total_count:
+          type: integer
+          format: int32
+          description: Total number of effects available
+        filters_applied:
+          type: object
+          properties:
+            element_type:
+              type: string
+            effect_type:
+              type: string
+            rarity:
+              type: string
+          description: Applied filters for this request
+      description: 'BACKEND NOTE: Response optimized for struct alignment with large
+        arrays first.'
+    ApplyEffectRequest:
+      type: object
+      required:
+      - weapon_id
+      - character_id
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        slot_index:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Weapon effect slot (0-4)
+          default: 0
+        mod_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Effect modification level
+          default: 1
+        custom_config:
+          type: object
+          description: Custom effect configuration overrides
+        validate_only:
+          type: boolean
+          description: Only validate application without applying
+          default: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    ApplyEffectResponse:
+      type: object
+      required:
+      - success
+      - weapon_config
+      properties:
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        weapon_config:
+          $ref: '#/components/schemas/WeaponEffectConfig'
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Validation errors if application failed
+        power_cost:
+          type: integer
+          description: Power/charge cost of applying effect
+        compatibility_warnings:
+          type: array
+          items:
+            type: string
+          description: Warnings about effect compatibility
+      description: 'BACKEND NOTE: Response optimized for struct alignment.'
+    RemoveEffectRequest:
+      type: object
+      required:
+      - weapon_id
+      - character_id
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        slot_index:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: Effect slot to remove
+      description: 'BACKEND NOTE: Simple removal request.'
+    RemoveEffectResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        weapon_config:
+          $ref: '#/components/schemas/WeaponEffectConfig'
+        refund_amount:
+          type: integer
+          description: Resource refund from removal
+      description: 'BACKEND NOTE: Optimized response for effect removal.'
+    WeaponEffectConfig:
+      type: object
+      required:
+      - weapon_id
+      - effects
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_id:
+                type: string
+                format: uuid
+                description: Applied effect ID
+              slot_index:
+                type: integer
+                minimum: 0
+                maximum: 4
+                description: Effect slot index
+              mod_level:
+                type: integer
+                minimum: 1
+                maximum: 10
+                description: Effect modification level
+              custom_config:
+                type: object
+                description: Custom effect configuration
+              is_active:
+                type: boolean
+                description: Whether effect is currently active
+              applied_at:
+                type: string
+                format: date-time
+                description: When effect was applied
+            description: 'BACKEND NOTE: Effect configuration in weapon'
+          description: Applied effects on weapon
+          maxItems: 5
+        total_power_draw:
+          type: integer
+          description: Total power consumption of all effects
+        stability_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Weapon stability with current effects (0-1)
+        heat_generation:
+          type: integer
+          description: Heat generated by effects per second
+      description: 'BACKEND NOTE: Weapon effect configuration with performance metrics.'
+    CalculateDamageRequest:
+      type: object
+      required:
+      - attacker_id
+      - target_id
+      - weapon_config
+      - base_damage
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity ID
+        weapon_config:
+          $ref: '#/components/schemas/WeaponEffectConfig'
+        base_damage:
+          type: integer
+          minimum: 0
+          description: Base weapon damage
+        target_armor:
+          type: object
+          properties:
+            physical:
+              type: integer
+              minimum: 0
+            energy:
+              type: integer
+              minimum: 0
+            chemical:
+              type: integer
+              minimum: 0
+            cybernetic:
+              type: integer
+              minimum: 0
+            quantum:
+              type: integer
+              minimum: 0
+          description: Target armor values by damage type
+        target_resistances:
+          type: object
+          properties:
+            fire:
+              type: number
+              minimum: 0
+              maximum: 1
+            ice:
+              type: number
+              minimum: 0
+              maximum: 1
+            electric:
+              type: number
+              minimum: 0
+              maximum: 1
+            poison:
+              type: number
+              minimum: 0
+              maximum: 1
+            acid:
+              type: number
+              minimum: 0
+              maximum: 1
+            radiation:
+              type: number
+              minimum: 0
+              maximum: 1
+            plasma:
+              type: number
+              minimum: 0
+              maximum: 1
+            cyber:
+              type: number
+              minimum: 0
+              maximum: 1
+            nano:
+              type: number
+              minimum: 0
+              maximum: 1
+            quantum:
+              type: number
+              minimum: 0
+              maximum: 1
+          description: Target elemental resistances (0-1)
+        environmental_factors:
+          type: object
+          properties:
+            weather:
+              type: string
+              enum:
+              - clear
+              - rain
+              - snow
+              - fog
+              - storm
+            terrain:
+              type: string
+              enum:
+              - urban
+              - desert
+              - forest
+              - water
+              - mountain
+            time_of_day:
+              type: string
+              enum:
+              - day
+              - night
+              - dawn
+              - dusk
+          description: Environmental modifiers
+        distance:
+          type: number
+          format: float
+          description: Distance to target in meters
+        hit_location:
+          type: string
+          enum:
+          - head
+          - torso
+          - arms
+          - legs
+          description: Body part hit
+        critical_hit:
+          type: boolean
+          description: Whether this is a critical hit
+        timestamp:
+          type: integer
+          format: int64
+          description: Calculation timestamp for anti-cheat
+      description: 'BACKEND NOTE: Comprehensive damage calculation request.'
+    CalculateDamageResponse:
+      type: object
+      required:
+      - total_damage
+      - damage_breakdown
+      properties:
+        total_damage:
+          type: integer
+          description: 'BACKEND NOTE: int32 - 4 bytes, ordered first'
+        damage_breakdown:
+          type: object
+          properties:
+            base_damage:
+              type: integer
+              description: Base weapon damage
+            elemental_damage:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Damage by element type
+            armor_reduction:
+              type: integer
+              description: Damage reduced by armor
+            resistance_reduction:
+              type: number
+              format: float
+              description: Damage multiplier from resistances
+            critical_multiplier:
+              type: number
+              format: float
+              description: Critical hit multiplier
+            synergy_bonus:
+              type: number
+              format: float
+              description: Damage bonus from synergies
+            environmental_modifier:
+              type: number
+              format: float
+              description: Environmental damage modifier
+          description: Detailed damage calculation breakdown
+        applied_effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_id:
+                type: string
+                format: uuid
+              applied_damage:
+                type: integer
+              proc_chance:
+                type: number
+                format: float
+              did_proc:
+                type: boolean
+              stacks_applied:
+                type: integer
+            description: Effects applied in this damage calculation
+          description: Effects that were triggered
+        validation_token:
+          type: string
+          description: Anti-cheat validation token
+        calculation_time_ms:
+          type: integer
+          format: int32
+          description: Time taken for calculation
+      description: 'BACKEND NOTE: Damage calculation response with full breakdown.'
+    CalculateSynergiesRequest:
+      type: object
+      required:
+      - effects
+      properties:
+        effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: 'BACKEND NOTE: Array of effect IDs to check for synergies'
+          minItems: 2
+          maxItems: 5
+        weapon_type:
+          type: string
+          enum:
+          - pistol
+          - rifle
+          - shotgun
+          - sniper
+          - smg
+          - melee
+          - heavy
+          description: Weapon type for synergy context
+        combat_context:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - boss
+          - defense
+          description: Combat context for synergy calculation
+      description: 'BACKEND NOTE: Synergy calculation request.'
+    CalculateSynergiesResponse:
+      type: object
+      required:
+      - synergies
+      properties:
+        synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_combination:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Effect IDs in synergy
+              damage_multiplier:
+                type: number
+                format: float
+                description: Total damage multiplier
+              bonus_effects:
+                type: array
+                items:
+                  type: string
+                description: Additional effects from synergy
+              stability_cost:
+                type: number
+                format: float
+                description: Weapon stability reduction
+              power_cost_multiplier:
+                type: number
+                format: float
+                description: Power consumption multiplier
+            description: Individual synergy calculation
+          description: All calculated synergies
+        optimal_combination:
+          type: object
+          properties:
+            effects:
+              type: array
+              items:
+                type: string
+                format: uuid
+            total_multiplier:
+              type: number
+              format: float
+            stability_impact:
+              type: number
+              format: float
+          description: Recommended optimal effect combination
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Synergy warnings and limitations
+      description: 'BACKEND NOTE: Comprehensive synergy analysis response.'
+    ValidateEffectRequest:
+      type: object
+      required:
+      - effect_config
+      properties:
+        effect_config:
+          $ref: '#/components/schemas/WeaponEffectConfig'
+        weapon_stats:
+          type: object
+          properties:
+            stability_base:
+              type: number
+              format: float
+            power_capacity:
+              type: integer
+            heat_capacity:
+              type: integer
+          description: Weapon base statistics
+        client_hash:
+          type: string
+          description: Client-side validation hash
+        validation_context:
+          type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+            timestamp:
+              type: integer
+              format: int64
+          description: Validation context
+      description: 'BACKEND NOTE: Anti-cheat validation request.'
+    ValidateEffectResponse:
+      type: object
+      required:
+      - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether effect configuration is valid
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              severity:
+                type: string
+                enum:
+                - warning
+                - error
+              message:
+                type: string
+            description: Validation violations found
+          description: List of validation issues
+        calculated_stats:
+          type: object
+          properties:
+            total_power_draw:
+              type: integer
+            stability_rating:
+              type: number
+              format: float
+            heat_generation:
+              type: integer
+          description: Calculated weapon statistics
+        server_hash:
+          type: string
+          description: Server-side validation hash
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Validation confidence score
+      description: 'BACKEND NOTE: Validation response with detailed analysis.'
+    ConfigureVisualRequest:
+      type: object
+      required:
+      - effect_id
+      - visual_config
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect ID to configure visuals for
+        visual_config:
+          $ref: '#/components/schemas/VisualEffectConfig'
+        quality_settings:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+          default: high
+          description: Visual quality preset
+        performance_mode:
+          type: boolean
+          description: Enable performance optimizations
+          default: false
+      description: 'BACKEND NOTE: Visual effect configuration request.'
+    ConfigureVisualResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether visual configuration was applied
+        performance_impact:
+          type: object
+          properties:
+            particle_count:
+              type: integer
+            draw_calls:
+              type: integer
+            memory_usage_kb:
+              type: integer
+          description: Performance impact of visual configuration
+        compatibility_warnings:
+          type: array
+          items:
+            type: string
+          description: Visual compatibility warnings
+      description: 'BACKEND NOTE: Visual configuration response.'
+    BatchCalculateRequest:
+      type: object
+      required:
+      - calculations
+      properties:
+        calculations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculateDamageRequest'
+          description: 'BACKEND NOTE: Array of damage calculations to process'
+          maxItems: 100
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch identifier for tracking
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          default: normal
+          description: Processing priority
+      description: 'BACKEND NOTE: Batch damage calculation request.'
+    BatchCalculateResponse:
+      type: object
+      required:
+      - results
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch identifier
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              request_index:
+                type: integer
+              success:
+                type: boolean
+              result:
+                $ref: '#/components/schemas/CalculateDamageResponse'
+              error_message:
+                type: string
+            description: Result for each calculation
+          description: Results for each damage calculation in batch
+        summary:
+          type: object
+          properties:
+            total_calculations:
+              type: integer
+            successful_calculations:
+              type: integer
+            average_calculation_time_ms:
+              type: number
+              format: float
+            total_processing_time_ms:
+              type: integer
+            cache_hit_rate:
+              type: number
+              format: float
+          description: Batch processing summary statistics
+      description: 'BACKEND NOTE: Batch calculation response with performance metrics.'
+    EffectsAnalyticsResponse:
+      type: object
+      required:
+      - summary
+      properties:
+        summary:
+          type: object
+          properties:
+            total_effects:
+              type: integer
+            effects_by_element:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Count by element type
+            effects_by_rarity:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Count by rarity
+            most_used_effects:
+              type: array
+              items:
+                type: object
+                properties:
+                  effect_id:
+                    type: string
+                    format: uuid
+                  usage_count:
+                    type: integer
+                  average_damage:
+                    type: number
+                    format: float
+                description: Most used effects statistics
+              maxItems: 10
+            synergy_popularity:
+              type: array
+              items:
+                type: object
+                properties:
+                  synergy_pair:
+                    type: array
+                    items:
+                      type: string
+                    maxItems: 2
+                  usage_count:
+                    type: integer
+                  average_multiplier:
+                    type: number
+                    format: float
+                description: Popular synergy combinations
+              maxItems: 10
+          description: Effects usage analytics summary
+        timeframe:
+          type: string
+          description: Applied timeframe filter
+        element_filter:
+          type: string
+          description: Applied element filter
+      description: 'BACKEND NOTE: Analytics response for effect usage patterns.'
+    EffectTrainingData:
+      type: object
+      required:
+      - character_id
+      - weapon_config
+      - combat_outcome
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character whose effect usage is being analyzed
+        weapon_config:
+          $ref: '#/components/schemas/WeaponEffectConfig'
+        combat_outcome:
+          type: object
+          properties:
+            damage_dealt:
+              type: integer
+              description: Total damage dealt with effects
+            damage_received:
+              type: integer
+              description: Damage received during combat
+            enemies_defeated:
+              type: integer
+              description: Number of enemies defeated
+            time_to_win:
+              type: integer
+              format: int64
+              description: Combat duration in milliseconds
+            effect_procs:
+              type: integer
+              description: Number of effect procs during combat
+            synergy_activations:
+              type: integer
+              description: Number of synergy activations
+          description: Combat performance metrics
+        player_feedback:
+          type: object
+          properties:
+            effect_satisfaction:
+              type: number
+              minimum: 1
+              maximum: 5
+              description: Player satisfaction with effects (1-5)
+            balance_rating:
+              type: number
+              minimum: 1
+              maximum: 5
+              description: Balance rating for effects (1-5)
+            suggestions:
+              type: array
+              items:
+                type: string
+              description: Player suggestions for improvements
+          description: Player feedback on effect performance
+        timestamp:
+          type: string
+          format: date-time
+          description: Training data timestamp
+      description: 'BACKEND NOTE: AI training data for effect optimization. Large
+        object first for struct alignment.'
+    TrainingResponse:
+      type: object
+      properties:
+        training_data_id:
+          type: string
+          format: uuid
+          description: Unique training data identifier
+        status:
+          type: string
+          enum:
+          - accepted
+          - processed
+          - rejected
+          description: Training data processing status
+        message:
+          type: string
+          description: Processing result message
+      description: 'BACKEND NOTE: Response for training data submission.'
+    EffectRecommendations:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_id:
+                type: string
+                format: uuid
+                description: Recommended effect
+              weapon_type:
+                type: string
+                description: Recommended weapon type for effect
+              priority_score:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Recommendation priority (0-1)
+              reasoning:
+                type: string
+                description: AI reasoning for recommendation
+              expected_damage_boost:
+                type: number
+                format: float
+                description: Expected damage increase percentage
+              synergy_partners:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Compatible effects for synergies
+              risk_assessment:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                description: Risk level for weapon stability
+            description: Individual effect recommendation
+          description: List of personalized effect recommendations
+        generated_at:
+          type: string
+          format: date-time
+          description: Recommendation generation timestamp
+        personalization_factors:
+          type: array
+          items:
+            type: string
+          description: Factors used for personalization
+      description: 'BACKEND NOTE: AI-generated effect recommendations.'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+security:
+- BearerAuth: []

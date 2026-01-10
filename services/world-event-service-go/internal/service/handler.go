@@ -183,13 +183,13 @@ func (h *Handler) CancelEvent(ctx context.Context, params api.CancelEventParams)
 
 	_, err := h.repo.UpdateWorldEvent(ctx, params.EventId, updates)
 	if err != nil {
-		return &api.Error{
+		return &api.CancelEventNotFound{
 			Code:    "404",
 			Message: fmt.Sprintf("Event not found: %s", params.EventId.String()),
 		}, nil
 	}
 
-	return &api.Error{
+	return &api.CancelEventOK{
 		Code:    "200",
 		Message: "Event cancelled successfully",
 	}, nil
@@ -223,7 +223,7 @@ func (h *Handler) JoinEvent(ctx context.Context, req *api.JoinEventReq, params a
 func (h *Handler) LeaveEvent(ctx context.Context, params api.LeaveEventParams) (api.LeaveEventRes, error) {
 	playerID, err := uuid.Parse(params.PlayerId)
 	if err != nil {
-		return &api.Error{
+		return &api.LeaveEventBadRequest{
 			Code:    "400",
 			Message: "Invalid player ID format",
 		}, nil
@@ -231,13 +231,13 @@ func (h *Handler) LeaveEvent(ctx context.Context, params api.LeaveEventParams) (
 
 	err = h.repo.LeaveEvent(ctx, playerID, params.EventId)
 	if err != nil {
-		return &api.Error{
+		return &api.LeaveEventBadRequest{
 			Code:    "400",
 			Message: fmt.Sprintf("Failed to leave event: %v", err),
 		}, nil
 	}
 
-	return &api.Error{
+	return &api.LeaveEventOK{
 		Code:    "200",
 		Message: "Successfully left event",
 	}, nil
@@ -245,27 +245,70 @@ func (h *Handler) LeaveEvent(ctx context.Context, params api.LeaveEventParams) (
 
 // GetEventParticipants implements getEventParticipants operation.
 func (h *Handler) GetEventParticipants(ctx context.Context, params api.GetEventParticipantsParams) (api.GetEventParticipantsRes, error) {
+	filter := &repository.ParticipationFilter{
+		Limit:  &[]int{50}[0], // Default limit
+		Offset: &[]int{0}[0],  // Default offset
+	}
+
+	participants, err := h.repo.GetEventParticipants(ctx, params.EventId, filter)
+	if err != nil {
+		return &api.Error{
+			Code:    "500",
+			Message: fmt.Sprintf("Failed to get event participants: %v", err),
+		}, nil
+	}
+
+	var apiParticipants []api.EventParticipant
+	for _, p := range participants {
+		apiParticipants = append(apiParticipants, api.EventParticipant{
+			Id:             p.ID,
+			PlayerId:       p.PlayerID,
+			EventId:        p.EventID,
+			Status:         api.ParticipationStatus(p.Status),
+			JoinedAt:       p.JoinedAt,
+			LastActivityAt: p.LastActivityAt,
+			CreatedAt:      p.CreatedAt,
+			UpdatedAt:      p.UpdatedAt,
+		})
+	}
+
 	return &api.GetEventParticipantsOK{
-		Body: api.EventParticipantsList{
-			Participants: []api.EventParticipant{},
-			Total:        0,
+		Data: api.EventParticipantsList{
+			Participants: apiParticipants,
+			Total:        len(apiParticipants),
 		},
 	}, nil
 }
 
 // GetPlayerParticipation implements getPlayerParticipation operation.
 func (h *Handler) GetPlayerParticipation(ctx context.Context, params api.GetPlayerParticipationParams) (api.GetPlayerParticipationRes, error) {
+	playerID, err := uuid.Parse(params.PlayerId)
+	if err != nil {
+		return &api.GetPlayerParticipationBadRequest{
+			Code:    "400",
+			Message: "Invalid player ID format",
+		}, nil
+	}
+
+	participation, err := h.repo.GetPlayerParticipation(ctx, playerID, params.EventId)
+	if err != nil {
+		return &api.GetPlayerParticipationNotFound{
+			Code:    "404",
+			Message: fmt.Sprintf("Participation not found: %v", err),
+		}, nil
+	}
+
 	return &api.GetPlayerParticipationOK{
-		Body: api.EventParticipationResponse{
+		Data: api.EventParticipationResponse{
 			Participation: api.EventParticipation{
-				ID:             uuid.New(),
-				PlayerID:       params.PlayerId,
-				EventID:        params.EventId,
-				Status:         api.ParticipationStatusActive,
-				JoinedAt:       time.Now(),
-				LastActivityAt: time.Now(),
-				CreatedAt:      time.Now(),
-				UpdatedAt:      time.Now(),
+				Id:             participation.ID,
+				PlayerId:       participation.PlayerID,
+				EventId:        participation.EventID,
+				Status:         api.ParticipationStatus(participation.Status),
+				JoinedAt:       participation.JoinedAt,
+				LastActivityAt: participation.LastActivityAt,
+				CreatedAt:      participation.CreatedAt,
+				UpdatedAt:      participation.UpdatedAt,
 			},
 		},
 	}, nil
@@ -273,17 +316,38 @@ func (h *Handler) GetPlayerParticipation(ctx context.Context, params api.GetPlay
 
 // UpdatePlayerParticipation implements updatePlayerParticipation operation.
 func (h *Handler) UpdatePlayerParticipation(ctx context.Context, req *api.UpdateParticipationRequest, params api.UpdatePlayerParticipationParams) (api.UpdatePlayerParticipationRes, error) {
+	playerID, err := uuid.Parse(params.PlayerId)
+	if err != nil {
+		return &api.UpdatePlayerParticipationBadRequest{
+			Code:    "400",
+			Message: "Invalid player ID format",
+		}, nil
+	}
+
+	updates := map[string]interface{}{
+		"status":           string(req.Status.Value),
+		"last_activity_at": time.Now(),
+	}
+
+	participation, err := h.repo.UpdateParticipation(ctx, params.ParticipationId, updates)
+	if err != nil {
+		return &api.UpdatePlayerParticipationNotFound{
+			Code:    "404",
+			Message: fmt.Sprintf("Participation not found: %v", err),
+		}, nil
+	}
+
 	return &api.UpdatePlayerParticipationOK{
-		Body: api.EventParticipationResponse{
+		Data: api.EventParticipationResponse{
 			Participation: api.EventParticipation{
-				ID:             uuid.New(),
-				PlayerID:       params.PlayerId,
-				EventID:        params.EventId,
-				Status:         api.ParticipationStatus(req.Status),
-				JoinedAt:       time.Now(),
-				LastActivityAt: time.Now(),
-				CreatedAt:      time.Now(),
-				UpdatedAt:      time.Now(),
+				Id:             participation.ID,
+				PlayerId:       participation.PlayerID,
+				EventId:        participation.EventID,
+				Status:         api.ParticipationStatus(participation.Status),
+				JoinedAt:       participation.JoinedAt,
+				LastActivityAt: participation.LastActivityAt,
+				CreatedAt:      participation.CreatedAt,
+				UpdatedAt:      participation.UpdatedAt,
 			},
 		},
 	}, nil
@@ -291,21 +355,56 @@ func (h *Handler) UpdatePlayerParticipation(ctx context.Context, req *api.Update
 
 // GetPlayerRewards implements getPlayerRewards operation.
 func (h *Handler) GetPlayerRewards(ctx context.Context, params api.GetPlayerRewardsParams) (api.GetPlayerRewardsRes, error) {
+	rewards, err := h.repo.GetPlayerRewards(ctx, params.PlayerId, params.EventId)
+	if err != nil {
+		return &api.GetPlayerRewardsInternalServerError{
+			Code:    "500",
+			Message: fmt.Sprintf("Failed to get player rewards: %v", err),
+		}, nil
+	}
+
+	var apiRewards []api.EventReward
+	for _, r := range rewards {
+		var rewardId api.OptString
+		if r.RewardID != nil {
+			rewardId = api.NewOptString(*r.RewardID)
+		}
+
+		apiRewards = append(apiRewards, api.EventReward{
+			Id:         r.ID,
+			EventId:    r.EventID,
+			PlayerId:   r.PlayerID,
+			RewardType: api.RewardType(r.RewardType),
+			RewardId:   rewardId,
+			Amount:     api.OptInt{Value: r.Amount, Set: true},
+			Claimed:    r.Claimed,
+			CreatedAt:  api.NewOptDateTime(r.CreatedAt),
+		})
+	}
+
 	return &api.GetPlayerRewardsOK{
-		Body: api.PlayerRewardsList{
-			Rewards: []api.EventReward{},
-			Total:   0,
+		Data: api.PlayerRewardsList{
+			Rewards: apiRewards,
+			Total:   len(apiRewards),
 		},
 	}, nil
 }
 
 // ClaimReward implements claimReward operation.
 func (h *Handler) ClaimReward(ctx context.Context, req *api.ClaimRewardReq, params api.ClaimRewardParams) (api.ClaimRewardRes, error) {
+	err := h.repo.ClaimReward(ctx, req.RewardId)
+	if err != nil {
+		return &api.ClaimRewardBadRequest{
+			Code:    "400",
+			Message: fmt.Sprintf("Failed to claim reward: %v", err),
+		}, nil
+	}
+
 	return &api.ClaimRewardOK{
-		Body: api.RewardClaimResponse{
-			RewardID:  req.RewardID,
-			PlayerID:  req.PlayerID,
-			EventID:   params.EventID,
+		Data: api.RewardClaimResponse{
+			RewardId:  req.RewardId,
+			PlayerId:  req.PlayerId,
+			EventId:   params.EventId,
 			ClaimedAt: time.Now(),
 			Status:    "claimed",
 			Delivered: true,
@@ -315,28 +414,73 @@ func (h *Handler) ClaimReward(ctx context.Context, req *api.ClaimRewardReq, para
 
 // ListEventTemplates implements listEventTemplates operation.
 func (h *Handler) ListEventTemplates(ctx context.Context, params api.ListEventTemplatesParams) (api.ListEventTemplatesOK, error) {
+	filter := &repository.TemplateFilter{
+		Limit:  &[]int{50}[0], // Default limit
+		Offset: &[]int{0}[0],  // Default offset
+	}
+
+	templates, err := h.repo.ListEventTemplates(ctx, filter)
+	if err != nil {
+		return api.ListEventTemplatesOK{
+			Data: api.EventTemplatesList{
+				Templates: []api.EventTemplateSummary{},
+				Total:     0,
+			},
+		}, fmt.Errorf("failed to list templates: %w", err)
+	}
+
+	var apiTemplates []api.EventTemplateSummary
+	for _, t := range templates {
+		apiTemplates = append(apiTemplates, api.EventTemplateSummary{
+			Id:         t.ID,
+			Name:       t.Name,
+			Type:       api.WorldEventType(t.Type),
+			Difficulty: api.WorldEventDifficulty(t.Difficulty),
+			IsActive:   t.IsActive,
+			UsageCount: api.NewOptInt(t.UsageCount),
+			CreatedAt:  t.CreatedAt,
+		})
+	}
+
 	return api.ListEventTemplatesOK{
-		Templates: []api.EventTemplateSummary{},
-		Total:     0,
+		Data: api.EventTemplatesList{
+			Templates: apiTemplates,
+			Total:     len(apiTemplates),
+		},
 	}, nil
 }
 
 // CreateEventTemplate implements createEventTemplate operation.
 func (h *Handler) CreateEventTemplate(ctx context.Context, req *api.CreateTemplateRequest) (api.CreateEventTemplateRes, error) {
+	template := &repository.EventTemplate{
+		Name:        req.Name,
+		Type:        string(req.Type),
+		Difficulty:  string(req.Difficulty),
+		Description: &req.Description,
+		IsActive:    true,
+		MinLevel:    &[]int{1}[0], // Default min level
+	}
+
+	created, err := h.repo.CreateEventTemplate(ctx, template)
+	if err != nil {
+		return &api.CreateEventTemplateInternalServerError{
+			Code:    "500",
+			Message: fmt.Sprintf("Failed to create event template: %v", err),
+		}, nil
+	}
+
 	return &api.CreateEventTemplateCreated{
-		Headers: api.CreateEventTemplateCreatedHeaders{
-			Location: "/templates/mock-id",
-		},
-		Body: api.EventTemplateResponse{
+		Location: "/templates/" + created.ID.String(),
+		Data: api.EventTemplateResponse{
 			Template: api.EventTemplate{
-				ID:          uuid.New(),
-				Name:        req.Name,
+				Id:          created.ID,
+				Name:        created.Name,
 				Description: req.Description,
-				Type:        api.WorldEventType(req.Type),
-				Difficulty:  api.WorldEventDifficulty(req.Difficulty),
-				IsActive:    true,
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
+				Type:        api.WorldEventType(created.Type),
+				Difficulty:  api.WorldEventDifficulty(created.Difficulty),
+				IsActive:    created.IsActive,
+				CreatedAt:   api.NewOptDateTime(created.CreatedAt),
+				UpdatedAt:   api.NewOptDateTime(created.UpdatedAt),
 			},
 		},
 	}, nil
@@ -344,16 +488,54 @@ func (h *Handler) CreateEventTemplate(ctx context.Context, req *api.CreateTempla
 
 // GetEventAnalytics implements getEventAnalytics operation.
 func (h *Handler) GetEventAnalytics(ctx context.Context, params api.GetEventAnalyticsParams) (api.GetEventAnalyticsRes, error) {
+	analytics, err := h.repo.GetEventAnalytics(ctx, params.EventId)
+	if err != nil {
+		// If analytics don't exist yet, return default values
+		return &api.GetEventAnalyticsOK{
+			Data: api.EventAnalyticsResponse{
+				EventId:               params.EventId,
+				TotalParticipants:     0,
+				CompletedParticipants: 0,
+				AverageCompletionTime: "0s",
+				AverageScore:          api.NewOptFloat64(0.0),
+				ParticipationRate:     api.NewOptFloat64(0.0),
+				SatisfactionRating:    api.NewOptFloat64(0.0),
+				LastUpdated:           time.Now(),
+			},
+		}, nil
+	}
+
+	var avgScore api.OptFloat64
+	if analytics.AverageScore != nil {
+		avgScore = api.NewOptFloat64(float64(*analytics.AverageScore))
+	}
+
+	var participationRate api.OptFloat64
+	if analytics.ParticipationRate != nil {
+		participationRate = api.NewOptFloat64(float64(*analytics.ParticipationRate))
+	}
+
+	var satisfactionRating api.OptFloat64
+	if analytics.SatisfactionRating != nil {
+		satisfactionRating = api.NewOptFloat64(float64(*analytics.SatisfactionRating))
+	}
+
+	// Format average completion time properly
+	avgCompletionTime := "0s" // Default fallback
+	if analytics.AverageCompletionTime != nil && *analytics.AverageCompletionTime != "" {
+		avgCompletionTime = *analytics.AverageCompletionTime
+	}
+
 	return &api.GetEventAnalyticsOK{
-		Body: api.EventAnalyticsResponse{
-			EventID:               params.EventID,
-			TotalParticipants:     100,
-			CompletedParticipants: 80,
-			AverageCompletionTime: "2h 30m",
-			AverageScore:          api.NewOptFloat64(85.5),
-			ParticipationRate:     api.NewOptFloat64(0.8),
-			SatisfactionRating:    api.NewOptFloat64(4.2),
-			LastUpdated:           time.Now(),
+		Data: api.EventAnalyticsResponse{
+			EventId:               analytics.EventID,
+			TotalParticipants:     analytics.TotalParticipants,
+			CompletedParticipants: analytics.CompletedParticipants,
+			AverageCompletionTime: avgCompletionTime,
+			AverageScore:          avgScore,
+			ParticipationRate:     participationRate,
+			SatisfactionRating:    satisfactionRating,
+			LastUpdated:           analytics.LastUpdated,
 		},
 	}, nil
 }

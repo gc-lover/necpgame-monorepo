@@ -61,68 +61,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
-
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					switch r.Method {
-					case "GET":
-						s.handleListTournamentsRequest([0]string{}, elemIsEscaped, w, r)
-					case "POST":
-						s.handleCreateExampleRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "GET,POST")
-					}
-
-					return
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
-
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "DELETE":
-							s.handleDeleteExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "GET":
-							s.handleGetExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "PUT":
-							s.handleUpdateExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "DELETE,GET,PUT")
-						}
-
-						return
-					}
-
-				}
-
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -166,7 +104,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							// Leaf node.
 							switch r.Method {
 							case "POST":
-								s.handleExampleDomainBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+								s.handleTournamentServiceBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 							default:
 								s.notAllowed(w, r, "POST")
 							}
@@ -192,6 +130,303 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 
 							return
+						}
+
+					}
+
+				}
+
+			case 'l': // Prefix: "leaderboards"
+
+				if l := len("leaderboards"); len(elem) >= l && elem[0:l] == "leaderboards" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetGlobalLeaderboardsRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
+			case 't': // Prefix: "tournaments"
+
+				if l := len("tournaments"); len(elem) >= l && elem[0:l] == "tournaments" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleListTournamentsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreateTournamentRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET,POST")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "tournament_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "DELETE":
+							s.handleDeleteTournamentRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "GET":
+							s.handleGetTournamentRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "PUT":
+							s.handleUpdateTournamentRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "DELETE,GET,PUT")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'b': // Prefix: "bracket"
+
+							if l := len("bracket"); len(elem) >= l && elem[0:l] == "bracket" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetTournamentBracketRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleGenerateTournamentBracketRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+
+						case 'j': // Prefix: "join"
+
+							if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleJoinTournamentRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						case 'l': // Prefix: "lea"
+
+							if l := len("lea"); len(elem) >= l && elem[0:l] == "lea" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'd': // Prefix: "derboard"
+
+								if l := len("derboard"); len(elem) >= l && elem[0:l] == "derboard" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "GET":
+										s.handleGetTournamentLeaderboardRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "GET")
+									}
+
+									return
+								}
+
+							case 'v': // Prefix: "ve"
+
+								if l := len("ve"); len(elem) >= l && elem[0:l] == "ve" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleLeaveTournamentRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+						case 's': // Prefix: "s"
+
+							if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "cores"
+
+								if l := len("cores"); len(elem) >= l && elem[0:l] == "cores" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleRegisterTournamentScoreRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'p': // Prefix: "pectat"
+
+								if l := len("pectat"); len(elem) >= l && elem[0:l] == "pectat" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									break
+								}
+								switch elem[0] {
+								case 'e': // Prefix: "e"
+
+									if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch r.Method {
+										case "GET":
+											s.handleTournamentSpectatorWebSocketRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, "GET")
+										}
+
+										return
+									}
+
+								case 'o': // Prefix: "ors"
+
+									if l := len("ors"); len(elem) >= l && elem[0:l] == "ors" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch r.Method {
+										case "GET":
+											s.handleGetTournamentSpectatorsRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, "GET")
+										}
+
+										return
+									}
+
+								}
+
+							}
+
 						}
 
 					}
@@ -298,93 +533,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
-
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					switch method {
-					case "GET":
-						r.name = ListTournamentsOperation
-						r.summary = "List examples with filtering and pagination"
-						r.operationID = "listTournaments"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					case "POST":
-						r.name = CreateExampleOperation
-						r.summary = "Create new example"
-						r.operationID = "createExample"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
-
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "DELETE":
-							r.name = DeleteExampleOperation
-							r.summary = "Delete example"
-							r.operationID = "deleteExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						case "GET":
-							r.name = GetExampleOperation
-							r.summary = "Get specific example by ID"
-							r.operationID = "getExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						case "PUT":
-							r.name = UpdateExampleOperation
-							r.summary = "Update existing example"
-							r.operationID = "updateExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						default:
-							return
-						}
-					}
-
-				}
-
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -397,7 +545,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					switch method {
 					case "GET":
 						r.name = TournamentServiceHealthCheckOperation
-						r.summary = "Example domain health check"
+						r.summary = "Tournament service health check"
 						r.operationID = "tournamentServiceHealthCheck"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
@@ -433,9 +581,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							// Leaf node.
 							switch method {
 							case "POST":
-								r.name = ExampleDomainBatchHealthCheckOperation
-								r.summary = "Batch health check for multiple domain services"
-								r.operationID = "exampleDomainBatchHealthCheck"
+								r.name = TournamentServiceBatchHealthCheckOperation
+								r.summary = "Batch health check for tournament services"
+								r.operationID = "tournamentServiceBatchHealthCheck"
 								r.operationGroup = ""
 								r.pathPattern = "/health/batch"
 								r.args = args
@@ -469,6 +617,359 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							default:
 								return
 							}
+						}
+
+					}
+
+				}
+
+			case 'l': // Prefix: "leaderboards"
+
+				if l := len("leaderboards"); len(elem) >= l && elem[0:l] == "leaderboards" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetGlobalLeaderboardsOperation
+						r.summary = "Get global tournament leaderboards"
+						r.operationID = "getGlobalLeaderboards"
+						r.operationGroup = ""
+						r.pathPattern = "/leaderboards"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 't': // Prefix: "tournaments"
+
+				if l := len("tournaments"); len(elem) >= l && elem[0:l] == "tournaments" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = ListTournamentsOperation
+						r.summary = "List tournaments with filtering and pagination"
+						r.operationID = "listTournaments"
+						r.operationGroup = ""
+						r.pathPattern = "/tournaments"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = CreateTournamentOperation
+						r.summary = "Create new tournament"
+						r.operationID = "createTournament"
+						r.operationGroup = ""
+						r.pathPattern = "/tournaments"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "tournament_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch method {
+						case "DELETE":
+							r.name = DeleteTournamentOperation
+							r.summary = "Delete tournament"
+							r.operationID = "deleteTournament"
+							r.operationGroup = ""
+							r.pathPattern = "/tournaments/{tournament_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "GET":
+							r.name = GetTournamentOperation
+							r.summary = "Get specific tournament by ID"
+							r.operationID = "getTournament"
+							r.operationGroup = ""
+							r.pathPattern = "/tournaments/{tournament_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "PUT":
+							r.name = UpdateTournamentOperation
+							r.summary = "Update existing tournament"
+							r.operationID = "updateTournament"
+							r.operationGroup = ""
+							r.pathPattern = "/tournaments/{tournament_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'b': // Prefix: "bracket"
+
+							if l := len("bracket"); len(elem) >= l && elem[0:l] == "bracket" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetTournamentBracketOperation
+									r.summary = "Get tournament bracket structure"
+									r.operationID = "getTournamentBracket"
+									r.operationGroup = ""
+									r.pathPattern = "/tournaments/{tournament_id}/bracket"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = GenerateTournamentBracketOperation
+									r.summary = "Generate tournament bracket"
+									r.operationID = "generateTournamentBracket"
+									r.operationGroup = ""
+									r.pathPattern = "/tournaments/{tournament_id}/bracket"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'j': // Prefix: "join"
+
+							if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = JoinTournamentOperation
+									r.summary = "Join a tournament"
+									r.operationID = "joinTournament"
+									r.operationGroup = ""
+									r.pathPattern = "/tournaments/{tournament_id}/join"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'l': // Prefix: "lea"
+
+							if l := len("lea"); len(elem) >= l && elem[0:l] == "lea" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'd': // Prefix: "derboard"
+
+								if l := len("derboard"); len(elem) >= l && elem[0:l] == "derboard" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "GET":
+										r.name = GetTournamentLeaderboardOperation
+										r.summary = "Get tournament leaderboard"
+										r.operationID = "getTournamentLeaderboard"
+										r.operationGroup = ""
+										r.pathPattern = "/tournaments/{tournament_id}/leaderboard"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'v': // Prefix: "ve"
+
+								if l := len("ve"); len(elem) >= l && elem[0:l] == "ve" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = LeaveTournamentOperation
+										r.summary = "Leave a tournament"
+										r.operationID = "leaveTournament"
+										r.operationGroup = ""
+										r.pathPattern = "/tournaments/{tournament_id}/leave"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						case 's': // Prefix: "s"
+
+							if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "cores"
+
+								if l := len("cores"); len(elem) >= l && elem[0:l] == "cores" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = RegisterTournamentScoreOperation
+										r.summary = "Register tournament match score"
+										r.operationID = "registerTournamentScore"
+										r.operationGroup = ""
+										r.pathPattern = "/tournaments/{tournament_id}/scores"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'p': // Prefix: "pectat"
+
+								if l := len("pectat"); len(elem) >= l && elem[0:l] == "pectat" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									break
+								}
+								switch elem[0] {
+								case 'e': // Prefix: "e"
+
+									if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "GET":
+											r.name = TournamentSpectatorWebSocketOperation
+											r.summary = "Real-time tournament spectator WebSocket"
+											r.operationID = "tournamentSpectatorWebSocket"
+											r.operationGroup = ""
+											r.pathPattern = "/tournaments/{tournament_id}/spectate"
+											r.args = args
+											r.count = 1
+											return r, true
+										default:
+											return
+										}
+									}
+
+								case 'o': // Prefix: "ors"
+
+									if l := len("ors"); len(elem) >= l && elem[0:l] == "ors" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "GET":
+											r.name = GetTournamentSpectatorsOperation
+											r.summary = "Get tournament spectator list"
+											r.operationID = "getTournamentSpectators"
+											r.operationGroup = ""
+											r.pathPattern = "/tournaments/{tournament_id}/spectators"
+											r.args = args
+											r.count = 1
+											return r, true
+										default:
+											return
+										}
+									}
+
+								}
+
+							}
+
 						}
 
 					}

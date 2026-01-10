@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
@@ -262,13 +261,13 @@ func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
 
 type HealthBatchSuccess struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []HealthBatchSuccessResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *HealthBatchSuccess) GetResults() []jx.Raw {
+func (s *HealthBatchSuccess) GetResults() []HealthBatchSuccessResultsItem {
 	return s.Results
 }
 
@@ -278,7 +277,7 @@ func (s *HealthBatchSuccess) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *HealthBatchSuccess) SetResults(val []jx.Raw) {
+func (s *HealthBatchSuccess) SetResults(val []HealthBatchSuccessResultsItem) {
 	s.Results = val
 }
 
@@ -325,6 +324,125 @@ func (s *HealthBatchSuccessHeaders) SetResponse(val HealthBatchSuccess) {
 }
 
 func (*HealthBatchSuccessHeaders) locationServiceBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type HealthBatchSuccessResultsItem struct {
+	Status            HealthBatchSuccessResultsItemStatus `json:"status"`
+	Domain            OptString                           `json:"domain"`
+	Timestamp         time.Time                           `json:"timestamp"`
+	Version           OptString                           `json:"version"`
+	UptimeSeconds     OptInt                              `json:"uptime_seconds"`
+	ActiveConnections OptInt                              `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *HealthBatchSuccessResultsItem) GetStatus() HealthBatchSuccessResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *HealthBatchSuccessResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *HealthBatchSuccessResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *HealthBatchSuccessResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *HealthBatchSuccessResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *HealthBatchSuccessResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthBatchSuccessResultsItem) SetStatus(val HealthBatchSuccessResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *HealthBatchSuccessResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *HealthBatchSuccessResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *HealthBatchSuccessResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *HealthBatchSuccessResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *HealthBatchSuccessResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type HealthBatchSuccessResultsItemStatus string
+
+const (
+	HealthBatchSuccessResultsItemStatusHealthy   HealthBatchSuccessResultsItemStatus = "healthy"
+	HealthBatchSuccessResultsItemStatusDegraded  HealthBatchSuccessResultsItemStatus = "degraded"
+	HealthBatchSuccessResultsItemStatusUnhealthy HealthBatchSuccessResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all HealthBatchSuccessResultsItemStatus values.
+func (HealthBatchSuccessResultsItemStatus) AllValues() []HealthBatchSuccessResultsItemStatus {
+	return []HealthBatchSuccessResultsItemStatus{
+		HealthBatchSuccessResultsItemStatusHealthy,
+		HealthBatchSuccessResultsItemStatusDegraded,
+		HealthBatchSuccessResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s HealthBatchSuccessResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case HealthBatchSuccessResultsItemStatusHealthy:
+		return []byte(s), nil
+	case HealthBatchSuccessResultsItemStatusDegraded:
+		return []byte(s), nil
+	case HealthBatchSuccessResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *HealthBatchSuccessResultsItemStatus) UnmarshalText(data []byte) error {
+	switch HealthBatchSuccessResultsItemStatus(data) {
+	case HealthBatchSuccessResultsItemStatusHealthy:
+		*s = HealthBatchSuccessResultsItemStatusHealthy
+		return nil
+	case HealthBatchSuccessResultsItemStatusDegraded:
+		*s = HealthBatchSuccessResultsItemStatusDegraded
+		return nil
+	case HealthBatchSuccessResultsItemStatusUnhealthy:
+		*s = HealthBatchSuccessResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Standard error response format.
 type LocationGetCurrentUserTooManyRequests struct {

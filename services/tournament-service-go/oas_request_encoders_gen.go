@@ -10,8 +10,8 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeCreateExampleRequest(
-	req *CreateExampleRequest,
+func encodeCreateTournamentRequest(
+	req *CreateTournamentRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -24,8 +24,28 @@ func encodeCreateExampleRequest(
 	return nil
 }
 
-func encodeExampleDomainBatchHealthCheckRequest(
-	req *ExampleDomainBatchHealthCheckReq,
+func encodeGenerateTournamentBracketRequest(
+	req OptGenerateBracketRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	if !req.Set {
+		// Keep request with empty body if value is not set.
+		return nil
+	}
+	e := new(jx.Encoder)
+	{
+		if req.Set {
+			req.Encode(e)
+		}
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeJoinTournamentRequest(
+	req *JoinTournamentRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -38,8 +58,50 @@ func encodeExampleDomainBatchHealthCheckRequest(
 	return nil
 }
 
-func encodeUpdateExampleRequest(
-	req *UpdateExampleRequest,
+func encodeLeaveTournamentRequest(
+	req *LeaveTournamentRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeRegisterTournamentScoreRequest(
+	req *RegisterTournamentScoreRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeTournamentServiceBatchHealthCheckRequest(
+	req *TournamentServiceBatchHealthCheckReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeUpdateTournamentRequest(
+	req *UpdateTournamentRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

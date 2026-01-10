@@ -1,9 +1,11 @@
 package middleware
 
 import (
-	"log"
+	"compress/gzip"
+	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -137,4 +139,83 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+// RateLimit implements basic rate limiting (production should use Redis-based rate limiting)
+func RateLimit(requestsPerMinute int) Middleware {
+	// Simple in-memory rate limiter (not suitable for distributed systems)
+	// Production should use Redis or similar distributed store
+	type clientLimiter struct {
+		requests int
+		resetTime time.Time
+	}
+
+	limiters := make(map[string]*clientLimiter)
+	var mu sync.RWMutex
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			clientIP := r.RemoteAddr
+
+			mu.Lock()
+			limiter, exists := limiters[clientIP]
+			now := time.Now()
+
+			if !exists || now.After(limiter.resetTime) {
+				limiter = &clientLimiter{
+					requests:  0,
+					resetTime: now.Add(time.Minute),
+				}
+				limiters[clientIP] = limiter
+			}
+
+			if limiter.requests >= requestsPerMinute {
+				mu.Unlock()
+				w.Header().Set("X-RateLimit-Remaining", "0")
+				w.Header().Set("X-RateLimit-Reset", limiter.resetTime.Format(time.RFC3339))
+				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+				return
+			}
+
+			limiter.requests++
+			remaining := requestsPerMinute - limiter.requests
+			w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+			w.Header().Set("X-RateLimit-Reset", limiter.resetTime.Format(time.RFC3339))
+
+			mu.Unlock()
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// Compression adds gzip compression for responses
+func Compression() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if client accepts gzip
+			if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+				w.Header().Set("Content-Encoding", "gzip")
+				gz := gzip.NewWriter(w)
+				defer gz.Close()
+				w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// gzipResponseWriter wraps http.ResponseWriter to enable gzip compression
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	*gzip.Writer
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func (w *gzipResponseWriter) WriteHeader(code int) {
+	w.ResponseWriter.WriteHeader(code)
 }

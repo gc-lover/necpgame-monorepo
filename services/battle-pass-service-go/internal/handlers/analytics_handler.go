@@ -68,6 +68,33 @@ func (h *AnalyticsHandler) GetGlobalStatistics(w http.ResponseWriter, r *http.Re
 	h.respondJSON(w, http.StatusOK, stats)
 }
 
+// GetSeasonAnalytics handles GET /statistics/season/{seasonId}
+func (h *AnalyticsHandler) GetSeasonAnalytics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract season ID from URL path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid URL path", http.StatusBadRequest)
+		return
+	}
+
+	seasonID := pathParts[2] // statistics/season/{seasonId}
+
+	analytics, err := h.analyticsService.GetSeasonAnalytics(seasonID)
+	if err != nil {
+		h.logger.Error("Failed to get season analytics",
+			zap.String("seasonID", seasonID), zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, analytics)
+}
+
 // respondJSON sends a JSON response
 func (h *AnalyticsHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

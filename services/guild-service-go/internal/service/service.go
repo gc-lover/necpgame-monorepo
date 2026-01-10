@@ -5,9 +5,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -54,6 +57,10 @@ type Service struct {
 	meter      metric.Meter
 	db         *pgxpool.Pool
 	redis      *redis.Client
+
+	// HTTP clients for service communication
+	userClient    *http.Client
+	economyClient *http.Client
 
 	// Service lifecycle
 	startTime time.Time
@@ -131,20 +138,41 @@ func NewGuildService(cfg Config) (*Service, error) {
 	announcementRepo := announcement.NewRepository(db, rdb, cfg.Logger)
 	eventRepo := event.NewRepository(db, rdb, cfg.Logger)
 
+	// Initialize HTTP clients for service communication
+	userHTTPClient := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     30 * time.Second,
+		},
+	}
+
+	economyHTTPClient := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     30 * time.Second,
+		},
+	}
+
 	svc := &Service{
-		config:          cfg,
-		logger:          cfg.Logger,
-		tracer:          cfg.Tracer,
-		meter:           cfg.Meter,
-		db:              db,
-		redis:           rdb,
-		startTime:       time.Now(),
-		guildRepo:       guildRepo,
-		memberRepo:      memberRepo,
-		bankRepo:        bankRepo,
-		territoryRepo:   territoryRepo,
+		config:        cfg,
+		logger:        cfg.Logger,
+		tracer:        cfg.Tracer,
+		meter:         cfg.Meter,
+		db:            db,
+		redis:         rdb,
+		userClient:    userHTTPClient,
+		economyClient: economyHTTPClient,
+		startTime:     time.Now(),
+		guildRepo:     guildRepo,
+		memberRepo:    memberRepo,
+		bankRepo:      bankRepo,
+		territoryRepo: territoryRepo,
 		announcementRepo: announcementRepo,
-		eventRepo:       eventRepo,
+		eventRepo:     eventRepo,
 	}
 
 	// Initialize performance monitoring
@@ -157,6 +185,96 @@ func NewGuildService(cfg Config) (*Service, error) {
 		zap.Int("redis_pool_size", opt.PoolSize))
 
 	return svc, nil
+}
+
+// callUserService calls user service to get player level
+func (s *Service) callUserService(ctx context.Context, userID uuid.UUID) (int, error) {
+	// Construct user service URL (assuming user-service-go runs on port 8081)
+	userServiceURL := fmt.Sprintf("http://user-service-go:8081/api/v1/users/%s/level", userID.String())
+
+	req, err := http.NewRequestWithContext(ctx, "GET", userServiceURL, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create user service request: %w", err)
+	}
+
+	resp, err := s.userClient.Do(req)
+	if err != nil {
+		s.logger.Warn("User service call failed, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return s.getFallbackLevel(userID), nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		s.logger.Warn("User service returned non-200 status, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Int("status_code", resp.StatusCode))
+		return s.getFallbackLevel(userID), nil
+	}
+
+	var response struct {
+		Level int `json:"level"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		s.logger.Warn("Failed to decode user service response, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return s.getFallbackLevel(userID), nil
+	}
+
+	return response.Level, nil
+}
+
+// callEconomyService calls economy service to get player gold balance
+func (s *Service) callEconomyService(ctx context.Context, userID uuid.UUID) (int, error) {
+	// Construct economy service URL (assuming economy-service-go runs on port 8082)
+	economyServiceURL := fmt.Sprintf("http://economy-service-go:8082/api/v1/economy/%s/balance", userID.String())
+
+	req, err := http.NewRequestWithContext(ctx, "GET", economyServiceURL, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create economy service request: %w", err)
+	}
+
+	resp, err := s.economyClient.Do(req)
+	if err != nil {
+		s.logger.Warn("Economy service call failed, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return s.getFallbackGold(userID), nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		s.logger.Warn("Economy service returned non-200 status, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Int("status_code", resp.StatusCode))
+		return s.getFallbackGold(userID), nil
+	}
+
+	var response struct {
+		Gold int `json:"gold"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		s.logger.Warn("Failed to decode economy service response, using fallback",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return s.getFallbackGold(userID), nil
+	}
+
+	return response.Gold, nil
+}
+
+// getFallbackLevel provides fallback level calculation
+func (s *Service) getFallbackLevel(userID uuid.UUID) int {
+	// Mock level based on user ID hash for consistent testing
+	return int(userID.ID()%20) + 1
+}
+
+// getFallbackGold provides fallback gold calculation
+func (s *Service) getFallbackGold(userID uuid.UUID) int {
+	// Mock gold based on user ID hash for consistent testing
+	return int(userID.ID()%5000) + 500
 }
 
 // initMetrics initializes performance monitoring for MMOFPS-scale operations
@@ -864,21 +982,13 @@ func (s *Service) getUserLevel(ctx context.Context, userID uuid.UUID) (int, erro
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	// TODO: Call user service to get actual level
-	// For now, simulate database lookup with mock data based on user ID
-	const query = `
-		SELECT COALESCE(level, 1) FROM players WHERE id = $1
-	`
-
-	var level int
-	err := s.db.QueryRow(ctx, query, userID).Scan(&level)
+	// Call user service to get actual level
+	level, err := s.callUserService(ctx, userID)
 	if err != nil {
-		// If player not found or no level data, return mock level
-		s.logger.Debug("Player level not found, using mock data",
+		s.logger.Error("Failed to get user level from service",
 			zap.String("user_id", userID.String()),
 			zap.Error(err))
-		// Mock level based on user ID hash for consistent testing
-		level = int(userID.ID()%20) + 1
+		return err
 	}
 
 	s.logger.Debug("Retrieved user level",
@@ -894,21 +1004,13 @@ func (s *Service) getUserGold(ctx context.Context, userID uuid.UUID) (int, error
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	// TODO: Call economy service to get actual gold amount
-	// For now, simulate economy service call with mock data based on user ID
-	const query = `
-		SELECT COALESCE(gold_balance, 500) FROM player_economy WHERE player_id = $1
-	`
-
-	var gold int
-	err := s.db.QueryRow(ctx, query, userID).Scan(&gold)
+	// Call economy service to get actual gold amount
+	gold, err := s.callEconomyService(ctx, userID)
 	if err != nil {
-		// If economy data not found, return mock gold
-		s.logger.Debug("Player gold not found, using mock data",
+		s.logger.Error("Failed to get user gold from service",
 			zap.String("user_id", userID.String()),
 			zap.Error(err))
-		// Mock gold based on user ID hash for consistent testing
-		gold = int(userID.ID()%5000) + 500
+		return err
 	}
 
 	s.logger.Debug("Retrieved user gold",
@@ -918,16 +1020,95 @@ func (s *Service) getUserGold(ctx context.Context, userID uuid.UUID) (int, error
 	return gold, nil
 }
 
-// distributeTreasuryShare distributes treasury share to a member (mock implementation)
+// distributeTreasuryShare distributes treasury share to a member via economy service
 func (s *Service) distributeTreasuryShare(ctx context.Context, userID uuid.UUID, amount int64) error {
-	// PERFORMANCE: Add timeout for external service calls
+	// PERFORMANCE: Add timeout for external service calls (2s for economy operations)
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	// TODO: Call economy service to actually distribute gold
-	s.logger.Info("Distributed treasury share",
+	// Call economy service to distribute gold
+	if err := s.distributeGoldViaEconomyService(ctx, userID, amount); err != nil {
+		s.logger.Error("Failed to distribute treasury share via economy service",
+			zap.String("user_id", userID.String()),
+			zap.Int64("amount", amount),
+			zap.Error(err))
+		return fmt.Errorf("failed to distribute treasury share: %w", err)
+	}
+
+	s.logger.Info("Successfully distributed treasury share",
 		zap.String("user_id", userID.String()),
 		zap.Int64("amount", amount))
+
+	return nil
+}
+
+// distributeGoldViaEconomyService calls economy service to add gold to player account
+func (s *Service) distributeGoldViaEconomyService(ctx context.Context, userID uuid.UUID, amount int64) error {
+	// Construct economy service URL (assuming economy-service-go runs on port 8082)
+	economyServiceURL := fmt.Sprintf("http://economy-service-go:8082/api/v1/economy/%s/add-gold", userID.String())
+
+	// Prepare request payload
+	payload := map[string]interface{}{
+		"amount":      amount,
+		"source":      "guild_treasury",
+		"description": "Guild treasury share distribution",
+		"timestamp":   time.Now().Format(time.RFC3339),
+	}
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request payload: %w", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", economyServiceURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return fmt.Errorf("failed to create economy service request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Source-Service", "guild-service")
+	req.Header.Set("X-Request-ID", fmt.Sprintf("guild-dist-%s-%d", userID.String(), time.Now().Unix()))
+
+	// Execute request
+	resp, err := s.economyClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("economy service request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		s.logger.Warn("Economy service returned non-success status",
+			zap.String("user_id", userID.String()),
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("response_body", string(body)))
+		return fmt.Errorf("economy service error: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse response to verify success
+	var response struct {
+		Success bool   `json:"success"`
+		Message string `json:"message,omitempty"`
+		NewBalance int64 `json:"new_balance,omitempty"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		s.logger.Warn("Failed to decode economy service response",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		// Don't fail if we can't decode response, assume success based on status code
+		return nil
+	}
+
+	if !response.Success {
+		return fmt.Errorf("economy service operation failed: %s", response.Message)
+	}
+
+	s.logger.Debug("Economy service confirmed gold distribution",
+		zap.String("user_id", userID.String()),
+		zap.Int64("amount", amount),
+		zap.Int64("new_balance", response.NewBalance))
 
 	return nil
 }

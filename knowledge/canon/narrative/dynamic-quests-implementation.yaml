@@ -1,0 +1,464 @@
+metadata:
+  id: canon-narrative-dynamic-quests-implementation
+  title: Dynamic Quests Implementation - Player Choice Based Stories
+  document_type: canon
+  category: narrative
+  subcategory: quest-implementation
+  status: draft
+  version: 1.0.0
+  last_updated: '2026-01-10T22:00:00Z'
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+  - role: content_writer
+    contact: content@necp.game
+  - role: narrative_director
+    contact: narrative@necp.game
+  tags:
+  - narrative
+  - quests
+  - implementation
+  - dynamic
+  - player-choice
+  topics:
+  - quest-design
+  - branching-narratives
+  - player-agency
+  - consequence-systems
+  related_systems:
+  - quest-service
+  - narrative-service
+  - player-state-service
+  related_documents:
+  - id: canon-narrative-dynamic-quest-system
+    relation: implements
+  - id: canon-narrative-dynamic-quest-examples
+    relation: extends
+  source: shared/docs/knowledge/canon/narrative/dynamic-quests-implementation.yaml
+  visibility: internal
+  audience:
+  - content
+  - narrative
+  - design
+  - backend
+  risk_level: high
+
+summary:
+  problem: Необходимо реализовать конкретные динамические квесты с полноценными ветвящимися сюжетами
+  goal: Создать готовые к реализации динамические квесты с множественными исходами и последствиями
+  essence: Полная спецификация трех динамических квестов с детальными ветвями, последствиями и технической реализацией
+  key_points:
+  - Полные спецификации трех динамических квестов
+  - Детальные ветвящиеся сюжетные линии
+  - Система последствий на всех уровнях
+  - Техническая реализация для backend систем
+  - Готовые SQL миграции для базы данных
+
+dynamic_quests_implementation:
+
+# Quest 1: Street Justice Dilemma - Social Choice Impact
+  street_justice_dilemma:
+    quest_id: dynamic-street-justice-dilemma
+    title: "Уличное Правосудие: Выбор Совести"
+    base_narrative: |
+      В темном переулке Night City вы становитесь свидетелем жестокой расправы уличной банды Maelstrom над одиноким риггером.
+      Банда обвиняет его в сотрудничестве с корпорациями. Толпа равнодушно проходит мимо.
+      Ваше решение определит не только судьбу жертвы, но и ваше будущее в этом районе.
+
+    choice_mechanics:
+      initial_choice:
+        prompt: "Ваша реакция на происходящее?"
+        timing: immediate
+        options:
+          intervene_help:
+            text: "Вмешаться и помочь жертве"
+            alignment_modifier: +10
+            faction_modifiers:
+              maelstrom: -20
+              street_reputation: +15
+            consequences:
+              immediate:
+                - text: "Банда отступает, жертва благодарит вас"
+                - combat_start: true
+                - reputation_gain: 10
+              short_term:
+                - unlock_quest: "rigger_alliance_quest"
+                - add_contact: "old_rigger_john"
+                - faction_standing: "maelstrom_hostile"
+              long_term:
+                - unlock_location: "watson_safehouse"
+                - story_flag: "street_hero"
+                - reputation_multiplier: "street_interactions +0.2"
+              butterfly_effects:
+                - chance: 0.3
+                  effect: "random_maelstrom_ambush"
+                  delay: "2-5 days"
+                  description: "Maelstrom мстит за унижение"
+
+          intervene_join:
+            text: "Присоединиться к банде"
+            alignment_modifier: -15
+            faction_modifiers:
+              maelstrom: +10
+              street_reputation: -10
+            consequences:
+              immediate:
+                - text: "Жертва получает дополнительные травмы"
+                - faction_reaction: "Maelstrom принимает вас как своего"
+                - money_gain: 200
+              short_term:
+                - unlock_quest: "maelstrom_initiation"
+                - add_contact: "maelstrom_lieutenant"
+                - faction_standing: "maelstrom_ally"
+              long_term:
+                - unlock_location: "maelstrom_hideout"
+                - story_flag: "bandit_sympathizer"
+                - reputation_multiplier: "corporate_interactions -0.15"
+              butterfly_effects:
+                - chance: 0.5
+                  effect: "police_investigation"
+                  delay: "1-3 days"
+                  description: "Полиция замечает вашу связь с бандой"
+
+          observe_neutral:
+            text: "Пройти мимо, не вмешиваясь"
+            alignment_modifier: 0
+            consequences:
+              immediate:
+                - text: "Вы уходите, не вмешиваясь"
+                - internal_monologue: "Иногда лучше не ввязываться"
+              short_term:
+                - add_memory: "witnessed_injustice"
+                - stress_increase: +5
+              long_term:
+                - story_flag: "neutral_observer"
+                - reputation_erosion: "street_trust -5"
+              butterfly_effects:
+                - chance: 0.1
+                  effect: "guilt_nightmare"
+                  delay: "next_sleep"
+                  description: "Кошмары о том, что вы могли сделать"
+
+          call_authorities:
+            text: "Вызвать полицию (требуется коммуникатор)"
+            requirements:
+              - has_implant: "communication"
+              - not_faction: "maelstrom"
+            consequences:
+              immediate:
+                - text: "Полиция отвечает через 5 минут"
+                - timer_start: "police_arrival"
+                - police_interaction: true
+              short_term:
+                - faction_modifiers:
+                    police: +5
+                    maelstrom: -10
+                - unlock_quest: "police_informant"
+              long_term:
+                - faction_standing: "police_ally"
+                - story_flag: "law_abiding_citizen"
+              butterfly_effects:
+                - chance: 0.7
+                  effect: "police_backup_request"
+                  delay: "3-7 days"
+                  description: "Полиция просит вашей помощи в будущем"
+
+    branching_paths:
+      hero_path:
+        trigger_condition: "choice_intervene_help AND player_level >= 8"
+        title: "Путь Героя"
+        description: "Становитесь защитником слабых в Watson"
+        rewards_modifier: "+20% experience, +10% reputation"
+        follow_up_events:
+          - type: "random_encounter"
+            description: "Благодарные жители предлагают помощь"
+            frequency: "common"
+            duration_days: 30
+
+      bandit_path:
+        trigger_condition: "choice_intervene_join AND maelstrom_reputation >= 50"
+        title: "Путь Бандита"
+        description: "Присоединяетесь к 'правосудию' Maelstrom"
+        rewards_modifier: "+50% currency, +15% maelstrom reputation"
+        follow_up_events:
+          - type: "faction_mission"
+            description: "Maelstrom поручает вам задания"
+            frequency: "frequent"
+            duration_days: 60
+
+      informant_path:
+        trigger_condition: "choice_call_authorities AND police_reputation >= 20"
+        title: "Путь Информатора"
+        description: "Становитесь ценным информатором полиции"
+        rewards_modifier: "+30% experience, police badge item"
+        follow_up_events:
+          - type: "police_dispatch"
+            description: "Полиция вызывает вас для помощи"
+            frequency: "occasional"
+            duration_days: 45
+
+# Quest 2: Corporate Betrayal Conspiracy - Intrigue Choice Impact
+  corporate_betrayal_conspiracy:
+    quest_id: dynamic-corporate-betrayal-conspiracy
+    title: "Корпоративное Предательство: Сеть Интриг"
+    base_narrative: |
+      Работая в Arasaka, вы обнаруживаете доказательства внутренней измены. Ваш начальник тайно продает секреты Militech.
+      У вас есть доступ к компрометирующим материалам, но раскрытие информации может разрушить вашу карьеру.
+
+    choice_mechanics:
+      evidence_discovery:
+        prompt: "Что делать с обнаруженными доказательствами?"
+        options:
+          report_internally:
+            text: "Доложить вышестоящему руководству Arasaka"
+            risk_level: medium
+            alignment_modifier: +5
+            consequences:
+              immediate:
+                - investigation_start: true
+                - personal_risk: +20
+                - career_progression: +10
+              short_term:
+                - corporate_reputation: +15
+                - promotion_chance: +25
+              long_term:
+                - executive_position: true
+                - rival_elimination: true
+              butterfly_effects:
+                - chance: 0.4
+                  effect: "corporate_restructuring"
+                  description: "Arasaka проводит внутреннюю чистку"
+
+          blackmail_boss:
+            text: "Шантажировать начальника лично"
+            risk_level: high
+            alignment_modifier: -10
+            requirements:
+              - skill_level_blackmail: 5
+            consequences:
+              immediate:
+                - negotiation_scene: true
+                - money_gain: 50000
+                - blackmail_leverage: true
+              short_term:
+                - temporary_alliance: true
+                - power_shift: true
+              long_term:
+                - career_instability: true
+                - corporate_distrust: true
+              butterfly_effects:
+                - chance: 0.6
+                  effect: "corporate_assassination_attempt"
+                  description: "Кто-то пытается устранить свидетелей"
+
+          sell_to_competitor:
+            text: "Продать информацию Militech напрямую"
+            risk_level: critical
+            alignment_modifier: -20
+            consequences:
+              immediate:
+                - contact_militech: true
+                - money_gain: 200000
+                - wanted_status: true
+              short_term:
+                - corporate_bounty: 100000
+                - exile_preparation: true
+              long_term:
+                - city_exile: true
+                - new_identity_needed: true
+              butterfly_effects:
+                - chance: 0.8
+                  effect: "corporate_war_escalation"
+                  description: "Arasaka объявляет войну Militech"
+
+          destroy_evidence:
+            text: "Уничтожить доказательства"
+            risk_level: low
+            alignment_modifier: +2
+            consequences:
+              immediate:
+                - evidence_destroyed: true
+                - moral_conflict: true
+              short_term:
+                - stress_increase: +15
+                - guilt_feeling: true
+              long_term:
+                - story_flag: "silent_observer"
+                - trust_erosion: true
+              butterfly_effects:
+                - chance: 0.2
+                  effect: "personal_mental_breakdown"
+                  description: "Бремя невысказанной правды влияет на психику"
+
+    branching_paths:
+      whistleblower_path:
+        trigger_condition: "choice_report_internally AND investigation_success"
+        title: "Путь Разоблачителя"
+        description: "Становитесь героем корпоративной этики"
+        rewards_modifier: "+100% reputation, whistleblower_award item"
+        follow_up_events:
+          - type: "corporate_ethics_campaign"
+            description: "Приглашают участвовать в реформах"
+            frequency: "rare"
+
+      kingmaker_path:
+        trigger_condition: "choice_blackmail_boss AND negotiation_success"
+        title: "Путь Кукловода"
+        description: "Контролируете корпоративную политику из тени"
+        rewards_modifier: "+200% currency, shadow_broker_implant item"
+        follow_up_events:
+          - type: "boardroom_intrigue"
+            description: "Влияете на решения совета директоров"
+            frequency: "occasional"
+
+      traitor_path:
+        trigger_condition: "choice_sell_to_competitor"
+        title: "Путь Предателя"
+        description: "Жизнь в бегах от корпоративного правосудия"
+        rewards_modifier: "+300% currency, forged_passport item"
+        follow_up_events:
+          - type: "exile_adventures"
+            description: "Приключения в новых городах"
+            frequency: "common"
+
+# Quest 3: Memory Merchant Mystery - Psychological Choice Impact
+  memory_merchant_mystery:
+    quest_id: dynamic-memory-merchant-mystery
+    title: "Торговец Воспоминаниями: Цена Памяти"
+    base_narrative: |
+      В подпольном Memory Market вы находите торговца воспоминаниями. Среди товаров - чужие переживания,
+      воспоминания знаменитостей и даже фрагменты будущего.
+
+    choice_mechanics:
+      memory_selection:
+        prompt: "Какое воспоминание купить?"
+        options:
+          buy_own_memory:
+            text: "Купить свои 'потерянные' воспоминания (1000 eddies)"
+            cost: 1000
+            consequences:
+              immediate:
+                - memory_implant: true
+                - revelation_scene: true
+                - stat_modifier: "intelligence +2"
+              short_term:
+                - new_knowledge: true
+                - backstory_reveal: true
+              long_term:
+                - relationship_changes: true
+                - story_alteration: true
+              butterfly_effects:
+                - chance: 0.9
+                  effect: "identity_crisis"
+                  description: "Воспоминания меняют ваше восприятие себя"
+
+          buy_celebrity_memory:
+            text: "Купить воспоминания знаменитости (5000 eddies)"
+            cost: 5000
+            consequences:
+              immediate:
+                - social_boost: true
+                - blackmail_material: true
+              short_term:
+                - reputation_gain: "socialite"
+                - party_invites: true
+              long_term:
+                - unlock_locations: "celebrity_events"
+                - relationship_opportunities: true
+              butterfly_effects:
+                - chance: 0.3
+                  effect: "paparazzi_attention"
+                  description: "Папарацци начинают следить за вами"
+
+          buy_future_memory:
+            text: "Купить воспоминание о будущем (10000 eddies)"
+            cost: 10000
+            risk_level: high
+            consequences:
+              immediate:
+                - future_knowledge: true
+                - sanity_check: -10
+              short_term:
+                - paranoia_increase: +20
+                - decision_conflicts: true
+              long_term:
+                - story_alteration: true
+                - time_paradox_effects: true
+              butterfly_effects:
+                - chance: 0.5
+                  effect: "reality_distortion"
+                  description: "Будущие знания искажают восприятие настоящего"
+
+          refuse_purchase:
+            text: "Отказаться от покупки"
+            consequences:
+              immediate:
+                - merchant_dialogue: "Мудрый выбор, choom"
+              short_term:
+                - memory: "market_location_saved"
+              long_term:
+                - story_flag: "memory_market_visited"
+              butterfly_effects:
+                - chance: 0.1
+                  effect: "merchant_random_encounter"
+                  description: "Торговец появляется в неожиданных местах"
+
+technical_implementation:
+  database_schema:
+    quest_definitions:
+      - dynamic_quest_flag: boolean (true for dynamic quests)
+      - choice_points: jsonb array of available choices
+      - branching_paths: jsonb object with path definitions
+      - consequence_system: jsonb with effect definitions
+
+    player_choices:
+      - player_id: uuid
+      - quest_id: varchar
+      - choice_point: varchar
+      - selected_option: varchar
+      - timestamp: timestamp
+      - consequences_applied: jsonb
+
+  backend_services:
+    dynamic_quest_service:
+      endpoints:
+        - GET /api/v1/quests/dynamic/{player_id}/available
+        - POST /api/v1/quests/dynamic/{quest_id}/choice
+        - GET /api/v1/quests/dynamic/{quest_id}/consequences
+
+    choice_processor:
+      functions:
+        - process_player_choice()
+        - calculate_consequences()
+        - update_world_state()
+        - trigger_butterfly_effects()
+
+  event_system:
+    kafka_topics:
+      - player.choice.made
+      - quest.consequence.applied
+      - world.state.updated
+
+  caching_strategy:
+    redis_keys:
+      - player:{id}:dynamic_quests
+      - quest:{id}:choice_history
+      - world:butterfly_effects
+
+quality_assurance:
+  testing_scenarios:
+    - choice_consistency_test
+    - consequence_calculation_test
+    - branching_path_validation
+    - butterfly_effect_simulation
+
+  performance_requirements:
+    - choice_processing: <100ms P95
+    - consequence_calculation: <50ms P95
+    - database_queries: <20ms P95
+
+  monitoring_metrics:
+    - dynamic_quest_completion_rate
+    - choice_distribution_analysis
+    - consequence_effectiveness_score
+    - player_satisfaction_rating

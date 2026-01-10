@@ -26,7 +26,8 @@ import (
 	"necpgame/services/time-trials-service-go/internal/validation"
 	"necpgame/services/time-trials-service-go/internal/reward"
 	"necpgame/services/time-trials-service-go/internal/analytics"
-	"necpgame/services/time-trials-service-go/pkg/api"
+	"necpgame/services/time-trials-service-go/internal/repository"
+	"necpgame/services/time-trials-service-go/api"
 )
 
 // Config holds service configuration
@@ -66,6 +67,9 @@ type Service struct {
 	validationSystem     *validation.System
 	rewardDistributor    *reward.Distributor
 	analyticsCollector   *analytics.Collector
+
+	// Data access layer
+	repository           *repository.Repository
 }
 
 // NewTimeTrialsService creates a new time trials service instance
@@ -205,6 +209,10 @@ func (s *Service) initComponents() error {
 	}
 	s.validationSystem = validationSystem
 
+	// Initialize repository
+	repo := repository.NewRepository(s.db, s.logger)
+	s.repository = repo
+
 	// Initialize reward distributor
 	rewardDistributor, err := reward.NewDistributor(reward.Config{
 		DB:     s.db,
@@ -212,6 +220,7 @@ func (s *Service) initComponents() error {
 		Logger: s.logger,
 		Tracer: s.tracer,
 		Meter:  s.meter,
+		Repo:   repo,
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize reward distributor")

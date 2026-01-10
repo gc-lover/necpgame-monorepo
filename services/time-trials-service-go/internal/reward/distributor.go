@@ -7,6 +7,7 @@ package reward
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -16,6 +17,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+
+	"necpgame/services/time-trials-service-go/internal/repository"
 )
 
 // Config holds reward distributor configuration
@@ -25,21 +28,23 @@ type Config struct {
 	Logger *zap.Logger
 	Tracer trace.Tracer
 	Meter  metric.Meter
+	Repo   *repository.Repository
 }
 
 // Distributor manages reward calculation and distribution
 type Distributor struct {
-	db     *pgxpool.Pool
-	redis  *redis.Client
-	logger *zap.Logger
-	tracer trace.Tracer
-	meter  metric.Meter
+	db        *pgxpool.Pool
+	redis     *redis.Client
+	logger    *zap.Logger
+	tracer    trace.Tracer
+	meter     metric.Meter
+	repo      *Repository
 }
 
 // NewDistributor creates a new reward distributor instance
 func NewDistributor(cfg Config) (*Distributor, error) {
-	if cfg.DB == nil || cfg.Redis == nil || cfg.Logger == nil {
-		return nil, errors.New("database, redis, and logger are required")
+	if cfg.DB == nil || cfg.Redis == nil || cfg.Logger == nil || cfg.Repo == nil {
+		return nil, errors.New("database, redis, logger, and repository are required")
 	}
 
 	return &Distributor{
@@ -48,6 +53,7 @@ func NewDistributor(cfg Config) (*Distributor, error) {
 		logger: cfg.Logger,
 		tracer: cfg.Tracer,
 		meter:  cfg.Meter,
+		repo:   cfg.Repo,
 	}, nil
 }
 
@@ -194,43 +200,23 @@ func (d *Distributor) applyDifficultyMultiplier(package_ *RewardPackage, difficu
 	package_.Rewards.Currency.SeasonalTokens = int(float64(package_.Rewards.Currency.SeasonalTokens) * multiplier)
 }
 
-// getTrialConfig retrieves trial reward configuration (placeholder)
+// getTrialConfig retrieves trial reward configuration from database
 func (d *Distributor) getTrialConfig(ctx context.Context, trialID uuid.UUID) (*TrialConfig, error) {
-	// TODO: Implement actual trial config retrieval from database
-	return &TrialConfig{
-		BronzeTime:  180000, // 3 minutes
-		SilverTime:  150000, // 2.5 minutes
-		GoldTime:    120000, // 2 minutes
-		PlatinumTime: 90000, // 1.5 minutes
-		BronzeRewards: RewardTiers{
-			Experience: 100,
-			Currency: CurrencyReward{
-				Gold:           50,
-				SeasonalTokens: 10,
-			},
-		},
-		SilverRewards: RewardTiers{
-			Experience: 150,
-			Currency: CurrencyReward{
-				Gold:           75,
-				SeasonalTokens: 15,
-			},
-		},
-		GoldRewards: RewardTiers{
-			Experience: 200,
-			Currency: CurrencyReward{
-				Gold:           100,
-				SeasonalTokens: 25,
-			},
-		},
-		PlatinumRewards: RewardTiers{
-			Experience: 300,
-			Currency: CurrencyReward{
-				Gold:           150,
-				SeasonalTokens: 50,
-			},
-		},
-	}, nil
+	// PERFORMANCE: Database config retrieval with fallback to defaults
+	config, err := d.repo.GetTrialConfig(ctx, trialID)
+	if err != nil {
+		d.logger.Error("Failed to retrieve trial configuration from database",
+			zap.String("trial_id", trialID.String()),
+			zap.Error(err))
+		return nil, fmt.Errorf("failed to get trial config: %w", err)
+	}
+
+	d.logger.Debug("Retrieved trial configuration",
+		zap.String("trial_id", trialID.String()),
+		zap.Int("bronze_time", config.BronzeTime),
+		zap.Int("gold_time", config.GoldTime))
+
+	return config, nil
 }
 
 // RewardTier represents reward tier levels

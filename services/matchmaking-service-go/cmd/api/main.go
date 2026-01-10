@@ -10,19 +10,54 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
+
+	"necpgame/services/matchmaking-service-go/internal/config"
+	"necpgame/services/matchmaking-service-go/internal/database"
 	"necpgame/services/matchmaking-service-go/internal/handlers"
+	"necpgame/services/matchmaking-service-go/internal/redis"
 	"necpgame/services/matchmaking-service-go/internal/service"
 	api "necpgame/services/matchmaking-service-go"
 )
 
 func main() {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Failed to create logger: %v", err)
+	}
+	defer logger.Sync()
+
 	fmt.Println("Matchmaking Service Starting...")
 
-	// Initialize service with business logic
-	matchmakingSvc := service.NewMatchmakingService()
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Fatal("Failed to load configuration", zap.Error(err))
+	}
+
+	if err := cfg.Validate(); err != nil {
+		logger.Fatal("Invalid configuration", zap.Error(err))
+	}
+
+	// Initialize database manager with connection pooling
+	dbManager, err := database.NewManager(&cfg.Database, logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize database", zap.Error(err))
+	}
+	defer dbManager.Close()
+
+	// Initialize Redis manager with optimized connection pooling
+	redisManager, err := redis.NewManager(&cfg.Redis, logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize Redis", zap.Error(err))
+	}
+	defer redisManager.Close()
+
+	// Initialize service with enterprise-grade components
+	matchmakingSvc := service.NewMatchmakingService(dbManager, redisManager, &cfg.Matchmaking, logger)
 
 	// Create HTTP handlers with ogen-generated interfaces
-	httpHandlers := handlers.NewMatchmakingHandlers(matchmakingSvc)
+	httpHandlers := handlers.NewMatchmakingHandlers(matchmakingSvc, dbManager)
 
 	// Create ogen server
 	server, err := api.NewServer(httpHandlers)
@@ -30,23 +65,18 @@ func main() {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
-	// Configure HTTP server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
+	// Configure HTTP server with enterprise-grade timeouts
 	httpServer := &http.Server{
-		Addr:         ":" + port,
+		Addr:         ":" + cfg.Server.Port,
 		Handler:      server,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	// Start server in goroutine
 	go func() {
-		fmt.Printf("Matchmaking Service listening on port %s\n", port)
+		fmt.Printf("Matchmaking Service listening on port %s\n", cfg.Server.Port)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
 		}

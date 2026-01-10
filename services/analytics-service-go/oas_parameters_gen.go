@@ -4,11 +4,14 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 
+	"github.com/go-faster/errors"
 	"github.com/ogen-go/ogen/conv"
 	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/uri"
+	"github.com/ogen-go/ogen/validate"
 )
 
 // AnalyticsServiceHealthCheckParams is parameters of analyticsServiceHealthCheck operation.
@@ -392,6 +395,286 @@ func decodeGetEconomyMarketAnalyticsParams(args [0]string, argsEscaped bool, r *
 	return params, nil
 }
 
+// GetFundamentalAnalysisParams is parameters of getFundamentalAnalysis operation.
+type GetFundamentalAnalysisParams struct {
+	// Stock symbol.
+	Symbol string
+}
+
+func unpackGetFundamentalAnalysisParams(packed middleware.Parameters) (params GetFundamentalAnalysisParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "symbol",
+			In:   "path",
+		}
+		params.Symbol = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetFundamentalAnalysisParams(args [1]string, argsEscaped bool, r *http.Request) (params GetFundamentalAnalysisParams, _ error) {
+	// Decode path: symbol.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "symbol",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Symbol = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "symbol",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetMarketTrendsParams is parameters of getMarketTrends operation.
+type GetMarketTrendsParams struct {
+	// Economic sector to analyze.
+	Sector OptGetMarketTrendsSector `json:",omitempty,omitzero"`
+	// Analysis timeframe.
+	Timeframe OptGetMarketTrendsTimeframe `json:",omitempty,omitzero"`
+	// Include AI-powered market predictions.
+	IncludePredictions OptBool `json:",omitempty,omitzero"`
+}
+
+func unpackGetMarketTrendsParams(packed middleware.Parameters) (params GetMarketTrendsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "sector",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Sector = v.(OptGetMarketTrendsSector)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "timeframe",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Timeframe = v.(OptGetMarketTrendsTimeframe)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include_predictions",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.IncludePredictions = v.(OptBool)
+		}
+	}
+	return params
+}
+
+func decodeGetMarketTrendsParams(args [0]string, argsEscaped bool, r *http.Request) (params GetMarketTrendsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: sector.
+	{
+		val := GetMarketTrendsSector("all")
+		params.Sector.SetTo(val)
+	}
+	// Decode query: sector.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "sector",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSectorVal GetMarketTrendsSector
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSectorVal = GetMarketTrendsSector(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Sector.SetTo(paramsDotSectorVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Sector.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "sector",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: timeframe.
+	{
+		val := GetMarketTrendsTimeframe("24h")
+		params.Timeframe.SetTo(val)
+	}
+	// Decode query: timeframe.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeframeVal GetMarketTrendsTimeframe
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTimeframeVal = GetMarketTrendsTimeframe(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Timeframe.SetTo(paramsDotTimeframeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Timeframe.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "timeframe",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: include_predictions.
+	{
+		val := bool(false)
+		params.IncludePredictions.SetTo(val)
+	}
+	// Decode query: include_predictions.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include_predictions",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludePredictionsVal bool
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToBool(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludePredictionsVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IncludePredictions.SetTo(paramsDotIncludePredictionsVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include_predictions",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetPlayerBehaviorAnalyticsParams is parameters of getPlayerBehaviorAnalytics operation.
 type GetPlayerBehaviorAnalyticsParams struct {
 	// Player segment to analyze.
@@ -617,6 +900,521 @@ func decodeGetSystemPerformanceMetricsParams(args [0]string, argsEscaped bool, r
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "component",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTechnicalAnalysisParams is parameters of getTechnicalAnalysis operation.
+type GetTechnicalAnalysisParams struct {
+	// Stock symbol.
+	Symbol string
+	// Analysis timeframe.
+	Timeframe OptGetTechnicalAnalysisTimeframe `json:",omitempty,omitzero"`
+}
+
+func unpackGetTechnicalAnalysisParams(packed middleware.Parameters) (params GetTechnicalAnalysisParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "symbol",
+			In:   "path",
+		}
+		params.Symbol = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "timeframe",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Timeframe = v.(OptGetTechnicalAnalysisTimeframe)
+		}
+	}
+	return params
+}
+
+func decodeGetTechnicalAnalysisParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTechnicalAnalysisParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: symbol.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "symbol",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Symbol = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "symbol",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Set default value for query: timeframe.
+	{
+		val := GetTechnicalAnalysisTimeframe("1M")
+		params.Timeframe.SetTo(val)
+	}
+	// Decode query: timeframe.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeframeVal GetTechnicalAnalysisTimeframe
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTimeframeVal = GetTechnicalAnalysisTimeframe(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Timeframe.SetTo(paramsDotTimeframeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Timeframe.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "timeframe",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTradeVolumeStatisticsParams is parameters of getTradeVolumeStatistics operation.
+type GetTradeVolumeStatisticsParams struct {
+	// Type of traded asset.
+	AssetType OptGetTradeVolumeStatisticsAssetType `json:",omitempty,omitzero"`
+	// Time period for statistics.
+	Period OptGetTradeVolumeStatisticsPeriod `json:",omitempty,omitzero"`
+}
+
+func unpackGetTradeVolumeStatisticsParams(packed middleware.Parameters) (params GetTradeVolumeStatisticsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "asset_type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.AssetType = v.(OptGetTradeVolumeStatisticsAssetType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "period",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Period = v.(OptGetTradeVolumeStatisticsPeriod)
+		}
+	}
+	return params
+}
+
+func decodeGetTradeVolumeStatisticsParams(args [0]string, argsEscaped bool, r *http.Request) (params GetTradeVolumeStatisticsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: asset_type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "asset_type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotAssetTypeVal GetTradeVolumeStatisticsAssetType
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotAssetTypeVal = GetTradeVolumeStatisticsAssetType(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.AssetType.SetTo(paramsDotAssetTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.AssetType.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "asset_type",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: period.
+	{
+		val := GetTradeVolumeStatisticsPeriod("day")
+		params.Period.SetTo(val)
+	}
+	// Decode query: period.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "period",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPeriodVal GetTradeVolumeStatisticsPeriod
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPeriodVal = GetTradeVolumeStatisticsPeriod(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Period.SetTo(paramsDotPeriodVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Period.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "period",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// MonitorMarketIntegrityParams is parameters of monitorMarketIntegrity operation.
+type MonitorMarketIntegrityParams struct {
+	// Analysis time window.
+	TimeWindow OptMonitorMarketIntegrityTimeWindow `json:",omitempty,omitzero"`
+	// Risk threshold for alerts (0-1).
+	RiskThreshold OptFloat64 `json:",omitempty,omitzero"`
+	// Include historical data.
+	IncludeHistorical OptBool `json:",omitempty,omitzero"`
+}
+
+func unpackMonitorMarketIntegrityParams(packed middleware.Parameters) (params MonitorMarketIntegrityParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "time_window",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TimeWindow = v.(OptMonitorMarketIntegrityTimeWindow)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "risk_threshold",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.RiskThreshold = v.(OptFloat64)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include_historical",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.IncludeHistorical = v.(OptBool)
+		}
+	}
+	return params
+}
+
+func decodeMonitorMarketIntegrityParams(args [0]string, argsEscaped bool, r *http.Request) (params MonitorMarketIntegrityParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: time_window.
+	{
+		val := MonitorMarketIntegrityTimeWindow("24h")
+		params.TimeWindow.SetTo(val)
+	}
+	// Decode query: time_window.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "time_window",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeWindowVal MonitorMarketIntegrityTimeWindow
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTimeWindowVal = MonitorMarketIntegrityTimeWindow(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TimeWindow.SetTo(paramsDotTimeWindowVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.TimeWindow.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "time_window",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: risk_threshold.
+	{
+		val := float64(0.7)
+		params.RiskThreshold.SetTo(val)
+	}
+	// Decode query: risk_threshold.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "risk_threshold",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRiskThresholdVal float64
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToFloat64(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRiskThresholdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.RiskThreshold.SetTo(paramsDotRiskThresholdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.RiskThreshold.Get(); ok {
+					if err := func() error {
+						if err := (validate.Float{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        true,
+							Max:           1,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    nil,
+							Pattern:       nil,
+						}).Validate(float64(value)); err != nil {
+							return errors.Wrap(err, "float")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "risk_threshold",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: include_historical.
+	{
+		val := bool(false)
+		params.IncludeHistorical.SetTo(val)
+	}
+	// Decode query: include_historical.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include_historical",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludeHistoricalVal bool
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToBool(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludeHistoricalVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IncludeHistorical.SetTo(paramsDotIncludeHistoricalVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include_historical",
 			In:   "query",
 			Err:  err,
 		}

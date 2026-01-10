@@ -48,112 +48,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/"
+		case '/': // Prefix: "/health"
 
-			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				break
-			}
-			switch elem[0] {
-			case 'h': // Prefix: "health"
-
-				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
-					elem = elem[l:]
-				} else {
-					break
+				// Leaf node.
+				switch r.Method {
+				case "GET":
+					s.handleSocialServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+				default:
+					s.notAllowed(w, r, "GET")
 				}
 
-				if len(elem) == 0 {
-					// Leaf node.
-					switch r.Method {
-					case "GET":
-						s.handleSocialServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "GET")
-					}
-
-					return
-				}
-
-			case 's': // Prefix: "social/"
-
-				if l := len("social/"); len(elem) >= l && elem[0:l] == "social/" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'c': // Prefix: "chat/messages"
-
-					if l := len("chat/messages"); len(elem) >= l && elem[0:l] == "chat/messages" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleSendChatMessageRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
-						}
-
-						return
-					}
-
-				case 'g': // Prefix: "guilds"
-
-					if l := len("guilds"); len(elem) >= l && elem[0:l] == "guilds" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleCreateGuildRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
-						}
-
-						return
-					}
-
-				case 'p': // Prefix: "parties"
-
-					if l := len("parties"); len(elem) >= l && elem[0:l] == "parties" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleCreatePartyRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
-						}
-
-						return
-					}
-
-				}
-
+				return
 			}
 
 		}
@@ -242,132 +154,29 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/"
+		case '/': // Prefix: "/health"
 
-			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			if l := len("/health"); len(elem) >= l && elem[0:l] == "/health" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				break
-			}
-			switch elem[0] {
-			case 'h': // Prefix: "health"
-
-				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
-					elem = elem[l:]
-				} else {
-					break
+				// Leaf node.
+				switch method {
+				case "GET":
+					r.name = SocialServiceHealthCheckOperation
+					r.summary = "Social Service Health Check"
+					r.operationID = "socialServiceHealthCheck"
+					r.operationGroup = ""
+					r.pathPattern = "/health"
+					r.args = args
+					r.count = 0
+					return r, true
+				default:
+					return
 				}
-
-				if len(elem) == 0 {
-					// Leaf node.
-					switch method {
-					case "GET":
-						r.name = SocialServiceHealthCheckOperation
-						r.summary = "Social Service Health Check"
-						r.operationID = "socialServiceHealthCheck"
-						r.operationGroup = ""
-						r.pathPattern = "/health"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
-				}
-
-			case 's': // Prefix: "social/"
-
-				if l := len("social/"); len(elem) >= l && elem[0:l] == "social/" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case 'c': // Prefix: "chat/messages"
-
-					if l := len("chat/messages"); len(elem) >= l && elem[0:l] == "chat/messages" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = SendChatMessageOperation
-							r.summary = "Send chat message"
-							r.operationID = "sendChatMessage"
-							r.operationGroup = ""
-							r.pathPattern = "/social/chat/messages"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				case 'g': // Prefix: "guilds"
-
-					if l := len("guilds"); len(elem) >= l && elem[0:l] == "guilds" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = CreateGuildOperation
-							r.summary = "Create guild"
-							r.operationID = "createGuild"
-							r.operationGroup = ""
-							r.pathPattern = "/social/guilds"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				case 'p': // Prefix: "parties"
-
-					if l := len("parties"); len(elem) >= l && elem[0:l] == "parties" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = CreatePartyOperation
-							r.summary = "Create party"
-							r.operationID = "createParty"
-							r.operationGroup = ""
-							r.pathPattern = "/social/parties"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
-				}
-
 			}
 
 		}

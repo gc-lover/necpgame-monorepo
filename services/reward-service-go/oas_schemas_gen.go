@@ -4832,13 +4832,13 @@ type RewardServiceBatchHealthCheckBadRequestDetails struct{}
 
 type RewardServiceBatchHealthCheckOK struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []RewardServiceBatchHealthCheckOKResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *RewardServiceBatchHealthCheckOK) GetResults() []jx.Raw {
+func (s *RewardServiceBatchHealthCheckOK) GetResults() []RewardServiceBatchHealthCheckOKResultsItem {
 	return s.Results
 }
 
@@ -4848,7 +4848,7 @@ func (s *RewardServiceBatchHealthCheckOK) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *RewardServiceBatchHealthCheckOK) SetResults(val []jx.Raw) {
+func (s *RewardServiceBatchHealthCheckOK) SetResults(val []RewardServiceBatchHealthCheckOKResultsItem) {
 	s.Results = val
 }
 
@@ -4895,6 +4895,125 @@ func (s *RewardServiceBatchHealthCheckOKHeaders) SetResponse(val RewardServiceBa
 }
 
 func (*RewardServiceBatchHealthCheckOKHeaders) rewardServiceBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type RewardServiceBatchHealthCheckOKResultsItem struct {
+	Status            RewardServiceBatchHealthCheckOKResultsItemStatus `json:"status"`
+	Domain            OptString                                        `json:"domain"`
+	Timestamp         time.Time                                        `json:"timestamp"`
+	Version           OptString                                        `json:"version"`
+	UptimeSeconds     OptInt                                           `json:"uptime_seconds"`
+	ActiveConnections OptInt                                           `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetStatus() RewardServiceBatchHealthCheckOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetStatus(val RewardServiceBatchHealthCheckOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *RewardServiceBatchHealthCheckOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type RewardServiceBatchHealthCheckOKResultsItemStatus string
+
+const (
+	RewardServiceBatchHealthCheckOKResultsItemStatusHealthy   RewardServiceBatchHealthCheckOKResultsItemStatus = "healthy"
+	RewardServiceBatchHealthCheckOKResultsItemStatusDegraded  RewardServiceBatchHealthCheckOKResultsItemStatus = "degraded"
+	RewardServiceBatchHealthCheckOKResultsItemStatusUnhealthy RewardServiceBatchHealthCheckOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all RewardServiceBatchHealthCheckOKResultsItemStatus values.
+func (RewardServiceBatchHealthCheckOKResultsItemStatus) AllValues() []RewardServiceBatchHealthCheckOKResultsItemStatus {
+	return []RewardServiceBatchHealthCheckOKResultsItemStatus{
+		RewardServiceBatchHealthCheckOKResultsItemStatusHealthy,
+		RewardServiceBatchHealthCheckOKResultsItemStatusDegraded,
+		RewardServiceBatchHealthCheckOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RewardServiceBatchHealthCheckOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case RewardServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case RewardServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case RewardServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RewardServiceBatchHealthCheckOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch RewardServiceBatchHealthCheckOKResultsItemStatus(data) {
+	case RewardServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = RewardServiceBatchHealthCheckOKResultsItemStatusHealthy
+		return nil
+	case RewardServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = RewardServiceBatchHealthCheckOKResultsItemStatusDegraded
+		return nil
+	case RewardServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = RewardServiceBatchHealthCheckOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type RewardServiceBatchHealthCheckReq struct {
 	// List of services to check.

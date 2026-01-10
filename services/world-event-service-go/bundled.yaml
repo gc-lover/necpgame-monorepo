@@ -1,161 +1,153 @@
 openapi: 3.0.3
 info:
-  title: World Events Service API - Enterprise-Grade Domain Service
-  description: '**Enterprise-Grade World Events API for NECPGAME**
+  title: World Event Service API - Enterprise-Grade Global Event Management System
+  description: '**Enterprise-Grade World Event Management API for NECPGAME**
 
-    This API manages dynamic world events in Night City, providing comprehensive event management,
-    player participation tracking, and performance-optimized operations for MMORPG-scale gameplay.
+    This API manages global world events, seasonal content, and dynamic activities
+    in Night City.
 
     ## Key Features
 
-    - **Event Management**: Full CRUD operations for world events - **Player Participation**:
-    Real-time tracking of player involvement and progress - **Performance Optimized**:
-    MMOFPS-grade performance with <15ms P99 latency - **Struct Alignment**: 30-50%
-    memory savings for event structs
+    - **Event Management**: Create and manage global world events - **Seasonal Content**:
+    Manage seasonal activities and challenges - **Dynamic Content**: Real-time event
+    spawning and management - **Participation Tracking**: Track player participation
+    and rewards - **Scalability**: Support for massive concurrent events - **Performance
+    Optimized**: High-throughput event operations with <25ms P99 latency
 
     ## Domain Purpose
 
-    The World Events domain provides dynamic, engaging world events that create living,
-    breathing gameplay experiences in Night City. Events include disasters, festivals,
-    tournaments, and special quests that players can participate in.
+    The World Event domain handles all global events, seasonal content, and dynamic
+    activities in Night City. Players participate in world events, seasonal challenges,
+    and dynamic content through comprehensive event management systems.
 
     ## Performance Targets
 
-    - P99 Latency: <15ms for event operations - Memory: <10KB per active event
-    session - Concurrent users: 40,000+ simultaneous event participations - Response time: <5ms
+    - P99 Latency: <25ms for event operations - Memory: <30KB per active event session
+    - Concurrent users: 200,000+ simultaneous event participants - Event throughput:
+    50,000+ operations per second
 
     '
   version: 1.0.0
-  license:
-    name: Proprietary
-    url: https://necpgame.com/license
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
-    email: api@world-events.necpgame.com
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/world-events
+- url: https://api.necpgame.com/v1/world-event
   description: Production server
-- url: https://staging-api.necpgame.com/v1/world-events
+- url: https://staging-api.necpgame.com/v1/world-event
   description: Staging server
-- url: http://localhost:8080/api/v1/world-events
+- url: http://localhost:8080/api/v1/world-event
   description: Local development server
 security:
 - BearerAuth: []
 tags:
-- name: World Events
-  description: Core world event operations
+- name: Event Management
+  description: Core world event operations and management
 - name: Event Participation
-  description: Player participation and progress tracking
-- name: Event Templates
-  description: Reusable event templates management
+  description: Player registration and event participation
 - name: Event Analytics
-  description: Event performance and analytics
+  description: Event statistics and performance monitoring
+- name: Event Templates
+  description: Reusable event templates and configurations
 - name: Health Monitoring
   description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: World Events service health check
+      summary: World Event service health check
       description: '**Enterprise-grade health check endpoint**
 
-        Returns system health status and performance metrics.
+        Provides real-time health status of the world event service microservice.
 
-        **Performance:** <1ms response time'
-      operationId: healthCheck
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: worldEventServiceHealthCheck
       tags:
       - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
         '200':
-          description: System is healthy
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                  timestamp:
-                    type: string
-                    format: date-time
-                  version:
-                    type: string
-                    example: 1.0.0
-                  uptime:
-                    type: integer
-                    description: System uptime in seconds
+                $ref: '#/components/schemas/HealthResponse'
         '503':
-          description: System is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/InternalServerError'
   /events:
     get:
-      summary: List world events
-      description: '**Get paginated world events list**
+      summary: List active world events
+      description: '**Enterprise-grade event listing with advanced filtering**
 
-        Returns active and upcoming world events with filtering and pagination support.
+        Retrieves paginated list of active world events with comprehensive filtering
+        options.
 
-        **Performance:** Indexed queries with efficient pagination'
+        **Performance:** <15ms P99, supports complex queries with indexes **Memory:**
+        <50KB per request with pagination optimization
+
+        '
       operationId: listEvents
       tags:
-      - World Events
+      - Event Management
       parameters:
-      - name: region
-        in: query
-        description: Filter by region
-        required: false
-        schema:
-          type: string
-          maxLength: 100
       - name: type
         in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventType'
         description: Filter by event type
-        required: false
+      - name: region
+        in: query
         schema:
           type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
+        description: Filter by region
       - name: status
         in: query
-        description: Filter by event status
-        required: false
         schema:
-          type: string
-          enum: [ANNOUNCED, ACTIVE, COMPLETED, CANCELLED]
-          default: ACTIVE
+          $ref: '#/components/schemas/WorldEventStatus'
+        description: Filter by event status
+      - name: difficulty
+        in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        description: Filter by difficulty level
       - name: limit
         in: query
-        description: Maximum number of events to return
-        required: false
         schema:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
+          default: 50
+        description: Number of events per page
       - name: offset
         in: query
-        description: Number of events to skip
-        required: false
         schema:
           type: integer
           minimum: 0
           default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Events retrieved successfully
@@ -163,39 +155,30 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                - events
-                - pagination
                 properties:
                   events:
                     type: array
                     items:
-                      $ref: '#/components/schemas/WorldEvent'
+                      $ref: '#/components/schemas/WorldEventSummary'
                   pagination:
                     $ref: '#/components/schemas/PaginationMeta'
         '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create new world event
-      description: '**Create a new world event**
+      description: '**Enterprise-grade event creation with validation**
 
-        Creates a new world event with full validation and business rules enforcement.
+        Creates a new world event with comprehensive validation and conflict checking.
 
-        **Performance:** <50ms for event creation and validation'
+        **Performance:** <25ms P99, includes business rule validation **Scalability:**
+        Supports 10,000+ concurrent event creations
+
+        '
       operationId: createEvent
       tags:
-      - World Events
+      - Event Management
       requestBody:
         required: true
         content:
@@ -210,81 +193,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorldEvent'
         '400':
-          description: Invalid event data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '409':
-          description: Event conflicts with existing events
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /events/{eventId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
     get:
-      summary: Get world event details
-      description: '**Get detailed information about a specific world event**
+      summary: Get event details
+      description: '**Enterprise-grade event retrieval with caching**
 
-        Returns complete event information including objectives, rewards, and participant data.
+        Retrieves detailed information about a specific world event.
 
-        **Performance:** <10ms for cached event lookups'
+        **Performance:** <10ms P99 with Redis caching **Memory:** <25KB per cached
+        event
+
+        '
       operationId: getEvent
       tags:
-      - World Events
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
+      - Event Management
       responses:
         '200':
-          description: Event details retrieved successfully
+          description: Event details retrieved
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorldEventDetail'
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
-      summary: Update world event
-      description: '**Update an existing world event**
+      summary: Update event
+      description: '**Enterprise-grade event updates with optimistic locking**
 
-        Updates event properties with full validation and conflict checking.
+        Updates existing world event with conflict resolution.
 
-        **Performance:** <30ms for event updates with validation'
+        **Performance:** <20ms P99, optimistic locking prevents conflicts **Safety:**
+        Version-based conflict detection
+
+        '
       operationId: updateEvent
       tags:
-      - World Events
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
+      - Event Management
       requestBody:
         required: true
         content:
@@ -299,285 +258,220 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorldEvent'
         '400':
-          description: Invalid update data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFound'
         '409':
-          description: Update conflicts with current state
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
-      summary: Cancel world event
-      description: '**Cancel an active or announced world event**
+      summary: Cancel event
+      description: '**Enterprise-grade event cancellation with participant notification**
 
-        Cancels the event and notifies all participants.
+        Cancels active world event and notifies all participants.
 
-        **Performance:** <20ms for event cancellation'
+        **Performance:** <30ms P99, includes bulk notification **Reliability:** Guaranteed
+        participant notification
+
+        '
       operationId: cancelEvent
       tags:
-      - World Events
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
+      - Event Management
       responses:
         '200':
           description: Event cancelled successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Event cancelled successfully
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Cannot cancel event in current status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /events/{eventId}/participants:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
     get:
       summary: Get event participants
-      description: '**Get list of participants for a specific event**
+      description: '**Enterprise-grade participant listing with performance optimization**
 
-        Returns paginated list of event participants with their progress and status.
+        Retrieves paginated list of event participants with activity tracking.
 
-        **Performance:** <25ms with efficient participant queries'
+        **Performance:** <20ms P99, indexed queries **Scalability:** Supports events
+        with 100,000+ participants
+
+        '
       operationId: getEventParticipants
       tags:
       - Event Participation
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
-      - name: status
-        in: query
-        description: Filter by participant status
-        required: false
-        schema:
-          type: string
-          enum: [ACTIVE, COMPLETED, LEFT, KICKED]
       - name: limit
         in: query
-        description: Maximum number of participants to return
-        required: false
         schema:
           type: integer
           minimum: 1
-          maximum: 100
-          default: 50
+          maximum: 1000
+          default: 100
+        description: Number of participants per page
       - name: offset
         in: query
-        description: Number of participants to skip
-        required: false
         schema:
           type: integer
           minimum: 0
           default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Participants retrieved successfully
           content:
             application/json:
               schema:
-                type: object
-                required:
-                - participants
-                - pagination
-                properties:
-                  participants:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EventParticipant'
-                  pagination:
-                    $ref: '#/components/schemas/PaginationMeta'
+                $ref: '#/components/schemas/EventParticipantsList'
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /events/{eventId}/join:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
     post:
       summary: Join event
-      description: '**Join a world event as a participant**
+      description: '**Enterprise-grade event joining with capacity management**
 
-        Adds player to event participation with validation and capacity checks.
+        Registers player participation in world event with capacity validation.
 
-        **Performance:** <15ms for join validation and participant creation'
+        **Performance:** <15ms P99, atomic operations **Concurrency:** Safe concurrent
+        joins with capacity limits
+
+        '
       operationId: joinEvent
       tags:
       - Event Participation
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - playerId
-              properties:
-                playerId:
-                  type: string
-                  description: Unique player identifier
-                  maxLength: 100
+              $ref: '#/components/schemas/JoinEventRequest'
       responses:
-        '201':
+        '200':
           description: Successfully joined event
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventParticipant'
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
         '400':
-          description: Invalid join request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFound'
         '409':
-          description: Player already participating or event at capacity
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /events/{eventId}/leave:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    post:
+      summary: Leave event
+      description: '**Enterprise-grade event leaving with cleanup**
 
-  /events/{eventId}/participants/{playerId}:
+        Removes player participation from world event.
+
+        **Performance:** <10ms P99, atomic operations **Data Integrity:** Guaranteed
+        cleanup of participation records
+
+        '
+      operationId: leaveEvent
+      tags:
+      - Event Participation
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /events/{eventId}/participation/{playerId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
     get:
       summary: Get player participation details
-      description: '**Get detailed participation information for a specific player**
+      description: '**Enterprise-grade participation retrieval with caching**
 
-        Returns player progress, achievements, and status in the event.
+        Retrieves detailed participation information for specific player.
 
-        **Performance:** <10ms for participant lookups'
+        **Performance:** <5ms P99 with Redis caching **Privacy:** Player-specific
+        data isolation
+
+        '
       operationId: getPlayerParticipation
       tags:
       - Event Participation
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
-      - name: playerId
-        in: path
-        required: true
-        description: Unique player identifier
-        schema:
-          type: string
-          maxLength: 100
       responses:
         '200':
-          description: Participation details retrieved successfully
+          description: Participation details retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventParticipantDetail'
+                $ref: '#/components/schemas/EventParticipationResponse'
         '404':
-          description: Event or player participation not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Update player participation
-      description: '**Update player progress and status in event**
+      description: '**Enterprise-grade participation updates with validation**
 
-        Updates participation data with validation and business rules.
+        Updates player participation status and progress data.
 
-        **Performance:** <20ms for participation updates'
+        **Performance:** <15ms P99, includes validation **Audit:** Full participation
+        history tracking
+
+        '
       operationId: updatePlayerParticipation
       tags:
       - Event Participation
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
-      - name: playerId
-        in: path
-        required: true
-        description: Unique player identifier
-        schema:
-          type: string
-          maxLength: 100
       requestBody:
         required: true
         content:
@@ -590,254 +484,257 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventParticipant'
+                $ref: '#/components/schemas/EventParticipationResponse'
         '400':
-          description: Invalid update data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event or player participation not found
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /events/{eventId}/analytics:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    get:
+      summary: Get event analytics
+      description: '**Enterprise-grade analytics with real-time metrics**
+
+        Provides comprehensive event analytics and performance metrics.
+
+        **Performance:** <50ms P99, aggregated data **Real-time:** Live participant
+        and performance metrics
+
+        '
+      operationId: getEventAnalytics
+      tags:
+      - Event Analytics
+      responses:
+        '200':
+          description: Analytics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/EventAnalyticsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /players/{playerId}/events:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player events
+      description: '**Enterprise-grade player event history with performance**
 
-    delete:
-      summary: Leave event
-      description: '**Remove player from event participation**
+        Retrieves paginated list of events player has participated in.
 
-        Allows player to leave event with status tracking.
+        **Performance:** <25ms P99, player-specific indexes **Privacy:** Player data
+        isolation and access control
 
-        **Performance:** <15ms for participant removal'
-      operationId: leaveEvent
+        '
+      operationId: getPlayerEvents
       tags:
       - Event Participation
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
+      - name: status
+        in: query
         schema:
-          type: string
-          format: uuid
-      - name: playerId
-        in: path
-        required: true
-        description: Unique player identifier
+          $ref: '#/components/schemas/ParticipationStatus'
+        description: Filter by participation status
+      - name: limit
+        in: query
         schema:
-          type: string
-          maxLength: 100
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of events per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
-          description: Successfully left event
+          description: Player events retrieved successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: Successfully left event
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerEventSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event or player participation not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Cannot leave event in current status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /events/{eventId}/rewards:
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /players/{playerId}/rewards:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
     get:
-      summary: Get player rewards for event
-      description: '**Get list of rewards earned by player in event**
+      summary: Get player event rewards
+      description: '**Enterprise-grade reward tracking with claim validation**
 
-        Returns both claimed and unclaimed rewards with claiming status.
+        Retrieves paginated list of unclaimed and claimed event rewards.
 
-        **Performance:** <15ms for reward queries'
+        **Performance:** <20ms P99, reward-specific queries **Security:** Claim validation
+        and anti-cheat measures
+
+        '
       operationId: getPlayerRewards
       tags:
       - Event Participation
       parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
-      - name: playerId
+      - name: claimed
         in: query
-        required: true
-        description: Unique player identifier
         schema:
-          type: string
-          maxLength: 100
+          type: boolean
+          default: false
+        description: Filter by claimed status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of rewards per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
-          description: Rewards retrieved successfully
+          description: Player rewards retrieved successfully
           content:
             application/json:
               schema:
-                type: object
-                required:
-                - rewards
-                properties:
-                  rewards:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EventReward'
+                $ref: '#/components/schemas/PlayerRewardsList'
         '400':
-          description: Missing playerId parameter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /players/{playerId}/rewards/{rewardId}/claim:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    - name: rewardId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique reward identifier
     post:
       summary: Claim event reward
-      description: '**Claim a specific reward from event**
+      description: '**Enterprise-grade reward claiming with atomic operations**
 
-        Marks reward as claimed and triggers reward delivery.
+        Claims specific event reward with validation and anti-cheat protection.
 
-        **Performance:** <25ms for reward claiming and delivery'
+        **Performance:** <15ms P99, atomic claim operations **Security:** Fraud prevention
+        and claim validation
+
+        '
       operationId: claimReward
       tags:
       - Event Participation
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - playerId
-              - rewardType
-              properties:
-                playerId:
-                  type: string
-                  description: Unique player identifier
-                  maxLength: 100
-                rewardType:
-                  type: string
-                  description: Type of reward to claim
-                  enum: [xp, currency, item, achievement]
-                rewardId:
-                  type: string
-                  description: Specific reward identifier (item ID, achievement ID, etc.)
+              $ref: '#/components/schemas/ClaimRewardRequest'
       responses:
         '200':
           description: Reward claimed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventReward'
+                $ref: '#/components/schemas/RewardClaimResponse'
         '400':
-          description: Invalid claim request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Event or reward not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFound'
         '409':
-          description: Reward already claimed or not eligible
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates:
     get:
       summary: List event templates
-      description: '**Get paginated list of event templates**
+      description: '**Enterprise-grade template management with versioning**
 
-        Returns reusable event templates for creating new events.
+        Retrieves paginated list of reusable event templates.
 
-        **Performance:** Indexed queries with efficient pagination'
+        **Performance:** <15ms P99, template caching **Reusability:** Standardized
+        event configurations
+
+        '
       operationId: listEventTemplates
       tags:
       - Event Templates
       parameters:
       - name: type
         in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventType'
         description: Filter by template type
-        required: false
-        schema:
-          type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
-      - name: difficulty
+      - name: is_active
         in: query
-        description: Filter by difficulty level
-        required: false
         schema:
-          type: string
-          enum: [EASY, MEDIUM, HARD, EXTREME]
+          type: boolean
+          default: true
+        description: Filter by active status
       - name: limit
         in: query
-        description: Maximum number of templates to return
-        required: false
         schema:
           type: integer
           minimum: 1
-          maximum: 50
-          default: 20
+          maximum: 100
+          default: 50
+        description: Number of templates per page
       - name: offset
         in: query
-        description: Number of templates to skip
-        required: false
         schema:
           type: integer
           minimum: 0
           default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Templates retrieved successfully
@@ -845,30 +742,28 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                - templates
-                - pagination
                 properties:
                   templates:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventTemplate'
-                  pagination:
-                    $ref: '#/components/schemas/PaginationMeta'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+                      $ref: '#/components/schemas/EventTemplateSummary'
+                  total:
+                    type: integer
+                    minimum: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create event template
-      description: '**Create a new reusable event template**
+      description: '**Enterprise-grade template creation with validation**
 
-        Creates template with full validation for reuse in future events.
+        Creates reusable event template with comprehensive validation.
 
-        **Performance:** <30ms for template creation and validation'
+        **Performance:** <30ms P99, includes template validation **Reusability:**
+        Standardized event configurations
+
+        '
       operationId: createEventTemplate
       tags:
       - Event Templates
@@ -881,81 +776,315 @@ paths:
       responses:
         '201':
           description: Template created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of created template
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventTemplate'
+                $ref: '#/components/schemas/EventTemplateResponse'
         '400':
-          description: Invalid template data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /events/{eventId}/analytics:
-    get:
-      summary: Get event analytics
-      description: '**Get performance analytics for a specific event**
-
-        Returns participation rates, completion statistics, and player satisfaction.
-
-        **Performance:** <20ms for analytics aggregation'
-      operationId: getEventAnalytics
-      tags:
-      - Event Analytics
-      parameters:
-      - name: eventId
-        in: path
-        required: true
-        description: Unique identifier of the world event
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Analytics retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventAnalytics'
-        '404':
-          description: Event not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
   schemas:
-    # Core Event Schemas
-    WorldEvent:
+    Error:
       type: object
       required:
-      - id
-      - name
-      - type
-      - region
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    HealthResponse:
+      type: object
+      required:
       - status
-      - startTime
-      - difficulty
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PaginationMeta:
+      type: object
+      required:
+      - total_count
+      - page_count
+      - current_page
+      - per_page
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+          example: 150
+          description: Total number of items across all pages
+        page_count:
+          type: integer
+          minimum: 0
+          example: 8
+          description: Total number of pages
+        current_page:
+          type: integer
+          minimum: 1
+          example: 1
+          description: Current page number
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Number of items per page
+    WorldEventType:
+      type: string
+      enum:
+      - combat
+      - exploration
+      - social
+      - economic
+      - seasonal
+      - emergency
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes).
+        Memory savings: minimal impact but consistent with enterprise patterns.**'
+    WorldEventStatus:
+      type: string
+      enum:
+      - announced
+      - active
+      - paused
+      - completed
+      - cancelled
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes).
+        Memory savings: minimal impact but consistent with enterprise patterns.**'
+    WorldEventDifficulty:
+      type: string
+      enum:
+      - easy
+      - medium
+      - hard
+      - extreme
+      - nightmare
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes).
+        Memory savings: minimal impact but consistent with enterprise patterns.**'
+    ParticipationStatus:
+      type: string
+      enum:
+      - registered
+      - active
+      - completed
+      - failed
+      - abandoned
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes).
+        Memory savings: minimal impact but consistent with enterprise patterns.**'
+    WorldEventSummary:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large ->
+        small). Expected memory savings: 25-35%. Performance: <10ms P99 for list operations.**'
       properties:
         id:
           type: string
@@ -963,65 +1092,137 @@ components:
           description: Unique event identifier
         name:
           type: string
-          maxLength: 200
-          description: Human-readable event name
+          maxLength: 255
+          description: Event display name
         type:
-          type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
-          description: Type of world event
+          $ref: '#/components/schemas/WorldEventType'
         region:
           type: string
           maxLength: 100
-          description: Geographical region where event occurs
+          description: Geographic region
         status:
-          type: string
-          enum: [ANNOUNCED, ACTIVE, COMPLETED, CANCELLED]
-          description: Current event status
-        startTime:
+          $ref: '#/components/schemas/WorldEventStatus'
+        start_time:
           type: string
           format: date-time
-          description: When event begins
-        endTime:
-          type: string
-          format: date-time
-          description: When event ends (optional)
-        description:
-          type: string
-          description: Detailed event description
-        objectives:
-          type: array
-          items:
-            type: object
-            description: Event objectives
-        rewards:
-          type: array
-          items:
-            type: object
-            description: Available event rewards
-        maxParticipants:
-          type: integer
-          minimum: 1
-          description: Maximum number of participants
-        currentParticipants:
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        current_participants:
           type: integer
           minimum: 0
-          description: Current number of participants
-        difficulty:
+          description: Current participant count
+        max_participants:
+          type: integer
+          minimum: 0
+          description: Maximum allowed participants
+      required:
+      - id
+      - name
+      - type
+      - region
+      - status
+      - start_time
+      - difficulty
+      - current_participants
+    WorldEvent:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large ->
+        small). Expected memory savings: 30-40%. Performance: <15ms P99 for CRUD operations.**'
+      properties:
+        id:
           type: string
-          enum: [EASY, MEDIUM, HARD, EXTREME]
-          description: Event difficulty level
-        eventData:
+          format: uuid
+          description: Unique event identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Event display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        region:
+          type: string
+          maxLength: 100
+          description: Geographic region
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        start_time:
+          type: string
+          format: date-time
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current participant count
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed event description
+        end_time:
+          type: string
+          format: date-time
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 0
+          description: Maximum allowed participants
+        objectives:
           type: object
-          description: Additional event-specific data
-        createdAt:
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum player level requirement
+        faction_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
+        created_at:
           type: string
           format: date-time
           description: Event creation timestamp
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-
+      required:
+      - id
+      - name
+      - type
+      - region
+      - status
+      - start_time
+      - difficulty
+      - current_participants
+      - created_at
+      - updated_at
     WorldEventDetail:
       allOf:
       - $ref: '#/components/schemas/WorldEvent'
@@ -1031,397 +1232,609 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/EventParticipant'
-          analytics:
-            $ref: '#/components/schemas/EventAnalytics'
-
+            description: Current event participants
     CreateEventRequest:
       type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large ->
+        small). Expected memory savings: 20-30%. Validation: Comprehensive business
+        rule checks.**'
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: Event display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        region:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Geographic region
+        start_time:
+          type: string
+          format: date-time
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed event description
+        end_time:
+          type: string
+          format: date-time
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Maximum allowed participants
+        objectives:
+          type: object
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum player level requirement
+        faction_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
       required:
       - name
       - type
       - region
-      - startTime
+      - start_time
       - difficulty
-      properties:
-        name:
-          type: string
-          maxLength: 200
-        type:
-          type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
-        region:
-          type: string
-          maxLength: 100
-        startTime:
-          type: string
-          format: date-time
-        endTime:
-          type: string
-          format: date-time
-        description:
-          type: string
-        objectives:
-          type: array
-          items:
-            type: object
-        rewards:
-          type: array
-          items:
-            type: object
-        maxParticipants:
-          type: integer
-          minimum: 1
-        difficulty:
-          type: string
-          enum: [EASY, MEDIUM, HARD, EXTREME]
-        eventData:
-          type: object
-
     UpdateEventRequest:
       type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Partial updates
+        supported with optimistic locking.**'
       properties:
         name:
           type: string
-          maxLength: 200
-        status:
-          type: string
-          enum: [ANNOUNCED, ACTIVE, COMPLETED, CANCELLED]
-        endTime:
-          type: string
-          format: date-time
+          minLength: 3
+          maxLength: 255
+          description: Event display name
         description:
           type: string
-        objectives:
-          type: array
-          items:
-            type: object
-        rewards:
-          type: array
-          items:
-            type: object
-        maxParticipants:
-          type: integer
-          minimum: 1
-        eventData:
-          type: object
-
-    # Participation Schemas
-    EventParticipant:
-      type: object
-      required:
-      - id
-      - eventId
-      - playerId
-      - joinTime
-      - status
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique participation identifier
-        eventId:
-          type: string
-          format: uuid
-          description: Reference to world event
-        playerId:
-          type: string
-          maxLength: 100
-          description: Unique player identifier
-        joinTime:
+          maxLength: 2000
+          description: Detailed event description
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        end_time:
           type: string
           format: date-time
-          description: When player joined event
-        status:
-          type: string
-          enum: [ACTIVE, COMPLETED, LEFT, KICKED]
-          description: Participation status
-        progressData:
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Maximum allowed participants
+        objectives:
           type: object
-          description: Player-specific progress tracking
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        faction_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
+    EventParticipant:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Performance:
+        Indexed queries for participant lookups.**'
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Unique player identifier
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation join timestamp
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        progress_data:
+          type: object
+          description: Player progress data (JSON)
+          additionalProperties: true
         score:
           type: integer
           minimum: 0
           description: Player score in event
-        achievements:
-          type: array
-          items:
-            type: object
-            description: Achievements earned during event
-        lastActivity:
+        rank:
+          type: integer
+          minimum: 1
+          description: Player rank in event
+        last_activity_at:
           type: string
           format: date-time
-          description: Last player activity timestamp
-
-    EventParticipantDetail:
-      allOf:
-      - $ref: '#/components/schemas/EventParticipant'
-      - type: object
-        properties:
-          rewards:
-            type: array
-            items:
-              $ref: '#/components/schemas/EventReward'
-
+          description: Last activity timestamp
+      required:
+      - player_id
+      - joined_at
+      - status
+      - last_activity_at
+    EventParticipantsList:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventParticipant'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of participants
+    EventParticipation:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Audit trail
+        with full participation history.**'
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique participation record ID
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation start timestamp
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        failed_at:
+          type: string
+          format: date-time
+          description: Failure timestamp
+        abandoned_at:
+          type: string
+          format: date-time
+          description: Abandon timestamp
+        progress_data:
+          type: object
+          description: Progress tracking data (JSON)
+          additionalProperties: true
+        rewards_claimed:
+          type: boolean
+          default: false
+          description: Whether rewards have been claimed
+        score:
+          type: integer
+          minimum: 0
+          description: Final score achieved
+        rank:
+          type: integer
+          minimum: 1
+          description: Final rank achieved
+        metadata:
+          type: object
+          description: Additional participation metadata (JSON)
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+      - id
+      - player_id
+      - event_id
+      - status
+      - joined_at
+      - last_activity_at
+      - rewards_claimed
+      - created_at
+      - updated_at
+    EventParticipationResponse:
+      type: object
+      properties:
+        participation:
+          $ref: '#/components/schemas/EventParticipation'
+    JoinEventRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+      required:
+      - player_id
     UpdateParticipationRequest:
       type: object
       properties:
         status:
-          type: string
-          enum: [ACTIVE, COMPLETED, LEFT, KICKED]
-        progressData:
+          $ref: '#/components/schemas/ParticipationStatus'
+        progress_data:
           type: object
+          description: Updated progress data (JSON)
+          additionalProperties: true
         score:
           type: integer
           minimum: 0
-        achievements:
-          type: array
-          items:
-            type: object
-
-    # Reward Schemas
+          description: Updated score
+      required:
+      - status
+    PlayerEventSummary:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Player-specific
+        event history queries.**'
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        event_name:
+          type: string
+          maxLength: 255
+          description: Event display name
+        event_type:
+          $ref: '#/components/schemas/WorldEventType'
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation join timestamp
+        score:
+          type: integer
+          minimum: 0
+          description: Player score
+        rank:
+          type: integer
+          minimum: 1
+          description: Player rank
+        rewards_claimed:
+          type: boolean
+          description: Whether rewards were claimed
+      required:
+      - event_id
+      - event_name
+      - event_type
+      - status
+      - joined_at
+      - rewards_claimed
     EventReward:
       type: object
-      required:
-      - id
-      - eventId
-      - playerId
-      - rewardType
-      - claimed
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Reward validation
+        and anti-cheat measures.**'
       properties:
         id:
           type: string
           format: uuid
           description: Unique reward identifier
-        eventId:
+        event_id:
           type: string
           format: uuid
-          description: Reference to world event
-        playerId:
+          description: Associated event identifier
+        player_id:
           type: string
-          maxLength: 100
-          description: Player who earned reward
-        rewardType:
+          format: uuid
+          description: Player identifier
+        reward_type:
           type: string
-          enum: [xp, currency, item, achievement]
+          enum:
+          - currency
+          - item
+          - experience
+          - cosmetic
+          - title
           description: Type of reward
-        rewardId:
+        reward_id:
           type: string
           description: Specific reward identifier
         amount:
           type: integer
           minimum: 1
-          default: 1
-          description: Quantity of reward
+          description: Reward amount/quantity
         claimed:
           type: boolean
+          default: false
           description: Whether reward has been claimed
-        claimedAt:
+        claimed_at:
           type: string
           format: date-time
-          description: When reward was claimed
-        createdAt:
+          description: Claim timestamp
+        created_at:
           type: string
           format: date-time
           description: Reward creation timestamp
-
-    # Template Schemas
-    EventTemplate:
+      required:
+      - id
+      - event_id
+      - player_id
+      - reward_type
+      - amount
+      - claimed
+      - created_at
+    PlayerRewardsList:
       type: object
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventReward'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of rewards
+    ClaimRewardRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier for validation
+      required:
+      - player_id
+    RewardClaimResponse:
+      type: object
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: Claimed reward identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        event_id:
+          type: string
+          format: uuid
+          description: Associated event identifier
+        claimed_at:
+          type: string
+          format: date-time
+          description: Claim timestamp
+        status:
+          type: string
+          enum:
+          - success
+          - pending
+          - failed
+          description: Claim status
+        delivered:
+          type: boolean
+          default: false
+          description: Whether reward was delivered to player inventory
+      required:
+      - reward_id
+      - player_id
+      - event_id
+      - claimed_at
+      - status
+      - delivered
+    EventAnalyticsResponse:
+      type: object
+      description: '**BACKEND NOTE: Aggregated analytics data. Performance: Pre-calculated
+        metrics for real-time access.**'
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        total_participants:
+          type: integer
+          minimum: 0
+          description: Total registered participants
+        completed_participants:
+          type: integer
+          minimum: 0
+          description: Participants who completed the event
+        average_completion_time:
+          type: string
+          description: Average time to complete (PostgreSQL interval format)
+        average_score:
+          type: number
+          format: float
+          minimum: 0
+          description: Average participant score
+        participation_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Participation completion rate
+        satisfaction_rating:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 5
+          description: Average satisfaction rating
+        last_updated:
+          type: string
+          format: date-time
+          description: Analytics last update timestamp
+      required:
+      - event_id
+      - total_participants
+      - completed_participants
+      - last_updated
+    EventTemplateSummary:
+      type: object
+      description: '**BACKEND NOTE: Template summary for listing. Performance: Cached
+        template metadata.**'
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Template display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        is_active:
+          type: boolean
+          default: true
+          description: Whether template is active for use
+        created_at:
+          type: string
+          format: date-time
+          description: Template creation timestamp
       required:
       - id
       - name
       - type
       - difficulty
-      - isActive
+      - is_active
+      - created_at
+    EventTemplate:
+      type: object
+      description: '**BACKEND NOTE: Complete template with all configuration data.
+        Performance: Template inheritance and reusability.**'
+      allOf:
+      - $ref: '#/components/schemas/EventTemplateSummary'
+      - type: object
+        properties:
+          description:
+            type: string
+            maxLength: 2000
+            description: Template description
+          objectives_template:
+            type: object
+            description: Default objectives configuration (JSON)
+            additionalProperties: true
+          rewards_template:
+            type: object
+            description: Default rewards configuration (JSON)
+            additionalProperties: true
+          duration_minutes:
+            type: integer
+            minimum: 1
+            description: Default event duration in minutes
+          max_participants:
+            type: integer
+            minimum: 1
+            description: Default maximum participants
+          region_restrictions:
+            type: array
+            items:
+              type: string
+            description: Default region restrictions
+          event_data_template:
+            type: object
+            description: Default event data configuration (JSON)
+            additionalProperties: true
+          updated_at:
+            type: string
+            format: date-time
+            description: Template last update timestamp
+        required:
+        - updated_at
+    EventTemplateResponse:
+      type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique template identifier
+        template:
+          $ref: '#/components/schemas/EventTemplate'
+    CreateTemplateRequest:
+      type: object
+      description: '**BACKEND NOTE: Template creation request with validation. Performance:
+        Template validation on creation.**'
+      properties:
         name:
           type: string
-          maxLength: 200
-          description: Template name
+          minLength: 3
+          maxLength: 255
+          description: Template display name
         type:
-          type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
-          description: Template type
+          $ref: '#/components/schemas/WorldEventType'
         difficulty:
-          type: string
-          enum: [EASY, MEDIUM, HARD, EXTREME]
-          description: Difficulty level
+          $ref: '#/components/schemas/WorldEventDifficulty'
         description:
           type: string
+          maxLength: 2000
           description: Template description
-        objectivesTemplate:
-          type: array
-          items:
-            type: object
-            description: Template objectives structure
-        rewardsTemplate:
-          type: array
-          items:
-            type: object
-            description: Template rewards structure
-        durationMinutes:
+        objectives_template:
+          type: object
+          description: Default objectives configuration (JSON)
+          additionalProperties: true
+        rewards_template:
+          type: object
+          description: Default rewards configuration (JSON)
+          additionalProperties: true
+        duration_minutes:
           type: integer
           minimum: 1
           description: Default event duration in minutes
-        maxParticipants:
+        max_participants:
           type: integer
           minimum: 1
           description: Default maximum participants
-        regionRestrictions:
+        region_restrictions:
           type: array
           items:
             type: string
-            description: Allowed regions for this template
-        eventDataTemplate:
+          description: Default region restrictions
+        event_data_template:
           type: object
-          description: Template event data structure
-        isActive:
-          type: boolean
-          description: Whether template is available for use
-        createdAt:
-          type: string
-          format: date-time
-          description: Template creation timestamp
-        updatedAt:
-          type: string
-          format: date-time
-          description: Last update timestamp
-
-    CreateTemplateRequest:
-      type: object
+          description: Default event data configuration (JSON)
+          additionalProperties: true
       required:
       - name
       - type
       - difficulty
-      properties:
-        name:
-          type: string
-          maxLength: 200
-        type:
-          type: string
-          enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
-        difficulty:
-          type: string
-          enum: [EASY, MEDIUM, HARD, EXTREME]
-        description:
-          type: string
-        objectivesTemplate:
-          type: array
-          items:
-            type: object
-        rewardsTemplate:
-          type: array
-          items:
-            type: object
-        durationMinutes:
-          type: integer
-          minimum: 1
-        maxParticipants:
-          type: integer
-          minimum: 1
-        regionRestrictions:
-          type: array
-          items:
-            type: string
-        eventDataTemplate:
-          type: object
-
-    # Analytics Schema
-    EventAnalytics:
-      type: object
-      required:
-      - eventId
-      - totalParticipants
-      - completedParticipants
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Reference to world event
-        totalParticipants:
-          type: integer
-          minimum: 0
-          description: Total number of participants
-        completedParticipants:
-          type: integer
-          minimum: 0
-          description: Number of participants who completed event
-        averageCompletionTime:
-          type: string
-          format: duration
-          description: Average time to complete event
-        averageScore:
-          type: number
-          format: float
-          minimum: 0
-          description: Average participant score
-        participationRate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Percentage of region population that participated
-        satisfactionRating:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 5
-          description: Average player satisfaction rating (0-5)
-        lastUpdated:
-          type: string
-          format: date-time
-          description: Last analytics update timestamp
-
-    # Common Schemas
-    PaginationMeta:
-      type: object
-      required:
-      - limit
-      - offset
-      - total
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          description: Number of items skipped
-        total:
-          type: integer
-          minimum: 0
-          description: Total number of items available
-
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Error code
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          description: Human-readable error message
-          example: Invalid request parameters
-        details:
-          type: object
-          description: Additional error details
-        timestamp:
-          type: string
-          format: date-time
-          description: Error timestamp
-
-# BACKEND NOTE: Enterprise-grade OpenAPI specification for world-events-service
-# - Struct alignment hints for 30-50% memory savings in Go structs
-# - Optimistic locking for concurrent event operations
-# - Event-driven architecture ready for Kafka integration
-# - Performance optimized for MMORPG scale (40,000+ concurrent users)
-# - Full validation and business rules enforcement

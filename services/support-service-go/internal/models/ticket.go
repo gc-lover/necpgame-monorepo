@@ -45,26 +45,27 @@ const (
 
 // Ticket represents a support ticket
 type Ticket struct {
-	ID           uuid.UUID      `json:"id" db:"id"`
-	PlayerID     uuid.UUID      `json:"player_id" db:"player_id"`
-	Title        string         `json:"title" db:"title"`
-	Description  string         `json:"description" db:"description"`
-	Category     TicketCategory `json:"category" db:"category"`
-	Priority     TicketPriority `json:"priority" db:"priority"`
-	Status       TicketStatus   `json:"status" db:"status"`
-	AgentID      *uuid.UUID     `json:"agent_id,omitempty" db:"agent_id"`
-	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at" db:"updated_at"`
-	ClosedAt     *time.Time     `json:"closed_at,omitempty" db:"closed_at"`
-	Tags         []string       `json:"tags" db:"tags"`
-	SLADueDate   *time.Time     `json:"sla_due_date,omitempty" db:"sla_due_date"`
-	SLAStatus    SLAStatus      `json:"sla_status" db:"sla_status"`
-	ResponseCount int           `json:"response_count" db:"response_count"`
+	ID            uuid.UUID      `json:"id" db:"id"`
+	CharacterID   uuid.UUID      `json:"character_id" db:"character_id"`
+	Title         string         `json:"title" db:"title"`
+	Description   string         `json:"description" db:"description"`
+	Category      TicketCategory `json:"category" db:"category"`
+	Priority      TicketPriority `json:"priority" db:"priority"`
+	Status        TicketStatus   `json:"status" db:"status"`
+	AgentID       *uuid.UUID     `json:"agent_id,omitempty" db:"agent_id"`
+	CreatedAt     time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at" db:"updated_at"`
+	ClosedAt      *time.Time     `json:"closed_at,omitempty" db:"closed_at"`
+	ResolvedAt    *time.Time     `json:"resolved_at,omitempty" db:"resolved_at"`
+	Tags          []string       `json:"tags" db:"tags"`
+	SLADeadline   *time.Time     `json:"sla_deadline,omitempty" db:"sla_deadline"`
+	SLAStatus     SLAStatus      `json:"sla_status" db:"sla_status"`
+	ResponseCount int            `json:"response_count" db:"response_count"`
 }
 
 // CreateTicketRequest represents a request to create a new ticket
 type CreateTicketRequest struct {
-	PlayerID    uuid.UUID      `json:"player_id"`
+	CharacterID uuid.UUID      `json:"character_id"`
 	Title       string         `json:"title"`
 	Description string         `json:"description"`
 	Category    TicketCategory `json:"category"`

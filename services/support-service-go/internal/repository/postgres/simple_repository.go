@@ -28,8 +28,8 @@ func (r *simplePostgresRepository) GetByID(ctx context.Context, id uuid.UUID) (*
 	return NewTicketRepository(r.db).GetByID(ctx, id)
 }
 
-func (r *simplePostgresRepository) GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
-	return NewTicketRepository(r.db).GetByPlayerID(ctx, playerID, limit, offset)
+func (r *simplePostgresRepository) GetByCharacterID(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
+	return NewTicketRepository(r.db).GetByCharacterID(ctx, characterID, limit, offset)
 }
 
 func (r *simplePostgresRepository) GetByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {

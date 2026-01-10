@@ -710,13 +710,13 @@ func (s *ImplantDiagnosticsNeuralPathways) init() ImplantDiagnosticsNeuralPathwa
 
 type ImplantDomainBatchHealthCheckOK struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []ImplantDomainBatchHealthCheckOKResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *ImplantDomainBatchHealthCheckOK) GetResults() []jx.Raw {
+func (s *ImplantDomainBatchHealthCheckOK) GetResults() []ImplantDomainBatchHealthCheckOKResultsItem {
 	return s.Results
 }
 
@@ -726,7 +726,7 @@ func (s *ImplantDomainBatchHealthCheckOK) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *ImplantDomainBatchHealthCheckOK) SetResults(val []jx.Raw) {
+func (s *ImplantDomainBatchHealthCheckOK) SetResults(val []ImplantDomainBatchHealthCheckOKResultsItem) {
 	s.Results = val
 }
 
@@ -773,6 +773,125 @@ func (s *ImplantDomainBatchHealthCheckOKHeaders) SetResponse(val ImplantDomainBa
 }
 
 func (*ImplantDomainBatchHealthCheckOKHeaders) implantDomainBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type ImplantDomainBatchHealthCheckOKResultsItem struct {
+	Status            ImplantDomainBatchHealthCheckOKResultsItemStatus `json:"status"`
+	Domain            OptString                                        `json:"domain"`
+	Timestamp         time.Time                                        `json:"timestamp"`
+	Version           OptString                                        `json:"version"`
+	UptimeSeconds     OptInt                                           `json:"uptime_seconds"`
+	ActiveConnections OptInt                                           `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetStatus() ImplantDomainBatchHealthCheckOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetStatus(val ImplantDomainBatchHealthCheckOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *ImplantDomainBatchHealthCheckOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type ImplantDomainBatchHealthCheckOKResultsItemStatus string
+
+const (
+	ImplantDomainBatchHealthCheckOKResultsItemStatusHealthy   ImplantDomainBatchHealthCheckOKResultsItemStatus = "healthy"
+	ImplantDomainBatchHealthCheckOKResultsItemStatusDegraded  ImplantDomainBatchHealthCheckOKResultsItemStatus = "degraded"
+	ImplantDomainBatchHealthCheckOKResultsItemStatusUnhealthy ImplantDomainBatchHealthCheckOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all ImplantDomainBatchHealthCheckOKResultsItemStatus values.
+func (ImplantDomainBatchHealthCheckOKResultsItemStatus) AllValues() []ImplantDomainBatchHealthCheckOKResultsItemStatus {
+	return []ImplantDomainBatchHealthCheckOKResultsItemStatus{
+		ImplantDomainBatchHealthCheckOKResultsItemStatusHealthy,
+		ImplantDomainBatchHealthCheckOKResultsItemStatusDegraded,
+		ImplantDomainBatchHealthCheckOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ImplantDomainBatchHealthCheckOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImplantDomainBatchHealthCheckOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch ImplantDomainBatchHealthCheckOKResultsItemStatus(data) {
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = ImplantDomainBatchHealthCheckOKResultsItemStatusHealthy
+		return nil
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = ImplantDomainBatchHealthCheckOKResultsItemStatusDegraded
+		return nil
+	case ImplantDomainBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = ImplantDomainBatchHealthCheckOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type ImplantDomainBatchHealthCheckReq struct {
 	// List of services to check.

@@ -217,8 +217,8 @@ func (r *Repository) List(ctx context.Context, params api.ListGuildsParams) ([]*
 	}
 
 	if recruiting := params.Recruiting; recruiting != nil && *recruiting {
-		// This would need a join with settings - simplified for now
-		conditions = append(conditions, "true") // TODO: Implement proper recruitment filter
+		// Filter guilds that are currently recruiting new members
+		conditions = append(conditions, "is_recruiting = true")
 	}
 
 	if faction := params.Faction; faction != nil {

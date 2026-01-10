@@ -9,19 +9,20 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
+	"github.com/google/uuid"
 	"github.com/ogen-go/ogen/json"
 	"github.com/ogen-go/ogen/validate"
 )
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleBadRequest) Encode(e *jx.Encoder) {
+func (s *BadRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleBadRequest) encodeFields(e *jx.Encoder) {
+func (s *BadRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -38,16 +39,16 @@ func (s *CreateExampleBadRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateExampleBadRequest = [3]string{
+var jsonFieldsNameOfBadRequest = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes CreateExampleBadRequest from json.
-func (s *CreateExampleBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes BadRequest from json.
+func (s *BadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleBadRequest to nil")
+		return errors.New("invalid: unable to decode BadRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -80,7 +81,7 @@ func (s *CreateExampleBadRequest) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem CreateExampleBadRequestDetails
+				var elem BadRequestDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -94,7 +95,7 @@ func (s *CreateExampleBadRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleBadRequest")
+		return errors.Wrap(err, "decode BadRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -111,8 +112,8 @@ func (s *CreateExampleBadRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateExampleBadRequest) {
-					name = jsonFieldsNameOfCreateExampleBadRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfBadRequest) {
+					name = jsonFieldsNameOfBadRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -133,35 +134,35 @@ func (s *CreateExampleBadRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleBadRequest) MarshalJSON() ([]byte, error) {
+func (s *BadRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleBadRequest) UnmarshalJSON(data []byte) error {
+func (s *BadRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleBadRequestDetails) Encode(e *jx.Encoder) {
+func (s *BadRequestDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleBadRequestDetails) encodeFields(e *jx.Encoder) {
+func (s *BadRequestDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfCreateExampleBadRequestDetails = [0]string{}
+var jsonFieldsNameOfBadRequestDetails = [0]string{}
 
-// Decode decodes CreateExampleBadRequestDetails from json.
-func (s *CreateExampleBadRequestDetails) Decode(d *jx.Decoder) error {
+// Decode decodes BadRequestDetails from json.
+func (s *BadRequestDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleBadRequestDetails to nil")
+		return errors.New("invalid: unable to decode BadRequestDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -170,34 +171,34 @@ func (s *CreateExampleBadRequestDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleBadRequestDetails")
+		return errors.Wrap(err, "decode BadRequestDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleBadRequestDetails) MarshalJSON() ([]byte, error) {
+func (s *BadRequestDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleBadRequestDetails) UnmarshalJSON(data []byte) error {
+func (s *BadRequestDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleConflict) Encode(e *jx.Encoder) {
+func (s *CreateTournamentBadRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleConflict) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentBadRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -214,16 +215,16 @@ func (s *CreateExampleConflict) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateExampleConflict = [3]string{
+var jsonFieldsNameOfCreateTournamentBadRequest = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes CreateExampleConflict from json.
-func (s *CreateExampleConflict) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentBadRequest from json.
+func (s *CreateTournamentBadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleConflict to nil")
+		return errors.New("invalid: unable to decode CreateTournamentBadRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -256,7 +257,7 @@ func (s *CreateExampleConflict) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem CreateExampleConflictDetails
+				var elem CreateTournamentBadRequestDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -270,7 +271,7 @@ func (s *CreateExampleConflict) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleConflict")
+		return errors.Wrap(err, "decode CreateTournamentBadRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -287,8 +288,8 @@ func (s *CreateExampleConflict) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateExampleConflict) {
-					name = jsonFieldsNameOfCreateExampleConflict[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentBadRequest) {
+					name = jsonFieldsNameOfCreateTournamentBadRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -309,35 +310,35 @@ func (s *CreateExampleConflict) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleConflict) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentBadRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleConflict) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentBadRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleConflictDetails) Encode(e *jx.Encoder) {
+func (s *CreateTournamentBadRequestDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleConflictDetails) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfCreateExampleConflictDetails = [0]string{}
+var jsonFieldsNameOfCreateTournamentBadRequestDetails = [0]string{}
 
-// Decode decodes CreateExampleConflictDetails from json.
-func (s *CreateExampleConflictDetails) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentBadRequestDetails from json.
+func (s *CreateTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleConflictDetails to nil")
+		return errors.New("invalid: unable to decode CreateTournamentBadRequestDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -346,195 +347,34 @@ func (s *CreateExampleConflictDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleConflictDetails")
+		return errors.Wrap(err, "decode CreateTournamentBadRequestDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleConflictDetails) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleConflictDetails) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleRequest) Encode(e *jx.Encoder) {
+func (s *CreateTournamentConflict) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleRequest) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("name")
-		e.Str(s.Name)
-	}
-	{
-		e.FieldStart("description")
-		e.Str(s.Description)
-	}
-	{
-		if s.Tags != nil {
-			e.FieldStart("tags")
-			e.ArrStart()
-			for _, elem := range s.Tags {
-				e.Str(elem)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
-		if s.Priority.Set {
-			e.FieldStart("priority")
-			s.Priority.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfCreateExampleRequest = [4]string{
-	0: "name",
-	1: "description",
-	2: "tags",
-	3: "priority",
-}
-
-// Decode decodes CreateExampleRequest from json.
-func (s *CreateExampleRequest) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleRequest to nil")
-	}
-	var requiredBitSet [1]uint8
-	s.setDefaults()
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "name":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.Name = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"name\"")
-			}
-		case "description":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Description = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"description\"")
-			}
-		case "tags":
-			if err := func() error {
-				s.Tags = make([]string, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
-						return err
-					}
-					s.Tags = append(s.Tags, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"tags\"")
-			}
-		case "priority":
-			if err := func() error {
-				s.Priority.Reset()
-				if err := s.Priority.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"priority\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleRequest")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateExampleRequest) {
-					name = jsonFieldsNameOfCreateExampleRequest[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleRequest) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *CreateExampleTooManyRequests) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *CreateExampleTooManyRequests) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentConflict) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -551,16 +391,16 @@ func (s *CreateExampleTooManyRequests) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateExampleTooManyRequests = [3]string{
+var jsonFieldsNameOfCreateTournamentConflict = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes CreateExampleTooManyRequests from json.
-func (s *CreateExampleTooManyRequests) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentConflict from json.
+func (s *CreateTournamentConflict) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleTooManyRequests to nil")
+		return errors.New("invalid: unable to decode CreateTournamentConflict to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -593,7 +433,7 @@ func (s *CreateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem CreateExampleTooManyRequestsDetails
+				var elem CreateTournamentConflictDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -607,7 +447,7 @@ func (s *CreateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleTooManyRequests")
+		return errors.Wrap(err, "decode CreateTournamentConflict")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -624,8 +464,8 @@ func (s *CreateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateExampleTooManyRequests) {
-					name = jsonFieldsNameOfCreateExampleTooManyRequests[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentConflict) {
+					name = jsonFieldsNameOfCreateTournamentConflict[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -646,35 +486,35 @@ func (s *CreateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleTooManyRequests) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentConflict) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleTooManyRequests) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentConflict) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleTooManyRequestsDetails) Encode(e *jx.Encoder) {
+func (s *CreateTournamentConflictDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentConflictDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfCreateExampleTooManyRequestsDetails = [0]string{}
+var jsonFieldsNameOfCreateTournamentConflictDetails = [0]string{}
 
-// Decode decodes CreateExampleTooManyRequestsDetails from json.
-func (s *CreateExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentConflictDetails from json.
+func (s *CreateTournamentConflictDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleTooManyRequestsDetails to nil")
+		return errors.New("invalid: unable to decode CreateTournamentConflictDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -683,34 +523,34 @@ func (s *CreateExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleTooManyRequestsDetails")
+		return errors.Wrap(err, "decode CreateTournamentConflictDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentConflictDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentConflictDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleUnprocessableEntity) Encode(e *jx.Encoder) {
+func (s *CreateTournamentDef) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleUnprocessableEntity) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentDef) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -727,16 +567,16 @@ func (s *CreateExampleUnprocessableEntity) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateExampleUnprocessableEntity = [3]string{
+var jsonFieldsNameOfCreateTournamentDef = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes CreateExampleUnprocessableEntity from json.
-func (s *CreateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentDef from json.
+func (s *CreateTournamentDef) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleUnprocessableEntity to nil")
+		return errors.New("invalid: unable to decode CreateTournamentDef to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -769,7 +609,7 @@ func (s *CreateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem CreateExampleUnprocessableEntityDetails
+				var elem CreateTournamentDefDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -783,7 +623,7 @@ func (s *CreateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleUnprocessableEntity")
+		return errors.Wrap(err, "decode CreateTournamentDef")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -800,8 +640,8 @@ func (s *CreateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateExampleUnprocessableEntity) {
-					name = jsonFieldsNameOfCreateExampleUnprocessableEntity[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentDef) {
+					name = jsonFieldsNameOfCreateTournamentDef[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -822,35 +662,35 @@ func (s *CreateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleUnprocessableEntity) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentDef) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleUnprocessableEntity) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentDef) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *CreateExampleUnprocessableEntityDetails) Encode(e *jx.Encoder) {
+func (s *CreateTournamentDefDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *CreateExampleUnprocessableEntityDetails) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentDefDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfCreateExampleUnprocessableEntityDetails = [0]string{}
+var jsonFieldsNameOfCreateTournamentDefDetails = [0]string{}
 
-// Decode decodes CreateExampleUnprocessableEntityDetails from json.
-func (s *CreateExampleUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentDefDetails from json.
+func (s *CreateTournamentDefDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode CreateExampleUnprocessableEntityDetails to nil")
+		return errors.New("invalid: unable to decode CreateTournamentDefDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -859,918 +699,34 @@ func (s *CreateExampleUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode CreateExampleUnprocessableEntityDetails")
+		return errors.Wrap(err, "decode CreateTournamentDefDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *CreateExampleUnprocessableEntityDetails) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentDefDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *CreateExampleUnprocessableEntityDetails) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *DeleteExampleBadRequest) Encode(e *jx.Encoder) {
+func (s *CreateTournamentRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *DeleteExampleBadRequest) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDeleteExampleBadRequest = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes DeleteExampleBadRequest from json.
-func (s *DeleteExampleBadRequest) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleBadRequest to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem DeleteExampleBadRequestDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleBadRequest")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfDeleteExampleBadRequest) {
-					name = jsonFieldsNameOfDeleteExampleBadRequest[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleBadRequest) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleBadRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleBadRequestDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleBadRequestDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfDeleteExampleBadRequestDetails = [0]string{}
-
-// Decode decodes DeleteExampleBadRequestDetails from json.
-func (s *DeleteExampleBadRequestDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleBadRequestDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleBadRequestDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleBadRequestDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleBadRequestDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleConflict) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleConflict) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDeleteExampleConflict = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes DeleteExampleConflict from json.
-func (s *DeleteExampleConflict) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleConflict to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem DeleteExampleConflictDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleConflict")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfDeleteExampleConflict) {
-					name = jsonFieldsNameOfDeleteExampleConflict[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleConflict) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleConflict) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleConflictDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleConflictDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfDeleteExampleConflictDetails = [0]string{}
-
-// Decode decodes DeleteExampleConflictDetails from json.
-func (s *DeleteExampleConflictDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleConflictDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleConflictDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleConflictDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleConflictDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleNotFound) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleNotFound) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDeleteExampleNotFound = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes DeleteExampleNotFound from json.
-func (s *DeleteExampleNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleNotFound to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem DeleteExampleNotFoundDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleNotFound")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfDeleteExampleNotFound) {
-					name = jsonFieldsNameOfDeleteExampleNotFound[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleNotFoundDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleNotFoundDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfDeleteExampleNotFoundDetails = [0]string{}
-
-// Decode decodes DeleteExampleNotFoundDetails from json.
-func (s *DeleteExampleNotFoundDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleNotFoundDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleNotFoundDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleNotFoundDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleNotFoundDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleTooManyRequests) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleTooManyRequests) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDeleteExampleTooManyRequests = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes DeleteExampleTooManyRequests from json.
-func (s *DeleteExampleTooManyRequests) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleTooManyRequests to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem DeleteExampleTooManyRequestsDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleTooManyRequests")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfDeleteExampleTooManyRequests) {
-					name = jsonFieldsNameOfDeleteExampleTooManyRequests[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleTooManyRequests) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleTooManyRequests) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DeleteExampleTooManyRequestsDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DeleteExampleTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfDeleteExampleTooManyRequestsDetails = [0]string{}
-
-// Decode decodes DeleteExampleTooManyRequestsDetails from json.
-func (s *DeleteExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DeleteExampleTooManyRequestsDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode DeleteExampleTooManyRequestsDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DeleteExampleTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DeleteExampleTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ErrResp) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ErrResp) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfErrResp = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes ErrResp from json.
-func (s *ErrResp) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ErrResp to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem ErrRespDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ErrResp")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfErrResp) {
-					name = jsonFieldsNameOfErrResp[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ErrResp) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ErrResp) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ErrRespDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ErrRespDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfErrRespDetails = [0]string{}
-
-// Decode decodes ErrRespDetails from json.
-func (s *ErrRespDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ErrRespDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode ErrRespDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ErrRespDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ErrRespDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *Example) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *Example) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("id")
-		json.EncodeUUID(e, s.ID)
-	}
+func (s *CreateTournamentRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("name")
 		e.Str(s.Name)
@@ -1782,77 +738,89 @@ func (s *Example) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("created_at")
-		json.EncodeDateTime(e, s.CreatedAt)
+		e.FieldStart("game_mode")
+		s.GameMode.Encode(e)
 	}
 	{
-		if s.UpdatedAt.Set {
-			e.FieldStart("updated_at")
-			s.UpdatedAt.Encode(e, json.EncodeDateTime)
+		e.FieldStart("tournament_type")
+		s.TournamentType.Encode(e)
+	}
+	{
+		if s.TournamentDifficulty.Set {
+			e.FieldStart("tournament_difficulty")
+			s.TournamentDifficulty.Encode(e)
 		}
 	}
 	{
-		e.FieldStart("status")
-		s.Status.Encode(e)
+		if s.MaxParticipants.Set {
+			e.FieldStart("max_participants")
+			s.MaxParticipants.Encode(e)
+		}
 	}
 	{
-		if s.Tags != nil {
-			e.FieldStart("tags")
+		e.FieldStart("start_date")
+		json.EncodeDateTime(e, s.StartDate)
+	}
+	{
+		e.FieldStart("end_date")
+		json.EncodeDateTime(e, s.EndDate)
+	}
+	{
+		if s.Region.Set {
+			e.FieldStart("region")
+			s.Region.Encode(e)
+		}
+	}
+	{
+		if s.EntryFee.Set {
+			e.FieldStart("entry_fee")
+			s.EntryFee.Encode(e)
+		}
+	}
+	{
+		if s.PrizePool.Set {
+			e.FieldStart("prize_pool")
+			s.PrizePool.Encode(e)
+		}
+	}
+	{
+		if s.Objectives != nil {
+			e.FieldStart("objectives")
 			e.ArrStart()
-			for _, elem := range s.Tags {
-				e.Str(elem)
+			for _, elem := range s.Objectives {
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
 	}
-	{
-		e.FieldStart("is_active")
-		e.Bool(s.IsActive)
-	}
-	{
-		if s.Priority.Set {
-			e.FieldStart("priority")
-			s.Priority.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfExample = [9]string{
-	0: "id",
-	1: "name",
-	2: "description",
-	3: "created_at",
-	4: "updated_at",
-	5: "status",
-	6: "tags",
-	7: "is_active",
-	8: "priority",
+var jsonFieldsNameOfCreateTournamentRequest = [12]string{
+	0:  "name",
+	1:  "description",
+	2:  "game_mode",
+	3:  "tournament_type",
+	4:  "tournament_difficulty",
+	5:  "max_participants",
+	6:  "start_date",
+	7:  "end_date",
+	8:  "region",
+	9:  "entry_fee",
+	10: "prize_pool",
+	11: "objectives",
 }
 
-// Decode decodes Example from json.
-func (s *Example) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentRequest from json.
+func (s *CreateTournamentRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode Example to nil")
+		return errors.New("invalid: unable to decode CreateTournamentRequest to nil")
 	}
 	var requiredBitSet [2]uint8
-	s.setDefaults()
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.ID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"id\"")
-			}
 		case "name":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.Name = string(v)
@@ -1873,90 +841,128 @@ func (s *Example) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
-		case "created_at":
+		case "game_mode":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.GameMode.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"game_mode\"")
+			}
+		case "tournament_type":
 			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				if err := s.TournamentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_type\"")
+			}
+		case "tournament_difficulty":
+			if err := func() error {
+				s.TournamentDifficulty.Reset()
+				if err := s.TournamentDifficulty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_difficulty\"")
+			}
+		case "max_participants":
+			if err := func() error {
+				s.MaxParticipants.Reset()
+				if err := s.MaxParticipants.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"max_participants\"")
+			}
+		case "start_date":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
 				v, err := json.DecodeDateTime(d)
-				s.CreatedAt = v
+				s.StartDate = v
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"created_at\"")
+				return errors.Wrap(err, "decode field \"start_date\"")
 			}
-		case "updated_at":
+		case "end_date":
+			requiredBitSet[0] |= 1 << 7
 			if err := func() error {
-				s.UpdatedAt.Reset()
-				if err := s.UpdatedAt.Decode(d, json.DecodeDateTime); err != nil {
+				v, err := json.DecodeDateTime(d)
+				s.EndDate = v
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"updated_at\"")
+				return errors.Wrap(err, "decode field \"end_date\"")
 			}
-		case "status":
-			requiredBitSet[0] |= 1 << 5
+		case "region":
 			if err := func() error {
-				if err := s.Status.Decode(d); err != nil {
+				s.Region.Reset()
+				if err := s.Region.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
+				return errors.Wrap(err, "decode field \"region\"")
 			}
-		case "tags":
+		case "entry_fee":
 			if err := func() error {
-				s.Tags = make([]string, 0)
+				s.EntryFee.Reset()
+				if err := s.EntryFee.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"entry_fee\"")
+			}
+		case "prize_pool":
+			if err := func() error {
+				s.PrizePool.Reset()
+				if err := s.PrizePool.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"prize_pool\"")
+			}
+		case "objectives":
+			if err := func() error {
+				s.Objectives = make([]TournamentObjective, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem TournamentObjective
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.Tags = append(s.Tags, elem)
+					s.Objectives = append(s.Objectives, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"tags\"")
-			}
-		case "is_active":
-			requiredBitSet[0] |= 1 << 7
-			if err := func() error {
-				v, err := d.Bool()
-				s.IsActive = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"is_active\"")
-			}
-		case "priority":
-			if err := func() error {
-				s.Priority.Reset()
-				if err := s.Priority.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"priority\"")
+				return errors.Wrap(err, "decode field \"objectives\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode Example")
+		return errors.Wrap(err, "decode CreateTournamentRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b10101011,
+		0b11001101,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -1969,8 +975,8 @@ func (s *Example) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExample) {
-					name = jsonFieldsNameOfExample[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentRequest) {
+					name = jsonFieldsNameOfCreateTournamentRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -1991,27 +997,165 @@ func (s *Example) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *Example) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Example) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTournamentRequestGameMode as json.
+func (s CreateTournamentRequestGameMode) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes CreateTournamentRequestGameMode from json.
+func (s *CreateTournamentRequestGameMode) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTournamentRequestGameMode to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch CreateTournamentRequestGameMode(v) {
+	case CreateTournamentRequestGameModeElimination:
+		*s = CreateTournamentRequestGameModeElimination
+	case CreateTournamentRequestGameModeRoundRobin:
+		*s = CreateTournamentRequestGameModeRoundRobin
+	case CreateTournamentRequestGameModeSwissSystem:
+		*s = CreateTournamentRequestGameModeSwissSystem
+	case CreateTournamentRequestGameModeSingleElimination:
+		*s = CreateTournamentRequestGameModeSingleElimination
+	case CreateTournamentRequestGameModeDoubleElimination:
+		*s = CreateTournamentRequestGameModeDoubleElimination
+	default:
+		*s = CreateTournamentRequestGameMode(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s CreateTournamentRequestGameMode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTournamentRequestGameMode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTournamentRequestTournamentDifficulty as json.
+func (s CreateTournamentRequestTournamentDifficulty) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes CreateTournamentRequestTournamentDifficulty from json.
+func (s *CreateTournamentRequestTournamentDifficulty) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTournamentRequestTournamentDifficulty to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch CreateTournamentRequestTournamentDifficulty(v) {
+	case CreateTournamentRequestTournamentDifficultyBeginner:
+		*s = CreateTournamentRequestTournamentDifficultyBeginner
+	case CreateTournamentRequestTournamentDifficultyIntermediate:
+		*s = CreateTournamentRequestTournamentDifficultyIntermediate
+	case CreateTournamentRequestTournamentDifficultyAdvanced:
+		*s = CreateTournamentRequestTournamentDifficultyAdvanced
+	case CreateTournamentRequestTournamentDifficultyExpert:
+		*s = CreateTournamentRequestTournamentDifficultyExpert
+	case CreateTournamentRequestTournamentDifficultyMaster:
+		*s = CreateTournamentRequestTournamentDifficultyMaster
+	default:
+		*s = CreateTournamentRequestTournamentDifficulty(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s CreateTournamentRequestTournamentDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTournamentRequestTournamentDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTournamentRequestTournamentType as json.
+func (s CreateTournamentRequestTournamentType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes CreateTournamentRequestTournamentType from json.
+func (s *CreateTournamentRequestTournamentType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTournamentRequestTournamentType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch CreateTournamentRequestTournamentType(v) {
+	case CreateTournamentRequestTournamentTypeRanked:
+		*s = CreateTournamentRequestTournamentTypeRanked
+	case CreateTournamentRequestTournamentTypeCasual:
+		*s = CreateTournamentRequestTournamentTypeCasual
+	case CreateTournamentRequestTournamentTypeChampionship:
+		*s = CreateTournamentRequestTournamentTypeChampionship
+	case CreateTournamentRequestTournamentTypeSeasonal:
+		*s = CreateTournamentRequestTournamentTypeSeasonal
+	case CreateTournamentRequestTournamentTypeSpecialEvent:
+		*s = CreateTournamentRequestTournamentTypeSpecialEvent
+	default:
+		*s = CreateTournamentRequestTournamentType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s CreateTournamentRequestTournamentType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTournamentRequestTournamentType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequest) Encode(e *jx.Encoder) {
+func (s *CreateTournamentTooManyRequests) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckBadRequest) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -2028,16 +1172,16 @@ func (s *ExampleDomainBatchHealthCheckBadRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckBadRequest = [3]string{
+var jsonFieldsNameOfCreateTournamentTooManyRequests = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes ExampleDomainBatchHealthCheckBadRequest from json.
-func (s *ExampleDomainBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentTooManyRequests from json.
+func (s *CreateTournamentTooManyRequests) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckBadRequest to nil")
+		return errors.New("invalid: unable to decode CreateTournamentTooManyRequests to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -2070,7 +1214,7 @@ func (s *ExampleDomainBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem ExampleDomainBatchHealthCheckBadRequestDetails
+				var elem CreateTournamentTooManyRequestsDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -2084,7 +1228,7 @@ func (s *ExampleDomainBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckBadRequest")
+		return errors.Wrap(err, "decode CreateTournamentTooManyRequests")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2101,8 +1245,8 @@ func (s *ExampleDomainBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleDomainBatchHealthCheckBadRequest) {
-					name = jsonFieldsNameOfExampleDomainBatchHealthCheckBadRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentTooManyRequests) {
+					name = jsonFieldsNameOfCreateTournamentTooManyRequests[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2123,35 +1267,35 @@ func (s *ExampleDomainBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequest) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequest) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequestDetails) Encode(e *jx.Encoder) {
+func (s *CreateTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckBadRequestDetails) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckBadRequestDetails = [0]string{}
+var jsonFieldsNameOfCreateTournamentTooManyRequestsDetails = [0]string{}
 
-// Decode decodes ExampleDomainBatchHealthCheckBadRequestDetails from json.
-func (s *ExampleDomainBatchHealthCheckBadRequestDetails) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentTooManyRequestsDetails from json.
+func (s *CreateTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckBadRequestDetails to nil")
+		return errors.New("invalid: unable to decode CreateTournamentTooManyRequestsDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -2160,102 +1304,107 @@ func (s *ExampleDomainBatchHealthCheckBadRequestDetails) Decode(d *jx.Decoder) e
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckBadRequestDetails")
+		return errors.Wrap(err, "decode CreateTournamentTooManyRequestsDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequestDetails) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckBadRequestDetails) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckOK) Encode(e *jx.Encoder) {
+func (s *CreateTournamentUnprocessableEntity) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckOK) encodeFields(e *jx.Encoder) {
+func (s *CreateTournamentUnprocessableEntity) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("results")
-		e.ArrStart()
-		for _, elem := range s.Results {
-			if len(elem) != 0 {
-				e.Raw(elem)
-			}
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
 		}
-		e.ArrEnd()
-	}
-	{
-		e.FieldStart("total_time_ms")
-		e.Int(s.TotalTimeMs)
 	}
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckOK = [2]string{
-	0: "results",
-	1: "total_time_ms",
+var jsonFieldsNameOfCreateTournamentUnprocessableEntity = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
 }
 
-// Decode decodes ExampleDomainBatchHealthCheckOK from json.
-func (s *ExampleDomainBatchHealthCheckOK) Decode(d *jx.Decoder) error {
+// Decode decodes CreateTournamentUnprocessableEntity from json.
+func (s *CreateTournamentUnprocessableEntity) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckOK to nil")
+		return errors.New("invalid: unable to decode CreateTournamentUnprocessableEntity to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "results":
+		case "code":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Results = make([]jx.Raw, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem jx.Raw
-					v, err := d.RawAppend(nil)
-					elem = jx.Raw(v)
-					if err != nil {
-						return err
-					}
-					s.Results = append(s.Results, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"results\"")
-			}
-		case "total_time_ms":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Int()
-				s.TotalTimeMs = int(v)
+				v, err := d.Int32()
+				s.Code = int32(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total_time_ms\"")
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem CreateTournamentUnprocessableEntityDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckOK")
+		return errors.Wrap(err, "decode CreateTournamentUnprocessableEntity")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2272,8 +1421,8 @@ func (s *ExampleDomainBatchHealthCheckOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleDomainBatchHealthCheckOK) {
-					name = jsonFieldsNameOfExampleDomainBatchHealthCheckOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateTournamentUnprocessableEntity) {
+					name = jsonFieldsNameOfCreateTournamentUnprocessableEntity[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2294,74 +1443,5218 @@ func (s *ExampleDomainBatchHealthCheckOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckOK) MarshalJSON() ([]byte, error) {
+func (s *CreateTournamentUnprocessableEntity) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckOK) UnmarshalJSON(data []byte) error {
+func (s *CreateTournamentUnprocessableEntity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckReq) Encode(e *jx.Encoder) {
+func (s *CreateTournamentUnprocessableEntityDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckReq) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("services")
-		e.ArrStart()
-		for _, elem := range s.Services {
-			elem.Encode(e)
+func (s *CreateTournamentUnprocessableEntityDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfCreateTournamentUnprocessableEntityDetails = [0]string{}
+
+// Decode decodes CreateTournamentUnprocessableEntityDetails from json.
+func (s *CreateTournamentUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTournamentUnprocessableEntityDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
 		}
-		e.ArrEnd()
+	}); err != nil {
+		return errors.Wrap(err, "decode CreateTournamentUnprocessableEntityDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CreateTournamentUnprocessableEntityDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTournamentUnprocessableEntityDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckReq = [1]string{
-	0: "services",
+var jsonFieldsNameOfDeleteTournamentBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
 }
 
-// Decode decodes ExampleDomainBatchHealthCheckReq from json.
-func (s *ExampleDomainBatchHealthCheckReq) Decode(d *jx.Decoder) error {
+// Decode decodes DeleteTournamentBadRequest from json.
+func (s *DeleteTournamentBadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckReq to nil")
+		return errors.New("invalid: unable to decode DeleteTournamentBadRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "services":
+		case "code":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Services = make([]ExampleDomainBatchHealthCheckReqServicesItem, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem ExampleDomainBatchHealthCheckReqServicesItem
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.Services = append(s.Services, elem)
-					return nil
-				}); err != nil {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"services\"")
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem DeleteTournamentBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckReq")
+		return errors.Wrap(err, "decode DeleteTournamentBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteTournamentBadRequest) {
+					name = jsonFieldsNameOfDeleteTournamentBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteTournamentBadRequestDetails = [0]string{}
+
+// Decode decodes DeleteTournamentBadRequestDetails from json.
+func (s *DeleteTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentConflict) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentConflict) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDeleteTournamentConflict = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes DeleteTournamentConflict from json.
+func (s *DeleteTournamentConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentConflict to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem DeleteTournamentConflictDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentConflict")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteTournamentConflict) {
+					name = jsonFieldsNameOfDeleteTournamentConflict[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentConflictDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentConflictDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteTournamentConflictDetails = [0]string{}
+
+// Decode decodes DeleteTournamentConflictDetails from json.
+func (s *DeleteTournamentConflictDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentConflictDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentConflictDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentConflictDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentConflictDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDeleteTournamentDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes DeleteTournamentDef from json.
+func (s *DeleteTournamentDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem DeleteTournamentDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteTournamentDef) {
+					name = jsonFieldsNameOfDeleteTournamentDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteTournamentDefDetails = [0]string{}
+
+// Decode decodes DeleteTournamentDefDetails from json.
+func (s *DeleteTournamentDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDeleteTournamentNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes DeleteTournamentNotFound from json.
+func (s *DeleteTournamentNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem DeleteTournamentNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteTournamentNotFound) {
+					name = jsonFieldsNameOfDeleteTournamentNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteTournamentNotFoundDetails = [0]string{}
+
+// Decode decodes DeleteTournamentNotFoundDetails from json.
+func (s *DeleteTournamentNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDeleteTournamentTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes DeleteTournamentTooManyRequests from json.
+func (s *DeleteTournamentTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem DeleteTournamentTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteTournamentTooManyRequests) {
+					name = jsonFieldsNameOfDeleteTournamentTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfDeleteTournamentTooManyRequestsDetails = [0]string{}
+
+// Decode decodes DeleteTournamentTooManyRequestsDetails from json.
+func (s *DeleteTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteTournamentTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteTournamentTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateBracketRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateBracketRequest) encodeFields(e *jx.Encoder) {
+	{
+		if s.SeedingAlgorithm.Set {
+			e.FieldStart("seeding_algorithm")
+			s.SeedingAlgorithm.Encode(e)
+		}
+	}
+	{
+		if s.BracketType.Set {
+			e.FieldStart("bracket_type")
+			s.BracketType.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateBracketRequest = [2]string{
+	0: "seeding_algorithm",
+	1: "bracket_type",
+}
+
+// Decode decodes GenerateBracketRequest from json.
+func (s *GenerateBracketRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateBracketRequest to nil")
+	}
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "seeding_algorithm":
+			if err := func() error {
+				s.SeedingAlgorithm.Reset()
+				if err := s.SeedingAlgorithm.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"seeding_algorithm\"")
+			}
+		case "bracket_type":
+			if err := func() error {
+				s.BracketType.Reset()
+				if err := s.BracketType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bracket_type\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateBracketRequest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateBracketRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateBracketRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GenerateBracketRequestBracketType as json.
+func (s GenerateBracketRequestBracketType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GenerateBracketRequestBracketType from json.
+func (s *GenerateBracketRequestBracketType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateBracketRequestBracketType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GenerateBracketRequestBracketType(v) {
+	case GenerateBracketRequestBracketTypeSingleElimination:
+		*s = GenerateBracketRequestBracketTypeSingleElimination
+	case GenerateBracketRequestBracketTypeDoubleElimination:
+		*s = GenerateBracketRequestBracketTypeDoubleElimination
+	case GenerateBracketRequestBracketTypeRoundRobin:
+		*s = GenerateBracketRequestBracketTypeRoundRobin
+	default:
+		*s = GenerateBracketRequestBracketType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GenerateBracketRequestBracketType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateBracketRequestBracketType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GenerateBracketRequestSeedingAlgorithm as json.
+func (s GenerateBracketRequestSeedingAlgorithm) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GenerateBracketRequestSeedingAlgorithm from json.
+func (s *GenerateBracketRequestSeedingAlgorithm) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateBracketRequestSeedingAlgorithm to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GenerateBracketRequestSeedingAlgorithm(v) {
+	case GenerateBracketRequestSeedingAlgorithmRandom:
+		*s = GenerateBracketRequestSeedingAlgorithmRandom
+	case GenerateBracketRequestSeedingAlgorithmSkillBased:
+		*s = GenerateBracketRequestSeedingAlgorithmSkillBased
+	case GenerateBracketRequestSeedingAlgorithmManual:
+		*s = GenerateBracketRequestSeedingAlgorithmManual
+	default:
+		*s = GenerateBracketRequestSeedingAlgorithm(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GenerateBracketRequestSeedingAlgorithm) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateBracketRequestSeedingAlgorithm) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GenerateTournamentBracketBadRequest from json.
+func (s *GenerateTournamentBracketBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GenerateTournamentBracketBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGenerateTournamentBracketBadRequest) {
+					name = jsonFieldsNameOfGenerateTournamentBracketBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketBadRequestDetails = [0]string{}
+
+// Decode decodes GenerateTournamentBracketBadRequestDetails from json.
+func (s *GenerateTournamentBracketBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketConflict) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketConflict) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketConflict = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GenerateTournamentBracketConflict from json.
+func (s *GenerateTournamentBracketConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketConflict to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GenerateTournamentBracketConflictDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketConflict")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGenerateTournamentBracketConflict) {
+					name = jsonFieldsNameOfGenerateTournamentBracketConflict[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketConflictDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketConflictDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketConflictDetails = [0]string{}
+
+// Decode decodes GenerateTournamentBracketConflictDetails from json.
+func (s *GenerateTournamentBracketConflictDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketConflictDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketConflictDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketConflictDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketConflictDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GenerateTournamentBracketDef from json.
+func (s *GenerateTournamentBracketDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GenerateTournamentBracketDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGenerateTournamentBracketDef) {
+					name = jsonFieldsNameOfGenerateTournamentBracketDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketDefDetails = [0]string{}
+
+// Decode decodes GenerateTournamentBracketDefDetails from json.
+func (s *GenerateTournamentBracketDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GenerateTournamentBracketNotFound from json.
+func (s *GenerateTournamentBracketNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GenerateTournamentBracketNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGenerateTournamentBracketNotFound) {
+					name = jsonFieldsNameOfGenerateTournamentBracketNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketNotFoundDetails = [0]string{}
+
+// Decode decodes GenerateTournamentBracketNotFoundDetails from json.
+func (s *GenerateTournamentBracketNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GenerateTournamentBracketTooManyRequests from json.
+func (s *GenerateTournamentBracketTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GenerateTournamentBracketTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGenerateTournamentBracketTooManyRequests) {
+					name = jsonFieldsNameOfGenerateTournamentBracketTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GenerateTournamentBracketTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GenerateTournamentBracketTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGenerateTournamentBracketTooManyRequestsDetails = [0]string{}
+
+// Decode decodes GenerateTournamentBracketTooManyRequestsDetails from json.
+func (s *GenerateTournamentBracketTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GenerateTournamentBracketTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GenerateTournamentBracketTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GenerateTournamentBracketTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GenerateTournamentBracketTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentBadRequest from json.
+func (s *GetTournamentBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentBadRequest) {
+					name = jsonFieldsNameOfGetTournamentBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentBadRequestDetails = [0]string{}
+
+// Decode decodes GetTournamentBadRequestDetails from json.
+func (s *GetTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentBracketDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentBracketDef from json.
+func (s *GetTournamentBracketDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentBracketDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentBracketDef) {
+					name = jsonFieldsNameOfGetTournamentBracketDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentBracketDefDetails = [0]string{}
+
+// Decode decodes GetTournamentBracketDefDetails from json.
+func (s *GetTournamentBracketDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentBracketNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentBracketNotFound from json.
+func (s *GetTournamentBracketNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentBracketNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentBracketNotFound) {
+					name = jsonFieldsNameOfGetTournamentBracketNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentBracketNotFoundDetails = [0]string{}
+
+// Decode decodes GetTournamentBracketNotFoundDetails from json.
+func (s *GetTournamentBracketNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentBracketTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentBracketTooManyRequests from json.
+func (s *GetTournamentBracketTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentBracketTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentBracketTooManyRequests) {
+					name = jsonFieldsNameOfGetTournamentBracketTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentBracketTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentBracketTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentBracketTooManyRequestsDetails = [0]string{}
+
+// Decode decodes GetTournamentBracketTooManyRequestsDetails from json.
+func (s *GetTournamentBracketTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentBracketTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentBracketTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentBracketTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentBracketTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentDef from json.
+func (s *GetTournamentDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentDef) {
+					name = jsonFieldsNameOfGetTournamentDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentDefDetails = [0]string{}
+
+// Decode decodes GetTournamentDefDetails from json.
+func (s *GetTournamentDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentLeaderboardDef from json.
+func (s *GetTournamentLeaderboardDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentLeaderboardDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentLeaderboardDef) {
+					name = jsonFieldsNameOfGetTournamentLeaderboardDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardDefDetails = [0]string{}
+
+// Decode decodes GetTournamentLeaderboardDefDetails from json.
+func (s *GetTournamentLeaderboardDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentLeaderboardNotFound from json.
+func (s *GetTournamentLeaderboardNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentLeaderboardNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentLeaderboardNotFound) {
+					name = jsonFieldsNameOfGetTournamentLeaderboardNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardNotFoundDetails = [0]string{}
+
+// Decode decodes GetTournamentLeaderboardNotFoundDetails from json.
+func (s *GetTournamentLeaderboardNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentLeaderboardTooManyRequests from json.
+func (s *GetTournamentLeaderboardTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentLeaderboardTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentLeaderboardTooManyRequests) {
+					name = jsonFieldsNameOfGetTournamentLeaderboardTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentLeaderboardTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentLeaderboardTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentLeaderboardTooManyRequestsDetails = [0]string{}
+
+// Decode decodes GetTournamentLeaderboardTooManyRequestsDetails from json.
+func (s *GetTournamentLeaderboardTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentLeaderboardTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentLeaderboardTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentLeaderboardTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentLeaderboardTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentNotFound from json.
+func (s *GetTournamentNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentNotFound) {
+					name = jsonFieldsNameOfGetTournamentNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentNotFoundDetails = [0]string{}
+
+// Decode decodes GetTournamentNotFoundDetails from json.
+func (s *GetTournamentNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentSpectatorsDef from json.
+func (s *GetTournamentSpectatorsDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentSpectatorsDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentSpectatorsDef) {
+					name = jsonFieldsNameOfGetTournamentSpectatorsDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsDefDetails = [0]string{}
+
+// Decode decodes GetTournamentSpectatorsDefDetails from json.
+func (s *GetTournamentSpectatorsDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentSpectatorsNotFound from json.
+func (s *GetTournamentSpectatorsNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentSpectatorsNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentSpectatorsNotFound) {
+					name = jsonFieldsNameOfGetTournamentSpectatorsNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsNotFoundDetails = [0]string{}
+
+// Decode decodes GetTournamentSpectatorsNotFoundDetails from json.
+func (s *GetTournamentSpectatorsNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentSpectatorsTooManyRequests from json.
+func (s *GetTournamentSpectatorsTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentSpectatorsTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentSpectatorsTooManyRequests) {
+					name = jsonFieldsNameOfGetTournamentSpectatorsTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentSpectatorsTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentSpectatorsTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentSpectatorsTooManyRequestsDetails = [0]string{}
+
+// Decode decodes GetTournamentSpectatorsTooManyRequestsDetails from json.
+func (s *GetTournamentSpectatorsTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentSpectatorsTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentSpectatorsTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentSpectatorsTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentSpectatorsTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTournamentTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes GetTournamentTooManyRequests from json.
+func (s *GetTournamentTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem GetTournamentTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTournamentTooManyRequests) {
+					name = jsonFieldsNameOfGetTournamentTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfGetTournamentTooManyRequestsDetails = [0]string{}
+
+// Decode decodes GetTournamentTooManyRequestsDetails from json.
+func (s *GetTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTournamentTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTournamentTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *InternalServerError) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *InternalServerError) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfInternalServerError = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes InternalServerError from json.
+func (s *InternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode InternalServerError to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem InternalServerErrorDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode InternalServerError")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfInternalServerError) {
+					name = jsonFieldsNameOfInternalServerError[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *InternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *InternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *InternalServerErrorDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *InternalServerErrorDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfInternalServerErrorDetails = [0]string{}
+
+// Decode decodes InternalServerErrorDetails from json.
+func (s *InternalServerErrorDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode InternalServerErrorDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode InternalServerErrorDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *InternalServerErrorDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *InternalServerErrorDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfJoinTournamentBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes JoinTournamentBadRequest from json.
+func (s *JoinTournamentBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem JoinTournamentBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentBadRequest) {
+					name = jsonFieldsNameOfJoinTournamentBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfJoinTournamentBadRequestDetails = [0]string{}
+
+// Decode decodes JoinTournamentBadRequestDetails from json.
+func (s *JoinTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentConflict) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentConflict) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfJoinTournamentConflict = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes JoinTournamentConflict from json.
+func (s *JoinTournamentConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentConflict to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem JoinTournamentConflictDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentConflict")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentConflict) {
+					name = jsonFieldsNameOfJoinTournamentConflict[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentConflictDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentConflictDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfJoinTournamentConflictDetails = [0]string{}
+
+// Decode decodes JoinTournamentConflictDetails from json.
+func (s *JoinTournamentConflictDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentConflictDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentConflictDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentConflictDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentConflictDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfJoinTournamentDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes JoinTournamentDef from json.
+func (s *JoinTournamentDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem JoinTournamentDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentDef) {
+					name = jsonFieldsNameOfJoinTournamentDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfJoinTournamentDefDetails = [0]string{}
+
+// Decode decodes JoinTournamentDefDetails from json.
+func (s *JoinTournamentDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfJoinTournamentNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes JoinTournamentNotFound from json.
+func (s *JoinTournamentNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem JoinTournamentNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentNotFound) {
+					name = jsonFieldsNameOfJoinTournamentNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfJoinTournamentNotFoundDetails = [0]string{}
+
+// Decode decodes JoinTournamentNotFoundDetails from json.
+func (s *JoinTournamentNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *JoinTournamentNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *JoinTournamentNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *JoinTournamentRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *JoinTournamentRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("tournament_id")
+		json.EncodeUUID(e, s.TournamentID)
+	}
+	{
+		if s.Seed.Set {
+			e.FieldStart("seed")
+			s.Seed.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfJoinTournamentRequest = [2]string{
+	0: "tournament_id",
+	1: "seed",
+}
+
+// Decode decodes JoinTournamentRequest from json.
+func (s *JoinTournamentRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode JoinTournamentRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "tournament_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TournamentID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_id\"")
+			}
+		case "seed":
+			if err := func() error {
+				s.Seed.Reset()
+				if err := s.Seed.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"seed\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode JoinTournamentRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2378,8 +6671,8 @@ func (s *ExampleDomainBatchHealthCheckReq) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleDomainBatchHealthCheckReq) {
-					name = jsonFieldsNameOfExampleDomainBatchHealthCheckReq[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentRequest) {
+					name = jsonFieldsNameOfJoinTournamentRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2400,69 +6693,27 @@ func (s *ExampleDomainBatchHealthCheckReq) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckReq) MarshalJSON() ([]byte, error) {
+func (s *JoinTournamentRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckReq) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ExampleDomainBatchHealthCheckReqServicesItem as json.
-func (s ExampleDomainBatchHealthCheckReqServicesItem) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ExampleDomainBatchHealthCheckReqServicesItem from json.
-func (s *ExampleDomainBatchHealthCheckReqServicesItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckReqServicesItem to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ExampleDomainBatchHealthCheckReqServicesItem(v) {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemExampleDomain
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSystemDomain
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain
-	default:
-		*s = ExampleDomainBatchHealthCheckReqServicesItem(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckReqServicesItem) UnmarshalJSON(data []byte) error {
+func (s *JoinTournamentRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) Encode(e *jx.Encoder) {
+func (s *JoinTournamentTooManyRequests) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) encodeFields(e *jx.Encoder) {
+func (s *JoinTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -2479,16 +6730,16 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequests) encodeFields(e *jx.Encode
 	}
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckTooManyRequests = [3]string{
+var jsonFieldsNameOfJoinTournamentTooManyRequests = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes ExampleDomainBatchHealthCheckTooManyRequests from json.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) error {
+// Decode decodes JoinTournamentTooManyRequests from json.
+func (s *JoinTournamentTooManyRequests) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckTooManyRequests to nil")
+		return errors.New("invalid: unable to decode JoinTournamentTooManyRequests to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -2521,7 +6772,7 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) err
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem ExampleDomainBatchHealthCheckTooManyRequestsDetails
+				var elem JoinTournamentTooManyRequestsDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -2535,7 +6786,7 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) err
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckTooManyRequests")
+		return errors.Wrap(err, "decode JoinTournamentTooManyRequests")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2552,8 +6803,8 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) err
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleDomainBatchHealthCheckTooManyRequests) {
-					name = jsonFieldsNameOfExampleDomainBatchHealthCheckTooManyRequests[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfJoinTournamentTooManyRequests) {
+					name = jsonFieldsNameOfJoinTournamentTooManyRequests[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2574,35 +6825,35 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) err
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) MarshalJSON() ([]byte, error) {
+func (s *JoinTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) UnmarshalJSON(data []byte) error {
+func (s *JoinTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) Encode(e *jx.Encoder) {
+func (s *JoinTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+func (s *JoinTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfExampleDomainBatchHealthCheckTooManyRequestsDetails = [0]string{}
+var jsonFieldsNameOfJoinTournamentTooManyRequestsDetails = [0]string{}
 
-// Decode decodes ExampleDomainBatchHealthCheckTooManyRequestsDetails from json.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+// Decode decodes JoinTournamentTooManyRequestsDetails from json.
+func (s *JoinTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleDomainBatchHealthCheckTooManyRequestsDetails to nil")
+		return errors.New("invalid: unable to decode JoinTournamentTooManyRequestsDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -2611,154 +6862,112 @@ func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) Decode(d *jx.Decod
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleDomainBatchHealthCheckTooManyRequestsDetails")
+		return errors.Wrap(err, "decode JoinTournamentTooManyRequestsDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+func (s *JoinTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+func (s *JoinTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleListResponse) Encode(e *jx.Encoder) {
+func (s *LeaveTournamentBadRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleListResponse) encodeFields(e *jx.Encoder) {
+func (s *LeaveTournamentBadRequest) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("examples")
-		e.ArrStart()
-		for _, elem := range s.Examples {
-			elem.Encode(e)
-		}
-		e.ArrEnd()
+		e.FieldStart("code")
+		e.Int32(s.Code)
 	}
 	{
-		e.FieldStart("has_more")
-		e.Bool(s.HasMore)
+		e.FieldStart("message")
+		e.Str(s.Message)
 	}
 	{
-		e.FieldStart("total_count")
-		e.Int(s.TotalCount)
-	}
-	{
-		if s.Page.Set {
-			e.FieldStart("page")
-			s.Page.Encode(e)
-		}
-	}
-	{
-		if s.Limit.Set {
-			e.FieldStart("limit")
-			s.Limit.Encode(e)
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
 		}
 	}
 }
 
-var jsonFieldsNameOfExampleListResponse = [5]string{
-	0: "examples",
-	1: "has_more",
-	2: "total_count",
-	3: "page",
-	4: "limit",
+var jsonFieldsNameOfLeaveTournamentBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
 }
 
-// Decode decodes ExampleListResponse from json.
-func (s *ExampleListResponse) Decode(d *jx.Decoder) error {
+// Decode decodes LeaveTournamentBadRequest from json.
+func (s *LeaveTournamentBadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleListResponse to nil")
+		return errors.New("invalid: unable to decode LeaveTournamentBadRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "examples":
+		case "code":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Examples = make([]Example, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem Example
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.Examples = append(s.Examples, elem)
-					return nil
-				}); err != nil {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"examples\"")
+				return errors.Wrap(err, "decode field \"code\"")
 			}
-		case "has_more":
+		case "message":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Bool()
-				s.HasMore = bool(v)
+				v, err := d.Str()
+				s.Message = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"has_more\"")
+				return errors.Wrap(err, "decode field \"message\"")
 			}
-		case "total_count":
-			requiredBitSet[0] |= 1 << 2
+		case "details":
 			if err := func() error {
-				v, err := d.Int()
-				s.TotalCount = int(v)
-				if err != nil {
+				s.Details = nil
+				var elem LeaveTournamentBadRequestDetails
+				if err := elem.Decode(d); err != nil {
 					return err
 				}
+				s.Details = &elem
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total_count\"")
-			}
-		case "page":
-			if err := func() error {
-				s.Page.Reset()
-				if err := s.Page.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"page\"")
-			}
-		case "limit":
-			if err := func() error {
-				s.Limit.Reset()
-				if err := s.Limit.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"limit\"")
+				return errors.Wrap(err, "decode field \"details\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleListResponse")
+		return errors.Wrap(err, "decode LeaveTournamentBadRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2770,8 +6979,8 @@ func (s *ExampleListResponse) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleListResponse) {
-					name = jsonFieldsNameOfExampleListResponse[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfLeaveTournamentBadRequest) {
+					name = jsonFieldsNameOfLeaveTournamentBadRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2792,62 +7001,460 @@ func (s *ExampleListResponse) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleListResponse) MarshalJSON() ([]byte, error) {
+func (s *LeaveTournamentBadRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleListResponse) UnmarshalJSON(data []byte) error {
+func (s *LeaveTournamentBadRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *ExampleResponse) Encode(e *jx.Encoder) {
+func (s *LeaveTournamentBadRequestDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *ExampleResponse) encodeFields(e *jx.Encoder) {
+func (s *LeaveTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfLeaveTournamentBadRequestDetails = [0]string{}
+
+// Decode decodes LeaveTournamentBadRequestDetails from json.
+func (s *LeaveTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LeaveTournamentBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode LeaveTournamentBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LeaveTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LeaveTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LeaveTournamentDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LeaveTournamentDef) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("example")
-		s.Example.Encode(e)
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfExampleResponse = [1]string{
-	0: "example",
+var jsonFieldsNameOfLeaveTournamentDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
 }
 
-// Decode decodes ExampleResponse from json.
-func (s *ExampleResponse) Decode(d *jx.Decoder) error {
+// Decode decodes LeaveTournamentDef from json.
+func (s *LeaveTournamentDef) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ExampleResponse to nil")
+		return errors.New("invalid: unable to decode LeaveTournamentDef to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "example":
+		case "code":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				if err := s.Example.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"example\"")
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem LeaveTournamentDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode ExampleResponse")
+		return errors.Wrap(err, "decode LeaveTournamentDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfLeaveTournamentDef) {
+					name = jsonFieldsNameOfLeaveTournamentDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LeaveTournamentDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LeaveTournamentDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LeaveTournamentDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LeaveTournamentDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfLeaveTournamentDefDetails = [0]string{}
+
+// Decode decodes LeaveTournamentDefDetails from json.
+func (s *LeaveTournamentDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LeaveTournamentDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode LeaveTournamentDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LeaveTournamentDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LeaveTournamentDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LeaveTournamentNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LeaveTournamentNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfLeaveTournamentNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes LeaveTournamentNotFound from json.
+func (s *LeaveTournamentNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LeaveTournamentNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem LeaveTournamentNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode LeaveTournamentNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfLeaveTournamentNotFound) {
+					name = jsonFieldsNameOfLeaveTournamentNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LeaveTournamentNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LeaveTournamentNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LeaveTournamentNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LeaveTournamentNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfLeaveTournamentNotFoundDetails = [0]string{}
+
+// Decode decodes LeaveTournamentNotFoundDetails from json.
+func (s *LeaveTournamentNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LeaveTournamentNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode LeaveTournamentNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *LeaveTournamentNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *LeaveTournamentNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *LeaveTournamentRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *LeaveTournamentRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("tournament_id")
+		json.EncodeUUID(e, s.TournamentID)
+	}
+}
+
+var jsonFieldsNameOfLeaveTournamentRequest = [1]string{
+	0: "tournament_id",
+}
+
+// Decode decodes LeaveTournamentRequest from json.
+func (s *LeaveTournamentRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode LeaveTournamentRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "tournament_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TournamentID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_id\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode LeaveTournamentRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -2864,8 +7471,8 @@ func (s *ExampleResponse) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfExampleResponse) {
-					name = jsonFieldsNameOfExampleResponse[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfLeaveTournamentRequest) {
+					name = jsonFieldsNameOfLeaveTournamentRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -2886,71 +7493,27 @@ func (s *ExampleResponse) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *ExampleResponse) MarshalJSON() ([]byte, error) {
+func (s *LeaveTournamentRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleResponse) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ExampleStatus as json.
-func (s ExampleStatus) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ExampleStatus from json.
-func (s *ExampleStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ExampleStatus to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ExampleStatus(v) {
-	case ExampleStatusActive:
-		*s = ExampleStatusActive
-	case ExampleStatusInactive:
-		*s = ExampleStatusInactive
-	case ExampleStatusPending:
-		*s = ExampleStatusPending
-	case ExampleStatusArchived:
-		*s = ExampleStatusArchived
-	default:
-		*s = ExampleStatus(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ExampleStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ExampleStatus) UnmarshalJSON(data []byte) error {
+func (s *LeaveTournamentRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *GetExampleBadRequest) Encode(e *jx.Encoder) {
+func (s *LeaveTournamentTooManyRequests) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *GetExampleBadRequest) encodeFields(e *jx.Encoder) {
+func (s *LeaveTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -2967,16 +7530,16 @@ func (s *GetExampleBadRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfGetExampleBadRequest = [3]string{
+var jsonFieldsNameOfLeaveTournamentTooManyRequests = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes GetExampleBadRequest from json.
-func (s *GetExampleBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes LeaveTournamentTooManyRequests from json.
+func (s *LeaveTournamentTooManyRequests) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleBadRequest to nil")
+		return errors.New("invalid: unable to decode LeaveTournamentTooManyRequests to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -3009,7 +7572,7 @@ func (s *GetExampleBadRequest) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem GetExampleBadRequestDetails
+				var elem LeaveTournamentTooManyRequestsDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -3023,7 +7586,7 @@ func (s *GetExampleBadRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleBadRequest")
+		return errors.Wrap(err, "decode LeaveTournamentTooManyRequests")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -3040,8 +7603,8 @@ func (s *GetExampleBadRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfGetExampleBadRequest) {
-					name = jsonFieldsNameOfGetExampleBadRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfLeaveTournamentTooManyRequests) {
+					name = jsonFieldsNameOfLeaveTournamentTooManyRequests[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -3062,35 +7625,35 @@ func (s *GetExampleBadRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleBadRequest) MarshalJSON() ([]byte, error) {
+func (s *LeaveTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleBadRequest) UnmarshalJSON(data []byte) error {
+func (s *LeaveTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *GetExampleBadRequestDetails) Encode(e *jx.Encoder) {
+func (s *LeaveTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *GetExampleBadRequestDetails) encodeFields(e *jx.Encoder) {
+func (s *LeaveTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfGetExampleBadRequestDetails = [0]string{}
+var jsonFieldsNameOfLeaveTournamentTooManyRequestsDetails = [0]string{}
 
-// Decode decodes GetExampleBadRequestDetails from json.
-func (s *GetExampleBadRequestDetails) Decode(d *jx.Decoder) error {
+// Decode decodes LeaveTournamentTooManyRequestsDetails from json.
+func (s *LeaveTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleBadRequestDetails to nil")
+		return errors.New("invalid: unable to decode LeaveTournamentTooManyRequestsDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -3099,373 +7662,21 @@ func (s *GetExampleBadRequestDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleBadRequestDetails")
+		return errors.Wrap(err, "decode LeaveTournamentTooManyRequestsDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleBadRequestDetails) MarshalJSON() ([]byte, error) {
+func (s *LeaveTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleBadRequestDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *GetExampleNotFound) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *GetExampleNotFound) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfGetExampleNotFound = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes GetExampleNotFound from json.
-func (s *GetExampleNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleNotFound to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem GetExampleNotFoundDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleNotFound")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfGetExampleNotFound) {
-					name = jsonFieldsNameOfGetExampleNotFound[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *GetExampleNotFoundDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *GetExampleNotFoundDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfGetExampleNotFoundDetails = [0]string{}
-
-// Decode decodes GetExampleNotFoundDetails from json.
-func (s *GetExampleNotFoundDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleNotFoundDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleNotFoundDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleNotFoundDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleNotFoundDetails) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *GetExampleTooManyRequests) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *GetExampleTooManyRequests) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("code")
-		e.Int32(s.Code)
-	}
-	{
-		e.FieldStart("message")
-		e.Str(s.Message)
-	}
-	{
-		if s.Details != nil {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfGetExampleTooManyRequests = [3]string{
-	0: "code",
-	1: "message",
-	2: "details",
-}
-
-// Decode decodes GetExampleTooManyRequests from json.
-func (s *GetExampleTooManyRequests) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleTooManyRequests to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "code":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"code\"")
-			}
-		case "message":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Message = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details = nil
-				var elem GetExampleTooManyRequestsDetails
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Details = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleTooManyRequests")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfGetExampleTooManyRequests) {
-					name = jsonFieldsNameOfGetExampleTooManyRequests[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleTooManyRequests) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleTooManyRequests) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *GetExampleTooManyRequestsDetails) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *GetExampleTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfGetExampleTooManyRequestsDetails = [0]string{}
-
-// Decode decodes GetExampleTooManyRequestsDetails from json.
-func (s *GetExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode GetExampleTooManyRequestsDetails to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode GetExampleTooManyRequestsDetails")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *GetExampleTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *GetExampleTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+func (s *LeaveTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3642,6 +7853,182 @@ func (s *ListTournamentsBadRequestDetails) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ListTournamentsBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ListTournamentsDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ListTournamentsDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfListTournamentsDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes ListTournamentsDef from json.
+func (s *ListTournamentsDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListTournamentsDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem ListTournamentsDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ListTournamentsDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfListTournamentsDef) {
+					name = jsonFieldsNameOfListTournamentsDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListTournamentsDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListTournamentsDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ListTournamentsDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ListTournamentsDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfListTournamentsDefDetails = [0]string{}
+
+// Decode decodes ListTournamentsDefDetails from json.
+func (s *ListTournamentsDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListTournamentsDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode ListTournamentsDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListTournamentsDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListTournamentsDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3857,6 +8244,39 @@ func (s *OptBool) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes CreateTournamentRequestTournamentDifficulty as json.
+func (o OptCreateTournamentRequestTournamentDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes CreateTournamentRequestTournamentDifficulty from json.
+func (o *OptCreateTournamentRequestTournamentDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptCreateTournamentRequestTournamentDifficulty to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptCreateTournamentRequestTournamentDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptCreateTournamentRequestTournamentDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes time.Time as json.
 func (o OptDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
 	if !o.Set {
@@ -3892,6 +8312,140 @@ func (s *OptDateTime) UnmarshalJSON(data []byte) error {
 	return s.Decode(d, json.DecodeDateTime)
 }
 
+// Encode encodes float64 as json.
+func (o OptFloat64) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Float64(float64(o.Value))
+}
+
+// Decode decodes float64 from json.
+func (o *OptFloat64) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptFloat64 to nil")
+	}
+	o.Set = true
+	v, err := d.Float64()
+	if err != nil {
+		return err
+	}
+	o.Value = float64(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptFloat64) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptFloat64) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GenerateBracketRequest as json.
+func (o OptGenerateBracketRequest) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes GenerateBracketRequest from json.
+func (o *OptGenerateBracketRequest) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGenerateBracketRequest to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGenerateBracketRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGenerateBracketRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GenerateBracketRequestBracketType as json.
+func (o OptGenerateBracketRequestBracketType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes GenerateBracketRequestBracketType from json.
+func (o *OptGenerateBracketRequestBracketType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGenerateBracketRequestBracketType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGenerateBracketRequestBracketType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGenerateBracketRequestBracketType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GenerateBracketRequestSeedingAlgorithm as json.
+func (o OptGenerateBracketRequestSeedingAlgorithm) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes GenerateBracketRequestSeedingAlgorithm from json.
+func (o *OptGenerateBracketRequestSeedingAlgorithm) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGenerateBracketRequestSeedingAlgorithm to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGenerateBracketRequestSeedingAlgorithm) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGenerateBracketRequestSeedingAlgorithm) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes int as json.
 func (o OptInt) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -3923,6 +8477,142 @@ func (s OptInt) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptInt) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes int as json.
+func (o OptNilInt) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Int(int(o.Value))
+}
+
+// Decode decodes int from json.
+func (o *OptNilInt) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilInt to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v int
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Int()
+	if err != nil {
+		return err
+	}
+	o.Value = int(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilInt) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilInt) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes uuid.UUID as json.
+func (o OptNilUUID) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	json.EncodeUUID(e, o.Value)
+}
+
+// Decode decodes uuid.UUID from json.
+func (o *OptNilUUID) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilUUID to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v uuid.UUID
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := json.DecodeUUID(d)
+	if err != nil {
+		return err
+	}
+	o.Value = v
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilUUID) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilUUID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes RegisterTournamentScoreRequestMetadata as json.
+func (o OptRegisterTournamentScoreRequestMetadata) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes RegisterTournamentScoreRequestMetadata from json.
+func (o *OptRegisterTournamentScoreRequestMetadata) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptRegisterTournamentScoreRequestMetadata to nil")
+	}
+	o.Set = true
+	o.Value = make(RegisterTournamentScoreRequestMetadata)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptRegisterTournamentScoreRequestMetadata) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptRegisterTournamentScoreRequestMetadata) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3962,18 +8652,18 @@ func (s *OptString) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes UpdateExampleRequestStatus as json.
-func (o OptUpdateExampleRequestStatus) Encode(e *jx.Encoder) {
+// Encode encodes TournamentBracketRoundsItemMatchesItemStatus as json.
+func (o OptTournamentBracketRoundsItemMatchesItemStatus) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	e.Str(string(o.Value))
 }
 
-// Decode decodes UpdateExampleRequestStatus from json.
-func (o *OptUpdateExampleRequestStatus) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentBracketRoundsItemMatchesItemStatus from json.
+func (o *OptTournamentBracketRoundsItemMatchesItemStatus) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptUpdateExampleRequestStatus to nil")
+		return errors.New("invalid: unable to decode OptTournamentBracketRoundsItemMatchesItemStatus to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -3983,14 +8673,5204 @@ func (o *OptUpdateExampleRequestStatus) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptUpdateExampleRequestStatus) MarshalJSON() ([]byte, error) {
+func (s OptTournamentBracketRoundsItemMatchesItemStatus) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptUpdateExampleRequestStatus) UnmarshalJSON(data []byte) error {
+func (s *OptTournamentBracketRoundsItemMatchesItemStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentParticipantStatus as json.
+func (o OptTournamentParticipantStatus) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TournamentParticipantStatus from json.
+func (o *OptTournamentParticipantStatus) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentParticipantStatus to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentParticipantStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentParticipantStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentReward as json.
+func (o OptTournamentReward) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TournamentReward from json.
+func (o *OptTournamentReward) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentReward to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentReward) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentReward) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentScoreMetadata as json.
+func (o OptTournamentScoreMetadata) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes TournamentScoreMetadata from json.
+func (o *OptTournamentScoreMetadata) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentScoreMetadata to nil")
+	}
+	o.Set = true
+	o.Value = make(TournamentScoreMetadata)
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentScoreMetadata) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentScoreMetadata) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentSpectatorsResponseSpectatorsItemActivityStatus as json.
+func (o OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TournamentSpectatorsResponseSpectatorsItemActivityStatus from json.
+func (o *OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentSpectatorsResponseSpectatorsItemActivityStatus to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentSpectatorsResponseSpectatorsItemActivityStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentStatus as json.
+func (o OptTournamentStatus) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TournamentStatus from json.
+func (o *OptTournamentStatus) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentStatus to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentTournamentDifficulty as json.
+func (o OptTournamentTournamentDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TournamentTournamentDifficulty from json.
+func (o *OptTournamentTournamentDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentTournamentDifficulty to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentTournamentDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentTournamentDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentTournamentType as json.
+func (o OptTournamentTournamentType) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes TournamentTournamentType from json.
+func (o *OptTournamentTournamentType) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptTournamentTournamentType to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptTournamentTournamentType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptTournamentTournamentType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes uuid.UUID as json.
+func (o OptUUID) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	json.EncodeUUID(e, o.Value)
+}
+
+// Decode decodes uuid.UUID from json.
+func (o *OptUUID) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptUUID to nil")
+	}
+	o.Set = true
+	v, err := json.DecodeUUID(d)
+	if err != nil {
+		return err
+	}
+	o.Value = v
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptUUID) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptUUID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes UpdateTournamentRequestTournamentDifficulty as json.
+func (o OptUpdateTournamentRequestTournamentDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes UpdateTournamentRequestTournamentDifficulty from json.
+func (o *OptUpdateTournamentRequestTournamentDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptUpdateTournamentRequestTournamentDifficulty to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptUpdateTournamentRequestTournamentDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptUpdateTournamentRequestTournamentDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes RegisterTournamentScoreBadRequest from json.
+func (s *RegisterTournamentScoreBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem RegisterTournamentScoreBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreBadRequest) {
+					name = jsonFieldsNameOfRegisterTournamentScoreBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreBadRequestDetails = [0]string{}
+
+// Decode decodes RegisterTournamentScoreBadRequestDetails from json.
+func (s *RegisterTournamentScoreBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreConflict) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreConflict) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreConflict = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes RegisterTournamentScoreConflict from json.
+func (s *RegisterTournamentScoreConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreConflict to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem RegisterTournamentScoreConflictDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreConflict")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreConflict) {
+					name = jsonFieldsNameOfRegisterTournamentScoreConflict[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreConflictDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreConflictDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreConflictDetails = [0]string{}
+
+// Decode decodes RegisterTournamentScoreConflictDetails from json.
+func (s *RegisterTournamentScoreConflictDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreConflictDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreConflictDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreConflictDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreConflictDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes RegisterTournamentScoreDef from json.
+func (s *RegisterTournamentScoreDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem RegisterTournamentScoreDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreDef) {
+					name = jsonFieldsNameOfRegisterTournamentScoreDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreDefDetails = [0]string{}
+
+// Decode decodes RegisterTournamentScoreDefDetails from json.
+func (s *RegisterTournamentScoreDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes RegisterTournamentScoreNotFound from json.
+func (s *RegisterTournamentScoreNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem RegisterTournamentScoreNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreNotFound) {
+					name = jsonFieldsNameOfRegisterTournamentScoreNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreNotFoundDetails = [0]string{}
+
+// Decode decodes RegisterTournamentScoreNotFoundDetails from json.
+func (s *RegisterTournamentScoreNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("participant_id")
+		json.EncodeUUID(e, s.ParticipantID)
+	}
+	{
+		e.FieldStart("match_id")
+		json.EncodeUUID(e, s.MatchID)
+	}
+	{
+		e.FieldStart("score")
+		e.Int(s.Score)
+	}
+	{
+		if s.Rank.Set {
+			e.FieldStart("rank")
+			s.Rank.Encode(e)
+		}
+	}
+	{
+		if s.Metadata.Set {
+			e.FieldStart("metadata")
+			s.Metadata.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreRequest = [5]string{
+	0: "participant_id",
+	1: "match_id",
+	2: "score",
+	3: "rank",
+	4: "metadata",
+}
+
+// Decode decodes RegisterTournamentScoreRequest from json.
+func (s *RegisterTournamentScoreRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "participant_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ParticipantID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_id\"")
+			}
+		case "match_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.MatchID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"match_id\"")
+			}
+		case "score":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int()
+				s.Score = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"score\"")
+			}
+		case "rank":
+			if err := func() error {
+				s.Rank.Reset()
+				if err := s.Rank.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		case "metadata":
+			if err := func() error {
+				s.Metadata.Reset()
+				if err := s.Metadata.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"metadata\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreRequest) {
+					name = jsonFieldsNameOfRegisterTournamentScoreRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s RegisterTournamentScoreRequestMetadata) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s RegisterTournamentScoreRequestMetadata) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes RegisterTournamentScoreRequestMetadata from json.
+func (s *RegisterTournamentScoreRequestMetadata) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreRequestMetadata to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreRequestMetadata")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s RegisterTournamentScoreRequestMetadata) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreRequestMetadata) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes RegisterTournamentScoreTooManyRequests from json.
+func (s *RegisterTournamentScoreTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem RegisterTournamentScoreTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRegisterTournamentScoreTooManyRequests) {
+					name = jsonFieldsNameOfRegisterTournamentScoreTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RegisterTournamentScoreTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RegisterTournamentScoreTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfRegisterTournamentScoreTooManyRequestsDetails = [0]string{}
+
+// Decode decodes RegisterTournamentScoreTooManyRequestsDetails from json.
+func (s *RegisterTournamentScoreTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RegisterTournamentScoreTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode RegisterTournamentScoreTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RegisterTournamentScoreTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RegisterTournamentScoreTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *Tournament) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Tournament) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("created_at")
+		json.EncodeDateTime(e, s.CreatedAt)
+	}
+	{
+		if s.UpdatedAt.Set {
+			e.FieldStart("updated_at")
+			s.UpdatedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		e.FieldStart("game_mode")
+		s.GameMode.Encode(e)
+	}
+	{
+		if s.TournamentType.Set {
+			e.FieldStart("tournament_type")
+			s.TournamentType.Encode(e)
+		}
+	}
+	{
+		if s.TournamentDifficulty.Set {
+			e.FieldStart("tournament_difficulty")
+			s.TournamentDifficulty.Encode(e)
+		}
+	}
+	{
+		if s.MaxParticipants.Set {
+			e.FieldStart("max_participants")
+			s.MaxParticipants.Encode(e)
+		}
+	}
+	{
+		if s.CurrentParticipants.Set {
+			e.FieldStart("current_participants")
+			s.CurrentParticipants.Encode(e)
+		}
+	}
+	{
+		if s.StartDate.Set {
+			e.FieldStart("start_date")
+			s.StartDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.EndDate.Set {
+			e.FieldStart("end_date")
+			s.EndDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.Reward.Set {
+			e.FieldStart("reward")
+			s.Reward.Encode(e)
+		}
+	}
+	{
+		if s.Objectives != nil {
+			e.FieldStart("objectives")
+			e.ArrStart()
+			for _, elem := range s.Objectives {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Region.Set {
+			e.FieldStart("region")
+			s.Region.Encode(e)
+		}
+	}
+	{
+		if s.EntryFee.Set {
+			e.FieldStart("entry_fee")
+			s.EntryFee.Encode(e)
+		}
+	}
+	{
+		if s.PrizePool.Set {
+			e.FieldStart("prize_pool")
+			s.PrizePool.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournament = [18]string{
+	0:  "id",
+	1:  "name",
+	2:  "description",
+	3:  "created_at",
+	4:  "updated_at",
+	5:  "game_mode",
+	6:  "tournament_type",
+	7:  "tournament_difficulty",
+	8:  "max_participants",
+	9:  "current_participants",
+	10: "start_date",
+	11: "end_date",
+	12: "status",
+	13: "reward",
+	14: "objectives",
+	15: "region",
+	16: "entry_fee",
+	17: "prize_pool",
+}
+
+// Decode decodes Tournament from json.
+func (s *Tournament) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Tournament to nil")
+	}
+	var requiredBitSet [3]uint8
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "created_at":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.CreatedAt = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_at\"")
+			}
+		case "updated_at":
+			if err := func() error {
+				s.UpdatedAt.Reset()
+				if err := s.UpdatedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"updated_at\"")
+			}
+		case "game_mode":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				if err := s.GameMode.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"game_mode\"")
+			}
+		case "tournament_type":
+			if err := func() error {
+				s.TournamentType.Reset()
+				if err := s.TournamentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_type\"")
+			}
+		case "tournament_difficulty":
+			if err := func() error {
+				s.TournamentDifficulty.Reset()
+				if err := s.TournamentDifficulty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_difficulty\"")
+			}
+		case "max_participants":
+			if err := func() error {
+				s.MaxParticipants.Reset()
+				if err := s.MaxParticipants.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"max_participants\"")
+			}
+		case "current_participants":
+			if err := func() error {
+				s.CurrentParticipants.Reset()
+				if err := s.CurrentParticipants.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_participants\"")
+			}
+		case "start_date":
+			if err := func() error {
+				s.StartDate.Reset()
+				if err := s.StartDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"start_date\"")
+			}
+		case "end_date":
+			if err := func() error {
+				s.EndDate.Reset()
+				if err := s.EndDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"end_date\"")
+			}
+		case "status":
+			requiredBitSet[1] |= 1 << 4
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "reward":
+			if err := func() error {
+				s.Reward.Reset()
+				if err := s.Reward.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"reward\"")
+			}
+		case "objectives":
+			if err := func() error {
+				s.Objectives = make([]TournamentObjective, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentObjective
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Objectives = append(s.Objectives, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"objectives\"")
+			}
+		case "region":
+			if err := func() error {
+				s.Region.Reset()
+				if err := s.Region.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"region\"")
+			}
+		case "entry_fee":
+			if err := func() error {
+				s.EntryFee.Reset()
+				if err := s.EntryFee.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"entry_fee\"")
+			}
+		case "prize_pool":
+			if err := func() error {
+				s.PrizePool.Reset()
+				if err := s.PrizePool.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"prize_pool\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Tournament")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [3]uint8{
+		0b00101011,
+		0b00010000,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournament) {
+					name = jsonFieldsNameOfTournament[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Tournament) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Tournament) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentBracket) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentBracket) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("tournament_id")
+		json.EncodeUUID(e, s.TournamentID)
+	}
+	{
+		if s.Rounds != nil {
+			e.FieldStart("rounds")
+			e.ArrStart()
+			for _, elem := range s.Rounds {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.CurrentRound.Set {
+			e.FieldStart("current_round")
+			s.CurrentRound.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("total_rounds")
+		e.Int(s.TotalRounds)
+	}
+	{
+		e.FieldStart("bracket_type")
+		s.BracketType.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfTournamentBracket = [5]string{
+	0: "tournament_id",
+	1: "rounds",
+	2: "current_round",
+	3: "total_rounds",
+	4: "bracket_type",
+}
+
+// Decode decodes TournamentBracket from json.
+func (s *TournamentBracket) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracket to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "tournament_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TournamentID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_id\"")
+			}
+		case "rounds":
+			if err := func() error {
+				s.Rounds = make([]TournamentBracketRoundsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentBracketRoundsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Rounds = append(s.Rounds, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rounds\"")
+			}
+		case "current_round":
+			if err := func() error {
+				s.CurrentRound.Reset()
+				if err := s.CurrentRound.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_round\"")
+			}
+		case "total_rounds":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalRounds = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_rounds\"")
+			}
+		case "bracket_type":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.BracketType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bracket_type\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentBracket")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00011001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentBracket) {
+					name = jsonFieldsNameOfTournamentBracket[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentBracket) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracket) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentBracketBracketType as json.
+func (s TournamentBracketBracketType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentBracketBracketType from json.
+func (s *TournamentBracketBracketType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracketBracketType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentBracketBracketType(v) {
+	case TournamentBracketBracketTypeSingleElimination:
+		*s = TournamentBracketBracketTypeSingleElimination
+	case TournamentBracketBracketTypeDoubleElimination:
+		*s = TournamentBracketBracketTypeDoubleElimination
+	case TournamentBracketBracketTypeRoundRobin:
+		*s = TournamentBracketBracketTypeRoundRobin
+	default:
+		*s = TournamentBracketBracketType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentBracketBracketType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracketBracketType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentBracketResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentBracketResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("bracket")
+		s.Bracket.Encode(e)
+	}
+	{
+		if s.IncludeMatches.Set {
+			e.FieldStart("include_matches")
+			s.IncludeMatches.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentBracketResponse = [2]string{
+	0: "bracket",
+	1: "include_matches",
+}
+
+// Decode decodes TournamentBracketResponse from json.
+func (s *TournamentBracketResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracketResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "bracket":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Bracket.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bracket\"")
+			}
+		case "include_matches":
+			if err := func() error {
+				s.IncludeMatches.Reset()
+				if err := s.IncludeMatches.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"include_matches\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentBracketResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentBracketResponse) {
+					name = jsonFieldsNameOfTournamentBracketResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentBracketResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracketResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentBracketRoundsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentBracketRoundsItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.RoundNumber.Set {
+			e.FieldStart("round_number")
+			s.RoundNumber.Encode(e)
+		}
+	}
+	{
+		if s.Matches != nil {
+			e.FieldStart("matches")
+			e.ArrStart()
+			for _, elem := range s.Matches {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentBracketRoundsItem = [2]string{
+	0: "round_number",
+	1: "matches",
+}
+
+// Decode decodes TournamentBracketRoundsItem from json.
+func (s *TournamentBracketRoundsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracketRoundsItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "round_number":
+			if err := func() error {
+				s.RoundNumber.Reset()
+				if err := s.RoundNumber.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"round_number\"")
+			}
+		case "matches":
+			if err := func() error {
+				s.Matches = make([]TournamentBracketRoundsItemMatchesItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentBracketRoundsItemMatchesItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Matches = append(s.Matches, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"matches\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentBracketRoundsItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentBracketRoundsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracketRoundsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentBracketRoundsItemMatchesItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentBracketRoundsItemMatchesItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.MatchID.Set {
+			e.FieldStart("match_id")
+			s.MatchID.Encode(e)
+		}
+	}
+	{
+		if s.Participant1.Set {
+			e.FieldStart("participant_1")
+			s.Participant1.Encode(e)
+		}
+	}
+	{
+		if s.Participant2.Set {
+			e.FieldStart("participant_2")
+			s.Participant2.Encode(e)
+		}
+	}
+	{
+		if s.Winner.Set {
+			e.FieldStart("winner")
+			s.Winner.Encode(e)
+		}
+	}
+	{
+		if s.Status.Set {
+			e.FieldStart("status")
+			s.Status.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentBracketRoundsItemMatchesItem = [5]string{
+	0: "match_id",
+	1: "participant_1",
+	2: "participant_2",
+	3: "winner",
+	4: "status",
+}
+
+// Decode decodes TournamentBracketRoundsItemMatchesItem from json.
+func (s *TournamentBracketRoundsItemMatchesItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracketRoundsItemMatchesItem to nil")
+	}
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "match_id":
+			if err := func() error {
+				s.MatchID.Reset()
+				if err := s.MatchID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"match_id\"")
+			}
+		case "participant_1":
+			if err := func() error {
+				s.Participant1.Reset()
+				if err := s.Participant1.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_1\"")
+			}
+		case "participant_2":
+			if err := func() error {
+				s.Participant2.Reset()
+				if err := s.Participant2.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_2\"")
+			}
+		case "winner":
+			if err := func() error {
+				s.Winner.Reset()
+				if err := s.Winner.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"winner\"")
+			}
+		case "status":
+			if err := func() error {
+				s.Status.Reset()
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentBracketRoundsItemMatchesItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentBracketRoundsItemMatchesItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracketRoundsItemMatchesItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentBracketRoundsItemMatchesItemStatus as json.
+func (s TournamentBracketRoundsItemMatchesItemStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentBracketRoundsItemMatchesItemStatus from json.
+func (s *TournamentBracketRoundsItemMatchesItemStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentBracketRoundsItemMatchesItemStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentBracketRoundsItemMatchesItemStatus(v) {
+	case TournamentBracketRoundsItemMatchesItemStatusPending:
+		*s = TournamentBracketRoundsItemMatchesItemStatusPending
+	case TournamentBracketRoundsItemMatchesItemStatusInProgress:
+		*s = TournamentBracketRoundsItemMatchesItemStatusInProgress
+	case TournamentBracketRoundsItemMatchesItemStatusCompleted:
+		*s = TournamentBracketRoundsItemMatchesItemStatusCompleted
+	case TournamentBracketRoundsItemMatchesItemStatusCancelled:
+		*s = TournamentBracketRoundsItemMatchesItemStatusCancelled
+	default:
+		*s = TournamentBracketRoundsItemMatchesItemStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentBracketRoundsItemMatchesItemStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentBracketRoundsItemMatchesItemStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentGameMode as json.
+func (s TournamentGameMode) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentGameMode from json.
+func (s *TournamentGameMode) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentGameMode to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentGameMode(v) {
+	case TournamentGameModeElimination:
+		*s = TournamentGameModeElimination
+	case TournamentGameModeRoundRobin:
+		*s = TournamentGameModeRoundRobin
+	case TournamentGameModeSwissSystem:
+		*s = TournamentGameModeSwissSystem
+	case TournamentGameModeSingleElimination:
+		*s = TournamentGameModeSingleElimination
+	case TournamentGameModeDoubleElimination:
+		*s = TournamentGameModeDoubleElimination
+	default:
+		*s = TournamentGameMode(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentGameMode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentGameMode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentLeaderboardResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentLeaderboardResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("leaderboard")
+		e.ArrStart()
+		for _, elem := range s.Leaderboard {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("total_participants")
+		e.Int(s.TotalParticipants)
+	}
+	{
+		if s.LastUpdated.Set {
+			e.FieldStart("last_updated")
+			s.LastUpdated.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentLeaderboardResponse = [3]string{
+	0: "leaderboard",
+	1: "total_participants",
+	2: "last_updated",
+}
+
+// Decode decodes TournamentLeaderboardResponse from json.
+func (s *TournamentLeaderboardResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentLeaderboardResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "leaderboard":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Leaderboard = make([]TournamentLeaderboardResponseLeaderboardItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentLeaderboardResponseLeaderboardItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Leaderboard = append(s.Leaderboard, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"leaderboard\"")
+			}
+		case "total_participants":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalParticipants = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_participants\"")
+			}
+		case "last_updated":
+			if err := func() error {
+				s.LastUpdated.Reset()
+				if err := s.LastUpdated.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"last_updated\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentLeaderboardResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentLeaderboardResponse) {
+					name = jsonFieldsNameOfTournamentLeaderboardResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentLeaderboardResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentLeaderboardResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentLeaderboardResponseLeaderboardItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentLeaderboardResponseLeaderboardItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.ParticipantID.Set {
+			e.FieldStart("participant_id")
+			s.ParticipantID.Encode(e)
+		}
+	}
+	{
+		if s.PlayerName.Set {
+			e.FieldStart("player_name")
+			s.PlayerName.Encode(e)
+		}
+	}
+	{
+		if s.TotalScore.Set {
+			e.FieldStart("total_score")
+			s.TotalScore.Encode(e)
+		}
+	}
+	{
+		if s.Rank.Set {
+			e.FieldStart("rank")
+			s.Rank.Encode(e)
+		}
+	}
+	{
+		if s.MatchesPlayed.Set {
+			e.FieldStart("matches_played")
+			s.MatchesPlayed.Encode(e)
+		}
+	}
+	{
+		if s.WinRate.Set {
+			e.FieldStart("win_rate")
+			s.WinRate.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentLeaderboardResponseLeaderboardItem = [6]string{
+	0: "participant_id",
+	1: "player_name",
+	2: "total_score",
+	3: "rank",
+	4: "matches_played",
+	5: "win_rate",
+}
+
+// Decode decodes TournamentLeaderboardResponseLeaderboardItem from json.
+func (s *TournamentLeaderboardResponseLeaderboardItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentLeaderboardResponseLeaderboardItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "participant_id":
+			if err := func() error {
+				s.ParticipantID.Reset()
+				if err := s.ParticipantID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_id\"")
+			}
+		case "player_name":
+			if err := func() error {
+				s.PlayerName.Reset()
+				if err := s.PlayerName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_name\"")
+			}
+		case "total_score":
+			if err := func() error {
+				s.TotalScore.Reset()
+				if err := s.TotalScore.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_score\"")
+			}
+		case "rank":
+			if err := func() error {
+				s.Rank.Reset()
+				if err := s.Rank.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		case "matches_played":
+			if err := func() error {
+				s.MatchesPlayed.Reset()
+				if err := s.MatchesPlayed.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"matches_played\"")
+			}
+		case "win_rate":
+			if err := func() error {
+				s.WinRate.Reset()
+				if err := s.WinRate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"win_rate\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentLeaderboardResponseLeaderboardItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentLeaderboardResponseLeaderboardItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentLeaderboardResponseLeaderboardItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentListResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentListResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("tournaments")
+		e.ArrStart()
+		for _, elem := range s.Tournaments {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("has_more")
+		e.Bool(s.HasMore)
+	}
+	{
+		e.FieldStart("total_count")
+		e.Int(s.TotalCount)
+	}
+	{
+		if s.Page.Set {
+			e.FieldStart("page")
+			s.Page.Encode(e)
+		}
+	}
+	{
+		if s.Limit.Set {
+			e.FieldStart("limit")
+			s.Limit.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentListResponse = [5]string{
+	0: "tournaments",
+	1: "has_more",
+	2: "total_count",
+	3: "page",
+	4: "limit",
+}
+
+// Decode decodes TournamentListResponse from json.
+func (s *TournamentListResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentListResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "tournaments":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Tournaments = make([]Tournament, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Tournament
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Tournaments = append(s.Tournaments, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournaments\"")
+			}
+		case "has_more":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.HasMore = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"has_more\"")
+			}
+		case "total_count":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalCount = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_count\"")
+			}
+		case "page":
+			if err := func() error {
+				s.Page.Reset()
+				if err := s.Page.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"page\"")
+			}
+		case "limit":
+			if err := func() error {
+				s.Limit.Reset()
+				if err := s.Limit.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"limit\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentListResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentListResponse) {
+					name = jsonFieldsNameOfTournamentListResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentListResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentListResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentObjective) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentObjective) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("description")
+		e.Str(s.Description)
+	}
+	{
+		if s.TargetValue.Set {
+			e.FieldStart("target_value")
+			s.TargetValue.Encode(e)
+		}
+	}
+	{
+		if s.CurrentValue.Set {
+			e.FieldStart("current_value")
+			s.CurrentValue.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentObjective = [4]string{
+	0: "type",
+	1: "description",
+	2: "target_value",
+	3: "current_value",
+}
+
+// Decode decodes TournamentObjective from json.
+func (s *TournamentObjective) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentObjective to nil")
+	}
+	var requiredBitSet [1]uint8
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "description":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Description = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "target_value":
+			if err := func() error {
+				s.TargetValue.Reset()
+				if err := s.TargetValue.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"target_value\"")
+			}
+		case "current_value":
+			if err := func() error {
+				s.CurrentValue.Reset()
+				if err := s.CurrentValue.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_value\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentObjective")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentObjective) {
+					name = jsonFieldsNameOfTournamentObjective[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentObjective) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentObjective) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentObjectiveType as json.
+func (s TournamentObjectiveType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentObjectiveType from json.
+func (s *TournamentObjectiveType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentObjectiveType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentObjectiveType(v) {
+	case TournamentObjectiveTypeWinMatches:
+		*s = TournamentObjectiveTypeWinMatches
+	case TournamentObjectiveTypeScorePoints:
+		*s = TournamentObjectiveTypeScorePoints
+	case TournamentObjectiveTypeSurviveRounds:
+		*s = TournamentObjectiveTypeSurviveRounds
+	case TournamentObjectiveTypeCompleteChallenges:
+		*s = TournamentObjectiveTypeCompleteChallenges
+	default:
+		*s = TournamentObjectiveType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentObjectiveType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentObjectiveType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentParticipant) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentParticipant) encodeFields(e *jx.Encoder) {
+	{
+		if s.ID.Set {
+			e.FieldStart("id")
+			s.ID.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("tournament_id")
+		json.EncodeUUID(e, s.TournamentID)
+	}
+	{
+		e.FieldStart("player_id")
+		json.EncodeUUID(e, s.PlayerID)
+	}
+	{
+		e.FieldStart("registered_at")
+		json.EncodeDateTime(e, s.RegisteredAt)
+	}
+	{
+		if s.Status.Set {
+			e.FieldStart("status")
+			s.Status.Encode(e)
+		}
+	}
+	{
+		if s.Seed.Set {
+			e.FieldStart("seed")
+			s.Seed.Encode(e)
+		}
+	}
+	{
+		if s.BracketPosition.Set {
+			e.FieldStart("bracket_position")
+			s.BracketPosition.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentParticipant = [7]string{
+	0: "id",
+	1: "tournament_id",
+	2: "player_id",
+	3: "registered_at",
+	4: "status",
+	5: "seed",
+	6: "bracket_position",
+}
+
+// Decode decodes TournamentParticipant from json.
+func (s *TournamentParticipant) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentParticipant to nil")
+	}
+	var requiredBitSet [1]uint8
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			if err := func() error {
+				s.ID.Reset()
+				if err := s.ID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "tournament_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TournamentID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_id\"")
+			}
+		case "player_id":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.PlayerID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "registered_at":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.RegisteredAt = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"registered_at\"")
+			}
+		case "status":
+			if err := func() error {
+				s.Status.Reset()
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "seed":
+			if err := func() error {
+				s.Seed.Reset()
+				if err := s.Seed.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"seed\"")
+			}
+		case "bracket_position":
+			if err := func() error {
+				s.BracketPosition.Reset()
+				if err := s.BracketPosition.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bracket_position\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentParticipant")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001110,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentParticipant) {
+					name = jsonFieldsNameOfTournamentParticipant[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentParticipant) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentParticipant) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentParticipantResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentParticipantResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("participant")
+		s.Participant.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfTournamentParticipantResponse = [1]string{
+	0: "participant",
+}
+
+// Decode decodes TournamentParticipantResponse from json.
+func (s *TournamentParticipantResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentParticipantResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "participant":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Participant.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentParticipantResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentParticipantResponse) {
+					name = jsonFieldsNameOfTournamentParticipantResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentParticipantResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentParticipantResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentParticipantStatus as json.
+func (s TournamentParticipantStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentParticipantStatus from json.
+func (s *TournamentParticipantStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentParticipantStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentParticipantStatus(v) {
+	case TournamentParticipantStatusRegistered:
+		*s = TournamentParticipantStatusRegistered
+	case TournamentParticipantStatusActive:
+		*s = TournamentParticipantStatusActive
+	case TournamentParticipantStatusEliminated:
+		*s = TournamentParticipantStatusEliminated
+	case TournamentParticipantStatusDisqualified:
+		*s = TournamentParticipantStatusDisqualified
+	case TournamentParticipantStatusWinner:
+		*s = TournamentParticipantStatusWinner
+	default:
+		*s = TournamentParticipantStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentParticipantStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentParticipantStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("tournament")
+		s.Tournament.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfTournamentResponse = [1]string{
+	0: "tournament",
+}
+
+// Decode decodes TournamentResponse from json.
+func (s *TournamentResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "tournament":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Tournament.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentResponse) {
+					name = jsonFieldsNameOfTournamentResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentReward) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentReward) encodeFields(e *jx.Encoder) {
+	{
+		if s.CurrencyAmount.Set {
+			e.FieldStart("currency_amount")
+			s.CurrencyAmount.Encode(e)
+		}
+	}
+	{
+		if s.Items != nil {
+			e.FieldStart("items")
+			e.ArrStart()
+			for _, elem := range s.Items {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.ExperiencePoints.Set {
+			e.FieldStart("experience_points")
+			s.ExperiencePoints.Encode(e)
+		}
+	}
+	{
+		if s.Title.Set {
+			e.FieldStart("title")
+			s.Title.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentReward = [4]string{
+	0: "currency_amount",
+	1: "items",
+	2: "experience_points",
+	3: "title",
+}
+
+// Decode decodes TournamentReward from json.
+func (s *TournamentReward) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentReward to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "currency_amount":
+			if err := func() error {
+				s.CurrencyAmount.Reset()
+				if err := s.CurrencyAmount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"currency_amount\"")
+			}
+		case "items":
+			if err := func() error {
+				s.Items = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Items = append(s.Items, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"items\"")
+			}
+		case "experience_points":
+			if err := func() error {
+				s.ExperiencePoints.Reset()
+				if err := s.ExperiencePoints.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"experience_points\"")
+			}
+		case "title":
+			if err := func() error {
+				s.Title.Reset()
+				if err := s.Title.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"title\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentReward")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentReward) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentReward) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentScore) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentScore) encodeFields(e *jx.Encoder) {
+	{
+		if s.ID.Set {
+			e.FieldStart("id")
+			s.ID.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("participant_id")
+		json.EncodeUUID(e, s.ParticipantID)
+	}
+	{
+		e.FieldStart("match_id")
+		json.EncodeUUID(e, s.MatchID)
+	}
+	{
+		e.FieldStart("score")
+		e.Int(s.Score)
+	}
+	{
+		if s.Rank.Set {
+			e.FieldStart("rank")
+			s.Rank.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("recorded_at")
+		json.EncodeDateTime(e, s.RecordedAt)
+	}
+	{
+		if s.Metadata.Set {
+			e.FieldStart("metadata")
+			s.Metadata.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentScore = [7]string{
+	0: "id",
+	1: "participant_id",
+	2: "match_id",
+	3: "score",
+	4: "rank",
+	5: "recorded_at",
+	6: "metadata",
+}
+
+// Decode decodes TournamentScore from json.
+func (s *TournamentScore) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentScore to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			if err := func() error {
+				s.ID.Reset()
+				if err := s.ID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "participant_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ParticipantID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_id\"")
+			}
+		case "match_id":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.MatchID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"match_id\"")
+			}
+		case "score":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.Score = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"score\"")
+			}
+		case "rank":
+			if err := func() error {
+				s.Rank.Reset()
+				if err := s.Rank.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		case "recorded_at":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.RecordedAt = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"recorded_at\"")
+			}
+		case "metadata":
+			if err := func() error {
+				s.Metadata.Reset()
+				if err := s.Metadata.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"metadata\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentScore")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00101110,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentScore) {
+					name = jsonFieldsNameOfTournamentScore[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentScore) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentScore) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s TournamentScoreMetadata) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s TournamentScoreMetadata) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		e.Str(elem)
+	}
+}
+
+// Decode decodes TournamentScoreMetadata from json.
+func (s *TournamentScoreMetadata) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentScoreMetadata to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem string
+		if err := func() error {
+			v, err := d.Str()
+			elem = string(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentScoreMetadata")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentScoreMetadata) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentScoreMetadata) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentScoreResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentScoreResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("score")
+		s.Score.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfTournamentScoreResponse = [1]string{
+	0: "score",
+}
+
+// Decode decodes TournamentScoreResponse from json.
+func (s *TournamentScoreResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentScoreResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "score":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Score.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"score\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentScoreResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentScoreResponse) {
+					name = jsonFieldsNameOfTournamentScoreResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentScoreResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentScoreResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckBadRequest from json.
+func (s *TournamentServiceBatchHealthCheckBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentServiceBatchHealthCheckBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckBadRequest) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckBadRequestDetails = [0]string{}
+
+// Decode decodes TournamentServiceBatchHealthCheckBadRequestDetails from json.
+func (s *TournamentServiceBatchHealthCheckBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckDef from json.
+func (s *TournamentServiceBatchHealthCheckDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentServiceBatchHealthCheckDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckDef) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckDefDetails = [0]string{}
+
+// Decode decodes TournamentServiceBatchHealthCheckDefDetails from json.
+func (s *TournamentServiceBatchHealthCheckDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("results")
+		e.ArrStart()
+		for _, elem := range s.Results {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("total_time_ms")
+		e.Int(s.TotalTimeMs)
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckOK = [2]string{
+	0: "results",
+	1: "total_time_ms",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckOK from json.
+func (s *TournamentServiceBatchHealthCheckOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "results":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Results = make([]TournamentServiceBatchHealthCheckOKResultsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentServiceBatchHealthCheckOKResultsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Results = append(s.Results, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"results\"")
+			}
+		case "total_time_ms":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalTimeMs = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_time_ms\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckOK) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.Domain.Set {
+			e.FieldStart("domain")
+			s.Domain.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("timestamp")
+		json.EncodeDateTime(e, s.Timestamp)
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.UptimeSeconds.Set {
+			e.FieldStart("uptime_seconds")
+			s.UptimeSeconds.Encode(e)
+		}
+	}
+	{
+		if s.ActiveConnections.Set {
+			e.FieldStart("active_connections")
+			s.ActiveConnections.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckOKResultsItem = [6]string{
+	0: "status",
+	1: "domain",
+	2: "timestamp",
+	3: "version",
+	4: "uptime_seconds",
+	5: "active_connections",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckOKResultsItem from json.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckOKResultsItem to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "status":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "domain":
+			if err := func() error {
+				s.Domain.Reset()
+				if err := s.Domain.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"domain\"")
+			}
+		case "timestamp":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.Timestamp = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "uptime_seconds":
+			if err := func() error {
+				s.UptimeSeconds.Reset()
+				if err := s.UptimeSeconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"uptime_seconds\"")
+			}
+		case "active_connections":
+			if err := func() error {
+				s.ActiveConnections.Reset()
+				if err := s.ActiveConnections.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"active_connections\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckOKResultsItem")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000101,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckOKResultsItem) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckOKResultsItem[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckOKResultsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentServiceBatchHealthCheckOKResultsItemStatus as json.
+func (s TournamentServiceBatchHealthCheckOKResultsItemStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckOKResultsItemStatus from json.
+func (s *TournamentServiceBatchHealthCheckOKResultsItemStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckOKResultsItemStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentServiceBatchHealthCheckOKResultsItemStatus(v) {
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusHealthy
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusDegraded
+	case TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatusUnhealthy
+	default:
+		*s = TournamentServiceBatchHealthCheckOKResultsItemStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentServiceBatchHealthCheckOKResultsItemStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckOKResultsItemStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckReq) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("services")
+		e.ArrStart()
+		for _, elem := range s.Services {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckReq = [1]string{
+	0: "services",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckReq from json.
+func (s *TournamentServiceBatchHealthCheckReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckReq to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "services":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Services = make([]TournamentServiceBatchHealthCheckReqServicesItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentServiceBatchHealthCheckReqServicesItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Services = append(s.Services, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"services\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckReq) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentServiceBatchHealthCheckReqServicesItem as json.
+func (s TournamentServiceBatchHealthCheckReqServicesItem) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckReqServicesItem from json.
+func (s *TournamentServiceBatchHealthCheckReqServicesItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckReqServicesItem to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentServiceBatchHealthCheckReqServicesItem(v) {
+	case TournamentServiceBatchHealthCheckReqServicesItemTournamentService:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemTournamentService
+	case TournamentServiceBatchHealthCheckReqServicesItemSystemDomain:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemSystemDomain
+	case TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain:
+		*s = TournamentServiceBatchHealthCheckReqServicesItemSpecializedDomain
+	default:
+		*s = TournamentServiceBatchHealthCheckReqServicesItem(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentServiceBatchHealthCheckReqServicesItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckReqServicesItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckTooManyRequests = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentServiceBatchHealthCheckTooManyRequests from json.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckTooManyRequests to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentServiceBatchHealthCheckTooManyRequestsDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckTooManyRequests")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceBatchHealthCheckTooManyRequests) {
+					name = jsonFieldsNameOfTournamentServiceBatchHealthCheckTooManyRequests[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentServiceBatchHealthCheckTooManyRequestsDetails = [0]string{}
+
+// Decode decodes TournamentServiceBatchHealthCheckTooManyRequestsDetails from json.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceBatchHealthCheckTooManyRequestsDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceBatchHealthCheckTooManyRequestsDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceBatchHealthCheckTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceHealthCheckDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceHealthCheckDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceHealthCheckDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentServiceHealthCheckDef from json.
+func (s *TournamentServiceHealthCheckDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceHealthCheckDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentServiceHealthCheckDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceHealthCheckDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceHealthCheckDef) {
+					name = jsonFieldsNameOfTournamentServiceHealthCheckDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceHealthCheckDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceHealthCheckDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceHealthCheckDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceHealthCheckDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentServiceHealthCheckDefDetails = [0]string{}
+
+// Decode decodes TournamentServiceHealthCheckDefDetails from json.
+func (s *TournamentServiceHealthCheckDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceHealthCheckDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceHealthCheckDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceHealthCheckDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceHealthCheckDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -4790,6 +14670,182 @@ func (s *TournamentServiceHealthWebSocketBadRequestDetails) UnmarshalJSON(data [
 }
 
 // Encode implements json.Marshaler.
+func (s *TournamentServiceHealthWebSocketDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceHealthWebSocketDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentServiceHealthWebSocketDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentServiceHealthWebSocketDef from json.
+func (s *TournamentServiceHealthWebSocketDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceHealthWebSocketDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentServiceHealthWebSocketDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceHealthWebSocketDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentServiceHealthWebSocketDef) {
+					name = jsonFieldsNameOfTournamentServiceHealthWebSocketDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceHealthWebSocketDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceHealthWebSocketDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentServiceHealthWebSocketDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentServiceHealthWebSocketDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentServiceHealthWebSocketDefDetails = [0]string{}
+
+// Decode decodes TournamentServiceHealthWebSocketDefDetails from json.
+func (s *TournamentServiceHealthWebSocketDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentServiceHealthWebSocketDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentServiceHealthWebSocketDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentServiceHealthWebSocketDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentServiceHealthWebSocketDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *TournamentServiceHealthWebSocketOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -5235,14 +15291,295 @@ func (s *TournamentServiceHealthWebSocketUnauthorizedDetails) UnmarshalJSON(data
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleBadRequest) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorMessage) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleBadRequest) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorMessage) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("timestamp")
+		json.EncodeDateTime(e, s.Timestamp)
+	}
+	{
+		if s.MessageTimestamp.Set {
+			e.FieldStart("message_timestamp")
+			s.MessageTimestamp.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.MatchID.Set {
+			e.FieldStart("match_id")
+			s.MatchID.Encode(e)
+		}
+	}
+	{
+		if s.Participant1Score.Set {
+			e.FieldStart("participant_1_score")
+			s.Participant1Score.Encode(e)
+		}
+	}
+	{
+		if s.Participant2Score.Set {
+			e.FieldStart("participant_2_score")
+			s.Participant2Score.Encode(e)
+		}
+	}
+	{
+		if s.WinnerID.Set {
+			e.FieldStart("winner_id")
+			s.WinnerID.Encode(e)
+		}
+	}
+	{
+		if s.BracketPosition.Set {
+			e.FieldStart("bracket_position")
+			s.BracketPosition.Encode(e)
+		}
+	}
+	{
+		if s.SpectatorCount.Set {
+			e.FieldStart("spectator_count")
+			s.SpectatorCount.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentSpectatorMessage = [9]string{
+	0: "type",
+	1: "timestamp",
+	2: "message_timestamp",
+	3: "match_id",
+	4: "participant_1_score",
+	5: "participant_2_score",
+	6: "winner_id",
+	7: "bracket_position",
+	8: "spectator_count",
+}
+
+// Decode decodes TournamentSpectatorMessage from json.
+func (s *TournamentSpectatorMessage) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorMessage to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "timestamp":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.Timestamp = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "message_timestamp":
+			if err := func() error {
+				s.MessageTimestamp.Reset()
+				if err := s.MessageTimestamp.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message_timestamp\"")
+			}
+		case "match_id":
+			if err := func() error {
+				s.MatchID.Reset()
+				if err := s.MatchID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"match_id\"")
+			}
+		case "participant_1_score":
+			if err := func() error {
+				s.Participant1Score.Reset()
+				if err := s.Participant1Score.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_1_score\"")
+			}
+		case "participant_2_score":
+			if err := func() error {
+				s.Participant2Score.Reset()
+				if err := s.Participant2Score.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"participant_2_score\"")
+			}
+		case "winner_id":
+			if err := func() error {
+				s.WinnerID.Reset()
+				if err := s.WinnerID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"winner_id\"")
+			}
+		case "bracket_position":
+			if err := func() error {
+				s.BracketPosition.Reset()
+				if err := s.BracketPosition.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bracket_position\"")
+			}
+		case "spectator_count":
+			if err := func() error {
+				s.SpectatorCount.Reset()
+				if err := s.SpectatorCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"spectator_count\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorMessage")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b00000011,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorMessage) {
+					name = jsonFieldsNameOfTournamentSpectatorMessage[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorMessage) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorMessage) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentSpectatorMessageType as json.
+func (s TournamentSpectatorMessageType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentSpectatorMessageType from json.
+func (s *TournamentSpectatorMessageType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorMessageType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentSpectatorMessageType(v) {
+	case TournamentSpectatorMessageTypeSpectatorJoined:
+		*s = TournamentSpectatorMessageTypeSpectatorJoined
+	case TournamentSpectatorMessageTypeSpectatorLeft:
+		*s = TournamentSpectatorMessageTypeSpectatorLeft
+	case TournamentSpectatorMessageTypeMatchStarted:
+		*s = TournamentSpectatorMessageTypeMatchStarted
+	case TournamentSpectatorMessageTypeMatchEnded:
+		*s = TournamentSpectatorMessageTypeMatchEnded
+	case TournamentSpectatorMessageTypeScoreUpdated:
+		*s = TournamentSpectatorMessageTypeScoreUpdated
+	case TournamentSpectatorMessageTypeBracketUpdated:
+		*s = TournamentSpectatorMessageTypeBracketUpdated
+	case TournamentSpectatorMessageTypeTournamentEnded:
+		*s = TournamentSpectatorMessageTypeTournamentEnded
+	default:
+		*s = TournamentSpectatorMessageType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentSpectatorMessageType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorMessageType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentSpectatorWebSocketBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentSpectatorWebSocketBadRequest) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -5259,16 +15596,16 @@ func (s *UpdateExampleBadRequest) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExampleBadRequest = [3]string{
+var jsonFieldsNameOfTournamentSpectatorWebSocketBadRequest = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExampleBadRequest from json.
-func (s *UpdateExampleBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketBadRequest from json.
+func (s *TournamentSpectatorWebSocketBadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleBadRequest to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketBadRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5301,7 +15638,7 @@ func (s *UpdateExampleBadRequest) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExampleBadRequestDetails
+				var elem TournamentSpectatorWebSocketBadRequestDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -5315,7 +15652,7 @@ func (s *UpdateExampleBadRequest) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleBadRequest")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketBadRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5332,8 +15669,8 @@ func (s *UpdateExampleBadRequest) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExampleBadRequest) {
-					name = jsonFieldsNameOfUpdateExampleBadRequest[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorWebSocketBadRequest) {
+					name = jsonFieldsNameOfTournamentSpectatorWebSocketBadRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5354,35 +15691,35 @@ func (s *UpdateExampleBadRequest) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleBadRequest) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketBadRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleBadRequest) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketBadRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleBadRequestDetails) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketBadRequestDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleBadRequestDetails) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketBadRequestDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExampleBadRequestDetails = [0]string{}
+var jsonFieldsNameOfTournamentSpectatorWebSocketBadRequestDetails = [0]string{}
 
-// Decode decodes UpdateExampleBadRequestDetails from json.
-func (s *UpdateExampleBadRequestDetails) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketBadRequestDetails from json.
+func (s *TournamentSpectatorWebSocketBadRequestDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleBadRequestDetails to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketBadRequestDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -5391,34 +15728,34 @@ func (s *UpdateExampleBadRequestDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleBadRequestDetails")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketBadRequestDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleBadRequestDetails) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketBadRequestDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleBadRequestDetails) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketBadRequestDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleConflict) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketDef) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleConflict) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketDef) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -5435,16 +15772,16 @@ func (s *UpdateExampleConflict) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExampleConflict = [3]string{
+var jsonFieldsNameOfTournamentSpectatorWebSocketDef = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExampleConflict from json.
-func (s *UpdateExampleConflict) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketDef from json.
+func (s *TournamentSpectatorWebSocketDef) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleConflict to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketDef to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5477,7 +15814,7 @@ func (s *UpdateExampleConflict) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExampleConflictDetails
+				var elem TournamentSpectatorWebSocketDefDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -5491,7 +15828,7 @@ func (s *UpdateExampleConflict) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleConflict")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketDef")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5508,8 +15845,8 @@ func (s *UpdateExampleConflict) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExampleConflict) {
-					name = jsonFieldsNameOfUpdateExampleConflict[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorWebSocketDef) {
+					name = jsonFieldsNameOfTournamentSpectatorWebSocketDef[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5530,35 +15867,35 @@ func (s *UpdateExampleConflict) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleConflict) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketDef) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleConflict) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketDef) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleConflictDetails) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketDefDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleConflictDetails) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketDefDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExampleConflictDetails = [0]string{}
+var jsonFieldsNameOfTournamentSpectatorWebSocketDefDetails = [0]string{}
 
-// Decode decodes UpdateExampleConflictDetails from json.
-func (s *UpdateExampleConflictDetails) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketDefDetails from json.
+func (s *TournamentSpectatorWebSocketDefDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleConflictDetails to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketDefDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -5567,34 +15904,34 @@ func (s *UpdateExampleConflictDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleConflictDetails")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketDefDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleConflictDetails) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketDefDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleConflictDetails) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketDefDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleNotFound) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketNotFound) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleNotFound) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketNotFound) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -5611,16 +15948,16 @@ func (s *UpdateExampleNotFound) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExampleNotFound = [3]string{
+var jsonFieldsNameOfTournamentSpectatorWebSocketNotFound = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExampleNotFound from json.
-func (s *UpdateExampleNotFound) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketNotFound from json.
+func (s *TournamentSpectatorWebSocketNotFound) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleNotFound to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketNotFound to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5653,7 +15990,7 @@ func (s *UpdateExampleNotFound) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExampleNotFoundDetails
+				var elem TournamentSpectatorWebSocketNotFoundDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -5667,7 +16004,7 @@ func (s *UpdateExampleNotFound) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleNotFound")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketNotFound")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5684,8 +16021,8 @@ func (s *UpdateExampleNotFound) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExampleNotFound) {
-					name = jsonFieldsNameOfUpdateExampleNotFound[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorWebSocketNotFound) {
+					name = jsonFieldsNameOfTournamentSpectatorWebSocketNotFound[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5706,35 +16043,35 @@ func (s *UpdateExampleNotFound) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleNotFound) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketNotFound) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleNotFound) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketNotFound) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleNotFoundDetails) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketNotFoundDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleNotFoundDetails) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketNotFoundDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExampleNotFoundDetails = [0]string{}
+var jsonFieldsNameOfTournamentSpectatorWebSocketNotFoundDetails = [0]string{}
 
-// Decode decodes UpdateExampleNotFoundDetails from json.
-func (s *UpdateExampleNotFoundDetails) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketNotFoundDetails from json.
+func (s *TournamentSpectatorWebSocketNotFoundDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleNotFoundDetails to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketNotFoundDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -5743,34 +16080,127 @@ func (s *UpdateExampleNotFoundDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleNotFoundDetails")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketNotFoundDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleNotFoundDetails) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketNotFoundDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleNotFoundDetails) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketNotFoundDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExamplePreconditionFailed) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExamplePreconditionFailed) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketOK) encodeFields(e *jx.Encoder) {
+	{
+		if s.WebsocketURL.Set {
+			e.FieldStart("websocket_url")
+			s.WebsocketURL.Encode(e)
+		}
+	}
+	{
+		if s.SupportedProtocols != nil {
+			e.FieldStart("supported_protocols")
+			e.ArrStart()
+			for _, elem := range s.SupportedProtocols {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentSpectatorWebSocketOK = [2]string{
+	0: "websocket_url",
+	1: "supported_protocols",
+}
+
+// Decode decodes TournamentSpectatorWebSocketOK from json.
+func (s *TournamentSpectatorWebSocketOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketOK to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "websocket_url":
+			if err := func() error {
+				s.WebsocketURL.Reset()
+				if err := s.WebsocketURL.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"websocket_url\"")
+			}
+		case "supported_protocols":
+			if err := func() error {
+				s.SupportedProtocols = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.SupportedProtocols = append(s.SupportedProtocols, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"supported_protocols\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketOK")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorWebSocketOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorWebSocketOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentSpectatorWebSocketTooManyRequests) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentSpectatorWebSocketTooManyRequests) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -5787,16 +16217,16 @@ func (s *UpdateExamplePreconditionFailed) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExamplePreconditionFailed = [3]string{
+var jsonFieldsNameOfTournamentSpectatorWebSocketTooManyRequests = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExamplePreconditionFailed from json.
-func (s *UpdateExamplePreconditionFailed) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketTooManyRequests from json.
+func (s *TournamentSpectatorWebSocketTooManyRequests) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExamplePreconditionFailed to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketTooManyRequests to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -5829,7 +16259,7 @@ func (s *UpdateExamplePreconditionFailed) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExamplePreconditionFailedDetails
+				var elem TournamentSpectatorWebSocketTooManyRequestsDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -5843,7 +16273,7 @@ func (s *UpdateExamplePreconditionFailed) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExamplePreconditionFailed")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketTooManyRequests")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -5860,8 +16290,8 @@ func (s *UpdateExamplePreconditionFailed) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExamplePreconditionFailed) {
-					name = jsonFieldsNameOfUpdateExamplePreconditionFailed[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorWebSocketTooManyRequests) {
+					name = jsonFieldsNameOfTournamentSpectatorWebSocketTooManyRequests[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -5882,35 +16312,35 @@ func (s *UpdateExamplePreconditionFailed) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExamplePreconditionFailed) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketTooManyRequests) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExamplePreconditionFailed) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExamplePreconditionFailedDetails) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketTooManyRequestsDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExamplePreconditionFailedDetails) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExamplePreconditionFailedDetails = [0]string{}
+var jsonFieldsNameOfTournamentSpectatorWebSocketTooManyRequestsDetails = [0]string{}
 
-// Decode decodes UpdateExamplePreconditionFailedDetails from json.
-func (s *UpdateExamplePreconditionFailedDetails) Decode(d *jx.Decoder) error {
+// Decode decodes TournamentSpectatorWebSocketTooManyRequestsDetails from json.
+func (s *TournamentSpectatorWebSocketTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExamplePreconditionFailedDetails to nil")
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketTooManyRequestsDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -5919,34 +16349,1703 @@ func (s *UpdateExamplePreconditionFailedDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExamplePreconditionFailedDetails")
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketTooManyRequestsDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExamplePreconditionFailedDetails) MarshalJSON() ([]byte, error) {
+func (s *TournamentSpectatorWebSocketTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExamplePreconditionFailedDetails) UnmarshalJSON(data []byte) error {
+func (s *TournamentSpectatorWebSocketTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleRequest) Encode(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketUnauthorized) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleRequest) encodeFields(e *jx.Encoder) {
+func (s *TournamentSpectatorWebSocketUnauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentSpectatorWebSocketUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes TournamentSpectatorWebSocketUnauthorized from json.
+func (s *TournamentSpectatorWebSocketUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketUnauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem TournamentSpectatorWebSocketUnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketUnauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorWebSocketUnauthorized) {
+					name = jsonFieldsNameOfTournamentSpectatorWebSocketUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorWebSocketUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorWebSocketUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentSpectatorWebSocketUnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentSpectatorWebSocketUnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfTournamentSpectatorWebSocketUnauthorizedDetails = [0]string{}
+
+// Decode decodes TournamentSpectatorWebSocketUnauthorizedDetails from json.
+func (s *TournamentSpectatorWebSocketUnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorWebSocketUnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorWebSocketUnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorWebSocketUnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorWebSocketUnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentSpectatorsResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentSpectatorsResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("spectators")
+		e.ArrStart()
+		for _, elem := range s.Spectators {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("total_count")
+		e.Int(s.TotalCount)
+	}
+	{
+		if s.LastUpdated.Set {
+			e.FieldStart("last_updated")
+			s.LastUpdated.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentSpectatorsResponse = [3]string{
+	0: "spectators",
+	1: "total_count",
+	2: "last_updated",
+}
+
+// Decode decodes TournamentSpectatorsResponse from json.
+func (s *TournamentSpectatorsResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorsResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "spectators":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Spectators = make([]TournamentSpectatorsResponseSpectatorsItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem TournamentSpectatorsResponseSpectatorsItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Spectators = append(s.Spectators, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"spectators\"")
+			}
+		case "total_count":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalCount = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_count\"")
+			}
+		case "last_updated":
+			if err := func() error {
+				s.LastUpdated.Reset()
+				if err := s.LastUpdated.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"last_updated\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorsResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTournamentSpectatorsResponse) {
+					name = jsonFieldsNameOfTournamentSpectatorsResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorsResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TournamentSpectatorsResponseSpectatorsItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TournamentSpectatorsResponseSpectatorsItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.SpectatorID.Set {
+			e.FieldStart("spectator_id")
+			s.SpectatorID.Encode(e)
+		}
+	}
+	{
+		if s.PlayerName.Set {
+			e.FieldStart("player_name")
+			s.PlayerName.Encode(e)
+		}
+	}
+	{
+		if s.JoinedAt.Set {
+			e.FieldStart("joined_at")
+			s.JoinedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ActivityStatus.Set {
+			e.FieldStart("activity_status")
+			s.ActivityStatus.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfTournamentSpectatorsResponseSpectatorsItem = [4]string{
+	0: "spectator_id",
+	1: "player_name",
+	2: "joined_at",
+	3: "activity_status",
+}
+
+// Decode decodes TournamentSpectatorsResponseSpectatorsItem from json.
+func (s *TournamentSpectatorsResponseSpectatorsItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorsResponseSpectatorsItem to nil")
+	}
+	s.setDefaults()
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "spectator_id":
+			if err := func() error {
+				s.SpectatorID.Reset()
+				if err := s.SpectatorID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"spectator_id\"")
+			}
+		case "player_name":
+			if err := func() error {
+				s.PlayerName.Reset()
+				if err := s.PlayerName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_name\"")
+			}
+		case "joined_at":
+			if err := func() error {
+				s.JoinedAt.Reset()
+				if err := s.JoinedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"joined_at\"")
+			}
+		case "activity_status":
+			if err := func() error {
+				s.ActivityStatus.Reset()
+				if err := s.ActivityStatus.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"activity_status\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TournamentSpectatorsResponseSpectatorsItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TournamentSpectatorsResponseSpectatorsItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorsResponseSpectatorsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentSpectatorsResponseSpectatorsItemActivityStatus as json.
+func (s TournamentSpectatorsResponseSpectatorsItemActivityStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentSpectatorsResponseSpectatorsItemActivityStatus from json.
+func (s *TournamentSpectatorsResponseSpectatorsItemActivityStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentSpectatorsResponseSpectatorsItemActivityStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentSpectatorsResponseSpectatorsItemActivityStatus(v) {
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusActive:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusActive
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusInactive
+	case TournamentSpectatorsResponseSpectatorsItemActivityStatusAway:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatusAway
+	default:
+		*s = TournamentSpectatorsResponseSpectatorsItemActivityStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentSpectatorsResponseSpectatorsItemActivityStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentSpectatorsResponseSpectatorsItemActivityStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentStatus as json.
+func (s TournamentStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentStatus from json.
+func (s *TournamentStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentStatus(v) {
+	case TournamentStatusUpcoming:
+		*s = TournamentStatusUpcoming
+	case TournamentStatusRegistrationOpen:
+		*s = TournamentStatusRegistrationOpen
+	case TournamentStatusRegistrationClosed:
+		*s = TournamentStatusRegistrationClosed
+	case TournamentStatusInProgress:
+		*s = TournamentStatusInProgress
+	case TournamentStatusCompleted:
+		*s = TournamentStatusCompleted
+	case TournamentStatusCancelled:
+		*s = TournamentStatusCancelled
+	default:
+		*s = TournamentStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentTournamentDifficulty as json.
+func (s TournamentTournamentDifficulty) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentTournamentDifficulty from json.
+func (s *TournamentTournamentDifficulty) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentTournamentDifficulty to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentTournamentDifficulty(v) {
+	case TournamentTournamentDifficultyBeginner:
+		*s = TournamentTournamentDifficultyBeginner
+	case TournamentTournamentDifficultyIntermediate:
+		*s = TournamentTournamentDifficultyIntermediate
+	case TournamentTournamentDifficultyAdvanced:
+		*s = TournamentTournamentDifficultyAdvanced
+	case TournamentTournamentDifficultyExpert:
+		*s = TournamentTournamentDifficultyExpert
+	case TournamentTournamentDifficultyMaster:
+		*s = TournamentTournamentDifficultyMaster
+	default:
+		*s = TournamentTournamentDifficulty(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentTournamentDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentTournamentDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TournamentTournamentType as json.
+func (s TournamentTournamentType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TournamentTournamentType from json.
+func (s *TournamentTournamentType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TournamentTournamentType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TournamentTournamentType(v) {
+	case TournamentTournamentTypeRanked:
+		*s = TournamentTournamentTypeRanked
+	case TournamentTournamentTypeCasual:
+		*s = TournamentTournamentTypeCasual
+	case TournamentTournamentTypeChampionship:
+		*s = TournamentTournamentTypeChampionship
+	case TournamentTournamentTypeSeasonal:
+		*s = TournamentTournamentTypeSeasonal
+	case TournamentTournamentTypeSpecialEvent:
+		*s = TournamentTournamentTypeSpecialEvent
+	default:
+		*s = TournamentTournamentType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TournamentTournamentType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TournamentTournamentType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *Unauthorized) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Unauthorized) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUnauthorized = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes Unauthorized from json.
+func (s *Unauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Unauthorized to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UnauthorizedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Unauthorized")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUnauthorized) {
+					name = jsonFieldsNameOfUnauthorized[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Unauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Unauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UnauthorizedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UnauthorizedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUnauthorizedDetails = [0]string{}
+
+// Decode decodes UnauthorizedDetails from json.
+func (s *UnauthorizedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UnauthorizedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UnauthorizedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UnauthorizedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UnauthorizedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentBadRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentBadRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateTournamentBadRequest = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes UpdateTournamentBadRequest from json.
+func (s *UpdateTournamentBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentBadRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UpdateTournamentBadRequestDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentBadRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentBadRequest) {
+					name = jsonFieldsNameOfUpdateTournamentBadRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentBadRequestDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentBadRequestDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUpdateTournamentBadRequestDetails = [0]string{}
+
+// Decode decodes UpdateTournamentBadRequestDetails from json.
+func (s *UpdateTournamentBadRequestDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentBadRequestDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentBadRequestDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentBadRequestDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentBadRequestDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentConflict) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentConflict) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateTournamentConflict = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes UpdateTournamentConflict from json.
+func (s *UpdateTournamentConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentConflict to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UpdateTournamentConflictDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentConflict")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentConflict) {
+					name = jsonFieldsNameOfUpdateTournamentConflict[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentConflictDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentConflictDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUpdateTournamentConflictDetails = [0]string{}
+
+// Decode decodes UpdateTournamentConflictDetails from json.
+func (s *UpdateTournamentConflictDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentConflictDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentConflictDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentConflictDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentConflictDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentDef) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentDef) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateTournamentDef = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes UpdateTournamentDef from json.
+func (s *UpdateTournamentDef) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentDef to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UpdateTournamentDefDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentDef")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentDef) {
+					name = jsonFieldsNameOfUpdateTournamentDef[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentDef) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentDef) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentDefDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentDefDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUpdateTournamentDefDetails = [0]string{}
+
+// Decode decodes UpdateTournamentDefDetails from json.
+func (s *UpdateTournamentDefDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentDefDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentDefDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentDefDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentDefDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentNotFound) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentNotFound) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateTournamentNotFound = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes UpdateTournamentNotFound from json.
+func (s *UpdateTournamentNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentNotFound to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UpdateTournamentNotFoundDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentNotFound")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentNotFound) {
+					name = jsonFieldsNameOfUpdateTournamentNotFound[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentNotFoundDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentNotFoundDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUpdateTournamentNotFoundDetails = [0]string{}
+
+// Decode decodes UpdateTournamentNotFoundDetails from json.
+func (s *UpdateTournamentNotFoundDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentNotFoundDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentNotFoundDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentNotFoundDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentNotFoundDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentPreconditionFailed) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentPreconditionFailed) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateTournamentPreconditionFailed = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes UpdateTournamentPreconditionFailed from json.
+func (s *UpdateTournamentPreconditionFailed) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentPreconditionFailed to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem UpdateTournamentPreconditionFailedDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentPreconditionFailed")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentPreconditionFailed) {
+					name = jsonFieldsNameOfUpdateTournamentPreconditionFailed[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentPreconditionFailed) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentPreconditionFailed) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentPreconditionFailedDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentPreconditionFailedDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfUpdateTournamentPreconditionFailedDetails = [0]string{}
+
+// Decode decodes UpdateTournamentPreconditionFailedDetails from json.
+func (s *UpdateTournamentPreconditionFailedDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateTournamentPreconditionFailedDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateTournamentPreconditionFailedDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateTournamentPreconditionFailedDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateTournamentPreconditionFailedDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateTournamentRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateTournamentRequest) encodeFields(e *jx.Encoder) {
 	{
 		if s.Name.Set {
 			e.FieldStart("name")
@@ -5960,48 +18059,83 @@ func (s *UpdateExampleRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.TournamentDifficulty.Set {
+			e.FieldStart("tournament_difficulty")
+			s.TournamentDifficulty.Encode(e)
+		}
+	}
+	{
+		if s.MaxParticipants.Set {
+			e.FieldStart("max_participants")
+			s.MaxParticipants.Encode(e)
+		}
+	}
+	{
+		if s.StartDate.Set {
+			e.FieldStart("start_date")
+			s.StartDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.EndDate.Set {
+			e.FieldStart("end_date")
+			s.EndDate.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
 		if s.Status.Set {
 			e.FieldStart("status")
 			s.Status.Encode(e)
 		}
 	}
 	{
-		if s.Tags != nil {
-			e.FieldStart("tags")
+		if s.Region.Set {
+			e.FieldStart("region")
+			s.Region.Encode(e)
+		}
+	}
+	{
+		if s.EntryFee.Set {
+			e.FieldStart("entry_fee")
+			s.EntryFee.Encode(e)
+		}
+	}
+	{
+		if s.PrizePool.Set {
+			e.FieldStart("prize_pool")
+			s.PrizePool.Encode(e)
+		}
+	}
+	{
+		if s.Objectives != nil {
+			e.FieldStart("objectives")
 			e.ArrStart()
-			for _, elem := range s.Tags {
-				e.Str(elem)
+			for _, elem := range s.Objectives {
+				elem.Encode(e)
 			}
 			e.ArrEnd()
 		}
 	}
-	{
-		if s.IsActive.Set {
-			e.FieldStart("is_active")
-			s.IsActive.Encode(e)
-		}
-	}
-	{
-		if s.Priority.Set {
-			e.FieldStart("priority")
-			s.Priority.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfUpdateExampleRequest = [6]string{
-	0: "name",
-	1: "description",
-	2: "status",
-	3: "tags",
-	4: "is_active",
-	5: "priority",
+var jsonFieldsNameOfUpdateTournamentRequest = [11]string{
+	0:  "name",
+	1:  "description",
+	2:  "tournament_difficulty",
+	3:  "max_participants",
+	4:  "start_date",
+	5:  "end_date",
+	6:  "status",
+	7:  "region",
+	8:  "entry_fee",
+	9:  "prize_pool",
+	10: "objectives",
 }
 
-// Decode decodes UpdateExampleRequest from json.
-func (s *UpdateExampleRequest) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentRequest from json.
+func (s *UpdateTournamentRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleRequest to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentRequest to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -6026,6 +18160,46 @@ func (s *UpdateExampleRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
+		case "tournament_difficulty":
+			if err := func() error {
+				s.TournamentDifficulty.Reset()
+				if err := s.TournamentDifficulty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tournament_difficulty\"")
+			}
+		case "max_participants":
+			if err := func() error {
+				s.MaxParticipants.Reset()
+				if err := s.MaxParticipants.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"max_participants\"")
+			}
+		case "start_date":
+			if err := func() error {
+				s.StartDate.Reset()
+				if err := s.StartDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"start_date\"")
+			}
+		case "end_date":
+			if err := func() error {
+				s.EndDate.Reset()
+				if err := s.EndDate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"end_date\"")
+			}
 		case "status":
 			if err := func() error {
 				s.Status.Reset()
@@ -6036,122 +18210,132 @@ func (s *UpdateExampleRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
-		case "tags":
+		case "region":
 			if err := func() error {
-				s.Tags = make([]string, 0)
+				s.Region.Reset()
+				if err := s.Region.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"region\"")
+			}
+		case "entry_fee":
+			if err := func() error {
+				s.EntryFee.Reset()
+				if err := s.EntryFee.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"entry_fee\"")
+			}
+		case "prize_pool":
+			if err := func() error {
+				s.PrizePool.Reset()
+				if err := s.PrizePool.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"prize_pool\"")
+			}
+		case "objectives":
+			if err := func() error {
+				s.Objectives = make([]TournamentObjective, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
+					var elem TournamentObjective
+					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.Tags = append(s.Tags, elem)
+					s.Objectives = append(s.Objectives, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"tags\"")
-			}
-		case "is_active":
-			if err := func() error {
-				s.IsActive.Reset()
-				if err := s.IsActive.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"is_active\"")
-			}
-		case "priority":
-			if err := func() error {
-				s.Priority.Reset()
-				if err := s.Priority.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"priority\"")
+				return errors.Wrap(err, "decode field \"objectives\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleRequest")
+		return errors.Wrap(err, "decode UpdateTournamentRequest")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleRequest) MarshalJSON() ([]byte, error) {
+func (s *UpdateTournamentRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleRequest) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes UpdateExampleRequestStatus as json.
-func (s UpdateExampleRequestStatus) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTournamentRequestTournamentDifficulty as json.
+func (s UpdateTournamentRequestTournamentDifficulty) Encode(e *jx.Encoder) {
 	e.Str(string(s))
 }
 
-// Decode decodes UpdateExampleRequestStatus from json.
-func (s *UpdateExampleRequestStatus) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentRequestTournamentDifficulty from json.
+func (s *UpdateTournamentRequestTournamentDifficulty) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleRequestStatus to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentRequestTournamentDifficulty to nil")
 	}
 	v, err := d.StrBytes()
 	if err != nil {
 		return err
 	}
 	// Try to use constant string.
-	switch UpdateExampleRequestStatus(v) {
-	case UpdateExampleRequestStatusActive:
-		*s = UpdateExampleRequestStatusActive
-	case UpdateExampleRequestStatusInactive:
-		*s = UpdateExampleRequestStatusInactive
-	case UpdateExampleRequestStatusPending:
-		*s = UpdateExampleRequestStatusPending
-	case UpdateExampleRequestStatusArchived:
-		*s = UpdateExampleRequestStatusArchived
+	switch UpdateTournamentRequestTournamentDifficulty(v) {
+	case UpdateTournamentRequestTournamentDifficultyBeginner:
+		*s = UpdateTournamentRequestTournamentDifficultyBeginner
+	case UpdateTournamentRequestTournamentDifficultyIntermediate:
+		*s = UpdateTournamentRequestTournamentDifficultyIntermediate
+	case UpdateTournamentRequestTournamentDifficultyAdvanced:
+		*s = UpdateTournamentRequestTournamentDifficultyAdvanced
+	case UpdateTournamentRequestTournamentDifficultyExpert:
+		*s = UpdateTournamentRequestTournamentDifficultyExpert
+	case UpdateTournamentRequestTournamentDifficultyMaster:
+		*s = UpdateTournamentRequestTournamentDifficultyMaster
 	default:
-		*s = UpdateExampleRequestStatus(v)
+		*s = UpdateTournamentRequestTournamentDifficulty(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s UpdateExampleRequestStatus) MarshalJSON() ([]byte, error) {
+func (s UpdateTournamentRequestTournamentDifficulty) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleRequestStatus) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentRequestTournamentDifficulty) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleTooManyRequests) Encode(e *jx.Encoder) {
+func (s *UpdateTournamentTooManyRequests) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleTooManyRequests) encodeFields(e *jx.Encoder) {
+func (s *UpdateTournamentTooManyRequests) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -6168,16 +18352,16 @@ func (s *UpdateExampleTooManyRequests) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExampleTooManyRequests = [3]string{
+var jsonFieldsNameOfUpdateTournamentTooManyRequests = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExampleTooManyRequests from json.
-func (s *UpdateExampleTooManyRequests) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentTooManyRequests from json.
+func (s *UpdateTournamentTooManyRequests) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleTooManyRequests to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentTooManyRequests to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -6210,7 +18394,7 @@ func (s *UpdateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExampleTooManyRequestsDetails
+				var elem UpdateTournamentTooManyRequestsDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -6224,7 +18408,7 @@ func (s *UpdateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleTooManyRequests")
+		return errors.Wrap(err, "decode UpdateTournamentTooManyRequests")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -6241,8 +18425,8 @@ func (s *UpdateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExampleTooManyRequests) {
-					name = jsonFieldsNameOfUpdateExampleTooManyRequests[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentTooManyRequests) {
+					name = jsonFieldsNameOfUpdateTournamentTooManyRequests[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -6263,35 +18447,35 @@ func (s *UpdateExampleTooManyRequests) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleTooManyRequests) MarshalJSON() ([]byte, error) {
+func (s *UpdateTournamentTooManyRequests) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleTooManyRequests) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleTooManyRequestsDetails) Encode(e *jx.Encoder) {
+func (s *UpdateTournamentTooManyRequestsDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
+func (s *UpdateTournamentTooManyRequestsDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExampleTooManyRequestsDetails = [0]string{}
+var jsonFieldsNameOfUpdateTournamentTooManyRequestsDetails = [0]string{}
 
-// Decode decodes UpdateExampleTooManyRequestsDetails from json.
-func (s *UpdateExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentTooManyRequestsDetails from json.
+func (s *UpdateTournamentTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleTooManyRequestsDetails to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentTooManyRequestsDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -6300,34 +18484,34 @@ func (s *UpdateExampleTooManyRequestsDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleTooManyRequestsDetails")
+		return errors.Wrap(err, "decode UpdateTournamentTooManyRequestsDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
+func (s *UpdateTournamentTooManyRequestsDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentTooManyRequestsDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleUnprocessableEntity) Encode(e *jx.Encoder) {
+func (s *UpdateTournamentUnprocessableEntity) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleUnprocessableEntity) encodeFields(e *jx.Encoder) {
+func (s *UpdateTournamentUnprocessableEntity) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
@@ -6344,16 +18528,16 @@ func (s *UpdateExampleUnprocessableEntity) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateExampleUnprocessableEntity = [3]string{
+var jsonFieldsNameOfUpdateTournamentUnprocessableEntity = [3]string{
 	0: "code",
 	1: "message",
 	2: "details",
 }
 
-// Decode decodes UpdateExampleUnprocessableEntity from json.
-func (s *UpdateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentUnprocessableEntity from json.
+func (s *UpdateTournamentUnprocessableEntity) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleUnprocessableEntity to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentUnprocessableEntity to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -6386,7 +18570,7 @@ func (s *UpdateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 		case "details":
 			if err := func() error {
 				s.Details = nil
-				var elem UpdateExampleUnprocessableEntityDetails
+				var elem UpdateTournamentUnprocessableEntityDetails
 				if err := elem.Decode(d); err != nil {
 					return err
 				}
@@ -6400,7 +18584,7 @@ func (s *UpdateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleUnprocessableEntity")
+		return errors.Wrap(err, "decode UpdateTournamentUnprocessableEntity")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -6417,8 +18601,8 @@ func (s *UpdateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfUpdateExampleUnprocessableEntity) {
-					name = jsonFieldsNameOfUpdateExampleUnprocessableEntity[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfUpdateTournamentUnprocessableEntity) {
+					name = jsonFieldsNameOfUpdateTournamentUnprocessableEntity[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -6439,35 +18623,35 @@ func (s *UpdateExampleUnprocessableEntity) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleUnprocessableEntity) MarshalJSON() ([]byte, error) {
+func (s *UpdateTournamentUnprocessableEntity) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleUnprocessableEntity) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentUnprocessableEntity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *UpdateExampleUnprocessableEntityDetails) Encode(e *jx.Encoder) {
+func (s *UpdateTournamentUnprocessableEntityDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *UpdateExampleUnprocessableEntityDetails) encodeFields(e *jx.Encoder) {
+func (s *UpdateTournamentUnprocessableEntityDetails) encodeFields(e *jx.Encoder) {
 }
 
-var jsonFieldsNameOfUpdateExampleUnprocessableEntityDetails = [0]string{}
+var jsonFieldsNameOfUpdateTournamentUnprocessableEntityDetails = [0]string{}
 
-// Decode decodes UpdateExampleUnprocessableEntityDetails from json.
-func (s *UpdateExampleUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTournamentUnprocessableEntityDetails from json.
+func (s *UpdateTournamentUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode UpdateExampleUnprocessableEntityDetails to nil")
+		return errors.New("invalid: unable to decode UpdateTournamentUnprocessableEntityDetails to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -6476,21 +18660,21 @@ func (s *UpdateExampleUnprocessableEntityDetails) Decode(d *jx.Decoder) error {
 			return d.Skip()
 		}
 	}); err != nil {
-		return errors.Wrap(err, "decode UpdateExampleUnprocessableEntityDetails")
+		return errors.Wrap(err, "decode UpdateTournamentUnprocessableEntityDetails")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *UpdateExampleUnprocessableEntityDetails) MarshalJSON() ([]byte, error) {
+func (s *UpdateTournamentUnprocessableEntityDetails) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *UpdateExampleUnprocessableEntityDetails) UnmarshalJSON(data []byte) error {
+func (s *UpdateTournamentUnprocessableEntityDetails) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

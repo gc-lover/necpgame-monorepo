@@ -6,7 +6,15 @@ package api
 type OperationName = string
 
 const (
-	BatchHealthCheckOperation             OperationName = "BatchHealthCheck"
-	HealthWebSocketOperation              OperationName = "HealthWebSocket"
-	ProgressionDomainHealthCheckOperation OperationName = "ProgressionDomainHealthCheck"
+	DistributeParagonPointsOperation OperationName = "DistributeParagonPoints"
+	GetMasteryLevelsOperation        OperationName = "GetMasteryLevels"
+	GetMasteryProgressOperation      OperationName = "GetMasteryProgress"
+	GetMasteryRewardsOperation       OperationName = "GetMasteryRewards"
+	GetParagonLevelsOperation        OperationName = "GetParagonLevels"
+	GetParagonStatsOperation         OperationName = "GetParagonStats"
+	GetPrestigeBonusesOperation      OperationName = "GetPrestigeBonuses"
+	GetPrestigeInfoOperation         OperationName = "GetPrestigeInfo"
+	HealthCheckOperation             OperationName = "HealthCheck"
+	ReadinessCheckOperation          OperationName = "ReadinessCheck"
+	ResetPrestigeOperation           OperationName = "ResetPrestige"
 )

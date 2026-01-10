@@ -114,6 +114,95 @@ func (h *ProgressHandler) GrantXP(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, result)
 }
 
+// PurchasePremiumPass handles POST /progress/premium
+func (h *ProgressHandler) PurchasePremiumPass(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract player ID from query parameters
+	playerID := r.URL.Query().Get("playerId")
+	if playerID == "" {
+		http.Error(w, "playerId query parameter required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var request struct {
+		Price    int    `json:"price"`
+		Currency string `json:"currency"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		h.logger.Error("Failed to decode premium purchase request", zap.Error(err))
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Get current season
+	currentSeason, err := h.progressService.GetCurrentSeason()
+	if err != nil {
+		h.logger.Error("Failed to get current season", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	err = h.progressService.PurchasePremiumPass(playerID, currentSeason.ID, request.Price, request.Currency)
+	if err != nil {
+		h.logger.Error("Failed to purchase premium pass",
+			zap.String("playerID", playerID), zap.Error(err))
+		if strings.Contains(err.Error(), "already has premium pass") {
+			http.Error(w, "Already has premium pass", http.StatusConflict)
+		} else {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"message": "Premium pass purchased successfully"})
+}
+
+// GetLeaderboard handles GET /progress/leaderboard
+func (h *ProgressHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get season ID from query parameters
+	seasonID := r.URL.Query().Get("seasonId")
+	if seasonID == "" {
+		// Get current season if not specified
+		currentSeason, err := h.progressService.GetCurrentSeason()
+		if err != nil {
+			h.logger.Error("Failed to get current season", zap.Error(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		seasonID = currentSeason.ID
+	}
+
+	// Get limit from query parameters
+	limit := 50
+	if limitParam := r.URL.Query().Get("limit"); limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	leaderboard, err := h.progressService.GetLeaderboard(seasonID, limit)
+	if err != nil {
+		h.logger.Error("Failed to get leaderboard", zap.String("seasonID", seasonID), zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"seasonId":    seasonID,
+		"leaderboard": leaderboard,
+	})
+}
+
 // respondJSON sends a JSON response
 func (h *ProgressHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

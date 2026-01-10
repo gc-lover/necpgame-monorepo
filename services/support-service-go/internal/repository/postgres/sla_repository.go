@@ -26,7 +26,7 @@ func (r *slaRepository) GetSLAInfo(ctx context.Context, ticketID uuid.UUID) (*mo
 	// For now, we'll calculate SLA info on the fly from ticket data
 
 	query := `
-		SELECT id, player_id, priority, status, created_at, updated_at, closed_at
+		SELECT id, character_id, priority, status, created_at, updated_at, closed_at
 		FROM support_tickets WHERE id = $1
 	`
 
@@ -35,7 +35,7 @@ func (r *slaRepository) GetSLAInfo(ctx context.Context, ticketID uuid.UUID) (*mo
 	var closedAt sql.NullTime
 
 	err := r.db.QueryRowContext(ctx, query, ticketID).Scan(
-		&ticket.ID, &ticket.PlayerID, &ticket.Priority, &ticket.Status,
+		&ticket.ID, &ticket.CharacterID, &ticket.Priority, &ticket.Status,
 		&ticket.CreatedAt, &ticket.UpdatedAt, &closedAt,
 	)
 	if err != nil {

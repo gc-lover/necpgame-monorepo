@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"necpgame/services/matchmaking-service-go/internal/database"
 	"necpgame/services/matchmaking-service-go/internal/service"
 	api "necpgame/services/matchmaking-service-go"
 )
@@ -12,18 +13,28 @@ import (
 // MatchmakingHandlers implements the generated Handler interface
 type MatchmakingHandlers struct {
 	matchmakingSvc *service.MatchmakingService
+	dbManager      *database.Manager
 }
 
 // NewMatchmakingHandlers creates a new instance of MatchmakingHandlers
-func NewMatchmakingHandlers(svc *service.MatchmakingService) *MatchmakingHandlers {
+func NewMatchmakingHandlers(svc *service.MatchmakingService, dbManager *database.Manager) *MatchmakingHandlers {
 	return &MatchmakingHandlers{
 		matchmakingSvc: svc,
+		dbManager:      dbManager,
 	}
 }
 
 // HealthCheck implements health check endpoint
 func (h *MatchmakingHandlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
 	log.Println("Health check requested")
+
+	// Check database health with context timeout
+	if err := h.dbManager.HealthCheck(ctx); err != nil {
+		log.Printf("Database health check failed: %v", err)
+		response := &api.HealthCheckOK{}
+		response.Status.SetTo("unhealthy")
+		return response, nil
+	}
 
 	response := &api.HealthCheckOK{}
 	response.Status.SetTo("healthy")

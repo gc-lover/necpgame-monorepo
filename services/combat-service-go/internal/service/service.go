@@ -6,9 +6,11 @@ package service
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
@@ -27,21 +29,119 @@ type Config struct {
 	RedisURL    string
 }
 
+// CombatSession represents an active combat session
+type CombatSession struct {
+	ID             uuid.UUID                  `json:"id"`
+	GameMode       string                     `json:"game_mode"`
+	Status         string                     `json:"status"` // active, paused, completed, cancelled
+	MaxParticipants int                      `json:"max_participants"`
+	Participants   map[string]*CombatParticipant `json:"participants"`
+	CreatedAt      time.Time                  `json:"created_at"`
+	UpdatedAt      time.Time                  `json:"updated_at"`
+	RoundNumber    int                       `json:"round_number"`
+	TurnOrder      []string                   `json:"turn_order"`
+	CurrentTurn    string                     `json:"current_turn"`
+	Environment    *CombatEnvironment        `json:"environment"`
+	CombatLog      []*CombatEvent            `json:"combat_log"`
+	mutex          sync.RWMutex
+}
+
+// CombatParticipant represents a player or NPC in combat
+type CombatParticipant struct {
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"` // player, npc, enemy
+	Health      *HealthStats      `json:"health"`
+	Position    *Position         `json:"position"`
+	Status      []string          `json:"status"` // poisoned, bleeding, stunned, etc.
+	Inventory   []*CombatItem     `json:"inventory"`
+	Abilities   []*CombatAbility  `json:"abilities"`
+	JoinedAt    time.Time         `json:"joined_at"`
+	LastAction  time.Time         `json:"last_action"`
+	IsActive    bool              `json:"is_active"`
+}
+
+// HealthStats represents health and armor statistics
+type HealthStats struct {
+	CurrentHP int `json:"current_hp"`
+	MaxHP     int `json:"max_hp"`
+	Armor     int `json:"armor"`
+	Shield    int `json:"shield"`
+}
+
+// Position represents 3D position in combat
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+// CombatItem represents an item in combat
+type CombatItem struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Damage   int    `json:"damage"`
+	Ammo     int    `json:"ammo"`
+	Durability int  `json:"durability"`
+}
+
+// CombatAbility represents a combat ability
+type CombatAbility struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Damage      int    `json:"damage"`
+	Cooldown    int    `json:"cooldown"`
+	LastUsed    time.Time `json:"last_used"`
+}
+
+// CombatEnvironment represents combat environment
+type CombatEnvironment struct {
+	Type        string  `json:"type"` // urban, wilderness, building, etc.
+	Weather     string  `json:"weather"`
+	TimeOfDay   string  `json:"time_of_day"`
+	Cover       []*CoverObject `json:"cover"`
+}
+
+// CoverObject represents cover in environment
+type CoverObject struct {
+	ID       string   `json:"id"`
+	Type     string   `json:"type"`
+	Position *Position `json:"position"`
+	Health   int      `json:"health"`
+}
+
+// CombatEvent represents an event in combat log
+type CombatEvent struct {
+	ID          string    `json:"id"`
+	Type        string    `json:"type"`
+	Timestamp   time.Time `json:"timestamp"`
+	Participant string    `json:"participant"`
+	Target      string    `json:"target,omitempty"`
+	Action      string    `json:"action"`
+	Damage      int       `json:"damage,omitempty"`
+	Description string    `json:"description"`
+}
+
 // Service implements the combat business logic
 type Service struct {
-	logger *zap.Logger
-	tracer trace.Tracer
-	meter  metric.Meter
-	db     *pgxpool.Pool
-	redis  *redis.Client
+	logger      *zap.Logger
+	tracer       trace.Tracer
+	meter        metric.Meter
+	db          *pgxpool.Pool
+	redis       *redis.Client
+	sessions    map[string]*CombatSession // In-memory session storage (use Redis in production)
+	sessionsMux sync.RWMutex
 }
 
 // NewCombatService creates optimized service instance
 func NewCombatService(cfg Config) (*Service, error) {
 	svc := &Service{
-		logger: cfg.Logger,
-		tracer: cfg.Tracer,
-		meter:  cfg.Meter,
+		logger:   cfg.Logger,
+		tracer:   cfg.Tracer,
+		meter:    cfg.Meter,
+		sessions: make(map[string]*CombatSession),
 	}
 
 	// Initialize database with performance optimizations
@@ -60,6 +160,304 @@ func NewCombatService(cfg Config) (*Service, error) {
 
 	svc.logger.Info("Combat service initialized successfully")
 	return svc, nil
+}
+
+// CreateCombatSession creates a new combat session
+func (s *Service) CreateCombatSession(ctx context.Context, req *api.CreateCombatSessionRequest) (*CombatSession, error) {
+	session := &CombatSession{
+		ID:               uuid.New(),
+		GameMode:         req.GameMode,
+		Status:           "active",
+		MaxParticipants:  req.MaxParticipants,
+		Participants:     make(map[string]*CombatParticipant),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		RoundNumber:      1,
+		TurnOrder:        []string{},
+		Environment:      &CombatEnvironment{
+			Type:      "urban",
+			Weather:   "clear",
+			TimeOfDay: "day",
+			Cover:     []*CoverObject{},
+		},
+		CombatLog: []*CombatEvent{},
+	}
+
+	s.sessionsMux.Lock()
+	s.sessions[session.ID.String()] = session
+	s.sessionsMux.Unlock()
+
+	s.logger.Info("Combat session created",
+		zap.String("session_id", session.ID.String()),
+		zap.String("game_mode", session.GameMode),
+		zap.Int("max_participants", session.MaxParticipants))
+
+	return session, nil
+}
+
+// GetCombatSession retrieves a combat session by ID
+func (s *Service) GetCombatSession(ctx context.Context, sessionID string) (*CombatSession, error) {
+	s.sessionsMux.RLock()
+	session, exists := s.sessions[sessionID]
+	s.sessionsMux.RUnlock()
+
+	if !exists {
+		return nil, errors.New("combat session not found")
+	}
+
+	return session, nil
+}
+
+// JoinCombatSession adds a participant to a combat session
+func (s *Service) JoinCombatSession(ctx context.Context, sessionID, participantID, participantName, participantType string) error {
+	session, err := s.GetCombatSession(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	if len(session.Participants) >= session.MaxParticipants {
+		return errors.New("combat session is full")
+	}
+
+	if _, exists := session.Participants[participantID]; exists {
+		return errors.New("participant already in session")
+	}
+
+	participant := &CombatParticipant{
+		ID:       participantID,
+		Name:     participantName,
+		Type:     participantType,
+		Health:   &HealthStats{CurrentHP: 100, MaxHP: 100, Armor: 0, Shield: 0},
+		Position: &Position{X: 0, Y: 0, Z: 0},
+		Status:   []string{},
+		Inventory: []*CombatItem{
+			{ID: "pistol", Name: "Pistol", Type: "weapon", Damage: 25, Ammo: 12, Durability: 100},
+		},
+		Abilities: []*CombatAbility{
+			{ID: "attack", Name: "Attack", Type: "basic", Damage: 20, Cooldown: 0},
+		},
+		JoinedAt:   time.Now(),
+		LastAction: time.Now(),
+		IsActive:   true,
+	}
+
+	session.Participants[participantID] = participant
+	session.TurnOrder = append(session.TurnOrder, participantID)
+	if session.CurrentTurn == "" {
+		session.CurrentTurn = participantID
+	}
+
+	session.UpdatedAt = time.Now()
+
+	s.logger.Info("Participant joined combat session",
+		zap.String("session_id", sessionID),
+		zap.String("participant_id", participantID),
+		zap.String("participant_name", participantName))
+
+	return nil
+}
+
+// ExecuteCombatAction processes a combat action
+func (s *Service) ExecuteCombatAction(ctx context.Context, sessionID, participantID string, action *api.CombatActionRequest) (*CombatEvent, error) {
+	session, err := s.GetCombatSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	participant, exists := session.Participants[participantID]
+	if !exists {
+		return nil, errors.New("participant not found in session")
+	}
+
+	if !participant.IsActive {
+		return nil, errors.New("participant is not active")
+	}
+
+	// Validate it's participant's turn (simplified - in production would be more complex)
+	if session.CurrentTurn != participantID {
+		return nil, errors.New("not participant's turn")
+	}
+
+	// Process action based on type
+	var event *CombatEvent
+	switch action.ActionType {
+	case "attack":
+		event, err = s.processAttackAction(session, participant, action)
+	case "move":
+		event, err = s.processMoveAction(session, participant, action)
+	case "ability":
+		event, err = s.processAbilityAction(session, participant, action)
+	default:
+		return nil, errors.New("unknown action type")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Add event to combat log
+	session.CombatLog = append(session.CombatLog, event)
+
+	// Update participant's last action time
+	participant.LastAction = time.Now()
+
+	// Advance turn (simplified round-robin)
+	currentIndex := -1
+	for i, pid := range session.TurnOrder {
+		if pid == participantID {
+			currentIndex = i
+			break
+		}
+	}
+
+	if currentIndex >= 0 {
+		nextIndex := (currentIndex + 1) % len(session.TurnOrder)
+		session.CurrentTurn = session.TurnOrder[nextIndex]
+
+		// Advance round if we completed a full cycle
+		if nextIndex == 0 {
+			session.RoundNumber++
+		}
+	}
+
+	session.UpdatedAt = time.Now()
+
+	return event, nil
+}
+
+// processAttackAction handles attack actions
+func (s *Service) processAttackAction(session *CombatSession, participant *CombatParticipant, action *api.CombatActionRequest) (*CombatEvent, error) {
+	targetID := action.TargetId
+	if targetID == "" {
+		return nil, errors.New("attack requires target")
+	}
+
+	target, exists := session.Participants[targetID]
+	if !exists {
+		return nil, errors.New("target not found")
+	}
+
+	// Calculate damage (simplified)
+	damage := 20 + rand.Intn(10) // Base damage 20-30
+
+	// Apply damage
+	target.Health.CurrentHP -= damage
+	if target.Health.CurrentHP < 0 {
+		target.Health.CurrentHP = 0
+		target.IsActive = false
+	}
+
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "attack",
+		Timestamp:   time.Now(),
+		Participant: participant.ID,
+		Target:      targetID,
+		Action:      "attack",
+		Damage:      damage,
+		Description: fmt.Sprintf("%s attacked %s for %d damage", participant.Name, target.Name, damage),
+	}
+
+	return event, nil
+}
+
+// processMoveAction handles movement actions
+func (s *Service) processMoveAction(session *CombatSession, participant *CombatParticipant, action *api.CombatActionRequest) (*CombatEvent, error) {
+	// Simplified movement - just update position
+	if action.Position != nil {
+		participant.Position.X = action.Position.X
+		participant.Position.Y = action.Position.Y
+		participant.Position.Z = action.Position.Z
+	}
+
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "move",
+		Timestamp:   time.Now(),
+		Participant: participant.ID,
+		Action:      "move",
+		Description: fmt.Sprintf("%s moved to position (%.1f, %.1f, %.1f)",
+			participant.Name, participant.Position.X, participant.Position.Y, participant.Position.Z),
+	}
+
+	return event, nil
+}
+
+// processAbilityAction handles ability usage
+func (s *Service) processAbilityAction(session *CombatSession, participant *CombatParticipant, action *api.CombatActionRequest) (*CombatEvent, error) {
+	abilityID := action.AbilityId
+	if abilityID == "" {
+		return nil, errors.New("ability action requires ability ID")
+	}
+
+	var ability *CombatAbility
+	for _, a := range participant.Abilities {
+		if a.ID == abilityID {
+			ability = a
+			break
+		}
+	}
+
+	if ability == nil {
+		return nil, errors.New("ability not found")
+	}
+
+	// Check cooldown
+	if time.Since(ability.LastUsed) < time.Duration(ability.Cooldown)*time.Second {
+		return nil, errors.New("ability on cooldown")
+	}
+
+	// Use ability
+	ability.LastUsed = time.Now()
+
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "ability",
+		Timestamp:   time.Now(),
+		Participant: participant.ID,
+		Action:      ability.Name,
+		Damage:      ability.Damage,
+		Description: fmt.Sprintf("%s used %s", participant.Name, ability.Name),
+	}
+
+	return event, nil
+}
+
+// CalculateDamage calculates damage for combat actions
+func (s *Service) CalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (*api.DamageCalculationResponse, error) {
+	// Simplified damage calculation
+	baseDamage := req.BaseDamage
+	criticalMultiplier := 1.0
+
+	// Check for critical hit (10% chance)
+	if rand.Float64() < 0.1 {
+		criticalMultiplier = 1.5
+		baseDamage = int(float64(baseDamage) * criticalMultiplier)
+	}
+
+	// Apply armor reduction
+	armorReduction := float64(req.TargetArmor) * 0.1 // 10% per armor point
+	actualDamage := baseDamage - int(armorReduction)
+	if actualDamage < 0 {
+		actualDamage = 0
+	}
+
+	response := &api.DamageCalculationResponse{
+		ActualDamage:       actualDamage,
+		CriticalHit:        criticalMultiplier > 1.0,
+		ArmorReduction:     int(armorReduction),
+		DamageType:         req.DamageType,
+		StatusEffects:      []string{},
+		CalculatedAt:       time.Now(),
+	}
+
+	return response, nil
 }
 
 // initDatabase initializes PostgreSQL connection with performance optimizations

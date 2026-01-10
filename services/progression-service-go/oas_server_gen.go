@@ -8,28 +8,83 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// BatchHealthCheck implements batchHealthCheck operation.
+	// DistributeParagonPoints implements distributeParagonPoints operation.
 	//
-	// Performance optimization: Check multiple domain health in single request.
+	// Распределяет доступные paragon очки по характеристикам
+	// персонажа.
 	//
-	// POST /api/v1/progression-domain/health/batch
-	BatchHealthCheck(ctx context.Context, req *BatchHealthCheckReq) (*BatchHealthCheckOK, error)
-	// HealthWebSocket implements healthWebSocket operation.
+	// POST /paragon/levels
+	DistributeParagonPoints(ctx context.Context, req *DistributeParagonPointsReq) (DistributeParagonPointsRes, error)
+	// GetMasteryLevels implements getMasteryLevels operation.
 	//
-	// Real-time health updates without polling.
+	// Возвращает информацию о всех типах мастерства
+	// персонажа: текущие уровни,
+	// прогресс до следующего уровня и разблокированные
+	// награды.
 	//
-	// GET /api/v1/progression-domain/health/ws
-	HealthWebSocket(ctx context.Context) error
-	// ProgressionDomainHealthCheck implements progression-domainHealthCheck operation.
+	// GET /mastery/levels
+	GetMasteryLevels(ctx context.Context, params GetMasteryLevelsParams) (GetMasteryLevelsRes, error)
+	// GetMasteryProgress implements getMasteryProgress operation.
 	//
-	// Progression domain domain health check.
+	// Возвращает детальную информацию о прогрессе в
+	// конкретном типе мастерства.
 	//
-	// GET /api/v1/progression-domain/health
-	ProgressionDomainHealthCheck(ctx context.Context) (*HealthResponseHeaders, error)
-	// NewError creates *ErrRespStatusCode from error returned by handler.
+	// GET /mastery/{mastery_type}/progress
+	GetMasteryProgress(ctx context.Context, params GetMasteryProgressParams) (GetMasteryProgressRes, error)
+	// GetMasteryRewards implements getMasteryRewards operation.
 	//
-	// Used for common default response.
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
+	// Возвращает доступные награды для конкретного типа
+	// мастерства.
+	//
+	// GET /mastery/{mastery_type}/rewards
+	GetMasteryRewards(ctx context.Context, params GetMasteryRewardsParams) (GetMasteryRewardsRes, error)
+	// GetParagonLevels implements getParagonLevels operation.
+	//
+	// Возвращает информацию о Paragon Levels персонажа: текущий
+	// уровень, накопленные очки,
+	// распределение очков по характеристикам и прогресс до
+	// следующего уровня.
+	//
+	// GET /paragon/levels
+	GetParagonLevels(ctx context.Context, params GetParagonLevelsParams) (GetParagonLevelsRes, error)
+	// GetParagonStats implements getParagonStats operation.
+	//
+	// Возвращает глобальную статистику Paragon системы.
+	//
+	// GET /paragon/stats
+	GetParagonStats(ctx context.Context, params GetParagonStatsParams) (GetParagonStatsRes, error)
+	// GetPrestigeBonuses implements getPrestigeBonuses operation.
+	//
+	// Возвращает текущие Prestige бонусы персонажа.
+	//
+	// GET /prestige/bonuses
+	GetPrestigeBonuses(ctx context.Context, params GetPrestigeBonusesParams) (GetPrestigeBonusesRes, error)
+	// GetPrestigeInfo implements getPrestigeInfo operation.
+	//
+	// Возвращает информацию о текущем Prestige Level персонажа,
+	// доступных бонусах
+	// и требованиях для следующего престижа.
+	//
+	// GET /prestige/info
+	GetPrestigeInfo(ctx context.Context, params GetPrestigeInfoParams) (GetPrestigeInfoRes, error)
+	// HealthCheck implements healthCheck operation.
+	//
+	// Проверка здоровья сервиса.
+	//
+	// GET /health
+	HealthCheck(ctx context.Context) (*HealthCheckOK, error)
+	// ReadinessCheck implements readinessCheck operation.
+	//
+	// Проверка готовности сервиса.
+	//
+	// GET /ready
+	ReadinessCheck(ctx context.Context) (*ReadinessCheckOK, error)
+	// ResetPrestige implements resetPrestige operation.
+	//
+	// Выполняет сброс прогресса персонажа за Prestige бонусы.
+	//
+	// POST /prestige/reset
+	ResetPrestige(ctx context.Context, req *ResetPrestigeReq) (ResetPrestigeRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

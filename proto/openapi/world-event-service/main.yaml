@@ -1,29 +1,27 @@
 openapi: 3.0.3
 info:
-  title: World Event Service API - Enterprise-Grade World Events Management
-  description: '**Enterprise-Grade World Events and Global Activities API for NECPGAME**
+  title: World Event Service API - Enterprise-Grade Global Event Management System
+  description: '**Enterprise-Grade World Event Management API for NECPGAME**
 
-    This API manages global world events, seasonal activities, dynamic content, and
-    large-scale gameplay experiences in Night City.
+    This API manages global world events, seasonal content, and dynamic activities in Night City.
 
     ## Key Features
 
     - **Event Management**: Create and manage global world events - **Seasonal Content**:
-    Handle seasonal activities and challenges - **Dynamic Content**: Real-time event
-    spawning and management - **Participation Tracking**: Track player participation
-    and rewards - **Scalability**: Support for massive concurrent events - **Performance
-    Optimized**: High-throughput event operations with <25ms P99 latency
+    Manage seasonal activities and challenges - **Dynamic Content**: Real-time event spawning and management
+    - **Participation Tracking**: Track player participation and rewards - **Scalability**: Support for massive concurrent events
+    - **Performance Optimized**: High-throughput event operations with <25ms P99 latency
 
     ## Domain Purpose
 
-    The World Event domain handles all global events and activities in Night City.
-    Players participate in world events, seasonal content, and dynamic activities
-    through comprehensive event management systems.
+    The World Event domain handles all global events, seasonal content, and dynamic activities in Night City.
+    Players participate in world events, seasonal challenges, and dynamic content through
+    comprehensive event management systems.
 
     ## Performance Targets
 
     - P99 Latency: <25ms for event operations - Memory: <30KB per active event session
-    - Concurrent users: 200,000+ simultaneous participants - Event throughput: 50,000+
+    - Concurrent users: 200,000+ simultaneous event participants - Event throughput: 50,000+
     operations per second
 
     '
@@ -45,23 +43,25 @@ servers:
 security:
 - BearerAuth: []
 tags:
-- name: World Event Management
+- name: Event Management
   description: Core world event operations and management
-- name: Seasonal Content
-  description: Seasonal activities and challenges
+- name: Event Participation
+  description: Player registration and event participation
+- name: Event Analytics
+  description: Event statistics and performance monitoring
+- name: Event Templates
+  description: Reusable event templates and configurations
 - name: Health Monitoring
   description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: Example domain health check
+      summary: World Event service health check
       description: '**Enterprise-grade health check endpoint**
 
-
-        Provides real-time health status of the example domain microservice.
+        Provides real-time health status of the world event service microservice.
 
         Critical for service discovery, load balancing, and monitoring.
-
 
         **Performance:** <1ms response time, cached for 30 seconds
 
@@ -89,948 +89,1557 @@ paths:
             ETag:
               schema:
                 type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: '#/components/schemas/HealthResponse'
         '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/batch:
-    post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
-        single request
+          $ref: '#/components/responses/InternalServerError'
 
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: exampleDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - example-domain
-                    - system-domain
-                    - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/ws:
+  /events:
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
+      summary: List active world events
+      description: '**Enterprise-grade event listing with advanced filtering**
 
+        Retrieves paginated list of active world events with comprehensive filtering options.
 
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
+        **Performance:** <15ms P99, supports complex queries with indexes
+        **Memory:** <50KB per request with pagination optimization
 
         '
-      operationId: worldEventServiceHealthWebSocket
+      operationId: listEvents
       tags:
-      - Health Monitoring
+      - Event Management
       parameters:
-      - name: services
+      - name: type
         in: query
         schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - example-domain
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /examples:
-    get:
-      summary: List examples with filtering and pagination
-      description: '**Enterprise-grade listing endpoint**
-
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        '
-      operationId: listWorldEvents
-      tags:
-      - World Event Management
-      parameters:
-      - name: page
+          $ref: '#/components/schemas/WorldEventType'
+        description: Filter by event type
+      - name: region
         in: query
         schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
+          type: string
+        description: Filter by region
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventStatus'
+        description: Filter by event status
+      - name: difficulty
+        in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        description: Filter by difficulty level
       - name: limit
         in: query
         schema:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: sort_by
+          default: 50
+        description: Number of events per page
+      - name: offset
         in: query
         schema:
-          type: string
-          enum:
-          - created_at
-          - name
-          - priority
-          default: created_at
-        description: Sort field
-      - name: sort_order
-        in: query
-        schema:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
-        description: Sort order
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-        description: Filter by status
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
-          $ref: '#/components/responses/ExampleListSuccess'
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldEventSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
         '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
     post:
-      summary: Create new example
-      description: '**Enterprise-grade creation endpoint**
+      summary: Create new world event
+      description: '**Enterprise-grade event creation with validation**
 
+        Creates a new world event with comprehensive validation and conflict checking.
 
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
+        **Performance:** <25ms P99, includes business rule validation
+        **Scalability:** Supports 10,000+ concurrent event creations
 
         '
-      operationId: createExample
+      operationId: createEvent
       tags:
-      - World Event Management
-      security:
-      - BearerAuth: []
+      - Event Management
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
+              $ref: '#/components/schemas/CreateEventRequest'
       responses:
         '201':
-          $ref: '#/components/responses/ExampleCreated'
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
         '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/BadRequest'
         '409':
-          description: Conflict - example with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /examples/{example_id}:
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
     get:
-      summary: Get specific example by ID
-      description: '**Enterprise-grade retrieval endpoint**
+      summary: Get event details
+      description: '**Enterprise-grade event retrieval with caching**
 
+        Retrieves detailed information about a specific world event.
 
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
+        **Performance:** <10ms P99 with Redis caching
+        **Memory:** <25KB per cached event
 
         '
-      operationId: getExample
+      operationId: getEvent
       tags:
-      - World Event Management
-      parameters:
-      - name: example_id
-        in: path
+      - Event Management
+      responses:
+        '200':
+          description: Event details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update event
+      description: '**Enterprise-grade event updates with optimistic locking**
+
+        Updates existing world event with conflict resolution.
+
+        **Performance:** <20ms P99, optimistic locking prevents conflicts
+        **Safety:** Version-based conflict detection
+
+        '
+      operationId: updateEvent
+      tags:
+      - Event Management
+      requestBody:
         required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Cancel event
+      description: '**Enterprise-grade event cancellation with participant notification**
+
+        Cancels active world event and notifies all participants.
+
+        **Performance:** <30ms P99, includes bulk notification
+        **Reliability:** Guaranteed participant notification
+
+        '
+      operationId: cancelEvent
+      tags:
+      - Event Management
+      responses:
+        '200':
+          description: Event cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/participants:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    get:
+      summary: Get event participants
+      description: '**Enterprise-grade participant listing with performance optimization**
+
+        Retrieves paginated list of event participants with activity tracking.
+
+        **Performance:** <20ms P99, indexed queries
+        **Scalability:** Supports events with 100,000+ participants
+
+        '
+      operationId: getEventParticipants
+      tags:
+      - Event Participation
+      parameters:
+      - name: limit
+        in: query
         schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: include_related
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of participants per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventParticipantsList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/join:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    post:
+      summary: Join event
+      description: '**Enterprise-grade event joining with capacity management**
+
+        Registers player participation in world event with capacity validation.
+
+        **Performance:** <15ms P99, atomic operations
+        **Concurrency:** Safe concurrent joins with capacity limits
+
+        '
+      operationId: joinEvent
+      tags:
+      - Event Participation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinEventRequest'
+      responses:
+        '200':
+          description: Successfully joined event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/leave:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    post:
+      summary: Leave event
+      description: '**Enterprise-grade event leaving with cleanup**
+
+        Removes player participation from world event.
+
+        **Performance:** <10ms P99, atomic operations
+        **Data Integrity:** Guaranteed cleanup of participation records
+
+        '
+      operationId: leaveEvent
+      tags:
+      - Event Participation
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/participation/{playerId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player participation details
+      description: '**Enterprise-grade participation retrieval with caching**
+
+        Retrieves detailed participation information for specific player.
+
+        **Performance:** <5ms P99 with Redis caching
+        **Privacy:** Player-specific data isolation
+
+        '
+      operationId: getPlayerParticipation
+      tags:
+      - Event Participation
+      responses:
+        '200':
+          description: Participation details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventParticipationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update player participation
+      description: '**Enterprise-grade participation updates with validation**
+
+        Updates player participation status and progress data.
+
+        **Performance:** <15ms P99, includes validation
+        **Audit:** Full participation history tracking
+
+        '
+      operationId: updatePlayerParticipation
+      tags:
+      - Event Participation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParticipationRequest'
+      responses:
+        '200':
+          description: Participation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/analytics:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    get:
+      summary: Get event analytics
+      description: '**Enterprise-grade analytics with real-time metrics**
+
+        Provides comprehensive event analytics and performance metrics.
+
+        **Performance:** <50ms P99, aggregated data
+        **Real-time:** Live participant and performance metrics
+
+        '
+      operationId: getEventAnalytics
+      tags:
+      - Event Analytics
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAnalyticsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /players/{playerId}/events:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player events
+      description: '**Enterprise-grade player event history with performance**
+
+        Retrieves paginated list of events player has participated in.
+
+        **Performance:** <25ms P99, player-specific indexes
+        **Privacy:** Player data isolation and access control
+
+        '
+      operationId: getPlayerEvents
+      tags:
+      - Event Participation
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/ParticipationStatus'
+        description: Filter by participation status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of events per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Player events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerEventSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /players/{playerId}/rewards:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player event rewards
+      description: '**Enterprise-grade reward tracking with claim validation**
+
+        Retrieves paginated list of unclaimed and claimed event rewards.
+
+        **Performance:** <20ms P99, reward-specific queries
+        **Security:** Claim validation and anti-cheat measures
+
+        '
+      operationId: getPlayerRewards
+      tags:
+      - Event Participation
+      parameters:
+      - name: claimed
         in: query
         schema:
           type: boolean
           default: false
-        description: Include related data in response
-      - name: If-None-Match
-        in: header
+        description: Filter by claimed status
+      - name: limit
+        in: query
         schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      - name: If-Modified-Since
-        in: header
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of rewards per page
+      - name: offset
+        in: query
         schema:
-          type: string
-          format: date-time
-        description: Conditional request - return 304 if not modified since this time
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
-          $ref: '#/components/responses/ExampleRetrieved'
-        '304':
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
+          description: Player rewards retrieved successfully
+          content:
+            application/json:
               schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
+                $ref: '#/components/schemas/PlayerRewardsList'
         '400':
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update existing example
-      description: '**Enterprise-grade update endpoint**
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
+  /players/{playerId}/rewards/{rewardId}/claim:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    - name: rewardId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique reward identifier
+    post:
+      summary: Claim event reward
+      description: '**Enterprise-grade reward claiming with atomic operations**
 
-        Supports partial updates, optimistic locking, and audit trails.
+        Claims specific event reward with validation and anti-cheat protection.
 
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
+        **Performance:** <15ms P99, atomic claim operations
+        **Security:** Fraud prevention and claim validation
 
         '
-      operationId: updateExample
+      operationId: claimReward
       tags:
-      - World Event Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      - name: If-Unmodified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional update - proceed only if not modified since this
-          time
+      - Event Participation
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateExampleRequest'
+              $ref: '#/components/schemas/ClaimRewardRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ExampleUpdated'
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardClaimResponse'
         '400':
-          description: Invalid request - malformed data or example ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/NotFound'
         '409':
-          description: Conflict - version conflict (optimistic locking) or precondition
-            failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '412':
-          description: Precondition failed - If-Match or If-Unmodified-Since condition
-            not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Delete example
-      description: '**Enterprise-grade deletion endpoint**
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
+  /templates:
+    get:
+      summary: List event templates
+      description: '**Enterprise-grade template management with versioning**
 
-        Supports soft deletes with audit trails and cleanup scheduling.
+        Retrieves paginated list of reusable event templates.
 
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
+        **Performance:** <15ms P99, template caching
+        **Reusability:** Standardized event configurations
 
         '
-      operationId: deleteExample
+      operationId: listEventTemplates
       tags:
-      - World Event Management
-      security:
-      - BearerAuth: []
+      - Event Templates
       parameters:
-      - name: example_id
-        in: path
-        required: true
+      - name: type
+        in: query
         schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
+          $ref: '#/components/schemas/WorldEventType'
+        description: Filter by template type
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Filter by active status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of templates per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        '204':
-          $ref: '#/components/responses/ExampleDeleted'
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventTemplateSummary'
+                  total:
+                    type: integer
+                    minimum: 0
         '400':
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Conflict - example cannot be deleted (referential integrity)
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - deletion rate limit exceeded
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create event template
+      description: '**Enterprise-grade template creation with validation**
+
+        Creates reusable event template with comprehensive validation.
+
+        **Performance:** <30ms P99, includes template validation
+        **Reusability:** Standardized event configurations
+
+        '
+      operationId: createEventTemplate
+      tags:
+      - Event Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
           headers:
-            Retry-After:
+            Location:
               schema:
-                type: integer
-                example: 60
+                type: string
+              description: URL of created template
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: '#/components/schemas/EventTemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common-service/security/security.yaml#/BearerAuth'
+    ApiKeyAuth:
+      $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
+    ServiceAuth:
+      $ref: '../common-service/security/security.yaml#/ServiceAuth'
+
   responses:
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleListResponse'
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-    OK:
-      $ref: ../common-service/responses/success.yaml#/OK
-    Created:
-      $ref: ../common-service/responses/success.yaml#/Created
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
+      $ref: '../common-service/responses/error.yaml#/BadRequest'
     Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
+      $ref: '../common-service/responses/error.yaml#/Unauthorized'
     Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
+      $ref: '../common-service/responses/error.yaml#/Forbidden'
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
+      $ref: '../common-service/responses/error.yaml#/NotFound'
     Conflict:
-      $ref: ../common-service/responses/error.yaml#/Conflict
+      $ref: '../common-service/responses/error.yaml#/Conflict'
     InternalServerError:
-      $ref: ../common-service/responses/error.yaml#/InternalServerError
-    HealthOK:
-      $ref: ../common-service/responses/success.yaml#/HealthOK
+      $ref: '../common-service/responses/error.yaml#/InternalServerError'
+
   schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: ../common-service/schemas/health.yaml#/HealthResponse
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+    # Common schemas from common-service
     Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    Example:
+      $ref: '../common-service/schemas/error.yaml#/Error'
+    HealthResponse:
+      $ref: '../common-service/schemas/health.yaml#/HealthResponse'
+    PaginationMeta:
+      $ref: '../common-service/schemas/pagination.yaml#/PaginationMeta'
+
+    # World Event specific schemas
+    WorldEventType:
+      type: string
+      enum:
+      - combat
+      - exploration
+      - social
+      - economic
+      - seasonal
+      - emergency
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes). Memory savings: minimal impact but consistent with enterprise patterns.**'
+
+    WorldEventStatus:
+      type: string
+      enum:
+      - announced
+      - active
+      - paused
+      - completed
+      - cancelled
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes). Memory savings: minimal impact but consistent with enterprise patterns.**'
+
+    WorldEventDifficulty:
+      type: string
+      enum:
+      - easy
+      - medium
+      - hard
+      - extreme
+      - nightmare
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes). Memory savings: minimal impact but consistent with enterprise patterns.**'
+
+    ParticipationStatus:
+      type: string
+      enum:
+      - registered
+      - active
+      - completed
+      - failed
+      - abandoned
+      description: '**BACKEND NOTE: Enum field ordered for struct alignment (4 bytes). Memory savings: minimal impact but consistent with enterprise patterns.**'
+
+    WorldEventSummary:
       type: object
-      required:
-      - id
-      - name
-      - created_at
-      - status
-      - is_active
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 25-35%. Performance: <10ms P99 for list operations.**'
       properties:
         id:
           type: string
           format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
+          description: Unique event identifier
         name:
           type: string
-          minLength: 1
+          maxLength: 255
+          description: Event display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        region:
+          type: string
           maxLength: 100
-          description: Example display name
-          example: Sample Example
+          description: Geographic region
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        start_time:
+          type: string
+          format: date-time
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current participant count
+        max_participants:
+          type: integer
+          minimum: 0
+          description: Maximum allowed participants
+      required:
+      - id
+      - name
+      - type
+      - region
+      - status
+      - start_time
+      - difficulty
+      - current_participants
+
+    WorldEvent:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 30-40%. Performance: <15ms P99 for CRUD operations.**'
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Event display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        region:
+          type: string
+          maxLength: 100
+          description: Geographic region
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        start_time:
+          type: string
+          format: date-time
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current participant count
         description:
           type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+          maxLength: 2000
+          description: Detailed event description
+        end_time:
+          type: string
+          format: date-time
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 0
+          description: Maximum allowed participants
+        objectives:
+          type: object
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum player level requirement
+        faction_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
+          description: Event creation timestamp
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
-        status:
+      required:
+      - id
+      - name
+      - type
+      - region
+      - status
+      - start_time
+      - difficulty
+      - current_participants
+      - created_at
+      - updated_at
+
+    WorldEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/WorldEvent'
+      - type: object
+        properties:
+          participants:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventParticipant'
+            description: Current event participants
+
+    CreateEventRequest:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 20-30%. Validation: Comprehensive business rule checks.**'
+      properties:
+        name:
           type: string
-          enum:
-          - active
-          - inactive
-          - pending
-          - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
+          minLength: 3
+          maxLength: 255
+          description: Event display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        region:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Geographic region
+        start_time:
+          type: string
+          format: date-time
+          description: Event start timestamp
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed event description
+        end_time:
+          type: string
+          format: date-time
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Maximum allowed participants
+        objectives:
+          type: object
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum player level requirement
+        faction_restrictions:
           type: array
           items:
             type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-          - demo
-          - template
-          - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Hot path optimization required.'
-    CreateExampleRequest:
-      type: object
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
       required:
       - name
-      - description
+      - type
+      - region
+      - start_time
+      - difficulty
+
+    UpdateEventRequest:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Partial updates supported with optimistic locking.**'
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
+          minLength: 3
+          maxLength: 255
+          description: Event display name
         description:
           type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
+          maxLength: 2000
+          description: Detailed event description
+        status:
+          $ref: '#/components/schemas/WorldEventStatus'
+        end_time:
+          type: string
+          format: date-time
+          description: Event end timestamp
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Maximum allowed participants
+        objectives:
+          type: object
+          description: Event objectives (JSON)
+          additionalProperties: true
+        rewards:
+          type: object
+          description: Event rewards (JSON)
+          additionalProperties: true
+        faction_restrictions:
           type: array
           items:
             type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
+          description: Allowed factions (empty = all allowed)
+        region_restrictions:
+          type: array
+          items:
+            type: string
+          description: Allowed regions (empty = all allowed)
+        prerequisites:
+          type: object
+          description: Event prerequisites (JSON)
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Additional event metadata (JSON)
+          additionalProperties: true
+
+    EventParticipant:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Performance: Indexed queries for participant lookups.**'
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Unique player identifier
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation join timestamp
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        progress_data:
+          type: object
+          description: Player progress data (JSON)
+          additionalProperties: true
+        score:
+          type: integer
+          minimum: 0
+          description: Player score in event
+        rank:
           type: integer
           minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UpdateExampleRequest:
+          description: Player rank in event
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+      required:
+      - player_id
+      - joined_at
+      - status
+      - last_activity_at
+
+    EventParticipantsList:
       type: object
       properties:
-        name:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventParticipant'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of participants
+
+    EventParticipation:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Audit trail with full participation history.**'
+      properties:
+        id:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
+          format: uuid
+          description: Unique participation record ID
+        player_id:
           type: string
-          maxLength: 1000
-          description: New description
+          format: uuid
+          description: Player identifier
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation start timestamp
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        failed_at:
+          type: string
+          format: date-time
+          description: Failure timestamp
+        abandoned_at:
+          type: string
+          format: date-time
+          description: Abandon timestamp
+        progress_data:
+          type: object
+          description: Progress tracking data (JSON)
+          additionalProperties: true
+        rewards_claimed:
+          type: boolean
+          default: false
+          description: Whether rewards have been claimed
+        score:
+          type: integer
+          minimum: 0
+          description: Final score achieved
+        rank:
+          type: integer
+          minimum: 1
+          description: Final rank achieved
+        metadata:
+          type: object
+          description: Additional participation metadata (JSON)
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+      - id
+      - player_id
+      - event_id
+      - status
+      - joined_at
+      - last_activity_at
+      - rewards_claimed
+      - created_at
+      - updated_at
+
+    EventParticipationResponse:
+      type: object
+      properties:
+        participation:
+          $ref: '#/components/schemas/EventParticipation'
+
+    JoinEventRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+      required:
+      - player_id
+
+    UpdateParticipationRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        progress_data:
+          type: object
+          description: Updated progress data (JSON)
+          additionalProperties: true
+        score:
+          type: integer
+          minimum: 0
+          description: Updated score
+      required:
+      - status
+
+    PlayerEventSummary:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Player-specific event history queries.**'
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        event_name:
+          type: string
+          maxLength: 255
+          description: Event display name
+        event_type:
+          $ref: '#/components/schemas/WorldEventType'
+        status:
+          $ref: '#/components/schemas/ParticipationStatus'
+        joined_at:
+          type: string
+          format: date-time
+          description: Participation join timestamp
+        score:
+          type: integer
+          minimum: 0
+          description: Player score
+        rank:
+          type: integer
+          minimum: 1
+          description: Player rank
+        rewards_claimed:
+          type: boolean
+          description: Whether rewards were claimed
+      required:
+      - event_id
+      - event_name
+      - event_type
+      - status
+      - joined_at
+      - rewards_claimed
+
+    EventReward:
+      type: object
+      description: '**BACKEND NOTE: Fields ordered for struct alignment. Reward validation and anti-cheat measures.**'
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique reward identifier
+        event_id:
+          type: string
+          format: uuid
+          description: Associated event identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        reward_type:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - cosmetic
+          - title
+          description: Type of reward
+        reward_id:
+          type: string
+          description: Specific reward identifier
+        amount:
+          type: integer
+          minimum: 1
+          description: Reward amount/quantity
+        claimed:
+          type: boolean
+          default: false
+          description: Whether reward has been claimed
+        claimed_at:
+          type: string
+          format: date-time
+          description: Claim timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Reward creation timestamp
+      required:
+      - id
+      - event_id
+      - player_id
+      - reward_type
+      - amount
+      - claimed
+      - created_at
+
+    PlayerRewardsList:
+      type: object
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventReward'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of rewards
+
+    ClaimRewardRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier for validation
+      required:
+      - player_id
+
+    RewardClaimResponse:
+      type: object
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: Claimed reward identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        event_id:
+          type: string
+          format: uuid
+          description: Associated event identifier
+        claimed_at:
+          type: string
+          format: date-time
+          description: Claim timestamp
         status:
           type: string
           enum:
-          - active
-          - inactive
+          - success
           - pending
-          - archived
-          description: New status
-        tags:
+          - failed
+          description: Claim status
+        delivered:
+          type: boolean
+          default: false
+          description: Whether reward was delivered to player inventory
+      required:
+      - reward_id
+      - player_id
+      - event_id
+      - claimed_at
+      - status
+      - delivered
+
+    EventAnalyticsResponse:
+      type: object
+      description: '**BACKEND NOTE: Aggregated analytics data. Performance: Pre-calculated metrics for real-time access.**'
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        total_participants:
+          type: integer
+          minimum: 0
+          description: Total registered participants
+        completed_participants:
+          type: integer
+          minimum: 0
+          description: Participants who completed the event
+        average_completion_time:
+          type: string
+          description: Average time to complete (PostgreSQL interval format)
+        average_score:
+          type: number
+          format: float
+          minimum: 0
+          description: Average participant score
+        participation_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Participation completion rate
+        satisfaction_rating:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 5
+          description: Average satisfaction rating
+        last_updated:
+          type: string
+          format: date-time
+          description: Analytics last update timestamp
+      required:
+      - event_id
+      - total_participants
+      - completed_participants
+      - last_updated
+
+    EventTemplateSummary:
+      type: object
+      description: '**BACKEND NOTE: Template summary for listing. Performance: Cached template metadata.**'
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Template display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        is_active:
+          type: boolean
+          default: true
+          description: Whether template is active for use
+        created_at:
+          type: string
+          format: date-time
+          description: Template creation timestamp
+      required:
+      - id
+      - name
+      - type
+      - difficulty
+      - is_active
+      - created_at
+
+    EventTemplate:
+      type: object
+      description: '**BACKEND NOTE: Complete template with all configuration data. Performance: Template inheritance and reusability.**'
+      allOf:
+      - $ref: '#/components/schemas/EventTemplateSummary'
+      - type: object
+        properties:
+          description:
+            type: string
+            maxLength: 2000
+            description: Template description
+          objectives_template:
+            type: object
+            description: Default objectives configuration (JSON)
+            additionalProperties: true
+          rewards_template:
+            type: object
+            description: Default rewards configuration (JSON)
+            additionalProperties: true
+          duration_minutes:
+            type: integer
+            minimum: 1
+            description: Default event duration in minutes
+          max_participants:
+            type: integer
+            minimum: 1
+            description: Default maximum participants
+          region_restrictions:
+            type: array
+            items:
+              type: string
+            description: Default region restrictions
+          event_data_template:
+            type: object
+            description: Default event data configuration (JSON)
+            additionalProperties: true
+          updated_at:
+            type: string
+            format: date-time
+            description: Template last update timestamp
+        required:
+        - updated_at
+
+    EventTemplateResponse:
+      type: object
+      properties:
+        template:
+          $ref: '#/components/schemas/EventTemplate'
+
+    CreateTemplateRequest:
+      type: object
+      description: '**BACKEND NOTE: Template creation request with validation. Performance: Template validation on creation.**'
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: Template display name
+        type:
+          $ref: '#/components/schemas/WorldEventType'
+        difficulty:
+          $ref: '#/components/schemas/WorldEventDifficulty'
+        description:
+          type: string
+          maxLength: 2000
+          description: Template description
+        objectives_template:
+          type: object
+          description: Default objectives configuration (JSON)
+          additionalProperties: true
+        rewards_template:
+          type: object
+          description: Default rewards configuration (JSON)
+          additionalProperties: true
+        duration_minutes:
+          type: integer
+          minimum: 1
+          description: Default event duration in minutes
+        max_participants:
+          type: integer
+          minimum: 1
+          description: Default maximum participants
+        region_restrictions:
           type: array
           items:
             type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    ExampleResponse:
-      type: object
+          description: Default region restrictions
+        event_data_template:
+          type: object
+          description: Default event data configuration (JSON)
+          additionalProperties: true
       required:
-      - example
-      properties:
-        example:
-          $ref: '#/components/schemas/Example'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    ExampleListResponse:
-      type: object
-      required:
-      - examples
-      - total_count
-      - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: '#/components/schemas/Example'
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Paginated responses optimized for memory
-        efficiency.'
-    PaginationParams:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
-    PaginatedResponse:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-  securitySchemes:
-    BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
-    ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      - name
+      - type
+      - difficulty

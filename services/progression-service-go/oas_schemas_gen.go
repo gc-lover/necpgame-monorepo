@@ -3,55 +3,11 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 )
-
-func (s *ErrRespStatusCode) Error() string {
-	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
-}
-
-type BatchHealthCheckOK struct {
-	Results []HealthResponse `json:"results"`
-	// Total processing time.
-	TotalTimeMs OptInt `json:"total_time_ms"`
-}
-
-// GetResults returns the value of Results.
-func (s *BatchHealthCheckOK) GetResults() []HealthResponse {
-	return s.Results
-}
-
-// GetTotalTimeMs returns the value of TotalTimeMs.
-func (s *BatchHealthCheckOK) GetTotalTimeMs() OptInt {
-	return s.TotalTimeMs
-}
-
-// SetResults sets the value of Results.
-func (s *BatchHealthCheckOK) SetResults(val []HealthResponse) {
-	s.Results = val
-}
-
-// SetTotalTimeMs sets the value of TotalTimeMs.
-func (s *BatchHealthCheckOK) SetTotalTimeMs(val OptInt) {
-	s.TotalTimeMs = val
-}
-
-type BatchHealthCheckReq struct {
-	Domains []string `json:"domains"`
-}
-
-// GetDomains returns the value of Domains.
-func (s *BatchHealthCheckReq) GetDomains() []string {
-	return s.Domains
-}
-
-// SetDomains sets the value of Domains.
-func (s *BatchHealthCheckReq) SetDomains(val []string) {
-	s.Domains = val
-}
 
 type BearerAuth struct {
 	Token string
@@ -78,218 +34,411 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-// Standard error response format.
-type ErrResp struct {
-	Code    int32  `json:"code"`
+type DistributeParagonPointsBadRequest Error
+
+func (*DistributeParagonPointsBadRequest) distributeParagonPointsRes() {}
+
+type DistributeParagonPointsInternalServerError Error
+
+func (*DistributeParagonPointsInternalServerError) distributeParagonPointsRes() {}
+
+// Ref: #/components/schemas/DistributeParagonPointsReq
+type DistributeParagonPointsReq struct {
+	CharacterID  uuid.UUID          `json:"character_id"`
+	Distribution PointsDistribution `json:"distribution"`
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *DistributeParagonPointsReq) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// GetDistribution returns the value of Distribution.
+func (s *DistributeParagonPointsReq) GetDistribution() PointsDistribution {
+	return s.Distribution
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *DistributeParagonPointsReq) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// SetDistribution sets the value of Distribution.
+func (s *DistributeParagonPointsReq) SetDistribution(val PointsDistribution) {
+	s.Distribution = val
+}
+
+// Ref: #/components/schemas/Error
+type Error struct {
+	Code    string `json:"code"`
 	Message string `json:"message"`
-	// Additional error details.
-	Details *ErrRespDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *ErrResp) GetCode() int32 {
+func (s *Error) GetCode() string {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *ErrResp) GetMessage() string {
+func (s *Error) GetMessage() string {
 	return s.Message
 }
 
-// GetDetails returns the value of Details.
-func (s *ErrResp) GetDetails() *ErrRespDetails {
-	return s.Details
-}
-
 // SetCode sets the value of Code.
-func (s *ErrResp) SetCode(val int32) {
+func (s *Error) SetCode(val string) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *ErrResp) SetMessage(val string) {
+func (s *Error) SetMessage(val string) {
 	s.Message = val
 }
 
-// SetDetails sets the value of Details.
-func (s *ErrResp) SetDetails(val *ErrRespDetails) {
-	s.Details = val
+func (*Error) getMasteryLevelsRes()   {}
+func (*Error) getParagonStatsRes()    {}
+func (*Error) getPrestigeBonusesRes() {}
+func (*Error) getPrestigeInfoRes()    {}
+
+type GetMasteryProgressBadRequest Error
+
+func (*GetMasteryProgressBadRequest) getMasteryProgressRes() {}
+
+type GetMasteryProgressInternalServerError Error
+
+func (*GetMasteryProgressInternalServerError) getMasteryProgressRes() {}
+
+type GetMasteryProgressMasteryType string
+
+const (
+	GetMasteryProgressMasteryTypeRaid        GetMasteryProgressMasteryType = "raid"
+	GetMasteryProgressMasteryTypeDungeon     GetMasteryProgressMasteryType = "dungeon"
+	GetMasteryProgressMasteryTypeWorldBoss   GetMasteryProgressMasteryType = "world_boss"
+	GetMasteryProgressMasteryTypePvp         GetMasteryProgressMasteryType = "pvp"
+	GetMasteryProgressMasteryTypeExploration GetMasteryProgressMasteryType = "exploration"
+)
+
+// AllValues returns all GetMasteryProgressMasteryType values.
+func (GetMasteryProgressMasteryType) AllValues() []GetMasteryProgressMasteryType {
+	return []GetMasteryProgressMasteryType{
+		GetMasteryProgressMasteryTypeRaid,
+		GetMasteryProgressMasteryTypeDungeon,
+		GetMasteryProgressMasteryTypeWorldBoss,
+		GetMasteryProgressMasteryTypePvp,
+		GetMasteryProgressMasteryTypeExploration,
+	}
 }
 
-// Additional error details.
-type ErrRespDetails struct{}
-
-// ErrRespStatusCode wraps ErrResp with StatusCode.
-type ErrRespStatusCode struct {
-	StatusCode int
-	Response   ErrResp
+// MarshalText implements encoding.TextMarshaler.
+func (s GetMasteryProgressMasteryType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetMasteryProgressMasteryTypeRaid:
+		return []byte(s), nil
+	case GetMasteryProgressMasteryTypeDungeon:
+		return []byte(s), nil
+	case GetMasteryProgressMasteryTypeWorldBoss:
+		return []byte(s), nil
+	case GetMasteryProgressMasteryTypePvp:
+		return []byte(s), nil
+	case GetMasteryProgressMasteryTypeExploration:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetStatusCode returns the value of StatusCode.
-func (s *ErrRespStatusCode) GetStatusCode() int {
-	return s.StatusCode
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetMasteryProgressMasteryType) UnmarshalText(data []byte) error {
+	switch GetMasteryProgressMasteryType(data) {
+	case GetMasteryProgressMasteryTypeRaid:
+		*s = GetMasteryProgressMasteryTypeRaid
+		return nil
+	case GetMasteryProgressMasteryTypeDungeon:
+		*s = GetMasteryProgressMasteryTypeDungeon
+		return nil
+	case GetMasteryProgressMasteryTypeWorldBoss:
+		*s = GetMasteryProgressMasteryTypeWorldBoss
+		return nil
+	case GetMasteryProgressMasteryTypePvp:
+		*s = GetMasteryProgressMasteryTypePvp
+		return nil
+	case GetMasteryProgressMasteryTypeExploration:
+		*s = GetMasteryProgressMasteryTypeExploration
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetResponse returns the value of Response.
-func (s *ErrRespStatusCode) GetResponse() ErrResp {
-	return s.Response
+type GetMasteryRewardsBadRequest Error
+
+func (*GetMasteryRewardsBadRequest) getMasteryRewardsRes() {}
+
+type GetMasteryRewardsInternalServerError Error
+
+func (*GetMasteryRewardsInternalServerError) getMasteryRewardsRes() {}
+
+type GetMasteryRewardsMasteryType string
+
+const (
+	GetMasteryRewardsMasteryTypeRaid        GetMasteryRewardsMasteryType = "raid"
+	GetMasteryRewardsMasteryTypeDungeon     GetMasteryRewardsMasteryType = "dungeon"
+	GetMasteryRewardsMasteryTypeWorldBoss   GetMasteryRewardsMasteryType = "world_boss"
+	GetMasteryRewardsMasteryTypePvp         GetMasteryRewardsMasteryType = "pvp"
+	GetMasteryRewardsMasteryTypeExploration GetMasteryRewardsMasteryType = "exploration"
+)
+
+// AllValues returns all GetMasteryRewardsMasteryType values.
+func (GetMasteryRewardsMasteryType) AllValues() []GetMasteryRewardsMasteryType {
+	return []GetMasteryRewardsMasteryType{
+		GetMasteryRewardsMasteryTypeRaid,
+		GetMasteryRewardsMasteryTypeDungeon,
+		GetMasteryRewardsMasteryTypeWorldBoss,
+		GetMasteryRewardsMasteryTypePvp,
+		GetMasteryRewardsMasteryTypeExploration,
+	}
 }
 
-// SetStatusCode sets the value of StatusCode.
-func (s *ErrRespStatusCode) SetStatusCode(val int) {
-	s.StatusCode = val
+// MarshalText implements encoding.TextMarshaler.
+func (s GetMasteryRewardsMasteryType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetMasteryRewardsMasteryTypeRaid:
+		return []byte(s), nil
+	case GetMasteryRewardsMasteryTypeDungeon:
+		return []byte(s), nil
+	case GetMasteryRewardsMasteryTypeWorldBoss:
+		return []byte(s), nil
+	case GetMasteryRewardsMasteryTypePvp:
+		return []byte(s), nil
+	case GetMasteryRewardsMasteryTypeExploration:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// SetResponse sets the value of Response.
-func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
-	s.Response = val
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetMasteryRewardsMasteryType) UnmarshalText(data []byte) error {
+	switch GetMasteryRewardsMasteryType(data) {
+	case GetMasteryRewardsMasteryTypeRaid:
+		*s = GetMasteryRewardsMasteryTypeRaid
+		return nil
+	case GetMasteryRewardsMasteryTypeDungeon:
+		*s = GetMasteryRewardsMasteryTypeDungeon
+		return nil
+	case GetMasteryRewardsMasteryTypeWorldBoss:
+		*s = GetMasteryRewardsMasteryTypeWorldBoss
+		return nil
+	case GetMasteryRewardsMasteryTypePvp:
+		*s = GetMasteryRewardsMasteryTypePvp
+		return nil
+	case GetMasteryRewardsMasteryTypeExploration:
+		*s = GetMasteryRewardsMasteryTypeExploration
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/HealthResponse
-type HealthResponse struct {
-	Status            HealthResponseStatus `json:"status"`
-	Domain            OptString            `json:"domain"`
-	Timestamp         time.Time            `json:"timestamp"`
-	Version           OptString            `json:"version"`
-	UptimeSeconds     OptInt               `json:"uptime_seconds"`
-	ActiveConnections OptInt               `json:"active_connections"`
+type GetParagonLevelsBadRequest Error
+
+func (*GetParagonLevelsBadRequest) getParagonLevelsRes() {}
+
+type GetParagonLevelsInternalServerError Error
+
+func (*GetParagonLevelsInternalServerError) getParagonLevelsRes() {}
+
+// Ref: #/components/schemas/HealthCheckOK
+type HealthCheckOK struct {
+	Status    string    `json:"status"`
+	Service   string    `json:"service"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 // GetStatus returns the value of Status.
-func (s *HealthResponse) GetStatus() HealthResponseStatus {
+func (s *HealthCheckOK) GetStatus() string {
 	return s.Status
 }
 
-// GetDomain returns the value of Domain.
-func (s *HealthResponse) GetDomain() OptString {
-	return s.Domain
+// GetService returns the value of Service.
+func (s *HealthCheckOK) GetService() string {
+	return s.Service
 }
 
 // GetTimestamp returns the value of Timestamp.
-func (s *HealthResponse) GetTimestamp() time.Time {
+func (s *HealthCheckOK) GetTimestamp() time.Time {
 	return s.Timestamp
 }
 
-// GetVersion returns the value of Version.
-func (s *HealthResponse) GetVersion() OptString {
-	return s.Version
-}
-
-// GetUptimeSeconds returns the value of UptimeSeconds.
-func (s *HealthResponse) GetUptimeSeconds() OptInt {
-	return s.UptimeSeconds
-}
-
-// GetActiveConnections returns the value of ActiveConnections.
-func (s *HealthResponse) GetActiveConnections() OptInt {
-	return s.ActiveConnections
-}
-
 // SetStatus sets the value of Status.
-func (s *HealthResponse) SetStatus(val HealthResponseStatus) {
+func (s *HealthCheckOK) SetStatus(val string) {
 	s.Status = val
 }
 
-// SetDomain sets the value of Domain.
-func (s *HealthResponse) SetDomain(val OptString) {
-	s.Domain = val
+// SetService sets the value of Service.
+func (s *HealthCheckOK) SetService(val string) {
+	s.Service = val
 }
 
 // SetTimestamp sets the value of Timestamp.
-func (s *HealthResponse) SetTimestamp(val time.Time) {
+func (s *HealthCheckOK) SetTimestamp(val time.Time) {
 	s.Timestamp = val
 }
 
-// SetVersion sets the value of Version.
-func (s *HealthResponse) SetVersion(val OptString) {
-	s.Version = val
+// Ref: #/components/schemas/MasteryLevels
+type MasteryLevels struct {
+	Levels  MasteryLevelsLevels  `json:"levels"`
+	Rewards MasteryLevelsRewards `json:"rewards"`
 }
 
-// SetUptimeSeconds sets the value of UptimeSeconds.
-func (s *HealthResponse) SetUptimeSeconds(val OptInt) {
-	s.UptimeSeconds = val
+// GetLevels returns the value of Levels.
+func (s *MasteryLevels) GetLevels() MasteryLevelsLevels {
+	return s.Levels
 }
 
-// SetActiveConnections sets the value of ActiveConnections.
-func (s *HealthResponse) SetActiveConnections(val OptInt) {
-	s.ActiveConnections = val
+// GetRewards returns the value of Rewards.
+func (s *MasteryLevels) GetRewards() MasteryLevelsRewards {
+	return s.Rewards
 }
 
-// HealthResponseHeaders wraps HealthResponse with response headers.
-type HealthResponseHeaders struct {
-	CacheControl    OptString
-	ContentEncoding OptProgressionDomainHealthCheckOKContentEncoding
-	ETag            OptString
-	Response        HealthResponse
+// SetLevels sets the value of Levels.
+func (s *MasteryLevels) SetLevels(val MasteryLevelsLevels) {
+	s.Levels = val
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *HealthResponseHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+// SetRewards sets the value of Rewards.
+func (s *MasteryLevels) SetRewards(val MasteryLevelsRewards) {
+	s.Rewards = val
 }
 
-// GetContentEncoding returns the value of ContentEncoding.
-func (s *HealthResponseHeaders) GetContentEncoding() OptProgressionDomainHealthCheckOKContentEncoding {
-	return s.ContentEncoding
+func (*MasteryLevels) getMasteryLevelsRes() {}
+
+type MasteryLevelsLevels map[string]int
+
+func (s *MasteryLevelsLevels) init() MasteryLevelsLevels {
+	m := *s
+	if m == nil {
+		m = map[string]int{}
+		*s = m
+	}
+	return m
 }
 
-// GetETag returns the value of ETag.
-func (s *HealthResponseHeaders) GetETag() OptString {
-	return s.ETag
+type MasteryLevelsRewards map[string][]string
+
+func (s *MasteryLevelsRewards) init() MasteryLevelsRewards {
+	m := *s
+	if m == nil {
+		m = map[string][]string{}
+		*s = m
+	}
+	return m
 }
 
-// GetResponse returns the value of Response.
-func (s *HealthResponseHeaders) GetResponse() HealthResponse {
-	return s.Response
+// Ref: #/components/schemas/MasteryProgress
+type MasteryProgress struct {
+	MasteryType     MasteryProgressMasteryType `json:"mastery_type"`
+	CurrentLevel    int                        `json:"current_level"`
+	CurrentXp       int64                      `json:"current_xp"`
+	XpToNextLevel   int64                      `json:"xp_to_next_level"`
+	ProgressPercent float32                    `json:"progress_percent"`
+	TotalXpEarned   int64                      `json:"total_xp_earned"`
 }
 
-// SetCacheControl sets the value of CacheControl.
-func (s *HealthResponseHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
+// GetMasteryType returns the value of MasteryType.
+func (s *MasteryProgress) GetMasteryType() MasteryProgressMasteryType {
+	return s.MasteryType
 }
 
-// SetContentEncoding sets the value of ContentEncoding.
-func (s *HealthResponseHeaders) SetContentEncoding(val OptProgressionDomainHealthCheckOKContentEncoding) {
-	s.ContentEncoding = val
+// GetCurrentLevel returns the value of CurrentLevel.
+func (s *MasteryProgress) GetCurrentLevel() int {
+	return s.CurrentLevel
 }
 
-// SetETag sets the value of ETag.
-func (s *HealthResponseHeaders) SetETag(val OptString) {
-	s.ETag = val
+// GetCurrentXp returns the value of CurrentXp.
+func (s *MasteryProgress) GetCurrentXp() int64 {
+	return s.CurrentXp
 }
 
-// SetResponse sets the value of Response.
-func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
-	s.Response = val
+// GetXpToNextLevel returns the value of XpToNextLevel.
+func (s *MasteryProgress) GetXpToNextLevel() int64 {
+	return s.XpToNextLevel
 }
 
-type HealthResponseStatus string
+// GetProgressPercent returns the value of ProgressPercent.
+func (s *MasteryProgress) GetProgressPercent() float32 {
+	return s.ProgressPercent
+}
+
+// GetTotalXpEarned returns the value of TotalXpEarned.
+func (s *MasteryProgress) GetTotalXpEarned() int64 {
+	return s.TotalXpEarned
+}
+
+// SetMasteryType sets the value of MasteryType.
+func (s *MasteryProgress) SetMasteryType(val MasteryProgressMasteryType) {
+	s.MasteryType = val
+}
+
+// SetCurrentLevel sets the value of CurrentLevel.
+func (s *MasteryProgress) SetCurrentLevel(val int) {
+	s.CurrentLevel = val
+}
+
+// SetCurrentXp sets the value of CurrentXp.
+func (s *MasteryProgress) SetCurrentXp(val int64) {
+	s.CurrentXp = val
+}
+
+// SetXpToNextLevel sets the value of XpToNextLevel.
+func (s *MasteryProgress) SetXpToNextLevel(val int64) {
+	s.XpToNextLevel = val
+}
+
+// SetProgressPercent sets the value of ProgressPercent.
+func (s *MasteryProgress) SetProgressPercent(val float32) {
+	s.ProgressPercent = val
+}
+
+// SetTotalXpEarned sets the value of TotalXpEarned.
+func (s *MasteryProgress) SetTotalXpEarned(val int64) {
+	s.TotalXpEarned = val
+}
+
+func (*MasteryProgress) getMasteryProgressRes() {}
+
+type MasteryProgressMasteryType string
 
 const (
-	HealthResponseStatusHealthy   HealthResponseStatus = "healthy"
-	HealthResponseStatusDegraded  HealthResponseStatus = "degraded"
-	HealthResponseStatusUnhealthy HealthResponseStatus = "unhealthy"
+	MasteryProgressMasteryTypeRaid        MasteryProgressMasteryType = "raid"
+	MasteryProgressMasteryTypeDungeon     MasteryProgressMasteryType = "dungeon"
+	MasteryProgressMasteryTypeWorldBoss   MasteryProgressMasteryType = "world_boss"
+	MasteryProgressMasteryTypePvp         MasteryProgressMasteryType = "pvp"
+	MasteryProgressMasteryTypeExploration MasteryProgressMasteryType = "exploration"
 )
 
-// AllValues returns all HealthResponseStatus values.
-func (HealthResponseStatus) AllValues() []HealthResponseStatus {
-	return []HealthResponseStatus{
-		HealthResponseStatusHealthy,
-		HealthResponseStatusDegraded,
-		HealthResponseStatusUnhealthy,
+// AllValues returns all MasteryProgressMasteryType values.
+func (MasteryProgressMasteryType) AllValues() []MasteryProgressMasteryType {
+	return []MasteryProgressMasteryType{
+		MasteryProgressMasteryTypeRaid,
+		MasteryProgressMasteryTypeDungeon,
+		MasteryProgressMasteryTypeWorldBoss,
+		MasteryProgressMasteryTypePvp,
+		MasteryProgressMasteryTypeExploration,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s HealthResponseStatus) MarshalText() ([]byte, error) {
+func (s MasteryProgressMasteryType) MarshalText() ([]byte, error) {
 	switch s {
-	case HealthResponseStatusHealthy:
+	case MasteryProgressMasteryTypeRaid:
 		return []byte(s), nil
-	case HealthResponseStatusDegraded:
+	case MasteryProgressMasteryTypeDungeon:
 		return []byte(s), nil
-	case HealthResponseStatusUnhealthy:
+	case MasteryProgressMasteryTypeWorldBoss:
+		return []byte(s), nil
+	case MasteryProgressMasteryTypePvp:
+		return []byte(s), nil
+	case MasteryProgressMasteryTypeExploration:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -297,188 +446,89 @@ func (s HealthResponseStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
-	switch HealthResponseStatus(data) {
-	case HealthResponseStatusHealthy:
-		*s = HealthResponseStatusHealthy
+func (s *MasteryProgressMasteryType) UnmarshalText(data []byte) error {
+	switch MasteryProgressMasteryType(data) {
+	case MasteryProgressMasteryTypeRaid:
+		*s = MasteryProgressMasteryTypeRaid
 		return nil
-	case HealthResponseStatusDegraded:
-		*s = HealthResponseStatusDegraded
+	case MasteryProgressMasteryTypeDungeon:
+		*s = MasteryProgressMasteryTypeDungeon
 		return nil
-	case HealthResponseStatusUnhealthy:
-		*s = HealthResponseStatusUnhealthy
+	case MasteryProgressMasteryTypeWorldBoss:
+		*s = MasteryProgressMasteryTypeWorldBoss
+		return nil
+	case MasteryProgressMasteryTypePvp:
+		*s = MasteryProgressMasteryTypePvp
+		return nil
+	case MasteryProgressMasteryTypeExploration:
+		*s = MasteryProgressMasteryTypeExploration
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// HealthWebSocketSwitchingProtocols is response for HealthWebSocket operation.
-type HealthWebSocketSwitchingProtocols struct{}
-
-// NewOptInt returns new OptInt with value set to v.
-func NewOptInt(v int) OptInt {
-	return OptInt{
-		Value: v,
-		Set:   true,
-	}
+// Ref: #/components/schemas/MasteryRewards
+type MasteryRewards struct {
+	MasteryType MasteryRewardsMasteryType `json:"mastery_type"`
+	Rewards     []string                  `json:"rewards"`
 }
 
-// OptInt is optional int.
-type OptInt struct {
-	Value int
-	Set   bool
+// GetMasteryType returns the value of MasteryType.
+func (s *MasteryRewards) GetMasteryType() MasteryRewardsMasteryType {
+	return s.MasteryType
 }
 
-// IsSet returns true if OptInt was set.
-func (o OptInt) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptInt) Reset() {
-	var v int
-	o.Value = v
-	o.Set = false
+// GetRewards returns the value of Rewards.
+func (s *MasteryRewards) GetRewards() []string {
+	return s.Rewards
 }
 
-// SetTo sets value to v.
-func (o *OptInt) SetTo(v int) {
-	o.Set = true
-	o.Value = v
+// SetMasteryType sets the value of MasteryType.
+func (s *MasteryRewards) SetMasteryType(val MasteryRewardsMasteryType) {
+	s.MasteryType = val
 }
 
-// Get returns value and boolean that denotes whether value was set.
-func (o OptInt) Get() (v int, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
+// SetRewards sets the value of Rewards.
+func (s *MasteryRewards) SetRewards(val []string) {
+	s.Rewards = val
 }
 
-// Or returns value if set, or given parameter if does not.
-func (o OptInt) Or(d int) int {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
+func (*MasteryRewards) getMasteryRewardsRes() {}
 
-// NewOptProgressionDomainHealthCheckOKContentEncoding returns new OptProgressionDomainHealthCheckOKContentEncoding with value set to v.
-func NewOptProgressionDomainHealthCheckOKContentEncoding(v ProgressionDomainHealthCheckOKContentEncoding) OptProgressionDomainHealthCheckOKContentEncoding {
-	return OptProgressionDomainHealthCheckOKContentEncoding{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptProgressionDomainHealthCheckOKContentEncoding is optional ProgressionDomainHealthCheckOKContentEncoding.
-type OptProgressionDomainHealthCheckOKContentEncoding struct {
-	Value ProgressionDomainHealthCheckOKContentEncoding
-	Set   bool
-}
-
-// IsSet returns true if OptProgressionDomainHealthCheckOKContentEncoding was set.
-func (o OptProgressionDomainHealthCheckOKContentEncoding) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptProgressionDomainHealthCheckOKContentEncoding) Reset() {
-	var v ProgressionDomainHealthCheckOKContentEncoding
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptProgressionDomainHealthCheckOKContentEncoding) SetTo(v ProgressionDomainHealthCheckOKContentEncoding) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptProgressionDomainHealthCheckOKContentEncoding) Get() (v ProgressionDomainHealthCheckOKContentEncoding, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptProgressionDomainHealthCheckOKContentEncoding) Or(d ProgressionDomainHealthCheckOKContentEncoding) ProgressionDomainHealthCheckOKContentEncoding {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptString returns new OptString with value set to v.
-func NewOptString(v string) OptString {
-	return OptString{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptString is optional string.
-type OptString struct {
-	Value string
-	Set   bool
-}
-
-// IsSet returns true if OptString was set.
-func (o OptString) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptString) Reset() {
-	var v string
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptString) SetTo(v string) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptString) Get() (v string, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptString) Or(d string) string {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-type ProgressionDomainHealthCheckOKContentEncoding string
+type MasteryRewardsMasteryType string
 
 const (
-	ProgressionDomainHealthCheckOKContentEncodingGzip    ProgressionDomainHealthCheckOKContentEncoding = "gzip"
-	ProgressionDomainHealthCheckOKContentEncodingDeflate ProgressionDomainHealthCheckOKContentEncoding = "deflate"
-	ProgressionDomainHealthCheckOKContentEncodingBr      ProgressionDomainHealthCheckOKContentEncoding = "br"
+	MasteryRewardsMasteryTypeRaid        MasteryRewardsMasteryType = "raid"
+	MasteryRewardsMasteryTypeDungeon     MasteryRewardsMasteryType = "dungeon"
+	MasteryRewardsMasteryTypeWorldBoss   MasteryRewardsMasteryType = "world_boss"
+	MasteryRewardsMasteryTypePvp         MasteryRewardsMasteryType = "pvp"
+	MasteryRewardsMasteryTypeExploration MasteryRewardsMasteryType = "exploration"
 )
 
-// AllValues returns all ProgressionDomainHealthCheckOKContentEncoding values.
-func (ProgressionDomainHealthCheckOKContentEncoding) AllValues() []ProgressionDomainHealthCheckOKContentEncoding {
-	return []ProgressionDomainHealthCheckOKContentEncoding{
-		ProgressionDomainHealthCheckOKContentEncodingGzip,
-		ProgressionDomainHealthCheckOKContentEncodingDeflate,
-		ProgressionDomainHealthCheckOKContentEncodingBr,
+// AllValues returns all MasteryRewardsMasteryType values.
+func (MasteryRewardsMasteryType) AllValues() []MasteryRewardsMasteryType {
+	return []MasteryRewardsMasteryType{
+		MasteryRewardsMasteryTypeRaid,
+		MasteryRewardsMasteryTypeDungeon,
+		MasteryRewardsMasteryTypeWorldBoss,
+		MasteryRewardsMasteryTypePvp,
+		MasteryRewardsMasteryTypeExploration,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ProgressionDomainHealthCheckOKContentEncoding) MarshalText() ([]byte, error) {
+func (s MasteryRewardsMasteryType) MarshalText() ([]byte, error) {
 	switch s {
-	case ProgressionDomainHealthCheckOKContentEncodingGzip:
+	case MasteryRewardsMasteryTypeRaid:
 		return []byte(s), nil
-	case ProgressionDomainHealthCheckOKContentEncodingDeflate:
+	case MasteryRewardsMasteryTypeDungeon:
 		return []byte(s), nil
-	case ProgressionDomainHealthCheckOKContentEncodingBr:
+	case MasteryRewardsMasteryTypeWorldBoss:
+		return []byte(s), nil
+	case MasteryRewardsMasteryTypePvp:
+		return []byte(s), nil
+	case MasteryRewardsMasteryTypeExploration:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -486,18 +536,409 @@ func (s ProgressionDomainHealthCheckOKContentEncoding) MarshalText() ([]byte, er
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ProgressionDomainHealthCheckOKContentEncoding) UnmarshalText(data []byte) error {
-	switch ProgressionDomainHealthCheckOKContentEncoding(data) {
-	case ProgressionDomainHealthCheckOKContentEncodingGzip:
-		*s = ProgressionDomainHealthCheckOKContentEncodingGzip
+func (s *MasteryRewardsMasteryType) UnmarshalText(data []byte) error {
+	switch MasteryRewardsMasteryType(data) {
+	case MasteryRewardsMasteryTypeRaid:
+		*s = MasteryRewardsMasteryTypeRaid
 		return nil
-	case ProgressionDomainHealthCheckOKContentEncodingDeflate:
-		*s = ProgressionDomainHealthCheckOKContentEncodingDeflate
+	case MasteryRewardsMasteryTypeDungeon:
+		*s = MasteryRewardsMasteryTypeDungeon
 		return nil
-	case ProgressionDomainHealthCheckOKContentEncodingBr:
-		*s = ProgressionDomainHealthCheckOKContentEncodingBr
+	case MasteryRewardsMasteryTypeWorldBoss:
+		*s = MasteryRewardsMasteryTypeWorldBoss
+		return nil
+	case MasteryRewardsMasteryTypePvp:
+		*s = MasteryRewardsMasteryTypePvp
+		return nil
+	case MasteryRewardsMasteryTypeExploration:
+		*s = MasteryRewardsMasteryTypeExploration
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Ref: #/components/schemas/ParagonLevels
+type ParagonLevels struct {
+	CurrentLevel      int               `json:"current_level"`
+	TotalXp           int64             `json:"total_xp"`
+	AvailablePoints   int               `json:"available_points"`
+	PointsDistributed PointsDistributed `json:"points_distributed"`
+	XpToNextLevel     int64             `json:"xp_to_next_level"`
+	XpProgress        float32           `json:"xp_progress"`
+	LastUpdated       time.Time         `json:"last_updated"`
+}
+
+// GetCurrentLevel returns the value of CurrentLevel.
+func (s *ParagonLevels) GetCurrentLevel() int {
+	return s.CurrentLevel
+}
+
+// GetTotalXp returns the value of TotalXp.
+func (s *ParagonLevels) GetTotalXp() int64 {
+	return s.TotalXp
+}
+
+// GetAvailablePoints returns the value of AvailablePoints.
+func (s *ParagonLevels) GetAvailablePoints() int {
+	return s.AvailablePoints
+}
+
+// GetPointsDistributed returns the value of PointsDistributed.
+func (s *ParagonLevels) GetPointsDistributed() PointsDistributed {
+	return s.PointsDistributed
+}
+
+// GetXpToNextLevel returns the value of XpToNextLevel.
+func (s *ParagonLevels) GetXpToNextLevel() int64 {
+	return s.XpToNextLevel
+}
+
+// GetXpProgress returns the value of XpProgress.
+func (s *ParagonLevels) GetXpProgress() float32 {
+	return s.XpProgress
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *ParagonLevels) GetLastUpdated() time.Time {
+	return s.LastUpdated
+}
+
+// SetCurrentLevel sets the value of CurrentLevel.
+func (s *ParagonLevels) SetCurrentLevel(val int) {
+	s.CurrentLevel = val
+}
+
+// SetTotalXp sets the value of TotalXp.
+func (s *ParagonLevels) SetTotalXp(val int64) {
+	s.TotalXp = val
+}
+
+// SetAvailablePoints sets the value of AvailablePoints.
+func (s *ParagonLevels) SetAvailablePoints(val int) {
+	s.AvailablePoints = val
+}
+
+// SetPointsDistributed sets the value of PointsDistributed.
+func (s *ParagonLevels) SetPointsDistributed(val PointsDistributed) {
+	s.PointsDistributed = val
+}
+
+// SetXpToNextLevel sets the value of XpToNextLevel.
+func (s *ParagonLevels) SetXpToNextLevel(val int64) {
+	s.XpToNextLevel = val
+}
+
+// SetXpProgress sets the value of XpProgress.
+func (s *ParagonLevels) SetXpProgress(val float32) {
+	s.XpProgress = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *ParagonLevels) SetLastUpdated(val time.Time) {
+	s.LastUpdated = val
+}
+
+func (*ParagonLevels) getParagonLevelsRes() {}
+
+// Ref: #/components/schemas/ParagonStats
+type ParagonStats struct {
+	TotalCharactersWithParagon int `json:"total_characters_with_paragon"`
+	AverageParagonLevel        int `json:"average_paragon_level"`
+	HighestParagonLevel        int `json:"highest_paragon_level"`
+}
+
+// GetTotalCharactersWithParagon returns the value of TotalCharactersWithParagon.
+func (s *ParagonStats) GetTotalCharactersWithParagon() int {
+	return s.TotalCharactersWithParagon
+}
+
+// GetAverageParagonLevel returns the value of AverageParagonLevel.
+func (s *ParagonStats) GetAverageParagonLevel() int {
+	return s.AverageParagonLevel
+}
+
+// GetHighestParagonLevel returns the value of HighestParagonLevel.
+func (s *ParagonStats) GetHighestParagonLevel() int {
+	return s.HighestParagonLevel
+}
+
+// SetTotalCharactersWithParagon sets the value of TotalCharactersWithParagon.
+func (s *ParagonStats) SetTotalCharactersWithParagon(val int) {
+	s.TotalCharactersWithParagon = val
+}
+
+// SetAverageParagonLevel sets the value of AverageParagonLevel.
+func (s *ParagonStats) SetAverageParagonLevel(val int) {
+	s.AverageParagonLevel = val
+}
+
+// SetHighestParagonLevel sets the value of HighestParagonLevel.
+func (s *ParagonStats) SetHighestParagonLevel(val int) {
+	s.HighestParagonLevel = val
+}
+
+func (*ParagonStats) getParagonStatsRes() {}
+
+// Ref: #/components/schemas/PointsDistributed
+type PointsDistributed struct {
+	Strength     int `json:"strength"`
+	Agility      int `json:"agility"`
+	Intelligence int `json:"intelligence"`
+	Vitality     int `json:"vitality"`
+	Luck         int `json:"luck"`
+}
+
+// GetStrength returns the value of Strength.
+func (s *PointsDistributed) GetStrength() int {
+	return s.Strength
+}
+
+// GetAgility returns the value of Agility.
+func (s *PointsDistributed) GetAgility() int {
+	return s.Agility
+}
+
+// GetIntelligence returns the value of Intelligence.
+func (s *PointsDistributed) GetIntelligence() int {
+	return s.Intelligence
+}
+
+// GetVitality returns the value of Vitality.
+func (s *PointsDistributed) GetVitality() int {
+	return s.Vitality
+}
+
+// GetLuck returns the value of Luck.
+func (s *PointsDistributed) GetLuck() int {
+	return s.Luck
+}
+
+// SetStrength sets the value of Strength.
+func (s *PointsDistributed) SetStrength(val int) {
+	s.Strength = val
+}
+
+// SetAgility sets the value of Agility.
+func (s *PointsDistributed) SetAgility(val int) {
+	s.Agility = val
+}
+
+// SetIntelligence sets the value of Intelligence.
+func (s *PointsDistributed) SetIntelligence(val int) {
+	s.Intelligence = val
+}
+
+// SetVitality sets the value of Vitality.
+func (s *PointsDistributed) SetVitality(val int) {
+	s.Vitality = val
+}
+
+// SetLuck sets the value of Luck.
+func (s *PointsDistributed) SetLuck(val int) {
+	s.Luck = val
+}
+
+// Ref: #/components/schemas/PointsDistribution
+type PointsDistribution struct {
+	Strength     int `json:"strength"`
+	Agility      int `json:"agility"`
+	Intelligence int `json:"intelligence"`
+	Vitality     int `json:"vitality"`
+	Luck         int `json:"luck"`
+}
+
+// GetStrength returns the value of Strength.
+func (s *PointsDistribution) GetStrength() int {
+	return s.Strength
+}
+
+// GetAgility returns the value of Agility.
+func (s *PointsDistribution) GetAgility() int {
+	return s.Agility
+}
+
+// GetIntelligence returns the value of Intelligence.
+func (s *PointsDistribution) GetIntelligence() int {
+	return s.Intelligence
+}
+
+// GetVitality returns the value of Vitality.
+func (s *PointsDistribution) GetVitality() int {
+	return s.Vitality
+}
+
+// GetLuck returns the value of Luck.
+func (s *PointsDistribution) GetLuck() int {
+	return s.Luck
+}
+
+// SetStrength sets the value of Strength.
+func (s *PointsDistribution) SetStrength(val int) {
+	s.Strength = val
+}
+
+// SetAgility sets the value of Agility.
+func (s *PointsDistribution) SetAgility(val int) {
+	s.Agility = val
+}
+
+// SetIntelligence sets the value of Intelligence.
+func (s *PointsDistribution) SetIntelligence(val int) {
+	s.Intelligence = val
+}
+
+// SetVitality sets the value of Vitality.
+func (s *PointsDistribution) SetVitality(val int) {
+	s.Vitality = val
+}
+
+// SetLuck sets the value of Luck.
+func (s *PointsDistribution) SetLuck(val int) {
+	s.Luck = val
+}
+
+// Ref: #/components/schemas/PrestigeBonuses
+type PrestigeBonuses struct {
+	Bonuses PrestigeBonusesBonuses `json:"bonuses"`
+}
+
+// GetBonuses returns the value of Bonuses.
+func (s *PrestigeBonuses) GetBonuses() PrestigeBonusesBonuses {
+	return s.Bonuses
+}
+
+// SetBonuses sets the value of Bonuses.
+func (s *PrestigeBonuses) SetBonuses(val PrestigeBonusesBonuses) {
+	s.Bonuses = val
+}
+
+func (*PrestigeBonuses) getPrestigeBonusesRes() {}
+
+type PrestigeBonusesBonuses map[string]float32
+
+func (s *PrestigeBonusesBonuses) init() PrestigeBonusesBonuses {
+	m := *s
+	if m == nil {
+		m = map[string]float32{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/PrestigeInfo
+type PrestigeInfo struct {
+	CurrentLevel        int       `json:"current_level"`
+	TotalResets         int       `json:"total_resets"`
+	BonusMultiplier     float32   `json:"bonus_multiplier"`
+	NextLevelXpRequired int64     `json:"next_level_xp_required"`
+	LastReset           time.Time `json:"last_reset"`
+}
+
+// GetCurrentLevel returns the value of CurrentLevel.
+func (s *PrestigeInfo) GetCurrentLevel() int {
+	return s.CurrentLevel
+}
+
+// GetTotalResets returns the value of TotalResets.
+func (s *PrestigeInfo) GetTotalResets() int {
+	return s.TotalResets
+}
+
+// GetBonusMultiplier returns the value of BonusMultiplier.
+func (s *PrestigeInfo) GetBonusMultiplier() float32 {
+	return s.BonusMultiplier
+}
+
+// GetNextLevelXpRequired returns the value of NextLevelXpRequired.
+func (s *PrestigeInfo) GetNextLevelXpRequired() int64 {
+	return s.NextLevelXpRequired
+}
+
+// GetLastReset returns the value of LastReset.
+func (s *PrestigeInfo) GetLastReset() time.Time {
+	return s.LastReset
+}
+
+// SetCurrentLevel sets the value of CurrentLevel.
+func (s *PrestigeInfo) SetCurrentLevel(val int) {
+	s.CurrentLevel = val
+}
+
+// SetTotalResets sets the value of TotalResets.
+func (s *PrestigeInfo) SetTotalResets(val int) {
+	s.TotalResets = val
+}
+
+// SetBonusMultiplier sets the value of BonusMultiplier.
+func (s *PrestigeInfo) SetBonusMultiplier(val float32) {
+	s.BonusMultiplier = val
+}
+
+// SetNextLevelXpRequired sets the value of NextLevelXpRequired.
+func (s *PrestigeInfo) SetNextLevelXpRequired(val int64) {
+	s.NextLevelXpRequired = val
+}
+
+// SetLastReset sets the value of LastReset.
+func (s *PrestigeInfo) SetLastReset(val time.Time) {
+	s.LastReset = val
+}
+
+func (*PrestigeInfo) getPrestigeInfoRes() {}
+
+// Ref: #/components/schemas/ReadinessCheckOK
+type ReadinessCheckOK struct {
+	Status string `json:"status"`
+}
+
+// GetStatus returns the value of Status.
+func (s *ReadinessCheckOK) GetStatus() string {
+	return s.Status
+}
+
+// SetStatus sets the value of Status.
+func (s *ReadinessCheckOK) SetStatus(val string) {
+	s.Status = val
+}
+
+type ResetPrestigeBadRequest Error
+
+func (*ResetPrestigeBadRequest) resetPrestigeRes() {}
+
+type ResetPrestigeInternalServerError Error
+
+func (*ResetPrestigeInternalServerError) resetPrestigeRes() {}
+
+// Ref: #/components/schemas/ResetPrestigeReq
+type ResetPrestigeReq struct {
+	CharacterID uuid.UUID `json:"character_id"`
+}
+
+// GetCharacterID returns the value of CharacterID.
+func (s *ResetPrestigeReq) GetCharacterID() uuid.UUID {
+	return s.CharacterID
+}
+
+// SetCharacterID sets the value of CharacterID.
+func (s *ResetPrestigeReq) SetCharacterID(val uuid.UUID) {
+	s.CharacterID = val
+}
+
+// Ref: #/components/schemas/SuccessResponse
+type SuccessResponse struct {
+	Message string `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *SuccessResponse) GetMessage() string {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *SuccessResponse) SetMessage(val string) {
+	s.Message = val
+}
+
+func (*SuccessResponse) distributeParagonPointsRes() {}
+func (*SuccessResponse) resetPrestigeRes()           {}

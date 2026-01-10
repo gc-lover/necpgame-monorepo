@@ -34,9 +34,6 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	CreateGuildOperation:              []string{},
-	CreatePartyOperation:              []string{},
-	SendChatMessageOperation:          []string{},
 	SocialServiceHealthCheckOperation: []string{},
 }
 

@@ -1,0 +1,652 @@
+openapi: 3.0.3
+info:
+  title: Endgame Progression Service API
+  description: 'API для системы эндгейм-прогрессии: Paragon Levels, Prestige System и Mastery System.
+
+    Обеспечивает бесконечную прогрессию после уровня 50, специализацию по контенту
+    и награды за долгосрочную игру.
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8084/api/v1/progression
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/progression
+    description: Продакшен сервер
+tags:
+  - name: Paragon
+    description: Paragon Levels - бесконечные уровни после 50
+  - name: Prestige
+    description: Prestige System - сброс прогресса за бонусы
+  - name: Mastery
+    description: Mastery System - специализация по контенту
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Проверка здоровья сервиса
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Сервис здоров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckOK'
+  /ready:
+    get:
+      tags:
+        - System
+      summary: Readiness check
+      description: Проверка готовности сервиса
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Сервис готов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessCheckOK'
+  /paragon/levels:
+    get:
+      tags:
+        - Paragon
+      summary: Получить Paragon Levels персонажа
+      description: 'Возвращает информацию о Paragon Levels персонажа: текущий уровень, накопленные очки,
+
+        распределение очков по характеристикам и прогресс до следующего уровня.
+
+        '
+      operationId: getParagonLevels
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Информация о Paragon Levels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParagonLevels'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Paragon
+      summary: Распределить Paragon Points
+      description: Распределяет доступные paragon очки по характеристикам персонажа
+      operationId: distributeParagonPoints
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeParagonPointsReq'
+      responses:
+        '200':
+          description: Очки успешно распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /paragon/stats:
+    get:
+      tags:
+        - Paragon
+      summary: Получить Paragon статистику
+      description: Возвращает глобальную статистику Paragon системы
+      operationId: getParagonStats
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Paragon статистика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParagonStats'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /prestige/info:
+    get:
+      tags:
+        - Prestige
+      summary: Получить информацию о Prestige
+      description: 'Возвращает информацию о текущем Prestige Level персонажа, доступных бонусах
+
+        и требованиях для следующего престижа.
+
+        '
+      operationId: getPrestigeInfo
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Информация о Prestige
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeInfo'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /prestige/reset:
+    post:
+      tags:
+        - Prestige
+      summary: Сброс Prestige
+      description: Выполняет сброс прогресса персонажа за Prestige бонусы
+      operationId: resetPrestige
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPrestigeReq'
+      responses:
+        '200':
+          description: Prestige сброшен успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /prestige/bonuses:
+    get:
+      tags:
+        - Prestige
+      summary: Получить Prestige бонусы
+      description: Возвращает текущие Prestige бонусы персонажа
+      operationId: getPrestigeBonuses
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Prestige бонусы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeBonuses'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mastery/levels:
+    get:
+      tags:
+        - Mastery
+      summary: Получить уровни мастерства
+      description: 'Возвращает информацию о всех типах мастерства персонажа: текущие уровни,
+
+        прогресс до следующего уровня и разблокированные награды.
+
+        '
+      operationId: getMasteryLevels
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Уровни мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryLevels'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mastery/{mastery_type}/progress:
+    get:
+      tags:
+        - Mastery
+      summary: Получить прогресс мастерства
+      description: Возвращает детальную информацию о прогрессе в конкретном типе мастерства
+      operationId: getMasteryProgress
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+        - name: mastery_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [raid, dungeon, world_boss, pvp, exploration]
+          description: Тип мастерства
+      responses:
+        '200':
+          description: Прогресс мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /mastery/{mastery_type}/rewards:
+    get:
+      tags:
+        - Mastery
+      summary: Получить награды мастерства
+      description: Возвращает доступные награды для конкретного типа мастерства
+      operationId: getMasteryRewards
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+        - name: mastery_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [raid, dungeon, world_boss, pvp, exploration]
+          description: Тип мастерства
+      responses:
+        '200':
+          description: Награды мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryRewards'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    # Common schemas
+    HealthCheckOK:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: healthy
+        service:
+          type: string
+          example: endgame-progression-service
+        timestamp:
+          type: string
+          format: date-time
+    ReadinessCheckOK:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: ready
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "500"
+        message:
+          type: string
+          example: "Internal server error"
+    SuccessResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    # Paragon schemas
+    ParagonLevels:
+      type: object
+      required:
+        - current_level
+        - total_xp
+        - available_points
+        - points_distributed
+        - xp_to_next_level
+        - xp_progress
+        - last_updated
+      properties:
+        current_level:
+          type: integer
+          minimum: 1
+          example: 15
+        total_xp:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 25000
+        available_points:
+          type: integer
+          minimum: 0
+          example: 10
+        points_distributed:
+          $ref: '#/components/schemas/PointsDistributed'
+        xp_to_next_level:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 5000
+        xp_progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.75
+        last_updated:
+          type: string
+          format: date-time
+    PointsDistributed:
+      type: object
+      required:
+        - strength
+        - agility
+        - intelligence
+        - vitality
+        - luck
+      properties:
+        strength:
+          type: integer
+          minimum: 0
+          example: 5
+        agility:
+          type: integer
+          minimum: 0
+          example: 3
+        intelligence:
+          type: integer
+          minimum: 0
+          example: 4
+        vitality:
+          type: integer
+          minimum: 0
+          example: 6
+        luck:
+          type: integer
+          minimum: 0
+          example: 2
+    DistributeParagonPointsReq:
+      type: object
+      required:
+        - character_id
+        - distribution
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        distribution:
+          $ref: '#/components/schemas/PointsDistribution'
+    PointsDistribution:
+      type: object
+      required:
+        - strength
+        - agility
+        - intelligence
+        - vitality
+        - luck
+      properties:
+        strength:
+          type: integer
+          minimum: 0
+          example: 2
+        agility:
+          type: integer
+          minimum: 0
+          example: 1
+        intelligence:
+          type: integer
+          minimum: 0
+          example: 2
+        vitality:
+          type: integer
+          minimum: 0
+          example: 3
+        luck:
+          type: integer
+          minimum: 0
+          example: 1
+    ParagonStats:
+      type: object
+      required:
+        - total_characters_with_paragon
+        - average_paragon_level
+        - highest_paragon_level
+      properties:
+        total_characters_with_paragon:
+          type: integer
+          minimum: 0
+          example: 15420
+        average_paragon_level:
+          type: integer
+          minimum: 0
+          example: 23
+        highest_paragon_level:
+          type: integer
+          minimum: 0
+          example: 156
+
+    # Prestige schemas
+    PrestigeInfo:
+      type: object
+      required:
+        - current_level
+        - total_resets
+        - bonus_multiplier
+        - next_level_xp_required
+        - last_reset
+      properties:
+        current_level:
+          type: integer
+          minimum: 0
+          example: 3
+        total_resets:
+          type: integer
+          minimum: 0
+          example: 2
+        bonus_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          example: 1.2
+        next_level_xp_required:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 100000
+        last_reset:
+          type: string
+          format: date-time
+    ResetPrestigeReq:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+    PrestigeBonuses:
+      type: object
+      required:
+        - bonuses
+      properties:
+        bonuses:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            xp_multiplier: 1.2
+            currency_multiplier: 1.1
+
+    # Mastery schemas
+    MasteryLevels:
+      type: object
+      required:
+        - levels
+        - rewards
+      properties:
+        levels:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+          example:
+            raid: 25
+            dungeon: 18
+            world_boss: 32
+            pvp: 15
+            exploration: 28
+        rewards:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            raid: ["raid_damage_bonus", "raid_health_bonus"]
+            dungeon: ["dungeon_speed_bonus", "dungeon_loot_bonus"]
+    MasteryProgress:
+      type: object
+      required:
+        - mastery_type
+        - current_level
+        - current_xp
+        - xp_to_next_level
+        - progress_percent
+        - total_xp_earned
+      properties:
+        mastery_type:
+          type: string
+          enum: [raid, dungeon, world_boss, pvp, exploration]
+          example: raid
+        current_level:
+          type: integer
+          minimum: 1
+          example: 25
+        current_xp:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 75000
+        xp_to_next_level:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 25000
+        progress_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.75
+        total_xp_earned:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 125000
+    MasteryRewards:
+      type: object
+      required:
+        - mastery_type
+        - rewards
+      properties:
+        mastery_type:
+          type: string
+          enum: [raid, dungeon, world_boss, pvp, exploration]
+          example: raid
+        rewards:
+          type: array
+          items:
+            type: string
+          example: ["raid_damage_bonus", "raid_health_bonus", "raid_elite_bonus"]

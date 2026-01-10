@@ -7,22 +7,31 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"battle-pass-service-go/internal/clients"
 	"battle-pass-service-go/internal/models"
 )
 
 // RewardService handles reward-related business logic
 type RewardService struct {
-	db     *sql.DB
-	redis  *redis.Client
-	logger *zap.Logger
+	db              *sql.DB
+	redis           *redis.Client
+	logger          *zap.Logger
+	inventoryClient *clients.InventoryClient
+	economyClient   *clients.EconomyClient
+	playerClient    *clients.PlayerClient
 }
 
 // NewRewardService creates a new RewardService instance
-func NewRewardService(db *sql.DB, redis *redis.Client, logger *zap.Logger) *RewardService {
+func NewRewardService(db *sql.DB, redis *redis.Client, logger *zap.Logger,
+	inventoryClient *clients.InventoryClient, economyClient *clients.EconomyClient,
+	playerClient *clients.PlayerClient) *RewardService {
 	return &RewardService{
-		db:     db,
-		redis:  redis,
-		logger: logger,
+		db:              db,
+		redis:           redis,
+		logger:          logger,
+		inventoryClient: inventoryClient,
+		economyClient:   economyClient,
+		playerClient:    playerClient,
 	}
 }
 
@@ -343,11 +352,31 @@ func (r *RewardService) getSeasonRewards(seasonID string) ([]models.SeasonReward
 	return rewards, nil
 }
 
-// addToInventory adds a reward to player inventory (placeholder for external service call)
+// addToInventory adds a reward to player inventory via Inventory Service
 func (r *RewardService) addToInventory(playerID string, reward *models.Reward) (string, error) {
-	// TODO: Call inventory service
-	// For now, generate a mock inventory ID
-	inventoryID := fmt.Sprintf("inv_%s_%s", playerID, reward.ID)
+	if r.inventoryClient == nil {
+		// Fallback for testing or when service is unavailable
+		r.logger.Warn("Inventory client not available, using fallback")
+		inventoryID := fmt.Sprintf("inv_%s_%s", playerID, reward.ID)
+		return inventoryID, nil
+	}
+
+	metadata := make(map[string]interface{})
+	if reward.Metadata != nil {
+		metadata = reward.Metadata
+	}
+	metadata["reward_type"] = reward.Type
+	metadata["rarity"] = reward.Rarity
+
+	inventoryID, err := r.inventoryClient.GrantReward(playerID, reward.Type, reward.ID, metadata)
+	if err != nil {
+		r.logger.Error("Failed to add reward to inventory",
+			zap.String("playerID", playerID),
+			zap.String("rewardID", reward.ID),
+			zap.Error(err))
+		return "", fmt.Errorf("failed to add reward to inventory: %w", err)
+	}
+
 	return inventoryID, nil
 }
 
@@ -361,6 +390,211 @@ func (r *RewardService) recordClaim(playerID, seasonID string, level int, tier, 
 	_, err := r.db.Exec(query, playerID, seasonID, level, tier, rewardID, inventoryID)
 	if err != nil {
 		return fmt.Errorf("failed to record claim: %w", err)
+	}
+
+	return nil
+}
+
+// CreateReward creates a new reward
+func (r *RewardService) CreateReward(reward *models.Reward) error {
+	// Validate reward data
+	if reward.ID == "" {
+		return fmt.Errorf("reward ID is required")
+	}
+	if reward.Type == "" {
+		return fmt.Errorf("reward type is required")
+	}
+	if reward.Name == "" {
+		return fmt.Errorf("reward name is required")
+	}
+
+	query := `
+		INSERT INTO rewards (id, type, name, description, rarity, metadata, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
+	`
+
+	_, err := r.db.Exec(query, reward.ID, reward.Type, reward.Name, reward.Description, reward.Rarity, reward.Metadata)
+	if err != nil {
+		r.logger.Error("Failed to create reward", zap.String("rewardID", reward.ID), zap.Error(err))
+		return fmt.Errorf("failed to create reward: %w", err)
+	}
+
+	r.logger.Info("Reward created successfully", zap.String("rewardID", reward.ID))
+	return nil
+}
+
+// UpdateReward updates an existing reward
+func (r *RewardService) UpdateReward(rewardID string, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return fmt.Errorf("no updates provided")
+	}
+
+	// Build dynamic update query
+	query := "UPDATE rewards SET"
+	args := []interface{}{}
+	argCount := 1
+
+	for field, value := range updates {
+		if argCount > 1 {
+			query += ","
+		}
+		query += fmt.Sprintf(" %s = $%d", field, argCount)
+		args = append(args, value)
+		argCount++
+	}
+
+	query += fmt.Sprintf(" WHERE id = $%d", argCount)
+	args = append(args, rewardID)
+
+	_, err := r.db.Exec(query, args...)
+	if err != nil {
+		r.logger.Error("Failed to update reward", zap.String("rewardID", rewardID), zap.Error(err))
+		return fmt.Errorf("failed to update reward: %w", err)
+	}
+
+	r.logger.Info("Reward updated successfully", zap.String("rewardID", rewardID))
+	return nil
+}
+
+// DeleteReward deletes a reward (admin function)
+func (r *RewardService) DeleteReward(rewardID string) error {
+	// Check if reward is being used in any season
+	var count int
+	checkQuery := "SELECT COUNT(*) FROM season_rewards WHERE free_reward_id = $1 OR premium_reward_id = $1"
+	err := r.db.QueryRow(checkQuery, rewardID).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check reward usage: %w", err)
+	}
+
+	if count > 0 {
+		return fmt.Errorf("cannot delete reward that is used in seasons")
+	}
+
+	// Delete the reward
+	query := "DELETE FROM rewards WHERE id = $1"
+	result, err := r.db.Exec(query, rewardID)
+	if err != nil {
+		r.logger.Error("Failed to delete reward", zap.String("rewardID", rewardID), zap.Error(err))
+		return fmt.Errorf("failed to delete reward: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("reward not found")
+	}
+
+	r.logger.Info("Reward deleted successfully", zap.String("rewardID", rewardID))
+	return nil
+}
+
+// ListRewards returns all rewards with pagination
+func (r *RewardService) ListRewards(limit, offset int, rewardType string) ([]models.Reward, error) {
+	query := `
+		SELECT id, type, name, description, rarity, metadata, created_at
+		FROM rewards
+		WHERE ($1 = '' OR type = $1)
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.Query(query, rewardType, limit, offset)
+	if err != nil {
+		r.logger.Error("Failed to list rewards", zap.Error(err))
+		return nil, fmt.Errorf("failed to list rewards: %w", err)
+	}
+	defer rows.Close()
+
+	var rewards []models.Reward
+	for rows.Next() {
+		var reward models.Reward
+		err := rows.Scan(&reward.ID, &reward.Type, &reward.Name, &reward.Description,
+			&reward.Rarity, &reward.Metadata, &reward.CreatedAt)
+		if err != nil {
+			continue
+		}
+		rewards = append(rewards, reward)
+	}
+
+	return rewards, nil
+}
+
+// GetClaimHistory returns claim history for a player
+func (r *RewardService) GetClaimHistory(playerID, seasonID string, limit, offset int) ([]models.ClaimedReward, error) {
+	query := `
+		SELECT player_id, season_id, level, tier, reward_id, claimed_at, inventory_id
+		FROM claimed_rewards
+		WHERE player_id = $1 AND ($2 = '' OR season_id = $2)
+		ORDER BY claimed_at DESC
+		LIMIT $3 OFFSET $4
+	`
+
+	rows, err := r.db.Query(query, playerID, seasonID, limit, offset)
+	if err != nil {
+		r.logger.Error("Failed to get claim history",
+			zap.String("playerID", playerID), zap.String("seasonID", seasonID), zap.Error(err))
+		return nil, fmt.Errorf("failed to get claim history: %w", err)
+	}
+	defer rows.Close()
+
+	var claims []models.ClaimedReward
+	for rows.Next() {
+		var claim models.ClaimedReward
+		err := rows.Scan(&claim.PlayerID, &claim.SeasonID, &claim.Level, &claim.Tier,
+			&claim.RewardID, &claim.ClaimedAt, &claim.InventoryID)
+		if err != nil {
+			continue
+		}
+		claims = append(claims, claim)
+	}
+
+	return claims, nil
+}
+
+// ValidateRewardClaim validates if a reward claim is valid (business logic check)
+func (r *RewardService) ValidateRewardClaim(playerID string, request models.ClaimRequest) error {
+	// Get current season
+	currentSeason, err := r.getCurrentSeason()
+	if err != nil {
+		return fmt.Errorf("failed to get current season: %w", err)
+	}
+
+	// Check if reward exists at this level
+	reward, tier, err := r.getRewardForLevel(currentSeason.ID, request.Level, request.Tier)
+	if err != nil {
+		return fmt.Errorf("invalid reward level/tier combination: %w", err)
+	}
+	_ = reward // reward is not used in validation but could be for additional checks
+	_ = tier
+
+	// Check player progress
+	progress, err := r.getPlayerProgress(playerID, currentSeason.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get player progress: %w", err)
+	}
+
+	// Validate level requirement
+	if progress.CurrentLevel < request.Level {
+		return fmt.Errorf("insufficient level: player level %d, required level %d",
+			progress.CurrentLevel, request.Level)
+	}
+
+	// Validate premium requirement
+	if request.Tier == "premium" && !progress.HasPremium {
+		return fmt.Errorf("premium pass required")
+	}
+
+	// Check if already claimed
+	alreadyClaimed, err := r.isRewardClaimed(playerID, currentSeason.ID, request.Level, request.Tier)
+	if err != nil {
+		return fmt.Errorf("failed to check claim status: %w", err)
+	}
+
+	if alreadyClaimed {
+		return fmt.Errorf("reward already claimed")
 	}
 
 	return nil

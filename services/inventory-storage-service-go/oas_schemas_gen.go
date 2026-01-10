@@ -1678,13 +1678,13 @@ type InventoryStorageBatchHealthCheckBadRequestDetails struct{}
 
 type InventoryStorageBatchHealthCheckOK struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []InventoryStorageBatchHealthCheckOKResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *InventoryStorageBatchHealthCheckOK) GetResults() []jx.Raw {
+func (s *InventoryStorageBatchHealthCheckOK) GetResults() []InventoryStorageBatchHealthCheckOKResultsItem {
 	return s.Results
 }
 
@@ -1694,7 +1694,7 @@ func (s *InventoryStorageBatchHealthCheckOK) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *InventoryStorageBatchHealthCheckOK) SetResults(val []jx.Raw) {
+func (s *InventoryStorageBatchHealthCheckOK) SetResults(val []InventoryStorageBatchHealthCheckOKResultsItem) {
 	s.Results = val
 }
 
@@ -1741,6 +1741,125 @@ func (s *InventoryStorageBatchHealthCheckOKHeaders) SetResponse(val InventorySto
 }
 
 func (*InventoryStorageBatchHealthCheckOKHeaders) inventoryStorageBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type InventoryStorageBatchHealthCheckOKResultsItem struct {
+	Status            InventoryStorageBatchHealthCheckOKResultsItemStatus `json:"status"`
+	Domain            OptString                                           `json:"domain"`
+	Timestamp         time.Time                                           `json:"timestamp"`
+	Version           OptString                                           `json:"version"`
+	UptimeSeconds     OptInt                                              `json:"uptime_seconds"`
+	ActiveConnections OptInt                                              `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetStatus() InventoryStorageBatchHealthCheckOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetStatus(val InventoryStorageBatchHealthCheckOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *InventoryStorageBatchHealthCheckOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type InventoryStorageBatchHealthCheckOKResultsItemStatus string
+
+const (
+	InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy   InventoryStorageBatchHealthCheckOKResultsItemStatus = "healthy"
+	InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded  InventoryStorageBatchHealthCheckOKResultsItemStatus = "degraded"
+	InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy InventoryStorageBatchHealthCheckOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all InventoryStorageBatchHealthCheckOKResultsItemStatus values.
+func (InventoryStorageBatchHealthCheckOKResultsItemStatus) AllValues() []InventoryStorageBatchHealthCheckOKResultsItemStatus {
+	return []InventoryStorageBatchHealthCheckOKResultsItemStatus{
+		InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy,
+		InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded,
+		InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s InventoryStorageBatchHealthCheckOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *InventoryStorageBatchHealthCheckOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch InventoryStorageBatchHealthCheckOKResultsItemStatus(data) {
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusHealthy
+		return nil
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusDegraded
+		return nil
+	case InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = InventoryStorageBatchHealthCheckOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type InventoryStorageBatchHealthCheckReq struct {
 	// List of services to check.

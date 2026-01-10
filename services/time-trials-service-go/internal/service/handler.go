@@ -19,7 +19,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"necpgame/services/time-trials-service-go/pkg/api"
+	"necpgame/services/time-trials-service-go/api"
 )
 
 // Handler implements the API handler interface
@@ -109,12 +109,13 @@ func NewHandler(svc *Service) *Handler {
 }
 
 // HealthGet implements health check endpoint
-func (h *Handler) HealthGet(ctx context.Context) (api.HealthGetRes, error) {
+func (h *Handler) GetHealth(ctx context.Context) (api.GetHealthRes, error) {
 	// Calculate actual uptime since service start
 	uptimeSeconds := int(time.Since(h.service.startTime).Seconds())
 
 	// Get active sessions count from database
 	// PERFORMANCE: Direct database query for accurate real-time session count
+	var activeSessions int
 	activeSessionsQuery := `SELECT COUNT(*) FROM time_trials.trials WHERE status = 'active'`
 	err := h.service.db.QueryRow(ctx, activeSessionsQuery).Scan(&activeSessions)
 	if err != nil {
@@ -123,33 +124,29 @@ func (h *Handler) HealthGet(ctx context.Context) (api.HealthGetRes, error) {
 		activeSessions = 0
 	}
 
-	return &api.HealthResponse{
-		Status:   "healthy",
-		Version:  "1.0.0",
-		Uptime:   uptimeSeconds,
-		Metrics: &api.HealthResponseMetrics{
-			ActiveSessions: &activeSessions,
-			TotalTrials:    &activeSessions, // Same as active sessions for now, can be optimized later
-		},
+	return &api.GetHealthOK{
+		Status:    api.GetHealthOKStatusHealthy,
+		Timestamp: time.Now(),
+		Version:   "1.0.0",
 	}, nil
 }
 
 // APIV1TimeTrialsTrialsGet implements GET /api/v1/time-trials/trials
-func (h *Handler) APIV1TimeTrialsTrialsGet(ctx context.Context, params api.APIV1TimeTrialsTrialsGetParams) (api.APIV1TimeTrialsTrialsGetRes, error) {
+func (h *Handler) ListTrials(ctx context.Context, params api.ListTrialsParams) (api.ListTrialsRes, error) {
 	// Parse query parameters
 	status := ""
-	if params.Status != nil {
-		status = string(*params.Status)
+	if params.Status.IsSet() {
+		status = string(params.Status.Value)
 	}
 
 	trialType := ""
-	if params.Type != nil {
-		trialType = string(*params.Type)
+	if params.Type.IsSet() {
+		trialType = string(params.Type.Value)
 	}
 
 	difficulty := ""
-	if params.Difficulty != nil {
-		difficulty = string(*params.Difficulty)
+	if params.Difficulty.IsSet() {
+		difficulty = string(params.Difficulty.Value)
 	}
 
 	limit := 20
@@ -287,7 +284,7 @@ func (h *Handler) APIV1TimeTrialsTrialsGet(ctx context.Context, params api.APIV1
 	// Record operation
 	h.service.trialOperations.WithLabelValues("list_trials", "success").Inc()
 
-	return &api.APIV1TimeTrialsTrialsGetRes200{
+	return &api.ListTrialsOK{
 		Trials: trials,
 		Total:  total,
 		Limit:  limit,
@@ -296,7 +293,7 @@ func (h *Handler) APIV1TimeTrialsTrialsGet(ctx context.Context, params api.APIV1
 }
 
 // APIV1TimeTrialsTrialsPost implements POST /api/v1/time-trials/trials
-func (h *Handler) APIV1TimeTrialsTrialsPost(ctx context.Context, req api.TimeTrial) (api.APIV1TimeTrialsTrialsPostRes, error) {
+func (h *Handler) CreateTrial(ctx context.Context, req api.TimeTrial) (api.CreateTrialRes, error) {
 	// Generate trial ID
 	trialID := uuid.New()
 	trialUUID := uuid.New() // Internal UUID for database
@@ -358,14 +355,15 @@ func (h *Handler) APIV1TimeTrialsTrialsPost(ctx context.Context, req api.TimeTri
 
 	h.service.trialOperations.WithLabelValues("create_trial", "success").Inc()
 
-	return &api.APIV1TimeTrialsTrialsPostRes201{
-		Id:   trialID.String(),
+	return &api.TimeTrial{
+		ID:   trialID.String(),
 		Name: req.Name,
+		Type: req.Type,
 	}, nil
 }
 
 // APIV1TimeTrialsTrialsTrialIdGet implements GET /api/v1/time-trials/trials/{trialId}
-func (h *Handler) APIV1TimeTrialsTrialsTrialIdGet(ctx context.Context, params api.APIV1TimeTrialsTrialsTrialIdGetParams) (api.APIV1TimeTrialsTrialsTrialIdGetRes, error) {
+func (h *Handler) GetTrial(ctx context.Context, params api.GetTrialParams) (api.GetTrialRes, error) {
 	trialID, err := uuid.Parse(params.TrialId)
 	if err != nil {
 		return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
@@ -461,7 +459,7 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdGet(ctx context.Context, params ap
 }
 
 // APIV1TimeTrialsTrialsTrialIdStartPost implements POST /api/v1/time-trials/trials/{trialId}/start
-func (h *Handler) APIV1TimeTrialsTrialsTrialIdStartPost(ctx context.Context, params api.APIV1TimeTrialsTrialsTrialIdStartPostParams, req api.APIV1TimeTrialsTrialsTrialIdStartPostReq) (api.APIV1TimeTrialsTrialsTrialIdStartPostRes, error) {
+func (h *Handler) StartTrialSession(ctx context.Context, params api.StartTrialSessionParams, req api.StartTrialSessionReq) (api.StartTrialSessionRes, error) {
 	trialID, err := uuid.Parse(params.TrialId)
 	if err != nil {
 		return &api.APIV1TimeTrialsTrialsTrialIdStartPostResDefault{
@@ -517,7 +515,7 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdStartPost(ctx context.Context, par
 }
 
 // APIV1TimeTrialsTrialsTrialIdCompletePost implements POST /api/v1/time-trials/trials/{trialId}/complete
-func (h *Handler) APIV1TimeTrialsTrialsTrialIdCompletePost(ctx context.Context, params api.APIV1TimeTrialsTrialsTrialIdCompletePostParams, req api.APIV1TimeTrialsTrialsTrialIdCompletePostReq) (api.APIV1TimeTrialsTrialsTrialIdCompletePostRes, error) {
+func (h *Handler) CompleteTrialSession(ctx context.Context, params api.CompleteTrialSessionParams, req api.CompleteTrialSessionReq) (api.CompleteTrialSessionRes, error) {
 	trialID, err := uuid.Parse(params.TrialId)
 	if err != nil {
 		return &api.APIV1TimeTrialsTrialsTrialIdCompletePostResDefault{
@@ -580,7 +578,7 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdCompletePost(ctx context.Context, 
 }
 
 // APIV1TimeTrialsLeaderboardsTrialIdGet implements GET /api/v1/time-trials/leaderboards/{trialId}
-func (h *Handler) APIV1TimeTrialsLeaderboardsTrialIdGet(ctx context.Context, params api.APIV1TimeTrialsLeaderboardsTrialIdGetParams) (api.APIV1TimeTrialsLeaderboardsTrialIdGetRes, error) {
+func (h *Handler) GetTrialLeaderboard(ctx context.Context, params api.GetTrialLeaderboardParams) (api.GetTrialLeaderboardRes, error) {
 	trialID, err := uuid.Parse(params.TrialId)
 	if err != nil {
 		return &api.APIV1TimeTrialsLeaderboardsTrialIdGetResDefault{
@@ -649,7 +647,7 @@ func (h *Handler) APIV1TimeTrialsLeaderboardsTrialIdGet(ctx context.Context, par
 }
 
 // APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGet implements GET /api/v1/time-trials/analytics/trials/{trialId}/performance
-func (h *Handler) APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params api.APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGetParams) (api.APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGetRes, error) {
+func (h *Handler) GetTrialPerformanceAnalytics(ctx context.Context, params api.GetTrialPerformanceAnalyticsParams) (api.GetTrialPerformanceAnalyticsRes, error) {
 	trialID, err := uuid.Parse(params.TrialId)
 	if err != nil {
 		return &api.APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGetResDefault{

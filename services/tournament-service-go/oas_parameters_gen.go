@@ -17,25 +17,25 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// DeleteExampleParams is parameters of deleteExample operation.
-type DeleteExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
+// DeleteTournamentParams is parameters of deleteTournament operation.
+type DeleteTournamentParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
 }
 
-func unpackDeleteExampleParams(packed middleware.Parameters) (params DeleteExampleParams) {
+func unpackDeleteTournamentParams(packed middleware.Parameters) (params DeleteTournamentParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 		}
-		params.ExampleID = packed[key].(uuid.UUID)
+		params.TournamentID = packed[key].(uuid.UUID)
 	}
 	return params
 }
 
-func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteExampleParams, _ error) {
-	// Decode path: example_id.
+func decodeDeleteTournamentParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteTournamentParams, _ error) {
+	// Decode path: tournament_id.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
@@ -47,7 +47,7 @@ func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request
 		}
 		if len(param) > 0 {
 			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
+				Param:   "tournament_id",
 				Value:   param,
 				Style:   uri.PathStyleSimple,
 				Explode: false,
@@ -64,7 +64,7 @@ func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request
 					return err
 				}
 
-				params.ExampleID = c
+				params.TournamentID = c
 				return nil
 			}(); err != nil {
 				return err
@@ -75,7 +75,7 @@ func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 			Err:  err,
 		}
@@ -83,10 +83,469 @@ func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request
 	return params, nil
 }
 
-// GetExampleParams is parameters of getExample operation.
-type GetExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
+// GenerateTournamentBracketParams is parameters of generateTournamentBracket operation.
+type GenerateTournamentBracketParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+}
+
+func unpackGenerateTournamentBracketParams(packed middleware.Parameters) (params GenerateTournamentBracketParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGenerateTournamentBracketParams(args [1]string, argsEscaped bool, r *http.Request) (params GenerateTournamentBracketParams, _ error) {
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetGlobalLeaderboardsParams is parameters of getGlobalLeaderboards operation.
+type GetGlobalLeaderboardsParams struct {
+	// Filter by tournament type.
+	TournamentType OptGetGlobalLeaderboardsTournamentType `json:",omitempty,omitzero"`
+	// Filter by time range.
+	TimeRange OptGetGlobalLeaderboardsTimeRange `json:",omitempty,omitzero"`
+	// Maximum number of entries to return.
+	Limit OptInt `json:",omitempty,omitzero"`
+	// Number of entries to skip.
+	Offset OptInt `json:",omitempty,omitzero"`
+	// Sort leaderboard by criteria.
+	SortBy OptGetGlobalLeaderboardsSortBy `json:",omitempty,omitzero"`
+}
+
+func unpackGetGlobalLeaderboardsParams(packed middleware.Parameters) (params GetGlobalLeaderboardsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TournamentType = v.(OptGetGlobalLeaderboardsTournamentType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "time_range",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TimeRange = v.(OptGetGlobalLeaderboardsTimeRange)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "sort_by",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.SortBy = v.(OptGetGlobalLeaderboardsSortBy)
+		}
+	}
+	return params
+}
+
+func decodeGetGlobalLeaderboardsParams(args [0]string, argsEscaped bool, r *http.Request) (params GetGlobalLeaderboardsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: tournament_type.
+	{
+		val := GetGlobalLeaderboardsTournamentType("all")
+		params.TournamentType.SetTo(val)
+	}
+	// Decode query: tournament_type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "tournament_type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTournamentTypeVal GetGlobalLeaderboardsTournamentType
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTournamentTypeVal = GetGlobalLeaderboardsTournamentType(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TournamentType.SetTo(paramsDotTournamentTypeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.TournamentType.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_type",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: time_range.
+	{
+		val := GetGlobalLeaderboardsTimeRange("all_time")
+		params.TimeRange.SetTo(val)
+	}
+	// Decode query: time_range.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "time_range",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeRangeVal GetGlobalLeaderboardsTimeRange
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTimeRangeVal = GetGlobalLeaderboardsTimeRange(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.TimeRange.SetTo(paramsDotTimeRangeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.TimeRange.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "time_range",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int(100)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           1000,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: offset.
+	{
+		val := int(0)
+		params.Offset.SetTo(val)
+	}
+	// Decode query: offset.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOffsetVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Offset.SetTo(paramsDotOffsetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Offset.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: sort_by.
+	{
+		val := GetGlobalLeaderboardsSortBy("total_score")
+		params.SortBy.SetTo(val)
+	}
+	// Decode query: sort_by.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "sort_by",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSortByVal GetGlobalLeaderboardsSortBy
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSortByVal = GetGlobalLeaderboardsSortBy(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.SortBy.SetTo(paramsDotSortByVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.SortBy.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "sort_by",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTournamentParams is parameters of getTournament operation.
+type GetTournamentParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
 	// Include related data in response.
 	IncludeRelated OptBool `json:",omitempty,omitzero"`
 	// Conditional request - return 304 if ETag matches.
@@ -95,13 +554,13 @@ type GetExampleParams struct {
 	IfModifiedSince OptDateTime `json:",omitempty,omitzero"`
 }
 
-func unpackGetExampleParams(packed middleware.Parameters) (params GetExampleParams) {
+func unpackGetTournamentParams(packed middleware.Parameters) (params GetTournamentParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 		}
-		params.ExampleID = packed[key].(uuid.UUID)
+		params.TournamentID = packed[key].(uuid.UUID)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -133,10 +592,10 @@ func unpackGetExampleParams(packed middleware.Parameters) (params GetExamplePara
 	return params
 }
 
-func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params GetExampleParams, _ error) {
+func decodeGetTournamentParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTournamentParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	h := uri.NewHeaderDecoder(r.Header)
-	// Decode path: example_id.
+	// Decode path: tournament_id.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
@@ -148,7 +607,7 @@ func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (
 		}
 		if len(param) > 0 {
 			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
+				Param:   "tournament_id",
 				Value:   param,
 				Style:   uri.PathStyleSimple,
 				Explode: false,
@@ -165,7 +624,7 @@ func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (
 					return err
 				}
 
-				params.ExampleID = c
+				params.TournamentID = c
 				return nil
 			}(); err != nil {
 				return err
@@ -176,7 +635,7 @@ func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 			Err:  err,
 		}
@@ -308,6 +767,560 @@ func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
+// GetTournamentBracketParams is parameters of getTournamentBracket operation.
+type GetTournamentBracketParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+	// Include detailed match information in bracket.
+	IncludeMatches OptBool `json:",omitempty,omitzero"`
+}
+
+func unpackGetTournamentBracketParams(packed middleware.Parameters) (params GetTournamentBracketParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include_matches",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.IncludeMatches = v.(OptBool)
+		}
+	}
+	return params
+}
+
+func decodeGetTournamentBracketParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTournamentBracketParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Set default value for query: include_matches.
+	{
+		val := bool(true)
+		params.IncludeMatches.SetTo(val)
+	}
+	// Decode query: include_matches.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include_matches",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludeMatchesVal bool
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToBool(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludeMatchesVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IncludeMatches.SetTo(paramsDotIncludeMatchesVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include_matches",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTournamentLeaderboardParams is parameters of getTournamentLeaderboard operation.
+type GetTournamentLeaderboardParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+	// Maximum number of leaderboard entries to return.
+	Limit OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackGetTournamentLeaderboardParams(packed middleware.Parameters) (params GetTournamentLeaderboardParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeGetTournamentLeaderboardParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTournamentLeaderboardParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int(50)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTournamentSpectatorsParams is parameters of getTournamentSpectators operation.
+type GetTournamentSpectatorsParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+	// Maximum number of spectator entries to return.
+	Limit OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackGetTournamentSpectatorsParams(packed middleware.Parameters) (params GetTournamentSpectatorsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeGetTournamentSpectatorsParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTournamentSpectatorsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Set default value for query: limit.
+	{
+		val := int(50)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// JoinTournamentParams is parameters of joinTournament operation.
+type JoinTournamentParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+}
+
+func unpackJoinTournamentParams(packed middleware.Parameters) (params JoinTournamentParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeJoinTournamentParams(args [1]string, argsEscaped bool, r *http.Request) (params JoinTournamentParams, _ error) {
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// LeaveTournamentParams is parameters of leaveTournament operation.
+type LeaveTournamentParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+}
+
+func unpackLeaveTournamentParams(packed middleware.Parameters) (params LeaveTournamentParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeLeaveTournamentParams(args [1]string, argsEscaped bool, r *http.Request) (params LeaveTournamentParams, _ error) {
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ListTournamentsParams is parameters of listTournaments operation.
 type ListTournamentsParams struct {
 	// Page number for pagination.
@@ -318,8 +1331,12 @@ type ListTournamentsParams struct {
 	SortBy OptListTournamentsSortBy `json:",omitempty,omitzero"`
 	// Sort order.
 	SortOrder OptListTournamentsSortOrder `json:",omitempty,omitzero"`
-	// Filter by status.
-	FilterStatus OptListTournamentsFilterStatus `json:",omitempty,omitzero"`
+	// Filter by tournament status.
+	Status OptListTournamentsStatus `json:",omitempty,omitzero"`
+	// Filter by game mode.
+	GameMode OptListTournamentsGameMode `json:",omitempty,omitzero"`
+	// Filter by required skill level.
+	SkillLevel OptListTournamentsSkillLevel `json:",omitempty,omitzero"`
 }
 
 func unpackListTournamentsParams(packed middleware.Parameters) (params ListTournamentsParams) {
@@ -361,11 +1378,29 @@ func unpackListTournamentsParams(packed middleware.Parameters) (params ListTourn
 	}
 	{
 		key := middleware.ParameterKey{
-			Name: "filter_status",
+			Name: "status",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.FilterStatus = v.(OptListTournamentsFilterStatus)
+			params.Status = v.(OptListTournamentsStatus)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "game_mode",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.GameMode = v.(OptListTournamentsGameMode)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "skill_level",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.SkillLevel = v.(OptListTournamentsSkillLevel)
 		}
 	}
 	return params
@@ -637,17 +1672,17 @@ func decodeListTournamentsParams(args [0]string, argsEscaped bool, r *http.Reque
 			Err:  err,
 		}
 	}
-	// Decode query: filter_status.
+	// Decode query: status.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "filter_status",
+			Name:    "status",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotFilterStatusVal ListTournamentsFilterStatus
+				var paramsDotStatusVal ListTournamentsStatus
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -659,18 +1694,18 @@ func decodeListTournamentsParams(args [0]string, argsEscaped bool, r *http.Reque
 						return err
 					}
 
-					paramsDotFilterStatusVal = ListTournamentsFilterStatus(c)
+					paramsDotStatusVal = ListTournamentsStatus(c)
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.FilterStatus.SetTo(paramsDotFilterStatusVal)
+				params.Status.SetTo(paramsDotStatusVal)
 				return nil
 			}); err != nil {
 				return err
 			}
 			if err := func() error {
-				if value, ok := params.FilterStatus.Get(); ok {
+				if value, ok := params.Status.Get(); ok {
 					if err := func() error {
 						if err := value.Validate(); err != nil {
 							return err
@@ -688,8 +1723,186 @@ func decodeListTournamentsParams(args [0]string, argsEscaped bool, r *http.Reque
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "filter_status",
+			Name: "status",
 			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: game_mode.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "game_mode",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotGameModeVal ListTournamentsGameMode
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotGameModeVal = ListTournamentsGameMode(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.GameMode.SetTo(paramsDotGameModeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.GameMode.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "game_mode",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: skill_level.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "skill_level",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotSkillLevelVal ListTournamentsSkillLevel
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotSkillLevelVal = ListTournamentsSkillLevel(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.SkillLevel.SetTo(paramsDotSkillLevelVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.SkillLevel.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "skill_level",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// RegisterTournamentScoreParams is parameters of registerTournamentScore operation.
+type RegisterTournamentScoreParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+}
+
+func unpackRegisterTournamentScoreParams(packed middleware.Parameters) (params RegisterTournamentScoreParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeRegisterTournamentScoreParams(args [1]string, argsEscaped bool, r *http.Request) (params RegisterTournamentScoreParams, _ error) {
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
 			Err:  err,
 		}
 	}
@@ -862,23 +2075,89 @@ func decodeTournamentServiceHealthWebSocketParams(args [0]string, argsEscaped bo
 	return params, nil
 }
 
-// UpdateExampleParams is parameters of updateExample operation.
-type UpdateExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
+// TournamentSpectatorWebSocketParams is parameters of tournamentSpectatorWebSocket operation.
+type TournamentSpectatorWebSocketParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
+}
+
+func unpackTournamentSpectatorWebSocketParams(packed middleware.Parameters) (params TournamentSpectatorWebSocketParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "tournament_id",
+			In:   "path",
+		}
+		params.TournamentID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeTournamentSpectatorWebSocketParams(args [1]string, argsEscaped bool, r *http.Request) (params TournamentSpectatorWebSocketParams, _ error) {
+	// Decode path: tournament_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "tournament_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TournamentID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "tournament_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// UpdateTournamentParams is parameters of updateTournament operation.
+type UpdateTournamentParams struct {
+	// Tournament unique identifier.
+	TournamentID uuid.UUID
 	// ETag for optimistic locking - prevents concurrent updates.
 	IfMatch OptString `json:",omitempty,omitzero"`
 	// Conditional update - proceed only if not modified since this time.
 	IfUnmodifiedSince OptDateTime `json:",omitempty,omitzero"`
 }
 
-func unpackUpdateExampleParams(packed middleware.Parameters) (params UpdateExampleParams) {
+func unpackUpdateTournamentParams(packed middleware.Parameters) (params UpdateTournamentParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 		}
-		params.ExampleID = packed[key].(uuid.UUID)
+		params.TournamentID = packed[key].(uuid.UUID)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -901,9 +2180,9 @@ func unpackUpdateExampleParams(packed middleware.Parameters) (params UpdateExamp
 	return params
 }
 
-func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params UpdateExampleParams, _ error) {
+func decodeUpdateTournamentParams(args [1]string, argsEscaped bool, r *http.Request) (params UpdateTournamentParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
-	// Decode path: example_id.
+	// Decode path: tournament_id.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
@@ -915,7 +2194,7 @@ func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request
 		}
 		if len(param) > 0 {
 			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
+				Param:   "tournament_id",
 				Value:   param,
 				Style:   uri.PathStyleSimple,
 				Explode: false,
@@ -932,7 +2211,7 @@ func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request
 					return err
 				}
 
-				params.ExampleID = c
+				params.TournamentID = c
 				return nil
 			}(); err != nil {
 				return err
@@ -943,7 +2222,7 @@ func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
+			Name: "tournament_id",
 			In:   "path",
 			Err:  err,
 		}

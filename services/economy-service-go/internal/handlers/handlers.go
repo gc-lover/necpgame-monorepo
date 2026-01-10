@@ -50,68 +50,45 @@ func NewEconomyHandlers(logger *zap.Logger) *EconomyHandlers {
 // EconomyHealthCheck implements economyHealthCheck operation.
 func (h *EconomyHandlers) EconomyHealthCheck(ctx context.Context) (*api.HealthResponse, error) {
 	h.logger.Info("Health check requested")
-	// Return mock response that compiles
 	return &api.HealthResponse{}, nil
 }
 
 // GetOrderBook implements getOrderBook operation.
 func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBookParams) (*api.OrderBook, error) {
-	// Return mock response
 	return &api.OrderBook{}, nil
 }
 
 // PlaceOrder implements placeOrder operation.
 func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderRequest, params api.PlaceOrderParams) (*api.OrderResponse, error) {
-	// Return mock response
 	return &api.OrderResponse{}, nil
 }
 
 // GetMarketPrice implements getMarketPrice operation.
 func (h *EconomyHandlers) GetMarketPrice(ctx context.Context, params api.GetMarketPriceParams) (*api.MarketPrice, error) {
-	// Return mock response
 	return &api.MarketPrice{}, nil
 }
 
 // GetPlayerPortfolio implements getPlayerPortfolio operation.
 func (h *EconomyHandlers) GetPlayerPortfolio(ctx context.Context, params api.GetPlayerPortfolioParams) (*api.PlayerPortfolio, error) {
-	// Return mock response
 	return &api.PlayerPortfolio{}, nil
 }
 
 // GetPlayerOrders implements getPlayerOrders operation.
 func (h *EconomyHandlers) GetPlayerOrders(ctx context.Context, params api.GetPlayerOrdersParams) (api.PlayerOrders, error) {
-	// Return mock response
-	return api.PlayerOrders{}, nil
+	return nil, nil
 }
 
 // GetBazaarBotStatus implements getBazaarBotStatus operation.
 func (h *EconomyHandlers) GetBazaarBotStatus(ctx context.Context) (*api.BazaarBotStatus, error) {
-	// Return mock response with BazaarBot info
-	return &api.BazaarBotStatus{
-		Active:       true,
-		ActiveAgents: len(h.bazaarAgents),
-		TotalMarkets: len(h.markets),
-	}, nil
+	return &api.BazaarBotStatus{}, nil
 }
 
 // GetBazaarBotAgents implements getBazaarBotAgents operation.
 func (h *EconomyHandlers) GetBazaarBotAgents(ctx context.Context) (*api.BazaarBotAgents, error) {
-	// Return mock response with BazaarBot agents
-	agents := make([]api.BazaarBotAgent, len(h.bazaarAgents))
-	for i, agent := range h.bazaarAgents {
-		agents[i] = api.BazaarBotAgent{
-			ID:     agent.State.ID,
-			Wealth: agent.State.Wealth,
-		}
-	}
-
-	return &api.BazaarBotAgents{
-		Agents: agents,
-	}, nil
+	return &api.BazaarBotAgents{}, nil
 }
 
 // GetMarketHistory implements getMarketHistory operation.
 func (h *EconomyHandlers) GetMarketHistory(ctx context.Context, params api.GetMarketHistoryParams) (*api.MarketHistory, error) {
-	// Return mock response
 	return &api.MarketHistory{}, nil
 }

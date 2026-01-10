@@ -30,34 +30,7 @@ CREATE TABLE IF NOT EXISTS gameplay.quest_definitions (
     quest_chain_order INTEGER,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    -- Struct alignment: large fields first for memory efficiency
-    -- Expected memory savings: 30-50% for quest operations
-    description TEXT,
-    rewards JSONB,
-    objectives JSONB,
-    prerequisites JSONB,
-    faction_requirements JSONB,
-    reputation_requirements JSONB,
-    item_requirements JSONB,
-    title VARCHAR(255),
-    quest_id VARCHAR(255),
-    category VARCHAR(100),
-    difficulty VARCHAR(50),
-    location VARCHAR(255),
-    npc_giver VARCHAR(255),
-    npc_completer VARCHAR(255),
-    quest_chain_id VARCHAR(255),
-    level_requirement INTEGER,
-    time_limit_minutes INTEGER,
-    max_completions INTEGER,
-    quest_chain_order INTEGER,
-    is_repeatable BOOLEAN,
-    is_active BOOLEAN,
-    id UUID,
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for performance optimization
@@ -86,21 +59,7 @@ CREATE TABLE IF NOT EXISTS gameplay.quest_progress (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- Composite unique constraint to prevent duplicate progress records
-    UNIQUE(player_id, quest_definition_id),
-
-    -- Struct alignment: large fields first for memory efficiency
-    objective_progress JSONB,
-    rewards_claimed JSONB,
-    status VARCHAR(50),
-    player_id UUID,
-    quest_definition_id UUID,
-    started_at TIMESTAMP WITH TIME ZONE,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    failed_at TIMESTAMP WITH TIME ZONE,
-    abandoned_at TIMESTAMP WITH TIME ZONE,
-    id UUID,
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
+    UNIQUE(player_id, quest_definition_id)
 );
 
 -- Indexes for quest progress performance
@@ -129,24 +88,6 @@ CREATE TABLE IF NOT EXISTS gameplay.quest_objectives (
     prerequisites JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Struct alignment: large fields first for memory efficiency
-    description TEXT,
-    prerequisites JSONB,
-    target_value VARCHAR(500),
-    location VARCHAR(255),
-    npc_id VARCHAR(255),
-    item_id VARCHAR(255),
-    objective_id VARCHAR(100),
-    objective_type VARCHAR(50),
-    target_count INTEGER,
-    current_count INTEGER,
-    order_index INTEGER,
-    is_optional BOOLEAN,
-    is_completed BOOLEAN,
-    quest_definition_id UUID,
-    id UUID,
-    created_at TIMESTAMP WITH TIME ZONE,
-
     UNIQUE(quest_definition_id, objective_id)
 );
 
@@ -170,23 +111,7 @@ CREATE TABLE IF NOT EXISTS gameplay.quest_rewards (
     unlock_id VARCHAR(255),
     is_conditional BOOLEAN NOT NULL DEFAULT false,
     condition_data JSONB,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    -- Struct alignment: large fields first for memory efficiency
-    item_data JSONB,
-    condition_data JSONB,
-    reward_id VARCHAR(255),
-    reputation_faction VARCHAR(100),
-    title_name VARCHAR(255),
-    unlock_type VARCHAR(100),
-    unlock_id VARCHAR(255),
-    reward_type VARCHAR(50),
-    amount INTEGER,
-    reputation_amount INTEGER,
-    is_conditional BOOLEAN,
-    quest_definition_id UUID,
-    id UUID,
-    created_at TIMESTAMP WITH TIME ZONE
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for quest rewards performance

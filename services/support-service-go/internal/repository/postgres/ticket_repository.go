@@ -24,7 +24,7 @@ func NewTicketRepository(db DBTX) repository.TicketRepository {
 func (r *ticketRepository) Create(ctx context.Context, ticket *models.Ticket) error {
 	query := `
 		INSERT INTO support_tickets (
-			id, player_id, title, description, category, priority,
+			id, character_id, title, description, category, priority,
 			status, agent_id, created_at, updated_at, closed_at, sla_status
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
@@ -35,7 +35,7 @@ func (r *ticketRepository) Create(ctx context.Context, ticket *models.Ticket) er
 	ticket.SLAStatus = models.SLAStatusCompliant // Default to compliant
 
 	_, err := r.db.ExecContext(ctx, query,
-		ticket.ID, ticket.PlayerID, ticket.Title, ticket.Description,
+		ticket.ID, ticket.CharacterID, ticket.Title, ticket.Description,
 		ticket.Category, ticket.Priority, ticket.Status, ticket.AgentID,
 		ticket.CreatedAt, ticket.UpdatedAt, ticket.ClosedAt, ticket.SLAStatus,
 	)
@@ -49,7 +49,7 @@ func (r *ticketRepository) Create(ctx context.Context, ticket *models.Ticket) er
 
 func (r *ticketRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets WHERE id = $1
 	`
@@ -59,7 +59,7 @@ func (r *ticketRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.T
 	var closedAt sql.NullTime
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&ticket.ID, &ticket.PlayerID, &ticket.Title, &ticket.Description,
+		&ticket.ID, &ticket.CharacterID, &ticket.Title, &ticket.Description,
 		&ticket.Category, &ticket.Priority, &ticket.Status, &agentID,
 		&ticket.CreatedAt, &ticket.UpdatedAt, &closedAt, &ticket.SLAStatus,
 	)
@@ -188,22 +188,22 @@ func (r *ticketRepository) Close(ctx context.Context, id uuid.UUID, resolution s
 	return responseRepo.CreateResponse(ctx, response)
 }
 
-func (r *ticketRepository) GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
+func (r *ticketRepository) GetByCharacterID(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
-		WHERE player_id = $1
+		WHERE character_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
 	`
 
-	return r.queryTickets(ctx, query, playerID, limit, offset)
+	return r.queryTickets(ctx, query, characterID, limit, offset)
 }
 
 func (r *ticketRepository) GetByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE agent_id = $1
@@ -216,7 +216,7 @@ func (r *ticketRepository) GetByAgentID(ctx context.Context, agentID uuid.UUID, 
 
 func (r *ticketRepository) GetByStatus(ctx context.Context, status models.TicketStatus, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE status = $1
@@ -229,7 +229,7 @@ func (r *ticketRepository) GetByStatus(ctx context.Context, status models.Ticket
 
 func (r *ticketRepository) GetByCategory(ctx context.Context, category string, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE category = $1
@@ -242,7 +242,7 @@ func (r *ticketRepository) GetByCategory(ctx context.Context, category string, l
 
 func (r *ticketRepository) GetByPriority(ctx context.Context, priority models.TicketPriority, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE priority = $1
@@ -255,7 +255,7 @@ func (r *ticketRepository) GetByPriority(ctx context.Context, priority models.Ti
 
 func (r *ticketRepository) GetQueue(ctx context.Context, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE status IN ('open', 'pending')
@@ -275,7 +275,7 @@ func (r *ticketRepository) GetQueue(ctx context.Context, limit, offset int) ([]*
 
 func (r *ticketRepository) GetUnassigned(ctx context.Context, limit, offset int) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE agent_id IS NULL AND status IN ('open', 'pending')
@@ -295,7 +295,7 @@ func (r *ticketRepository) GetUnassigned(ctx context.Context, limit, offset int)
 
 func (r *ticketRepository) GetOverdueSLA(ctx context.Context, currentTime time.Time) ([]*models.Ticket, error) {
 	query := `
-		SELECT id, player_id, title, description, category, priority,
+		SELECT id, character_id, title, description, category, priority,
 			   status, agent_id, created_at, updated_at, closed_at, sla_status
 		FROM support_tickets
 		WHERE status != 'closed'
@@ -417,7 +417,7 @@ func (r *ticketRepository) queryTickets(ctx context.Context, query string, args 
 		var closedAt sql.NullTime
 
 		err := rows.Scan(
-			&ticket.ID, &ticket.PlayerID, &ticket.Title, &ticket.Description,
+			&ticket.ID, &ticket.CharacterID, &ticket.Title, &ticket.Description,
 			&ticket.Category, &ticket.Priority, &ticket.Status, &agentID,
 			&ticket.CreatedAt, &ticket.UpdatedAt, &closedAt, &ticket.SLAStatus,
 		)

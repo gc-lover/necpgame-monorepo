@@ -40,6 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
+	args := [1]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -92,24 +93,99 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
-				case 'e': // Prefix: "economy/market"
+				case 'e': // Prefix: "economy/"
 
-					if l := len("economy/market"); len(elem) >= l && elem[0:l] == "economy/market" {
+					if l := len("economy/"); len(elem) >= l && elem[0:l] == "economy/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGetEconomyMarketAnalyticsRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
+						break
+					}
+					switch elem[0] {
+					case 'h': // Prefix: "health"
+
+						if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
+							elem = elem[l:]
+						} else {
+							break
 						}
 
-						return
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleEconomyAnalyticsHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'm': // Prefix: "market"
+
+						if l := len("market"); len(elem) >= l && elem[0:l] == "market" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleGetEconomyMarketAnalyticsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/trends"
+
+							if l := len("/trends"); len(elem) >= l && elem[0:l] == "/trends" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetMarketTrendsRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						}
+
+					case 't': // Prefix: "trade/volume"
+
+						if l := len("trade/volume"); len(elem) >= l && elem[0:l] == "trade/volume" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetTradeVolumeStatisticsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
 					}
 
 				case 'p': // Prefix: "players/behavior"
@@ -132,24 +208,134 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
-				case 's': // Prefix: "system/performance"
+				case 's': // Prefix: "s"
 
-					if l := len("system/performance"); len(elem) >= l && elem[0:l] == "system/performance" {
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGetSystemPerformanceMetricsRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
+						break
+					}
+					switch elem[0] {
+					case 't': // Prefix: "tock/"
+
+						if l := len("tock/"); len(elem) >= l && elem[0:l] == "tock/" {
+							elem = elem[l:]
+						} else {
+							break
 						}
 
-						return
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'f': // Prefix: "fundamental/"
+
+							if l := len("fundamental/"); len(elem) >= l && elem[0:l] == "fundamental/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "symbol"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetFundamentalAnalysisRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 'p': // Prefix: "protection/market-integrity"
+
+							if l := len("protection/market-integrity"); len(elem) >= l && elem[0:l] == "protection/market-integrity" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleMonitorMarketIntegrityRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 't': // Prefix: "technical/"
+
+							if l := len("technical/"); len(elem) >= l && elem[0:l] == "technical/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "symbol"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetTechnicalAnalysisRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						}
+
+					case 'y': // Prefix: "ystem/performance"
+
+						if l := len("ystem/performance"); len(elem) >= l && elem[0:l] == "ystem/performance" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetSystemPerformanceMetricsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -189,7 +375,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [0]string
+	args           [1]string
 }
 
 // Name returns ogen operation name.
@@ -311,29 +497,119 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
-				case 'e': // Prefix: "economy/market"
+				case 'e': // Prefix: "economy/"
 
-					if l := len("economy/market"); len(elem) >= l && elem[0:l] == "economy/market" {
+					if l := len("economy/"); len(elem) >= l && elem[0:l] == "economy/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GetEconomyMarketAnalyticsOperation
-							r.summary = "Get economy market analytics"
-							r.operationID = "getEconomyMarketAnalytics"
-							r.operationGroup = ""
-							r.pathPattern = "/analytics/economy/market"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
+						break
+					}
+					switch elem[0] {
+					case 'h': // Prefix: "health"
+
+						if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
+							elem = elem[l:]
+						} else {
+							break
 						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = EconomyAnalyticsHealthCheckOperation
+								r.summary = "Economy analytics service health check"
+								r.operationID = "economyAnalyticsHealthCheck"
+								r.operationGroup = ""
+								r.pathPattern = "/analytics/economy/health"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'm': // Prefix: "market"
+
+						if l := len("market"); len(elem) >= l && elem[0:l] == "market" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "GET":
+								r.name = GetEconomyMarketAnalyticsOperation
+								r.summary = "Get economy market analytics"
+								r.operationID = "getEconomyMarketAnalytics"
+								r.operationGroup = ""
+								r.pathPattern = "/analytics/economy/market"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/trends"
+
+							if l := len("/trends"); len(elem) >= l && elem[0:l] == "/trends" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetMarketTrendsOperation
+									r.summary = "Get market trends analysis"
+									r.operationID = "getMarketTrends"
+									r.operationGroup = ""
+									r.pathPattern = "/analytics/economy/market/trends"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					case 't': // Prefix: "trade/volume"
+
+						if l := len("trade/volume"); len(elem) >= l && elem[0:l] == "trade/volume" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetTradeVolumeStatisticsOperation
+								r.summary = "Get trade volume statistics"
+								r.operationID = "getTradeVolumeStatistics"
+								r.operationGroup = ""
+								r.pathPattern = "/analytics/economy/trade/volume"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				case 'p': // Prefix: "players/behavior"
@@ -361,29 +637,150 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
-				case 's': // Prefix: "system/performance"
+				case 's': // Prefix: "s"
 
-					if l := len("system/performance"); len(elem) >= l && elem[0:l] == "system/performance" {
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GetSystemPerformanceMetricsOperation
-							r.summary = "Get system performance metrics"
-							r.operationID = "getSystemPerformanceMetrics"
-							r.operationGroup = ""
-							r.pathPattern = "/analytics/system/performance"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
+						break
+					}
+					switch elem[0] {
+					case 't': // Prefix: "tock/"
+
+						if l := len("tock/"); len(elem) >= l && elem[0:l] == "tock/" {
+							elem = elem[l:]
+						} else {
+							break
 						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'f': // Prefix: "fundamental/"
+
+							if l := len("fundamental/"); len(elem) >= l && elem[0:l] == "fundamental/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "symbol"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetFundamentalAnalysisOperation
+									r.summary = "Get fundamental analysis for a stock"
+									r.operationID = "getFundamentalAnalysis"
+									r.operationGroup = ""
+									r.pathPattern = "/analytics/stock/fundamental/{symbol}"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'p': // Prefix: "protection/market-integrity"
+
+							if l := len("protection/market-integrity"); len(elem) >= l && elem[0:l] == "protection/market-integrity" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = MonitorMarketIntegrityOperation
+									r.summary = "Monitor market integrity"
+									r.operationID = "monitorMarketIntegrity"
+									r.operationGroup = ""
+									r.pathPattern = "/analytics/stock/protection/market-integrity"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 't': // Prefix: "technical/"
+
+							if l := len("technical/"); len(elem) >= l && elem[0:l] == "technical/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "symbol"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetTechnicalAnalysisOperation
+									r.summary = "Get comprehensive technical analysis"
+									r.operationID = "getTechnicalAnalysis"
+									r.operationGroup = ""
+									r.pathPattern = "/analytics/stock/technical/{symbol}"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					case 'y': // Prefix: "ystem/performance"
+
+						if l := len("ystem/performance"); len(elem) >= l && elem[0:l] == "ystem/performance" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetSystemPerformanceMetricsOperation
+								r.summary = "Get system performance metrics"
+								r.operationID = "getSystemPerformanceMetrics"
+								r.operationGroup = ""
+								r.pathPattern = "/analytics/system/performance"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				}

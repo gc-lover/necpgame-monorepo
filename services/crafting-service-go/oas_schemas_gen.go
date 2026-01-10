@@ -283,13 +283,13 @@ type CraftingServiceBatchHealthCheckBadRequestDetails struct{}
 
 type CraftingServiceBatchHealthCheckOK struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []CraftingServiceBatchHealthCheckOKResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *CraftingServiceBatchHealthCheckOK) GetResults() []jx.Raw {
+func (s *CraftingServiceBatchHealthCheckOK) GetResults() []CraftingServiceBatchHealthCheckOKResultsItem {
 	return s.Results
 }
 
@@ -299,7 +299,7 @@ func (s *CraftingServiceBatchHealthCheckOK) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *CraftingServiceBatchHealthCheckOK) SetResults(val []jx.Raw) {
+func (s *CraftingServiceBatchHealthCheckOK) SetResults(val []CraftingServiceBatchHealthCheckOKResultsItem) {
 	s.Results = val
 }
 
@@ -346,6 +346,125 @@ func (s *CraftingServiceBatchHealthCheckOKHeaders) SetResponse(val CraftingServi
 }
 
 func (*CraftingServiceBatchHealthCheckOKHeaders) craftingServiceBatchHealthCheckRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type CraftingServiceBatchHealthCheckOKResultsItem struct {
+	Status            CraftingServiceBatchHealthCheckOKResultsItemStatus `json:"status"`
+	Domain            OptString                                          `json:"domain"`
+	Timestamp         time.Time                                          `json:"timestamp"`
+	Version           OptString                                          `json:"version"`
+	UptimeSeconds     OptInt                                             `json:"uptime_seconds"`
+	ActiveConnections OptInt                                             `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetStatus() CraftingServiceBatchHealthCheckOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetStatus(val CraftingServiceBatchHealthCheckOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *CraftingServiceBatchHealthCheckOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type CraftingServiceBatchHealthCheckOKResultsItemStatus string
+
+const (
+	CraftingServiceBatchHealthCheckOKResultsItemStatusHealthy   CraftingServiceBatchHealthCheckOKResultsItemStatus = "healthy"
+	CraftingServiceBatchHealthCheckOKResultsItemStatusDegraded  CraftingServiceBatchHealthCheckOKResultsItemStatus = "degraded"
+	CraftingServiceBatchHealthCheckOKResultsItemStatusUnhealthy CraftingServiceBatchHealthCheckOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all CraftingServiceBatchHealthCheckOKResultsItemStatus values.
+func (CraftingServiceBatchHealthCheckOKResultsItemStatus) AllValues() []CraftingServiceBatchHealthCheckOKResultsItemStatus {
+	return []CraftingServiceBatchHealthCheckOKResultsItemStatus{
+		CraftingServiceBatchHealthCheckOKResultsItemStatusHealthy,
+		CraftingServiceBatchHealthCheckOKResultsItemStatusDegraded,
+		CraftingServiceBatchHealthCheckOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CraftingServiceBatchHealthCheckOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CraftingServiceBatchHealthCheckOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch CraftingServiceBatchHealthCheckOKResultsItemStatus(data) {
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusHealthy:
+		*s = CraftingServiceBatchHealthCheckOKResultsItemStatusHealthy
+		return nil
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusDegraded:
+		*s = CraftingServiceBatchHealthCheckOKResultsItemStatusDegraded
+		return nil
+	case CraftingServiceBatchHealthCheckOKResultsItemStatusUnhealthy:
+		*s = CraftingServiceBatchHealthCheckOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type CraftingServiceBatchHealthCheckReq struct {
 	// List of services to check.

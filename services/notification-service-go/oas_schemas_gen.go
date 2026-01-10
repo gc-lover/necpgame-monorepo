@@ -1792,13 +1792,13 @@ type GetBatchHealthBadRequestDetails struct{}
 
 type GetBatchHealthOK struct {
 	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
+	Results []GetBatchHealthOKResultsItem `json:"results"`
 	// Total processing time in milliseconds.
 	TotalTimeMs int `json:"total_time_ms"`
 }
 
 // GetResults returns the value of Results.
-func (s *GetBatchHealthOK) GetResults() []jx.Raw {
+func (s *GetBatchHealthOK) GetResults() []GetBatchHealthOKResultsItem {
 	return s.Results
 }
 
@@ -1808,7 +1808,7 @@ func (s *GetBatchHealthOK) GetTotalTimeMs() int {
 }
 
 // SetResults sets the value of Results.
-func (s *GetBatchHealthOK) SetResults(val []jx.Raw) {
+func (s *GetBatchHealthOK) SetResults(val []GetBatchHealthOKResultsItem) {
 	s.Results = val
 }
 
@@ -1855,6 +1855,125 @@ func (s *GetBatchHealthOKHeaders) SetResponse(val GetBatchHealthOK) {
 }
 
 func (*GetBatchHealthOKHeaders) getBatchHealthRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+type GetBatchHealthOKResultsItem struct {
+	Status            GetBatchHealthOKResultsItemStatus `json:"status"`
+	Domain            OptString                         `json:"domain"`
+	Timestamp         time.Time                         `json:"timestamp"`
+	Version           OptString                         `json:"version"`
+	UptimeSeconds     OptInt                            `json:"uptime_seconds"`
+	ActiveConnections OptInt                            `json:"active_connections"`
+}
+
+// GetStatus returns the value of Status.
+func (s *GetBatchHealthOKResultsItem) GetStatus() GetBatchHealthOKResultsItemStatus {
+	return s.Status
+}
+
+// GetDomain returns the value of Domain.
+func (s *GetBatchHealthOKResultsItem) GetDomain() OptString {
+	return s.Domain
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *GetBatchHealthOKResultsItem) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *GetBatchHealthOKResultsItem) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *GetBatchHealthOKResultsItem) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *GetBatchHealthOKResultsItem) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *GetBatchHealthOKResultsItem) SetStatus(val GetBatchHealthOKResultsItemStatus) {
+	s.Status = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *GetBatchHealthOKResultsItem) SetDomain(val OptString) {
+	s.Domain = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *GetBatchHealthOKResultsItem) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *GetBatchHealthOKResultsItem) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *GetBatchHealthOKResultsItem) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *GetBatchHealthOKResultsItem) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
+
+type GetBatchHealthOKResultsItemStatus string
+
+const (
+	GetBatchHealthOKResultsItemStatusHealthy   GetBatchHealthOKResultsItemStatus = "healthy"
+	GetBatchHealthOKResultsItemStatusDegraded  GetBatchHealthOKResultsItemStatus = "degraded"
+	GetBatchHealthOKResultsItemStatusUnhealthy GetBatchHealthOKResultsItemStatus = "unhealthy"
+)
+
+// AllValues returns all GetBatchHealthOKResultsItemStatus values.
+func (GetBatchHealthOKResultsItemStatus) AllValues() []GetBatchHealthOKResultsItemStatus {
+	return []GetBatchHealthOKResultsItemStatus{
+		GetBatchHealthOKResultsItemStatusHealthy,
+		GetBatchHealthOKResultsItemStatusDegraded,
+		GetBatchHealthOKResultsItemStatusUnhealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetBatchHealthOKResultsItemStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetBatchHealthOKResultsItemStatusHealthy:
+		return []byte(s), nil
+	case GetBatchHealthOKResultsItemStatusDegraded:
+		return []byte(s), nil
+	case GetBatchHealthOKResultsItemStatusUnhealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetBatchHealthOKResultsItemStatus) UnmarshalText(data []byte) error {
+	switch GetBatchHealthOKResultsItemStatus(data) {
+	case GetBatchHealthOKResultsItemStatusHealthy:
+		*s = GetBatchHealthOKResultsItemStatusHealthy
+		return nil
+	case GetBatchHealthOKResultsItemStatusDegraded:
+		*s = GetBatchHealthOKResultsItemStatusDegraded
+		return nil
+	case GetBatchHealthOKResultsItemStatusUnhealthy:
+		*s = GetBatchHealthOKResultsItemStatusUnhealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type GetBatchHealthReq struct {
 	// List of services to check.

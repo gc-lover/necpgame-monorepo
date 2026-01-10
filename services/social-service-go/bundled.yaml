@@ -25,7 +25,21 @@ info:
     - Concurrent users: 60,000+ simultaneous social interactions - Message delivery:
     <2ms response time
 
-    '
+    ## Modular Architecture
+
+    The Social Service is organized into specialized modules for better maintainability:
+
+    - **Chat Module** (`chat.yaml`): Real-time messaging, channels, moderation - **Guilds
+    Module** (`guilds.yaml`): Guild management, membership, hierarchy - **Parties
+    Module** (`parties.yaml`): Temporary groups, matchmaking, coordination
+
+    Each module can be developed, deployed, and scaled independently while maintaining
+    consistent API patterns and shared infrastructure.
+
+    ## BACKEND NOTE - Struct alignment hints: 30-50% memory savings across all social
+    operations - Optimized for MMOFPS RPG with low latency social interactions - Context
+    timeouts: Module-specific timeout configurations - DB pool config: Dedicated connection
+    pools per module - Performance target: <50ms P95 for cross-module operations '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -40,18 +54,6 @@ servers:
 - url: http://localhost:8080/api/v1/social
   description: Local development server
 tags:
-- name: Chat
-  description: Real-time messaging and communication
-- name: Guilds
-  description: Guild management and social groups
-- name: Parties
-  description: Temporary player groups
-- name: Relationships
-  description: NPC and player relationships
-- name: Notifications
-  description: Event notifications
-- name: Voice
-  description: Voice communication
 - name: Health Monitoring
   description: System health and performance monitoring
 security:
@@ -62,13 +64,14 @@ paths:
       summary: Social Service Health Check
       description: '**Enterprise-grade health check endpoint**
 
-        Provides real-time health status of the social service.
+        Provides real-time health status of the social service and all modules.
 
         Critical for service discovery, load balancing, and monitoring.
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        '
+        ## BACKEND NOTE - Health checks all modules: chat, guilds, parties - Cached
+        responses with ETag validation - Circuit breaker pattern for module failures '
       operationId: socialServiceHealthCheck
       tags:
       - Health Monitoring
@@ -121,294 +124,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /social/chat/messages:
-    post:
-      summary: Send chat message
-      operationId: sendChatMessage
-      description: 'Send a real-time chat message with moderation and anti-spam filtering.
-
-        **Real-time:** WebSocket-based delivery for instant messaging.'
-      tags:
-      - Chat
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendMessageRequest'
-      responses:
-        '200':
-          description: Message sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /social/guilds:
-    post:
-      summary: Create guild
-      operationId: createGuild
-      description: 'Create a new player guild with customizable settings and permissions.
-
-        **Community:** Foundation for social gameplay and cooperation.'
-      tags:
-      - Guilds
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateGuildRequest'
-      responses:
-        '201':
-          description: Guild created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GuildResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /social/parties:
-    post:
-      summary: Create party
-      operationId: createParty
-      description: 'Create a temporary player party for cooperative gameplay.
-
-        **Dynamic:** Short-lived groups for specific missions or activities.'
-      tags:
-      - Parties
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePartyRequest'
-      responses:
-        '201':
-          description: Party created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PartyResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
         default:
           description: Unexpected error
           content:
@@ -608,6 +323,7 @@ components:
       required:
       - status
       - timestamp
+      - version
       properties:
         status:
           type: string
@@ -615,31 +331,43 @@ components:
           - healthy
           - degraded
           - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
+          description: Overall service health status
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
+          description: Health check timestamp
         version:
           type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
+          description: Service version
+        modules:
+          type: object
+          properties:
+            chat:
+              type: string
+              enum:
+              - healthy
+              - unhealthy
+              description: Chat module status
+            guilds:
+              type: string
+              enum:
+              - healthy
+              - unhealthy
+              description: Guilds module status
+            parties:
+              type: string
+              enum:
+              - healthy
+              - unhealthy
+              description: Parties module status
+          description: Individual module health statuses
+        uptime:
           type: integer
-          example: 3600
-          minimum: 0
+          description: Service uptime in seconds
         active_connections:
           type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+          description: Number of active connections
+      description: Comprehensive health response including module statuses
     Error:
       type: object
       required:
@@ -682,7 +410,11 @@ components:
           - system
           default: text
           description: Type of message
-      description: 'BACKEND NOTE: Chat message with anti-spam validation.'
+        reply_to:
+          type: string
+          format: uuid
+          description: ID of message being replied to
+      description: Chat message request with validation
     MessageResponse:
       type: object
       properties:
@@ -709,7 +441,75 @@ components:
           - delivered
           - moderated
           description: Message delivery status
-      description: 'BACKEND NOTE: Message confirmation with delivery tracking.'
+      description: Message confirmation response
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Message unique identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Channel identifier
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender player ID
+        sender_name:
+          type: string
+          description: Sender display name
+        content:
+          type: string
+          description: Message content
+        message_type:
+          type: string
+          enum:
+          - text
+          - emoji
+          - system
+          description: Message type
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        edited_at:
+          type: string
+          format: date-time
+          description: Last edit timestamp
+        reply_to:
+          type: string
+          format: uuid
+          description: Replied message ID
+        reactions:
+          type: array
+          items:
+            type: object
+            properties:
+              emoji:
+                type: string
+              count:
+                type: integer
+              users:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+          description: Message reactions
+      description: Complete message object with all metadata
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          example: INVALID_ARGUMENT
+        message:
+          type: string
+          example: Invalid message content
     CreateGuildRequest:
       type: object
       required:
@@ -720,14 +520,26 @@ components:
           type: string
           minLength: 3
           maxLength: 50
-          description: Guild name
+          pattern: ^[a-zA-Z0-9\\s\\-_]+$
+          description: Guild name (alphanumeric, spaces, hyphens, underscores)
         description:
           type: string
           maxLength: 500
           description: Guild description
+        category:
+          type: string
+          enum:
+          - casual
+          - competitive
+          - roleplay
+          - trading
+          - pvp
+          default: casual
+          description: Guild category
         emblem:
           type: string
-          description: Guild emblem/crest data
+          format: uri
+          description: Guild emblem image URL
         settings:
           type: object
           properties:
@@ -741,8 +553,36 @@ components:
               maximum: 500
               default: 50
               description: Maximum guild members
+            join_approval_required:
+              type: boolean
+              default: false
+              description: Whether join requests need approval
+            min_level_required:
+              type: integer
+              minimum: 1
+              default: 1
+              description: Minimum player level to join
           description: Guild configuration settings
-      description: 'BACKEND NOTE: Guild creation with validation and limits.'
+      description: Guild creation request with comprehensive validation
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+        emblem:
+          type: string
+          format: uri
+          description: New guild emblem
+        settings:
+          $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+      description: Guild update request (partial update allowed)
     GuildResponse:
       type: object
       properties:
@@ -753,6 +593,18 @@ components:
         name:
           type: string
           description: Guild name
+        description:
+          type: string
+          description: Guild description
+        category:
+          type: string
+          enum:
+          - casual
+          - competitive
+          - roleplay
+          - trading
+          - pvp
+          description: Guild category
         leader_id:
           type: string
           format: uuid
@@ -761,16 +613,141 @@ components:
           type: integer
           minimum: 1
           description: Current member count
-        created_at:
-          type: string
-          format: date-time
-          description: Guild creation timestamp
         level:
           type: integer
           minimum: 1
           default: 1
           description: Guild level
-      description: 'BACKEND NOTE: Guild information with membership data.'
+        experience:
+          type: integer
+          minimum: 0
+          description: Guild experience points
+        emblem:
+          type: string
+          format: uri
+          description: Guild emblem URL
+        settings:
+          $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Complete guild information response
+    GuildSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild ID
+        name:
+          type: string
+          description: Guild name
+        description:
+          type: string
+          description: Guild description
+        category:
+          type: string
+          enum:
+          - casual
+          - competitive
+          - roleplay
+          - trading
+          - pvp
+          description: Guild category
+        member_count:
+          type: integer
+          description: Current member count
+        level:
+          type: integer
+          description: Guild level
+        emblem:
+          type: string
+          format: uri
+          description: Guild emblem
+        is_public:
+          type: boolean
+          description: Whether guild is public
+        leader_name:
+          type: string
+          description: Guild leader's display name
+      description: Condensed guild information for listings
+    GuildDetails:
+      allOf:
+      - $ref: '#/components/schemas/GuildResponse'
+      - type: object
+        properties:
+          members:
+            type: array
+            items:
+              $ref: '#/components/schemas/GuildMember'
+            description: Guild members (if requester is member)
+          achievements:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                unlocked_at:
+                  type: string
+                  format: date-time
+            description: Guild achievements
+          stats:
+            type: object
+            properties:
+              total_playtime:
+                type: integer
+                description: Total guild playtime in minutes
+              raids_completed:
+                type: integer
+                description: Number of raids completed
+              pvp_wins:
+                type: integer
+                description: PvP victories
+            description: Guild statistics
+      description: Detailed guild information including members and stats
+    GuildMember:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        player_name:
+          type: string
+          description: Player display name
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - veteran
+          - member
+          - recruit
+          description: Member role in guild
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined guild
+        last_active:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        contribution_score:
+          type: integer
+          minimum: 0
+          description: Player's contribution to guild
+      description: Guild member information
     CreatePartyRequest:
       type: object
       required:
@@ -785,17 +762,94 @@ components:
           type: string
           maxLength: 200
           description: Party description
+        activity_type:
+          type: string
+          enum:
+          - raid
+          - dungeon
+          - pvp
+          - exploration
+          - quest
+          - casual
+          default: casual
+          description: Primary activity type
         max_size:
           type: integer
           minimum: 2
           maximum: 8
           default: 4
           description: Maximum party size
+        min_level:
+          type: integer
+          minimum: 1
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          description: Maximum player level requirement
+        skill_level:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          description: Required skill proficiency
+        region:
+          type: string
+          description: Geographic region preference
+        language:
+          type: string
+          description: Preferred language
         is_public:
           type: boolean
           default: true
-          description: Whether party accepts join requests
-      description: 'BACKEND NOTE: Party creation for cooperative gameplay.'
+          description: Whether party appears in public listings
+        auto_approve:
+          type: boolean
+          default: true
+          description: Whether to auto-approve join requests
+        voice_required:
+          type: boolean
+          default: false
+          description: Whether voice communication is required
+      description: Party creation request with comprehensive configuration
+    UpdatePartyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: New party name
+        description:
+          type: string
+          maxLength: 200
+          description: New party description
+        activity_type:
+          $ref: '#/components/schemas/CreatePartyRequest/properties/activity_type'
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 8
+          description: New maximum party size
+        min_level:
+          type: integer
+          minimum: 1
+          description: New minimum level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          description: New maximum level requirement
+        skill_level:
+          $ref: '#/components/schemas/CreatePartyRequest/properties/skill_level'
+        is_public:
+          type: boolean
+          description: New public visibility setting
+        auto_approve:
+          type: boolean
+          description: New auto-approval setting
+      description: Party update request (partial updates allowed)
     PartyResponse:
       type: object
       properties:
@@ -806,10 +860,26 @@ components:
         name:
           type: string
           description: Party name
+        description:
+          type: string
+          description: Party description
+        activity_type:
+          type: string
+          enum:
+          - raid
+          - dungeon
+          - pvp
+          - exploration
+          - quest
+          - casual
+          description: Primary activity type
         leader_id:
           type: string
           format: uuid
           description: Party leader's player ID
+        leader_name:
+          type: string
+          description: Party leader's display name
         members:
           type: array
           items:
@@ -818,208 +888,1925 @@ components:
               player_id:
                 type: string
                 format: uuid
+              player_name:
+                type: string
               role:
                 type: string
                 enum:
                 - leader
+                - officer
                 - member
               joined_at:
                 type: string
                 format: date-time
             description: Party member information
           description: Current party members
+        current_size:
+          type: integer
+          description: Current number of members
+        max_size:
+          type: integer
+          description: Maximum party size
+        min_level:
+          type: integer
+          description: Minimum level requirement
+        max_level:
+          type: integer
+          description: Maximum level requirement
+        skill_level:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          description: Required skill level
+        region:
+          type: string
+          description: Geographic region
+        language:
+          type: string
+          description: Preferred language
+        is_public:
+          type: boolean
+          description: Public visibility
+        voice_required:
+          type: boolean
+          description: Voice communication requirement
         created_at:
           type: string
           format: date-time
           description: Party creation timestamp
-      description: 'BACKEND NOTE: Party information with member management.'
-    BaseEntity:
+        expires_at:
+          type: string
+          format: date-time
+          description: Party expiration timestamp
+      description: Complete party information response
+    PartySummary:
       type: object
-      required:
-      - id
-      - created_at
-      - updated_at
       properties:
         id:
           type: string
           format: uuid
-          description: Unique identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-        created_at:
+          description: Party ID
+        name:
           type: string
-          format: date-time
-          description: Creation timestamp (ISO 8601)
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
-        updated_at:
+          description: Party name
+        activity_type:
           type: string
-          format: date-time
-          description: Last modification timestamp (ISO 8601)
-          example: '2025-12-28T10:30:00Z'
-          maxLength: 30
-      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-        Memory savings: 30-50%. All domain entities should extend this.'
-    AuditableEntity:
+          enum:
+          - raid
+          - dungeon
+          - pvp
+          - exploration
+          - quest
+          - casual
+          description: Activity type
+        leader_name:
+          type: string
+          description: Leader's display name
+        current_size:
+          type: integer
+          description: Current member count
+        max_size:
+          type: integer
+          description: Maximum size
+        min_level:
+          type: integer
+          description: Minimum level
+        max_level:
+          type: integer
+          description: Maximum level
+        skill_level:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          description: Skill level requirement
+        region:
+          type: string
+          description: Geographic region
+        language:
+          type: string
+          description: Language
+        voice_required:
+          type: boolean
+          description: Voice chat required
+      description: Condensed party information for listings
+    PartyDetails:
       allOf:
-      - $ref: '#/components/schemas/BaseEntity'
+      - $ref: '#/components/schemas/PartyResponse'
       - type: object
         properties:
-          created_by:
-            type: string
-            format: uuid
-            description: ID of user who created the entity
-            example: 123e4567-e89b-12d3-a456-426614174001
-            maxLength: 36
-          updated_by:
-            type: string
-            format: uuid
-            description: ID of user who last modified the entity
-            example: 123e4567-e89b-12d3-a456-426614174002
-            maxLength: 36
-      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-        entities.'
-    VersionedEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - version
-        properties:
-          version:
-            type: integer
-            minimum: 1
-            description: Optimistic locking version
-            example: 1
-      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-        concurrent-safe updates.'
-    SoftDeletableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          deleted_at:
-            type: string
-            format: date-time
-            nullable: true
-            description: Soft deletion timestamp (null if not deleted)
-            example: null
-            maxLength: 30
-      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
-        Use for recoverable deletions.'
-    UpdateRequest:
+          pending_requests:
+            type: array
+            items:
+              $ref: '#/components/schemas/JoinRequest'
+            description: Pending join requests
+          recent_activity:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - member_joined
+                  - member_left
+                  - activity_started
+                  - activity_completed
+                player_name:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
+                details:
+                  type: object
+                  additionalProperties: true
+            description: Recent party activity log
+      description: Detailed party information including pending requests and activity
+    JoinRequest:
       type: object
-      required:
-      - id
-      description: Base schema for update operations with optimistic locking support.
       properties:
         id:
-          $ref: '#/components/schemas/UUID'
-        version:
+          type: string
+          format: uuid
+          description: Request unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Requesting player ID
+        player_name:
+          type: string
+          description: Requesting player name
+        player_level:
           type: integer
-          minimum: 1
-          description: Current entity version for optimistic locking
-        metadata:
-          type: object
-          properties:
-            updated_by:
-              $ref: '#/components/schemas/UUID'
-            reason:
-              type: string
-              maxLength: 200
-              description: Update reason for audit trail
-    PaginationParams:
-      type: object
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
-    PaginatedResponse:
-      type: object
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          description: Array of items
-        total:
-          type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
-    UUID:
-      type: string
-      format: uuid
-      description: Universally Unique Identifier (UUID v4)
-      example: 123e4567-e89b-12d3-a456-426614174000
-      maxLength: 36
-    Email:
-      type: string
-      format: email
-      description: Email address
-      example: user@necpgame.com
-      maxLength: 255
-    Timestamp:
-      type: string
-      format: date-time
-      description: ISO 8601 timestamp
-      example: '2025-12-28T10:00:00Z'
-      maxLength: 30
-    Version:
-      type: string
-      pattern: ^\d+\.\d+\.\d+$
-      description: Semantic version (MAJOR.MINOR.PATCH)
-      example: 1.0.0
-      maxLength: 20
-    ValidationResult:
-      type: object
-      required:
-      - valid
-      properties:
-        valid:
-          type: boolean
-          description: Whether validation passed
-          example: true
-        errors:
-          type: array
-          items:
-            type: string
-          description: Validation error messages
-          example:
-          - Field is required
-          - Invalid format
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Validation warnings
-          example:
-          - Deprecated field usage
+          description: Player level
+        message:
+          type: string
+          description: Optional request message
+        requested_at:
+          type: string
+          format: date-time
+          description: Request timestamp
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - rejected
+          description: Request status
+      description: Party join request information
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
       description: JWT Bearer token authentication
+x-module-chat:
+  description: Chat functionality - imported from chat.yaml
+  paths:
+    /social/chat/messages:
+      post:
+        summary: Send chat message
+        operationId: sendChatMessage
+        description: 'Send a real-time chat message with moderation and anti-spam
+          filtering.
+
+          **Real-time:** WebSocket-based delivery for instant messaging.
+
+          ## BACKEND NOTE - Struct alignment hints: 30-50% memory savings for message
+          processing - Optimized for MMOFPS RPG with low latency message delivery
+          - Context timeouts: 1s for message validation, 2s for spam filtering - DB
+          pool config: connection pooling for message history - Performance target:
+          <2ms for message delivery, <50ms P95 for spam checks'
+        tags:
+        - Chat
+        security:
+        - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageRequest'
+        responses:
+          '200':
+            description: Message sent successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/MessageResponse'
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '429':
+            description: Rate limit exceeded
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/chat/channels/{channelId}/messages:
+      get:
+        summary: Get channel messages
+        operationId: getChannelMessages
+        description: 'Retrieve message history for a specific chat channel.
+
+          **Pagination:** Supports cursor-based pagination for efficient message loading.
+
+          ## BACKEND NOTE - Optimized message retrieval with cursor pagination - Memory
+          efficient for large message histories'
+        tags:
+        - Chat
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Chat channel identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of messages to retrieve
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get messages before this timestamp
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get messages after this timestamp
+        responses:
+          '200':
+            description: Channel messages retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    messages:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Message'
+                    has_more:
+                      type: boolean
+                      description: Whether there are more messages available
+                    next_cursor:
+                      type: string
+                      description: Cursor for next page of results
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Channel not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+  components:
+    schemas:
+      SendMessageRequest:
+        type: object
+        required:
+        - channel_id
+        - content
+        properties:
+          channel_id:
+            type: string
+            format: uuid
+            description: Chat channel identifier
+          content:
+            type: string
+            maxLength: 500
+            description: Message content
+          message_type:
+            type: string
+            enum:
+            - text
+            - emoji
+            - system
+            default: text
+            description: Type of message
+          reply_to:
+            type: string
+            format: uuid
+            description: ID of message being replied to
+        description: Chat message request with validation
+      MessageResponse:
+        type: object
+        properties:
+          message_id:
+            type: string
+            format: uuid
+            description: Unique message identifier
+          channel_id:
+            type: string
+            format: uuid
+            description: Channel where message was sent
+          sender_id:
+            type: string
+            format: uuid
+            description: Sender's player ID
+          timestamp:
+            type: string
+            format: date-time
+            description: Message timestamp
+          status:
+            type: string
+            enum:
+            - sent
+            - delivered
+            - moderated
+            description: Message delivery status
+        description: Message confirmation response
+      Message:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Message unique identifier
+          channel_id:
+            type: string
+            format: uuid
+            description: Channel identifier
+          sender_id:
+            type: string
+            format: uuid
+            description: Sender player ID
+          sender_name:
+            type: string
+            description: Sender display name
+          content:
+            type: string
+            description: Message content
+          message_type:
+            type: string
+            enum:
+            - text
+            - emoji
+            - system
+            description: Message type
+          timestamp:
+            type: string
+            format: date-time
+            description: Message timestamp
+          edited_at:
+            type: string
+            format: date-time
+            description: Last edit timestamp
+          reply_to:
+            type: string
+            format: uuid
+            description: Replied message ID
+          reactions:
+            type: array
+            items:
+              type: object
+              properties:
+                emoji:
+                  type: string
+                count:
+                  type: integer
+                users:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+            description: Message reactions
+        description: Complete message object with all metadata
+      ErrorResponse:
+        type: object
+        required:
+        - code
+        - message
+        properties:
+          code:
+            type: string
+            example: INVALID_ARGUMENT
+          message:
+            type: string
+            example: Invalid message content
+x-module-guilds:
+  description: Guild management - imported from guilds.yaml
+  paths:
+    /social/guilds:
+      get:
+        summary: List guilds
+        operationId: listGuilds
+        description: 'Retrieve a list of available guilds with filtering and pagination.
+
+          ## BACKEND NOTE - Optimized guild listing with search indexes - Memory efficient
+          pagination for large guild directories'
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search guilds by name or description
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+            - casual
+            - competitive
+            - roleplay
+            - trading
+            - pvp
+          description: Filter by guild category
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum guild level
+        - name: max_members
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum member count filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of guilds to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+        responses:
+          '200':
+            description: Guilds retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    guilds:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GuildSummary'
+                    total_count:
+                      type: integer
+                      description: Total number of guilds matching criteria
+                    has_more:
+                      type: boolean
+                      description: Whether there are more results
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      post:
+        summary: Create guild
+        operationId: createGuild
+        description: 'Create a new player guild with customizable settings and permissions.
+
+          **Community:** Foundation for social gameplay and cooperation.
+
+          ## BACKEND NOTE - Guild creation with validation and anti-spam measures
+          - Struct alignment hints: 30-50% memory savings for guild operations - Context
+          timeouts: 3s for guild validation, 5s for creation - DB pool config: dedicated
+          connection for guild metadata'
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGuildRequest'
+        responses:
+          '201':
+            description: Guild created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GuildResponse'
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '429':
+            description: Rate limit exceeded (guild creation limit)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/guilds/{guildId}:
+      get:
+        summary: Get guild details
+        operationId: getGuild
+        description: Retrieve detailed information about a specific guild.
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        responses:
+          '200':
+            description: Guild details retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GuildDetails'
+          '404':
+            description: Guild not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '403':
+            description: Access denied (private guild)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      put:
+        summary: Update guild
+        operationId: updateGuild
+        description: Update guild information and settings (leader only).
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateGuildRequest'
+        responses:
+          '200':
+            description: Guild updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GuildResponse'
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Guild not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      delete:
+        summary: Delete guild
+        operationId: deleteGuild
+        description: Delete a guild (leader only, with confirmation).
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: confirmation
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Confirmation token for deletion
+        responses:
+          '204':
+            description: Guild deleted successfully
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Guild not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/guilds/{guildId}/members:
+      get:
+        summary: Get guild members
+        operationId: getGuildMembers
+        description: Retrieve list of guild members with roles and activity.
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of members to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+        responses:
+          '200':
+            description: Guild members retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    members:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GuildMember'
+                    total_count:
+                      type: integer
+          '403':
+            description: Access denied
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Guild not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      post:
+        summary: Invite player to guild
+        operationId: inviteToGuild
+        description: Invite a player to join the guild (officer+ permissions).
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - player_id
+                properties:
+                  player_id:
+                    type: string
+                    format: uuid
+                    description: Player to invite
+                  message:
+                    type: string
+                    maxLength: 200
+                    description: Optional invitation message
+        responses:
+          '200':
+            description: Invitation sent successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    invitation_id:
+                      type: string
+                      format: uuid
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Guild or player not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/guilds/{guildId}/members/{playerId}:
+      delete:
+        summary: Remove member from guild
+        operationId: removeGuildMember
+        description: Remove a member from the guild (appropriate permissions required).
+        tags:
+        - Guilds
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player to remove
+        - name: reason
+          in: query
+          schema:
+            type: string
+            enum:
+            - voluntary
+            - kicked
+            - inactive
+            default: voluntary
+          description: Reason for removal
+        responses:
+          '204':
+            description: Member removed successfully
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Guild or member not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+  components:
+    schemas:
+      CreateGuildRequest:
+        type: object
+        required:
+        - name
+        - description
+        properties:
+          name:
+            type: string
+            minLength: 3
+            maxLength: 50
+            pattern: ^[a-zA-Z0-9\\s\\-_]+$
+            description: Guild name (alphanumeric, spaces, hyphens, underscores)
+          description:
+            type: string
+            maxLength: 500
+            description: Guild description
+          category:
+            type: string
+            enum:
+            - casual
+            - competitive
+            - roleplay
+            - trading
+            - pvp
+            default: casual
+            description: Guild category
+          emblem:
+            type: string
+            format: uri
+            description: Guild emblem image URL
+          settings:
+            type: object
+            properties:
+              is_public:
+                type: boolean
+                default: true
+                description: Whether guild is public
+              max_members:
+                type: integer
+                minimum: 5
+                maximum: 500
+                default: 50
+                description: Maximum guild members
+              join_approval_required:
+                type: boolean
+                default: false
+                description: Whether join requests need approval
+              min_level_required:
+                type: integer
+                minimum: 1
+                default: 1
+                description: Minimum player level to join
+            description: Guild configuration settings
+        description: Guild creation request with comprehensive validation
+      UpdateGuildRequest:
+        type: object
+        properties:
+          name:
+            type: string
+            minLength: 3
+            maxLength: 50
+            description: New guild name
+          description:
+            type: string
+            maxLength: 500
+            description: New guild description
+          emblem:
+            type: string
+            format: uri
+            description: New guild emblem
+          settings:
+            $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+        description: Guild update request (partial update allowed)
+      GuildResponse:
+        type: object
+        properties:
+          guild_id:
+            type: string
+            format: uuid
+            description: Unique guild identifier
+          name:
+            type: string
+            description: Guild name
+          description:
+            type: string
+            description: Guild description
+          category:
+            type: string
+            enum:
+            - casual
+            - competitive
+            - roleplay
+            - trading
+            - pvp
+            description: Guild category
+          leader_id:
+            type: string
+            format: uuid
+            description: Guild leader's player ID
+          member_count:
+            type: integer
+            minimum: 1
+            description: Current member count
+          level:
+            type: integer
+            minimum: 1
+            default: 1
+            description: Guild level
+          experience:
+            type: integer
+            minimum: 0
+            description: Guild experience points
+          emblem:
+            type: string
+            format: uri
+            description: Guild emblem URL
+          settings:
+            $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+          created_at:
+            type: string
+            format: date-time
+            description: Guild creation timestamp
+          updated_at:
+            type: string
+            format: date-time
+            description: Last update timestamp
+        description: Complete guild information response
+      GuildSummary:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Guild ID
+          name:
+            type: string
+            description: Guild name
+          description:
+            type: string
+            description: Guild description
+          category:
+            type: string
+            enum:
+            - casual
+            - competitive
+            - roleplay
+            - trading
+            - pvp
+            description: Guild category
+          member_count:
+            type: integer
+            description: Current member count
+          level:
+            type: integer
+            description: Guild level
+          emblem:
+            type: string
+            format: uri
+            description: Guild emblem
+          is_public:
+            type: boolean
+            description: Whether guild is public
+          leader_name:
+            type: string
+            description: Guild leader's display name
+        description: Condensed guild information for listings
+      GuildDetails:
+        allOf:
+        - $ref: '#/components/schemas/GuildResponse'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/GuildMember'
+              description: Guild members (if requester is member)
+            achievements:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  unlocked_at:
+                    type: string
+                    format: date-time
+              description: Guild achievements
+            stats:
+              type: object
+              properties:
+                total_playtime:
+                  type: integer
+                  description: Total guild playtime in minutes
+                raids_completed:
+                  type: integer
+                  description: Number of raids completed
+                pvp_wins:
+                  type: integer
+                  description: PvP victories
+              description: Guild statistics
+        description: Detailed guild information including members and stats
+      GuildMember:
+        type: object
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player ID
+          player_name:
+            type: string
+            description: Player display name
+          role:
+            type: string
+            enum:
+            - leader
+            - officer
+            - veteran
+            - member
+            - recruit
+            description: Member role in guild
+          joined_at:
+            type: string
+            format: date-time
+            description: When player joined guild
+          last_active:
+            type: string
+            format: date-time
+            description: Last activity timestamp
+          contribution_score:
+            type: integer
+            minimum: 0
+            description: Player's contribution to guild
+        description: Guild member information
+      ErrorResponse:
+        type: object
+        required:
+        - code
+        - message
+        properties:
+          code:
+            type: string
+            example: GUILD_NOT_FOUND
+          message:
+            type: string
+            example: Guild with specified ID does not exist
+x-module-parties:
+  description: Party system - imported from parties.yaml
+  paths:
+    /social/parties:
+      get:
+        summary: List available parties
+        operationId: listParties
+        description: 'Retrieve a list of available parties that can be joined.
+
+          ## BACKEND NOTE - Optimized party discovery with geolocation filtering -
+          Memory efficient for large numbers of active parties'
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: activity_type
+          in: query
+          schema:
+            type: string
+            enum:
+            - raid
+            - dungeon
+            - pvp
+            - exploration
+            - quest
+          description: Filter by activity type
+        - name: min_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum party size
+        - name: max_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum party size
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: Geographic region filter
+        - name: language
+          in: query
+          schema:
+            type: string
+          description: Preferred language
+        - name: skill_level
+          in: query
+          schema:
+            type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+            - expert
+          description: Required skill level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+          description: Number of parties to return
+        responses:
+          '200':
+            description: Parties retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    parties:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PartySummary'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      post:
+        summary: Create party
+        operationId: createParty
+        description: 'Create a temporary player party for cooperative gameplay.
+
+          **Dynamic:** Short-lived groups for specific missions or activities.
+
+          ## BACKEND NOTE - Party creation with automatic cleanup timers - Struct
+          alignment hints: 30-50% memory savings for party operations - Context timeouts:
+          2s for party validation, 3s for creation - Optimized for quick party formation
+          in high-tempo gameplay'
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePartyRequest'
+        responses:
+          '201':
+            description: Party created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PartyResponse'
+          '400':
+            description: Invalid request payload
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '429':
+            description: Rate limit exceeded
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/parties/{partyId}:
+      get:
+        summary: Get party details
+        operationId: getParty
+        description: Retrieve detailed information about a specific party.
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        responses:
+          '200':
+            description: Party details retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PartyDetails'
+          '404':
+            description: Party not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '403':
+            description: Access denied
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      put:
+        summary: Update party
+        operationId: updateParty
+        description: Update party settings (leader only).
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdatePartyRequest'
+        responses:
+          '200':
+            description: Party updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PartyResponse'
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      delete:
+        summary: Disband party
+        operationId: disbandParty
+        description: Disband the party (leader only).
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        responses:
+          '204':
+            description: Party disbanded successfully
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/parties/{partyId}/members:
+      post:
+        summary: Join party
+        operationId: joinParty
+        description: Request to join or directly join a party.
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        requestBody:
+          required: false
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    maxLength: 100
+                    description: Optional join message
+        responses:
+          '200':
+            description: Successfully joined party
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PartyResponse'
+          '202':
+            description: Join request sent (pending approval)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    request_id:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                      enum:
+                      - pending
+          '403':
+            description: Party is full or join not allowed
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/parties/{partyId}/members/{playerId}:
+      delete:
+        summary: Leave party or kick member
+        operationId: leaveParty
+        description: Leave the party (any member) or kick a member (leader/officer
+          only).
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player to remove (can be self)
+        - name: reason
+          in: query
+          schema:
+            type: string
+            enum:
+            - voluntary
+            - kicked
+            - inactive
+            - afk
+            default: voluntary
+          description: Reason for leaving/kicking
+        responses:
+          '204':
+            description: Member removed successfully
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party or member not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/parties/{partyId}/invite:
+      post:
+        summary: Invite player to party
+        operationId: inviteToParty
+        description: Invite a specific player to join the party.
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - player_id
+                properties:
+                  player_id:
+                    type: string
+                    format: uuid
+                    description: Player to invite
+                  message:
+                    type: string
+                    maxLength: 100
+                    description: Optional invitation message
+        responses:
+          '200':
+            description: Invitation sent successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    invitation_id:
+                      type: string
+                      format: uuid
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party or player not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /social/parties/{partyId}/requests:
+      get:
+        summary: Get join requests
+        operationId: getJoinRequests
+        description: Get pending join requests for the party (leader/officers only).
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        responses:
+          '200':
+            description: Join requests retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    requests:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/JoinRequest'
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Party not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+      post:
+        summary: Respond to join request
+        operationId: respondToJoinRequest
+        description: Accept or reject a join request (leader/officers only).
+        tags:
+        - Parties
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - request_id
+                - action
+                properties:
+                  request_id:
+                    type: string
+                    format: uuid
+                    description: Join request ID
+                  action:
+                    type: string
+                    enum:
+                    - accept
+                    - reject
+                    description: Response action
+                  message:
+                    type: string
+                    maxLength: 200
+                    description: Optional response message
+        responses:
+          '200':
+            description: Request processed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - accepted
+                      - rejected
+          '403':
+            description: Insufficient permissions
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Request not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+  components:
+    schemas:
+      CreatePartyRequest:
+        type: object
+        required:
+        - name
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 30
+            description: Party name
+          description:
+            type: string
+            maxLength: 200
+            description: Party description
+          activity_type:
+            type: string
+            enum:
+            - raid
+            - dungeon
+            - pvp
+            - exploration
+            - quest
+            - casual
+            default: casual
+            description: Primary activity type
+          max_size:
+            type: integer
+            minimum: 2
+            maximum: 8
+            default: 4
+            description: Maximum party size
+          min_level:
+            type: integer
+            minimum: 1
+            description: Minimum player level requirement
+          max_level:
+            type: integer
+            minimum: 1
+            description: Maximum player level requirement
+          skill_level:
+            type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+            - expert
+            description: Required skill proficiency
+          region:
+            type: string
+            description: Geographic region preference
+          language:
+            type: string
+            description: Preferred language
+          is_public:
+            type: boolean
+            default: true
+            description: Whether party appears in public listings
+          auto_approve:
+            type: boolean
+            default: true
+            description: Whether to auto-approve join requests
+          voice_required:
+            type: boolean
+            default: false
+            description: Whether voice communication is required
+        description: Party creation request with comprehensive configuration
+      UpdatePartyRequest:
+        type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 30
+            description: New party name
+          description:
+            type: string
+            maxLength: 200
+            description: New party description
+          activity_type:
+            $ref: '#/components/schemas/CreatePartyRequest/properties/activity_type'
+          max_size:
+            type: integer
+            minimum: 2
+            maximum: 8
+            description: New maximum party size
+          min_level:
+            type: integer
+            minimum: 1
+            description: New minimum level requirement
+          max_level:
+            type: integer
+            minimum: 1
+            description: New maximum level requirement
+          skill_level:
+            $ref: '#/components/schemas/CreatePartyRequest/properties/skill_level'
+          is_public:
+            type: boolean
+            description: New public visibility setting
+          auto_approve:
+            type: boolean
+            description: New auto-approval setting
+        description: Party update request (partial updates allowed)
+      PartyResponse:
+        type: object
+        properties:
+          party_id:
+            type: string
+            format: uuid
+            description: Unique party identifier
+          name:
+            type: string
+            description: Party name
+          description:
+            type: string
+            description: Party description
+          activity_type:
+            type: string
+            enum:
+            - raid
+            - dungeon
+            - pvp
+            - exploration
+            - quest
+            - casual
+            description: Primary activity type
+          leader_id:
+            type: string
+            format: uuid
+            description: Party leader's player ID
+          leader_name:
+            type: string
+            description: Party leader's display name
+          members:
+            type: array
+            items:
+              type: object
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                player_name:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                  - leader
+                  - officer
+                  - member
+                joined_at:
+                  type: string
+                  format: date-time
+              description: Party member information
+            description: Current party members
+          current_size:
+            type: integer
+            description: Current number of members
+          max_size:
+            type: integer
+            description: Maximum party size
+          min_level:
+            type: integer
+            description: Minimum level requirement
+          max_level:
+            type: integer
+            description: Maximum level requirement
+          skill_level:
+            type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+            - expert
+            description: Required skill level
+          region:
+            type: string
+            description: Geographic region
+          language:
+            type: string
+            description: Preferred language
+          is_public:
+            type: boolean
+            description: Public visibility
+          voice_required:
+            type: boolean
+            description: Voice communication requirement
+          created_at:
+            type: string
+            format: date-time
+            description: Party creation timestamp
+          expires_at:
+            type: string
+            format: date-time
+            description: Party expiration timestamp
+        description: Complete party information response
+      PartySummary:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Party ID
+          name:
+            type: string
+            description: Party name
+          activity_type:
+            type: string
+            enum:
+            - raid
+            - dungeon
+            - pvp
+            - exploration
+            - quest
+            - casual
+            description: Activity type
+          leader_name:
+            type: string
+            description: Leader's display name
+          current_size:
+            type: integer
+            description: Current member count
+          max_size:
+            type: integer
+            description: Maximum size
+          min_level:
+            type: integer
+            description: Minimum level
+          max_level:
+            type: integer
+            description: Maximum level
+          skill_level:
+            type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+            - expert
+            description: Skill level requirement
+          region:
+            type: string
+            description: Geographic region
+          language:
+            type: string
+            description: Language
+          voice_required:
+            type: boolean
+            description: Voice chat required
+        description: Condensed party information for listings
+      PartyDetails:
+        allOf:
+        - $ref: '#/components/schemas/PartyResponse'
+        - type: object
+          properties:
+            pending_requests:
+              type: array
+              items:
+                $ref: '#/components/schemas/JoinRequest'
+              description: Pending join requests
+            recent_activity:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                    - member_joined
+                    - member_left
+                    - activity_started
+                    - activity_completed
+                  player_name:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  details:
+                    type: object
+                    additionalProperties: true
+              description: Recent party activity log
+        description: Detailed party information including pending requests and activity
+      JoinRequest:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Request unique identifier
+          player_id:
+            type: string
+            format: uuid
+            description: Requesting player ID
+          player_name:
+            type: string
+            description: Requesting player name
+          player_level:
+            type: integer
+            description: Player level
+          message:
+            type: string
+            description: Optional request message
+          requested_at:
+            type: string
+            format: date-time
+            description: Request timestamp
+          status:
+            type: string
+            enum:
+            - pending
+            - accepted
+            - rejected
+            description: Request status
+        description: Party join request information
+      ErrorResponse:
+        type: object
+        required:
+        - code
+        - message
+        properties:
+          code:
+            type: string
+            example: PARTY_FULL
+          message:
+            type: string
+            example: Party has reached maximum capacity

@@ -44,8 +44,8 @@ func (r *postgresRepository) GetByID(ctx context.Context, id uuid.UUID) (*models
 	return r.ticketRepo.GetByID(ctx, id)
 }
 
-func (r *postgresRepository) GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
-	return r.ticketRepo.GetByPlayerID(ctx, playerID, limit, offset)
+func (r *postgresRepository) GetByCharacterID(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
+	return r.ticketRepo.GetByCharacterID(ctx, characterID, limit, offset)
 }
 
 func (r *postgresRepository) GetByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {

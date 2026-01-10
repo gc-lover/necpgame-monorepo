@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  battle-pass-service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=battlepass
+      - DB_PASSWORD=password
+      - DB_NAME=battlepass
+      - DB_SSLMODE=disable
+      - DB_MAX_CONNS=10
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - JWT_SECRET=your-development-secret-key-change-in-production
+      - JWT_EXPIRY_TIME=24h
+      - PLAYER_SERVICE_URL=http://player-service:8080
+      - INVENTORY_SERVICE_URL=http://inventory-service:8080
+      - ECONOMY_SERVICE_URL=http://economy-service:8080
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - battlepass-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=battlepass
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=battlepass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - battlepass-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - battlepass-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  battlepass-network:
+    driver: bridge

@@ -6,8 +6,5 @@ package api
 type OperationName = string
 
 const (
-	CreateGuildOperation              OperationName = "CreateGuild"
-	CreatePartyOperation              OperationName = "CreateParty"
-	SendChatMessageOperation          OperationName = "SendChatMessage"
 	SocialServiceHealthCheckOperation OperationName = "SocialServiceHealthCheck"
 )

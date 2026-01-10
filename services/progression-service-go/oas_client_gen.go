@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/otelogen"
@@ -27,24 +28,83 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// BatchHealthCheck invokes batchHealthCheck operation.
+	// DistributeParagonPoints invokes distributeParagonPoints operation.
 	//
-	// Performance optimization: Check multiple domain health in single request.
+	// Распределяет доступные paragon очки по характеристикам
+	// персонажа.
 	//
-	// POST /api/v1/progression-domain/health/batch
-	BatchHealthCheck(ctx context.Context, request *BatchHealthCheckReq) (*BatchHealthCheckOK, error)
-	// HealthWebSocket invokes healthWebSocket operation.
+	// POST /paragon/levels
+	DistributeParagonPoints(ctx context.Context, request *DistributeParagonPointsReq) (DistributeParagonPointsRes, error)
+	// GetMasteryLevels invokes getMasteryLevels operation.
 	//
-	// Real-time health updates without polling.
+	// Возвращает информацию о всех типах мастерства
+	// персонажа: текущие уровни,
+	// прогресс до следующего уровня и разблокированные
+	// награды.
 	//
-	// GET /api/v1/progression-domain/health/ws
-	HealthWebSocket(ctx context.Context) error
-	// ProgressionDomainHealthCheck invokes progression-domainHealthCheck operation.
+	// GET /mastery/levels
+	GetMasteryLevels(ctx context.Context, params GetMasteryLevelsParams) (GetMasteryLevelsRes, error)
+	// GetMasteryProgress invokes getMasteryProgress operation.
 	//
-	// Progression domain domain health check.
+	// Возвращает детальную информацию о прогрессе в
+	// конкретном типе мастерства.
 	//
-	// GET /api/v1/progression-domain/health
-	ProgressionDomainHealthCheck(ctx context.Context) (*HealthResponseHeaders, error)
+	// GET /mastery/{mastery_type}/progress
+	GetMasteryProgress(ctx context.Context, params GetMasteryProgressParams) (GetMasteryProgressRes, error)
+	// GetMasteryRewards invokes getMasteryRewards operation.
+	//
+	// Возвращает доступные награды для конкретного типа
+	// мастерства.
+	//
+	// GET /mastery/{mastery_type}/rewards
+	GetMasteryRewards(ctx context.Context, params GetMasteryRewardsParams) (GetMasteryRewardsRes, error)
+	// GetParagonLevels invokes getParagonLevels operation.
+	//
+	// Возвращает информацию о Paragon Levels персонажа: текущий
+	// уровень, накопленные очки,
+	// распределение очков по характеристикам и прогресс до
+	// следующего уровня.
+	//
+	// GET /paragon/levels
+	GetParagonLevels(ctx context.Context, params GetParagonLevelsParams) (GetParagonLevelsRes, error)
+	// GetParagonStats invokes getParagonStats operation.
+	//
+	// Возвращает глобальную статистику Paragon системы.
+	//
+	// GET /paragon/stats
+	GetParagonStats(ctx context.Context, params GetParagonStatsParams) (GetParagonStatsRes, error)
+	// GetPrestigeBonuses invokes getPrestigeBonuses operation.
+	//
+	// Возвращает текущие Prestige бонусы персонажа.
+	//
+	// GET /prestige/bonuses
+	GetPrestigeBonuses(ctx context.Context, params GetPrestigeBonusesParams) (GetPrestigeBonusesRes, error)
+	// GetPrestigeInfo invokes getPrestigeInfo operation.
+	//
+	// Возвращает информацию о текущем Prestige Level персонажа,
+	// доступных бонусах
+	// и требованиях для следующего престижа.
+	//
+	// GET /prestige/info
+	GetPrestigeInfo(ctx context.Context, params GetPrestigeInfoParams) (GetPrestigeInfoRes, error)
+	// HealthCheck invokes healthCheck operation.
+	//
+	// Проверка здоровья сервиса.
+	//
+	// GET /health
+	HealthCheck(ctx context.Context) (*HealthCheckOK, error)
+	// ReadinessCheck invokes readinessCheck operation.
+	//
+	// Проверка готовности сервиса.
+	//
+	// GET /ready
+	ReadinessCheck(ctx context.Context) (*ReadinessCheckOK, error)
+	// ResetPrestige invokes resetPrestige operation.
+	//
+	// Выполняет сброс прогресса персонажа за Prestige бонусы.
+	//
+	// POST /prestige/reset
+	ResetPrestige(ctx context.Context, request *ResetPrestigeReq) (ResetPrestigeRes, error)
 }
 
 // Client implements OAS client.
@@ -53,12 +113,8 @@ type Client struct {
 	sec       SecuritySource
 	baseClient
 }
-type errorHandler interface {
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
-}
 
 var _ Handler = struct {
-	errorHandler
 	*Client
 }{}
 
@@ -96,21 +152,22 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// BatchHealthCheck invokes batchHealthCheck operation.
+// DistributeParagonPoints invokes distributeParagonPoints operation.
 //
-// Performance optimization: Check multiple domain health in single request.
+// Распределяет доступные paragon очки по характеристикам
+// персонажа.
 //
-// POST /api/v1/progression-domain/health/batch
-func (c *Client) BatchHealthCheck(ctx context.Context, request *BatchHealthCheckReq) (*BatchHealthCheckOK, error) {
-	res, err := c.sendBatchHealthCheck(ctx, request)
+// POST /paragon/levels
+func (c *Client) DistributeParagonPoints(ctx context.Context, request *DistributeParagonPointsReq) (DistributeParagonPointsRes, error) {
+	res, err := c.sendDistributeParagonPoints(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthCheckReq) (res *BatchHealthCheckOK, err error) {
+func (c *Client) sendDistributeParagonPoints(ctx context.Context, request *DistributeParagonPointsReq) (res DistributeParagonPointsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("batchHealthCheck"),
+		otelogen.OperationID("distributeParagonPoints"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/api/v1/progression-domain/health/batch"),
+		semconv.URLTemplateKey.String("/paragon/levels"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -126,7 +183,7 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, BatchHealthCheckOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, DistributeParagonPointsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -144,7 +201,7 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/api/v1/progression-domain/health/batch"
+	pathParts[0] = "/paragon/levels"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -152,7 +209,7 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeBatchHealthCheckRequest(request, r); err != nil {
+	if err := encodeDistributeParagonPointsRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -161,7 +218,7 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, BatchHealthCheckOperation, r); {
+			switch err := c.securityBearerAuth(ctx, DistributeParagonPointsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -197,7 +254,7 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeBatchHealthCheckResponse(resp)
+	result, err := decodeDistributeParagonPointsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -205,127 +262,24 @@ func (c *Client) sendBatchHealthCheck(ctx context.Context, request *BatchHealthC
 	return result, nil
 }
 
-// HealthWebSocket invokes healthWebSocket operation.
+// GetMasteryLevels invokes getMasteryLevels operation.
 //
-// Real-time health updates without polling.
+// Возвращает информацию о всех типах мастерства
+// персонажа: текущие уровни,
+// прогресс до следующего уровня и разблокированные
+// награды.
 //
-// GET /api/v1/progression-domain/health/ws
-func (c *Client) HealthWebSocket(ctx context.Context) error {
-	_, err := c.sendHealthWebSocket(ctx)
-	return err
-}
-
-func (c *Client) sendHealthWebSocket(ctx context.Context) (res *HealthWebSocketSwitchingProtocols, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("healthWebSocket"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/api/v1/progression-domain/health/ws"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, HealthWebSocketOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/api/v1/progression-domain/health/ws"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, HealthWebSocketOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeHealthWebSocketResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ProgressionDomainHealthCheck invokes progression-domainHealthCheck operation.
-//
-// Progression domain domain health check.
-//
-// GET /api/v1/progression-domain/health
-func (c *Client) ProgressionDomainHealthCheck(ctx context.Context) (*HealthResponseHeaders, error) {
-	res, err := c.sendProgressionDomainHealthCheck(ctx)
+// GET /mastery/levels
+func (c *Client) GetMasteryLevels(ctx context.Context, params GetMasteryLevelsParams) (GetMasteryLevelsRes, error) {
+	res, err := c.sendGetMasteryLevels(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendProgressionDomainHealthCheck(ctx context.Context) (res *HealthResponseHeaders, err error) {
+func (c *Client) sendGetMasteryLevels(ctx context.Context, params GetMasteryLevelsParams) (res GetMasteryLevelsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("progression-domainHealthCheck"),
+		otelogen.OperationID("getMasteryLevels"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/api/v1/progression-domain/health"),
+		semconv.URLTemplateKey.String("/mastery/levels"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -341,7 +295,7 @@ func (c *Client) sendProgressionDomainHealthCheck(ctx context.Context) (res *Hea
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ProgressionDomainHealthCheckOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetMasteryLevelsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -359,8 +313,26 @@ func (c *Client) sendProgressionDomainHealthCheck(ctx context.Context) (res *Hea
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/api/v1/progression-domain/health"
+	pathParts[0] = "/mastery/levels"
 	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"
 	r, err := ht.NewRequest(ctx, "GET", u)
@@ -373,7 +345,7 @@ func (c *Client) sendProgressionDomainHealthCheck(ctx context.Context) (res *Hea
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ProgressionDomainHealthCheckOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetMasteryLevelsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -409,7 +381,1051 @@ func (c *Client) sendProgressionDomainHealthCheck(ctx context.Context) (res *Hea
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeProgressionDomainHealthCheckResponse(resp)
+	result, err := decodeGetMasteryLevelsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetMasteryProgress invokes getMasteryProgress operation.
+//
+// Возвращает детальную информацию о прогрессе в
+// конкретном типе мастерства.
+//
+// GET /mastery/{mastery_type}/progress
+func (c *Client) GetMasteryProgress(ctx context.Context, params GetMasteryProgressParams) (GetMasteryProgressRes, error) {
+	res, err := c.sendGetMasteryProgress(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetMasteryProgress(ctx context.Context, params GetMasteryProgressParams) (res GetMasteryProgressRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getMasteryProgress"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/mastery/{mastery_type}/progress"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetMasteryProgressOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/mastery/"
+	{
+		// Encode "mastery_type" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "mastery_type",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(string(params.MasteryType)))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/progress"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetMasteryProgressOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetMasteryProgressResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetMasteryRewards invokes getMasteryRewards operation.
+//
+// Возвращает доступные награды для конкретного типа
+// мастерства.
+//
+// GET /mastery/{mastery_type}/rewards
+func (c *Client) GetMasteryRewards(ctx context.Context, params GetMasteryRewardsParams) (GetMasteryRewardsRes, error) {
+	res, err := c.sendGetMasteryRewards(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetMasteryRewards(ctx context.Context, params GetMasteryRewardsParams) (res GetMasteryRewardsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getMasteryRewards"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/mastery/{mastery_type}/rewards"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetMasteryRewardsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/mastery/"
+	{
+		// Encode "mastery_type" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "mastery_type",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(string(params.MasteryType)))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/rewards"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetMasteryRewardsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetMasteryRewardsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetParagonLevels invokes getParagonLevels operation.
+//
+// Возвращает информацию о Paragon Levels персонажа: текущий
+// уровень, накопленные очки,
+// распределение очков по характеристикам и прогресс до
+// следующего уровня.
+//
+// GET /paragon/levels
+func (c *Client) GetParagonLevels(ctx context.Context, params GetParagonLevelsParams) (GetParagonLevelsRes, error) {
+	res, err := c.sendGetParagonLevels(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetParagonLevels(ctx context.Context, params GetParagonLevelsParams) (res GetParagonLevelsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getParagonLevels"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/paragon/levels"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetParagonLevelsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/paragon/levels"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetParagonLevelsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetParagonLevelsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetParagonStats invokes getParagonStats operation.
+//
+// Возвращает глобальную статистику Paragon системы.
+//
+// GET /paragon/stats
+func (c *Client) GetParagonStats(ctx context.Context, params GetParagonStatsParams) (GetParagonStatsRes, error) {
+	res, err := c.sendGetParagonStats(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetParagonStats(ctx context.Context, params GetParagonStatsParams) (res GetParagonStatsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getParagonStats"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/paragon/stats"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetParagonStatsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/paragon/stats"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetParagonStatsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetParagonStatsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetPrestigeBonuses invokes getPrestigeBonuses operation.
+//
+// Возвращает текущие Prestige бонусы персонажа.
+//
+// GET /prestige/bonuses
+func (c *Client) GetPrestigeBonuses(ctx context.Context, params GetPrestigeBonusesParams) (GetPrestigeBonusesRes, error) {
+	res, err := c.sendGetPrestigeBonuses(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetPrestigeBonuses(ctx context.Context, params GetPrestigeBonusesParams) (res GetPrestigeBonusesRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPrestigeBonuses"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/prestige/bonuses"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPrestigeBonusesOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/prestige/bonuses"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetPrestigeBonusesOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetPrestigeBonusesResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetPrestigeInfo invokes getPrestigeInfo operation.
+//
+// Возвращает информацию о текущем Prestige Level персонажа,
+// доступных бонусах
+// и требованиях для следующего престижа.
+//
+// GET /prestige/info
+func (c *Client) GetPrestigeInfo(ctx context.Context, params GetPrestigeInfoParams) (GetPrestigeInfoRes, error) {
+	res, err := c.sendGetPrestigeInfo(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetPrestigeInfo(ctx context.Context, params GetPrestigeInfoParams) (res GetPrestigeInfoRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPrestigeInfo"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/prestige/info"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPrestigeInfoOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/prestige/info"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "character_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "character_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.CharacterID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetPrestigeInfoOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetPrestigeInfoResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// HealthCheck invokes healthCheck operation.
+//
+// Проверка здоровья сервиса.
+//
+// GET /health
+func (c *Client) HealthCheck(ctx context.Context) (*HealthCheckOK, error) {
+	res, err := c.sendHealthCheck(ctx)
+	return res, err
+}
+
+func (c *Client) sendHealthCheck(ctx context.Context) (res *HealthCheckOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("healthCheck"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/health"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, HealthCheckOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/health"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeHealthCheckResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ReadinessCheck invokes readinessCheck operation.
+//
+// Проверка готовности сервиса.
+//
+// GET /ready
+func (c *Client) ReadinessCheck(ctx context.Context) (*ReadinessCheckOK, error) {
+	res, err := c.sendReadinessCheck(ctx)
+	return res, err
+}
+
+func (c *Client) sendReadinessCheck(ctx context.Context) (res *ReadinessCheckOK, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("readinessCheck"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/ready"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ReadinessCheckOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/ready"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeReadinessCheckResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ResetPrestige invokes resetPrestige operation.
+//
+// Выполняет сброс прогресса персонажа за Prestige бонусы.
+//
+// POST /prestige/reset
+func (c *Client) ResetPrestige(ctx context.Context, request *ResetPrestigeReq) (ResetPrestigeRes, error) {
+	res, err := c.sendResetPrestige(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendResetPrestige(ctx context.Context, request *ResetPrestigeReq) (res ResetPrestigeRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("resetPrestige"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/prestige/reset"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ResetPrestigeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/prestige/reset"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeResetPrestigeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ResetPrestigeOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeResetPrestigeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

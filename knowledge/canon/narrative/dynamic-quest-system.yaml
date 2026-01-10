@@ -1,0 +1,412 @@
+metadata:
+  id: canon-narrative-dynamic-quest-system
+  title: Dynamic Quest System - Player Choice Based Quests
+  document_type: canon
+  category: narrative
+  subcategory: quest-system
+  status: draft
+  version: 1.0.0
+  last_updated: '2026-01-10T21:00:00Z'
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+  - role: content_writer
+    contact: content@necp.game
+  - role: narrative_director
+    contact: narrative@necp.game
+  tags:
+  - narrative
+  - quests
+  - dynamic
+  - player-choice
+  - branching
+  - consequences
+  topics:
+  - dynamic-quest-generation
+  - player-agency
+  - narrative-branching
+  - choice-consequences
+  - adaptive-storytelling
+  related_systems:
+  - quest-service
+  - narrative-service
+  - player-state-service
+  - event-service
+  related_documents:
+  - id: canon-narrative-narrative-branching-consequences
+    relation: extends
+  - id: mechanics-quest-systems
+    relation: implements
+  source: shared/docs/knowledge/canon/narrative/dynamic-quest-system.yaml
+  visibility: internal
+  audience:
+  - content
+  - narrative
+  - design
+  - qa
+  risk_level: high
+
+summary:
+  problem: Текущая система квестов статична и не адаптируется к выбору игрока, ограничивая реиграбельность и глубину нарратива
+  goal: Создать динамическую систему квестов, которая адаптируется к выбору игрока и создает уникальные истории
+  essence: Система динамических квестов на основе выбора игрока с ветвящимися сюжетами, адаптивными последствиями и персонализированными историями
+  key_points:
+  - Динамическая генерация квестов на основе выбора игрока
+  - Ветвящиеся сюжетные линии с множественными исходами
+  - Адаптивные последствия, влияющие на мир и персонажей
+  - Система памяти выборов для долгосрочных эффектов
+  - Баланс между свободой выбора и сюжетной связностью
+
+system_architecture:
+  core_components:
+  - name: Quest Generator
+    description: Генерирует динамические квесты на основе контекста игрока
+    inputs:
+    - player_history
+    - current_location
+    - faction_reputation
+    - character_stats
+    outputs:
+    - quest_template
+    - branching_options
+
+  - name: Choice Processor
+    description: Обрабатывает выборы игрока и рассчитывает последствия
+    inputs:
+    - player_choice
+    - quest_context
+    - world_state
+    outputs:
+    - consequence_events
+    - narrative_updates
+    - quest_modifications
+
+  - name: Memory System
+    description: Хранит историю выборов игрока для будущих адаптаций
+    inputs:
+    - choice_history
+    - consequence_log
+    outputs:
+    - player_profile
+    - adaptive_weights
+
+  - name: Narrative Weaver
+    description: Связывает разрозненные квесты в coherentную историю
+    inputs:
+    - quest_outcomes
+    - player_arc
+    outputs:
+    - story_connections
+    - thematic_consistency
+
+  data_structures:
+  - name: Player Choice Memory
+    fields:
+    - choice_id: string
+    - timestamp: datetime
+    - context: object
+    - consequence_weight: float
+    - butterfly_effects: array
+
+  - name: Dynamic Quest Template
+    fields:
+    - base_narrative: string
+    - choice_points: array
+    - consequence_chains: object
+    - adaptation_rules: object
+
+  - name: Branching Node
+    fields:
+    - node_id: string
+    - choice_text: string
+    - outcomes: array
+    - probability_weights: object
+
+choice_mechanics:
+  choice_types:
+  - type: dialogue_choice
+    description: Выбор в диалогах с NPC
+    impact: immediate
+    scope: conversation
+    examples:
+    - "Помочь незнакомцу или пройти мимо"
+    - "Сказать правду или солгать"
+    - "Выбрать сторону в споре"
+
+  - type: action_choice
+    description: Выбор действий в ситуациях
+    impact: short_term
+    scope: scene
+    examples:
+    - "Взломать дверь или найти другой путь"
+    - "Спаси заложника или выполни миссию"
+    - "Поделись ресурсом или сохрани для себя"
+
+  - type: relationship_choice
+    description: Выбор, влияющий на отношения
+    impact: long_term
+    scope: character
+    examples:
+    - "Поддержать друга или предать"
+    - "Простить обиду или отомстить"
+    - "Защитить слабого или использовать ситуацию"
+
+  - type: moral_choice
+    description: Этические дилеммы
+    impact: character_arc
+    scope: personal
+    examples:
+    - "Жизнь одного или смерть многих"
+    - "Правда ценой потери или ложь с выгодой"
+    - "Свобода или безопасность"
+
+  choice_weighting:
+    factors:
+    - player_alignment: -1.0 to 1.0
+    - faction_reputation: -100 to 100
+    - character_background: categorical
+    - previous_choices: historical
+    - world_state: current_conditions
+
+consequence_system:
+  consequence_types:
+  - type: immediate
+    description: Мгновенный эффект выбора
+    examples:
+    - Диалог продолжается по-разному
+    - NPC меняет отношение
+    - Доступ к новой информации
+
+  - type: short_term
+    description: Эффекты в рамках квеста
+    examples:
+    - Новые союзники или враги
+    - Изменение доступных опций
+    - Модификация награды
+
+  - type: long_term
+    description: Эффекты на будущие квесты
+    examples:
+    - Изменение репутации фракций
+    - Доступ к новым локациям
+    - Персональные последствия
+
+  - type: butterfly
+    description: Неожиданные отдаленные эффекты
+    examples:
+    - Случайная встреча с последствиями
+    - Изменение мира через цепную реакцию
+    - Неожиданные сюжетные повороты
+
+  consequence_chains:
+    example_chain:
+    - choice: "Помочь незнакомцу в беде"
+    - immediate: "Незнакомец делится полезной информацией"
+    - short_term: "Получаешь доступ к подпольной сети"
+    - long_term: "Становишься известным в определенных кругах"
+    - butterfly: "Спасенный становится важным NPC в будущем квесте"
+
+adaptive_narrative:
+  adaptation_mechanisms:
+  - name: Choice Pattern Recognition
+    description: Анализирует паттерны выборов игрока для предсказания предпочтений
+    implementation: machine_learning_model
+    update_frequency: per_session
+
+  - name: Thematic Consistency
+    description: Поддерживает связность тем в истории игрока
+    implementation: narrative_constraint_engine
+    update_frequency: per_quest
+
+  - name: Character Development
+    description: Адаптирует развитие персонажа на основе выборов
+    implementation: arc_modification_system
+    update_frequency: per_major_choice
+
+  - name: World State Integration
+    description: Интегрирует выборы в глобальное состояние мира
+    implementation: state_propagation_engine
+    update_frequency: real_time
+
+  personalization_levels:
+  - level: basic
+    description: Простая адаптация диалогов
+    complexity: low
+    player_impact: minimal
+
+  - level: intermediate
+    description: Ветвящиеся сюжетные линии
+    complexity: medium
+    player_impact: moderate
+
+  - level: advanced
+    description: Полная адаптация мира и персонажей
+    complexity: high
+    player_impact: maximum
+
+quest_examples:
+  basic_dynamic_quest:
+    title: "Уличный инцидент"
+    description: "Игрок становится свидетелем конфликта на улице"
+    base_narrative: "В темном переулке происходит драка между двумя группами"
+
+    choice_points:
+    - id: initial_response
+      prompt: "Ваша реакция?"
+      options:
+      - text: "Вмешаться и помочь слабому"
+        alignment: good
+        consequence:
+          immediate: "Драка останавливается, слабый благодарит"
+          short_term: "Получаете временного союзника"
+          long_term: "Репутация в нижнем городе растет"
+          butterfly: "Союзник может появиться в будущем квесте"
+
+      - text: "Вмешаться и помочь сильному"
+        alignment: pragmatic
+        consequence:
+          immediate: "Драка заканчивается быстро"
+          short_term: "Получаете небольшую награду"
+          long_term: "Репутация среди уличных банд растет"
+          butterfly: "Банды могут предложить работу"
+
+      - text: "Пройти мимо"
+        alignment: neutral
+        consequence:
+          immediate: "Конфликт продолжается без вас"
+          short_term: "Ничего не происходит"
+          long_term: "Нет изменений в репутации"
+          butterfly: "Можете услышать слухи о последствиях позже"
+
+  advanced_dynamic_quest:
+    title: "Корпоративный шантаж"
+    description: "Игрок находит компромат на корпоративного менеджера"
+    adaptation_rules:
+    - if_player_reputation_corporate_high: "Менеджер предлагает сделку"
+    - if_player_alignment_good: "Добавляется опция 'передать в полицию'"
+    - if_player_has_hacking_skill: "Добавляется опция 'использовать для взлома'"
+
+    branching_narrative:
+    - branch_1:
+        condition: "player_reputation > 50"
+        title: "Корпоративная сделка"
+        plot: "Менеджер предлагает работу в корпорации"
+
+    - branch_2:
+        condition: "player_alignment == 'chaotic'"
+        title: "Шантаж"
+        plot: "Игрок шантажирует менеджера"
+
+    - branch_3:
+        condition: "player_has_contacts_police"
+        title: "Правосудие"
+        plot: "Компромат передается в полицию"
+
+implementation_requirements:
+  technical_components:
+  - name: Choice Engine
+    technology: Go + Redis
+    purpose: Хранение и обработка выборов игрока
+    scalability: high
+
+  - name: Narrative Generator
+    technology: Python + ML models
+    purpose: Генерация адаптивных сюжетов
+    scalability: medium
+
+  - name: Memory System
+    technology: PostgreSQL + Elasticsearch
+    purpose: Долгосрочное хранение истории игрока
+    scalability: high
+
+  - name: Consequence Calculator
+    technology: Go + Rules Engine
+    purpose: Расчет эффектов выборов
+    scalability: high
+
+  database_schema:
+  - table: player_choices
+    fields:
+    - player_id: uuid
+    - choice_id: string
+    - timestamp: datetime
+    - context: jsonb
+    - weight: float
+
+  - table: choice_consequences
+    fields:
+    - choice_id: string
+    - consequence_type: enum
+    - effect_data: jsonb
+    - propagation_rules: jsonb
+
+  - table: narrative_memory
+    fields:
+    - player_id: uuid
+    - memory_type: string
+    - content: jsonb
+    - relevance_score: float
+
+  api_endpoints:
+  - method: POST
+    path: /api/v1/quests/dynamic/generate
+    description: Генерирует динамический квест для игрока
+
+  - method: POST
+    path: /api/v1/choices/process
+    description: Обрабатывает выбор игрока и рассчитывает последствия
+
+  - method: GET
+    path: /api/v1/players/{id}/memory
+    description: Получает историю выборов игрока
+
+quality_assurance:
+  testing_scenarios:
+  - name: Choice Consistency Test
+    description: Проверяет, что одинаковые выборы дают одинаковые результаты
+
+  - name: Narrative Coherence Test
+    description: Проверяет связность сюжета при разных ветвях
+
+  - name: Performance Impact Test
+    description: Измеряет влияние системы на производительность
+
+  - name: Player Experience Test
+    description: Оценивает влияние на вовлеченность игрока
+
+  metrics:
+  - name: Choice Diversity
+    formula: unique_choice_patterns / total_players
+    target: > 0.8
+
+  - name: Narrative Satisfaction
+    formula: average_player_rating
+    target: > 4.0
+
+  - name: Replay Value
+    formula: average_sessions_per_player
+    target: > 15
+
+future_expansions:
+  planned_features:
+  - name: AI Narrative Generation
+    description: ИИ генерирует персонализированные истории
+    timeline: Q2 2026
+
+  - name: Cross-Platform Continuity
+    description: Синхронизация выборов между платформами
+    timeline: Q3 2026
+
+  - name: Community Story Sharing
+    description: Возможность делиться созданными историями
+    timeline: Q4 2026
+
+  - name: Advanced Consequence Modeling
+    description: Более сложные цепочки последствий
+    timeline: Q1 2027
+
+  research_areas:
+  - procedural_narrative_generation
+  - player_behavior_modeling
+  - emotional_attachment_measurement
+  - cultural_narrative_adaptation

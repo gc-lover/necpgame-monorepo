@@ -17,6 +17,14 @@ type Handler interface {
 	//
 	// GET /health
 	AnalyticsServiceHealthCheck(ctx context.Context, params AnalyticsServiceHealthCheckParams) (AnalyticsServiceHealthCheckRes, error)
+	// EconomyAnalyticsHealthCheck implements economyAnalyticsHealthCheck operation.
+	//
+	// **Enterprise-grade health check endpoint**
+	// Provides real-time health status of the economy analytics microservice.
+	// Critical for service discovery, load balancing, and monitoring.
+	//
+	// GET /analytics/economy/health
+	EconomyAnalyticsHealthCheck(ctx context.Context) (EconomyAnalyticsHealthCheckRes, error)
 	// GetCombatAnalyticsOverview implements getCombatAnalyticsOverview operation.
 	//
 	// Retrieve comprehensive combat analytics overview with metrics and trends.
@@ -31,6 +39,19 @@ type Handler interface {
 	//
 	// GET /analytics/economy/market
 	GetEconomyMarketAnalytics(ctx context.Context, params GetEconomyMarketAnalyticsParams) (GetEconomyMarketAnalyticsRes, error)
+	// GetFundamentalAnalysis implements getFundamentalAnalysis operation.
+	//
+	// Get fundamental analysis for a stock.
+	//
+	// GET /analytics/stock/fundamental/{symbol}
+	GetFundamentalAnalysis(ctx context.Context, params GetFundamentalAnalysisParams) (GetFundamentalAnalysisRes, error)
+	// GetMarketTrends implements getMarketTrends operation.
+	//
+	// Analyzes current market trends including price movements, volume changes, and market sentiment
+	// across all economic sectors.
+	//
+	// GET /analytics/economy/market/trends
+	GetMarketTrends(ctx context.Context, params GetMarketTrendsParams) (GetMarketTrendsRes, error)
 	// GetPlayerBehaviorAnalytics implements getPlayerBehaviorAnalytics operation.
 	//
 	// Analyze player behavior patterns, engagement metrics, and retention data.
@@ -45,10 +66,28 @@ type Handler interface {
 	//
 	// GET /analytics/system/performance
 	GetSystemPerformanceMetrics(ctx context.Context, params GetSystemPerformanceMetricsParams) (GetSystemPerformanceMetricsRes, error)
-	// NewError creates *ErrRespStatusCode from error returned by handler.
+	// GetTechnicalAnalysis implements getTechnicalAnalysis operation.
 	//
-	// Used for common default response.
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
+	// Get comprehensive technical analysis.
+	//
+	// GET /analytics/stock/technical/{symbol}
+	GetTechnicalAnalysis(ctx context.Context, params GetTechnicalAnalysisParams) (GetTechnicalAnalysisRes, error)
+	// GetTradeVolumeStatistics implements getTradeVolumeStatistics operation.
+	//
+	// Provides detailed trade volume statistics and analysis for economic transactions across all game
+	// markets.
+	//
+	// GET /analytics/economy/trade/volume
+	GetTradeVolumeStatistics(ctx context.Context, params GetTradeVolumeStatisticsParams) (GetTradeVolumeStatisticsRes, error)
+	// MonitorMarketIntegrity implements monitorMarketIntegrity operation.
+	//
+	// **Comprehensive market integrity monitoring**
+	// Analyzes market state to detect potential integrity threats. Includes trade pattern analysis,
+	// manipulation detection, and risk assessment.
+	// **AI Integration:** Uses advanced algorithms for anomaly detection.
+	//
+	// GET /analytics/stock/protection/market-integrity
+	MonitorMarketIntegrity(ctx context.Context, params MonitorMarketIntegrityParams) (MonitorMarketIntegrityRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

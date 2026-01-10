@@ -13,37 +13,112 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// BatchHealthCheck implements batchHealthCheck operation.
+// DistributeParagonPoints implements distributeParagonPoints operation.
 //
-// Performance optimization: Check multiple domain health in single request.
+// Распределяет доступные paragon очки по характеристикам
+// персонажа.
 //
-// POST /api/v1/progression-domain/health/batch
-func (UnimplementedHandler) BatchHealthCheck(ctx context.Context, req *BatchHealthCheckReq) (r *BatchHealthCheckOK, _ error) {
+// POST /paragon/levels
+func (UnimplementedHandler) DistributeParagonPoints(ctx context.Context, req *DistributeParagonPointsReq) (r DistributeParagonPointsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// HealthWebSocket implements healthWebSocket operation.
+// GetMasteryLevels implements getMasteryLevels operation.
 //
-// Real-time health updates without polling.
+// Возвращает информацию о всех типах мастерства
+// персонажа: текущие уровни,
+// прогресс до следующего уровня и разблокированные
+// награды.
 //
-// GET /api/v1/progression-domain/health/ws
-func (UnimplementedHandler) HealthWebSocket(ctx context.Context) error {
-	return ht.ErrNotImplemented
-}
-
-// ProgressionDomainHealthCheck implements progression-domainHealthCheck operation.
-//
-// Progression domain domain health check.
-//
-// GET /api/v1/progression-domain/health
-func (UnimplementedHandler) ProgressionDomainHealthCheck(ctx context.Context) (r *HealthResponseHeaders, _ error) {
+// GET /mastery/levels
+func (UnimplementedHandler) GetMasteryLevels(ctx context.Context, params GetMasteryLevelsParams) (r GetMasteryLevelsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// NewError creates *ErrRespStatusCode from error returned by handler.
+// GetMasteryProgress implements getMasteryProgress operation.
 //
-// Used for common default response.
-func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ErrRespStatusCode) {
-	r = new(ErrRespStatusCode)
-	return r
+// Возвращает детальную информацию о прогрессе в
+// конкретном типе мастерства.
+//
+// GET /mastery/{mastery_type}/progress
+func (UnimplementedHandler) GetMasteryProgress(ctx context.Context, params GetMasteryProgressParams) (r GetMasteryProgressRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetMasteryRewards implements getMasteryRewards operation.
+//
+// Возвращает доступные награды для конкретного типа
+// мастерства.
+//
+// GET /mastery/{mastery_type}/rewards
+func (UnimplementedHandler) GetMasteryRewards(ctx context.Context, params GetMasteryRewardsParams) (r GetMasteryRewardsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetParagonLevels implements getParagonLevels operation.
+//
+// Возвращает информацию о Paragon Levels персонажа: текущий
+// уровень, накопленные очки,
+// распределение очков по характеристикам и прогресс до
+// следующего уровня.
+//
+// GET /paragon/levels
+func (UnimplementedHandler) GetParagonLevels(ctx context.Context, params GetParagonLevelsParams) (r GetParagonLevelsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetParagonStats implements getParagonStats operation.
+//
+// Возвращает глобальную статистику Paragon системы.
+//
+// GET /paragon/stats
+func (UnimplementedHandler) GetParagonStats(ctx context.Context, params GetParagonStatsParams) (r GetParagonStatsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPrestigeBonuses implements getPrestigeBonuses operation.
+//
+// Возвращает текущие Prestige бонусы персонажа.
+//
+// GET /prestige/bonuses
+func (UnimplementedHandler) GetPrestigeBonuses(ctx context.Context, params GetPrestigeBonusesParams) (r GetPrestigeBonusesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPrestigeInfo implements getPrestigeInfo operation.
+//
+// Возвращает информацию о текущем Prestige Level персонажа,
+// доступных бонусах
+// и требованиях для следующего престижа.
+//
+// GET /prestige/info
+func (UnimplementedHandler) GetPrestigeInfo(ctx context.Context, params GetPrestigeInfoParams) (r GetPrestigeInfoRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// HealthCheck implements healthCheck operation.
+//
+// Проверка здоровья сервиса.
+//
+// GET /health
+func (UnimplementedHandler) HealthCheck(ctx context.Context) (r *HealthCheckOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReadinessCheck implements readinessCheck operation.
+//
+// Проверка готовности сервиса.
+//
+// GET /ready
+func (UnimplementedHandler) ReadinessCheck(ctx context.Context) (r *ReadinessCheckOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ResetPrestige implements resetPrestige operation.
+//
+// Выполняет сброс прогресса персонажа за Prestige бонусы.
+//
+// POST /prestige/reset
+func (UnimplementedHandler) ResetPrestige(ctx context.Context, req *ResetPrestigeReq) (r ResetPrestigeRes, _ error) {
+	return r, ht.ErrNotImplemented
 }
