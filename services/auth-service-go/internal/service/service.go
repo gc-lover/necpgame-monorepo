@@ -6,9 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/argon2"
 
@@ -25,6 +28,15 @@ type Service struct {
 	passwordSvc   *PasswordService
 	server        *api.Server
 	handler       *Handler
+
+	// Prometheus metrics
+	authRequests        *prometheus.CounterVec
+	authRequestDuration *prometheus.HistogramVec
+	activeSessions      prometheus.Gauge
+	tokenGenerationTime *prometheus.HistogramVec
+	databaseQueryTime   *prometheus.HistogramVec
+	goroutineCount      prometheus.Gauge
+	gcPauseDuration     prometheus.Histogram
 }
 
 func NewService(logger *zap.Logger, repo *repository.Repository, cfg *config.Config) *Service {
@@ -37,6 +49,11 @@ func NewService(logger *zap.Logger, repo *repository.Repository, cfg *config.Con
 		passwordSvc: NewPasswordService(),
 	}
 
+	// Initialize Prometheus metrics
+	s.initMetrics()
+
+	return s
+
 	// Create handler with generated API
 	s.handler = &Handler{
 		logger:      logger,
@@ -44,6 +61,7 @@ func NewService(logger *zap.Logger, repo *repository.Repository, cfg *config.Con
 		config:      cfg,
 		jwtService:  s.jwtService,
 		passwordSvc: s.passwordSvc,
+		service:     s, // Reference to service for metrics
 	}
 
 	// Create security handler
@@ -63,7 +81,126 @@ func NewService(logger *zap.Logger, repo *repository.Repository, cfg *config.Con
 	return s
 }
 
+// initMetrics initializes Prometheus metrics for the auth service
+func (s *Service) initMetrics() {
+	// Authentication request counter
+	s.authRequests = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "auth_service_requests_total",
+			Help: "Total number of authentication requests by operation and status",
+		},
+		[]string{"operation", "status"},
+	)
+
+	// Request duration histogram
+	s.authRequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "auth_service_request_duration_seconds",
+			Help:    "Request duration in seconds by operation",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"operation"},
+	)
+
+	// Active sessions gauge
+	s.activeSessions = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "auth_service_active_sessions",
+			Help: "Number of currently active user sessions",
+		},
+	)
+
+	// Token generation time histogram
+	s.tokenGenerationTime = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "auth_service_token_generation_duration_seconds",
+			Help:    "Time spent generating JWT tokens",
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0},
+		},
+		[]string{"token_type"},
+	)
+
+	// Database query time histogram
+	s.databaseQueryTime = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "auth_service_database_query_duration_seconds",
+			Help:    "Time spent on database queries",
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0},
+		},
+		[]string{"operation"},
+	)
+
+	// Goroutine count gauge
+	s.goroutineCount = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "auth_service_goroutines",
+			Help: "Number of active goroutines",
+		},
+	)
+
+	// GC pause duration histogram
+	s.gcPauseDuration = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "auth_service_gc_pause_duration_seconds",
+			Help:    "Time spent in GC pauses",
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0},
+		},
+	)
+
+	// Register metrics
+	prometheus.MustRegister(
+		s.authRequests,
+		s.authRequestDuration,
+		s.activeSessions,
+		s.tokenGenerationTime,
+		s.databaseQueryTime,
+		s.goroutineCount,
+		s.gcPauseDuration,
+	)
+
+	// Start background metrics collection
+	go s.collectRuntimeMetrics()
+}
+
+// collectRuntimeMetrics periodically collects runtime metrics
+func (s *Service) collectRuntimeMetrics() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		// Update goroutine count
+		s.goroutineCount.Set(float64(runtime.NumGoroutine()))
+
+		// Collect GC stats
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
+		// Record GC pause time (convert nanoseconds to seconds)
+		if len(m.PauseNs) > 0 {
+			s.gcPauseDuration.Observe(float64(m.PauseNs[(m.NumGC+255)%256]) / 1e9)
+		}
+
+		// Update active sessions count (simplified - would need actual count from DB)
+		// This is a placeholder - in production you'd query the database
+		s.activeSessions.Set(0) // Placeholder value
+	}
+}
+
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Handle metrics endpoint
+	if r.URL.Path == "/metrics" {
+		promhttp.Handler().ServeHTTP(w, r)
+		return
+	}
+
+	// Handle health check endpoint
+	if r.URL.Path == "/health" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy","service":"auth-service","version":"1.0.0"}`))
+		return
+	}
+
 	s.server.ServeHTTP(w, r)
 }
 

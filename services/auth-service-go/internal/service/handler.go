@@ -19,6 +19,7 @@ type Handler struct {
 	config      *config.Config
 	jwtService  *JWTService
 	passwordSvc *PasswordService
+	service     *Service // Reference to service for metrics
 }
 
 // AuthServiceHealthCheck implements authServiceHealthCheck operation.
@@ -61,10 +62,20 @@ func (h *Handler) AuthServiceBatchHealthCheck(ctx context.Context, req *api.Auth
 
 // AuthRegister implements authRegister operation.
 func (h *Handler) AuthRegister(ctx context.Context, req *api.RegisterRequest) (api.AuthRegisterRes, error) {
+	start := time.Now()
+	status := "success"
+
+	defer func() {
+		duration := time.Since(start).Seconds()
+		h.service.authRequests.WithLabelValues("register", status).Inc()
+		h.service.authRequestDuration.WithLabelValues("register").Observe(duration)
+	}()
+
 	h.logger.Info("User registration attempt", zap.String("email", req.Email), zap.String("username", req.Username))
 
 	// Validate input
 	if req.Email == "" || req.Username == "" || req.Password == "" {
+		status = "validation_error"
 		return &api.AuthRegisterBadRequest{
 			Message: "Email, username, and password are required",
 		}, nil
@@ -77,6 +88,7 @@ func (h *Handler) AuthRegister(ctx context.Context, req *api.RegisterRequest) (a
 	// Check if user already exists
 	existingUser, err := h.repo.GetUserByEmail(dbCtx, req.Email)
 	if err == nil && existingUser != nil {
+		status = "user_exists"
 		return &api.AuthRegisterBadRequest{
 			Message: "User with this email already exists",
 		}, nil
@@ -84,19 +96,23 @@ func (h *Handler) AuthRegister(ctx context.Context, req *api.RegisterRequest) (a
 
 	// Validate password strength
 	if err := h.passwordSvc.IsValidPassword(req.Password); err != nil {
+		status = "weak_password"
 		return &api.AuthRegisterBadRequest{
 			Message: err.Error(),
 		}, nil
 	}
 
 	// Hash password
+	hashStart := time.Now()
 	hashedPassword, err := h.passwordSvc.HashPassword(req.Password)
 	if err != nil {
 		h.logger.Error("Failed to hash password", zap.Error(err))
+		status = "hash_error"
 		return &api.AuthRegisterBadRequest{
 			Message: "Failed to process registration",
 		}, nil
 	}
+	h.service.tokenGenerationTime.WithLabelValues("password_hash").Observe(time.Since(hashStart).Seconds())
 
 	// Create user
 	user := &repository.User{
@@ -106,9 +122,14 @@ func (h *Handler) AuthRegister(ctx context.Context, req *api.RegisterRequest) (a
 		Status:   "active",
 	}
 
+	// Create user with metrics
+	dbStart := time.Now()
 	createdUser, err := h.repo.CreateUser(dbCtx, user)
+	h.service.databaseQueryTime.WithLabelValues("create_user").Observe(time.Since(dbStart).Seconds())
+
 	if err != nil {
 		h.logger.Error("Failed to create user", zap.Error(err))
+		status = "db_error"
 		return &api.AuthRegisterBadRequest{
 			Message: "Failed to create user",
 		}, nil
@@ -121,10 +142,20 @@ func (h *Handler) AuthRegister(ctx context.Context, req *api.RegisterRequest) (a
 
 // AuthLogin implements authLogin operation.
 func (h *Handler) AuthLogin(ctx context.Context, req *api.LoginRequest) (api.AuthLoginRes, error) {
+	start := time.Now()
+	status := "success"
+
+	defer func() {
+		duration := time.Since(start).Seconds()
+		h.service.authRequests.WithLabelValues("login", status).Inc()
+		h.service.authRequestDuration.WithLabelValues("login").Observe(duration)
+	}()
+
 	h.logger.Info("User login attempt", zap.String("email", req.Email))
 
 	// Validate input
 	if req.Email == "" || req.Password == "" {
+		status = "validation_error"
 		return &api.AuthLoginBadRequest{
 			Message: "Email and password are required",
 		}, nil

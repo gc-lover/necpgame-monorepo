@@ -36,6 +36,37 @@ func (h *Handler) withTimeout(ctx context.Context, operation string, timeout tim
 	return context.WithTimeout(ctx, timeout)
 }
 
+// Helper functions for data conversion
+func convertCombatItems(items []*CombatItem) []api.CombatItem {
+	result := make([]api.CombatItem, len(items))
+	for i, item := range items {
+		result[i] = api.CombatItem{
+			Id:         item.ID,
+			Name:       item.Name,
+			Type:       item.Type,
+			Damage:     item.Damage,
+			Ammo:       item.Ammo,
+			Durability: item.Durability,
+		}
+	}
+	return result
+}
+
+func convertCombatAbilities(abilities []*CombatAbility) []api.CombatAbility {
+	result := make([]api.CombatAbility, len(abilities))
+	for i, ability := range abilities {
+		result[i] = api.CombatAbility{
+			Id:       ability.ID,
+			Name:     ability.Name,
+			Type:     ability.Type,
+			Damage:   ability.Damage,
+			Cooldown: ability.Cooldown,
+			LastUsed: ability.LastUsed,
+		}
+	}
+	return result
+}
+
 // CombatServiceCreateSession creates a new combat session
 // PERFORMANCE: Context timeout prevents slow session creation operations
 func (h *Handler) CombatServiceCreateSession(ctx context.Context, req *api.CreateCombatSessionRequest) (api.CombatServiceCreateSessionRes, error) {
@@ -46,50 +77,53 @@ func (h *Handler) CombatServiceCreateSession(ctx context.Context, req *api.Creat
 		zap.String("game_mode", req.GameMode),
 		zap.Int("max_participants", req.MaxParticipants))
 
-	// Generate session ID
-	sessionID := uuid.New()
-
-	// Create session in database
-	query := `
-		INSERT INTO combat.sessions (
-			session_id, game_mode, status, max_participants,
-			created_at, last_activity, metadata
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id
-	`
-
-	var dbID uuid.UUID
-	now := time.Now()
-	err := h.service.db.QueryRow(ctx, query,
-		sessionID.String(),
-		req.GameMode,
-		"active",
-		req.MaxParticipants,
-		now,
-		now,
-		"{}", // Empty metadata for now
-	).Scan(&dbID)
-
+	// Create combat session using business logic
+	combatSession, err := h.service.CreateCombatSession(ctx, req)
 	if err != nil {
-		h.service.logger.Error("Failed to create combat session in database",
-			zap.String("session_id", sessionID.String()),
-			zap.Error(err))
-		return nil, errors.Wrap(err, "failed to create combat session")
+		h.service.logger.Error("Failed to create combat session", zap.Error(err))
+		return &api.CombatServiceCreateSessionBadRequest{
+			Message: fmt.Sprintf("Failed to create session: %v", err),
+		}, nil
 	}
 
-	h.service.logger.Info("Combat session created in database",
-		zap.String("session_id", sessionID.String()),
-		zap.String("db_id", dbID.String()),
-		zap.String("game_mode", req.GameMode),
-		zap.Int("max_participants", req.MaxParticipants))
+	// Convert to API response
+	participants := make([]api.CombatParticipant, 0, len(combatSession.Participants))
+	for _, p := range combatSession.Participants {
+		participants = append(participants, api.CombatParticipant{
+			Id:          p.ID,
+			Name:        p.Name,
+			Type:        api.CombatParticipantType(p.Type),
+			Health:      &api.HealthStats{CurrentHp: p.Health.CurrentHP, MaxHp: p.Health.MaxHP, Armor: p.Health.Armor, Shield: p.Health.Shield},
+			Position:    &api.Position{X: p.Position.X, Y: p.Position.Y, Z: p.Position.Z},
+			Status:      p.Status,
+			Inventory:   convertCombatItems(p.Inventory),
+			Abilities:   convertCombatAbilities(p.Abilities),
+			JoinedAt:    p.JoinedAt,
+			LastAction:  p.LastAction,
+			IsActive:    p.IsActive,
+		})
+	}
 
-	return &api.CombatServiceCreateSessionOK{
-		Data: &api.CombatSessionResponse{
-			SessionID: sessionID.String(),
-			Status:    "active",
-			GameMode:  req.GameMode,
-			CreatedAt: now.Format(time.RFC3339),
-		},
+	session := &api.CombatSession{
+		Id:               combatSession.ID.String(),
+		GameMode:         combatSession.GameMode,
+		Status:           api.CombatSessionStatus(combatSession.Status),
+		MaxParticipants:  combatSession.MaxParticipants,
+		Participants:     participants,
+		CreatedAt:        combatSession.CreatedAt,
+		UpdatedAt:        combatSession.UpdatedAt,
+		RoundNumber:      combatSession.RoundNumber,
+		TurnOrder:        combatSession.TurnOrder,
+		CurrentTurn:      combatSession.CurrentTurn,
+		Environment:      &api.CombatEnvironment{},
+		CombatLog:        []api.CombatEvent{},
+	}
+
+	h.service.logger.Info("Combat session created",
+		zap.String("session_id", combatSession.ID.String()))
+
+	return &api.CombatServiceCreateSessionCreated{
+		Session: *session,
 	}, nil
 }
 

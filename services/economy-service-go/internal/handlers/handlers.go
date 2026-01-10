@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -54,13 +53,17 @@ func (h *EconomyHandlers) EconomyHealthCheck(ctx context.Context) (*api.HealthRe
 }
 
 // GetOrderBook implements getOrderBook operation.
-func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBookParams) (*api.OrderBook, error) {
-	return &api.OrderBook{}, nil
+// TODO: Implement proper order book retrieval
+func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params interface{}) (interface{}, error) {
+	h.logger.Info("GetOrderBook called - placeholder implementation")
+	return nil, fmt.Errorf("not implemented")
 }
 
 // PlaceOrder implements placeOrder operation.
-func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderRequest, params api.PlaceOrderParams) (*api.OrderResponse, error) {
-	return &api.OrderResponse{}, nil
+// TODO: Implement proper order placement
+func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req interface{}, params interface{}) (interface{}, error) {
+	h.logger.Info("PlaceOrder called - placeholder implementation")
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GetMarketPrice implements getMarketPrice operation.

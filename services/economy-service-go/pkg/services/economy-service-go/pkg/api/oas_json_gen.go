@@ -29,6 +29,18 @@ func (s *BazaarBotAgent) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Wealth.Set {
+			e.FieldStart("wealth")
+			s.Wealth.Encode(e)
+		}
+	}
+	{
+		if s.Personality.Set {
+			e.FieldStart("personality")
+			s.Personality.Encode(e)
+		}
+	}
+	{
 		if s.Inventory.Set {
 			e.FieldStart("inventory")
 			s.Inventory.Encode(e)
@@ -40,26 +52,14 @@ func (s *BazaarBotAgent) encodeFields(e *jx.Encoder) {
 			s.LastActivity.Encode(e, json.EncodeDateTime)
 		}
 	}
-	{
-		if s.Personality.Set {
-			e.FieldStart("personality")
-			s.Personality.Encode(e)
-		}
-	}
-	{
-		if s.Wealth.Set {
-			e.FieldStart("wealth")
-			s.Wealth.Encode(e)
-		}
-	}
 }
 
 var jsonFieldsNameOfBazaarBotAgent = [5]string{
 	0: "id",
-	1: "inventory",
-	2: "lastActivity",
-	3: "personality",
-	4: "wealth",
+	1: "wealth",
+	2: "personality",
+	3: "inventory",
+	4: "lastActivity",
 }
 
 // Decode decodes BazaarBotAgent from json.
@@ -80,6 +80,26 @@ func (s *BazaarBotAgent) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
+		case "wealth":
+			if err := func() error {
+				s.Wealth.Reset()
+				if err := s.Wealth.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"wealth\"")
+			}
+		case "personality":
+			if err := func() error {
+				s.Personality.Reset()
+				if err := s.Personality.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"personality\"")
+			}
 		case "inventory":
 			if err := func() error {
 				s.Inventory.Reset()
@@ -99,26 +119,6 @@ func (s *BazaarBotAgent) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"lastActivity\"")
-			}
-		case "personality":
-			if err := func() error {
-				s.Personality.Reset()
-				if err := s.Personality.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"personality\"")
-			}
-		case "wealth":
-			if err := func() error {
-				s.Wealth.Reset()
-				if err := s.Wealth.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"wealth\"")
 			}
 		default:
 			return d.Skip()
@@ -210,21 +210,15 @@ func (s *BazaarBotAgentPersonality) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *BazaarBotAgentPersonality) encodeFields(e *jx.Encoder) {
 	{
-		if s.ImpatienceFactor.Set {
-			e.FieldStart("impatienceFactor")
-			s.ImpatienceFactor.Encode(e)
-		}
-	}
-	{
-		if s.LearningRate.Set {
-			e.FieldStart("learningRate")
-			s.LearningRate.Encode(e)
-		}
-	}
-	{
 		if s.RiskTolerance.Set {
 			e.FieldStart("riskTolerance")
 			s.RiskTolerance.Encode(e)
+		}
+	}
+	{
+		if s.ImpatienceFactor.Set {
+			e.FieldStart("impatienceFactor")
+			s.ImpatienceFactor.Encode(e)
 		}
 	}
 	{
@@ -233,13 +227,19 @@ func (s *BazaarBotAgentPersonality) encodeFields(e *jx.Encoder) {
 			s.SocialInfluence.Encode(e)
 		}
 	}
+	{
+		if s.LearningRate.Set {
+			e.FieldStart("learningRate")
+			s.LearningRate.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfBazaarBotAgentPersonality = [4]string{
-	0: "impatienceFactor",
-	1: "learningRate",
-	2: "riskTolerance",
-	3: "socialInfluence",
+	0: "riskTolerance",
+	1: "impatienceFactor",
+	2: "socialInfluence",
+	3: "learningRate",
 }
 
 // Decode decodes BazaarBotAgentPersonality from json.
@@ -250,26 +250,6 @@ func (s *BazaarBotAgentPersonality) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "impatienceFactor":
-			if err := func() error {
-				s.ImpatienceFactor.Reset()
-				if err := s.ImpatienceFactor.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"impatienceFactor\"")
-			}
-		case "learningRate":
-			if err := func() error {
-				s.LearningRate.Reset()
-				if err := s.LearningRate.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"learningRate\"")
-			}
 		case "riskTolerance":
 			if err := func() error {
 				s.RiskTolerance.Reset()
@@ -280,6 +260,16 @@ func (s *BazaarBotAgentPersonality) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"riskTolerance\"")
 			}
+		case "impatienceFactor":
+			if err := func() error {
+				s.ImpatienceFactor.Reset()
+				if err := s.ImpatienceFactor.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"impatienceFactor\"")
+			}
 		case "socialInfluence":
 			if err := func() error {
 				s.SocialInfluence.Reset()
@@ -289,6 +279,16 @@ func (s *BazaarBotAgentPersonality) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"socialInfluence\"")
+			}
+		case "learningRate":
+			if err := func() error {
+				s.LearningRate.Reset()
+				if err := s.LearningRate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"learningRate\"")
 			}
 		default:
 			return d.Skip()
@@ -404,21 +404,15 @@ func (s *BazaarBotStatus) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.ActiveAgents.Set {
-			e.FieldStart("activeAgents")
-			s.ActiveAgents.Encode(e)
-		}
-	}
-	{
 		if s.LastTick.Set {
 			e.FieldStart("lastTick")
 			s.LastTick.Encode(e, json.EncodeDateTime)
 		}
 	}
 	{
-		if s.SimulationUptime.Set {
-			e.FieldStart("simulationUptime")
-			s.SimulationUptime.Encode(e)
+		if s.ActiveAgents.Set {
+			e.FieldStart("activeAgents")
+			s.ActiveAgents.Encode(e)
 		}
 	}
 	{
@@ -427,14 +421,20 @@ func (s *BazaarBotStatus) encodeFields(e *jx.Encoder) {
 			s.TotalMarkets.Encode(e)
 		}
 	}
+	{
+		if s.SimulationUptime.Set {
+			e.FieldStart("simulationUptime")
+			s.SimulationUptime.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfBazaarBotStatus = [5]string{
 	0: "active",
-	1: "activeAgents",
-	2: "lastTick",
-	3: "simulationUptime",
-	4: "totalMarkets",
+	1: "lastTick",
+	2: "activeAgents",
+	3: "totalMarkets",
+	4: "simulationUptime",
 }
 
 // Decode decodes BazaarBotStatus from json.
@@ -455,16 +455,6 @@ func (s *BazaarBotStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"active\"")
 			}
-		case "activeAgents":
-			if err := func() error {
-				s.ActiveAgents.Reset()
-				if err := s.ActiveAgents.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"activeAgents\"")
-			}
 		case "lastTick":
 			if err := func() error {
 				s.LastTick.Reset()
@@ -475,15 +465,15 @@ func (s *BazaarBotStatus) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"lastTick\"")
 			}
-		case "simulationUptime":
+		case "activeAgents":
 			if err := func() error {
-				s.SimulationUptime.Reset()
-				if err := s.SimulationUptime.Decode(d); err != nil {
+				s.ActiveAgents.Reset()
+				if err := s.ActiveAgents.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"simulationUptime\"")
+				return errors.Wrap(err, "decode field \"activeAgents\"")
 			}
 		case "totalMarkets":
 			if err := func() error {
@@ -494,6 +484,16 @@ func (s *BazaarBotStatus) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"totalMarkets\"")
+			}
+		case "simulationUptime":
+			if err := func() error {
+				s.SimulationUptime.Reset()
+				if err := s.SimulationUptime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"simulationUptime\"")
 			}
 		default:
 			return d.Skip()
@@ -591,15 +591,15 @@ func (s *HealthResponse) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Uptime.Set {
-			e.FieldStart("uptime")
-			s.Uptime.Encode(e)
-		}
-	}
-	{
 		if s.Version.Set {
 			e.FieldStart("version")
 			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.Uptime.Set {
+			e.FieldStart("uptime")
+			s.Uptime.Encode(e)
 		}
 	}
 }
@@ -607,8 +607,8 @@ func (s *HealthResponse) encodeFields(e *jx.Encoder) {
 var jsonFieldsNameOfHealthResponse = [4]string{
 	0: "status",
 	1: "timestamp",
-	2: "uptime",
-	3: "version",
+	2: "version",
+	3: "uptime",
 }
 
 // Decode decodes HealthResponse from json.
@@ -639,16 +639,6 @@ func (s *HealthResponse) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"timestamp\"")
 			}
-		case "uptime":
-			if err := func() error {
-				s.Uptime.Reset()
-				if err := s.Uptime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"uptime\"")
-			}
 		case "version":
 			if err := func() error {
 				s.Version.Reset()
@@ -658,6 +648,16 @@ func (s *HealthResponse) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "uptime":
+			if err := func() error {
+				s.Uptime.Reset()
+				if err := s.Uptime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"uptime\"")
 			}
 		default:
 			return d.Skip()
@@ -824,15 +824,15 @@ func (s *MarketHistoryPricesItem) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *MarketHistoryPricesItem) encodeFields(e *jx.Encoder) {
 	{
-		if s.Price.Set {
-			e.FieldStart("price")
-			s.Price.Encode(e)
-		}
-	}
-	{
 		if s.Timestamp.Set {
 			e.FieldStart("timestamp")
 			s.Timestamp.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Price.Set {
+			e.FieldStart("price")
+			s.Price.Encode(e)
 		}
 	}
 	{
@@ -844,8 +844,8 @@ func (s *MarketHistoryPricesItem) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfMarketHistoryPricesItem = [3]string{
-	0: "price",
-	1: "timestamp",
+	0: "timestamp",
+	1: "price",
 	2: "volume",
 }
 
@@ -857,16 +857,6 @@ func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "price":
-			if err := func() error {
-				s.Price.Reset()
-				if err := s.Price.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"price\"")
-			}
 		case "timestamp":
 			if err := func() error {
 				s.Timestamp.Reset()
@@ -876,6 +866,16 @@ func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "price":
+			if err := func() error {
+				s.Price.Reset()
+				if err := s.Price.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"price\"")
 			}
 		case "volume":
 			if err := func() error {
@@ -921,21 +921,9 @@ func (s *MarketPrice) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *MarketPrice) encodeFields(e *jx.Encoder) {
 	{
-		if s.Change24h.Set {
-			e.FieldStart("change24h")
-			s.Change24h.Encode(e)
-		}
-	}
-	{
 		if s.Commodity.Set {
 			e.FieldStart("commodity")
 			s.Commodity.Encode(e)
-		}
-	}
-	{
-		if s.LastUpdate.Set {
-			e.FieldStart("lastUpdate")
-			s.LastUpdate.Encode(e, json.EncodeDateTime)
 		}
 	}
 	{
@@ -945,19 +933,31 @@ func (s *MarketPrice) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Change24h.Set {
+			e.FieldStart("change24h")
+			s.Change24h.Encode(e)
+		}
+	}
+	{
 		if s.Volume24h.Set {
 			e.FieldStart("volume24h")
 			s.Volume24h.Encode(e)
 		}
 	}
+	{
+		if s.LastUpdate.Set {
+			e.FieldStart("lastUpdate")
+			s.LastUpdate.Encode(e, json.EncodeDateTime)
+		}
+	}
 }
 
 var jsonFieldsNameOfMarketPrice = [5]string{
-	0: "change24h",
-	1: "commodity",
-	2: "lastUpdate",
-	3: "price",
-	4: "volume24h",
+	0: "commodity",
+	1: "price",
+	2: "change24h",
+	3: "volume24h",
+	4: "lastUpdate",
 }
 
 // Decode decodes MarketPrice from json.
@@ -968,16 +968,6 @@ func (s *MarketPrice) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "change24h":
-			if err := func() error {
-				s.Change24h.Reset()
-				if err := s.Change24h.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"change24h\"")
-			}
 		case "commodity":
 			if err := func() error {
 				s.Commodity.Reset()
@@ -987,16 +977,6 @@ func (s *MarketPrice) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"commodity\"")
-			}
-		case "lastUpdate":
-			if err := func() error {
-				s.LastUpdate.Reset()
-				if err := s.LastUpdate.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"lastUpdate\"")
 			}
 		case "price":
 			if err := func() error {
@@ -1008,6 +988,16 @@ func (s *MarketPrice) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"price\"")
 			}
+		case "change24h":
+			if err := func() error {
+				s.Change24h.Reset()
+				if err := s.Change24h.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"change24h\"")
+			}
 		case "volume24h":
 			if err := func() error {
 				s.Volume24h.Reset()
@@ -1017,6 +1007,16 @@ func (s *MarketPrice) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"volume24h\"")
+			}
+		case "lastUpdate":
+			if err := func() error {
+				s.LastUpdate.Reset()
+				if err := s.LastUpdate.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lastUpdate\"")
 			}
 		default:
 			return d.Skip()
@@ -1495,18 +1495,6 @@ func (s *Order) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Order) encodeFields(e *jx.Encoder) {
 	{
-		if s.Commodity.Set {
-			e.FieldStart("commodity")
-			s.Commodity.Encode(e)
-		}
-	}
-	{
-		if s.CreatedAt.Set {
-			e.FieldStart("createdAt")
-			s.CreatedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
 		if s.ID.Set {
 			e.FieldStart("id")
 			s.ID.Encode(e)
@@ -1516,6 +1504,18 @@ func (s *Order) encodeFields(e *jx.Encoder) {
 		if s.PlayerId.Set {
 			e.FieldStart("playerId")
 			s.PlayerId.Encode(e)
+		}
+	}
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+	{
+		if s.Commodity.Set {
+			e.FieldStart("commodity")
+			s.Commodity.Encode(e)
 		}
 	}
 	{
@@ -1531,21 +1531,21 @@ func (s *Order) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Type.Set {
-			e.FieldStart("type")
-			s.Type.Encode(e)
+		if s.CreatedAt.Set {
+			e.FieldStart("createdAt")
+			s.CreatedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
 }
 
 var jsonFieldsNameOfOrder = [7]string{
-	0: "commodity",
-	1: "createdAt",
-	2: "id",
-	3: "playerId",
+	0: "id",
+	1: "playerId",
+	2: "type",
+	3: "commodity",
 	4: "price",
 	5: "quantity",
-	6: "type",
+	6: "createdAt",
 }
 
 // Decode decodes Order from json.
@@ -1556,26 +1556,6 @@ func (s *Order) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "commodity":
-			if err := func() error {
-				s.Commodity.Reset()
-				if err := s.Commodity.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"commodity\"")
-			}
-		case "createdAt":
-			if err := func() error {
-				s.CreatedAt.Reset()
-				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"createdAt\"")
-			}
 		case "id":
 			if err := func() error {
 				s.ID.Reset()
@@ -1595,6 +1575,26 @@ func (s *Order) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"playerId\"")
+			}
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "commodity":
+			if err := func() error {
+				s.Commodity.Reset()
+				if err := s.Commodity.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"commodity\"")
 			}
 		case "price":
 			if err := func() error {
@@ -1616,15 +1616,15 @@ func (s *Order) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"quantity\"")
 			}
-		case "type":
+		case "createdAt":
 			if err := func() error {
-				s.Type.Reset()
-				if err := s.Type.Decode(d); err != nil {
+				s.CreatedAt.Reset()
+				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
+				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		default:
 			return d.Skip()
@@ -1660,12 +1660,6 @@ func (s *OrderResponse) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *OrderResponse) encodeFields(e *jx.Encoder) {
 	{
-		if s.Message.Set {
-			e.FieldStart("message")
-			s.Message.Encode(e)
-		}
-	}
-	{
 		if s.OrderId.Set {
 			e.FieldStart("orderId")
 			s.OrderId.Encode(e)
@@ -1677,12 +1671,18 @@ func (s *OrderResponse) encodeFields(e *jx.Encoder) {
 			s.Status.Encode(e)
 		}
 	}
+	{
+		if s.Message.Set {
+			e.FieldStart("message")
+			s.Message.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfOrderResponse = [3]string{
-	0: "message",
-	1: "orderId",
-	2: "status",
+	0: "orderId",
+	1: "status",
+	2: "message",
 }
 
 // Decode decodes OrderResponse from json.
@@ -1693,16 +1693,6 @@ func (s *OrderResponse) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "message":
-			if err := func() error {
-				s.Message.Reset()
-				if err := s.Message.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"message\"")
-			}
 		case "orderId":
 			if err := func() error {
 				s.OrderId.Reset()
@@ -1722,6 +1712,16 @@ func (s *OrderResponse) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "message":
+			if err := func() error {
+				s.Message.Reset()
+				if err := s.Message.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
 			}
 		default:
 			return d.Skip()
@@ -1839,6 +1839,10 @@ func (s *PlaceOrderRequest) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *PlaceOrderRequest) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
 		e.FieldStart("price")
 		e.Float32(s.Price)
 	}
@@ -1846,16 +1850,12 @@ func (s *PlaceOrderRequest) encodeFields(e *jx.Encoder) {
 		e.FieldStart("quantity")
 		e.Int(s.Quantity)
 	}
-	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
-	}
 }
 
 var jsonFieldsNameOfPlaceOrderRequest = [3]string{
-	0: "price",
-	1: "quantity",
-	2: "type",
+	0: "type",
+	1: "price",
+	2: "quantity",
 }
 
 // Decode decodes PlaceOrderRequest from json.
@@ -1867,8 +1867,18 @@ func (s *PlaceOrderRequest) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "price":
+		case "type":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "price":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Float32()
 				s.Price = float32(v)
@@ -1880,7 +1890,7 @@ func (s *PlaceOrderRequest) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"price\"")
 			}
 		case "quantity":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Int()
 				s.Quantity = int(v)
@@ -1890,16 +1900,6 @@ func (s *PlaceOrderRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"quantity\"")
-			}
-		case "type":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
 			}
 		default:
 			return d.Skip()
@@ -2057,22 +2057,6 @@ func (s *PlayerPortfolio) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *PlayerPortfolio) encodeFields(e *jx.Encoder) {
 	{
-		if s.ActiveOrders != nil {
-			e.FieldStart("activeOrders")
-			e.ArrStart()
-			for _, elem := range s.ActiveOrders {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
-	{
-		if s.Inventory.Set {
-			e.FieldStart("inventory")
-			s.Inventory.Encode(e)
-		}
-	}
-	{
 		if s.PlayerId.Set {
 			e.FieldStart("playerId")
 			s.PlayerId.Encode(e)
@@ -2084,13 +2068,29 @@ func (s *PlayerPortfolio) encodeFields(e *jx.Encoder) {
 			s.Wealth.Encode(e)
 		}
 	}
+	{
+		if s.Inventory.Set {
+			e.FieldStart("inventory")
+			s.Inventory.Encode(e)
+		}
+	}
+	{
+		if s.ActiveOrders != nil {
+			e.FieldStart("activeOrders")
+			e.ArrStart()
+			for _, elem := range s.ActiveOrders {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
 }
 
 var jsonFieldsNameOfPlayerPortfolio = [4]string{
-	0: "activeOrders",
-	1: "inventory",
-	2: "playerId",
-	3: "wealth",
+	0: "playerId",
+	1: "wealth",
+	2: "inventory",
+	3: "activeOrders",
 }
 
 // Decode decodes PlayerPortfolio from json.
@@ -2101,33 +2101,6 @@ func (s *PlayerPortfolio) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "activeOrders":
-			if err := func() error {
-				s.ActiveOrders = make([]Order, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem Order
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.ActiveOrders = append(s.ActiveOrders, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"activeOrders\"")
-			}
-		case "inventory":
-			if err := func() error {
-				s.Inventory.Reset()
-				if err := s.Inventory.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"inventory\"")
-			}
 		case "playerId":
 			if err := func() error {
 				s.PlayerId.Reset()
@@ -2147,6 +2120,33 @@ func (s *PlayerPortfolio) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"wealth\"")
+			}
+		case "inventory":
+			if err := func() error {
+				s.Inventory.Reset()
+				if err := s.Inventory.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"inventory\"")
+			}
+		case "activeOrders":
+			if err := func() error {
+				s.ActiveOrders = make([]Order, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Order
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.ActiveOrders = append(s.ActiveOrders, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"activeOrders\"")
 			}
 		default:
 			return d.Skip()

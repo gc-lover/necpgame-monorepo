@@ -35,6 +35,49 @@ services:
       timeout: 10s
       retries: 3
 
+  # Message Queue
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    ports:
+      - "9094:9092"
+      - "9095:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - necpgame
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    ports:
+      - "2182:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - necpgame
+
   # Core Services
   auth-service:
     build:
@@ -124,10 +167,73 @@ services:
       DB_NAME: necpgame
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - necpgame
+    restart: unless-stopped
+
+  combat-service:
+    build:
+      context: ./services/combat-service-go
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      PORT: "8084"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: necpgame
+      DB_PASSWORD: necpgame_password
+      DB_NAME: necpgame
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - necpgame
+    restart: unless-stopped
+
+  simulation-ticker-service:
+    build:
+      context: ./services/simulation-ticker-service-go
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      PORT: "8084"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - necpgame
+    restart: unless-stopped
+
+  world-simulation-service:
+    build:
+      context: ./services/world-simulation-python
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      PORT: "8085"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CROWD_SIMULATION_ENABLED: "true"
+      CROWD_GRID_WIDTH: "50"
+      CROWD_GRID_HEIGHT: "50"
+      CROWD_NUM_AGENTS: "100"
+    depends_on:
+      kafka:
         condition: service_healthy
     networks:
       - necpgame
@@ -180,6 +286,9 @@ volumes:
   postgres_data:
   redis_data:
   grafana_data:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_logs:
 
 networks:
   necpgame:

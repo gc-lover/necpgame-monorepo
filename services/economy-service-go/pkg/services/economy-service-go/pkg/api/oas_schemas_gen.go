@@ -12,15 +12,25 @@ import (
 // Ref: #/components/schemas/BazaarBotAgent
 type BazaarBotAgent struct {
 	ID           OptString                    `json:"id"`
+	Wealth       OptFloat32                   `json:"wealth"`
+	Personality  OptBazaarBotAgentPersonality `json:"personality"`
 	Inventory    OptBazaarBotAgentInventory   `json:"inventory"`
 	LastActivity OptDateTime                  `json:"lastActivity"`
-	Personality  OptBazaarBotAgentPersonality `json:"personality"`
-	Wealth       OptFloat32                   `json:"wealth"`
 }
 
 // GetID returns the value of ID.
 func (s *BazaarBotAgent) GetID() OptString {
 	return s.ID
+}
+
+// GetWealth returns the value of Wealth.
+func (s *BazaarBotAgent) GetWealth() OptFloat32 {
+	return s.Wealth
+}
+
+// GetPersonality returns the value of Personality.
+func (s *BazaarBotAgent) GetPersonality() OptBazaarBotAgentPersonality {
+	return s.Personality
 }
 
 // GetInventory returns the value of Inventory.
@@ -33,19 +43,19 @@ func (s *BazaarBotAgent) GetLastActivity() OptDateTime {
 	return s.LastActivity
 }
 
-// GetPersonality returns the value of Personality.
-func (s *BazaarBotAgent) GetPersonality() OptBazaarBotAgentPersonality {
-	return s.Personality
-}
-
-// GetWealth returns the value of Wealth.
-func (s *BazaarBotAgent) GetWealth() OptFloat32 {
-	return s.Wealth
-}
-
 // SetID sets the value of ID.
 func (s *BazaarBotAgent) SetID(val OptString) {
 	s.ID = val
+}
+
+// SetWealth sets the value of Wealth.
+func (s *BazaarBotAgent) SetWealth(val OptFloat32) {
+	s.Wealth = val
+}
+
+// SetPersonality sets the value of Personality.
+func (s *BazaarBotAgent) SetPersonality(val OptBazaarBotAgentPersonality) {
+	s.Personality = val
 }
 
 // SetInventory sets the value of Inventory.
@@ -56,16 +66,6 @@ func (s *BazaarBotAgent) SetInventory(val OptBazaarBotAgentInventory) {
 // SetLastActivity sets the value of LastActivity.
 func (s *BazaarBotAgent) SetLastActivity(val OptDateTime) {
 	s.LastActivity = val
-}
-
-// SetPersonality sets the value of Personality.
-func (s *BazaarBotAgent) SetPersonality(val OptBazaarBotAgentPersonality) {
-	s.Personality = val
-}
-
-// SetWealth sets the value of Wealth.
-func (s *BazaarBotAgent) SetWealth(val OptFloat32) {
-	s.Wealth = val
 }
 
 type BazaarBotAgentInventory map[string]int
@@ -80,20 +80,10 @@ func (s *BazaarBotAgentInventory) init() BazaarBotAgentInventory {
 }
 
 type BazaarBotAgentPersonality struct {
-	ImpatienceFactor OptFloat32 `json:"impatienceFactor"`
-	LearningRate     OptFloat32 `json:"learningRate"`
 	RiskTolerance    OptFloat32 `json:"riskTolerance"`
+	ImpatienceFactor OptFloat32 `json:"impatienceFactor"`
 	SocialInfluence  OptFloat32 `json:"socialInfluence"`
-}
-
-// GetImpatienceFactor returns the value of ImpatienceFactor.
-func (s *BazaarBotAgentPersonality) GetImpatienceFactor() OptFloat32 {
-	return s.ImpatienceFactor
-}
-
-// GetLearningRate returns the value of LearningRate.
-func (s *BazaarBotAgentPersonality) GetLearningRate() OptFloat32 {
-	return s.LearningRate
+	LearningRate     OptFloat32 `json:"learningRate"`
 }
 
 // GetRiskTolerance returns the value of RiskTolerance.
@@ -101,19 +91,19 @@ func (s *BazaarBotAgentPersonality) GetRiskTolerance() OptFloat32 {
 	return s.RiskTolerance
 }
 
+// GetImpatienceFactor returns the value of ImpatienceFactor.
+func (s *BazaarBotAgentPersonality) GetImpatienceFactor() OptFloat32 {
+	return s.ImpatienceFactor
+}
+
 // GetSocialInfluence returns the value of SocialInfluence.
 func (s *BazaarBotAgentPersonality) GetSocialInfluence() OptFloat32 {
 	return s.SocialInfluence
 }
 
-// SetImpatienceFactor sets the value of ImpatienceFactor.
-func (s *BazaarBotAgentPersonality) SetImpatienceFactor(val OptFloat32) {
-	s.ImpatienceFactor = val
-}
-
-// SetLearningRate sets the value of LearningRate.
-func (s *BazaarBotAgentPersonality) SetLearningRate(val OptFloat32) {
-	s.LearningRate = val
+// GetLearningRate returns the value of LearningRate.
+func (s *BazaarBotAgentPersonality) GetLearningRate() OptFloat32 {
+	return s.LearningRate
 }
 
 // SetRiskTolerance sets the value of RiskTolerance.
@@ -121,9 +111,19 @@ func (s *BazaarBotAgentPersonality) SetRiskTolerance(val OptFloat32) {
 	s.RiskTolerance = val
 }
 
+// SetImpatienceFactor sets the value of ImpatienceFactor.
+func (s *BazaarBotAgentPersonality) SetImpatienceFactor(val OptFloat32) {
+	s.ImpatienceFactor = val
+}
+
 // SetSocialInfluence sets the value of SocialInfluence.
 func (s *BazaarBotAgentPersonality) SetSocialInfluence(val OptFloat32) {
 	s.SocialInfluence = val
+}
+
+// SetLearningRate sets the value of LearningRate.
+func (s *BazaarBotAgentPersonality) SetLearningRate(val OptFloat32) {
+	s.LearningRate = val
 }
 
 // Ref: #/components/schemas/BazaarBotAgents
@@ -144,11 +144,11 @@ func (s *BazaarBotAgents) SetAgents(val []BazaarBotAgent) {
 // Ref: #/components/schemas/BazaarBotStatus
 type BazaarBotStatus struct {
 	Active       OptBool     `json:"active"`
-	ActiveAgents OptInt      `json:"activeAgents"`
 	LastTick     OptDateTime `json:"lastTick"`
+	ActiveAgents OptInt      `json:"activeAgents"`
+	TotalMarkets OptInt      `json:"totalMarkets"`
 	// Uptime in seconds.
 	SimulationUptime OptInt `json:"simulationUptime"`
-	TotalMarkets     OptInt `json:"totalMarkets"`
 }
 
 // GetActive returns the value of Active.
@@ -156,19 +156,14 @@ func (s *BazaarBotStatus) GetActive() OptBool {
 	return s.Active
 }
 
-// GetActiveAgents returns the value of ActiveAgents.
-func (s *BazaarBotStatus) GetActiveAgents() OptInt {
-	return s.ActiveAgents
-}
-
 // GetLastTick returns the value of LastTick.
 func (s *BazaarBotStatus) GetLastTick() OptDateTime {
 	return s.LastTick
 }
 
-// GetSimulationUptime returns the value of SimulationUptime.
-func (s *BazaarBotStatus) GetSimulationUptime() OptInt {
-	return s.SimulationUptime
+// GetActiveAgents returns the value of ActiveAgents.
+func (s *BazaarBotStatus) GetActiveAgents() OptInt {
+	return s.ActiveAgents
 }
 
 // GetTotalMarkets returns the value of TotalMarkets.
@@ -176,14 +171,14 @@ func (s *BazaarBotStatus) GetTotalMarkets() OptInt {
 	return s.TotalMarkets
 }
 
+// GetSimulationUptime returns the value of SimulationUptime.
+func (s *BazaarBotStatus) GetSimulationUptime() OptInt {
+	return s.SimulationUptime
+}
+
 // SetActive sets the value of Active.
 func (s *BazaarBotStatus) SetActive(val OptBool) {
 	s.Active = val
-}
-
-// SetActiveAgents sets the value of ActiveAgents.
-func (s *BazaarBotStatus) SetActiveAgents(val OptInt) {
-	s.ActiveAgents = val
 }
 
 // SetLastTick sets the value of LastTick.
@@ -191,14 +186,19 @@ func (s *BazaarBotStatus) SetLastTick(val OptDateTime) {
 	s.LastTick = val
 }
 
-// SetSimulationUptime sets the value of SimulationUptime.
-func (s *BazaarBotStatus) SetSimulationUptime(val OptInt) {
-	s.SimulationUptime = val
+// SetActiveAgents sets the value of ActiveAgents.
+func (s *BazaarBotStatus) SetActiveAgents(val OptInt) {
+	s.ActiveAgents = val
 }
 
 // SetTotalMarkets sets the value of TotalMarkets.
 func (s *BazaarBotStatus) SetTotalMarkets(val OptInt) {
 	s.TotalMarkets = val
+}
+
+// SetSimulationUptime sets the value of SimulationUptime.
+func (s *BazaarBotStatus) SetSimulationUptime(val OptInt) {
+	s.SimulationUptime = val
 }
 
 // Market commodities.
@@ -283,9 +283,9 @@ func (s *Commodity) UnmarshalText(data []byte) error {
 type HealthResponse struct {
 	Status    OptHealthResponseStatus `json:"status"`
 	Timestamp OptDateTime             `json:"timestamp"`
+	Version   OptString               `json:"version"`
 	// Uptime in seconds.
-	Uptime  OptInt    `json:"uptime"`
-	Version OptString `json:"version"`
+	Uptime OptInt `json:"uptime"`
 }
 
 // GetStatus returns the value of Status.
@@ -298,14 +298,14 @@ func (s *HealthResponse) GetTimestamp() OptDateTime {
 	return s.Timestamp
 }
 
-// GetUptime returns the value of Uptime.
-func (s *HealthResponse) GetUptime() OptInt {
-	return s.Uptime
-}
-
 // GetVersion returns the value of Version.
 func (s *HealthResponse) GetVersion() OptString {
 	return s.Version
+}
+
+// GetUptime returns the value of Uptime.
+func (s *HealthResponse) GetUptime() OptInt {
+	return s.Uptime
 }
 
 // SetStatus sets the value of Status.
@@ -318,14 +318,14 @@ func (s *HealthResponse) SetTimestamp(val OptDateTime) {
 	s.Timestamp = val
 }
 
-// SetUptime sets the value of Uptime.
-func (s *HealthResponse) SetUptime(val OptInt) {
-	s.Uptime = val
-}
-
 // SetVersion sets the value of Version.
 func (s *HealthResponse) SetVersion(val OptString) {
 	s.Version = val
+}
+
+// SetUptime sets the value of Uptime.
+func (s *HealthResponse) SetUptime(val OptInt) {
+	s.Uptime = val
 }
 
 type HealthResponseStatus string
@@ -396,14 +396,9 @@ func (s *MarketHistory) SetPrices(val []MarketHistoryPricesItem) {
 }
 
 type MarketHistoryPricesItem struct {
-	Price     OptFloat32  `json:"price"`
 	Timestamp OptDateTime `json:"timestamp"`
+	Price     OptFloat32  `json:"price"`
 	Volume    OptInt      `json:"volume"`
-}
-
-// GetPrice returns the value of Price.
-func (s *MarketHistoryPricesItem) GetPrice() OptFloat32 {
-	return s.Price
 }
 
 // GetTimestamp returns the value of Timestamp.
@@ -411,19 +406,24 @@ func (s *MarketHistoryPricesItem) GetTimestamp() OptDateTime {
 	return s.Timestamp
 }
 
+// GetPrice returns the value of Price.
+func (s *MarketHistoryPricesItem) GetPrice() OptFloat32 {
+	return s.Price
+}
+
 // GetVolume returns the value of Volume.
 func (s *MarketHistoryPricesItem) GetVolume() OptInt {
 	return s.Volume
 }
 
-// SetPrice sets the value of Price.
-func (s *MarketHistoryPricesItem) SetPrice(val OptFloat32) {
-	s.Price = val
-}
-
 // SetTimestamp sets the value of Timestamp.
 func (s *MarketHistoryPricesItem) SetTimestamp(val OptDateTime) {
 	s.Timestamp = val
+}
+
+// SetPrice sets the value of Price.
+func (s *MarketHistoryPricesItem) SetPrice(val OptFloat32) {
+	s.Price = val
 }
 
 // SetVolume sets the value of Volume.
@@ -433,16 +433,11 @@ func (s *MarketHistoryPricesItem) SetVolume(val OptInt) {
 
 // Ref: #/components/schemas/MarketPrice
 type MarketPrice struct {
-	Change24h  OptFloat32   `json:"change24h"`
 	Commodity  OptCommodity `json:"commodity"`
-	LastUpdate OptDateTime  `json:"lastUpdate"`
 	Price      OptFloat32   `json:"price"`
+	Change24h  OptFloat32   `json:"change24h"`
 	Volume24h  OptInt       `json:"volume24h"`
-}
-
-// GetChange24h returns the value of Change24h.
-func (s *MarketPrice) GetChange24h() OptFloat32 {
-	return s.Change24h
+	LastUpdate OptDateTime  `json:"lastUpdate"`
 }
 
 // GetCommodity returns the value of Commodity.
@@ -450,14 +445,14 @@ func (s *MarketPrice) GetCommodity() OptCommodity {
 	return s.Commodity
 }
 
-// GetLastUpdate returns the value of LastUpdate.
-func (s *MarketPrice) GetLastUpdate() OptDateTime {
-	return s.LastUpdate
-}
-
 // GetPrice returns the value of Price.
 func (s *MarketPrice) GetPrice() OptFloat32 {
 	return s.Price
+}
+
+// GetChange24h returns the value of Change24h.
+func (s *MarketPrice) GetChange24h() OptFloat32 {
+	return s.Change24h
 }
 
 // GetVolume24h returns the value of Volume24h.
@@ -465,9 +460,9 @@ func (s *MarketPrice) GetVolume24h() OptInt {
 	return s.Volume24h
 }
 
-// SetChange24h sets the value of Change24h.
-func (s *MarketPrice) SetChange24h(val OptFloat32) {
-	s.Change24h = val
+// GetLastUpdate returns the value of LastUpdate.
+func (s *MarketPrice) GetLastUpdate() OptDateTime {
+	return s.LastUpdate
 }
 
 // SetCommodity sets the value of Commodity.
@@ -475,19 +470,24 @@ func (s *MarketPrice) SetCommodity(val OptCommodity) {
 	s.Commodity = val
 }
 
-// SetLastUpdate sets the value of LastUpdate.
-func (s *MarketPrice) SetLastUpdate(val OptDateTime) {
-	s.LastUpdate = val
-}
-
 // SetPrice sets the value of Price.
 func (s *MarketPrice) SetPrice(val OptFloat32) {
 	s.Price = val
 }
 
+// SetChange24h sets the value of Change24h.
+func (s *MarketPrice) SetChange24h(val OptFloat32) {
+	s.Change24h = val
+}
+
 // SetVolume24h sets the value of Volume24h.
 func (s *MarketPrice) SetVolume24h(val OptInt) {
 	s.Volume24h = val
+}
+
+// SetLastUpdate sets the value of LastUpdate.
+func (s *MarketPrice) SetLastUpdate(val OptDateTime) {
+	s.LastUpdate = val
 }
 
 // NewOptBazaarBotAgentInventory returns new OptBazaarBotAgentInventory with value set to v.
@@ -1090,23 +1090,13 @@ func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 
 // Ref: #/components/schemas/Order
 type Order struct {
-	Commodity OptCommodity `json:"commodity"`
-	CreatedAt OptDateTime  `json:"createdAt"`
 	ID        OptUUID      `json:"id"`
 	PlayerId  OptUUID      `json:"playerId"`
+	Type      OptOrderType `json:"type"`
+	Commodity OptCommodity `json:"commodity"`
 	Price     OptFloat32   `json:"price"`
 	Quantity  OptInt       `json:"quantity"`
-	Type      OptOrderType `json:"type"`
-}
-
-// GetCommodity returns the value of Commodity.
-func (s *Order) GetCommodity() OptCommodity {
-	return s.Commodity
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *Order) GetCreatedAt() OptDateTime {
-	return s.CreatedAt
+	CreatedAt OptDateTime  `json:"createdAt"`
 }
 
 // GetID returns the value of ID.
@@ -1119,6 +1109,16 @@ func (s *Order) GetPlayerId() OptUUID {
 	return s.PlayerId
 }
 
+// GetType returns the value of Type.
+func (s *Order) GetType() OptOrderType {
+	return s.Type
+}
+
+// GetCommodity returns the value of Commodity.
+func (s *Order) GetCommodity() OptCommodity {
+	return s.Commodity
+}
+
 // GetPrice returns the value of Price.
 func (s *Order) GetPrice() OptFloat32 {
 	return s.Price
@@ -1129,19 +1129,9 @@ func (s *Order) GetQuantity() OptInt {
 	return s.Quantity
 }
 
-// GetType returns the value of Type.
-func (s *Order) GetType() OptOrderType {
-	return s.Type
-}
-
-// SetCommodity sets the value of Commodity.
-func (s *Order) SetCommodity(val OptCommodity) {
-	s.Commodity = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *Order) SetCreatedAt(val OptDateTime) {
-	s.CreatedAt = val
+// GetCreatedAt returns the value of CreatedAt.
+func (s *Order) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
 }
 
 // SetID sets the value of ID.
@@ -1154,6 +1144,16 @@ func (s *Order) SetPlayerId(val OptUUID) {
 	s.PlayerId = val
 }
 
+// SetType sets the value of Type.
+func (s *Order) SetType(val OptOrderType) {
+	s.Type = val
+}
+
+// SetCommodity sets the value of Commodity.
+func (s *Order) SetCommodity(val OptCommodity) {
+	s.Commodity = val
+}
+
 // SetPrice sets the value of Price.
 func (s *Order) SetPrice(val OptFloat32) {
 	s.Price = val
@@ -1164,21 +1164,16 @@ func (s *Order) SetQuantity(val OptInt) {
 	s.Quantity = val
 }
 
-// SetType sets the value of Type.
-func (s *Order) SetType(val OptOrderType) {
-	s.Type = val
+// SetCreatedAt sets the value of CreatedAt.
+func (s *Order) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
 }
 
 // Ref: #/components/schemas/OrderResponse
 type OrderResponse struct {
-	Message OptString              `json:"message"`
 	OrderId OptUUID                `json:"orderId"`
 	Status  OptOrderResponseStatus `json:"status"`
-}
-
-// GetMessage returns the value of Message.
-func (s *OrderResponse) GetMessage() OptString {
-	return s.Message
+	Message OptString              `json:"message"`
 }
 
 // GetOrderId returns the value of OrderId.
@@ -1191,9 +1186,9 @@ func (s *OrderResponse) GetStatus() OptOrderResponseStatus {
 	return s.Status
 }
 
-// SetMessage sets the value of Message.
-func (s *OrderResponse) SetMessage(val OptString) {
-	s.Message = val
+// GetMessage returns the value of Message.
+func (s *OrderResponse) GetMessage() OptString {
+	return s.Message
 }
 
 // SetOrderId sets the value of OrderId.
@@ -1204,6 +1199,11 @@ func (s *OrderResponse) SetOrderId(val OptUUID) {
 // SetStatus sets the value of Status.
 func (s *OrderResponse) SetStatus(val OptOrderResponseStatus) {
 	s.Status = val
+}
+
+// SetMessage sets the value of Message.
+func (s *OrderResponse) SetMessage(val OptString) {
+	s.Message = val
 }
 
 type OrderResponseStatus string
@@ -1297,9 +1297,14 @@ func (s *OrderType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/PlaceOrderRequest
 type PlaceOrderRequest struct {
+	Type     PlaceOrderRequestType `json:"type"`
 	Price    float32               `json:"price"`
 	Quantity int                   `json:"quantity"`
-	Type     PlaceOrderRequestType `json:"type"`
+}
+
+// GetType returns the value of Type.
+func (s *PlaceOrderRequest) GetType() PlaceOrderRequestType {
+	return s.Type
 }
 
 // GetPrice returns the value of Price.
@@ -1312,9 +1317,9 @@ func (s *PlaceOrderRequest) GetQuantity() int {
 	return s.Quantity
 }
 
-// GetType returns the value of Type.
-func (s *PlaceOrderRequest) GetType() PlaceOrderRequestType {
-	return s.Type
+// SetType sets the value of Type.
+func (s *PlaceOrderRequest) SetType(val PlaceOrderRequestType) {
+	s.Type = val
 }
 
 // SetPrice sets the value of Price.
@@ -1325,11 +1330,6 @@ func (s *PlaceOrderRequest) SetPrice(val float32) {
 // SetQuantity sets the value of Quantity.
 func (s *PlaceOrderRequest) SetQuantity(val int) {
 	s.Quantity = val
-}
-
-// SetType sets the value of Type.
-func (s *PlaceOrderRequest) SetType(val PlaceOrderRequestType) {
-	s.Type = val
 }
 
 type PlaceOrderRequestType string
@@ -1377,20 +1377,10 @@ type PlayerOrders []Order
 
 // Ref: #/components/schemas/PlayerPortfolio
 type PlayerPortfolio struct {
-	ActiveOrders []Order                     `json:"activeOrders"`
-	Inventory    OptPlayerPortfolioInventory `json:"inventory"`
 	PlayerId     OptUUID                     `json:"playerId"`
 	Wealth       OptFloat32                  `json:"wealth"`
-}
-
-// GetActiveOrders returns the value of ActiveOrders.
-func (s *PlayerPortfolio) GetActiveOrders() []Order {
-	return s.ActiveOrders
-}
-
-// GetInventory returns the value of Inventory.
-func (s *PlayerPortfolio) GetInventory() OptPlayerPortfolioInventory {
-	return s.Inventory
+	Inventory    OptPlayerPortfolioInventory `json:"inventory"`
+	ActiveOrders []Order                     `json:"activeOrders"`
 }
 
 // GetPlayerId returns the value of PlayerId.
@@ -1403,14 +1393,14 @@ func (s *PlayerPortfolio) GetWealth() OptFloat32 {
 	return s.Wealth
 }
 
-// SetActiveOrders sets the value of ActiveOrders.
-func (s *PlayerPortfolio) SetActiveOrders(val []Order) {
-	s.ActiveOrders = val
+// GetInventory returns the value of Inventory.
+func (s *PlayerPortfolio) GetInventory() OptPlayerPortfolioInventory {
+	return s.Inventory
 }
 
-// SetInventory sets the value of Inventory.
-func (s *PlayerPortfolio) SetInventory(val OptPlayerPortfolioInventory) {
-	s.Inventory = val
+// GetActiveOrders returns the value of ActiveOrders.
+func (s *PlayerPortfolio) GetActiveOrders() []Order {
+	return s.ActiveOrders
 }
 
 // SetPlayerId sets the value of PlayerId.
@@ -1421,6 +1411,16 @@ func (s *PlayerPortfolio) SetPlayerId(val OptUUID) {
 // SetWealth sets the value of Wealth.
 func (s *PlayerPortfolio) SetWealth(val OptFloat32) {
 	s.Wealth = val
+}
+
+// SetInventory sets the value of Inventory.
+func (s *PlayerPortfolio) SetInventory(val OptPlayerPortfolioInventory) {
+	s.Inventory = val
+}
+
+// SetActiveOrders sets the value of ActiveOrders.
+func (s *PlayerPortfolio) SetActiveOrders(val []Order) {
+	s.ActiveOrders = val
 }
 
 type PlayerPortfolioInventory map[string]int

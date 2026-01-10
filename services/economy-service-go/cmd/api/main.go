@@ -1,3 +1,5 @@
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target ../../pkg/services/economy-service-go/pkg/api --package api ../../bundled.yaml
+
 package main
 
 import (
@@ -82,7 +84,14 @@ func initDatabasePool() error {
 }
 
 func main() {
-	fmt.Println("Economy Service Starting...")
+	// Initialize structured logger
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatal("Failed to create logger", err)
+	}
+	defer logger.Sync()
+
+	logger.Info("Economy Service Starting")
 
 	// Initialize database connection pool
 	if err := initDatabasePool(); err != nil {
@@ -232,6 +241,10 @@ func processHourlyTick(ctx context.Context, tickEvent *TickEventMessage) error {
 
 	// Initialize repository for agent management
 	repo := repository.NewRepository(dbPool, zap.L().Named("economy-repo"))
+
+	// Declare price and volume variables for market clearing result
+	var price float64
+	var volume int
 
 	// Ensure default agents exist for food commodity
 	if err := repo.CreateDefaultAgents(ctx, bazaar.CommodityFood); err != nil {
@@ -447,6 +460,10 @@ func updateAllActiveMarkets(ctx context.Context, writer *kafka.Writer, tickEvent
 	}
 
 	for _, commodity := range commodities {
+		// Declare price and volume variables for this commodity
+		var price float64
+		var volume int
+
 		// Ensure default agents exist for this commodity
 		if err := repo.CreateDefaultAgents(ctx, commodity); err != nil {
 			log.Printf("Warning: Failed to create default agents for %s: %v", commodity, err)
@@ -461,8 +478,8 @@ func updateAllActiveMarkets(ctx context.Context, writer *kafka.Writer, tickEvent
 			agents := []*bazaar.AgentLogic{}
 			market := bazaar.NewMarketLogic(commodity)
 			result := market.Clear(agents)
-			price := result.NewPrices[commodity]
-			volume := result.TotalVolume
+			price = result.NewPrices[commodity]
+			volume = result.TotalVolume
 			log.Printf("Market cleared with empty agents - Commodity: %s, Price: %.2f, Volume: %d", commodity, price, volume)
 		} else {
 			// Convert database agents to bazaar agents
@@ -486,8 +503,8 @@ func updateAllActiveMarkets(ctx context.Context, writer *kafka.Writer, tickEvent
 				}
 			}
 
-			price := result.NewPrices[commodity]
-			volume := result.TotalVolume
+			price = result.NewPrices[commodity]
+			volume = result.TotalVolume
 		}
 
 		// Create market cleared event for this commodity
