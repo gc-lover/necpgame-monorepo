@@ -255,7 +255,7 @@ class NECPGAMESimpleHealthChecker:
         print(f"   Healthy: {summary['healthy_services']} ✅")
         print(f"   Warning: {summary['warning_services']} ⚠️")
         print(f"   Critical: {summary['critical_services']} ❌")
-        print(".1f"
+        print(f"   Health Percentage: {summary['health_percentage']:.1f}%")
         status_emoji = {
             "healthy": "🟢",
             "warning": "🟡",

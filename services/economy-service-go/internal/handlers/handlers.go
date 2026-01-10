@@ -89,25 +89,21 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 	order := &bazaar.Order{
 		ID:       fmt.Sprintf("order-%d", time.Now().UnixNano()),
 		Type:     bazaar.OrderType(req.Type),
-		Price:    req.Price,
+		Price:    float64(req.Price),
 		Quantity: req.Quantity,
 		PlayerID: userID,
 		CreatedAt: time.Now(),
 	}
 
 	// Add order to market
-	err := market.AddOrder(order)
-	if err != nil {
-		h.logger.Error("Failed to add order to market", zap.Error(err))
-		return nil, fmt.Errorf("failed to place order: %v", err)
-	}
+	market.AddOrder(order)
 
 	// Try to clear market (execute trades)
 	trades := market.ClearMarket()
 
 	response := &api.OrderResponse{
-		OrderID: api.NewOptString(order.ID),
-		Status:  api.NewOptOrderResponseStatus(api.OrderResponseStatusPlaced),
+		OrderId: api.NewOptUUID(order.ID),
+		Status:  api.NewOptOrderResponseStatus(api.OrderResponseStatusPending),
 		Message: api.NewOptString("Order placed successfully"),
 	}
 
