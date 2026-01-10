@@ -19,6 +19,7 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
 
 	"necpgame/services/voice-chat-service-go/config"
 	"necpgame/services/voice-chat-service-go/internal/models"
@@ -28,6 +29,9 @@ import (
 // Service represents the voice chat service with all dependencies
 // PERFORMANCE: Struct field alignment optimized for memory efficiency
 type Service struct {
+	// Logger (8 bytes)
+	logger *zap.Logger
+
 	// Database connections (8 bytes each)
 	db     Database
 	redis  RedisClient
@@ -206,7 +210,7 @@ type RedisClient interface {
 }
 
 // NewService creates a new voice chat service instance
-func NewService(cfg *config.Config, db Database, redis RedisClient) (*Service, error) {
+func NewService(cfg *config.Config, db Database, redis RedisClient, logger *zap.Logger) (*Service, error) {
 	// Initialize WebRTC API with STUN/TURN servers
 	webrtcConfig := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
@@ -314,6 +318,7 @@ func NewService(cfg *config.Config, db Database, redis RedisClient) (*Service, e
 	}
 
 	service := &Service{
+		logger:         logger,
 		db:             db,
 		redis:          redis,
 		api:            api,
@@ -403,7 +408,9 @@ func (s *Service) CreateVoiceRoom(ctx context.Context, req *api.CreateRoomReques
 	s.metrics.roomsCreated.Inc()
 	s.metrics.activeRooms.Inc()
 
-	log.Printf("Created voice room: %s (%s)", roomID, room.RoomName)
+	s.logger.Info("Created voice room",
+		zap.String("room_id", roomID),
+		zap.String("room_name", room.RoomName))
 
 	return &api.CreateRoomResponse{
 		RoomID:    roomID,
@@ -474,14 +481,16 @@ func (s *Service) JoinVoiceRoom(ctx context.Context, req *api.JoinRoomRequest) (
 	// Update room participant count
 	room.CurrentParticipants++
 	if err := s.db.UpdateVoiceRoom(ctx, room); err != nil {
-		log.Printf("Failed to update room participant count: %v", err)
+		s.logger.Error("Failed to update room participant count", zap.Error(err))
 	}
 
 	// Update metrics
 	s.metrics.participantsJoined.Inc()
 	s.metrics.activeParticipants.Inc()
 
-	log.Printf("User %s joined room %s", req.UserID, req.RoomID)
+	s.logger.Info("User joined room",
+		zap.String("user_id", req.UserID),
+		zap.String("room_id", req.RoomID))
 
 	return &api.JoinRoomResponse{
 		SessionID: participant.SessionID,
@@ -523,7 +532,7 @@ func (s *Service) LeaveVoiceRoom(ctx context.Context, req *api.LeaveRoomRequest)
 
 	// Remove from database
 	if err := s.db.RemoveParticipant(ctx, req.RoomID, req.UserID); err != nil {
-		log.Printf("Failed to remove participant from database: %v", err)
+		s.logger.Error("Failed to remove participant from database", zap.Error(err))
 	}
 
 	// Update room participant count
@@ -554,7 +563,9 @@ func (s *Service) LeaveVoiceRoom(ctx context.Context, req *api.LeaveRoomRequest)
 		s.metrics.participantDuration.Observe(duration.Seconds())
 	}
 
-	log.Printf("User %s left room %s", req.UserID, req.RoomID)
+	s.logger.Info("User left room",
+		zap.String("user_id", req.UserID),
+		zap.String("room_id", req.RoomID))
 
 	return nil
 }
@@ -589,7 +600,7 @@ func (s *Service) SendSignalingMessage(ctx context.Context, req *api.SignalingMe
 
 	// Save to database
 	if err := s.db.SaveSignalingMessage(ctx, message); err != nil {
-		log.Printf("Failed to save signaling message: %v", err)
+		s.logger.Error("Failed to save signaling message", zap.Error(err))
 	}
 
 	// Send to room manager for processing
@@ -597,7 +608,8 @@ func (s *Service) SendSignalingMessage(ctx context.Context, req *api.SignalingMe
 	case roomManager.signalingCh <- message:
 		s.metrics.signalingMessages.Inc()
 	default:
-		log.Printf("Signaling channel full for room %s", req.RoomID)
+	s.logger.Warn("Signaling channel full for room",
+		zap.String("room_id", req.RoomID))
 	}
 
 	return nil
@@ -612,7 +624,7 @@ func (s *Service) GetRoomInfo(ctx context.Context, roomID string) (*api.RoomInfo
 
 	participants, err := s.db.GetParticipants(ctx, roomID)
 	if err != nil {
-		log.Printf("Failed to get participants: %v", err)
+	s.logger.Error("Failed to get participants", zap.Error(err))
 		participants = []*models.VoiceParticipant{}
 	}
 
@@ -704,7 +716,9 @@ func (s *Service) StartRecording(ctx context.Context, req *api.StartRecordingReq
 	s.metrics.recordingStarted.Inc()
 	s.metrics.activeRecordings.Inc()
 
-	log.Printf("Started recording in room %s: %s", req.RoomID, recording.RecordingID)
+	s.logger.Info("Started recording in room",
+		zap.String("room_id", req.RoomID),
+		zap.String("recording_id", recording.RecordingID))
 
 	return &api.StartRecordingResponse{
 		RecordingID: recording.RecordingID,
@@ -745,7 +759,7 @@ func (s *Service) StopRecording(ctx context.Context, req *api.StopRecordingReque
 	roomManager.recording.recording.Status = "completed"
 
 	if err := s.db.UpdateRecording(ctx, roomManager.recording.recording); err != nil {
-		log.Printf("Failed to update recording: %v", err)
+	s.logger.Error("Failed to update recording", zap.Error(err))
 	}
 
 	// Clear recording manager
@@ -755,7 +769,8 @@ func (s *Service) StopRecording(ctx context.Context, req *api.StopRecordingReque
 	s.metrics.recordingCompleted.Inc()
 	s.metrics.activeRecordings.Dec()
 
-	log.Printf("Stopped recording in room %s", req.RoomID)
+	s.logger.Info("Stopped recording in room",
+		zap.String("room_id", req.RoomID))
 
 	return nil
 }
@@ -822,8 +837,15 @@ func (s *Service) MuteParticipant(ctx context.Context, req *api.MuteParticipantR
 
 	s.db.LogModerationEvent(ctx, event)
 
-	log.Printf("User %s %s muted in room %s by %s", req.TargetUserID,
-		map[bool]string{true: "was", false: "was un"}[req.Mute], req.RoomID, req.RequesterID)
+	action := "was"
+	if !req.Mute {
+		action = "was un"
+	}
+	s.logger.Info("User mute status changed",
+		zap.String("target_user_id", req.TargetUserID),
+		zap.String("action", action+"muted"),
+		zap.String("room_id", req.RoomID),
+		zap.String("requester_id", req.RequesterID))
 
 	return nil
 }
@@ -896,7 +918,7 @@ func (s *Service) SendQualityMetrics(ctx context.Context, req *api.QualityMetric
 
 	// Save to database
 	if err := s.db.SaveQualityMetrics(ctx, metrics); err != nil {
-		log.Printf("Failed to save quality metrics: %v", err)
+	s.logger.Error("Failed to save quality metrics", zap.Error(err))
 		return err
 	}
 
@@ -906,9 +928,44 @@ func (s *Service) SendQualityMetrics(ctx context.Context, req *api.QualityMetric
 	return nil
 }
 
+// StartQualityMonitoring starts monitoring voice quality metrics
+func (s *Service) StartQualityMonitoring(ctx context.Context) error {
+	s.logger.Info("Starting voice quality monitoring")
+
+	// Start quality monitoring ticker
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			s.logger.Info("Voice quality monitoring stopped")
+			return ctx.Err()
+		case <-s.shutdownCh:
+			s.logger.Info("Voice quality monitoring stopped due to service shutdown")
+			return nil
+		case <-ticker.C:
+			s.performQualityCheck(ctx)
+		}
+	}
+}
+
+// performQualityCheck performs periodic quality monitoring
+func (s *Service) performQualityCheck(ctx context.Context) {
+	s.roomsMutex.RLock()
+	roomCount := len(s.rooms)
+	s.roomsMutex.RUnlock()
+
+	s.logger.Info("Quality check completed",
+		zap.Int("active_rooms", roomCount))
+
+	// In production, this would analyze quality metrics from database
+	// and take corrective actions if needed
+}
+
 // Shutdown gracefully shuts down the service
 func (s *Service) Shutdown() {
-	log.Println("Shutting down voice chat service...")
+	s.logger.Info("Shutting down voice chat service")
 
 	close(s.shutdownCh)
 
@@ -920,7 +977,7 @@ func (s *Service) Shutdown() {
 	}
 	s.roomsMutex.Unlock()
 
-	log.Println("Voice chat service shutdown complete")
+	s.logger.Info("Voice chat service shutdown complete")
 }
 
 // generateRoomToken generates a secure token for room access

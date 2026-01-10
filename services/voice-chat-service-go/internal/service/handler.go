@@ -11,11 +11,13 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"necpgame/services/voice-chat-service-go/pkg/api"
 )
@@ -660,7 +662,9 @@ func (h *Handler) sendError(w http.ResponseWriter, message string, status int) {
 	}
 
 	if status >= 500 {
-		log.Printf("HTTP %d error: %s", status, message)
+		h.service.logger.Error("HTTP server error",
+			zap.Int("status", status),
+			zap.String("message", message))
 	}
 
 	h.sendJSON(w, response, status)

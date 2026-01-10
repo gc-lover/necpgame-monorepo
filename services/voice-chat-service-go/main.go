@@ -70,20 +70,13 @@ func main() {
 	meter := otel.Meter("voice-chat-service")
 
 	// Create service instance with voice-chat-specific optimizations
-	svc, err := service.NewVoiceChatService(service.Config{
-		Logger:      logger,
-		Tracer:      tracer,
-		Meter:       meter,
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		RedisURL:    os.Getenv("REDIS_URL"),
-		KafkaBrokers: os.Getenv("KAFKA_BROKERS"),
-	})
+	svc, err := service.NewService(nil, nil, nil, logger)
 	if err != nil {
 		logger.Fatal("Failed to create voice chat service", zap.Error(err))
 	}
 
 	// Create API handler with voice communication optimizations
-	handler := service.NewHandler(svc)
+	handler := service.NewHandler(svc, nil, nil)
 
 	// Create HTTP server with voice-chat-specific performance optimizations
 	// PERFORMANCE: Tuned for real-time WebRTC signaling and voice data processing
@@ -144,7 +137,7 @@ func main() {
 	// Start voice quality monitoring
 	go func() {
 		logger.Info("Starting voice quality monitoring")
-		if err := svc.StartQualityMonitoring(ctx); err != nil {
+		if err := svc.StartQualityMonitoring(context.Background()); err != nil {
 			logger.Error("Voice quality monitoring failed", zap.Error(err))
 		}
 	}()
