@@ -13,108 +13,186 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// CreateExample implements createExample operation.
+// CancelEvent implements cancelEvent operation.
 //
-// **Enterprise-grade creation endpoint**
-// Validates business rules, applies security checks, and ensures data consistency.
-// Supports optimistic locking for concurrent operations.
-// **Performance:** <50ms P95, includes validation and business logic.
+// **Cancel an active or announced world event**
+// Cancels the event and notifies all participants.
+// **Performance:** <20ms for event cancellation.
 //
-// POST /examples
-func (UnimplementedHandler) CreateExample(ctx context.Context, req *CreateExampleRequest) (r CreateExampleRes, _ error) {
+// DELETE /events/{eventId}
+func (UnimplementedHandler) CancelEvent(ctx context.Context, params CancelEventParams) (r CancelEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// DeleteExample implements deleteExample operation.
+// ClaimReward implements claimReward operation.
 //
-// **Enterprise-grade deletion endpoint**
-// Supports soft deletes with audit trails and cleanup scheduling.
-// Ensures referential integrity and cascading deletes.
-// **Performance:** <15ms P95, includes cleanup operations.
+// **Claim a specific reward from event**
+// Marks reward as claimed and triggers reward delivery.
+// **Performance:** <25ms for reward claiming and delivery.
 //
-// DELETE /examples/{example_id}
-func (UnimplementedHandler) DeleteExample(ctx context.Context, params DeleteExampleParams) (r DeleteExampleRes, _ error) {
+// POST /events/{eventId}/rewards
+func (UnimplementedHandler) ClaimReward(ctx context.Context, req *ClaimRewardReq, params ClaimRewardParams) (r ClaimRewardRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// ExampleDomainBatchHealthCheck implements exampleDomainBatchHealthCheck operation.
+// CreateEvent implements createEvent operation.
 //
-// **Performance optimization:** Check multiple domain health in single request
-// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-// Eliminates network overhead in health monitoring scenarios.
-// **Use case:** Service mesh health checks, Kubernetes readiness probes.
+// **Create a new world event**
+// Creates a new world event with full validation and business rules enforcement.
+// **Performance:** <50ms for event creation and validation.
 //
-// POST /health/batch
-func (UnimplementedHandler) ExampleDomainBatchHealthCheck(ctx context.Context, req *ExampleDomainBatchHealthCheckReq) (r ExampleDomainBatchHealthCheckRes, _ error) {
+// POST /events
+func (UnimplementedHandler) CreateEvent(ctx context.Context, req *CreateEventRequest) (r CreateEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// GetExample implements getExample operation.
+// CreateEventTemplate implements createEventTemplate operation.
 //
-// **Enterprise-grade retrieval endpoint**
-// Optimized with proper caching strategies and database indexing.
-// Supports conditional requests with ETags.
-// **Performance:** <5ms P95 with Redis caching.
+// **Create a new reusable event template**
+// Creates template with full validation for reuse in future events.
+// **Performance:** <30ms for template creation and validation.
 //
-// GET /examples/{example_id}
-func (UnimplementedHandler) GetExample(ctx context.Context, params GetExampleParams) (r GetExampleRes, _ error) {
+// POST /templates
+func (UnimplementedHandler) CreateEventTemplate(ctx context.Context, req *CreateTemplateRequest) (r CreateEventTemplateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// ListWorldEvents implements listWorldEvents operation.
+// GetEvent implements getEvent operation.
 //
-// **Enterprise-grade listing endpoint**
-// Supports complex filtering, sorting, and pagination patterns.
-// Optimized for high-throughput scenarios with proper indexing.
-// **Performance:** <10ms P95, supports 1000+ concurrent requests.
+// **Get detailed information about a specific world event**
+// Returns complete event information including objectives, rewards, and participant data.
+// **Performance:** <10ms for cached event lookups.
 //
-// GET /examples
-func (UnimplementedHandler) ListWorldEvents(ctx context.Context, params ListWorldEventsParams) (r ListWorldEventsRes, _ error) {
+// GET /events/{eventId}
+func (UnimplementedHandler) GetEvent(ctx context.Context, params GetEventParams) (r GetEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// UpdateExample implements updateExample operation.
+// GetEventAnalytics implements getEventAnalytics operation.
 //
-// **Enterprise-grade update endpoint**
-// Supports partial updates, optimistic locking, and audit trails.
-// Ensures data consistency with event sourcing patterns.
-// **Performance:** <25ms P95, includes validation and conflict resolution.
+// **Get performance analytics for a specific event**
+// Returns participation rates, completion statistics, and player satisfaction.
+// **Performance:** <20ms for analytics aggregation.
 //
-// PUT /examples/{example_id}
-func (UnimplementedHandler) UpdateExample(ctx context.Context, req *UpdateExampleRequest, params UpdateExampleParams) (r UpdateExampleRes, _ error) {
+// GET /events/{eventId}/analytics
+func (UnimplementedHandler) GetEventAnalytics(ctx context.Context, params GetEventAnalyticsParams) (r GetEventAnalyticsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// WorldEventServiceHealthCheck implements worldEventServiceHealthCheck operation.
+// GetEventParticipants implements getEventParticipants operation.
+//
+// **Get list of participants for a specific event**
+// Returns paginated list of event participants with their progress and status.
+// **Performance:** <25ms with efficient participant queries.
+//
+// GET /events/{eventId}/participants
+func (UnimplementedHandler) GetEventParticipants(ctx context.Context, params GetEventParticipantsParams) (r GetEventParticipantsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPlayerParticipation implements getPlayerParticipation operation.
+//
+// **Get detailed participation information for a specific player**
+// Returns player progress, achievements, and status in the event.
+// **Performance:** <10ms for participant lookups.
+//
+// GET /events/{eventId}/participants/{playerId}
+func (UnimplementedHandler) GetPlayerParticipation(ctx context.Context, params GetPlayerParticipationParams) (r GetPlayerParticipationRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPlayerRewards implements getPlayerRewards operation.
+//
+// **Get list of rewards earned by player in event**
+// Returns both claimed and unclaimed rewards with claiming status.
+// **Performance:** <15ms for reward queries.
+//
+// GET /events/{eventId}/rewards
+func (UnimplementedHandler) GetPlayerRewards(ctx context.Context, params GetPlayerRewardsParams) (r GetPlayerRewardsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// HealthCheck implements healthCheck operation.
 //
 // **Enterprise-grade health check endpoint**
-// Provides real-time health status of the example domain microservice.
-// Critical for service discovery, load balancing, and monitoring.
-// **Performance:** <1ms response time, cached for 30 seconds.
+// Returns system health status and performance metrics.
+// **Performance:** <1ms response time.
 //
 // GET /health
-func (UnimplementedHandler) WorldEventServiceHealthCheck(ctx context.Context, params WorldEventServiceHealthCheckParams) (r WorldEventServiceHealthCheckRes, _ error) {
+func (UnimplementedHandler) HealthCheck(ctx context.Context) (r HealthCheckRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// WorldEventServiceHealthWebSocket implements worldEventServiceHealthWebSocket operation.
+// JoinEvent implements joinEvent operation.
 //
-// **Performance optimization:** Real-time health updates without polling
-// Eliminates periodic HTTP requests, reduces server load by ~90%.
-// Perfect for dashboard monitoring and alerting systems.
-// **Protocol:** WebSocket with JSON payloads
-// **Heartbeat:** 30 second intervals
-// **Reconnection:** Automatic with exponential backoff.
+// **Join a world event as a participant**
+// Adds player to event participation with validation and capacity checks.
+// **Performance:** <15ms for join validation and participant creation.
 //
-// GET /health/ws
-func (UnimplementedHandler) WorldEventServiceHealthWebSocket(ctx context.Context, params WorldEventServiceHealthWebSocketParams) (r WorldEventServiceHealthWebSocketRes, _ error) {
+// POST /events/{eventId}/participants
+func (UnimplementedHandler) JoinEvent(ctx context.Context, req *JoinEventReq, params JoinEventParams) (r JoinEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// NewError creates *ErrRespStatusCode from error returned by handler.
+// LeaveEvent implements leaveEvent operation.
+//
+// **Remove player from event participation**
+// Allows player to leave event with status tracking.
+// **Performance:** <15ms for participant removal.
+//
+// DELETE /events/{eventId}/participants/{playerId}
+func (UnimplementedHandler) LeaveEvent(ctx context.Context, params LeaveEventParams) (r LeaveEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListEventTemplates implements listEventTemplates operation.
+//
+// **Get paginated list of event templates**
+// Returns reusable event templates for creating new events.
+// **Performance:** Indexed queries with efficient pagination.
+//
+// GET /templates
+func (UnimplementedHandler) ListEventTemplates(ctx context.Context, params ListEventTemplatesParams) (r *ListEventTemplatesOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListEvents implements listEvents operation.
+//
+// **Get paginated world events list**
+// Returns active and upcoming world events with filtering and pagination support.
+// **Performance:** Indexed queries with efficient pagination.
+//
+// GET /events
+func (UnimplementedHandler) ListEvents(ctx context.Context, params ListEventsParams) (r ListEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateEvent implements updateEvent operation.
+//
+// **Update an existing world event**
+// Updates event properties with full validation and conflict checking.
+// **Performance:** <30ms for event updates with validation.
+//
+// PUT /events/{eventId}
+func (UnimplementedHandler) UpdateEvent(ctx context.Context, req *UpdateEventRequest, params UpdateEventParams) (r UpdateEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdatePlayerParticipation implements updatePlayerParticipation operation.
+//
+// **Update player progress and status in event**
+// Updates participation data with validation and business rules.
+// **Performance:** <20ms for participation updates.
+//
+// PUT /events/{eventId}/participants/{playerId}
+func (UnimplementedHandler) UpdatePlayerParticipation(ctx context.Context, req *UpdateParticipationRequest, params UpdatePlayerParticipationParams) (r UpdatePlayerParticipationRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// NewError creates *ErrorStatusCode from error returned by handler.
 //
 // Used for common default response.
-func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ErrRespStatusCode) {
-	r = new(ErrRespStatusCode)
+func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ErrorStatusCode) {
+	r = new(ErrorStatusCode)
 	return r
 }

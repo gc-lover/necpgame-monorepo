@@ -1,0 +1,118 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service API
+  description: Player Matchmaking API for NECPGAME
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1/matchmaking
+  description: Local development server
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+  /queue/join:
+    post:
+      summary: Join matchmaking queue
+      operationId: joinQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - player_id
+              - game_mode
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                game_mode:
+                  type: string
+                  enum: [pvp_ranked, pvp_casual, pve_dungeon]
+      responses:
+        '202':
+          description: Successfully joined queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queue_position:
+                    type: integer
+                  estimated_wait_seconds:
+                    type: integer
+        '400':
+          description: Bad request
+  /queue/leave:
+    delete:
+      summary: Leave matchmaking queue
+      operationId: leaveQueue
+      parameters:
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Successfully left queue
+        '404':
+          description: Player not in queue
+  /match/find:
+    post:
+      summary: Find match
+      operationId: findMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Match found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  match_id:
+                    type: string
+                    format: uuid
+                  players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        player_id:
+                          type: string
+                          format: uuid
+                        team:
+                          type: string
+        '202':
+          description: Search in progress
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

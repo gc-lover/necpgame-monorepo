@@ -10,8 +10,8 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeCreateExampleRequest(
-	req *CreateExampleRequest,
+func encodeClaimRewardRequest(
+	req *ClaimRewardReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -24,8 +24,8 @@ func encodeCreateExampleRequest(
 	return nil
 }
 
-func encodeExampleDomainBatchHealthCheckRequest(
-	req *ExampleDomainBatchHealthCheckReq,
+func encodeCreateEventRequest(
+	req *CreateEventRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -38,8 +38,50 @@ func encodeExampleDomainBatchHealthCheckRequest(
 	return nil
 }
 
-func encodeUpdateExampleRequest(
-	req *UpdateExampleRequest,
+func encodeCreateEventTemplateRequest(
+	req *CreateTemplateRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeJoinEventRequest(
+	req *JoinEventReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeUpdateEventRequest(
+	req *UpdateEventRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeUpdatePlayerParticipationRequest(
+	req *UpdateParticipationRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

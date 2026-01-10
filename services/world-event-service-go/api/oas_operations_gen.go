@@ -6,12 +6,20 @@ package api
 type OperationName = string
 
 const (
-	CreateExampleOperation                    OperationName = "CreateExample"
-	DeleteExampleOperation                    OperationName = "DeleteExample"
-	ExampleDomainBatchHealthCheckOperation    OperationName = "ExampleDomainBatchHealthCheck"
-	GetExampleOperation                       OperationName = "GetExample"
-	ListWorldEventsOperation                  OperationName = "ListWorldEvents"
-	UpdateExampleOperation                    OperationName = "UpdateExample"
-	WorldEventServiceHealthCheckOperation     OperationName = "WorldEventServiceHealthCheck"
-	WorldEventServiceHealthWebSocketOperation OperationName = "WorldEventServiceHealthWebSocket"
+	CancelEventOperation               OperationName = "CancelEvent"
+	ClaimRewardOperation               OperationName = "ClaimReward"
+	CreateEventOperation               OperationName = "CreateEvent"
+	CreateEventTemplateOperation       OperationName = "CreateEventTemplate"
+	GetEventOperation                  OperationName = "GetEvent"
+	GetEventAnalyticsOperation         OperationName = "GetEventAnalytics"
+	GetEventParticipantsOperation      OperationName = "GetEventParticipants"
+	GetPlayerParticipationOperation    OperationName = "GetPlayerParticipation"
+	GetPlayerRewardsOperation          OperationName = "GetPlayerRewards"
+	HealthCheckOperation               OperationName = "HealthCheck"
+	JoinEventOperation                 OperationName = "JoinEvent"
+	LeaveEventOperation                OperationName = "LeaveEvent"
+	ListEventTemplatesOperation        OperationName = "ListEventTemplates"
+	ListEventsOperation                OperationName = "ListEvents"
+	UpdateEventOperation               OperationName = "UpdateEvent"
+	UpdatePlayerParticipationOperation OperationName = "UpdatePlayerParticipation"
 )

@@ -1,0 +1,70 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"necpgame/services/matchmaking-service-go/internal/handlers"
+	"necpgame/services/matchmaking-service-go/internal/service"
+	api "necpgame/services/matchmaking-service-go"
+)
+
+func main() {
+	fmt.Println("Matchmaking Service Starting...")
+
+	// Initialize service with business logic
+	matchmakingSvc := service.NewMatchmakingService()
+
+	// Create HTTP handlers with ogen-generated interfaces
+	httpHandlers := handlers.NewMatchmakingHandlers(matchmakingSvc)
+
+	// Create ogen server
+	server, err := api.NewServer(httpHandlers)
+	if err != nil {
+		log.Fatalf("Failed to create server: %v", err)
+	}
+
+	// Configure HTTP server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	httpServer := &http.Server{
+		Addr:         ":" + port,
+		Handler:      server,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	// Start server in goroutine
+	go func() {
+		fmt.Printf("Matchmaking Service listening on port %s\n", port)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("Shutting down Matchmaking Service...")
+
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	fmt.Println("Matchmaking Service stopped")
+}

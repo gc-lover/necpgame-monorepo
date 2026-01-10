@@ -40,7 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	args := [1]string{}
+	args := [2]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -61,9 +61,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
+			case 'e': // Prefix: "events"
 
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
+				if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
 					elem = elem[l:]
 				} else {
 					break
@@ -72,9 +72,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleListWorldEventsRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleListEventsRequest([0]string{}, elemIsEscaped, w, r)
 					case "POST":
-						s.handleCreateExampleRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleCreateEventRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET,POST")
 					}
@@ -90,28 +90,27 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
+					// Param: "eventId"
+					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
+					if idx < 0 {
+						idx = len(elem)
 					}
-					args[0] = elem
-					elem = ""
+					args[0] = elem[:idx]
+					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						// Leaf node.
 						switch r.Method {
 						case "DELETE":
-							s.handleDeleteExampleRequest([1]string{
+							s.handleCancelEventRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						case "GET":
-							s.handleGetExampleRequest([1]string{
+							s.handleGetEventRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						case "PUT":
-							s.handleUpdateExampleRequest([1]string{
+							s.handleUpdateEventRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
@@ -119,6 +118,139 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						}
 
 						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "analytics"
+
+							if l := len("analytics"); len(elem) >= l && elem[0:l] == "analytics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetEventAnalyticsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						case 'p': // Prefix: "participants"
+
+							if l := len("participants"); len(elem) >= l && elem[0:l] == "participants" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleGetEventParticipantsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleJoinEventRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "playerId"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleLeaveEventRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "GET":
+										s.handleGetPlayerParticipationRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleUpdatePlayerParticipationRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "DELETE,GET,PUT")
+									}
+
+									return
+								}
+
+							}
+
+						case 'r': // Prefix: "rewards"
+
+							if l := len("rewards"); len(elem) >= l && elem[0:l] == "rewards" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetPlayerRewardsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleClaimRewardRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+
+						}
+
 					}
 
 				}
@@ -132,70 +264,37 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleWorldEventServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET")
 					}
 
 					return
 				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
+			case 't': // Prefix: "templates"
+
+				if l := len("templates"); len(elem) >= l && elem[0:l] == "templates" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleListEventTemplatesRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreateEventTemplateRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET,POST")
 					}
 
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 'b': // Prefix: "batch"
-
-						if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleExampleDomainBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
-					case 'w': // Prefix: "ws"
-
-						if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "GET":
-								s.handleWorldEventServiceHealthWebSocketRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "GET")
-							}
-
-							return
-						}
-
-					}
-
+					return
 				}
 
 			}
@@ -213,7 +312,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [1]string
+	args           [2]string
 }
 
 // Name returns ogen operation name.
@@ -298,9 +397,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
+			case 'e': // Prefix: "events"
 
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
+				if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
 					elem = elem[l:]
 				} else {
 					break
@@ -309,20 +408,20 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = ListWorldEventsOperation
-						r.summary = "List examples with filtering and pagination"
-						r.operationID = "listWorldEvents"
+						r.name = ListEventsOperation
+						r.summary = "List world events"
+						r.operationID = "listEvents"
 						r.operationGroup = ""
-						r.pathPattern = "/examples"
+						r.pathPattern = "/events"
 						r.args = args
 						r.count = 0
 						return r, true
 					case "POST":
-						r.name = CreateExampleOperation
-						r.summary = "Create new example"
-						r.operationID = "createExample"
+						r.name = CreateEventOperation
+						r.summary = "Create new world event"
+						r.operationID = "createEvent"
 						r.operationGroup = ""
-						r.pathPattern = "/examples"
+						r.pathPattern = "/events"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -339,48 +438,209 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
+					// Param: "eventId"
+					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
+					if idx < 0 {
+						idx = len(elem)
 					}
-					args[0] = elem
-					elem = ""
+					args[0] = elem[:idx]
+					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						// Leaf node.
 						switch method {
 						case "DELETE":
-							r.name = DeleteExampleOperation
-							r.summary = "Delete example"
-							r.operationID = "deleteExample"
+							r.name = CancelEventOperation
+							r.summary = "Cancel world event"
+							r.operationID = "cancelEvent"
 							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
+							r.pathPattern = "/events/{eventId}"
 							r.args = args
 							r.count = 1
 							return r, true
 						case "GET":
-							r.name = GetExampleOperation
-							r.summary = "Get specific example by ID"
-							r.operationID = "getExample"
+							r.name = GetEventOperation
+							r.summary = "Get world event details"
+							r.operationID = "getEvent"
 							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
+							r.pathPattern = "/events/{eventId}"
 							r.args = args
 							r.count = 1
 							return r, true
 						case "PUT":
-							r.name = UpdateExampleOperation
-							r.summary = "Update existing example"
-							r.operationID = "updateExample"
+							r.name = UpdateEventOperation
+							r.summary = "Update world event"
+							r.operationID = "updateEvent"
 							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
+							r.pathPattern = "/events/{eventId}"
 							r.args = args
 							r.count = 1
 							return r, true
 						default:
 							return
 						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'a': // Prefix: "analytics"
+
+							if l := len("analytics"); len(elem) >= l && elem[0:l] == "analytics" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetEventAnalyticsOperation
+									r.summary = "Get event analytics"
+									r.operationID = "getEventAnalytics"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{eventId}/analytics"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'p': // Prefix: "participants"
+
+							if l := len("participants"); len(elem) >= l && elem[0:l] == "participants" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = GetEventParticipantsOperation
+									r.summary = "Get event participants"
+									r.operationID = "getEventParticipants"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{eventId}/participants"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = JoinEventOperation
+									r.summary = "Join event"
+									r.operationID = "joinEvent"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{eventId}/participants"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "playerId"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = LeaveEventOperation
+										r.summary = "Leave event"
+										r.operationID = "leaveEvent"
+										r.operationGroup = ""
+										r.pathPattern = "/events/{eventId}/participants/{playerId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "GET":
+										r.name = GetPlayerParticipationOperation
+										r.summary = "Get player participation details"
+										r.operationID = "getPlayerParticipation"
+										r.operationGroup = ""
+										r.pathPattern = "/events/{eventId}/participants/{playerId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "PUT":
+										r.name = UpdatePlayerParticipationOperation
+										r.summary = "Update player participation"
+										r.operationID = "updatePlayerParticipation"
+										r.operationGroup = ""
+										r.pathPattern = "/events/{eventId}/participants/{playerId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						case 'r': // Prefix: "rewards"
+
+							if l := len("rewards"); len(elem) >= l && elem[0:l] == "rewards" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetPlayerRewardsOperation
+									r.summary = "Get player rewards for event"
+									r.operationID = "getPlayerRewards"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{eventId}/rewards"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = ClaimRewardOperation
+									r.summary = "Claim event reward"
+									r.operationID = "claimReward"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{eventId}/rewards"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
 					}
 
 				}
@@ -394,11 +654,12 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = WorldEventServiceHealthCheckOperation
-						r.summary = "Example domain health check"
-						r.operationID = "worldEventServiceHealthCheck"
+						r.name = HealthCheckOperation
+						r.summary = "World Events service health check"
+						r.operationID = "healthCheck"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
 						r.args = args
@@ -408,71 +669,39 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						return
 					}
 				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
+			case 't': // Prefix: "templates"
+
+				if l := len("templates"); len(elem) >= l && elem[0:l] == "templates" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = ListEventTemplatesOperation
+						r.summary = "List event templates"
+						r.operationID = "listEventTemplates"
+						r.operationGroup = ""
+						r.pathPattern = "/templates"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = CreateEventTemplateOperation
+						r.summary = "Create event template"
+						r.operationID = "createEventTemplate"
+						r.operationGroup = ""
+						r.pathPattern = "/templates"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
 					}
-
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 'b': // Prefix: "batch"
-
-						if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = ExampleDomainBatchHealthCheckOperation
-								r.summary = "Batch health check for multiple domain services"
-								r.operationID = "exampleDomainBatchHealthCheck"
-								r.operationGroup = ""
-								r.pathPattern = "/health/batch"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-					case 'w': // Prefix: "ws"
-
-						if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "GET":
-								r.name = WorldEventServiceHealthWebSocketOperation
-								r.summary = "Real-time health monitoring WebSocket"
-								r.operationID = "worldEventServiceHealthWebSocket"
-								r.operationGroup = ""
-								r.pathPattern = "/health/ws"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-					}
-
 				}
 
 			}

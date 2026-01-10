@@ -24,13 +24,10 @@ func NewHandler(logger *zap.Logger, repo *repository.Repository) *Handler {
 }
 
 // NewError implements api.Handler.NewError.
-func (h *Handler) NewError(ctx context.Context, err error) *api.ErrRespStatusCode {
-	return &api.ErrRespStatusCode{
-		StatusCode: 500,
-		Response: api.ErrResp{
-			Code:    500,
-			Message: err.Error(),
-		},
+func (h *Handler) NewError(ctx context.Context, err error) *api.Error {
+	return &api.Error{
+		Code:    500,
+		Message: err.Error(),
 	}
 }
 

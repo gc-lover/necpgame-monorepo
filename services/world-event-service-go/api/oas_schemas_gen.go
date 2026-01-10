@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
-func (s *ErrRespStatusCode) Error() string {
+func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
@@ -40,853 +39,1855 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-// Standard error response format.
-type CreateExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *CreateExampleBadRequestDetails `json:"details"`
-}
+type CancelEventConflict Error
 
-// GetCode returns the value of Code.
-func (s *CreateExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
+func (*CancelEventConflict) cancelEventRes() {}
 
-// GetMessage returns the value of Message.
-func (s *CreateExampleBadRequest) GetMessage() string {
-	return s.Message
-}
+type CancelEventNotFound Error
 
-// GetDetails returns the value of Details.
-func (s *CreateExampleBadRequest) GetDetails() *CreateExampleBadRequestDetails {
-	return s.Details
-}
+func (*CancelEventNotFound) cancelEventRes() {}
 
-// SetCode sets the value of Code.
-func (s *CreateExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *CreateExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *CreateExampleBadRequest) SetDetails(val *CreateExampleBadRequestDetails) {
-	s.Details = val
-}
-
-func (*CreateExampleBadRequest) createExampleRes() {}
-
-// Additional error details.
-type CreateExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type CreateExampleConflict struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *CreateExampleConflictDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *CreateExampleConflict) GetCode() int32 {
-	return s.Code
+type CancelEventOK struct {
+	Message OptString `json:"message"`
 }
 
 // GetMessage returns the value of Message.
-func (s *CreateExampleConflict) GetMessage() string {
+func (s *CancelEventOK) GetMessage() OptString {
 	return s.Message
 }
 
-// GetDetails returns the value of Details.
-func (s *CreateExampleConflict) GetDetails() *CreateExampleConflictDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *CreateExampleConflict) SetCode(val int32) {
-	s.Code = val
-}
-
 // SetMessage sets the value of Message.
-func (s *CreateExampleConflict) SetMessage(val string) {
+func (s *CancelEventOK) SetMessage(val OptString) {
 	s.Message = val
 }
 
-// SetDetails sets the value of Details.
-func (s *CreateExampleConflict) SetDetails(val *CreateExampleConflictDetails) {
-	s.Details = val
+func (*CancelEventOK) cancelEventRes() {}
+
+type ClaimRewardBadRequest Error
+
+func (*ClaimRewardBadRequest) claimRewardRes() {}
+
+type ClaimRewardConflict Error
+
+func (*ClaimRewardConflict) claimRewardRes() {}
+
+type ClaimRewardNotFound Error
+
+func (*ClaimRewardNotFound) claimRewardRes() {}
+
+type ClaimRewardReq struct {
+	// Unique player identifier.
+	PlayerId string `json:"playerId"`
+	// Type of reward to claim.
+	RewardType ClaimRewardReqRewardType `json:"rewardType"`
+	// Specific reward identifier (item ID, achievement ID, etc.).
+	RewardId OptString `json:"rewardId"`
 }
 
-func (*CreateExampleConflict) createExampleRes() {}
+// GetPlayerId returns the value of PlayerId.
+func (s *ClaimRewardReq) GetPlayerId() string {
+	return s.PlayerId
+}
 
-// Additional error details.
-type CreateExampleConflictDetails struct{}
+// GetRewardType returns the value of RewardType.
+func (s *ClaimRewardReq) GetRewardType() ClaimRewardReqRewardType {
+	return s.RewardType
+}
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/CreateExampleRequest
-type CreateExampleRequest struct {
-	// Desired example name.
-	Name string `json:"name"`
-	// Example description.
-	Description string `json:"description"`
-	// Initial tags.
-	Tags []string `json:"tags"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
+// GetRewardId returns the value of RewardId.
+func (s *ClaimRewardReq) GetRewardId() OptString {
+	return s.RewardId
+}
+
+// SetPlayerId sets the value of PlayerId.
+func (s *ClaimRewardReq) SetPlayerId(val string) {
+	s.PlayerId = val
+}
+
+// SetRewardType sets the value of RewardType.
+func (s *ClaimRewardReq) SetRewardType(val ClaimRewardReqRewardType) {
+	s.RewardType = val
+}
+
+// SetRewardId sets the value of RewardId.
+func (s *ClaimRewardReq) SetRewardId(val OptString) {
+	s.RewardId = val
+}
+
+// Type of reward to claim.
+type ClaimRewardReqRewardType string
+
+const (
+	ClaimRewardReqRewardTypeXp          ClaimRewardReqRewardType = "xp"
+	ClaimRewardReqRewardTypeCurrency    ClaimRewardReqRewardType = "currency"
+	ClaimRewardReqRewardTypeItem        ClaimRewardReqRewardType = "item"
+	ClaimRewardReqRewardTypeAchievement ClaimRewardReqRewardType = "achievement"
+)
+
+// AllValues returns all ClaimRewardReqRewardType values.
+func (ClaimRewardReqRewardType) AllValues() []ClaimRewardReqRewardType {
+	return []ClaimRewardReqRewardType{
+		ClaimRewardReqRewardTypeXp,
+		ClaimRewardReqRewardTypeCurrency,
+		ClaimRewardReqRewardTypeItem,
+		ClaimRewardReqRewardTypeAchievement,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ClaimRewardReqRewardType) MarshalText() ([]byte, error) {
+	switch s {
+	case ClaimRewardReqRewardTypeXp:
+		return []byte(s), nil
+	case ClaimRewardReqRewardTypeCurrency:
+		return []byte(s), nil
+	case ClaimRewardReqRewardTypeItem:
+		return []byte(s), nil
+	case ClaimRewardReqRewardTypeAchievement:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ClaimRewardReqRewardType) UnmarshalText(data []byte) error {
+	switch ClaimRewardReqRewardType(data) {
+	case ClaimRewardReqRewardTypeXp:
+		*s = ClaimRewardReqRewardTypeXp
+		return nil
+	case ClaimRewardReqRewardTypeCurrency:
+		*s = ClaimRewardReqRewardTypeCurrency
+		return nil
+	case ClaimRewardReqRewardTypeItem:
+		*s = ClaimRewardReqRewardTypeItem
+		return nil
+	case ClaimRewardReqRewardTypeAchievement:
+		*s = ClaimRewardReqRewardTypeAchievement
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateEventBadRequest Error
+
+func (*CreateEventBadRequest) createEventRes() {}
+
+type CreateEventConflict Error
+
+func (*CreateEventConflict) createEventRes() {}
+
+// Ref: #/components/schemas/CreateEventRequest
+type CreateEventRequest struct {
+	Name            string                             `json:"name"`
+	Type            CreateEventRequestType             `json:"type"`
+	Region          string                             `json:"region"`
+	StartTime       time.Time                          `json:"startTime"`
+	EndTime         OptDateTime                        `json:"endTime"`
+	Description     OptString                          `json:"description"`
+	Objectives      []CreateEventRequestObjectivesItem `json:"objectives"`
+	Rewards         []CreateEventRequestRewardsItem    `json:"rewards"`
+	MaxParticipants OptInt                             `json:"maxParticipants"`
+	Difficulty      CreateEventRequestDifficulty       `json:"difficulty"`
+	EventData       *CreateEventRequestEventData       `json:"eventData"`
 }
 
 // GetName returns the value of Name.
-func (s *CreateExampleRequest) GetName() string {
+func (s *CreateEventRequest) GetName() string {
 	return s.Name
 }
 
+// GetType returns the value of Type.
+func (s *CreateEventRequest) GetType() CreateEventRequestType {
+	return s.Type
+}
+
+// GetRegion returns the value of Region.
+func (s *CreateEventRequest) GetRegion() string {
+	return s.Region
+}
+
+// GetStartTime returns the value of StartTime.
+func (s *CreateEventRequest) GetStartTime() time.Time {
+	return s.StartTime
+}
+
+// GetEndTime returns the value of EndTime.
+func (s *CreateEventRequest) GetEndTime() OptDateTime {
+	return s.EndTime
+}
+
 // GetDescription returns the value of Description.
-func (s *CreateExampleRequest) GetDescription() string {
+func (s *CreateEventRequest) GetDescription() OptString {
 	return s.Description
 }
 
-// GetTags returns the value of Tags.
-func (s *CreateExampleRequest) GetTags() []string {
-	return s.Tags
+// GetObjectives returns the value of Objectives.
+func (s *CreateEventRequest) GetObjectives() []CreateEventRequestObjectivesItem {
+	return s.Objectives
 }
 
-// GetPriority returns the value of Priority.
-func (s *CreateExampleRequest) GetPriority() OptInt {
-	return s.Priority
+// GetRewards returns the value of Rewards.
+func (s *CreateEventRequest) GetRewards() []CreateEventRequestRewardsItem {
+	return s.Rewards
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *CreateEventRequest) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *CreateEventRequest) GetDifficulty() CreateEventRequestDifficulty {
+	return s.Difficulty
+}
+
+// GetEventData returns the value of EventData.
+func (s *CreateEventRequest) GetEventData() *CreateEventRequestEventData {
+	return s.EventData
 }
 
 // SetName sets the value of Name.
-func (s *CreateExampleRequest) SetName(val string) {
+func (s *CreateEventRequest) SetName(val string) {
 	s.Name = val
 }
 
+// SetType sets the value of Type.
+func (s *CreateEventRequest) SetType(val CreateEventRequestType) {
+	s.Type = val
+}
+
+// SetRegion sets the value of Region.
+func (s *CreateEventRequest) SetRegion(val string) {
+	s.Region = val
+}
+
+// SetStartTime sets the value of StartTime.
+func (s *CreateEventRequest) SetStartTime(val time.Time) {
+	s.StartTime = val
+}
+
+// SetEndTime sets the value of EndTime.
+func (s *CreateEventRequest) SetEndTime(val OptDateTime) {
+	s.EndTime = val
+}
+
 // SetDescription sets the value of Description.
-func (s *CreateExampleRequest) SetDescription(val string) {
+func (s *CreateEventRequest) SetDescription(val OptString) {
 	s.Description = val
 }
 
-// SetTags sets the value of Tags.
-func (s *CreateExampleRequest) SetTags(val []string) {
-	s.Tags = val
+// SetObjectives sets the value of Objectives.
+func (s *CreateEventRequest) SetObjectives(val []CreateEventRequestObjectivesItem) {
+	s.Objectives = val
 }
 
-// SetPriority sets the value of Priority.
-func (s *CreateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
+// SetRewards sets the value of Rewards.
+func (s *CreateEventRequest) SetRewards(val []CreateEventRequestRewardsItem) {
+	s.Rewards = val
 }
 
-// Standard error response format.
-type CreateExampleTooManyRequests struct {
-	Code    int32  `json:"code"`
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *CreateEventRequest) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *CreateEventRequest) SetDifficulty(val CreateEventRequestDifficulty) {
+	s.Difficulty = val
+}
+
+// SetEventData sets the value of EventData.
+func (s *CreateEventRequest) SetEventData(val *CreateEventRequestEventData) {
+	s.EventData = val
+}
+
+type CreateEventRequestDifficulty string
+
+const (
+	CreateEventRequestDifficultyEASY    CreateEventRequestDifficulty = "EASY"
+	CreateEventRequestDifficultyMEDIUM  CreateEventRequestDifficulty = "MEDIUM"
+	CreateEventRequestDifficultyHARD    CreateEventRequestDifficulty = "HARD"
+	CreateEventRequestDifficultyEXTREME CreateEventRequestDifficulty = "EXTREME"
+)
+
+// AllValues returns all CreateEventRequestDifficulty values.
+func (CreateEventRequestDifficulty) AllValues() []CreateEventRequestDifficulty {
+	return []CreateEventRequestDifficulty{
+		CreateEventRequestDifficultyEASY,
+		CreateEventRequestDifficultyMEDIUM,
+		CreateEventRequestDifficultyHARD,
+		CreateEventRequestDifficultyEXTREME,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateEventRequestDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateEventRequestDifficultyEASY:
+		return []byte(s), nil
+	case CreateEventRequestDifficultyMEDIUM:
+		return []byte(s), nil
+	case CreateEventRequestDifficultyHARD:
+		return []byte(s), nil
+	case CreateEventRequestDifficultyEXTREME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateEventRequestDifficulty) UnmarshalText(data []byte) error {
+	switch CreateEventRequestDifficulty(data) {
+	case CreateEventRequestDifficultyEASY:
+		*s = CreateEventRequestDifficultyEASY
+		return nil
+	case CreateEventRequestDifficultyMEDIUM:
+		*s = CreateEventRequestDifficultyMEDIUM
+		return nil
+	case CreateEventRequestDifficultyHARD:
+		*s = CreateEventRequestDifficultyHARD
+		return nil
+	case CreateEventRequestDifficultyEXTREME:
+		*s = CreateEventRequestDifficultyEXTREME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateEventRequestEventData struct{}
+
+type CreateEventRequestObjectivesItem struct{}
+
+type CreateEventRequestRewardsItem struct{}
+
+type CreateEventRequestType string
+
+const (
+	CreateEventRequestTypeDISASTER   CreateEventRequestType = "DISASTER"
+	CreateEventRequestTypeFESTIVAL   CreateEventRequestType = "FESTIVAL"
+	CreateEventRequestTypeWAR        CreateEventRequestType = "WAR"
+	CreateEventRequestTypeINVASION   CreateEventRequestType = "INVASION"
+	CreateEventRequestTypeTOURNAMENT CreateEventRequestType = "TOURNAMENT"
+	CreateEventRequestTypeQUEST      CreateEventRequestType = "QUEST"
+)
+
+// AllValues returns all CreateEventRequestType values.
+func (CreateEventRequestType) AllValues() []CreateEventRequestType {
+	return []CreateEventRequestType{
+		CreateEventRequestTypeDISASTER,
+		CreateEventRequestTypeFESTIVAL,
+		CreateEventRequestTypeWAR,
+		CreateEventRequestTypeINVASION,
+		CreateEventRequestTypeTOURNAMENT,
+		CreateEventRequestTypeQUEST,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateEventRequestType) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateEventRequestTypeDISASTER:
+		return []byte(s), nil
+	case CreateEventRequestTypeFESTIVAL:
+		return []byte(s), nil
+	case CreateEventRequestTypeWAR:
+		return []byte(s), nil
+	case CreateEventRequestTypeINVASION:
+		return []byte(s), nil
+	case CreateEventRequestTypeTOURNAMENT:
+		return []byte(s), nil
+	case CreateEventRequestTypeQUEST:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateEventRequestType) UnmarshalText(data []byte) error {
+	switch CreateEventRequestType(data) {
+	case CreateEventRequestTypeDISASTER:
+		*s = CreateEventRequestTypeDISASTER
+		return nil
+	case CreateEventRequestTypeFESTIVAL:
+		*s = CreateEventRequestTypeFESTIVAL
+		return nil
+	case CreateEventRequestTypeWAR:
+		*s = CreateEventRequestTypeWAR
+		return nil
+	case CreateEventRequestTypeINVASION:
+		*s = CreateEventRequestTypeINVASION
+		return nil
+	case CreateEventRequestTypeTOURNAMENT:
+		*s = CreateEventRequestTypeTOURNAMENT
+		return nil
+	case CreateEventRequestTypeQUEST:
+		*s = CreateEventRequestTypeQUEST
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/CreateTemplateRequest
+type CreateTemplateRequest struct {
+	Name               string                                        `json:"name"`
+	Type               CreateTemplateRequestType                     `json:"type"`
+	Difficulty         CreateTemplateRequestDifficulty               `json:"difficulty"`
+	Description        OptString                                     `json:"description"`
+	ObjectivesTemplate []CreateTemplateRequestObjectivesTemplateItem `json:"objectivesTemplate"`
+	RewardsTemplate    []CreateTemplateRequestRewardsTemplateItem    `json:"rewardsTemplate"`
+	DurationMinutes    OptInt                                        `json:"durationMinutes"`
+	MaxParticipants    OptInt                                        `json:"maxParticipants"`
+	RegionRestrictions []string                                      `json:"regionRestrictions"`
+	EventDataTemplate  *CreateTemplateRequestEventDataTemplate       `json:"eventDataTemplate"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateTemplateRequest) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *CreateTemplateRequest) GetType() CreateTemplateRequestType {
+	return s.Type
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *CreateTemplateRequest) GetDifficulty() CreateTemplateRequestDifficulty {
+	return s.Difficulty
+}
+
+// GetDescription returns the value of Description.
+func (s *CreateTemplateRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// GetObjectivesTemplate returns the value of ObjectivesTemplate.
+func (s *CreateTemplateRequest) GetObjectivesTemplate() []CreateTemplateRequestObjectivesTemplateItem {
+	return s.ObjectivesTemplate
+}
+
+// GetRewardsTemplate returns the value of RewardsTemplate.
+func (s *CreateTemplateRequest) GetRewardsTemplate() []CreateTemplateRequestRewardsTemplateItem {
+	return s.RewardsTemplate
+}
+
+// GetDurationMinutes returns the value of DurationMinutes.
+func (s *CreateTemplateRequest) GetDurationMinutes() OptInt {
+	return s.DurationMinutes
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *CreateTemplateRequest) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetRegionRestrictions returns the value of RegionRestrictions.
+func (s *CreateTemplateRequest) GetRegionRestrictions() []string {
+	return s.RegionRestrictions
+}
+
+// GetEventDataTemplate returns the value of EventDataTemplate.
+func (s *CreateTemplateRequest) GetEventDataTemplate() *CreateTemplateRequestEventDataTemplate {
+	return s.EventDataTemplate
+}
+
+// SetName sets the value of Name.
+func (s *CreateTemplateRequest) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *CreateTemplateRequest) SetType(val CreateTemplateRequestType) {
+	s.Type = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *CreateTemplateRequest) SetDifficulty(val CreateTemplateRequestDifficulty) {
+	s.Difficulty = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CreateTemplateRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetObjectivesTemplate sets the value of ObjectivesTemplate.
+func (s *CreateTemplateRequest) SetObjectivesTemplate(val []CreateTemplateRequestObjectivesTemplateItem) {
+	s.ObjectivesTemplate = val
+}
+
+// SetRewardsTemplate sets the value of RewardsTemplate.
+func (s *CreateTemplateRequest) SetRewardsTemplate(val []CreateTemplateRequestRewardsTemplateItem) {
+	s.RewardsTemplate = val
+}
+
+// SetDurationMinutes sets the value of DurationMinutes.
+func (s *CreateTemplateRequest) SetDurationMinutes(val OptInt) {
+	s.DurationMinutes = val
+}
+
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *CreateTemplateRequest) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// SetRegionRestrictions sets the value of RegionRestrictions.
+func (s *CreateTemplateRequest) SetRegionRestrictions(val []string) {
+	s.RegionRestrictions = val
+}
+
+// SetEventDataTemplate sets the value of EventDataTemplate.
+func (s *CreateTemplateRequest) SetEventDataTemplate(val *CreateTemplateRequestEventDataTemplate) {
+	s.EventDataTemplate = val
+}
+
+type CreateTemplateRequestDifficulty string
+
+const (
+	CreateTemplateRequestDifficultyEASY    CreateTemplateRequestDifficulty = "EASY"
+	CreateTemplateRequestDifficultyMEDIUM  CreateTemplateRequestDifficulty = "MEDIUM"
+	CreateTemplateRequestDifficultyHARD    CreateTemplateRequestDifficulty = "HARD"
+	CreateTemplateRequestDifficultyEXTREME CreateTemplateRequestDifficulty = "EXTREME"
+)
+
+// AllValues returns all CreateTemplateRequestDifficulty values.
+func (CreateTemplateRequestDifficulty) AllValues() []CreateTemplateRequestDifficulty {
+	return []CreateTemplateRequestDifficulty{
+		CreateTemplateRequestDifficultyEASY,
+		CreateTemplateRequestDifficultyMEDIUM,
+		CreateTemplateRequestDifficultyHARD,
+		CreateTemplateRequestDifficultyEXTREME,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateTemplateRequestDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateTemplateRequestDifficultyEASY:
+		return []byte(s), nil
+	case CreateTemplateRequestDifficultyMEDIUM:
+		return []byte(s), nil
+	case CreateTemplateRequestDifficultyHARD:
+		return []byte(s), nil
+	case CreateTemplateRequestDifficultyEXTREME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateTemplateRequestDifficulty) UnmarshalText(data []byte) error {
+	switch CreateTemplateRequestDifficulty(data) {
+	case CreateTemplateRequestDifficultyEASY:
+		*s = CreateTemplateRequestDifficultyEASY
+		return nil
+	case CreateTemplateRequestDifficultyMEDIUM:
+		*s = CreateTemplateRequestDifficultyMEDIUM
+		return nil
+	case CreateTemplateRequestDifficultyHARD:
+		*s = CreateTemplateRequestDifficultyHARD
+		return nil
+	case CreateTemplateRequestDifficultyEXTREME:
+		*s = CreateTemplateRequestDifficultyEXTREME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateTemplateRequestEventDataTemplate struct{}
+
+type CreateTemplateRequestObjectivesTemplateItem struct{}
+
+type CreateTemplateRequestRewardsTemplateItem struct{}
+
+type CreateTemplateRequestType string
+
+const (
+	CreateTemplateRequestTypeDISASTER   CreateTemplateRequestType = "DISASTER"
+	CreateTemplateRequestTypeFESTIVAL   CreateTemplateRequestType = "FESTIVAL"
+	CreateTemplateRequestTypeWAR        CreateTemplateRequestType = "WAR"
+	CreateTemplateRequestTypeINVASION   CreateTemplateRequestType = "INVASION"
+	CreateTemplateRequestTypeTOURNAMENT CreateTemplateRequestType = "TOURNAMENT"
+	CreateTemplateRequestTypeQUEST      CreateTemplateRequestType = "QUEST"
+)
+
+// AllValues returns all CreateTemplateRequestType values.
+func (CreateTemplateRequestType) AllValues() []CreateTemplateRequestType {
+	return []CreateTemplateRequestType{
+		CreateTemplateRequestTypeDISASTER,
+		CreateTemplateRequestTypeFESTIVAL,
+		CreateTemplateRequestTypeWAR,
+		CreateTemplateRequestTypeINVASION,
+		CreateTemplateRequestTypeTOURNAMENT,
+		CreateTemplateRequestTypeQUEST,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateTemplateRequestType) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateTemplateRequestTypeDISASTER:
+		return []byte(s), nil
+	case CreateTemplateRequestTypeFESTIVAL:
+		return []byte(s), nil
+	case CreateTemplateRequestTypeWAR:
+		return []byte(s), nil
+	case CreateTemplateRequestTypeINVASION:
+		return []byte(s), nil
+	case CreateTemplateRequestTypeTOURNAMENT:
+		return []byte(s), nil
+	case CreateTemplateRequestTypeQUEST:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateTemplateRequestType) UnmarshalText(data []byte) error {
+	switch CreateTemplateRequestType(data) {
+	case CreateTemplateRequestTypeDISASTER:
+		*s = CreateTemplateRequestTypeDISASTER
+		return nil
+	case CreateTemplateRequestTypeFESTIVAL:
+		*s = CreateTemplateRequestTypeFESTIVAL
+		return nil
+	case CreateTemplateRequestTypeWAR:
+		*s = CreateTemplateRequestTypeWAR
+		return nil
+	case CreateTemplateRequestTypeINVASION:
+		*s = CreateTemplateRequestTypeINVASION
+		return nil
+	case CreateTemplateRequestTypeTOURNAMENT:
+		*s = CreateTemplateRequestTypeTOURNAMENT
+		return nil
+	case CreateTemplateRequestTypeQUEST:
+		*s = CreateTemplateRequestTypeQUEST
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/Error
+type Error struct {
+	// Error code.
+	Code string `json:"code"`
+	// Human-readable error message.
 	Message string `json:"message"`
 	// Additional error details.
-	Details *CreateExampleTooManyRequestsDetails `json:"details"`
+	Details *ErrorDetails `json:"details"`
+	// Error timestamp.
+	Timestamp OptDateTime `json:"timestamp"`
 }
 
 // GetCode returns the value of Code.
-func (s *CreateExampleTooManyRequests) GetCode() int32 {
+func (s *Error) GetCode() string {
 	return s.Code
 }
 
 // GetMessage returns the value of Message.
-func (s *CreateExampleTooManyRequests) GetMessage() string {
+func (s *Error) GetMessage() string {
 	return s.Message
 }
 
 // GetDetails returns the value of Details.
-func (s *CreateExampleTooManyRequests) GetDetails() *CreateExampleTooManyRequestsDetails {
+func (s *Error) GetDetails() *ErrorDetails {
 	return s.Details
 }
 
+// GetTimestamp returns the value of Timestamp.
+func (s *Error) GetTimestamp() OptDateTime {
+	return s.Timestamp
+}
+
 // SetCode sets the value of Code.
-func (s *CreateExampleTooManyRequests) SetCode(val int32) {
+func (s *Error) SetCode(val string) {
 	s.Code = val
 }
 
 // SetMessage sets the value of Message.
-func (s *CreateExampleTooManyRequests) SetMessage(val string) {
+func (s *Error) SetMessage(val string) {
 	s.Message = val
 }
 
 // SetDetails sets the value of Details.
-func (s *CreateExampleTooManyRequests) SetDetails(val *CreateExampleTooManyRequestsDetails) {
+func (s *Error) SetDetails(val *ErrorDetails) {
 	s.Details = val
 }
 
-// Additional error details.
-type CreateExampleTooManyRequestsDetails struct{}
-
-// CreateExampleTooManyRequestsHeaders wraps CreateExampleTooManyRequests with response headers.
-type CreateExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   CreateExampleTooManyRequests
+// SetTimestamp sets the value of Timestamp.
+func (s *Error) SetTimestamp(val OptDateTime) {
+	s.Timestamp = val
 }
 
-// GetRetryAfter returns the value of RetryAfter.
-func (s *CreateExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *CreateExampleTooManyRequestsHeaders) GetResponse() CreateExampleTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *CreateExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *CreateExampleTooManyRequestsHeaders) SetResponse(val CreateExampleTooManyRequests) {
-	s.Response = val
-}
-
-func (*CreateExampleTooManyRequestsHeaders) createExampleRes() {}
-
-// Standard error response format.
-type CreateExampleUnprocessableEntity struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *CreateExampleUnprocessableEntityDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *CreateExampleUnprocessableEntity) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *CreateExampleUnprocessableEntity) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *CreateExampleUnprocessableEntity) GetDetails() *CreateExampleUnprocessableEntityDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *CreateExampleUnprocessableEntity) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *CreateExampleUnprocessableEntity) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *CreateExampleUnprocessableEntity) SetDetails(val *CreateExampleUnprocessableEntityDetails) {
-	s.Details = val
-}
-
-func (*CreateExampleUnprocessableEntity) createExampleRes() {}
+func (*Error) createEventTemplateRes()    {}
+func (*Error) getEventAnalyticsRes()      {}
+func (*Error) getEventParticipantsRes()   {}
+func (*Error) getEventRes()               {}
+func (*Error) getPlayerParticipationRes() {}
+func (*Error) healthCheckRes()            {}
+func (*Error) listEventsRes()             {}
 
 // Additional error details.
-type CreateExampleUnprocessableEntityDetails struct{}
+type ErrorDetails struct{}
 
-// Standard error response format.
-type DeleteExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleBadRequest) GetDetails() *DeleteExampleBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleBadRequest) SetDetails(val *DeleteExampleBadRequestDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleBadRequest) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type DeleteExampleConflict struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleConflictDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleConflict) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleConflict) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleConflict) GetDetails() *DeleteExampleConflictDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleConflict) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleConflict) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleConflict) SetDetails(val *DeleteExampleConflictDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleConflict) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleConflictDetails struct{}
-
-// Standard error response format.
-type DeleteExampleNotFound struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleNotFoundDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleNotFound) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleNotFound) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleNotFound) GetDetails() *DeleteExampleNotFoundDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleNotFound) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleNotFound) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleNotFound) SetDetails(val *DeleteExampleNotFoundDetails) {
-	s.Details = val
-}
-
-func (*DeleteExampleNotFound) deleteExampleRes() {}
-
-// Additional error details.
-type DeleteExampleNotFoundDetails struct{}
-
-// Standard error response format.
-type DeleteExampleTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *DeleteExampleTooManyRequestsDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *DeleteExampleTooManyRequests) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *DeleteExampleTooManyRequests) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *DeleteExampleTooManyRequests) GetDetails() *DeleteExampleTooManyRequestsDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *DeleteExampleTooManyRequests) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *DeleteExampleTooManyRequests) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *DeleteExampleTooManyRequests) SetDetails(val *DeleteExampleTooManyRequestsDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type DeleteExampleTooManyRequestsDetails struct{}
-
-// DeleteExampleTooManyRequestsHeaders wraps DeleteExampleTooManyRequests with response headers.
-type DeleteExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   DeleteExampleTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *DeleteExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *DeleteExampleTooManyRequestsHeaders) GetResponse() DeleteExampleTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *DeleteExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *DeleteExampleTooManyRequestsHeaders) SetResponse(val DeleteExampleTooManyRequests) {
-	s.Response = val
-}
-
-func (*DeleteExampleTooManyRequestsHeaders) deleteExampleRes() {}
-
-// Standard error response format.
-type ErrResp struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ErrRespDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ErrResp) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ErrResp) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ErrResp) GetDetails() *ErrRespDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ErrResp) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ErrResp) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ErrResp) SetDetails(val *ErrRespDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type ErrRespDetails struct{}
-
-// ErrRespStatusCode wraps ErrResp with StatusCode.
-type ErrRespStatusCode struct {
+// ErrorStatusCode wraps Error with StatusCode.
+type ErrorStatusCode struct {
 	StatusCode int
-	Response   ErrResp
+	Response   Error
 }
 
 // GetStatusCode returns the value of StatusCode.
-func (s *ErrRespStatusCode) GetStatusCode() int {
+func (s *ErrorStatusCode) GetStatusCode() int {
 	return s.StatusCode
 }
 
 // GetResponse returns the value of Response.
-func (s *ErrRespStatusCode) GetResponse() ErrResp {
+func (s *ErrorStatusCode) GetResponse() Error {
 	return s.Response
 }
 
 // SetStatusCode sets the value of StatusCode.
-func (s *ErrRespStatusCode) SetStatusCode(val int) {
+func (s *ErrorStatusCode) SetStatusCode(val int) {
 	s.StatusCode = val
 }
 
 // SetResponse sets the value of Response.
-func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
+func (s *ErrorStatusCode) SetResponse(val Error) {
 	s.Response = val
 }
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%. Hot path optimization required.
-// Ref: #/components/schemas/Example
-type Example struct {
-	// Example unique identifier.
+// Ref: #/components/schemas/EventAnalytics
+type EventAnalytics struct {
+	// Reference to world event.
+	EventId uuid.UUID `json:"eventId"`
+	// Total number of participants.
+	TotalParticipants int `json:"totalParticipants"`
+	// Number of participants who completed event.
+	CompletedParticipants int `json:"completedParticipants"`
+	// Average time to complete event.
+	AverageCompletionTime OptDuration `json:"averageCompletionTime"`
+	// Average participant score.
+	AverageScore OptFloat32 `json:"averageScore"`
+	// Percentage of region population that participated.
+	ParticipationRate OptFloat32 `json:"participationRate"`
+	// Average player satisfaction rating (0-5).
+	SatisfactionRating OptFloat32 `json:"satisfactionRating"`
+	// Last analytics update timestamp.
+	LastUpdated OptDateTime `json:"lastUpdated"`
+}
+
+// GetEventId returns the value of EventId.
+func (s *EventAnalytics) GetEventId() uuid.UUID {
+	return s.EventId
+}
+
+// GetTotalParticipants returns the value of TotalParticipants.
+func (s *EventAnalytics) GetTotalParticipants() int {
+	return s.TotalParticipants
+}
+
+// GetCompletedParticipants returns the value of CompletedParticipants.
+func (s *EventAnalytics) GetCompletedParticipants() int {
+	return s.CompletedParticipants
+}
+
+// GetAverageCompletionTime returns the value of AverageCompletionTime.
+func (s *EventAnalytics) GetAverageCompletionTime() OptDuration {
+	return s.AverageCompletionTime
+}
+
+// GetAverageScore returns the value of AverageScore.
+func (s *EventAnalytics) GetAverageScore() OptFloat32 {
+	return s.AverageScore
+}
+
+// GetParticipationRate returns the value of ParticipationRate.
+func (s *EventAnalytics) GetParticipationRate() OptFloat32 {
+	return s.ParticipationRate
+}
+
+// GetSatisfactionRating returns the value of SatisfactionRating.
+func (s *EventAnalytics) GetSatisfactionRating() OptFloat32 {
+	return s.SatisfactionRating
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *EventAnalytics) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetEventId sets the value of EventId.
+func (s *EventAnalytics) SetEventId(val uuid.UUID) {
+	s.EventId = val
+}
+
+// SetTotalParticipants sets the value of TotalParticipants.
+func (s *EventAnalytics) SetTotalParticipants(val int) {
+	s.TotalParticipants = val
+}
+
+// SetCompletedParticipants sets the value of CompletedParticipants.
+func (s *EventAnalytics) SetCompletedParticipants(val int) {
+	s.CompletedParticipants = val
+}
+
+// SetAverageCompletionTime sets the value of AverageCompletionTime.
+func (s *EventAnalytics) SetAverageCompletionTime(val OptDuration) {
+	s.AverageCompletionTime = val
+}
+
+// SetAverageScore sets the value of AverageScore.
+func (s *EventAnalytics) SetAverageScore(val OptFloat32) {
+	s.AverageScore = val
+}
+
+// SetParticipationRate sets the value of ParticipationRate.
+func (s *EventAnalytics) SetParticipationRate(val OptFloat32) {
+	s.ParticipationRate = val
+}
+
+// SetSatisfactionRating sets the value of SatisfactionRating.
+func (s *EventAnalytics) SetSatisfactionRating(val OptFloat32) {
+	s.SatisfactionRating = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *EventAnalytics) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+func (*EventAnalytics) getEventAnalyticsRes() {}
+
+// Ref: #/components/schemas/EventParticipant
+type EventParticipant struct {
+	// Unique participation identifier.
 	ID uuid.UUID `json:"id"`
-	// Example display name.
-	Name string `json:"name"`
-	// Detailed description.
-	Description OptString `json:"description"`
-	// Creation timestamp.
-	CreatedAt time.Time `json:"created_at"`
-	// Last update timestamp.
-	UpdatedAt OptDateTime `json:"updated_at"`
-	// Current status.
-	Status ExampleStatus `json:"status"`
-	// Associated tags.
-	Tags []string `json:"tags"`
-	// Whether this example is active.
-	IsActive bool `json:"is_active"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
+	// Reference to world event.
+	EventId uuid.UUID `json:"eventId"`
+	// Unique player identifier.
+	PlayerId string `json:"playerId"`
+	// When player joined event.
+	JoinTime time.Time `json:"joinTime"`
+	// Participation status.
+	Status EventParticipantStatus `json:"status"`
+	// Player-specific progress tracking.
+	ProgressData *EventParticipantProgressData `json:"progressData"`
+	// Player score in event.
+	Score        OptInt                             `json:"score"`
+	Achievements []EventParticipantAchievementsItem `json:"achievements"`
+	// Last player activity timestamp.
+	LastActivity OptDateTime `json:"lastActivity"`
 }
 
 // GetID returns the value of ID.
-func (s *Example) GetID() uuid.UUID {
+func (s *EventParticipant) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetEventId returns the value of EventId.
+func (s *EventParticipant) GetEventId() uuid.UUID {
+	return s.EventId
+}
+
+// GetPlayerId returns the value of PlayerId.
+func (s *EventParticipant) GetPlayerId() string {
+	return s.PlayerId
+}
+
+// GetJoinTime returns the value of JoinTime.
+func (s *EventParticipant) GetJoinTime() time.Time {
+	return s.JoinTime
+}
+
+// GetStatus returns the value of Status.
+func (s *EventParticipant) GetStatus() EventParticipantStatus {
+	return s.Status
+}
+
+// GetProgressData returns the value of ProgressData.
+func (s *EventParticipant) GetProgressData() *EventParticipantProgressData {
+	return s.ProgressData
+}
+
+// GetScore returns the value of Score.
+func (s *EventParticipant) GetScore() OptInt {
+	return s.Score
+}
+
+// GetAchievements returns the value of Achievements.
+func (s *EventParticipant) GetAchievements() []EventParticipantAchievementsItem {
+	return s.Achievements
+}
+
+// GetLastActivity returns the value of LastActivity.
+func (s *EventParticipant) GetLastActivity() OptDateTime {
+	return s.LastActivity
+}
+
+// SetID sets the value of ID.
+func (s *EventParticipant) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetEventId sets the value of EventId.
+func (s *EventParticipant) SetEventId(val uuid.UUID) {
+	s.EventId = val
+}
+
+// SetPlayerId sets the value of PlayerId.
+func (s *EventParticipant) SetPlayerId(val string) {
+	s.PlayerId = val
+}
+
+// SetJoinTime sets the value of JoinTime.
+func (s *EventParticipant) SetJoinTime(val time.Time) {
+	s.JoinTime = val
+}
+
+// SetStatus sets the value of Status.
+func (s *EventParticipant) SetStatus(val EventParticipantStatus) {
+	s.Status = val
+}
+
+// SetProgressData sets the value of ProgressData.
+func (s *EventParticipant) SetProgressData(val *EventParticipantProgressData) {
+	s.ProgressData = val
+}
+
+// SetScore sets the value of Score.
+func (s *EventParticipant) SetScore(val OptInt) {
+	s.Score = val
+}
+
+// SetAchievements sets the value of Achievements.
+func (s *EventParticipant) SetAchievements(val []EventParticipantAchievementsItem) {
+	s.Achievements = val
+}
+
+// SetLastActivity sets the value of LastActivity.
+func (s *EventParticipant) SetLastActivity(val OptDateTime) {
+	s.LastActivity = val
+}
+
+func (*EventParticipant) joinEventRes()                 {}
+func (*EventParticipant) updatePlayerParticipationRes() {}
+
+// Achievements earned during event.
+type EventParticipantAchievementsItem struct{}
+
+// Merged schema.
+// Ref: #/components/schemas/EventParticipantDetail
+type EventParticipantDetail struct {
+	// Unique participation identifier.
+	ID uuid.UUID `json:"id"`
+	// Reference to world event.
+	EventId uuid.UUID `json:"eventId"`
+	// Unique player identifier.
+	PlayerId string `json:"playerId"`
+	// When player joined event.
+	JoinTime time.Time `json:"joinTime"`
+	// Participation status.
+	Status EventParticipantDetailStatus `json:"status"`
+	// Player-specific progress tracking.
+	ProgressData *EventParticipantDetailProgressData `json:"progressData"`
+	// Player score in event.
+	Score        OptInt                                   `json:"score"`
+	Achievements []EventParticipantDetailAchievementsItem `json:"achievements"`
+	// Last player activity timestamp.
+	LastActivity OptDateTime   `json:"lastActivity"`
+	Rewards      []EventReward `json:"rewards"`
+}
+
+// GetID returns the value of ID.
+func (s *EventParticipantDetail) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetEventId returns the value of EventId.
+func (s *EventParticipantDetail) GetEventId() uuid.UUID {
+	return s.EventId
+}
+
+// GetPlayerId returns the value of PlayerId.
+func (s *EventParticipantDetail) GetPlayerId() string {
+	return s.PlayerId
+}
+
+// GetJoinTime returns the value of JoinTime.
+func (s *EventParticipantDetail) GetJoinTime() time.Time {
+	return s.JoinTime
+}
+
+// GetStatus returns the value of Status.
+func (s *EventParticipantDetail) GetStatus() EventParticipantDetailStatus {
+	return s.Status
+}
+
+// GetProgressData returns the value of ProgressData.
+func (s *EventParticipantDetail) GetProgressData() *EventParticipantDetailProgressData {
+	return s.ProgressData
+}
+
+// GetScore returns the value of Score.
+func (s *EventParticipantDetail) GetScore() OptInt {
+	return s.Score
+}
+
+// GetAchievements returns the value of Achievements.
+func (s *EventParticipantDetail) GetAchievements() []EventParticipantDetailAchievementsItem {
+	return s.Achievements
+}
+
+// GetLastActivity returns the value of LastActivity.
+func (s *EventParticipantDetail) GetLastActivity() OptDateTime {
+	return s.LastActivity
+}
+
+// GetRewards returns the value of Rewards.
+func (s *EventParticipantDetail) GetRewards() []EventReward {
+	return s.Rewards
+}
+
+// SetID sets the value of ID.
+func (s *EventParticipantDetail) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetEventId sets the value of EventId.
+func (s *EventParticipantDetail) SetEventId(val uuid.UUID) {
+	s.EventId = val
+}
+
+// SetPlayerId sets the value of PlayerId.
+func (s *EventParticipantDetail) SetPlayerId(val string) {
+	s.PlayerId = val
+}
+
+// SetJoinTime sets the value of JoinTime.
+func (s *EventParticipantDetail) SetJoinTime(val time.Time) {
+	s.JoinTime = val
+}
+
+// SetStatus sets the value of Status.
+func (s *EventParticipantDetail) SetStatus(val EventParticipantDetailStatus) {
+	s.Status = val
+}
+
+// SetProgressData sets the value of ProgressData.
+func (s *EventParticipantDetail) SetProgressData(val *EventParticipantDetailProgressData) {
+	s.ProgressData = val
+}
+
+// SetScore sets the value of Score.
+func (s *EventParticipantDetail) SetScore(val OptInt) {
+	s.Score = val
+}
+
+// SetAchievements sets the value of Achievements.
+func (s *EventParticipantDetail) SetAchievements(val []EventParticipantDetailAchievementsItem) {
+	s.Achievements = val
+}
+
+// SetLastActivity sets the value of LastActivity.
+func (s *EventParticipantDetail) SetLastActivity(val OptDateTime) {
+	s.LastActivity = val
+}
+
+// SetRewards sets the value of Rewards.
+func (s *EventParticipantDetail) SetRewards(val []EventReward) {
+	s.Rewards = val
+}
+
+func (*EventParticipantDetail) getPlayerParticipationRes() {}
+
+// Achievements earned during event.
+type EventParticipantDetailAchievementsItem struct{}
+
+// Player-specific progress tracking.
+type EventParticipantDetailProgressData struct{}
+
+// Participation status.
+type EventParticipantDetailStatus string
+
+const (
+	EventParticipantDetailStatusACTIVE    EventParticipantDetailStatus = "ACTIVE"
+	EventParticipantDetailStatusCOMPLETED EventParticipantDetailStatus = "COMPLETED"
+	EventParticipantDetailStatusLEFT      EventParticipantDetailStatus = "LEFT"
+	EventParticipantDetailStatusKICKED    EventParticipantDetailStatus = "KICKED"
+)
+
+// AllValues returns all EventParticipantDetailStatus values.
+func (EventParticipantDetailStatus) AllValues() []EventParticipantDetailStatus {
+	return []EventParticipantDetailStatus{
+		EventParticipantDetailStatusACTIVE,
+		EventParticipantDetailStatusCOMPLETED,
+		EventParticipantDetailStatusLEFT,
+		EventParticipantDetailStatusKICKED,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventParticipantDetailStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case EventParticipantDetailStatusACTIVE:
+		return []byte(s), nil
+	case EventParticipantDetailStatusCOMPLETED:
+		return []byte(s), nil
+	case EventParticipantDetailStatusLEFT:
+		return []byte(s), nil
+	case EventParticipantDetailStatusKICKED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventParticipantDetailStatus) UnmarshalText(data []byte) error {
+	switch EventParticipantDetailStatus(data) {
+	case EventParticipantDetailStatusACTIVE:
+		*s = EventParticipantDetailStatusACTIVE
+		return nil
+	case EventParticipantDetailStatusCOMPLETED:
+		*s = EventParticipantDetailStatusCOMPLETED
+		return nil
+	case EventParticipantDetailStatusLEFT:
+		*s = EventParticipantDetailStatusLEFT
+		return nil
+	case EventParticipantDetailStatusKICKED:
+		*s = EventParticipantDetailStatusKICKED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Player-specific progress tracking.
+type EventParticipantProgressData struct{}
+
+// Participation status.
+type EventParticipantStatus string
+
+const (
+	EventParticipantStatusACTIVE    EventParticipantStatus = "ACTIVE"
+	EventParticipantStatusCOMPLETED EventParticipantStatus = "COMPLETED"
+	EventParticipantStatusLEFT      EventParticipantStatus = "LEFT"
+	EventParticipantStatusKICKED    EventParticipantStatus = "KICKED"
+)
+
+// AllValues returns all EventParticipantStatus values.
+func (EventParticipantStatus) AllValues() []EventParticipantStatus {
+	return []EventParticipantStatus{
+		EventParticipantStatusACTIVE,
+		EventParticipantStatusCOMPLETED,
+		EventParticipantStatusLEFT,
+		EventParticipantStatusKICKED,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventParticipantStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case EventParticipantStatusACTIVE:
+		return []byte(s), nil
+	case EventParticipantStatusCOMPLETED:
+		return []byte(s), nil
+	case EventParticipantStatusLEFT:
+		return []byte(s), nil
+	case EventParticipantStatusKICKED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventParticipantStatus) UnmarshalText(data []byte) error {
+	switch EventParticipantStatus(data) {
+	case EventParticipantStatusACTIVE:
+		*s = EventParticipantStatusACTIVE
+		return nil
+	case EventParticipantStatusCOMPLETED:
+		*s = EventParticipantStatusCOMPLETED
+		return nil
+	case EventParticipantStatusLEFT:
+		*s = EventParticipantStatusLEFT
+		return nil
+	case EventParticipantStatusKICKED:
+		*s = EventParticipantStatusKICKED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/EventReward
+type EventReward struct {
+	// Unique reward identifier.
+	ID uuid.UUID `json:"id"`
+	// Reference to world event.
+	EventId uuid.UUID `json:"eventId"`
+	// Player who earned reward.
+	PlayerId string `json:"playerId"`
+	// Type of reward.
+	RewardType EventRewardRewardType `json:"rewardType"`
+	// Specific reward identifier.
+	RewardId OptString `json:"rewardId"`
+	// Quantity of reward.
+	Amount OptInt `json:"amount"`
+	// Whether reward has been claimed.
+	Claimed bool `json:"claimed"`
+	// When reward was claimed.
+	ClaimedAt OptDateTime `json:"claimedAt"`
+	// Reward creation timestamp.
+	CreatedAt OptDateTime `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *EventReward) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetEventId returns the value of EventId.
+func (s *EventReward) GetEventId() uuid.UUID {
+	return s.EventId
+}
+
+// GetPlayerId returns the value of PlayerId.
+func (s *EventReward) GetPlayerId() string {
+	return s.PlayerId
+}
+
+// GetRewardType returns the value of RewardType.
+func (s *EventReward) GetRewardType() EventRewardRewardType {
+	return s.RewardType
+}
+
+// GetRewardId returns the value of RewardId.
+func (s *EventReward) GetRewardId() OptString {
+	return s.RewardId
+}
+
+// GetAmount returns the value of Amount.
+func (s *EventReward) GetAmount() OptInt {
+	return s.Amount
+}
+
+// GetClaimed returns the value of Claimed.
+func (s *EventReward) GetClaimed() bool {
+	return s.Claimed
+}
+
+// GetClaimedAt returns the value of ClaimedAt.
+func (s *EventReward) GetClaimedAt() OptDateTime {
+	return s.ClaimedAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *EventReward) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *EventReward) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetEventId sets the value of EventId.
+func (s *EventReward) SetEventId(val uuid.UUID) {
+	s.EventId = val
+}
+
+// SetPlayerId sets the value of PlayerId.
+func (s *EventReward) SetPlayerId(val string) {
+	s.PlayerId = val
+}
+
+// SetRewardType sets the value of RewardType.
+func (s *EventReward) SetRewardType(val EventRewardRewardType) {
+	s.RewardType = val
+}
+
+// SetRewardId sets the value of RewardId.
+func (s *EventReward) SetRewardId(val OptString) {
+	s.RewardId = val
+}
+
+// SetAmount sets the value of Amount.
+func (s *EventReward) SetAmount(val OptInt) {
+	s.Amount = val
+}
+
+// SetClaimed sets the value of Claimed.
+func (s *EventReward) SetClaimed(val bool) {
+	s.Claimed = val
+}
+
+// SetClaimedAt sets the value of ClaimedAt.
+func (s *EventReward) SetClaimedAt(val OptDateTime) {
+	s.ClaimedAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *EventReward) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+func (*EventReward) claimRewardRes() {}
+
+// Type of reward.
+type EventRewardRewardType string
+
+const (
+	EventRewardRewardTypeXp          EventRewardRewardType = "xp"
+	EventRewardRewardTypeCurrency    EventRewardRewardType = "currency"
+	EventRewardRewardTypeItem        EventRewardRewardType = "item"
+	EventRewardRewardTypeAchievement EventRewardRewardType = "achievement"
+)
+
+// AllValues returns all EventRewardRewardType values.
+func (EventRewardRewardType) AllValues() []EventRewardRewardType {
+	return []EventRewardRewardType{
+		EventRewardRewardTypeXp,
+		EventRewardRewardTypeCurrency,
+		EventRewardRewardTypeItem,
+		EventRewardRewardTypeAchievement,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventRewardRewardType) MarshalText() ([]byte, error) {
+	switch s {
+	case EventRewardRewardTypeXp:
+		return []byte(s), nil
+	case EventRewardRewardTypeCurrency:
+		return []byte(s), nil
+	case EventRewardRewardTypeItem:
+		return []byte(s), nil
+	case EventRewardRewardTypeAchievement:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventRewardRewardType) UnmarshalText(data []byte) error {
+	switch EventRewardRewardType(data) {
+	case EventRewardRewardTypeXp:
+		*s = EventRewardRewardTypeXp
+		return nil
+	case EventRewardRewardTypeCurrency:
+		*s = EventRewardRewardTypeCurrency
+		return nil
+	case EventRewardRewardTypeItem:
+		*s = EventRewardRewardTypeItem
+		return nil
+	case EventRewardRewardTypeAchievement:
+		*s = EventRewardRewardTypeAchievement
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/EventTemplate
+type EventTemplate struct {
+	// Unique template identifier.
+	ID uuid.UUID `json:"id"`
+	// Template name.
+	Name string `json:"name"`
+	// Template type.
+	Type EventTemplateType `json:"type"`
+	// Difficulty level.
+	Difficulty EventTemplateDifficulty `json:"difficulty"`
+	// Template description.
+	Description        OptString                             `json:"description"`
+	ObjectivesTemplate []EventTemplateObjectivesTemplateItem `json:"objectivesTemplate"`
+	RewardsTemplate    []EventTemplateRewardsTemplateItem    `json:"rewardsTemplate"`
+	// Default event duration in minutes.
+	DurationMinutes OptInt `json:"durationMinutes"`
+	// Default maximum participants.
+	MaxParticipants    OptInt   `json:"maxParticipants"`
+	RegionRestrictions []string `json:"regionRestrictions"`
+	// Template event data structure.
+	EventDataTemplate *EventTemplateEventDataTemplate `json:"eventDataTemplate"`
+	// Whether template is available for use.
+	IsActive bool `json:"isActive"`
+	// Template creation timestamp.
+	CreatedAt OptDateTime `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt OptDateTime `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *EventTemplate) GetID() uuid.UUID {
 	return s.ID
 }
 
 // GetName returns the value of Name.
-func (s *Example) GetName() string {
+func (s *EventTemplate) GetName() string {
 	return s.Name
 }
 
+// GetType returns the value of Type.
+func (s *EventTemplate) GetType() EventTemplateType {
+	return s.Type
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *EventTemplate) GetDifficulty() EventTemplateDifficulty {
+	return s.Difficulty
+}
+
 // GetDescription returns the value of Description.
-func (s *Example) GetDescription() OptString {
+func (s *EventTemplate) GetDescription() OptString {
 	return s.Description
 }
 
+// GetObjectivesTemplate returns the value of ObjectivesTemplate.
+func (s *EventTemplate) GetObjectivesTemplate() []EventTemplateObjectivesTemplateItem {
+	return s.ObjectivesTemplate
+}
+
+// GetRewardsTemplate returns the value of RewardsTemplate.
+func (s *EventTemplate) GetRewardsTemplate() []EventTemplateRewardsTemplateItem {
+	return s.RewardsTemplate
+}
+
+// GetDurationMinutes returns the value of DurationMinutes.
+func (s *EventTemplate) GetDurationMinutes() OptInt {
+	return s.DurationMinutes
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *EventTemplate) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetRegionRestrictions returns the value of RegionRestrictions.
+func (s *EventTemplate) GetRegionRestrictions() []string {
+	return s.RegionRestrictions
+}
+
+// GetEventDataTemplate returns the value of EventDataTemplate.
+func (s *EventTemplate) GetEventDataTemplate() *EventTemplateEventDataTemplate {
+	return s.EventDataTemplate
+}
+
+// GetIsActive returns the value of IsActive.
+func (s *EventTemplate) GetIsActive() bool {
+	return s.IsActive
+}
+
 // GetCreatedAt returns the value of CreatedAt.
-func (s *Example) GetCreatedAt() time.Time {
+func (s *EventTemplate) GetCreatedAt() OptDateTime {
 	return s.CreatedAt
 }
 
 // GetUpdatedAt returns the value of UpdatedAt.
-func (s *Example) GetUpdatedAt() OptDateTime {
+func (s *EventTemplate) GetUpdatedAt() OptDateTime {
 	return s.UpdatedAt
 }
 
-// GetStatus returns the value of Status.
-func (s *Example) GetStatus() ExampleStatus {
-	return s.Status
-}
-
-// GetTags returns the value of Tags.
-func (s *Example) GetTags() []string {
-	return s.Tags
-}
-
-// GetIsActive returns the value of IsActive.
-func (s *Example) GetIsActive() bool {
-	return s.IsActive
-}
-
-// GetPriority returns the value of Priority.
-func (s *Example) GetPriority() OptInt {
-	return s.Priority
-}
-
 // SetID sets the value of ID.
-func (s *Example) SetID(val uuid.UUID) {
+func (s *EventTemplate) SetID(val uuid.UUID) {
 	s.ID = val
 }
 
 // SetName sets the value of Name.
-func (s *Example) SetName(val string) {
+func (s *EventTemplate) SetName(val string) {
 	s.Name = val
 }
 
+// SetType sets the value of Type.
+func (s *EventTemplate) SetType(val EventTemplateType) {
+	s.Type = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *EventTemplate) SetDifficulty(val EventTemplateDifficulty) {
+	s.Difficulty = val
+}
+
 // SetDescription sets the value of Description.
-func (s *Example) SetDescription(val OptString) {
+func (s *EventTemplate) SetDescription(val OptString) {
 	s.Description = val
 }
 
+// SetObjectivesTemplate sets the value of ObjectivesTemplate.
+func (s *EventTemplate) SetObjectivesTemplate(val []EventTemplateObjectivesTemplateItem) {
+	s.ObjectivesTemplate = val
+}
+
+// SetRewardsTemplate sets the value of RewardsTemplate.
+func (s *EventTemplate) SetRewardsTemplate(val []EventTemplateRewardsTemplateItem) {
+	s.RewardsTemplate = val
+}
+
+// SetDurationMinutes sets the value of DurationMinutes.
+func (s *EventTemplate) SetDurationMinutes(val OptInt) {
+	s.DurationMinutes = val
+}
+
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *EventTemplate) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
+
+// SetRegionRestrictions sets the value of RegionRestrictions.
+func (s *EventTemplate) SetRegionRestrictions(val []string) {
+	s.RegionRestrictions = val
+}
+
+// SetEventDataTemplate sets the value of EventDataTemplate.
+func (s *EventTemplate) SetEventDataTemplate(val *EventTemplateEventDataTemplate) {
+	s.EventDataTemplate = val
+}
+
+// SetIsActive sets the value of IsActive.
+func (s *EventTemplate) SetIsActive(val bool) {
+	s.IsActive = val
+}
+
 // SetCreatedAt sets the value of CreatedAt.
-func (s *Example) SetCreatedAt(val time.Time) {
+func (s *EventTemplate) SetCreatedAt(val OptDateTime) {
 	s.CreatedAt = val
 }
 
 // SetUpdatedAt sets the value of UpdatedAt.
-func (s *Example) SetUpdatedAt(val OptDateTime) {
+func (s *EventTemplate) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
+func (*EventTemplate) createEventTemplateRes() {}
+
+// Difficulty level.
+type EventTemplateDifficulty string
+
+const (
+	EventTemplateDifficultyEASY    EventTemplateDifficulty = "EASY"
+	EventTemplateDifficultyMEDIUM  EventTemplateDifficulty = "MEDIUM"
+	EventTemplateDifficultyHARD    EventTemplateDifficulty = "HARD"
+	EventTemplateDifficultyEXTREME EventTemplateDifficulty = "EXTREME"
+)
+
+// AllValues returns all EventTemplateDifficulty values.
+func (EventTemplateDifficulty) AllValues() []EventTemplateDifficulty {
+	return []EventTemplateDifficulty{
+		EventTemplateDifficultyEASY,
+		EventTemplateDifficultyMEDIUM,
+		EventTemplateDifficultyHARD,
+		EventTemplateDifficultyEXTREME,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventTemplateDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case EventTemplateDifficultyEASY:
+		return []byte(s), nil
+	case EventTemplateDifficultyMEDIUM:
+		return []byte(s), nil
+	case EventTemplateDifficultyHARD:
+		return []byte(s), nil
+	case EventTemplateDifficultyEXTREME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventTemplateDifficulty) UnmarshalText(data []byte) error {
+	switch EventTemplateDifficulty(data) {
+	case EventTemplateDifficultyEASY:
+		*s = EventTemplateDifficultyEASY
+		return nil
+	case EventTemplateDifficultyMEDIUM:
+		*s = EventTemplateDifficultyMEDIUM
+		return nil
+	case EventTemplateDifficultyHARD:
+		*s = EventTemplateDifficultyHARD
+		return nil
+	case EventTemplateDifficultyEXTREME:
+		*s = EventTemplateDifficultyEXTREME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Template event data structure.
+type EventTemplateEventDataTemplate struct{}
+
+// Template objectives structure.
+type EventTemplateObjectivesTemplateItem struct{}
+
+// Template rewards structure.
+type EventTemplateRewardsTemplateItem struct{}
+
+// Template type.
+type EventTemplateType string
+
+const (
+	EventTemplateTypeDISASTER   EventTemplateType = "DISASTER"
+	EventTemplateTypeFESTIVAL   EventTemplateType = "FESTIVAL"
+	EventTemplateTypeWAR        EventTemplateType = "WAR"
+	EventTemplateTypeINVASION   EventTemplateType = "INVASION"
+	EventTemplateTypeTOURNAMENT EventTemplateType = "TOURNAMENT"
+	EventTemplateTypeQUEST      EventTemplateType = "QUEST"
+)
+
+// AllValues returns all EventTemplateType values.
+func (EventTemplateType) AllValues() []EventTemplateType {
+	return []EventTemplateType{
+		EventTemplateTypeDISASTER,
+		EventTemplateTypeFESTIVAL,
+		EventTemplateTypeWAR,
+		EventTemplateTypeINVASION,
+		EventTemplateTypeTOURNAMENT,
+		EventTemplateTypeQUEST,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventTemplateType) MarshalText() ([]byte, error) {
+	switch s {
+	case EventTemplateTypeDISASTER:
+		return []byte(s), nil
+	case EventTemplateTypeFESTIVAL:
+		return []byte(s), nil
+	case EventTemplateTypeWAR:
+		return []byte(s), nil
+	case EventTemplateTypeINVASION:
+		return []byte(s), nil
+	case EventTemplateTypeTOURNAMENT:
+		return []byte(s), nil
+	case EventTemplateTypeQUEST:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventTemplateType) UnmarshalText(data []byte) error {
+	switch EventTemplateType(data) {
+	case EventTemplateTypeDISASTER:
+		*s = EventTemplateTypeDISASTER
+		return nil
+	case EventTemplateTypeFESTIVAL:
+		*s = EventTemplateTypeFESTIVAL
+		return nil
+	case EventTemplateTypeWAR:
+		*s = EventTemplateTypeWAR
+		return nil
+	case EventTemplateTypeINVASION:
+		*s = EventTemplateTypeINVASION
+		return nil
+	case EventTemplateTypeTOURNAMENT:
+		*s = EventTemplateTypeTOURNAMENT
+		return nil
+	case EventTemplateTypeQUEST:
+		*s = EventTemplateTypeQUEST
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetEventParticipantsOK struct {
+	Participants []EventParticipant `json:"participants"`
+	Pagination   PaginationMeta     `json:"pagination"`
+}
+
+// GetParticipants returns the value of Participants.
+func (s *GetEventParticipantsOK) GetParticipants() []EventParticipant {
+	return s.Participants
+}
+
+// GetPagination returns the value of Pagination.
+func (s *GetEventParticipantsOK) GetPagination() PaginationMeta {
+	return s.Pagination
+}
+
+// SetParticipants sets the value of Participants.
+func (s *GetEventParticipantsOK) SetParticipants(val []EventParticipant) {
+	s.Participants = val
+}
+
+// SetPagination sets the value of Pagination.
+func (s *GetEventParticipantsOK) SetPagination(val PaginationMeta) {
+	s.Pagination = val
+}
+
+func (*GetEventParticipantsOK) getEventParticipantsRes() {}
+
+type GetEventParticipantsStatus string
+
+const (
+	GetEventParticipantsStatusACTIVE    GetEventParticipantsStatus = "ACTIVE"
+	GetEventParticipantsStatusCOMPLETED GetEventParticipantsStatus = "COMPLETED"
+	GetEventParticipantsStatusLEFT      GetEventParticipantsStatus = "LEFT"
+	GetEventParticipantsStatusKICKED    GetEventParticipantsStatus = "KICKED"
+)
+
+// AllValues returns all GetEventParticipantsStatus values.
+func (GetEventParticipantsStatus) AllValues() []GetEventParticipantsStatus {
+	return []GetEventParticipantsStatus{
+		GetEventParticipantsStatusACTIVE,
+		GetEventParticipantsStatusCOMPLETED,
+		GetEventParticipantsStatusLEFT,
+		GetEventParticipantsStatusKICKED,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetEventParticipantsStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetEventParticipantsStatusACTIVE:
+		return []byte(s), nil
+	case GetEventParticipantsStatusCOMPLETED:
+		return []byte(s), nil
+	case GetEventParticipantsStatusLEFT:
+		return []byte(s), nil
+	case GetEventParticipantsStatusKICKED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetEventParticipantsStatus) UnmarshalText(data []byte) error {
+	switch GetEventParticipantsStatus(data) {
+	case GetEventParticipantsStatusACTIVE:
+		*s = GetEventParticipantsStatusACTIVE
+		return nil
+	case GetEventParticipantsStatusCOMPLETED:
+		*s = GetEventParticipantsStatusCOMPLETED
+		return nil
+	case GetEventParticipantsStatusLEFT:
+		*s = GetEventParticipantsStatusLEFT
+		return nil
+	case GetEventParticipantsStatusKICKED:
+		*s = GetEventParticipantsStatusKICKED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetPlayerRewardsBadRequest Error
+
+func (*GetPlayerRewardsBadRequest) getPlayerRewardsRes() {}
+
+type GetPlayerRewardsNotFound Error
+
+func (*GetPlayerRewardsNotFound) getPlayerRewardsRes() {}
+
+type GetPlayerRewardsOK struct {
+	Rewards []EventReward `json:"rewards"`
+}
+
+// GetRewards returns the value of Rewards.
+func (s *GetPlayerRewardsOK) GetRewards() []EventReward {
+	return s.Rewards
+}
+
+// SetRewards sets the value of Rewards.
+func (s *GetPlayerRewardsOK) SetRewards(val []EventReward) {
+	s.Rewards = val
+}
+
+func (*GetPlayerRewardsOK) getPlayerRewardsRes() {}
+
+type HealthCheckOK struct {
+	Status    HealthCheckOKStatus `json:"status"`
+	Timestamp time.Time           `json:"timestamp"`
+	Version   OptString           `json:"version"`
+	// System uptime in seconds.
+	Uptime OptInt `json:"uptime"`
+}
+
+// GetStatus returns the value of Status.
+func (s *HealthCheckOK) GetStatus() HealthCheckOKStatus {
+	return s.Status
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *HealthCheckOK) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *HealthCheckOK) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptime returns the value of Uptime.
+func (s *HealthCheckOK) GetUptime() OptInt {
+	return s.Uptime
+}
+
 // SetStatus sets the value of Status.
-func (s *Example) SetStatus(val ExampleStatus) {
+func (s *HealthCheckOK) SetStatus(val HealthCheckOKStatus) {
 	s.Status = val
 }
 
-// SetTags sets the value of Tags.
-func (s *Example) SetTags(val []string) {
-	s.Tags = val
+// SetTimestamp sets the value of Timestamp.
+func (s *HealthCheckOK) SetTimestamp(val time.Time) {
+	s.Timestamp = val
 }
 
-// SetIsActive sets the value of IsActive.
-func (s *Example) SetIsActive(val bool) {
-	s.IsActive = val
+// SetVersion sets the value of Version.
+func (s *HealthCheckOK) SetVersion(val OptString) {
+	s.Version = val
 }
 
-// SetPriority sets the value of Priority.
-func (s *Example) SetPriority(val OptInt) {
-	s.Priority = val
+// SetUptime sets the value of Uptime.
+func (s *HealthCheckOK) SetUptime(val OptInt) {
+	s.Uptime = val
 }
 
-// ExampleCreatedHeaders wraps ExampleResponse with response headers.
-type ExampleCreatedHeaders struct {
-	CacheControl OptString
-	ETag         OptString
-	Location     OptString
-	Response     ExampleResponse
-}
+func (*HealthCheckOK) healthCheckRes() {}
 
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleCreatedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *ExampleCreatedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLocation returns the value of Location.
-func (s *ExampleCreatedHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleCreatedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleCreatedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleCreatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLocation sets the value of Location.
-func (s *ExampleCreatedHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleCreatedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleCreatedHeaders) createExampleRes() {}
-
-// Ref: #/components/responses/ExampleDeleted
-type ExampleDeleted struct {
-	XProcessingTime OptInt
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleDeleted) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleDeleted) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-func (*ExampleDeleted) deleteExampleRes() {}
-
-// Standard error response format.
-type ExampleDomainBatchHealthCheckBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ExampleDomainBatchHealthCheckBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ExampleDomainBatchHealthCheckBadRequest) GetDetails() *ExampleDomainBatchHealthCheckBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ExampleDomainBatchHealthCheckBadRequest) SetDetails(val *ExampleDomainBatchHealthCheckBadRequestDetails) {
-	s.Details = val
-}
-
-func (*ExampleDomainBatchHealthCheckBadRequest) exampleDomainBatchHealthCheckRes() {}
-
-// Additional error details.
-type ExampleDomainBatchHealthCheckBadRequestDetails struct{}
-
-type ExampleDomainBatchHealthCheckOK struct {
-	// Health status for each requested service.
-	Results []jx.Raw `json:"results"`
-	// Total processing time in milliseconds.
-	TotalTimeMs int `json:"total_time_ms"`
-}
-
-// GetResults returns the value of Results.
-func (s *ExampleDomainBatchHealthCheckOK) GetResults() []jx.Raw {
-	return s.Results
-}
-
-// GetTotalTimeMs returns the value of TotalTimeMs.
-func (s *ExampleDomainBatchHealthCheckOK) GetTotalTimeMs() int {
-	return s.TotalTimeMs
-}
-
-// SetResults sets the value of Results.
-func (s *ExampleDomainBatchHealthCheckOK) SetResults(val []jx.Raw) {
-	s.Results = val
-}
-
-// SetTotalTimeMs sets the value of TotalTimeMs.
-func (s *ExampleDomainBatchHealthCheckOK) SetTotalTimeMs(val int) {
-	s.TotalTimeMs = val
-}
-
-// ExampleDomainBatchHealthCheckOKHeaders wraps ExampleDomainBatchHealthCheckOK with response headers.
-type ExampleDomainBatchHealthCheckOKHeaders struct {
-	CacheControl    OptString
-	XProcessingTime OptInt
-	Response        ExampleDomainBatchHealthCheckOK
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) GetResponse() ExampleDomainBatchHealthCheckOK {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleDomainBatchHealthCheckOKHeaders) SetResponse(val ExampleDomainBatchHealthCheckOK) {
-	s.Response = val
-}
-
-func (*ExampleDomainBatchHealthCheckOKHeaders) exampleDomainBatchHealthCheckRes() {}
-
-type ExampleDomainBatchHealthCheckReq struct {
-	// List of services to check.
-	Services []ExampleDomainBatchHealthCheckReqServicesItem `json:"services"`
-}
-
-// GetServices returns the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) GetServices() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return s.Services
-}
-
-// SetServices sets the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) SetServices(val []ExampleDomainBatchHealthCheckReqServicesItem) {
-	s.Services = val
-}
-
-type ExampleDomainBatchHealthCheckReqServicesItem string
+type HealthCheckOKStatus string
 
 const (
-	ExampleDomainBatchHealthCheckReqServicesItemExampleDomain     ExampleDomainBatchHealthCheckReqServicesItem = "example-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSystemDomain      ExampleDomainBatchHealthCheckReqServicesItem = "system-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain ExampleDomainBatchHealthCheckReqServicesItem = "specialized-domain"
+	HealthCheckOKStatusHealthy   HealthCheckOKStatus = "healthy"
+	HealthCheckOKStatusDegraded  HealthCheckOKStatus = "degraded"
+	HealthCheckOKStatusUnhealthy HealthCheckOKStatus = "unhealthy"
 )
 
-// AllValues returns all ExampleDomainBatchHealthCheckReqServicesItem values.
-func (ExampleDomainBatchHealthCheckReqServicesItem) AllValues() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return []ExampleDomainBatchHealthCheckReqServicesItem{
-		ExampleDomainBatchHealthCheckReqServicesItemExampleDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSystemDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain,
+// AllValues returns all HealthCheckOKStatus values.
+func (HealthCheckOKStatus) AllValues() []HealthCheckOKStatus {
+	return []HealthCheckOKStatus{
+		HealthCheckOKStatusHealthy,
+		HealthCheckOKStatusDegraded,
+		HealthCheckOKStatusUnhealthy,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalText() ([]byte, error) {
+func (s HealthCheckOKStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
+	case HealthCheckOKStatusHealthy:
 		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
+	case HealthCheckOKStatusDegraded:
 		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
+	case HealthCheckOKStatusUnhealthy:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -894,315 +1895,102 @@ func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalText() ([]byte, err
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleDomainBatchHealthCheckReqServicesItem) UnmarshalText(data []byte) error {
-	switch ExampleDomainBatchHealthCheckReqServicesItem(data) {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemExampleDomain
+func (s *HealthCheckOKStatus) UnmarshalText(data []byte) error {
+	switch HealthCheckOKStatus(data) {
+	case HealthCheckOKStatusHealthy:
+		*s = HealthCheckOKStatusHealthy
 		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSystemDomain
+	case HealthCheckOKStatusDegraded:
+		*s = HealthCheckOKStatusDegraded
 		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain
+	case HealthCheckOKStatusUnhealthy:
+		*s = HealthCheckOKStatusUnhealthy
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// Standard error response format.
-type ExampleDomainBatchHealthCheckTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ExampleDomainBatchHealthCheckTooManyRequestsDetails `json:"details"`
+type JoinEventBadRequest Error
+
+func (*JoinEventBadRequest) joinEventRes() {}
+
+type JoinEventConflict Error
+
+func (*JoinEventConflict) joinEventRes() {}
+
+type JoinEventNotFound Error
+
+func (*JoinEventNotFound) joinEventRes() {}
+
+type JoinEventReq struct {
+	// Unique player identifier.
+	PlayerId string `json:"playerId"`
 }
 
-// GetCode returns the value of Code.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetCode() int32 {
-	return s.Code
+// GetPlayerId returns the value of PlayerId.
+func (s *JoinEventReq) GetPlayerId() string {
+	return s.PlayerId
+}
+
+// SetPlayerId sets the value of PlayerId.
+func (s *JoinEventReq) SetPlayerId(val string) {
+	s.PlayerId = val
+}
+
+type LeaveEventConflict Error
+
+func (*LeaveEventConflict) leaveEventRes() {}
+
+type LeaveEventNotFound Error
+
+func (*LeaveEventNotFound) leaveEventRes() {}
+
+type LeaveEventOK struct {
+	Message OptString `json:"message"`
 }
 
 // GetMessage returns the value of Message.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetMessage() string {
+func (s *LeaveEventOK) GetMessage() OptString {
 	return s.Message
 }
 
-// GetDetails returns the value of Details.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) GetDetails() *ExampleDomainBatchHealthCheckTooManyRequestsDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetCode(val int32) {
-	s.Code = val
-}
-
 // SetMessage sets the value of Message.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetMessage(val string) {
+func (s *LeaveEventOK) SetMessage(val OptString) {
 	s.Message = val
 }
 
-// SetDetails sets the value of Details.
-func (s *ExampleDomainBatchHealthCheckTooManyRequests) SetDetails(val *ExampleDomainBatchHealthCheckTooManyRequestsDetails) {
-	s.Details = val
-}
+func (*LeaveEventOK) leaveEventRes() {}
 
-// Additional error details.
-type ExampleDomainBatchHealthCheckTooManyRequestsDetails struct{}
-
-// ExampleDomainBatchHealthCheckTooManyRequestsHeaders wraps ExampleDomainBatchHealthCheckTooManyRequests with response headers.
-type ExampleDomainBatchHealthCheckTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   ExampleDomainBatchHealthCheckTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) GetResponse() ExampleDomainBatchHealthCheckTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleDomainBatchHealthCheckTooManyRequestsHeaders) SetResponse(val ExampleDomainBatchHealthCheckTooManyRequests) {
-	s.Response = val
-}
-
-func (*ExampleDomainBatchHealthCheckTooManyRequestsHeaders) exampleDomainBatchHealthCheckRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%. Paginated responses optimized for memory efficiency.
-// Ref: #/components/schemas/ExampleListResponse
-type ExampleListResponse struct {
-	// List of examples.
-	Examples []Example `json:"examples"`
-	// Whether there are more results available.
-	HasMore bool `json:"has_more"`
-	// Total number of examples matching criteria.
-	TotalCount int `json:"total_count"`
-	// Current page number.
-	Page OptInt `json:"page"`
-	// Items per page.
-	Limit OptInt `json:"limit"`
-}
-
-// GetExamples returns the value of Examples.
-func (s *ExampleListResponse) GetExamples() []Example {
-	return s.Examples
-}
-
-// GetHasMore returns the value of HasMore.
-func (s *ExampleListResponse) GetHasMore() bool {
-	return s.HasMore
-}
-
-// GetTotalCount returns the value of TotalCount.
-func (s *ExampleListResponse) GetTotalCount() int {
-	return s.TotalCount
-}
-
-// GetPage returns the value of Page.
-func (s *ExampleListResponse) GetPage() OptInt {
-	return s.Page
-}
-
-// GetLimit returns the value of Limit.
-func (s *ExampleListResponse) GetLimit() OptInt {
-	return s.Limit
-}
-
-// SetExamples sets the value of Examples.
-func (s *ExampleListResponse) SetExamples(val []Example) {
-	s.Examples = val
-}
-
-// SetHasMore sets the value of HasMore.
-func (s *ExampleListResponse) SetHasMore(val bool) {
-	s.HasMore = val
-}
-
-// SetTotalCount sets the value of TotalCount.
-func (s *ExampleListResponse) SetTotalCount(val int) {
-	s.TotalCount = val
-}
-
-// SetPage sets the value of Page.
-func (s *ExampleListResponse) SetPage(val OptInt) {
-	s.Page = val
-}
-
-// SetLimit sets the value of Limit.
-func (s *ExampleListResponse) SetLimit(val OptInt) {
-	s.Limit = val
-}
-
-// ExampleListSuccessHeaders wraps ExampleListResponse with response headers.
-type ExampleListSuccessHeaders struct {
-	CacheControl OptString
-	XPageCount   OptInt
-	XTotalCount  OptInt
-	Response     ExampleListResponse
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleListSuccessHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetXPageCount returns the value of XPageCount.
-func (s *ExampleListSuccessHeaders) GetXPageCount() OptInt {
-	return s.XPageCount
-}
-
-// GetXTotalCount returns the value of XTotalCount.
-func (s *ExampleListSuccessHeaders) GetXTotalCount() OptInt {
-	return s.XTotalCount
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleListSuccessHeaders) GetResponse() ExampleListResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleListSuccessHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetXPageCount sets the value of XPageCount.
-func (s *ExampleListSuccessHeaders) SetXPageCount(val OptInt) {
-	s.XPageCount = val
-}
-
-// SetXTotalCount sets the value of XTotalCount.
-func (s *ExampleListSuccessHeaders) SetXTotalCount(val OptInt) {
-	s.XTotalCount = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleListSuccessHeaders) SetResponse(val ExampleListResponse) {
-	s.Response = val
-}
-
-func (*ExampleListSuccessHeaders) listWorldEventsRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/ExampleResponse
-type ExampleResponse struct {
-	Example Example `json:"example"`
-}
-
-// GetExample returns the value of Example.
-func (s *ExampleResponse) GetExample() Example {
-	return s.Example
-}
-
-// SetExample sets the value of Example.
-func (s *ExampleResponse) SetExample(val Example) {
-	s.Example = val
-}
-
-// ExampleRetrievedHeaders wraps ExampleResponse with response headers.
-type ExampleRetrievedHeaders struct {
-	CacheControl    OptString
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleRetrievedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *ExampleRetrievedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLastModified returns the value of LastModified.
-func (s *ExampleRetrievedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleRetrievedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleRetrievedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleRetrievedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleRetrievedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleRetrievedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleRetrievedHeaders) getExampleRes() {}
-
-// Current status.
-type ExampleStatus string
+type ListEventTemplatesDifficulty string
 
 const (
-	ExampleStatusActive   ExampleStatus = "active"
-	ExampleStatusInactive ExampleStatus = "inactive"
-	ExampleStatusPending  ExampleStatus = "pending"
-	ExampleStatusArchived ExampleStatus = "archived"
+	ListEventTemplatesDifficultyEASY    ListEventTemplatesDifficulty = "EASY"
+	ListEventTemplatesDifficultyMEDIUM  ListEventTemplatesDifficulty = "MEDIUM"
+	ListEventTemplatesDifficultyHARD    ListEventTemplatesDifficulty = "HARD"
+	ListEventTemplatesDifficultyEXTREME ListEventTemplatesDifficulty = "EXTREME"
 )
 
-// AllValues returns all ExampleStatus values.
-func (ExampleStatus) AllValues() []ExampleStatus {
-	return []ExampleStatus{
-		ExampleStatusActive,
-		ExampleStatusInactive,
-		ExampleStatusPending,
-		ExampleStatusArchived,
+// AllValues returns all ListEventTemplatesDifficulty values.
+func (ListEventTemplatesDifficulty) AllValues() []ListEventTemplatesDifficulty {
+	return []ListEventTemplatesDifficulty{
+		ListEventTemplatesDifficultyEASY,
+		ListEventTemplatesDifficultyMEDIUM,
+		ListEventTemplatesDifficultyHARD,
+		ListEventTemplatesDifficultyEXTREME,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ExampleStatus) MarshalText() ([]byte, error) {
+func (s ListEventTemplatesDifficulty) MarshalText() ([]byte, error) {
 	switch s {
-	case ExampleStatusActive:
+	case ListEventTemplatesDifficultyEASY:
 		return []byte(s), nil
-	case ExampleStatusInactive:
+	case ListEventTemplatesDifficultyMEDIUM:
 		return []byte(s), nil
-	case ExampleStatusPending:
+	case ListEventTemplatesDifficultyHARD:
 		return []byte(s), nil
-	case ExampleStatusArchived:
+	case ListEventTemplatesDifficultyEXTREME:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1210,326 +1998,87 @@ func (s ExampleStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleStatus) UnmarshalText(data []byte) error {
-	switch ExampleStatus(data) {
-	case ExampleStatusActive:
-		*s = ExampleStatusActive
+func (s *ListEventTemplatesDifficulty) UnmarshalText(data []byte) error {
+	switch ListEventTemplatesDifficulty(data) {
+	case ListEventTemplatesDifficultyEASY:
+		*s = ListEventTemplatesDifficultyEASY
 		return nil
-	case ExampleStatusInactive:
-		*s = ExampleStatusInactive
+	case ListEventTemplatesDifficultyMEDIUM:
+		*s = ListEventTemplatesDifficultyMEDIUM
 		return nil
-	case ExampleStatusPending:
-		*s = ExampleStatusPending
+	case ListEventTemplatesDifficultyHARD:
+		*s = ListEventTemplatesDifficultyHARD
 		return nil
-	case ExampleStatusArchived:
-		*s = ExampleStatusArchived
+	case ListEventTemplatesDifficultyEXTREME:
+		*s = ListEventTemplatesDifficultyEXTREME
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// ExampleUpdatedHeaders wraps ExampleResponse with response headers.
-type ExampleUpdatedHeaders struct {
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
+type ListEventTemplatesOK struct {
+	Templates  []EventTemplate `json:"templates"`
+	Pagination PaginationMeta  `json:"pagination"`
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleUpdatedHeaders) GetETag() OptString {
-	return s.ETag
+// GetTemplates returns the value of Templates.
+func (s *ListEventTemplatesOK) GetTemplates() []EventTemplate {
+	return s.Templates
 }
 
-// GetLastModified returns the value of LastModified.
-func (s *ExampleUpdatedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
+// GetPagination returns the value of Pagination.
+func (s *ListEventTemplatesOK) GetPagination() PaginationMeta {
+	return s.Pagination
 }
 
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
+// SetTemplates sets the value of Templates.
+func (s *ListEventTemplatesOK) SetTemplates(val []EventTemplate) {
+	s.Templates = val
 }
 
-// GetResponse returns the value of Response.
-func (s *ExampleUpdatedHeaders) GetResponse() ExampleResponse {
-	return s.Response
+// SetPagination sets the value of Pagination.
+func (s *ListEventTemplatesOK) SetPagination(val PaginationMeta) {
+	s.Pagination = val
 }
 
-// SetETag sets the value of ETag.
-func (s *ExampleUpdatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleUpdatedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleUpdatedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleUpdatedHeaders) updateExampleRes() {}
-
-// Standard error response format.
-type GetExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *GetExampleBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *GetExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *GetExampleBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *GetExampleBadRequest) GetDetails() *GetExampleBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *GetExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *GetExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *GetExampleBadRequest) SetDetails(val *GetExampleBadRequestDetails) {
-	s.Details = val
-}
-
-func (*GetExampleBadRequest) getExampleRes() {}
-
-// Additional error details.
-type GetExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type GetExampleNotFound struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *GetExampleNotFoundDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *GetExampleNotFound) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *GetExampleNotFound) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *GetExampleNotFound) GetDetails() *GetExampleNotFoundDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *GetExampleNotFound) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *GetExampleNotFound) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *GetExampleNotFound) SetDetails(val *GetExampleNotFoundDetails) {
-	s.Details = val
-}
-
-func (*GetExampleNotFound) getExampleRes() {}
-
-// Additional error details.
-type GetExampleNotFoundDetails struct{}
-
-// GetExampleNotModified is response for GetExample operation.
-type GetExampleNotModified struct {
-	CacheControl OptString
-	ETag         OptString
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *GetExampleNotModified) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *GetExampleNotModified) GetETag() OptString {
-	return s.ETag
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *GetExampleNotModified) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *GetExampleNotModified) SetETag(val OptString) {
-	s.ETag = val
-}
-
-func (*GetExampleNotModified) getExampleRes() {}
-
-// Standard error response format.
-type GetExampleTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *GetExampleTooManyRequestsDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *GetExampleTooManyRequests) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *GetExampleTooManyRequests) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *GetExampleTooManyRequests) GetDetails() *GetExampleTooManyRequestsDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *GetExampleTooManyRequests) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *GetExampleTooManyRequests) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *GetExampleTooManyRequests) SetDetails(val *GetExampleTooManyRequestsDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type GetExampleTooManyRequestsDetails struct{}
-
-// GetExampleTooManyRequestsHeaders wraps GetExampleTooManyRequests with response headers.
-type GetExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   GetExampleTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *GetExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *GetExampleTooManyRequestsHeaders) GetResponse() GetExampleTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *GetExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *GetExampleTooManyRequestsHeaders) SetResponse(val GetExampleTooManyRequests) {
-	s.Response = val
-}
-
-func (*GetExampleTooManyRequestsHeaders) getExampleRes() {}
-
-// Standard error response format.
-type ListWorldEventsBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ListWorldEventsBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ListWorldEventsBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ListWorldEventsBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ListWorldEventsBadRequest) GetDetails() *ListWorldEventsBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ListWorldEventsBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ListWorldEventsBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ListWorldEventsBadRequest) SetDetails(val *ListWorldEventsBadRequestDetails) {
-	s.Details = val
-}
-
-func (*ListWorldEventsBadRequest) listWorldEventsRes() {}
-
-// Additional error details.
-type ListWorldEventsBadRequestDetails struct{}
-
-type ListWorldEventsFilterStatus string
+type ListEventTemplatesType string
 
 const (
-	ListWorldEventsFilterStatusActive   ListWorldEventsFilterStatus = "active"
-	ListWorldEventsFilterStatusInactive ListWorldEventsFilterStatus = "inactive"
-	ListWorldEventsFilterStatusPending  ListWorldEventsFilterStatus = "pending"
+	ListEventTemplatesTypeDISASTER   ListEventTemplatesType = "DISASTER"
+	ListEventTemplatesTypeFESTIVAL   ListEventTemplatesType = "FESTIVAL"
+	ListEventTemplatesTypeWAR        ListEventTemplatesType = "WAR"
+	ListEventTemplatesTypeINVASION   ListEventTemplatesType = "INVASION"
+	ListEventTemplatesTypeTOURNAMENT ListEventTemplatesType = "TOURNAMENT"
+	ListEventTemplatesTypeQUEST      ListEventTemplatesType = "QUEST"
 )
 
-// AllValues returns all ListWorldEventsFilterStatus values.
-func (ListWorldEventsFilterStatus) AllValues() []ListWorldEventsFilterStatus {
-	return []ListWorldEventsFilterStatus{
-		ListWorldEventsFilterStatusActive,
-		ListWorldEventsFilterStatusInactive,
-		ListWorldEventsFilterStatusPending,
+// AllValues returns all ListEventTemplatesType values.
+func (ListEventTemplatesType) AllValues() []ListEventTemplatesType {
+	return []ListEventTemplatesType{
+		ListEventTemplatesTypeDISASTER,
+		ListEventTemplatesTypeFESTIVAL,
+		ListEventTemplatesTypeWAR,
+		ListEventTemplatesTypeINVASION,
+		ListEventTemplatesTypeTOURNAMENT,
+		ListEventTemplatesTypeQUEST,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ListWorldEventsFilterStatus) MarshalText() ([]byte, error) {
+func (s ListEventTemplatesType) MarshalText() ([]byte, error) {
 	switch s {
-	case ListWorldEventsFilterStatusActive:
+	case ListEventTemplatesTypeDISASTER:
 		return []byte(s), nil
-	case ListWorldEventsFilterStatusInactive:
+	case ListEventTemplatesTypeFESTIVAL:
 		return []byte(s), nil
-	case ListWorldEventsFilterStatusPending:
+	case ListEventTemplatesTypeWAR:
+		return []byte(s), nil
+	case ListEventTemplatesTypeINVASION:
+		return []byte(s), nil
+	case ListEventTemplatesTypeTOURNAMENT:
+		return []byte(s), nil
+	case ListEventTemplatesTypeQUEST:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1537,47 +2086,87 @@ func (s ListWorldEventsFilterStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ListWorldEventsFilterStatus) UnmarshalText(data []byte) error {
-	switch ListWorldEventsFilterStatus(data) {
-	case ListWorldEventsFilterStatusActive:
-		*s = ListWorldEventsFilterStatusActive
+func (s *ListEventTemplatesType) UnmarshalText(data []byte) error {
+	switch ListEventTemplatesType(data) {
+	case ListEventTemplatesTypeDISASTER:
+		*s = ListEventTemplatesTypeDISASTER
 		return nil
-	case ListWorldEventsFilterStatusInactive:
-		*s = ListWorldEventsFilterStatusInactive
+	case ListEventTemplatesTypeFESTIVAL:
+		*s = ListEventTemplatesTypeFESTIVAL
 		return nil
-	case ListWorldEventsFilterStatusPending:
-		*s = ListWorldEventsFilterStatusPending
+	case ListEventTemplatesTypeWAR:
+		*s = ListEventTemplatesTypeWAR
+		return nil
+	case ListEventTemplatesTypeINVASION:
+		*s = ListEventTemplatesTypeINVASION
+		return nil
+	case ListEventTemplatesTypeTOURNAMENT:
+		*s = ListEventTemplatesTypeTOURNAMENT
+		return nil
+	case ListEventTemplatesTypeQUEST:
+		*s = ListEventTemplatesTypeQUEST
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type ListWorldEventsSortBy string
+type ListEventsOK struct {
+	Events     []WorldEvent   `json:"events"`
+	Pagination PaginationMeta `json:"pagination"`
+}
+
+// GetEvents returns the value of Events.
+func (s *ListEventsOK) GetEvents() []WorldEvent {
+	return s.Events
+}
+
+// GetPagination returns the value of Pagination.
+func (s *ListEventsOK) GetPagination() PaginationMeta {
+	return s.Pagination
+}
+
+// SetEvents sets the value of Events.
+func (s *ListEventsOK) SetEvents(val []WorldEvent) {
+	s.Events = val
+}
+
+// SetPagination sets the value of Pagination.
+func (s *ListEventsOK) SetPagination(val PaginationMeta) {
+	s.Pagination = val
+}
+
+func (*ListEventsOK) listEventsRes() {}
+
+type ListEventsStatus string
 
 const (
-	ListWorldEventsSortByCreatedAt ListWorldEventsSortBy = "created_at"
-	ListWorldEventsSortByName      ListWorldEventsSortBy = "name"
-	ListWorldEventsSortByPriority  ListWorldEventsSortBy = "priority"
+	ListEventsStatusANNOUNCED ListEventsStatus = "ANNOUNCED"
+	ListEventsStatusACTIVE    ListEventsStatus = "ACTIVE"
+	ListEventsStatusCOMPLETED ListEventsStatus = "COMPLETED"
+	ListEventsStatusCANCELLED ListEventsStatus = "CANCELLED"
 )
 
-// AllValues returns all ListWorldEventsSortBy values.
-func (ListWorldEventsSortBy) AllValues() []ListWorldEventsSortBy {
-	return []ListWorldEventsSortBy{
-		ListWorldEventsSortByCreatedAt,
-		ListWorldEventsSortByName,
-		ListWorldEventsSortByPriority,
+// AllValues returns all ListEventsStatus values.
+func (ListEventsStatus) AllValues() []ListEventsStatus {
+	return []ListEventsStatus{
+		ListEventsStatusANNOUNCED,
+		ListEventsStatusACTIVE,
+		ListEventsStatusCOMPLETED,
+		ListEventsStatusCANCELLED,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ListWorldEventsSortBy) MarshalText() ([]byte, error) {
+func (s ListEventsStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case ListWorldEventsSortByCreatedAt:
+	case ListEventsStatusANNOUNCED:
 		return []byte(s), nil
-	case ListWorldEventsSortByName:
+	case ListEventsStatusACTIVE:
 		return []byte(s), nil
-	case ListWorldEventsSortByPriority:
+	case ListEventsStatusCOMPLETED:
+		return []byte(s), nil
+	case ListEventsStatusCANCELLED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1585,43 +2174,62 @@ func (s ListWorldEventsSortBy) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ListWorldEventsSortBy) UnmarshalText(data []byte) error {
-	switch ListWorldEventsSortBy(data) {
-	case ListWorldEventsSortByCreatedAt:
-		*s = ListWorldEventsSortByCreatedAt
+func (s *ListEventsStatus) UnmarshalText(data []byte) error {
+	switch ListEventsStatus(data) {
+	case ListEventsStatusANNOUNCED:
+		*s = ListEventsStatusANNOUNCED
 		return nil
-	case ListWorldEventsSortByName:
-		*s = ListWorldEventsSortByName
+	case ListEventsStatusACTIVE:
+		*s = ListEventsStatusACTIVE
 		return nil
-	case ListWorldEventsSortByPriority:
-		*s = ListWorldEventsSortByPriority
+	case ListEventsStatusCOMPLETED:
+		*s = ListEventsStatusCOMPLETED
+		return nil
+	case ListEventsStatusCANCELLED:
+		*s = ListEventsStatusCANCELLED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type ListWorldEventsSortOrder string
+type ListEventsType string
 
 const (
-	ListWorldEventsSortOrderAsc  ListWorldEventsSortOrder = "asc"
-	ListWorldEventsSortOrderDesc ListWorldEventsSortOrder = "desc"
+	ListEventsTypeDISASTER   ListEventsType = "DISASTER"
+	ListEventsTypeFESTIVAL   ListEventsType = "FESTIVAL"
+	ListEventsTypeWAR        ListEventsType = "WAR"
+	ListEventsTypeINVASION   ListEventsType = "INVASION"
+	ListEventsTypeTOURNAMENT ListEventsType = "TOURNAMENT"
+	ListEventsTypeQUEST      ListEventsType = "QUEST"
 )
 
-// AllValues returns all ListWorldEventsSortOrder values.
-func (ListWorldEventsSortOrder) AllValues() []ListWorldEventsSortOrder {
-	return []ListWorldEventsSortOrder{
-		ListWorldEventsSortOrderAsc,
-		ListWorldEventsSortOrderDesc,
+// AllValues returns all ListEventsType values.
+func (ListEventsType) AllValues() []ListEventsType {
+	return []ListEventsType{
+		ListEventsTypeDISASTER,
+		ListEventsTypeFESTIVAL,
+		ListEventsTypeWAR,
+		ListEventsTypeINVASION,
+		ListEventsTypeTOURNAMENT,
+		ListEventsTypeQUEST,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ListWorldEventsSortOrder) MarshalText() ([]byte, error) {
+func (s ListEventsType) MarshalText() ([]byte, error) {
 	switch s {
-	case ListWorldEventsSortOrderAsc:
+	case ListEventsTypeDISASTER:
 		return []byte(s), nil
-	case ListWorldEventsSortOrderDesc:
+	case ListEventsTypeFESTIVAL:
+		return []byte(s), nil
+	case ListEventsTypeWAR:
+		return []byte(s), nil
+	case ListEventsTypeINVASION:
+		return []byte(s), nil
+	case ListEventsTypeTOURNAMENT:
+		return []byte(s), nil
+	case ListEventsTypeQUEST:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1629,106 +2237,29 @@ func (s ListWorldEventsSortOrder) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ListWorldEventsSortOrder) UnmarshalText(data []byte) error {
-	switch ListWorldEventsSortOrder(data) {
-	case ListWorldEventsSortOrderAsc:
-		*s = ListWorldEventsSortOrderAsc
+func (s *ListEventsType) UnmarshalText(data []byte) error {
+	switch ListEventsType(data) {
+	case ListEventsTypeDISASTER:
+		*s = ListEventsTypeDISASTER
 		return nil
-	case ListWorldEventsSortOrderDesc:
-		*s = ListWorldEventsSortOrderDesc
+	case ListEventsTypeFESTIVAL:
+		*s = ListEventsTypeFESTIVAL
+		return nil
+	case ListEventsTypeWAR:
+		*s = ListEventsTypeWAR
+		return nil
+	case ListEventsTypeINVASION:
+		*s = ListEventsTypeINVASION
+		return nil
+	case ListEventsTypeTOURNAMENT:
+		*s = ListEventsTypeTOURNAMENT
+		return nil
+	case ListEventsTypeQUEST:
+		*s = ListEventsTypeQUEST
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-// Standard error response format.
-type ListWorldEventsUnprocessableEntity struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *ListWorldEventsUnprocessableEntityDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *ListWorldEventsUnprocessableEntity) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *ListWorldEventsUnprocessableEntity) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *ListWorldEventsUnprocessableEntity) GetDetails() *ListWorldEventsUnprocessableEntityDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *ListWorldEventsUnprocessableEntity) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *ListWorldEventsUnprocessableEntity) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ListWorldEventsUnprocessableEntity) SetDetails(val *ListWorldEventsUnprocessableEntityDetails) {
-	s.Details = val
-}
-
-func (*ListWorldEventsUnprocessableEntity) listWorldEventsRes() {}
-
-// Additional error details.
-type ListWorldEventsUnprocessableEntityDetails struct{}
-
-// NewOptBool returns new OptBool with value set to v.
-func NewOptBool(v bool) OptBool {
-	return OptBool{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptBool is optional bool.
-type OptBool struct {
-	Value bool
-	Set   bool
-}
-
-// IsSet returns true if OptBool was set.
-func (o OptBool) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptBool) Reset() {
-	var v bool
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptBool) SetTo(v bool) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptBool) Get() (v bool, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptBool) Or(d bool) bool {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
 }
 
 // NewOptDateTime returns new OptDateTime with value set to v.
@@ -1771,6 +2302,190 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptDuration returns new OptDuration with value set to v.
+func NewOptDuration(v time.Duration) OptDuration {
+	return OptDuration{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDuration is optional time.Duration.
+type OptDuration struct {
+	Value time.Duration
+	Set   bool
+}
+
+// IsSet returns true if OptDuration was set.
+func (o OptDuration) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDuration) Reset() {
+	var v time.Duration
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDuration) SetTo(v time.Duration) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDuration) Get() (v time.Duration, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDuration) Or(d time.Duration) time.Duration {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEventAnalytics returns new OptEventAnalytics with value set to v.
+func NewOptEventAnalytics(v EventAnalytics) OptEventAnalytics {
+	return OptEventAnalytics{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventAnalytics is optional EventAnalytics.
+type OptEventAnalytics struct {
+	Value EventAnalytics
+	Set   bool
+}
+
+// IsSet returns true if OptEventAnalytics was set.
+func (o OptEventAnalytics) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventAnalytics) Reset() {
+	var v EventAnalytics
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventAnalytics) SetTo(v EventAnalytics) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventAnalytics) Get() (v EventAnalytics, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventAnalytics) Or(d EventAnalytics) EventAnalytics {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFloat32 returns new OptFloat32 with value set to v.
+func NewOptFloat32(v float32) OptFloat32 {
+	return OptFloat32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFloat32 is optional float32.
+type OptFloat32 struct {
+	Value float32
+	Set   bool
+}
+
+// IsSet returns true if OptFloat32 was set.
+func (o OptFloat32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFloat32) Reset() {
+	var v float32
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFloat32) SetTo(v float32) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFloat32) Get() (v float32, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFloat32) Or(d float32) float32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetEventParticipantsStatus returns new OptGetEventParticipantsStatus with value set to v.
+func NewOptGetEventParticipantsStatus(v GetEventParticipantsStatus) OptGetEventParticipantsStatus {
+	return OptGetEventParticipantsStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetEventParticipantsStatus is optional GetEventParticipantsStatus.
+type OptGetEventParticipantsStatus struct {
+	Value GetEventParticipantsStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetEventParticipantsStatus was set.
+func (o OptGetEventParticipantsStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetEventParticipantsStatus) Reset() {
+	var v GetEventParticipantsStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetEventParticipantsStatus) SetTo(v GetEventParticipantsStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetEventParticipantsStatus) Get() (v GetEventParticipantsStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetEventParticipantsStatus) Or(d GetEventParticipantsStatus) GetEventParticipantsStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1823,38 +2538,38 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
-// NewOptListWorldEventsFilterStatus returns new OptListWorldEventsFilterStatus with value set to v.
-func NewOptListWorldEventsFilterStatus(v ListWorldEventsFilterStatus) OptListWorldEventsFilterStatus {
-	return OptListWorldEventsFilterStatus{
+// NewOptListEventTemplatesDifficulty returns new OptListEventTemplatesDifficulty with value set to v.
+func NewOptListEventTemplatesDifficulty(v ListEventTemplatesDifficulty) OptListEventTemplatesDifficulty {
+	return OptListEventTemplatesDifficulty{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptListWorldEventsFilterStatus is optional ListWorldEventsFilterStatus.
-type OptListWorldEventsFilterStatus struct {
-	Value ListWorldEventsFilterStatus
+// OptListEventTemplatesDifficulty is optional ListEventTemplatesDifficulty.
+type OptListEventTemplatesDifficulty struct {
+	Value ListEventTemplatesDifficulty
 	Set   bool
 }
 
-// IsSet returns true if OptListWorldEventsFilterStatus was set.
-func (o OptListWorldEventsFilterStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptListEventTemplatesDifficulty was set.
+func (o OptListEventTemplatesDifficulty) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptListWorldEventsFilterStatus) Reset() {
-	var v ListWorldEventsFilterStatus
+func (o *OptListEventTemplatesDifficulty) Reset() {
+	var v ListEventTemplatesDifficulty
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptListWorldEventsFilterStatus) SetTo(v ListWorldEventsFilterStatus) {
+func (o *OptListEventTemplatesDifficulty) SetTo(v ListEventTemplatesDifficulty) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptListWorldEventsFilterStatus) Get() (v ListWorldEventsFilterStatus, ok bool) {
+func (o OptListEventTemplatesDifficulty) Get() (v ListEventTemplatesDifficulty, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1862,45 +2577,45 @@ func (o OptListWorldEventsFilterStatus) Get() (v ListWorldEventsFilterStatus, ok
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptListWorldEventsFilterStatus) Or(d ListWorldEventsFilterStatus) ListWorldEventsFilterStatus {
+func (o OptListEventTemplatesDifficulty) Or(d ListEventTemplatesDifficulty) ListEventTemplatesDifficulty {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptListWorldEventsSortBy returns new OptListWorldEventsSortBy with value set to v.
-func NewOptListWorldEventsSortBy(v ListWorldEventsSortBy) OptListWorldEventsSortBy {
-	return OptListWorldEventsSortBy{
+// NewOptListEventTemplatesType returns new OptListEventTemplatesType with value set to v.
+func NewOptListEventTemplatesType(v ListEventTemplatesType) OptListEventTemplatesType {
+	return OptListEventTemplatesType{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptListWorldEventsSortBy is optional ListWorldEventsSortBy.
-type OptListWorldEventsSortBy struct {
-	Value ListWorldEventsSortBy
+// OptListEventTemplatesType is optional ListEventTemplatesType.
+type OptListEventTemplatesType struct {
+	Value ListEventTemplatesType
 	Set   bool
 }
 
-// IsSet returns true if OptListWorldEventsSortBy was set.
-func (o OptListWorldEventsSortBy) IsSet() bool { return o.Set }
+// IsSet returns true if OptListEventTemplatesType was set.
+func (o OptListEventTemplatesType) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptListWorldEventsSortBy) Reset() {
-	var v ListWorldEventsSortBy
+func (o *OptListEventTemplatesType) Reset() {
+	var v ListEventTemplatesType
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptListWorldEventsSortBy) SetTo(v ListWorldEventsSortBy) {
+func (o *OptListEventTemplatesType) SetTo(v ListEventTemplatesType) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptListWorldEventsSortBy) Get() (v ListWorldEventsSortBy, ok bool) {
+func (o OptListEventTemplatesType) Get() (v ListEventTemplatesType, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1908,45 +2623,45 @@ func (o OptListWorldEventsSortBy) Get() (v ListWorldEventsSortBy, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptListWorldEventsSortBy) Or(d ListWorldEventsSortBy) ListWorldEventsSortBy {
+func (o OptListEventTemplatesType) Or(d ListEventTemplatesType) ListEventTemplatesType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptListWorldEventsSortOrder returns new OptListWorldEventsSortOrder with value set to v.
-func NewOptListWorldEventsSortOrder(v ListWorldEventsSortOrder) OptListWorldEventsSortOrder {
-	return OptListWorldEventsSortOrder{
+// NewOptListEventsStatus returns new OptListEventsStatus with value set to v.
+func NewOptListEventsStatus(v ListEventsStatus) OptListEventsStatus {
+	return OptListEventsStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptListWorldEventsSortOrder is optional ListWorldEventsSortOrder.
-type OptListWorldEventsSortOrder struct {
-	Value ListWorldEventsSortOrder
+// OptListEventsStatus is optional ListEventsStatus.
+type OptListEventsStatus struct {
+	Value ListEventsStatus
 	Set   bool
 }
 
-// IsSet returns true if OptListWorldEventsSortOrder was set.
-func (o OptListWorldEventsSortOrder) IsSet() bool { return o.Set }
+// IsSet returns true if OptListEventsStatus was set.
+func (o OptListEventsStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptListWorldEventsSortOrder) Reset() {
-	var v ListWorldEventsSortOrder
+func (o *OptListEventsStatus) Reset() {
+	var v ListEventsStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptListWorldEventsSortOrder) SetTo(v ListWorldEventsSortOrder) {
+func (o *OptListEventsStatus) SetTo(v ListEventsStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptListWorldEventsSortOrder) Get() (v ListWorldEventsSortOrder, ok bool) {
+func (o OptListEventsStatus) Get() (v ListEventsStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1954,7 +2669,53 @@ func (o OptListWorldEventsSortOrder) Get() (v ListWorldEventsSortOrder, ok bool)
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptListWorldEventsSortOrder) Or(d ListWorldEventsSortOrder) ListWorldEventsSortOrder {
+func (o OptListEventsStatus) Or(d ListEventsStatus) ListEventsStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptListEventsType returns new OptListEventsType with value set to v.
+func NewOptListEventsType(v ListEventsType) OptListEventsType {
+	return OptListEventsType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListEventsType is optional ListEventsType.
+type OptListEventsType struct {
+	Value ListEventsType
+	Set   bool
+}
+
+// IsSet returns true if OptListEventsType was set.
+func (o OptListEventsType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListEventsType) Reset() {
+	var v ListEventsType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListEventsType) SetTo(v ListEventsType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListEventsType) Get() (v ListEventsType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListEventsType) Or(d ListEventsType) ListEventsType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2007,38 +2768,38 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
-// NewOptUpdateExampleRequestStatus returns new OptUpdateExampleRequestStatus with value set to v.
-func NewOptUpdateExampleRequestStatus(v UpdateExampleRequestStatus) OptUpdateExampleRequestStatus {
-	return OptUpdateExampleRequestStatus{
+// NewOptUpdateEventRequestStatus returns new OptUpdateEventRequestStatus with value set to v.
+func NewOptUpdateEventRequestStatus(v UpdateEventRequestStatus) OptUpdateEventRequestStatus {
+	return OptUpdateEventRequestStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptUpdateExampleRequestStatus is optional UpdateExampleRequestStatus.
-type OptUpdateExampleRequestStatus struct {
-	Value UpdateExampleRequestStatus
+// OptUpdateEventRequestStatus is optional UpdateEventRequestStatus.
+type OptUpdateEventRequestStatus struct {
+	Value UpdateEventRequestStatus
 	Set   bool
 }
 
-// IsSet returns true if OptUpdateExampleRequestStatus was set.
-func (o OptUpdateExampleRequestStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptUpdateEventRequestStatus was set.
+func (o OptUpdateEventRequestStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptUpdateExampleRequestStatus) Reset() {
-	var v UpdateExampleRequestStatus
+func (o *OptUpdateEventRequestStatus) Reset() {
+	var v UpdateEventRequestStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptUpdateExampleRequestStatus) SetTo(v UpdateExampleRequestStatus) {
+func (o *OptUpdateEventRequestStatus) SetTo(v UpdateEventRequestStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok bool) {
+func (o OptUpdateEventRequestStatus) Get() (v UpdateEventRequestStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -2046,45 +2807,45 @@ func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok b
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptUpdateExampleRequestStatus) Or(d UpdateExampleRequestStatus) UpdateExampleRequestStatus {
+func (o OptUpdateEventRequestStatus) Or(d UpdateEventRequestStatus) UpdateEventRequestStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptWorldEventServiceHealthCheckAcceptEncoding returns new OptWorldEventServiceHealthCheckAcceptEncoding with value set to v.
-func NewOptWorldEventServiceHealthCheckAcceptEncoding(v WorldEventServiceHealthCheckAcceptEncoding) OptWorldEventServiceHealthCheckAcceptEncoding {
-	return OptWorldEventServiceHealthCheckAcceptEncoding{
+// NewOptUpdateParticipationRequestStatus returns new OptUpdateParticipationRequestStatus with value set to v.
+func NewOptUpdateParticipationRequestStatus(v UpdateParticipationRequestStatus) OptUpdateParticipationRequestStatus {
+	return OptUpdateParticipationRequestStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptWorldEventServiceHealthCheckAcceptEncoding is optional WorldEventServiceHealthCheckAcceptEncoding.
-type OptWorldEventServiceHealthCheckAcceptEncoding struct {
-	Value WorldEventServiceHealthCheckAcceptEncoding
+// OptUpdateParticipationRequestStatus is optional UpdateParticipationRequestStatus.
+type OptUpdateParticipationRequestStatus struct {
+	Value UpdateParticipationRequestStatus
 	Set   bool
 }
 
-// IsSet returns true if OptWorldEventServiceHealthCheckAcceptEncoding was set.
-func (o OptWorldEventServiceHealthCheckAcceptEncoding) IsSet() bool { return o.Set }
+// IsSet returns true if OptUpdateParticipationRequestStatus was set.
+func (o OptUpdateParticipationRequestStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptWorldEventServiceHealthCheckAcceptEncoding) Reset() {
-	var v WorldEventServiceHealthCheckAcceptEncoding
+func (o *OptUpdateParticipationRequestStatus) Reset() {
+	var v UpdateParticipationRequestStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptWorldEventServiceHealthCheckAcceptEncoding) SetTo(v WorldEventServiceHealthCheckAcceptEncoding) {
+func (o *OptUpdateParticipationRequestStatus) SetTo(v UpdateParticipationRequestStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptWorldEventServiceHealthCheckAcceptEncoding) Get() (v WorldEventServiceHealthCheckAcceptEncoding, ok bool) {
+func (o OptUpdateParticipationRequestStatus) Get() (v UpdateParticipationRequestStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -2092,391 +2853,192 @@ func (o OptWorldEventServiceHealthCheckAcceptEncoding) Get() (v WorldEventServic
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptWorldEventServiceHealthCheckAcceptEncoding) Or(d WorldEventServiceHealthCheckAcceptEncoding) WorldEventServiceHealthCheckAcceptEncoding {
+func (o OptUpdateParticipationRequestStatus) Or(d UpdateParticipationRequestStatus) UpdateParticipationRequestStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptWorldEventServiceHealthCheckOKContentEncoding returns new OptWorldEventServiceHealthCheckOKContentEncoding with value set to v.
-func NewOptWorldEventServiceHealthCheckOKContentEncoding(v WorldEventServiceHealthCheckOKContentEncoding) OptWorldEventServiceHealthCheckOKContentEncoding {
-	return OptWorldEventServiceHealthCheckOKContentEncoding{
-		Value: v,
-		Set:   true,
-	}
+// Ref: #/components/schemas/PaginationMeta
+type PaginationMeta struct {
+	// Items per page.
+	Limit int `json:"limit"`
+	// Number of items skipped.
+	Offset int `json:"offset"`
+	// Total number of items available.
+	Total int `json:"total"`
 }
 
-// OptWorldEventServiceHealthCheckOKContentEncoding is optional WorldEventServiceHealthCheckOKContentEncoding.
-type OptWorldEventServiceHealthCheckOKContentEncoding struct {
-	Value WorldEventServiceHealthCheckOKContentEncoding
-	Set   bool
+// GetLimit returns the value of Limit.
+func (s *PaginationMeta) GetLimit() int {
+	return s.Limit
 }
 
-// IsSet returns true if OptWorldEventServiceHealthCheckOKContentEncoding was set.
-func (o OptWorldEventServiceHealthCheckOKContentEncoding) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptWorldEventServiceHealthCheckOKContentEncoding) Reset() {
-	var v WorldEventServiceHealthCheckOKContentEncoding
-	o.Value = v
-	o.Set = false
+// GetOffset returns the value of Offset.
+func (s *PaginationMeta) GetOffset() int {
+	return s.Offset
 }
 
-// SetTo sets value to v.
-func (o *OptWorldEventServiceHealthCheckOKContentEncoding) SetTo(v WorldEventServiceHealthCheckOKContentEncoding) {
-	o.Set = true
-	o.Value = v
+// GetTotal returns the value of Total.
+func (s *PaginationMeta) GetTotal() int {
+	return s.Total
 }
 
-// Get returns value and boolean that denotes whether value was set.
-func (o OptWorldEventServiceHealthCheckOKContentEncoding) Get() (v WorldEventServiceHealthCheckOKContentEncoding, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
+// SetLimit sets the value of Limit.
+func (s *PaginationMeta) SetLimit(val int) {
+	s.Limit = val
 }
 
-// Or returns value if set, or given parameter if does not.
-func (o OptWorldEventServiceHealthCheckOKContentEncoding) Or(d WorldEventServiceHealthCheckOKContentEncoding) WorldEventServiceHealthCheckOKContentEncoding {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
+// SetOffset sets the value of Offset.
+func (s *PaginationMeta) SetOffset(val int) {
+	s.Offset = val
 }
 
-// Standard error response format.
-type UpdateExampleBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleBadRequestDetails `json:"details"`
+// SetTotal sets the value of Total.
+func (s *PaginationMeta) SetTotal(val int) {
+	s.Total = val
 }
 
-// GetCode returns the value of Code.
-func (s *UpdateExampleBadRequest) GetCode() int32 {
-	return s.Code
-}
+type UpdateEventBadRequest Error
 
-// GetMessage returns the value of Message.
-func (s *UpdateExampleBadRequest) GetMessage() string {
-	return s.Message
-}
+func (*UpdateEventBadRequest) updateEventRes() {}
 
-// GetDetails returns the value of Details.
-func (s *UpdateExampleBadRequest) GetDetails() *UpdateExampleBadRequestDetails {
-	return s.Details
-}
+type UpdateEventConflict Error
 
-// SetCode sets the value of Code.
-func (s *UpdateExampleBadRequest) SetCode(val int32) {
-	s.Code = val
-}
+func (*UpdateEventConflict) updateEventRes() {}
 
-// SetMessage sets the value of Message.
-func (s *UpdateExampleBadRequest) SetMessage(val string) {
-	s.Message = val
-}
+type UpdateEventNotFound Error
 
-// SetDetails sets the value of Details.
-func (s *UpdateExampleBadRequest) SetDetails(val *UpdateExampleBadRequestDetails) {
-	s.Details = val
-}
+func (*UpdateEventNotFound) updateEventRes() {}
 
-func (*UpdateExampleBadRequest) updateExampleRes() {}
-
-// Additional error details.
-type UpdateExampleBadRequestDetails struct{}
-
-// Standard error response format.
-type UpdateExampleConflict struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleConflictDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExampleConflict) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExampleConflict) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleConflict) GetDetails() *UpdateExampleConflictDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleConflict) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleConflict) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleConflict) SetDetails(val *UpdateExampleConflictDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type UpdateExampleConflictDetails struct{}
-
-// UpdateExampleConflictHeaders wraps UpdateExampleConflict with response headers.
-type UpdateExampleConflictHeaders struct {
-	ETag     OptString
-	Response UpdateExampleConflict
-}
-
-// GetETag returns the value of ETag.
-func (s *UpdateExampleConflictHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetResponse returns the value of Response.
-func (s *UpdateExampleConflictHeaders) GetResponse() UpdateExampleConflict {
-	return s.Response
-}
-
-// SetETag sets the value of ETag.
-func (s *UpdateExampleConflictHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetResponse sets the value of Response.
-func (s *UpdateExampleConflictHeaders) SetResponse(val UpdateExampleConflict) {
-	s.Response = val
-}
-
-func (*UpdateExampleConflictHeaders) updateExampleRes() {}
-
-// Standard error response format.
-type UpdateExampleNotFound struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleNotFoundDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExampleNotFound) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExampleNotFound) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleNotFound) GetDetails() *UpdateExampleNotFoundDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleNotFound) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleNotFound) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleNotFound) SetDetails(val *UpdateExampleNotFoundDetails) {
-	s.Details = val
-}
-
-func (*UpdateExampleNotFound) updateExampleRes() {}
-
-// Additional error details.
-type UpdateExampleNotFoundDetails struct{}
-
-// Standard error response format.
-type UpdateExamplePreconditionFailed struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExamplePreconditionFailedDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *UpdateExamplePreconditionFailed) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *UpdateExamplePreconditionFailed) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExamplePreconditionFailed) GetDetails() *UpdateExamplePreconditionFailedDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExamplePreconditionFailed) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExamplePreconditionFailed) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExamplePreconditionFailed) SetDetails(val *UpdateExamplePreconditionFailedDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type UpdateExamplePreconditionFailedDetails struct{}
-
-// UpdateExamplePreconditionFailedHeaders wraps UpdateExamplePreconditionFailed with response headers.
-type UpdateExamplePreconditionFailedHeaders struct {
-	ETag     OptString
-	Response UpdateExamplePreconditionFailed
-}
-
-// GetETag returns the value of ETag.
-func (s *UpdateExamplePreconditionFailedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetResponse returns the value of Response.
-func (s *UpdateExamplePreconditionFailedHeaders) GetResponse() UpdateExamplePreconditionFailed {
-	return s.Response
-}
-
-// SetETag sets the value of ETag.
-func (s *UpdateExamplePreconditionFailedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetResponse sets the value of Response.
-func (s *UpdateExamplePreconditionFailedHeaders) SetResponse(val UpdateExamplePreconditionFailed) {
-	s.Response = val
-}
-
-func (*UpdateExamplePreconditionFailedHeaders) updateExampleRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/UpdateExampleRequest
-type UpdateExampleRequest struct {
-	// New example name.
-	Name OptString `json:"name"`
-	// New description.
-	Description OptString `json:"description"`
-	// New status.
-	Status OptUpdateExampleRequestStatus `json:"status"`
-	// Replace all tags.
-	Tags []string `json:"tags"`
-	// Update active status.
-	IsActive OptBool `json:"is_active"`
-	// New priority.
-	Priority OptInt `json:"priority"`
+// Ref: #/components/schemas/UpdateEventRequest
+type UpdateEventRequest struct {
+	Name            OptString                          `json:"name"`
+	Status          OptUpdateEventRequestStatus        `json:"status"`
+	EndTime         OptDateTime                        `json:"endTime"`
+	Description     OptString                          `json:"description"`
+	Objectives      []UpdateEventRequestObjectivesItem `json:"objectives"`
+	Rewards         []UpdateEventRequestRewardsItem    `json:"rewards"`
+	MaxParticipants OptInt                             `json:"maxParticipants"`
+	EventData       *UpdateEventRequestEventData       `json:"eventData"`
 }
 
 // GetName returns the value of Name.
-func (s *UpdateExampleRequest) GetName() OptString {
+func (s *UpdateEventRequest) GetName() OptString {
 	return s.Name
 }
 
+// GetStatus returns the value of Status.
+func (s *UpdateEventRequest) GetStatus() OptUpdateEventRequestStatus {
+	return s.Status
+}
+
+// GetEndTime returns the value of EndTime.
+func (s *UpdateEventRequest) GetEndTime() OptDateTime {
+	return s.EndTime
+}
+
 // GetDescription returns the value of Description.
-func (s *UpdateExampleRequest) GetDescription() OptString {
+func (s *UpdateEventRequest) GetDescription() OptString {
 	return s.Description
 }
 
-// GetStatus returns the value of Status.
-func (s *UpdateExampleRequest) GetStatus() OptUpdateExampleRequestStatus {
-	return s.Status
+// GetObjectives returns the value of Objectives.
+func (s *UpdateEventRequest) GetObjectives() []UpdateEventRequestObjectivesItem {
+	return s.Objectives
 }
 
-// GetTags returns the value of Tags.
-func (s *UpdateExampleRequest) GetTags() []string {
-	return s.Tags
+// GetRewards returns the value of Rewards.
+func (s *UpdateEventRequest) GetRewards() []UpdateEventRequestRewardsItem {
+	return s.Rewards
 }
 
-// GetIsActive returns the value of IsActive.
-func (s *UpdateExampleRequest) GetIsActive() OptBool {
-	return s.IsActive
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *UpdateEventRequest) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
 }
 
-// GetPriority returns the value of Priority.
-func (s *UpdateExampleRequest) GetPriority() OptInt {
-	return s.Priority
+// GetEventData returns the value of EventData.
+func (s *UpdateEventRequest) GetEventData() *UpdateEventRequestEventData {
+	return s.EventData
 }
 
 // SetName sets the value of Name.
-func (s *UpdateExampleRequest) SetName(val OptString) {
+func (s *UpdateEventRequest) SetName(val OptString) {
 	s.Name = val
 }
 
+// SetStatus sets the value of Status.
+func (s *UpdateEventRequest) SetStatus(val OptUpdateEventRequestStatus) {
+	s.Status = val
+}
+
+// SetEndTime sets the value of EndTime.
+func (s *UpdateEventRequest) SetEndTime(val OptDateTime) {
+	s.EndTime = val
+}
+
 // SetDescription sets the value of Description.
-func (s *UpdateExampleRequest) SetDescription(val OptString) {
+func (s *UpdateEventRequest) SetDescription(val OptString) {
 	s.Description = val
 }
 
-// SetStatus sets the value of Status.
-func (s *UpdateExampleRequest) SetStatus(val OptUpdateExampleRequestStatus) {
-	s.Status = val
+// SetObjectives sets the value of Objectives.
+func (s *UpdateEventRequest) SetObjectives(val []UpdateEventRequestObjectivesItem) {
+	s.Objectives = val
 }
 
-// SetTags sets the value of Tags.
-func (s *UpdateExampleRequest) SetTags(val []string) {
-	s.Tags = val
+// SetRewards sets the value of Rewards.
+func (s *UpdateEventRequest) SetRewards(val []UpdateEventRequestRewardsItem) {
+	s.Rewards = val
 }
 
-// SetIsActive sets the value of IsActive.
-func (s *UpdateExampleRequest) SetIsActive(val OptBool) {
-	s.IsActive = val
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *UpdateEventRequest) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
 }
 
-// SetPriority sets the value of Priority.
-func (s *UpdateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
+// SetEventData sets the value of EventData.
+func (s *UpdateEventRequest) SetEventData(val *UpdateEventRequestEventData) {
+	s.EventData = val
 }
 
-// New status.
-type UpdateExampleRequestStatus string
+type UpdateEventRequestEventData struct{}
+
+type UpdateEventRequestObjectivesItem struct{}
+
+type UpdateEventRequestRewardsItem struct{}
+
+type UpdateEventRequestStatus string
 
 const (
-	UpdateExampleRequestStatusActive   UpdateExampleRequestStatus = "active"
-	UpdateExampleRequestStatusInactive UpdateExampleRequestStatus = "inactive"
-	UpdateExampleRequestStatusPending  UpdateExampleRequestStatus = "pending"
-	UpdateExampleRequestStatusArchived UpdateExampleRequestStatus = "archived"
+	UpdateEventRequestStatusANNOUNCED UpdateEventRequestStatus = "ANNOUNCED"
+	UpdateEventRequestStatusACTIVE    UpdateEventRequestStatus = "ACTIVE"
+	UpdateEventRequestStatusCOMPLETED UpdateEventRequestStatus = "COMPLETED"
+	UpdateEventRequestStatusCANCELLED UpdateEventRequestStatus = "CANCELLED"
 )
 
-// AllValues returns all UpdateExampleRequestStatus values.
-func (UpdateExampleRequestStatus) AllValues() []UpdateExampleRequestStatus {
-	return []UpdateExampleRequestStatus{
-		UpdateExampleRequestStatusActive,
-		UpdateExampleRequestStatusInactive,
-		UpdateExampleRequestStatusPending,
-		UpdateExampleRequestStatusArchived,
+// AllValues returns all UpdateEventRequestStatus values.
+func (UpdateEventRequestStatus) AllValues() []UpdateEventRequestStatus {
+	return []UpdateEventRequestStatus{
+		UpdateEventRequestStatusANNOUNCED,
+		UpdateEventRequestStatusACTIVE,
+		UpdateEventRequestStatusCOMPLETED,
+		UpdateEventRequestStatusCANCELLED,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
+func (s UpdateEventRequestStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case UpdateExampleRequestStatusActive:
+	case UpdateEventRequestStatusANNOUNCED:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusInactive:
+	case UpdateEventRequestStatusACTIVE:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusPending:
+	case UpdateEventRequestStatusCOMPLETED:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusArchived:
+	case UpdateEventRequestStatusCANCELLED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2484,770 +3046,586 @@ func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *UpdateExampleRequestStatus) UnmarshalText(data []byte) error {
-	switch UpdateExampleRequestStatus(data) {
-	case UpdateExampleRequestStatusActive:
-		*s = UpdateExampleRequestStatusActive
+func (s *UpdateEventRequestStatus) UnmarshalText(data []byte) error {
+	switch UpdateEventRequestStatus(data) {
+	case UpdateEventRequestStatusANNOUNCED:
+		*s = UpdateEventRequestStatusANNOUNCED
 		return nil
-	case UpdateExampleRequestStatusInactive:
-		*s = UpdateExampleRequestStatusInactive
+	case UpdateEventRequestStatusACTIVE:
+		*s = UpdateEventRequestStatusACTIVE
 		return nil
-	case UpdateExampleRequestStatusPending:
-		*s = UpdateExampleRequestStatusPending
+	case UpdateEventRequestStatusCOMPLETED:
+		*s = UpdateEventRequestStatusCOMPLETED
 		return nil
-	case UpdateExampleRequestStatusArchived:
-		*s = UpdateExampleRequestStatusArchived
+	case UpdateEventRequestStatusCANCELLED:
+		*s = UpdateEventRequestStatusCANCELLED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// Standard error response format.
-type UpdateExampleTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleTooManyRequestsDetails `json:"details"`
+// Ref: #/components/schemas/UpdateParticipationRequest
+type UpdateParticipationRequest struct {
+	Status       OptUpdateParticipationRequestStatus          `json:"status"`
+	ProgressData *UpdateParticipationRequestProgressData      `json:"progressData"`
+	Score        OptInt                                       `json:"score"`
+	Achievements []UpdateParticipationRequestAchievementsItem `json:"achievements"`
 }
 
-// GetCode returns the value of Code.
-func (s *UpdateExampleTooManyRequests) GetCode() int32 {
-	return s.Code
+// GetStatus returns the value of Status.
+func (s *UpdateParticipationRequest) GetStatus() OptUpdateParticipationRequestStatus {
+	return s.Status
 }
 
-// GetMessage returns the value of Message.
-func (s *UpdateExampleTooManyRequests) GetMessage() string {
-	return s.Message
+// GetProgressData returns the value of ProgressData.
+func (s *UpdateParticipationRequest) GetProgressData() *UpdateParticipationRequestProgressData {
+	return s.ProgressData
 }
 
-// GetDetails returns the value of Details.
-func (s *UpdateExampleTooManyRequests) GetDetails() *UpdateExampleTooManyRequestsDetails {
-	return s.Details
+// GetScore returns the value of Score.
+func (s *UpdateParticipationRequest) GetScore() OptInt {
+	return s.Score
 }
 
-// SetCode sets the value of Code.
-func (s *UpdateExampleTooManyRequests) SetCode(val int32) {
-	s.Code = val
+// GetAchievements returns the value of Achievements.
+func (s *UpdateParticipationRequest) GetAchievements() []UpdateParticipationRequestAchievementsItem {
+	return s.Achievements
 }
 
-// SetMessage sets the value of Message.
-func (s *UpdateExampleTooManyRequests) SetMessage(val string) {
-	s.Message = val
+// SetStatus sets the value of Status.
+func (s *UpdateParticipationRequest) SetStatus(val OptUpdateParticipationRequestStatus) {
+	s.Status = val
 }
 
-// SetDetails sets the value of Details.
-func (s *UpdateExampleTooManyRequests) SetDetails(val *UpdateExampleTooManyRequestsDetails) {
-	s.Details = val
+// SetProgressData sets the value of ProgressData.
+func (s *UpdateParticipationRequest) SetProgressData(val *UpdateParticipationRequestProgressData) {
+	s.ProgressData = val
 }
 
-// Additional error details.
-type UpdateExampleTooManyRequestsDetails struct{}
-
-// UpdateExampleTooManyRequestsHeaders wraps UpdateExampleTooManyRequests with response headers.
-type UpdateExampleTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   UpdateExampleTooManyRequests
+// SetScore sets the value of Score.
+func (s *UpdateParticipationRequest) SetScore(val OptInt) {
+	s.Score = val
 }
 
-// GetRetryAfter returns the value of RetryAfter.
-func (s *UpdateExampleTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
+// SetAchievements sets the value of Achievements.
+func (s *UpdateParticipationRequest) SetAchievements(val []UpdateParticipationRequestAchievementsItem) {
+	s.Achievements = val
 }
 
-// GetResponse returns the value of Response.
-func (s *UpdateExampleTooManyRequestsHeaders) GetResponse() UpdateExampleTooManyRequests {
-	return s.Response
+type UpdateParticipationRequestAchievementsItem struct{}
+
+type UpdateParticipationRequestProgressData struct{}
+
+type UpdateParticipationRequestStatus string
+
+const (
+	UpdateParticipationRequestStatusACTIVE    UpdateParticipationRequestStatus = "ACTIVE"
+	UpdateParticipationRequestStatusCOMPLETED UpdateParticipationRequestStatus = "COMPLETED"
+	UpdateParticipationRequestStatusLEFT      UpdateParticipationRequestStatus = "LEFT"
+	UpdateParticipationRequestStatusKICKED    UpdateParticipationRequestStatus = "KICKED"
+)
+
+// AllValues returns all UpdateParticipationRequestStatus values.
+func (UpdateParticipationRequestStatus) AllValues() []UpdateParticipationRequestStatus {
+	return []UpdateParticipationRequestStatus{
+		UpdateParticipationRequestStatusACTIVE,
+		UpdateParticipationRequestStatusCOMPLETED,
+		UpdateParticipationRequestStatusLEFT,
+		UpdateParticipationRequestStatusKICKED,
+	}
 }
 
-// SetRetryAfter sets the value of RetryAfter.
-func (s *UpdateExampleTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
+// MarshalText implements encoding.TextMarshaler.
+func (s UpdateParticipationRequestStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case UpdateParticipationRequestStatusACTIVE:
+		return []byte(s), nil
+	case UpdateParticipationRequestStatusCOMPLETED:
+		return []byte(s), nil
+	case UpdateParticipationRequestStatusLEFT:
+		return []byte(s), nil
+	case UpdateParticipationRequestStatusKICKED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// SetResponse sets the value of Response.
-func (s *UpdateExampleTooManyRequestsHeaders) SetResponse(val UpdateExampleTooManyRequests) {
-	s.Response = val
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UpdateParticipationRequestStatus) UnmarshalText(data []byte) error {
+	switch UpdateParticipationRequestStatus(data) {
+	case UpdateParticipationRequestStatusACTIVE:
+		*s = UpdateParticipationRequestStatusACTIVE
+		return nil
+	case UpdateParticipationRequestStatusCOMPLETED:
+		*s = UpdateParticipationRequestStatusCOMPLETED
+		return nil
+	case UpdateParticipationRequestStatusLEFT:
+		*s = UpdateParticipationRequestStatusLEFT
+		return nil
+	case UpdateParticipationRequestStatusKICKED:
+		*s = UpdateParticipationRequestStatusKICKED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-func (*UpdateExampleTooManyRequestsHeaders) updateExampleRes() {}
+type UpdatePlayerParticipationBadRequest Error
 
-// Standard error response format.
-type UpdateExampleUnprocessableEntity struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *UpdateExampleUnprocessableEntityDetails `json:"details"`
+func (*UpdatePlayerParticipationBadRequest) updatePlayerParticipationRes() {}
+
+type UpdatePlayerParticipationNotFound Error
+
+func (*UpdatePlayerParticipationNotFound) updatePlayerParticipationRes() {}
+
+// Ref: #/components/schemas/WorldEvent
+type WorldEvent struct {
+	// Unique event identifier.
+	ID uuid.UUID `json:"id"`
+	// Human-readable event name.
+	Name string `json:"name"`
+	// Type of world event.
+	Type WorldEventType `json:"type"`
+	// Geographical region where event occurs.
+	Region string `json:"region"`
+	// Current event status.
+	Status WorldEventStatus `json:"status"`
+	// When event begins.
+	StartTime time.Time `json:"startTime"`
+	// When event ends (optional).
+	EndTime OptDateTime `json:"endTime"`
+	// Detailed event description.
+	Description OptString                  `json:"description"`
+	Objectives  []WorldEventObjectivesItem `json:"objectives"`
+	Rewards     []WorldEventRewardsItem    `json:"rewards"`
+	// Maximum number of participants.
+	MaxParticipants OptInt `json:"maxParticipants"`
+	// Current number of participants.
+	CurrentParticipants OptInt `json:"currentParticipants"`
+	// Event difficulty level.
+	Difficulty WorldEventDifficulty `json:"difficulty"`
+	// Additional event-specific data.
+	EventData *WorldEventEventData `json:"eventData"`
+	// Event creation timestamp.
+	CreatedAt OptDateTime `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt OptDateTime `json:"updatedAt"`
 }
 
-// GetCode returns the value of Code.
-func (s *UpdateExampleUnprocessableEntity) GetCode() int32 {
-	return s.Code
+// GetID returns the value of ID.
+func (s *WorldEvent) GetID() uuid.UUID {
+	return s.ID
 }
 
-// GetMessage returns the value of Message.
-func (s *UpdateExampleUnprocessableEntity) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *UpdateExampleUnprocessableEntity) GetDetails() *UpdateExampleUnprocessableEntityDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *UpdateExampleUnprocessableEntity) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *UpdateExampleUnprocessableEntity) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *UpdateExampleUnprocessableEntity) SetDetails(val *UpdateExampleUnprocessableEntityDetails) {
-	s.Details = val
-}
-
-func (*UpdateExampleUnprocessableEntity) updateExampleRes() {}
-
-// Additional error details.
-type UpdateExampleUnprocessableEntityDetails struct{}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/WebSocketHealthMessage
-type WebSocketHealthMessage struct {
-	Type      WebSocketHealthMessageType `json:"type"`
-	Timestamp time.Time                  `json:"timestamp"`
-	// Timestamp of the health message.
-	MessageTimestamp OptDateTime `json:"message_timestamp"`
-	// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-	// 30-50%.
-	Health WebSocketHealthMessageHealth `json:"health"`
+// GetName returns the value of Name.
+func (s *WorldEvent) GetName() string {
+	return s.Name
 }
 
 // GetType returns the value of Type.
-func (s *WebSocketHealthMessage) GetType() WebSocketHealthMessageType {
+func (s *WorldEvent) GetType() WorldEventType {
 	return s.Type
 }
 
-// GetTimestamp returns the value of Timestamp.
-func (s *WebSocketHealthMessage) GetTimestamp() time.Time {
-	return s.Timestamp
+// GetRegion returns the value of Region.
+func (s *WorldEvent) GetRegion() string {
+	return s.Region
 }
 
-// GetMessageTimestamp returns the value of MessageTimestamp.
-func (s *WebSocketHealthMessage) GetMessageTimestamp() OptDateTime {
-	return s.MessageTimestamp
+// GetStatus returns the value of Status.
+func (s *WorldEvent) GetStatus() WorldEventStatus {
+	return s.Status
 }
 
-// GetHealth returns the value of Health.
-func (s *WebSocketHealthMessage) GetHealth() WebSocketHealthMessageHealth {
-	return s.Health
+// GetStartTime returns the value of StartTime.
+func (s *WorldEvent) GetStartTime() time.Time {
+	return s.StartTime
+}
+
+// GetEndTime returns the value of EndTime.
+func (s *WorldEvent) GetEndTime() OptDateTime {
+	return s.EndTime
+}
+
+// GetDescription returns the value of Description.
+func (s *WorldEvent) GetDescription() OptString {
+	return s.Description
+}
+
+// GetObjectives returns the value of Objectives.
+func (s *WorldEvent) GetObjectives() []WorldEventObjectivesItem {
+	return s.Objectives
+}
+
+// GetRewards returns the value of Rewards.
+func (s *WorldEvent) GetRewards() []WorldEventRewardsItem {
+	return s.Rewards
+}
+
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *WorldEvent) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
+}
+
+// GetCurrentParticipants returns the value of CurrentParticipants.
+func (s *WorldEvent) GetCurrentParticipants() OptInt {
+	return s.CurrentParticipants
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *WorldEvent) GetDifficulty() WorldEventDifficulty {
+	return s.Difficulty
+}
+
+// GetEventData returns the value of EventData.
+func (s *WorldEvent) GetEventData() *WorldEventEventData {
+	return s.EventData
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *WorldEvent) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *WorldEvent) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *WorldEvent) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *WorldEvent) SetName(val string) {
+	s.Name = val
 }
 
 // SetType sets the value of Type.
-func (s *WebSocketHealthMessage) SetType(val WebSocketHealthMessageType) {
+func (s *WorldEvent) SetType(val WorldEventType) {
 	s.Type = val
 }
 
-// SetTimestamp sets the value of Timestamp.
-func (s *WebSocketHealthMessage) SetTimestamp(val time.Time) {
-	s.Timestamp = val
-}
-
-// SetMessageTimestamp sets the value of MessageTimestamp.
-func (s *WebSocketHealthMessage) SetMessageTimestamp(val OptDateTime) {
-	s.MessageTimestamp = val
-}
-
-// SetHealth sets the value of Health.
-func (s *WebSocketHealthMessage) SetHealth(val WebSocketHealthMessageHealth) {
-	s.Health = val
-}
-
-// WebSocketHealthMessageHeaders wraps WebSocketHealthMessage with response headers.
-type WebSocketHealthMessageHeaders struct {
-	Connection         OptString
-	SecWebSocketAccept OptString
-	Upgrade            OptString
-	Response           WebSocketHealthMessage
-}
-
-// GetConnection returns the value of Connection.
-func (s *WebSocketHealthMessageHeaders) GetConnection() OptString {
-	return s.Connection
-}
-
-// GetSecWebSocketAccept returns the value of SecWebSocketAccept.
-func (s *WebSocketHealthMessageHeaders) GetSecWebSocketAccept() OptString {
-	return s.SecWebSocketAccept
-}
-
-// GetUpgrade returns the value of Upgrade.
-func (s *WebSocketHealthMessageHeaders) GetUpgrade() OptString {
-	return s.Upgrade
-}
-
-// GetResponse returns the value of Response.
-func (s *WebSocketHealthMessageHeaders) GetResponse() WebSocketHealthMessage {
-	return s.Response
-}
-
-// SetConnection sets the value of Connection.
-func (s *WebSocketHealthMessageHeaders) SetConnection(val OptString) {
-	s.Connection = val
-}
-
-// SetSecWebSocketAccept sets the value of SecWebSocketAccept.
-func (s *WebSocketHealthMessageHeaders) SetSecWebSocketAccept(val OptString) {
-	s.SecWebSocketAccept = val
-}
-
-// SetUpgrade sets the value of Upgrade.
-func (s *WebSocketHealthMessageHeaders) SetUpgrade(val OptString) {
-	s.Upgrade = val
-}
-
-// SetResponse sets the value of Response.
-func (s *WebSocketHealthMessageHeaders) SetResponse(val WebSocketHealthMessage) {
-	s.Response = val
-}
-
-func (*WebSocketHealthMessageHeaders) worldEventServiceHealthWebSocketRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-type WebSocketHealthMessageHealth struct {
-	Status            WebSocketHealthMessageHealthStatus `json:"status"`
-	Domain            OptString                          `json:"domain"`
-	Timestamp         time.Time                          `json:"timestamp"`
-	Version           OptString                          `json:"version"`
-	UptimeSeconds     OptInt                             `json:"uptime_seconds"`
-	ActiveConnections OptInt                             `json:"active_connections"`
-}
-
-// GetStatus returns the value of Status.
-func (s *WebSocketHealthMessageHealth) GetStatus() WebSocketHealthMessageHealthStatus {
-	return s.Status
-}
-
-// GetDomain returns the value of Domain.
-func (s *WebSocketHealthMessageHealth) GetDomain() OptString {
-	return s.Domain
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *WebSocketHealthMessageHealth) GetTimestamp() time.Time {
-	return s.Timestamp
-}
-
-// GetVersion returns the value of Version.
-func (s *WebSocketHealthMessageHealth) GetVersion() OptString {
-	return s.Version
-}
-
-// GetUptimeSeconds returns the value of UptimeSeconds.
-func (s *WebSocketHealthMessageHealth) GetUptimeSeconds() OptInt {
-	return s.UptimeSeconds
-}
-
-// GetActiveConnections returns the value of ActiveConnections.
-func (s *WebSocketHealthMessageHealth) GetActiveConnections() OptInt {
-	return s.ActiveConnections
+// SetRegion sets the value of Region.
+func (s *WorldEvent) SetRegion(val string) {
+	s.Region = val
 }
 
 // SetStatus sets the value of Status.
-func (s *WebSocketHealthMessageHealth) SetStatus(val WebSocketHealthMessageHealthStatus) {
+func (s *WorldEvent) SetStatus(val WorldEventStatus) {
 	s.Status = val
 }
 
-// SetDomain sets the value of Domain.
-func (s *WebSocketHealthMessageHealth) SetDomain(val OptString) {
-	s.Domain = val
+// SetStartTime sets the value of StartTime.
+func (s *WorldEvent) SetStartTime(val time.Time) {
+	s.StartTime = val
 }
 
-// SetTimestamp sets the value of Timestamp.
-func (s *WebSocketHealthMessageHealth) SetTimestamp(val time.Time) {
-	s.Timestamp = val
+// SetEndTime sets the value of EndTime.
+func (s *WorldEvent) SetEndTime(val OptDateTime) {
+	s.EndTime = val
 }
 
-// SetVersion sets the value of Version.
-func (s *WebSocketHealthMessageHealth) SetVersion(val OptString) {
-	s.Version = val
+// SetDescription sets the value of Description.
+func (s *WorldEvent) SetDescription(val OptString) {
+	s.Description = val
 }
 
-// SetUptimeSeconds sets the value of UptimeSeconds.
-func (s *WebSocketHealthMessageHealth) SetUptimeSeconds(val OptInt) {
-	s.UptimeSeconds = val
+// SetObjectives sets the value of Objectives.
+func (s *WorldEvent) SetObjectives(val []WorldEventObjectivesItem) {
+	s.Objectives = val
 }
 
-// SetActiveConnections sets the value of ActiveConnections.
-func (s *WebSocketHealthMessageHealth) SetActiveConnections(val OptInt) {
-	s.ActiveConnections = val
+// SetRewards sets the value of Rewards.
+func (s *WorldEvent) SetRewards(val []WorldEventRewardsItem) {
+	s.Rewards = val
 }
 
-type WebSocketHealthMessageHealthStatus string
-
-const (
-	WebSocketHealthMessageHealthStatusHealthy   WebSocketHealthMessageHealthStatus = "healthy"
-	WebSocketHealthMessageHealthStatusDegraded  WebSocketHealthMessageHealthStatus = "degraded"
-	WebSocketHealthMessageHealthStatusUnhealthy WebSocketHealthMessageHealthStatus = "unhealthy"
-)
-
-// AllValues returns all WebSocketHealthMessageHealthStatus values.
-func (WebSocketHealthMessageHealthStatus) AllValues() []WebSocketHealthMessageHealthStatus {
-	return []WebSocketHealthMessageHealthStatus{
-		WebSocketHealthMessageHealthStatusHealthy,
-		WebSocketHealthMessageHealthStatusDegraded,
-		WebSocketHealthMessageHealthStatusUnhealthy,
-	}
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *WorldEvent) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s WebSocketHealthMessageHealthStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case WebSocketHealthMessageHealthStatusHealthy:
-		return []byte(s), nil
-	case WebSocketHealthMessageHealthStatusDegraded:
-		return []byte(s), nil
-	case WebSocketHealthMessageHealthStatusUnhealthy:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
+// SetCurrentParticipants sets the value of CurrentParticipants.
+func (s *WorldEvent) SetCurrentParticipants(val OptInt) {
+	s.CurrentParticipants = val
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WebSocketHealthMessageHealthStatus) UnmarshalText(data []byte) error {
-	switch WebSocketHealthMessageHealthStatus(data) {
-	case WebSocketHealthMessageHealthStatusHealthy:
-		*s = WebSocketHealthMessageHealthStatusHealthy
-		return nil
-	case WebSocketHealthMessageHealthStatusDegraded:
-		*s = WebSocketHealthMessageHealthStatusDegraded
-		return nil
-	case WebSocketHealthMessageHealthStatusUnhealthy:
-		*s = WebSocketHealthMessageHealthStatusUnhealthy
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetDifficulty sets the value of Difficulty.
+func (s *WorldEvent) SetDifficulty(val WorldEventDifficulty) {
+	s.Difficulty = val
 }
 
-type WebSocketHealthMessageType string
-
-const (
-	WebSocketHealthMessageTypeHealthUpdate WebSocketHealthMessageType = "health_update"
-	WebSocketHealthMessageTypeHealthAlert  WebSocketHealthMessageType = "health_alert"
-	WebSocketHealthMessageTypeServiceDown  WebSocketHealthMessageType = "service_down"
-)
-
-// AllValues returns all WebSocketHealthMessageType values.
-func (WebSocketHealthMessageType) AllValues() []WebSocketHealthMessageType {
-	return []WebSocketHealthMessageType{
-		WebSocketHealthMessageTypeHealthUpdate,
-		WebSocketHealthMessageTypeHealthAlert,
-		WebSocketHealthMessageTypeServiceDown,
-	}
+// SetEventData sets the value of EventData.
+func (s *WorldEvent) SetEventData(val *WorldEventEventData) {
+	s.EventData = val
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s WebSocketHealthMessageType) MarshalText() ([]byte, error) {
-	switch s {
-	case WebSocketHealthMessageTypeHealthUpdate:
-		return []byte(s), nil
-	case WebSocketHealthMessageTypeHealthAlert:
-		return []byte(s), nil
-	case WebSocketHealthMessageTypeServiceDown:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
+// SetCreatedAt sets the value of CreatedAt.
+func (s *WorldEvent) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WebSocketHealthMessageType) UnmarshalText(data []byte) error {
-	switch WebSocketHealthMessageType(data) {
-	case WebSocketHealthMessageTypeHealthUpdate:
-		*s = WebSocketHealthMessageTypeHealthUpdate
-		return nil
-	case WebSocketHealthMessageTypeHealthAlert:
-		*s = WebSocketHealthMessageTypeHealthAlert
-		return nil
-	case WebSocketHealthMessageTypeServiceDown:
-		*s = WebSocketHealthMessageTypeServiceDown
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *WorldEvent) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
 }
 
-type WorldEventServiceHealthCheckAcceptEncoding string
+func (*WorldEvent) createEventRes() {}
+func (*WorldEvent) updateEventRes() {}
 
-const (
-	WorldEventServiceHealthCheckAcceptEncodingGzip    WorldEventServiceHealthCheckAcceptEncoding = "gzip"
-	WorldEventServiceHealthCheckAcceptEncodingDeflate WorldEventServiceHealthCheckAcceptEncoding = "deflate"
-	WorldEventServiceHealthCheckAcceptEncodingBr      WorldEventServiceHealthCheckAcceptEncoding = "br"
-)
-
-// AllValues returns all WorldEventServiceHealthCheckAcceptEncoding values.
-func (WorldEventServiceHealthCheckAcceptEncoding) AllValues() []WorldEventServiceHealthCheckAcceptEncoding {
-	return []WorldEventServiceHealthCheckAcceptEncoding{
-		WorldEventServiceHealthCheckAcceptEncodingGzip,
-		WorldEventServiceHealthCheckAcceptEncodingDeflate,
-		WorldEventServiceHealthCheckAcceptEncodingBr,
-	}
+// Merged schema.
+// Ref: #/components/schemas/WorldEventDetail
+type WorldEventDetail struct {
+	// Unique event identifier.
+	ID uuid.UUID `json:"id"`
+	// Human-readable event name.
+	Name string `json:"name"`
+	// Type of world event.
+	Type WorldEventDetailType `json:"type"`
+	// Geographical region where event occurs.
+	Region string `json:"region"`
+	// Current event status.
+	Status WorldEventDetailStatus `json:"status"`
+	// When event begins.
+	StartTime time.Time `json:"startTime"`
+	// When event ends (optional).
+	EndTime OptDateTime `json:"endTime"`
+	// Detailed event description.
+	Description OptString                        `json:"description"`
+	Objectives  []WorldEventDetailObjectivesItem `json:"objectives"`
+	Rewards     []WorldEventDetailRewardsItem    `json:"rewards"`
+	// Maximum number of participants.
+	MaxParticipants OptInt `json:"maxParticipants"`
+	// Current number of participants.
+	CurrentParticipants OptInt `json:"currentParticipants"`
+	// Event difficulty level.
+	Difficulty WorldEventDetailDifficulty `json:"difficulty"`
+	// Additional event-specific data.
+	EventData *WorldEventDetailEventData `json:"eventData"`
+	// Event creation timestamp.
+	CreatedAt OptDateTime `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt    OptDateTime        `json:"updatedAt"`
+	Participants []EventParticipant `json:"participants"`
+	Analytics    OptEventAnalytics  `json:"analytics"`
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s WorldEventServiceHealthCheckAcceptEncoding) MarshalText() ([]byte, error) {
-	switch s {
-	case WorldEventServiceHealthCheckAcceptEncodingGzip:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckAcceptEncodingDeflate:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckAcceptEncodingBr:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
+// GetID returns the value of ID.
+func (s *WorldEventDetail) GetID() uuid.UUID {
+	return s.ID
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WorldEventServiceHealthCheckAcceptEncoding) UnmarshalText(data []byte) error {
-	switch WorldEventServiceHealthCheckAcceptEncoding(data) {
-	case WorldEventServiceHealthCheckAcceptEncodingGzip:
-		*s = WorldEventServiceHealthCheckAcceptEncodingGzip
-		return nil
-	case WorldEventServiceHealthCheckAcceptEncodingDeflate:
-		*s = WorldEventServiceHealthCheckAcceptEncodingDeflate
-		return nil
-	case WorldEventServiceHealthCheckAcceptEncodingBr:
-		*s = WorldEventServiceHealthCheckAcceptEncodingBr
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// GetName returns the value of Name.
+func (s *WorldEventDetail) GetName() string {
+	return s.Name
 }
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-type WorldEventServiceHealthCheckOK struct {
-	Status            WorldEventServiceHealthCheckOKStatus `json:"status"`
-	Domain            OptString                            `json:"domain"`
-	Timestamp         time.Time                            `json:"timestamp"`
-	Version           OptString                            `json:"version"`
-	UptimeSeconds     OptInt                               `json:"uptime_seconds"`
-	ActiveConnections OptInt                               `json:"active_connections"`
+// GetType returns the value of Type.
+func (s *WorldEventDetail) GetType() WorldEventDetailType {
+	return s.Type
+}
+
+// GetRegion returns the value of Region.
+func (s *WorldEventDetail) GetRegion() string {
+	return s.Region
 }
 
 // GetStatus returns the value of Status.
-func (s *WorldEventServiceHealthCheckOK) GetStatus() WorldEventServiceHealthCheckOKStatus {
+func (s *WorldEventDetail) GetStatus() WorldEventDetailStatus {
 	return s.Status
 }
 
-// GetDomain returns the value of Domain.
-func (s *WorldEventServiceHealthCheckOK) GetDomain() OptString {
-	return s.Domain
+// GetStartTime returns the value of StartTime.
+func (s *WorldEventDetail) GetStartTime() time.Time {
+	return s.StartTime
 }
 
-// GetTimestamp returns the value of Timestamp.
-func (s *WorldEventServiceHealthCheckOK) GetTimestamp() time.Time {
-	return s.Timestamp
+// GetEndTime returns the value of EndTime.
+func (s *WorldEventDetail) GetEndTime() OptDateTime {
+	return s.EndTime
 }
 
-// GetVersion returns the value of Version.
-func (s *WorldEventServiceHealthCheckOK) GetVersion() OptString {
-	return s.Version
+// GetDescription returns the value of Description.
+func (s *WorldEventDetail) GetDescription() OptString {
+	return s.Description
 }
 
-// GetUptimeSeconds returns the value of UptimeSeconds.
-func (s *WorldEventServiceHealthCheckOK) GetUptimeSeconds() OptInt {
-	return s.UptimeSeconds
+// GetObjectives returns the value of Objectives.
+func (s *WorldEventDetail) GetObjectives() []WorldEventDetailObjectivesItem {
+	return s.Objectives
 }
 
-// GetActiveConnections returns the value of ActiveConnections.
-func (s *WorldEventServiceHealthCheckOK) GetActiveConnections() OptInt {
-	return s.ActiveConnections
+// GetRewards returns the value of Rewards.
+func (s *WorldEventDetail) GetRewards() []WorldEventDetailRewardsItem {
+	return s.Rewards
 }
 
-// SetStatus sets the value of Status.
-func (s *WorldEventServiceHealthCheckOK) SetStatus(val WorldEventServiceHealthCheckOKStatus) {
-	s.Status = val
+// GetMaxParticipants returns the value of MaxParticipants.
+func (s *WorldEventDetail) GetMaxParticipants() OptInt {
+	return s.MaxParticipants
 }
 
-// SetDomain sets the value of Domain.
-func (s *WorldEventServiceHealthCheckOK) SetDomain(val OptString) {
-	s.Domain = val
+// GetCurrentParticipants returns the value of CurrentParticipants.
+func (s *WorldEventDetail) GetCurrentParticipants() OptInt {
+	return s.CurrentParticipants
 }
 
-// SetTimestamp sets the value of Timestamp.
-func (s *WorldEventServiceHealthCheckOK) SetTimestamp(val time.Time) {
-	s.Timestamp = val
+// GetDifficulty returns the value of Difficulty.
+func (s *WorldEventDetail) GetDifficulty() WorldEventDetailDifficulty {
+	return s.Difficulty
 }
 
-// SetVersion sets the value of Version.
-func (s *WorldEventServiceHealthCheckOK) SetVersion(val OptString) {
-	s.Version = val
+// GetEventData returns the value of EventData.
+func (s *WorldEventDetail) GetEventData() *WorldEventDetailEventData {
+	return s.EventData
 }
 
-// SetUptimeSeconds sets the value of UptimeSeconds.
-func (s *WorldEventServiceHealthCheckOK) SetUptimeSeconds(val OptInt) {
-	s.UptimeSeconds = val
+// GetCreatedAt returns the value of CreatedAt.
+func (s *WorldEventDetail) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
 }
 
-// SetActiveConnections sets the value of ActiveConnections.
-func (s *WorldEventServiceHealthCheckOK) SetActiveConnections(val OptInt) {
-	s.ActiveConnections = val
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *WorldEventDetail) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
 }
 
-type WorldEventServiceHealthCheckOKContentEncoding string
-
-const (
-	WorldEventServiceHealthCheckOKContentEncodingGzip    WorldEventServiceHealthCheckOKContentEncoding = "gzip"
-	WorldEventServiceHealthCheckOKContentEncodingDeflate WorldEventServiceHealthCheckOKContentEncoding = "deflate"
-	WorldEventServiceHealthCheckOKContentEncodingBr      WorldEventServiceHealthCheckOKContentEncoding = "br"
-)
-
-// AllValues returns all WorldEventServiceHealthCheckOKContentEncoding values.
-func (WorldEventServiceHealthCheckOKContentEncoding) AllValues() []WorldEventServiceHealthCheckOKContentEncoding {
-	return []WorldEventServiceHealthCheckOKContentEncoding{
-		WorldEventServiceHealthCheckOKContentEncodingGzip,
-		WorldEventServiceHealthCheckOKContentEncodingDeflate,
-		WorldEventServiceHealthCheckOKContentEncodingBr,
-	}
+// GetParticipants returns the value of Participants.
+func (s *WorldEventDetail) GetParticipants() []EventParticipant {
+	return s.Participants
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s WorldEventServiceHealthCheckOKContentEncoding) MarshalText() ([]byte, error) {
-	switch s {
-	case WorldEventServiceHealthCheckOKContentEncodingGzip:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckOKContentEncodingDeflate:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckOKContentEncodingBr:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
+// GetAnalytics returns the value of Analytics.
+func (s *WorldEventDetail) GetAnalytics() OptEventAnalytics {
+	return s.Analytics
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WorldEventServiceHealthCheckOKContentEncoding) UnmarshalText(data []byte) error {
-	switch WorldEventServiceHealthCheckOKContentEncoding(data) {
-	case WorldEventServiceHealthCheckOKContentEncodingGzip:
-		*s = WorldEventServiceHealthCheckOKContentEncodingGzip
-		return nil
-	case WorldEventServiceHealthCheckOKContentEncodingDeflate:
-		*s = WorldEventServiceHealthCheckOKContentEncodingDeflate
-		return nil
-	case WorldEventServiceHealthCheckOKContentEncodingBr:
-		*s = WorldEventServiceHealthCheckOKContentEncodingBr
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// SetID sets the value of ID.
+func (s *WorldEventDetail) SetID(val uuid.UUID) {
+	s.ID = val
 }
 
-// WorldEventServiceHealthCheckOKHeaders wraps WorldEventServiceHealthCheckOK with response headers.
-type WorldEventServiceHealthCheckOKHeaders struct {
-	CacheControl    OptString
-	ContentEncoding OptWorldEventServiceHealthCheckOKContentEncoding
-	ETag            OptString
-	Response        WorldEventServiceHealthCheckOK
+// SetName sets the value of Name.
+func (s *WorldEventDetail) SetName(val string) {
+	s.Name = val
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *WorldEventServiceHealthCheckOKHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+// SetType sets the value of Type.
+func (s *WorldEventDetail) SetType(val WorldEventDetailType) {
+	s.Type = val
 }
 
-// GetContentEncoding returns the value of ContentEncoding.
-func (s *WorldEventServiceHealthCheckOKHeaders) GetContentEncoding() OptWorldEventServiceHealthCheckOKContentEncoding {
-	return s.ContentEncoding
-}
-
-// GetETag returns the value of ETag.
-func (s *WorldEventServiceHealthCheckOKHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetResponse returns the value of Response.
-func (s *WorldEventServiceHealthCheckOKHeaders) GetResponse() WorldEventServiceHealthCheckOK {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *WorldEventServiceHealthCheckOKHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetContentEncoding sets the value of ContentEncoding.
-func (s *WorldEventServiceHealthCheckOKHeaders) SetContentEncoding(val OptWorldEventServiceHealthCheckOKContentEncoding) {
-	s.ContentEncoding = val
-}
-
-// SetETag sets the value of ETag.
-func (s *WorldEventServiceHealthCheckOKHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetResponse sets the value of Response.
-func (s *WorldEventServiceHealthCheckOKHeaders) SetResponse(val WorldEventServiceHealthCheckOK) {
-	s.Response = val
-}
-
-func (*WorldEventServiceHealthCheckOKHeaders) worldEventServiceHealthCheckRes() {}
-
-type WorldEventServiceHealthCheckOKStatus string
-
-const (
-	WorldEventServiceHealthCheckOKStatusHealthy   WorldEventServiceHealthCheckOKStatus = "healthy"
-	WorldEventServiceHealthCheckOKStatusDegraded  WorldEventServiceHealthCheckOKStatus = "degraded"
-	WorldEventServiceHealthCheckOKStatusUnhealthy WorldEventServiceHealthCheckOKStatus = "unhealthy"
-)
-
-// AllValues returns all WorldEventServiceHealthCheckOKStatus values.
-func (WorldEventServiceHealthCheckOKStatus) AllValues() []WorldEventServiceHealthCheckOKStatus {
-	return []WorldEventServiceHealthCheckOKStatus{
-		WorldEventServiceHealthCheckOKStatusHealthy,
-		WorldEventServiceHealthCheckOKStatusDegraded,
-		WorldEventServiceHealthCheckOKStatusUnhealthy,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s WorldEventServiceHealthCheckOKStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case WorldEventServiceHealthCheckOKStatusHealthy:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckOKStatusDegraded:
-		return []byte(s), nil
-	case WorldEventServiceHealthCheckOKStatusUnhealthy:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WorldEventServiceHealthCheckOKStatus) UnmarshalText(data []byte) error {
-	switch WorldEventServiceHealthCheckOKStatus(data) {
-	case WorldEventServiceHealthCheckOKStatusHealthy:
-		*s = WorldEventServiceHealthCheckOKStatusHealthy
-		return nil
-	case WorldEventServiceHealthCheckOKStatusDegraded:
-		*s = WorldEventServiceHealthCheckOKStatusDegraded
-		return nil
-	case WorldEventServiceHealthCheckOKStatusUnhealthy:
-		*s = WorldEventServiceHealthCheckOKStatusUnhealthy
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-type WorldEventServiceHealthCheckServiceUnavailable struct {
-	Status            WorldEventServiceHealthCheckServiceUnavailableStatus `json:"status"`
-	Domain            OptString                                            `json:"domain"`
-	Timestamp         time.Time                                            `json:"timestamp"`
-	Version           OptString                                            `json:"version"`
-	UptimeSeconds     OptInt                                               `json:"uptime_seconds"`
-	ActiveConnections OptInt                                               `json:"active_connections"`
-}
-
-// GetStatus returns the value of Status.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetStatus() WorldEventServiceHealthCheckServiceUnavailableStatus {
-	return s.Status
-}
-
-// GetDomain returns the value of Domain.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetDomain() OptString {
-	return s.Domain
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetTimestamp() time.Time {
-	return s.Timestamp
-}
-
-// GetVersion returns the value of Version.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetVersion() OptString {
-	return s.Version
-}
-
-// GetUptimeSeconds returns the value of UptimeSeconds.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetUptimeSeconds() OptInt {
-	return s.UptimeSeconds
-}
-
-// GetActiveConnections returns the value of ActiveConnections.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) GetActiveConnections() OptInt {
-	return s.ActiveConnections
+// SetRegion sets the value of Region.
+func (s *WorldEventDetail) SetRegion(val string) {
+	s.Region = val
 }
 
 // SetStatus sets the value of Status.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetStatus(val WorldEventServiceHealthCheckServiceUnavailableStatus) {
+func (s *WorldEventDetail) SetStatus(val WorldEventDetailStatus) {
 	s.Status = val
 }
 
-// SetDomain sets the value of Domain.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetDomain(val OptString) {
-	s.Domain = val
+// SetStartTime sets the value of StartTime.
+func (s *WorldEventDetail) SetStartTime(val time.Time) {
+	s.StartTime = val
 }
 
-// SetTimestamp sets the value of Timestamp.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetTimestamp(val time.Time) {
-	s.Timestamp = val
+// SetEndTime sets the value of EndTime.
+func (s *WorldEventDetail) SetEndTime(val OptDateTime) {
+	s.EndTime = val
 }
 
-// SetVersion sets the value of Version.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetVersion(val OptString) {
-	s.Version = val
+// SetDescription sets the value of Description.
+func (s *WorldEventDetail) SetDescription(val OptString) {
+	s.Description = val
 }
 
-// SetUptimeSeconds sets the value of UptimeSeconds.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetUptimeSeconds(val OptInt) {
-	s.UptimeSeconds = val
+// SetObjectives sets the value of Objectives.
+func (s *WorldEventDetail) SetObjectives(val []WorldEventDetailObjectivesItem) {
+	s.Objectives = val
 }
 
-// SetActiveConnections sets the value of ActiveConnections.
-func (s *WorldEventServiceHealthCheckServiceUnavailable) SetActiveConnections(val OptInt) {
-	s.ActiveConnections = val
+// SetRewards sets the value of Rewards.
+func (s *WorldEventDetail) SetRewards(val []WorldEventDetailRewardsItem) {
+	s.Rewards = val
 }
 
-func (*WorldEventServiceHealthCheckServiceUnavailable) worldEventServiceHealthCheckRes() {}
+// SetMaxParticipants sets the value of MaxParticipants.
+func (s *WorldEventDetail) SetMaxParticipants(val OptInt) {
+	s.MaxParticipants = val
+}
 
-type WorldEventServiceHealthCheckServiceUnavailableStatus string
+// SetCurrentParticipants sets the value of CurrentParticipants.
+func (s *WorldEventDetail) SetCurrentParticipants(val OptInt) {
+	s.CurrentParticipants = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *WorldEventDetail) SetDifficulty(val WorldEventDetailDifficulty) {
+	s.Difficulty = val
+}
+
+// SetEventData sets the value of EventData.
+func (s *WorldEventDetail) SetEventData(val *WorldEventDetailEventData) {
+	s.EventData = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *WorldEventDetail) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *WorldEventDetail) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetParticipants sets the value of Participants.
+func (s *WorldEventDetail) SetParticipants(val []EventParticipant) {
+	s.Participants = val
+}
+
+// SetAnalytics sets the value of Analytics.
+func (s *WorldEventDetail) SetAnalytics(val OptEventAnalytics) {
+	s.Analytics = val
+}
+
+func (*WorldEventDetail) getEventRes() {}
+
+// Event difficulty level.
+type WorldEventDetailDifficulty string
 
 const (
-	WorldEventServiceHealthCheckServiceUnavailableStatusHealthy   WorldEventServiceHealthCheckServiceUnavailableStatus = "healthy"
-	WorldEventServiceHealthCheckServiceUnavailableStatusDegraded  WorldEventServiceHealthCheckServiceUnavailableStatus = "degraded"
-	WorldEventServiceHealthCheckServiceUnavailableStatusUnhealthy WorldEventServiceHealthCheckServiceUnavailableStatus = "unhealthy"
+	WorldEventDetailDifficultyEASY    WorldEventDetailDifficulty = "EASY"
+	WorldEventDetailDifficultyMEDIUM  WorldEventDetailDifficulty = "MEDIUM"
+	WorldEventDetailDifficultyHARD    WorldEventDetailDifficulty = "HARD"
+	WorldEventDetailDifficultyEXTREME WorldEventDetailDifficulty = "EXTREME"
 )
 
-// AllValues returns all WorldEventServiceHealthCheckServiceUnavailableStatus values.
-func (WorldEventServiceHealthCheckServiceUnavailableStatus) AllValues() []WorldEventServiceHealthCheckServiceUnavailableStatus {
-	return []WorldEventServiceHealthCheckServiceUnavailableStatus{
-		WorldEventServiceHealthCheckServiceUnavailableStatusHealthy,
-		WorldEventServiceHealthCheckServiceUnavailableStatusDegraded,
-		WorldEventServiceHealthCheckServiceUnavailableStatusUnhealthy,
+// AllValues returns all WorldEventDetailDifficulty values.
+func (WorldEventDetailDifficulty) AllValues() []WorldEventDetailDifficulty {
+	return []WorldEventDetailDifficulty{
+		WorldEventDetailDifficultyEASY,
+		WorldEventDetailDifficultyMEDIUM,
+		WorldEventDetailDifficultyHARD,
+		WorldEventDetailDifficultyEXTREME,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s WorldEventServiceHealthCheckServiceUnavailableStatus) MarshalText() ([]byte, error) {
+func (s WorldEventDetailDifficulty) MarshalText() ([]byte, error) {
 	switch s {
-	case WorldEventServiceHealthCheckServiceUnavailableStatusHealthy:
+	case WorldEventDetailDifficultyEASY:
 		return []byte(s), nil
-	case WorldEventServiceHealthCheckServiceUnavailableStatusDegraded:
+	case WorldEventDetailDifficultyMEDIUM:
 		return []byte(s), nil
-	case WorldEventServiceHealthCheckServiceUnavailableStatusUnhealthy:
+	case WorldEventDetailDifficultyHARD:
+		return []byte(s), nil
+	case WorldEventDetailDifficultyEXTREME:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3255,186 +3633,64 @@ func (s WorldEventServiceHealthCheckServiceUnavailableStatus) MarshalText() ([]b
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WorldEventServiceHealthCheckServiceUnavailableStatus) UnmarshalText(data []byte) error {
-	switch WorldEventServiceHealthCheckServiceUnavailableStatus(data) {
-	case WorldEventServiceHealthCheckServiceUnavailableStatusHealthy:
-		*s = WorldEventServiceHealthCheckServiceUnavailableStatusHealthy
+func (s *WorldEventDetailDifficulty) UnmarshalText(data []byte) error {
+	switch WorldEventDetailDifficulty(data) {
+	case WorldEventDetailDifficultyEASY:
+		*s = WorldEventDetailDifficultyEASY
 		return nil
-	case WorldEventServiceHealthCheckServiceUnavailableStatusDegraded:
-		*s = WorldEventServiceHealthCheckServiceUnavailableStatusDegraded
+	case WorldEventDetailDifficultyMEDIUM:
+		*s = WorldEventDetailDifficultyMEDIUM
 		return nil
-	case WorldEventServiceHealthCheckServiceUnavailableStatusUnhealthy:
-		*s = WorldEventServiceHealthCheckServiceUnavailableStatusUnhealthy
+	case WorldEventDetailDifficultyHARD:
+		*s = WorldEventDetailDifficultyHARD
+		return nil
+	case WorldEventDetailDifficultyEXTREME:
+		*s = WorldEventDetailDifficultyEXTREME
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// Standard error response format.
-type WorldEventServiceHealthCheckTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *WorldEventServiceHealthCheckTooManyRequestsDetails `json:"details"`
-}
+// Additional event-specific data.
+type WorldEventDetailEventData struct{}
 
-// GetCode returns the value of Code.
-func (s *WorldEventServiceHealthCheckTooManyRequests) GetCode() int32 {
-	return s.Code
-}
+// Event objectives.
+type WorldEventDetailObjectivesItem struct{}
 
-// GetMessage returns the value of Message.
-func (s *WorldEventServiceHealthCheckTooManyRequests) GetMessage() string {
-	return s.Message
-}
+// Available event rewards.
+type WorldEventDetailRewardsItem struct{}
 
-// GetDetails returns the value of Details.
-func (s *WorldEventServiceHealthCheckTooManyRequests) GetDetails() *WorldEventServiceHealthCheckTooManyRequestsDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *WorldEventServiceHealthCheckTooManyRequests) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *WorldEventServiceHealthCheckTooManyRequests) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *WorldEventServiceHealthCheckTooManyRequests) SetDetails(val *WorldEventServiceHealthCheckTooManyRequestsDetails) {
-	s.Details = val
-}
-
-// Additional error details.
-type WorldEventServiceHealthCheckTooManyRequestsDetails struct{}
-
-// WorldEventServiceHealthCheckTooManyRequestsHeaders wraps WorldEventServiceHealthCheckTooManyRequests with response headers.
-type WorldEventServiceHealthCheckTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   WorldEventServiceHealthCheckTooManyRequests
-}
-
-// GetRetryAfter returns the value of RetryAfter.
-func (s *WorldEventServiceHealthCheckTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
-}
-
-// GetResponse returns the value of Response.
-func (s *WorldEventServiceHealthCheckTooManyRequestsHeaders) GetResponse() WorldEventServiceHealthCheckTooManyRequests {
-	return s.Response
-}
-
-// SetRetryAfter sets the value of RetryAfter.
-func (s *WorldEventServiceHealthCheckTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
-}
-
-// SetResponse sets the value of Response.
-func (s *WorldEventServiceHealthCheckTooManyRequestsHeaders) SetResponse(val WorldEventServiceHealthCheckTooManyRequests) {
-	s.Response = val
-}
-
-func (*WorldEventServiceHealthCheckTooManyRequestsHeaders) worldEventServiceHealthCheckRes() {}
-
-// Standard error response format.
-type WorldEventServiceHealthWebSocketBadRequest struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *WorldEventServiceHealthWebSocketBadRequestDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *WorldEventServiceHealthWebSocketBadRequest) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *WorldEventServiceHealthWebSocketBadRequest) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *WorldEventServiceHealthWebSocketBadRequest) GetDetails() *WorldEventServiceHealthWebSocketBadRequestDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *WorldEventServiceHealthWebSocketBadRequest) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *WorldEventServiceHealthWebSocketBadRequest) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *WorldEventServiceHealthWebSocketBadRequest) SetDetails(val *WorldEventServiceHealthWebSocketBadRequestDetails) {
-	s.Details = val
-}
-
-func (*WorldEventServiceHealthWebSocketBadRequest) worldEventServiceHealthWebSocketRes() {}
-
-// Additional error details.
-type WorldEventServiceHealthWebSocketBadRequestDetails struct{}
-
-type WorldEventServiceHealthWebSocketOK struct {
-	WebsocketURL       OptString `json:"websocket_url"`
-	SupportedProtocols []string  `json:"supported_protocols"`
-}
-
-// GetWebsocketURL returns the value of WebsocketURL.
-func (s *WorldEventServiceHealthWebSocketOK) GetWebsocketURL() OptString {
-	return s.WebsocketURL
-}
-
-// GetSupportedProtocols returns the value of SupportedProtocols.
-func (s *WorldEventServiceHealthWebSocketOK) GetSupportedProtocols() []string {
-	return s.SupportedProtocols
-}
-
-// SetWebsocketURL sets the value of WebsocketURL.
-func (s *WorldEventServiceHealthWebSocketOK) SetWebsocketURL(val OptString) {
-	s.WebsocketURL = val
-}
-
-// SetSupportedProtocols sets the value of SupportedProtocols.
-func (s *WorldEventServiceHealthWebSocketOK) SetSupportedProtocols(val []string) {
-	s.SupportedProtocols = val
-}
-
-func (*WorldEventServiceHealthWebSocketOK) worldEventServiceHealthWebSocketRes() {}
-
-type WorldEventServiceHealthWebSocketServicesItem string
+// Current event status.
+type WorldEventDetailStatus string
 
 const (
-	WorldEventServiceHealthWebSocketServicesItemExampleDomain     WorldEventServiceHealthWebSocketServicesItem = "example-domain"
-	WorldEventServiceHealthWebSocketServicesItemSystemDomain      WorldEventServiceHealthWebSocketServicesItem = "system-domain"
-	WorldEventServiceHealthWebSocketServicesItemSpecializedDomain WorldEventServiceHealthWebSocketServicesItem = "specialized-domain"
+	WorldEventDetailStatusANNOUNCED WorldEventDetailStatus = "ANNOUNCED"
+	WorldEventDetailStatusACTIVE    WorldEventDetailStatus = "ACTIVE"
+	WorldEventDetailStatusCOMPLETED WorldEventDetailStatus = "COMPLETED"
+	WorldEventDetailStatusCANCELLED WorldEventDetailStatus = "CANCELLED"
 )
 
-// AllValues returns all WorldEventServiceHealthWebSocketServicesItem values.
-func (WorldEventServiceHealthWebSocketServicesItem) AllValues() []WorldEventServiceHealthWebSocketServicesItem {
-	return []WorldEventServiceHealthWebSocketServicesItem{
-		WorldEventServiceHealthWebSocketServicesItemExampleDomain,
-		WorldEventServiceHealthWebSocketServicesItemSystemDomain,
-		WorldEventServiceHealthWebSocketServicesItemSpecializedDomain,
+// AllValues returns all WorldEventDetailStatus values.
+func (WorldEventDetailStatus) AllValues() []WorldEventDetailStatus {
+	return []WorldEventDetailStatus{
+		WorldEventDetailStatusANNOUNCED,
+		WorldEventDetailStatusACTIVE,
+		WorldEventDetailStatusCOMPLETED,
+		WorldEventDetailStatusCANCELLED,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s WorldEventServiceHealthWebSocketServicesItem) MarshalText() ([]byte, error) {
+func (s WorldEventDetailStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case WorldEventServiceHealthWebSocketServicesItemExampleDomain:
+	case WorldEventDetailStatusANNOUNCED:
 		return []byte(s), nil
-	case WorldEventServiceHealthWebSocketServicesItemSystemDomain:
+	case WorldEventDetailStatusACTIVE:
 		return []byte(s), nil
-	case WorldEventServiceHealthWebSocketServicesItemSpecializedDomain:
+	case WorldEventDetailStatusCOMPLETED:
+		return []byte(s), nil
+	case WorldEventDetailStatusCANCELLED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3442,131 +3698,282 @@ func (s WorldEventServiceHealthWebSocketServicesItem) MarshalText() ([]byte, err
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WorldEventServiceHealthWebSocketServicesItem) UnmarshalText(data []byte) error {
-	switch WorldEventServiceHealthWebSocketServicesItem(data) {
-	case WorldEventServiceHealthWebSocketServicesItemExampleDomain:
-		*s = WorldEventServiceHealthWebSocketServicesItemExampleDomain
+func (s *WorldEventDetailStatus) UnmarshalText(data []byte) error {
+	switch WorldEventDetailStatus(data) {
+	case WorldEventDetailStatusANNOUNCED:
+		*s = WorldEventDetailStatusANNOUNCED
 		return nil
-	case WorldEventServiceHealthWebSocketServicesItemSystemDomain:
-		*s = WorldEventServiceHealthWebSocketServicesItemSystemDomain
+	case WorldEventDetailStatusACTIVE:
+		*s = WorldEventDetailStatusACTIVE
 		return nil
-	case WorldEventServiceHealthWebSocketServicesItemSpecializedDomain:
-		*s = WorldEventServiceHealthWebSocketServicesItemSpecializedDomain
+	case WorldEventDetailStatusCOMPLETED:
+		*s = WorldEventDetailStatusCOMPLETED
+		return nil
+	case WorldEventDetailStatusCANCELLED:
+		*s = WorldEventDetailStatusCANCELLED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-// Standard error response format.
-type WorldEventServiceHealthWebSocketTooManyRequests struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *WorldEventServiceHealthWebSocketTooManyRequestsDetails `json:"details"`
+// Type of world event.
+type WorldEventDetailType string
+
+const (
+	WorldEventDetailTypeDISASTER   WorldEventDetailType = "DISASTER"
+	WorldEventDetailTypeFESTIVAL   WorldEventDetailType = "FESTIVAL"
+	WorldEventDetailTypeWAR        WorldEventDetailType = "WAR"
+	WorldEventDetailTypeINVASION   WorldEventDetailType = "INVASION"
+	WorldEventDetailTypeTOURNAMENT WorldEventDetailType = "TOURNAMENT"
+	WorldEventDetailTypeQUEST      WorldEventDetailType = "QUEST"
+)
+
+// AllValues returns all WorldEventDetailType values.
+func (WorldEventDetailType) AllValues() []WorldEventDetailType {
+	return []WorldEventDetailType{
+		WorldEventDetailTypeDISASTER,
+		WorldEventDetailTypeFESTIVAL,
+		WorldEventDetailTypeWAR,
+		WorldEventDetailTypeINVASION,
+		WorldEventDetailTypeTOURNAMENT,
+		WorldEventDetailTypeQUEST,
+	}
 }
 
-// GetCode returns the value of Code.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) GetCode() int32 {
-	return s.Code
+// MarshalText implements encoding.TextMarshaler.
+func (s WorldEventDetailType) MarshalText() ([]byte, error) {
+	switch s {
+	case WorldEventDetailTypeDISASTER:
+		return []byte(s), nil
+	case WorldEventDetailTypeFESTIVAL:
+		return []byte(s), nil
+	case WorldEventDetailTypeWAR:
+		return []byte(s), nil
+	case WorldEventDetailTypeINVASION:
+		return []byte(s), nil
+	case WorldEventDetailTypeTOURNAMENT:
+		return []byte(s), nil
+	case WorldEventDetailTypeQUEST:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetMessage returns the value of Message.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) GetMessage() string {
-	return s.Message
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WorldEventDetailType) UnmarshalText(data []byte) error {
+	switch WorldEventDetailType(data) {
+	case WorldEventDetailTypeDISASTER:
+		*s = WorldEventDetailTypeDISASTER
+		return nil
+	case WorldEventDetailTypeFESTIVAL:
+		*s = WorldEventDetailTypeFESTIVAL
+		return nil
+	case WorldEventDetailTypeWAR:
+		*s = WorldEventDetailTypeWAR
+		return nil
+	case WorldEventDetailTypeINVASION:
+		*s = WorldEventDetailTypeINVASION
+		return nil
+	case WorldEventDetailTypeTOURNAMENT:
+		*s = WorldEventDetailTypeTOURNAMENT
+		return nil
+	case WorldEventDetailTypeQUEST:
+		*s = WorldEventDetailTypeQUEST
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetDetails returns the value of Details.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) GetDetails() *WorldEventServiceHealthWebSocketTooManyRequestsDetails {
-	return s.Details
+// Event difficulty level.
+type WorldEventDifficulty string
+
+const (
+	WorldEventDifficultyEASY    WorldEventDifficulty = "EASY"
+	WorldEventDifficultyMEDIUM  WorldEventDifficulty = "MEDIUM"
+	WorldEventDifficultyHARD    WorldEventDifficulty = "HARD"
+	WorldEventDifficultyEXTREME WorldEventDifficulty = "EXTREME"
+)
+
+// AllValues returns all WorldEventDifficulty values.
+func (WorldEventDifficulty) AllValues() []WorldEventDifficulty {
+	return []WorldEventDifficulty{
+		WorldEventDifficultyEASY,
+		WorldEventDifficultyMEDIUM,
+		WorldEventDifficultyHARD,
+		WorldEventDifficultyEXTREME,
+	}
 }
 
-// SetCode sets the value of Code.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) SetCode(val int32) {
-	s.Code = val
+// MarshalText implements encoding.TextMarshaler.
+func (s WorldEventDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case WorldEventDifficultyEASY:
+		return []byte(s), nil
+	case WorldEventDifficultyMEDIUM:
+		return []byte(s), nil
+	case WorldEventDifficultyHARD:
+		return []byte(s), nil
+	case WorldEventDifficultyEXTREME:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// SetMessage sets the value of Message.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) SetMessage(val string) {
-	s.Message = val
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WorldEventDifficulty) UnmarshalText(data []byte) error {
+	switch WorldEventDifficulty(data) {
+	case WorldEventDifficultyEASY:
+		*s = WorldEventDifficultyEASY
+		return nil
+	case WorldEventDifficultyMEDIUM:
+		*s = WorldEventDifficultyMEDIUM
+		return nil
+	case WorldEventDifficultyHARD:
+		*s = WorldEventDifficultyHARD
+		return nil
+	case WorldEventDifficultyEXTREME:
+		*s = WorldEventDifficultyEXTREME
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// SetDetails sets the value of Details.
-func (s *WorldEventServiceHealthWebSocketTooManyRequests) SetDetails(val *WorldEventServiceHealthWebSocketTooManyRequestsDetails) {
-	s.Details = val
+// Additional event-specific data.
+type WorldEventEventData struct{}
+
+// Event objectives.
+type WorldEventObjectivesItem struct{}
+
+// Available event rewards.
+type WorldEventRewardsItem struct{}
+
+// Current event status.
+type WorldEventStatus string
+
+const (
+	WorldEventStatusANNOUNCED WorldEventStatus = "ANNOUNCED"
+	WorldEventStatusACTIVE    WorldEventStatus = "ACTIVE"
+	WorldEventStatusCOMPLETED WorldEventStatus = "COMPLETED"
+	WorldEventStatusCANCELLED WorldEventStatus = "CANCELLED"
+)
+
+// AllValues returns all WorldEventStatus values.
+func (WorldEventStatus) AllValues() []WorldEventStatus {
+	return []WorldEventStatus{
+		WorldEventStatusANNOUNCED,
+		WorldEventStatusACTIVE,
+		WorldEventStatusCOMPLETED,
+		WorldEventStatusCANCELLED,
+	}
 }
 
-// Additional error details.
-type WorldEventServiceHealthWebSocketTooManyRequestsDetails struct{}
-
-// WorldEventServiceHealthWebSocketTooManyRequestsHeaders wraps WorldEventServiceHealthWebSocketTooManyRequests with response headers.
-type WorldEventServiceHealthWebSocketTooManyRequestsHeaders struct {
-	RetryAfter OptInt
-	Response   WorldEventServiceHealthWebSocketTooManyRequests
+// MarshalText implements encoding.TextMarshaler.
+func (s WorldEventStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case WorldEventStatusANNOUNCED:
+		return []byte(s), nil
+	case WorldEventStatusACTIVE:
+		return []byte(s), nil
+	case WorldEventStatusCOMPLETED:
+		return []byte(s), nil
+	case WorldEventStatusCANCELLED:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetRetryAfter returns the value of RetryAfter.
-func (s *WorldEventServiceHealthWebSocketTooManyRequestsHeaders) GetRetryAfter() OptInt {
-	return s.RetryAfter
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WorldEventStatus) UnmarshalText(data []byte) error {
+	switch WorldEventStatus(data) {
+	case WorldEventStatusANNOUNCED:
+		*s = WorldEventStatusANNOUNCED
+		return nil
+	case WorldEventStatusACTIVE:
+		*s = WorldEventStatusACTIVE
+		return nil
+	case WorldEventStatusCOMPLETED:
+		*s = WorldEventStatusCOMPLETED
+		return nil
+	case WorldEventStatusCANCELLED:
+		*s = WorldEventStatusCANCELLED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetResponse returns the value of Response.
-func (s *WorldEventServiceHealthWebSocketTooManyRequestsHeaders) GetResponse() WorldEventServiceHealthWebSocketTooManyRequests {
-	return s.Response
+// Type of world event.
+type WorldEventType string
+
+const (
+	WorldEventTypeDISASTER   WorldEventType = "DISASTER"
+	WorldEventTypeFESTIVAL   WorldEventType = "FESTIVAL"
+	WorldEventTypeWAR        WorldEventType = "WAR"
+	WorldEventTypeINVASION   WorldEventType = "INVASION"
+	WorldEventTypeTOURNAMENT WorldEventType = "TOURNAMENT"
+	WorldEventTypeQUEST      WorldEventType = "QUEST"
+)
+
+// AllValues returns all WorldEventType values.
+func (WorldEventType) AllValues() []WorldEventType {
+	return []WorldEventType{
+		WorldEventTypeDISASTER,
+		WorldEventTypeFESTIVAL,
+		WorldEventTypeWAR,
+		WorldEventTypeINVASION,
+		WorldEventTypeTOURNAMENT,
+		WorldEventTypeQUEST,
+	}
 }
 
-// SetRetryAfter sets the value of RetryAfter.
-func (s *WorldEventServiceHealthWebSocketTooManyRequestsHeaders) SetRetryAfter(val OptInt) {
-	s.RetryAfter = val
+// MarshalText implements encoding.TextMarshaler.
+func (s WorldEventType) MarshalText() ([]byte, error) {
+	switch s {
+	case WorldEventTypeDISASTER:
+		return []byte(s), nil
+	case WorldEventTypeFESTIVAL:
+		return []byte(s), nil
+	case WorldEventTypeWAR:
+		return []byte(s), nil
+	case WorldEventTypeINVASION:
+		return []byte(s), nil
+	case WorldEventTypeTOURNAMENT:
+		return []byte(s), nil
+	case WorldEventTypeQUEST:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// SetResponse sets the value of Response.
-func (s *WorldEventServiceHealthWebSocketTooManyRequestsHeaders) SetResponse(val WorldEventServiceHealthWebSocketTooManyRequests) {
-	s.Response = val
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WorldEventType) UnmarshalText(data []byte) error {
+	switch WorldEventType(data) {
+	case WorldEventTypeDISASTER:
+		*s = WorldEventTypeDISASTER
+		return nil
+	case WorldEventTypeFESTIVAL:
+		*s = WorldEventTypeFESTIVAL
+		return nil
+	case WorldEventTypeWAR:
+		*s = WorldEventTypeWAR
+		return nil
+	case WorldEventTypeINVASION:
+		*s = WorldEventTypeINVASION
+		return nil
+	case WorldEventTypeTOURNAMENT:
+		*s = WorldEventTypeTOURNAMENT
+		return nil
+	case WorldEventTypeQUEST:
+		*s = WorldEventTypeQUEST
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
-
-func (*WorldEventServiceHealthWebSocketTooManyRequestsHeaders) worldEventServiceHealthWebSocketRes() {
-}
-
-// Standard error response format.
-type WorldEventServiceHealthWebSocketUnauthorized struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	// Additional error details.
-	Details *WorldEventServiceHealthWebSocketUnauthorizedDetails `json:"details"`
-}
-
-// GetCode returns the value of Code.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) GetCode() int32 {
-	return s.Code
-}
-
-// GetMessage returns the value of Message.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) GetMessage() string {
-	return s.Message
-}
-
-// GetDetails returns the value of Details.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) GetDetails() *WorldEventServiceHealthWebSocketUnauthorizedDetails {
-	return s.Details
-}
-
-// SetCode sets the value of Code.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) SetCode(val int32) {
-	s.Code = val
-}
-
-// SetMessage sets the value of Message.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) SetMessage(val string) {
-	s.Message = val
-}
-
-// SetDetails sets the value of Details.
-func (s *WorldEventServiceHealthWebSocketUnauthorized) SetDetails(val *WorldEventServiceHealthWebSocketUnauthorizedDetails) {
-	s.Details = val
-}
-
-func (*WorldEventServiceHealthWebSocketUnauthorized) worldEventServiceHealthWebSocketRes() {}
-
-// Additional error details.
-type WorldEventServiceHealthWebSocketUnauthorizedDetails struct{}

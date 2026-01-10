@@ -40,7 +40,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	args := [1]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -61,68 +60,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
-
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					switch r.Method {
-					case "GET":
-						s.handleListExamplesRequest([0]string{}, elemIsEscaped, w, r)
-					case "POST":
-						s.handleCreateExampleRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "GET,POST")
-					}
-
-					return
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
-
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "DELETE":
-							s.handleDeleteExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "GET":
-							s.handleGetExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "PUT":
-							s.handleUpdateExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "DELETE,GET,PUT")
-						}
-
-						return
-					}
-
-				}
-
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -132,68 +69,87 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleMatchmakingServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET")
 					}
 
 					return
 				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			case 'm': // Prefix: "match/find"
+
+				if l := len("match/find"); len(elem) >= l && elem[0:l] == "match/find" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleFindMatchRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+			case 'q': // Prefix: "queue/"
+
+				if l := len("queue/"); len(elem) >= l && elem[0:l] == "queue/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'j': // Prefix: "join"
+
+					if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleJoinQueueRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+				case 'l': // Prefix: "leave"
+
+					if l := len("leave"); len(elem) >= l && elem[0:l] == "leave" {
+						elem = elem[l:]
+					} else {
 						break
 					}
-					switch elem[0] {
-					case 'b': // Prefix: "batch"
 
-						if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-							elem = elem[l:]
-						} else {
-							break
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "DELETE":
+							s.handleLeaveQueueRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "DELETE")
 						}
 
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleExampleDomainBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
-					case 'w': // Prefix: "ws"
-
-						if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "GET":
-								s.handleExampleDomainHealthWebSocketRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "GET")
-							}
-
-							return
-						}
-
+						return
 					}
 
 				}
@@ -213,7 +169,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [1]string
+	args           [0]string
 }
 
 // Name returns ogen operation name.
@@ -298,93 +254,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
-
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
-					elem = elem[l:]
-				} else {
-					break
-				}
-
-				if len(elem) == 0 {
-					switch method {
-					case "GET":
-						r.name = ListExamplesOperation
-						r.summary = "List examples with filtering and pagination"
-						r.operationID = "listExamples"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					case "POST":
-						r.name = CreateExampleOperation
-						r.summary = "Create new example"
-						r.operationID = "createExample"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
-
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "DELETE":
-							r.name = DeleteExampleOperation
-							r.summary = "Delete example"
-							r.operationID = "deleteExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						case "GET":
-							r.name = GetExampleOperation
-							r.summary = "Get specific example by ID"
-							r.operationID = "getExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						case "PUT":
-							r.name = UpdateExampleOperation
-							r.summary = "Update existing example"
-							r.operationID = "updateExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						default:
-							return
-						}
-					}
-
-				}
-
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -394,11 +263,12 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = MatchmakingServiceHealthCheckOperation
-						r.summary = "Example domain health check"
-						r.operationID = "matchmakingServiceHealthCheck"
+						r.name = HealthCheckOperation
+						r.summary = "Health check"
+						r.operationID = "healthCheck"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
 						r.args = args
@@ -408,69 +278,92 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						return
 					}
 				}
-				switch elem[0] {
-				case '/': // Prefix: "/"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			case 'm': // Prefix: "match/find"
+
+				if l := len("match/find"); len(elem) >= l && elem[0:l] == "match/find" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = FindMatchOperation
+						r.summary = "Find match"
+						r.operationID = "findMatch"
+						r.operationGroup = ""
+						r.pathPattern = "/match/find"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'q': // Prefix: "queue/"
+
+				if l := len("queue/"); len(elem) >= l && elem[0:l] == "queue/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'j': // Prefix: "join"
+
+					if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = JoinQueueOperation
+							r.summary = "Join matchmaking queue"
+							r.operationID = "joinQueue"
+							r.operationGroup = ""
+							r.pathPattern = "/queue/join"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'l': // Prefix: "leave"
+
+					if l := len("leave"); len(elem) >= l && elem[0:l] == "leave" {
+						elem = elem[l:]
+					} else {
 						break
 					}
-					switch elem[0] {
-					case 'b': // Prefix: "batch"
 
-						if l := len("batch"); len(elem) >= l && elem[0:l] == "batch" {
-							elem = elem[l:]
-						} else {
-							break
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "DELETE":
+							r.name = LeaveQueueOperation
+							r.summary = "Leave matchmaking queue"
+							r.operationID = "leaveQueue"
+							r.operationGroup = ""
+							r.pathPattern = "/queue/leave"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
 						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = ExampleDomainBatchHealthCheckOperation
-								r.summary = "Batch health check for multiple domain services"
-								r.operationID = "exampleDomainBatchHealthCheck"
-								r.operationGroup = ""
-								r.pathPattern = "/health/batch"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-					case 'w': // Prefix: "ws"
-
-						if l := len("ws"); len(elem) >= l && elem[0:l] == "ws" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "GET":
-								r.name = ExampleDomainHealthWebSocketOperation
-								r.summary = "Real-time health monitoring WebSocket"
-								r.operationID = "exampleDomainHealthWebSocket"
-								r.operationGroup = ""
-								r.pathPattern = "/health/ws"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
 					}
 
 				}

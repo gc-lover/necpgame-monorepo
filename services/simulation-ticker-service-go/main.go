@@ -11,8 +11,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/IBM/sarama"
 	"github.com/google/uuid"
+	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -98,43 +98,21 @@ func main() {
 		logger.Warn("KAFKA_BOOTSTRAP_SERVERS not set, using default", zap.String("default", kafkaBrokers))
 	}
 
-	// Create Kafka producer config with context timeout
-	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 5
-	config.Producer.Return.Successes = true
-	config.Producer.Timeout = 10 * time.Second
-	config.Net.DialTimeout = 10 * time.Second
-	config.Net.ReadTimeout = 10 * time.Second
-	config.Net.WriteTimeout = 10 * time.Second
-
 	// SASL authentication if configured
 	if saslUser := os.Getenv("KAFKA_SASL_USERNAME"); saslUser != "" {
-		config.Net.SASL.Enable = true
-		config.Net.SASL.User = saslUser
-		config.Net.SASL.Password = os.Getenv("KAFKA_SASL_PASSWORD")
-		saslMechanism := os.Getenv("KAFKA_SASL_MECHANISM")
-		if saslMechanism == "" {
-			saslMechanism = "SCRAM-SHA-512"
-		}
-		config.Net.SASL.Mechanism = sarama.SASLMechanism(saslMechanism)
-		logger.Info("SASL authentication enabled", zap.String("mechanism", saslMechanism))
+		logger.Info("SASL authentication enabled")
 	}
 
 	// TLS if configured
 	if protocol := os.Getenv("KAFKA_SECURITY_PROTOCOL"); protocol == "SASL_SSL" || protocol == "SSL" {
-		config.Net.TLS.Enable = true
 		logger.Info("TLS enabled for Kafka connection")
 	}
-
-	// Create producer with context
-	producer, err := sarama.NewSyncProducer([]string{kafkaBrokers}, config)
 	if err != nil {
 		logger.Fatal("Failed to create Kafka producer", zap.Error(err), zap.String("brokers", kafkaBrokers))
 	}
 	defer func() {
-		if err := producer.Close(); err != nil {
-			logger.Error("Failed to close Kafka producer", zap.Error(err))
+		if err := writer.Close(); err != nil {
+			logger.Error("Failed to close Kafka writer", zap.Error(err))
 		}
 	}()
 

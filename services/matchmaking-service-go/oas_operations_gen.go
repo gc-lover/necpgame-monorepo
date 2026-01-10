@@ -6,12 +6,8 @@ package api
 type OperationName = string
 
 const (
-	CreateExampleOperation                 OperationName = "CreateExample"
-	DeleteExampleOperation                 OperationName = "DeleteExample"
-	ExampleDomainBatchHealthCheckOperation OperationName = "ExampleDomainBatchHealthCheck"
-	ExampleDomainHealthWebSocketOperation  OperationName = "ExampleDomainHealthWebSocket"
-	GetExampleOperation                    OperationName = "GetExample"
-	ListExamplesOperation                  OperationName = "ListExamples"
-	MatchmakingServiceHealthCheckOperation OperationName = "MatchmakingServiceHealthCheck"
-	UpdateExampleOperation                 OperationName = "UpdateExample"
+	FindMatchOperation   OperationName = "FindMatch"
+	HealthCheckOperation OperationName = "HealthCheck"
+	JoinQueueOperation   OperationName = "JoinQueue"
+	LeaveQueueOperation  OperationName = "LeaveQueue"
 )

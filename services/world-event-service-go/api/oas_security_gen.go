@@ -14,7 +14,6 @@ import (
 // SecurityHandler is handler for security parameters.
 type SecurityHandler interface {
 	// HandleBearerAuth handles BearerAuth security.
-	// JWT Bearer token authentication.
 	HandleBearerAuth(ctx context.Context, operationName OperationName, t BearerAuth) (context.Context, error)
 }
 
@@ -34,14 +33,22 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	CreateExampleOperation:                    []string{},
-	DeleteExampleOperation:                    []string{},
-	ExampleDomainBatchHealthCheckOperation:    []string{},
-	GetExampleOperation:                       []string{},
-	ListWorldEventsOperation:                  []string{},
-	UpdateExampleOperation:                    []string{},
-	WorldEventServiceHealthCheckOperation:     []string{},
-	WorldEventServiceHealthWebSocketOperation: []string{},
+	CancelEventOperation:               []string{},
+	ClaimRewardOperation:               []string{},
+	CreateEventOperation:               []string{},
+	CreateEventTemplateOperation:       []string{},
+	GetEventOperation:                  []string{},
+	GetEventAnalyticsOperation:         []string{},
+	GetEventParticipantsOperation:      []string{},
+	GetPlayerParticipationOperation:    []string{},
+	GetPlayerRewardsOperation:          []string{},
+	HealthCheckOperation:               []string{},
+	JoinEventOperation:                 []string{},
+	LeaveEventOperation:                []string{},
+	ListEventTemplatesOperation:        []string{},
+	ListEventsOperation:                []string{},
+	UpdateEventOperation:               []string{},
+	UpdatePlayerParticipationOperation: []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
@@ -64,7 +71,6 @@ func (s *Server) securityBearerAuth(ctx context.Context, operationName Operation
 // SecuritySource is provider of security values (tokens, passwords, etc.).
 type SecuritySource interface {
 	// BearerAuth provides BearerAuth security value.
-	// JWT Bearer token authentication.
 	BearerAuth(ctx context.Context, operationName OperationName) (BearerAuth, error)
 }
 

@@ -3,21 +3,9 @@
 package api
 
 // setDefaults set default value of fields.
-func (s *CreateExampleRequest) setDefaults() {
+func (s *EventReward) setDefaults() {
 	{
-		val := int(5)
-		s.Priority.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *Example) setDefaults() {
-	{
-		val := ExampleStatus("active")
-		s.Status = val
-	}
-	{
-		val := int(5)
-		s.Priority.SetTo(val)
+		val := int(1)
+		s.Amount.SetTo(val)
 	}
 }
