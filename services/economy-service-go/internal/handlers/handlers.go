@@ -53,42 +53,10 @@ func (h *EconomyHandlers) EconomyHealthCheck(ctx context.Context) (*api.HealthRe
 }
 
 // GetOrderBook implements getOrderBook operation.
-func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBookParams) (*api.OrderBook, error) {
-	h.logger.Info("GetOrderBook called", zap.String("commodity", string(params.Commodity)))
-
-	// Get market for commodity
-	market, exists := h.markets[bazaar.Commodity(params.Commodity)]
-	if !exists {
-		return nil, fmt.Errorf("market not found for commodity: %s", params.Commodity)
-	}
-
-	// Get order book from market
-	orders := market.GetOrderBook()
-
-	// Convert to API format
-	apiOrders := make([]api.Order, len(orders))
-	for i, order := range orders {
-		apiOrders[i] = api.Order{
-			ID:       order.ID,
-			Type:     api.OrderType(order.Type),
-			Price:    order.Price,
-			Quantity: order.Quantity,
-			PlayerID: order.PlayerID,
-			CreatedAt: order.CreatedAt,
-		}
-	}
-
-	orderBook := &api.OrderBook{
-		Commodity: string(params.Commodity),
-		Orders:    apiOrders,
-		LastUpdated: time.Now(),
-	}
-
-	h.logger.Info("Order book retrieved",
-		zap.String("commodity", string(params.Commodity)),
-		zap.Int("order_count", len(apiOrders)))
-
-	return orderBook, nil
+// TODO: Fix OpenAPI generation issue - operation not found in bundled spec
+func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params interface{}) (interface{}, error) {
+	h.logger.Info("GetOrderBook called - placeholder implementation")
+	return nil, fmt.Errorf("not implemented - OpenAPI generation issue")
 }
 
 // PlaceOrder implements placeOrder operation.

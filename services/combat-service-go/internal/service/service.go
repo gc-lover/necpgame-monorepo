@@ -6,17 +6,28 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
+	"necpgame/services/combat-service-go/internal/timer"
+	"necpgame/services/combat-service-go/internal/leaderboard"
+	"necpgame/services/combat-service-go/internal/validation"
+	"necpgame/services/combat-service-go/internal/reward"
+	"necpgame/services/combat-service-go/internal/analytics"
 	"necpgame/services/combat-service-go/pkg/api"
 )
 
@@ -63,9 +74,95 @@ type CombatParticipant struct {
 
 // HealthStats represents health and armor statistics
 type HealthStats struct {
-	CurrentHP int `json:"current_hp"`
-	MaxHP     int `json:"max_hp"`
-	Armor     int `json:"armor"`
+	CurrentHP   int `json:"current_hp"`
+	MaxHP       int `json:"max_hp"`
+	Armor       int `json:"armor"`
+	MagicResist int `json:"magic_resist"`
+}
+
+// Position represents a 3D position in combat space
+type Position struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+	Z int `json:"z"`
+}
+
+// CombatItem represents an item in combat
+type CombatItem struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Damage      int    `json:"damage,omitempty"`
+	Armor       int    `json:"armor,omitempty"`
+}
+
+// CombatAbility represents a combat ability
+type CombatAbility struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+	Damage      int    `json:"damage,omitempty"`
+	ArmorBonus  int    `json:"armor_bonus,omitempty"`
+	Cooldown    int    `json:"cooldown"`
+	ManaCost    int    `json:"mana_cost"`
+}
+
+// CombatEnvironment represents the combat environment
+type CombatEnvironment struct {
+	Type        string `json:"type"`
+	Description string `json:"description"`
+}
+
+// CombatEvent represents an event in combat log
+type CombatEvent struct {
+	ID          string                 `json:"id"`
+	Type        string                 `json:"type"`
+	Timestamp   time.Time              `json:"timestamp"`
+	Participant string                 `json:"participant,omitempty"`
+	Description string                 `json:"description"`
+	Data        map[string]interface{} `json:"data,omitempty"`
+}
+
+// CombatSessionConfig represents configuration for creating a combat session
+type CombatSessionConfig struct {
+	Name                   string
+	Description            string
+	CreatorName            string
+	MaxParticipants        int
+	MinParticipants        int
+	Difficulty             string
+	EnvironmentType        string
+	EnvironmentDescription string
+}
+
+// CombatActionRequest represents a combat action request
+type CombatActionRequest struct {
+	ActionType      string     `json:"action_type"`
+	TargetID        string     `json:"target_id,omitempty"`
+	AbilityID       string     `json:"ability_id,omitempty"`
+	TargetPosition  *Position  `json:"target_position,omitempty"`
+	Parameters      map[string]interface{} `json:"parameters,omitempty"`
+}
+
+// CombatActionResult represents the result of a combat action
+type CombatActionResult struct {
+	ActionID    string           `json:"action_id"`
+	Participant string           `json:"participant"`
+	ActionType  string           `json:"action_type"`
+	Timestamp   time.Time        `json:"timestamp"`
+	Effects     []*CombatEffect  `json:"effects"`
+	Success     bool             `json:"success"`
+}
+
+// CombatEffect represents an effect of a combat action
+type CombatEffect struct {
+	Type        string `json:"type"`
+	Target      string `json:"target,omitempty"`
+	Value       int    `json:"value,omitempty"`
+	Description string `json:"description"`
+}
 	Shield    int `json:"shield"`
 }
 
