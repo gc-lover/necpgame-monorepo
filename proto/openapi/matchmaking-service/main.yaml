@@ -1,31 +1,40 @@
 openapi: 3.0.3
 info:
-  title: Matchmaking Service API - Enterprise-Grade Domain Service
+  title: Matchmaking Service API - Enterprise-Grade Matchmaking System
   description: '**Enterprise-Grade Player Matchmaking API for NECPGAME**
 
     This API manages player matchmaking algorithms, skill-based matching, queue management,
-    anti-smurfing systems, and fair competitive balancing in the cyberpunk world.
+    anti-smurfing systems, and fair competitive balancing in the cyberpunk world of Night City.
 
     ## Key Features
 
-    - **Skill-Based Matching**: Advanced algorithms for fair player matchmaking -
-    **Queue Management**: Dynamic queue systems with priority and timeout handling
-    - **Anti-Smurfing**: Detection and prevention of skill manipulation techniques
-    - **Regional Balancing**: Geographic distribution and ping optimization - **Competitive
-    Integrity**: Fair play enforcement and cheating prevention - **Performance Optimized**:
-    Sub-second matchmaking with <100ms P99 latency
+    - **Skill-Based Matching**: Advanced algorithms for fair player matchmaking with ELO-based rating system
+    - **Queue Management**: Dynamic queue systems with priority handling, timeout management, and queue expansion
+    - **Anti-Smurfing**: Detection and prevention of skill manipulation techniques with account verification
+    - **Regional Balancing**: Geographic distribution and ping optimization for low-latency matchmaking
+    - **Competitive Integrity**: Fair play enforcement, cheating prevention, and match quality monitoring
+    - **Performance Optimized**: Sub-second matchmaking with <100ms P99 latency for 200K+ concurrent players
 
     ## Domain Purpose
 
-    The Matchmaking domain handles player matching for competitive gameplay in Night
-    City. Players are paired with suitable opponents based on skill, preferences,
+    The Matchmaking domain handles player matching for competitive gameplay in Night City.
+    Players are paired with suitable opponents based on skill ratings, playstyle preferences,
     and fairness algorithms to ensure balanced and enjoyable competitive experiences.
 
     ## Performance Targets
 
-    - P99 Latency: <100ms for matchmaking operations - Memory: <40KB per active matchmaking
-    session - Concurrent users: 200,000+ players in queue simultaneously - Match quality:
-    95%+ satisfaction rating
+    - P99 Latency: <100ms for matchmaking operations
+    - Memory: <40KB per active matchmaking session
+    - Concurrent users: 200,000+ players in queue simultaneously
+    - Match quality: 95%+ player satisfaction rating
+    - Queue expansion: Automatic range widening for faster matchmaking
+
+    ## Supported Game Modes
+
+    - **PvP Modes**: Ranked, Casual, Tournament brackets
+    - **PvE Modes**: Dungeon runs, Raid matchmaking, Group content
+    - **Party Modes**: Existing party matching, Fill empty slots
+    - **Custom Modes**: Special event matchmaking, Seasonal content
 
     '
   version: 1.0.0
@@ -46,21 +55,27 @@ servers:
 security:
 - BearerAuth: []
 tags:
-- name: Matchmaking
-  description: Core matchmaking and queue management operations
+- name: Queue Management
+  description: Player queue operations and management
+- name: Matchmaking Engine
+  description: Core matchmaking algorithms and match finding
+- name: Rating System
+  description: Player rating and statistics management
+- name: Match Quality
+  description: Match quality assessment and monitoring
+- name: Anti-Smurfing
+  description: Account verification and manipulation prevention
 - name: Health Monitoring
   description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: Example domain health check
+      summary: Matchmaking service health check
       description: '**Enterprise-grade health check endpoint**
 
+        Provides real-time health status of the matchmaking service microservice.
 
-        Provides real-time health status of the example domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
+        Critical for service discovery, load balancing, and monitoring systems.
 
         **Performance:** <1ms response time, cached for 30 seconds
 
@@ -88,7 +103,7 @@ paths:
             ETag:
               schema:
                 type: string
-                example: '"health-v1.0"'
+                example: '"matchmaking-health-v1.0"'
             Content-Encoding:
               schema:
                 type: string
@@ -98,6 +113,340 @@ paths:
                 - br
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /queue/join:
+    post:
+      summary: Join matchmaking queue
+      description: '**Join matchmaking queue with player preferences**
+
+        Adds a player to the matchmaking queue with specified game mode, preferences,
+        and skill-based matching criteria. Supports party queuing and role selection.
+
+        **Queue Types Supported:**
+        - PvP: Competitive player vs player matches
+        - PvE: Player vs environment content (dungeons, raids)
+        - Ranked: Skill-based competitive matches
+        - Casual: Relaxed matchmaking without rating changes
+        - Tournament: Bracket-based tournament matches
+
+        **Performance:** <50ms queue join time, immediate Redis cache update
+
+        '
+      operationId: joinMatchmakingQueue
+      tags:
+      - Queue Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinQueueRequest'
+      responses:
+        '202':
+          description: Successfully joined queue
+          headers:
+            X-Queue-Position:
+              schema:
+                type: integer
+                example: 1
+            X-Estimated-Wait-Time:
+              schema:
+                type: integer
+                example: 45
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /queue/leave:
+    delete:
+      summary: Leave matchmaking queue
+      description: '**Remove player from matchmaking queue**
+
+        Removes a player from the active matchmaking queue. Called when players
+        cancel matchmaking or are matched into a game.
+
+        **Queue Cleanup:**
+        - Immediate removal from Redis queue
+        - Update queue statistics
+        - Free up queue slot for other players
+
+        **Performance:** <10ms queue removal time
+
+        '
+      operationId: leaveMatchmakingQueue
+      tags:
+      - Queue Management
+      parameters:
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '204':
+          description: Successfully left queue
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Player not in queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /queue/status:
+    get:
+      summary: Get queue status
+      description: '**Retrieve current matchmaking queue status**
+
+        Returns detailed information about player's position in queue,
+        estimated wait time, and queue statistics.
+
+        **Queue Information:**
+        - Current position in queue
+        - Estimated wait time in seconds
+        - Total players in queue
+        - Queue expansion status
+
+        **Performance:** <5ms status retrieval from Redis cache
+
+        '
+      operationId: getQueueStatus
+      tags:
+      - Queue Management
+      parameters:
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Queue status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatusResponse'
+        '404':
+          description: Player not in queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /match/find:
+    post:
+      summary: Find optimal match
+      description: '**Execute matchmaking algorithm to find optimal player matches**
+
+        Runs the matchmaking engine to find suitable opponents or teammates based on
+        player skill ratings, preferences, and queue parameters.
+
+        **Matching Algorithms:**
+        - ELO-based skill matching with configurable ranges
+        - Geographic proximity for low ping
+        - Role-based team composition
+        - Party size compatibility
+        - Anti-smurf detection integration
+
+        **Performance:** <100ms P99 matchmaking time, Redis-backed candidate search
+
+        '
+      operationId: findMatch
+      tags:
+      - Matchmaking Engine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindMatchRequest'
+      responses:
+        '200':
+          description: Match found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+        '202':
+          description: Match search in progress
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchSearchStatus'
+        '404':
+          description: No suitable match found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /rating/{player_id}:
+    get:
+      summary: Get player rating
+      description: '**Retrieve player matchmaking rating and statistics**
+
+        Returns comprehensive rating information including current ELO score,
+        rating history, win/loss statistics, and matchmaking performance metrics.
+
+        **Rating Information:**
+        - Current ELO rating with confidence interval
+        - Rating history and trends
+        - Win/loss ratio and streak data
+        - Placement matches status
+        - Regional ranking information
+
+        **Performance:** <20ms rating retrieval with caching
+
+        '
+      operationId: getPlayerRating
+      tags:
+      - Rating System
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+        example: 550e8400-e29b-41d4-a716-446655440000
+      - name: include_history
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include rating history in response
+      responses:
+        '200':
+          description: Player rating retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatingResponse'
+        '404':
+          description: Player rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /match/quality/{match_id}:
+    get:
+      summary: Get match quality assessment
+      description: '**Retrieve match quality metrics and balance assessment**
+
+        Returns detailed quality analysis for a completed or in-progress match,
+        including team balance, skill distribution, and predicted outcome.
+
+        **Quality Metrics:**
+        - Team skill balance score (0.0-1.0)
+        - Predicted win probability for each team
+        - Match fairness assessment
+        - Anti-smurf detection flags
+        - Regional distribution analysis
+
+        **Performance:** <50ms quality calculation with caching
+
+        '
+      operationId: getMatchQuality
+      tags:
+      - Match Quality
+      parameters:
+      - name: match_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Match unique identifier
+        example: 550e8400-e29b-41d4-a716-446655440001
+      responses:
+        '200':
+          description: Match quality retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchQualityResponse'
+        '404':
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /anti-smurf/verify/{player_id}:
+    post:
+      summary: Verify player account for anti-smurfing
+      description: '**Perform anti-smurf verification on player account**
+
+        Runs comprehensive verification checks to detect potential skill manipulation
+        or account abuse patterns. Includes behavioral analysis and account history review.
+
+        **Verification Checks:**
+        - Account age and activity patterns
+        - Rating progression analysis
+        - Behavioral consistency checks
+        - Multi-account detection
+        - Regional play pattern analysis
+
+        **Performance:** <200ms verification time, background processing for complex checks
+
+        '
+      operationId: verifyAntiSmurf
+      tags:
+      - Anti-Smurfing
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Verification completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AntiSmurfVerificationResponse'
+        '202':
+          description: Verification in progress
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+        '403':
+          description: Account flagged for potential manipulation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
               schema:
                 $ref: ../common-service/schemas/health.yaml#/HealthResponse
         '503':

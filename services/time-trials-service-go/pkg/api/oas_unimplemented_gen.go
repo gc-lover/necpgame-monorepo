@@ -13,101 +13,101 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// AnalyticsTrialsTrialIdPerformanceGet implements GET /analytics/trials/{trialId}/performance operation.
-//
-// Retrieve performance metrics and statistics for a time trial.
-//
-// GET /analytics/trials/{trialId}/performance
-func (UnimplementedHandler) AnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params AnalyticsTrialsTrialIdPerformanceGetParams) (r *AnalyticsTrialsTrialIdPerformanceGetOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// HealthGet implements GET /health operation.
-//
-// Returns service health status and basic metrics.
-//
-// GET /health
-func (UnimplementedHandler) HealthGet(ctx context.Context) (r *HealthGetOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// LeaderboardsTrialIdGet implements GET /leaderboards/{trialId} operation.
-//
-// Retrieve leaderboard rankings for a specific time trial.
-//
-// GET /leaderboards/{trialId}
-func (UnimplementedHandler) LeaderboardsTrialIdGet(ctx context.Context, params LeaderboardsTrialIdGetParams) (r *LeaderboardsTrialIdGetOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// LeaderboardsTrialIdPersonalPlayerIdGet implements GET /leaderboards/{trialId}/personal/{playerId} operation.
-//
-// Retrieve a specific player's best time and ranking for a trial.
-//
-// GET /leaderboards/{trialId}/personal/{playerId}
-func (UnimplementedHandler) LeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context, params LeaderboardsTrialIdPersonalPlayerIdGetParams) (r *LeaderboardsTrialIdPersonalPlayerIdGetOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// TrialsGet implements GET /trials operation.
-//
-// Retrieve paginated list of available time trials with filtering options.
-//
-// GET /trials
-func (UnimplementedHandler) TrialsGet(ctx context.Context, params TrialsGetParams) (r *TrialsGetOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// TrialsPost implements POST /trials operation.
-//
-// Create a new time trial configuration (admin only).
-//
-// POST /trials
-func (UnimplementedHandler) TrialsPost(ctx context.Context, req *TimeTrial) (r TrialsPostRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// TrialsTrialIdCompletePost implements POST /trials/{trialId}/complete operation.
+// CompleteTrialSession implements completeTrialSession operation.
 //
 // Submit completion data for an active time trial session.
 //
 // POST /trials/{trialId}/complete
-func (UnimplementedHandler) TrialsTrialIdCompletePost(ctx context.Context, req *TrialsTrialIdCompletePostReq, params TrialsTrialIdCompletePostParams) (r TrialsTrialIdCompletePostRes, _ error) {
+func (UnimplementedHandler) CompleteTrialSession(ctx context.Context, req *CompleteTrialSessionReq, params CompleteTrialSessionParams) (r CompleteTrialSessionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// TrialsTrialIdGet implements GET /trials/{trialId} operation.
+// CreateTrial implements createTrial operation.
+//
+// Create a new time trial configuration (admin only).
+//
+// POST /trials
+func (UnimplementedHandler) CreateTrial(ctx context.Context, req *TimeTrial) (r CreateTrialRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetHealth implements getHealth operation.
+//
+// Returns service health status and basic metrics.
+//
+// GET /health
+func (UnimplementedHandler) GetHealth(ctx context.Context) (r GetHealthRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPlayerPersonalRecord implements getPlayerPersonalRecord operation.
+//
+// Retrieve a specific player's best time and ranking for a trial.
+//
+// GET /leaderboards/{trialId}/personal/{playerId}
+func (UnimplementedHandler) GetPlayerPersonalRecord(ctx context.Context, params GetPlayerPersonalRecordParams) (r GetPlayerPersonalRecordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetTrial implements getTrial operation.
 //
 // Retrieve detailed information about a specific time trial.
 //
 // GET /trials/{trialId}
-func (UnimplementedHandler) TrialsTrialIdGet(ctx context.Context, params TrialsTrialIdGetParams) (r TrialsTrialIdGetRes, _ error) {
+func (UnimplementedHandler) GetTrial(ctx context.Context, params GetTrialParams) (r GetTrialRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// TrialsTrialIdPut implements PUT /trials/{trialId} operation.
+// GetTrialLeaderboard implements getTrialLeaderboard operation.
 //
-// Update an existing time trial configuration (admin only).
+// Retrieve leaderboard rankings for a specific time trial.
 //
-// PUT /trials/{trialId}
-func (UnimplementedHandler) TrialsTrialIdPut(ctx context.Context, req *TimeTrial, params TrialsTrialIdPutParams) (r TrialsTrialIdPutRes, _ error) {
+// GET /leaderboards/{trialId}
+func (UnimplementedHandler) GetTrialLeaderboard(ctx context.Context, params GetTrialLeaderboardParams) (r GetTrialLeaderboardRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// TrialsTrialIdStartPost implements POST /trials/{trialId}/start operation.
+// GetTrialPerformanceAnalytics implements getTrialPerformanceAnalytics operation.
 //
-// Initialize a new time trial session for the authenticated player.
+// Retrieve performance metrics and statistics for a time trial.
 //
-// POST /trials/{trialId}/start
-func (UnimplementedHandler) TrialsTrialIdStartPost(ctx context.Context, req OptTrialsTrialIdStartPostReq, params TrialsTrialIdStartPostParams) (r TrialsTrialIdStartPostRes, _ error) {
+// GET /analytics/trials/{trialId}/performance
+func (UnimplementedHandler) GetTrialPerformanceAnalytics(ctx context.Context, params GetTrialPerformanceAnalyticsParams) (r GetTrialPerformanceAnalyticsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// ValidationSessionsSessionIdReportPost implements POST /validation/sessions/{sessionId}/report operation.
+// ListTrials implements listTrials operation.
+//
+// Retrieve paginated list of available time trials with filtering options.
+//
+// GET /trials
+func (UnimplementedHandler) ListTrials(ctx context.Context, params ListTrialsParams) (r ListTrialsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReportSuspiciousSession implements reportSuspiciousSession operation.
 //
 // Allow players to report potentially cheated trial sessions.
 //
 // POST /validation/sessions/{sessionId}/report
-func (UnimplementedHandler) ValidationSessionsSessionIdReportPost(ctx context.Context, req *ValidationSessionsSessionIdReportPostReq, params ValidationSessionsSessionIdReportPostParams) (r ValidationSessionsSessionIdReportPostRes, _ error) {
+func (UnimplementedHandler) ReportSuspiciousSession(ctx context.Context, req *ReportSuspiciousSessionReq, params ReportSuspiciousSessionParams) (r ReportSuspiciousSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// StartTrialSession implements startTrialSession operation.
+//
+// Initialize a new time trial session for the authenticated player.
+//
+// POST /trials/{trialId}/start
+func (UnimplementedHandler) StartTrialSession(ctx context.Context, req OptStartTrialSessionReq, params StartTrialSessionParams) (r StartTrialSessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateTrial implements updateTrial operation.
+//
+// Update an existing time trial configuration (admin only).
+//
+// PUT /trials/{trialId}
+func (UnimplementedHandler) UpdateTrial(ctx context.Context, req *TimeTrial, params UpdateTrialParams) (r UpdateTrialRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -1661,10 +1663,76 @@ func (h *Handler) NewError(ctx context.Context, err error) *api.ErrRespStatusCod
 
 // Helper methods
 
-// getUserIDFromContext extracts user ID from request context
-// This would be implemented by authentication middleware
+// getUserIDFromContext extracts user ID from request context with JWT validation
 func (h *Handler) getUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	// TODO: Implement proper user ID extraction from JWT/auth context
-	// For now, return a placeholder UUID
-	return uuid.New(), nil
+	// Try to get token from context first (set by auth middleware)
+	if tokenStr, ok := ctx.Value("jwt_token").(string); ok && tokenStr != "" {
+		return h.parseUserIDFromJWT(tokenStr)
+	}
+
+	// Fallback: try to get from HTTP request context
+	if req, ok := ctx.Value("http_request").(*http.Request); ok {
+		authHeader := req.Header.Get("Authorization")
+		if authHeader != "" {
+			// Extract Bearer token
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				return h.parseUserIDFromJWT(parts[1])
+			}
+		}
+	}
+
+	h.service.logger.Error("No JWT token found in context")
+	return uuid.Nil, errors.New("authentication required: no JWT token provided")
+}
+
+// parseUserIDFromJWT validates JWT token and extracts user ID
+func (h *Handler) parseUserIDFromJWT(tokenString string) (uuid.UUID, error) {
+	// Parse and validate JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(h.service.config.JWTSecret), nil
+	})
+
+	if err != nil {
+		h.service.logger.Error("JWT token parsing failed", zap.Error(err))
+		return uuid.Nil, errors.Wrap(err, "invalid JWT token")
+	}
+
+	if !token.Valid {
+		h.service.logger.Error("JWT token validation failed")
+		return uuid.Nil, errors.New("invalid JWT token")
+	}
+
+	// Extract claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		h.service.logger.Error("Invalid JWT claims format")
+		return uuid.Nil, errors.New("invalid JWT claims")
+	}
+
+	// Extract user ID from claims
+	userIDStr, exists := claims["user_id"]
+	if !exists {
+		userIDStr, exists = claims["sub"] // Alternative: subject claim
+	}
+	if !exists {
+		h.service.logger.Error("No user_id or sub claim in JWT")
+		return uuid.Nil, errors.New("user ID not found in JWT token")
+	}
+
+	// Parse user ID as UUID
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		h.service.logger.Error("Invalid user ID format in JWT", zap.String("user_id", userIDStr.(string)))
+		return uuid.Nil, errors.Wrap(err, "invalid user ID format")
+	}
+
+	h.service.logger.Debug("Successfully extracted user ID from JWT",
+		zap.String("user_id", userID.String()))
+
+	return userID, nil
 }

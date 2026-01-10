@@ -8,72 +8,72 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// AnalyticsTrialsTrialIdPerformanceGet implements GET /analytics/trials/{trialId}/performance operation.
-	//
-	// Retrieve performance metrics and statistics for a time trial.
-	//
-	// GET /analytics/trials/{trialId}/performance
-	AnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params AnalyticsTrialsTrialIdPerformanceGetParams) (*AnalyticsTrialsTrialIdPerformanceGetOK, error)
-	// HealthGet implements GET /health operation.
-	//
-	// Returns service health status and basic metrics.
-	//
-	// GET /health
-	HealthGet(ctx context.Context) (*HealthGetOK, error)
-	// LeaderboardsTrialIdGet implements GET /leaderboards/{trialId} operation.
-	//
-	// Retrieve leaderboard rankings for a specific time trial.
-	//
-	// GET /leaderboards/{trialId}
-	LeaderboardsTrialIdGet(ctx context.Context, params LeaderboardsTrialIdGetParams) (*LeaderboardsTrialIdGetOK, error)
-	// LeaderboardsTrialIdPersonalPlayerIdGet implements GET /leaderboards/{trialId}/personal/{playerId} operation.
-	//
-	// Retrieve a specific player's best time and ranking for a trial.
-	//
-	// GET /leaderboards/{trialId}/personal/{playerId}
-	LeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context, params LeaderboardsTrialIdPersonalPlayerIdGetParams) (*LeaderboardsTrialIdPersonalPlayerIdGetOK, error)
-	// TrialsGet implements GET /trials operation.
-	//
-	// Retrieve paginated list of available time trials with filtering options.
-	//
-	// GET /trials
-	TrialsGet(ctx context.Context, params TrialsGetParams) (*TrialsGetOK, error)
-	// TrialsPost implements POST /trials operation.
-	//
-	// Create a new time trial configuration (admin only).
-	//
-	// POST /trials
-	TrialsPost(ctx context.Context, req *TimeTrial) (TrialsPostRes, error)
-	// TrialsTrialIdCompletePost implements POST /trials/{trialId}/complete operation.
+	// CompleteTrialSession implements completeTrialSession operation.
 	//
 	// Submit completion data for an active time trial session.
 	//
 	// POST /trials/{trialId}/complete
-	TrialsTrialIdCompletePost(ctx context.Context, req *TrialsTrialIdCompletePostReq, params TrialsTrialIdCompletePostParams) (TrialsTrialIdCompletePostRes, error)
-	// TrialsTrialIdGet implements GET /trials/{trialId} operation.
+	CompleteTrialSession(ctx context.Context, req *CompleteTrialSessionReq, params CompleteTrialSessionParams) (CompleteTrialSessionRes, error)
+	// CreateTrial implements createTrial operation.
+	//
+	// Create a new time trial configuration (admin only).
+	//
+	// POST /trials
+	CreateTrial(ctx context.Context, req *TimeTrial) (CreateTrialRes, error)
+	// GetHealth implements getHealth operation.
+	//
+	// Returns service health status and basic metrics.
+	//
+	// GET /health
+	GetHealth(ctx context.Context) (GetHealthRes, error)
+	// GetPlayerPersonalRecord implements getPlayerPersonalRecord operation.
+	//
+	// Retrieve a specific player's best time and ranking for a trial.
+	//
+	// GET /leaderboards/{trialId}/personal/{playerId}
+	GetPlayerPersonalRecord(ctx context.Context, params GetPlayerPersonalRecordParams) (GetPlayerPersonalRecordRes, error)
+	// GetTrial implements getTrial operation.
 	//
 	// Retrieve detailed information about a specific time trial.
 	//
 	// GET /trials/{trialId}
-	TrialsTrialIdGet(ctx context.Context, params TrialsTrialIdGetParams) (TrialsTrialIdGetRes, error)
-	// TrialsTrialIdPut implements PUT /trials/{trialId} operation.
+	GetTrial(ctx context.Context, params GetTrialParams) (GetTrialRes, error)
+	// GetTrialLeaderboard implements getTrialLeaderboard operation.
 	//
-	// Update an existing time trial configuration (admin only).
+	// Retrieve leaderboard rankings for a specific time trial.
 	//
-	// PUT /trials/{trialId}
-	TrialsTrialIdPut(ctx context.Context, req *TimeTrial, params TrialsTrialIdPutParams) (TrialsTrialIdPutRes, error)
-	// TrialsTrialIdStartPost implements POST /trials/{trialId}/start operation.
+	// GET /leaderboards/{trialId}
+	GetTrialLeaderboard(ctx context.Context, params GetTrialLeaderboardParams) (GetTrialLeaderboardRes, error)
+	// GetTrialPerformanceAnalytics implements getTrialPerformanceAnalytics operation.
 	//
-	// Initialize a new time trial session for the authenticated player.
+	// Retrieve performance metrics and statistics for a time trial.
 	//
-	// POST /trials/{trialId}/start
-	TrialsTrialIdStartPost(ctx context.Context, req OptTrialsTrialIdStartPostReq, params TrialsTrialIdStartPostParams) (TrialsTrialIdStartPostRes, error)
-	// ValidationSessionsSessionIdReportPost implements POST /validation/sessions/{sessionId}/report operation.
+	// GET /analytics/trials/{trialId}/performance
+	GetTrialPerformanceAnalytics(ctx context.Context, params GetTrialPerformanceAnalyticsParams) (GetTrialPerformanceAnalyticsRes, error)
+	// ListTrials implements listTrials operation.
+	//
+	// Retrieve paginated list of available time trials with filtering options.
+	//
+	// GET /trials
+	ListTrials(ctx context.Context, params ListTrialsParams) (ListTrialsRes, error)
+	// ReportSuspiciousSession implements reportSuspiciousSession operation.
 	//
 	// Allow players to report potentially cheated trial sessions.
 	//
 	// POST /validation/sessions/{sessionId}/report
-	ValidationSessionsSessionIdReportPost(ctx context.Context, req *ValidationSessionsSessionIdReportPostReq, params ValidationSessionsSessionIdReportPostParams) (ValidationSessionsSessionIdReportPostRes, error)
+	ReportSuspiciousSession(ctx context.Context, req *ReportSuspiciousSessionReq, params ReportSuspiciousSessionParams) (ReportSuspiciousSessionRes, error)
+	// StartTrialSession implements startTrialSession operation.
+	//
+	// Initialize a new time trial session for the authenticated player.
+	//
+	// POST /trials/{trialId}/start
+	StartTrialSession(ctx context.Context, req OptStartTrialSessionReq, params StartTrialSessionParams) (StartTrialSessionRes, error)
+	// UpdateTrial implements updateTrial operation.
+	//
+	// Update an existing time trial configuration (admin only).
+	//
+	// PUT /trials/{trialId}
+	UpdateTrial(ctx context.Context, req *TimeTrial, params UpdateTrialParams) (UpdateTrialRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

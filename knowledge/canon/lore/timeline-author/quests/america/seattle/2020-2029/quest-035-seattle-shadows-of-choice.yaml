@@ -1,0 +1,811 @@
+metadata:
+  id: canon-quest-seattle-035-shadows-of-choice
+  title: Seattle 2020-2029 — Тени выбора
+  document_type: canon
+  category: quest
+  status: draft
+  version: 1.0.0
+  last_updated: '2025-12-27T15:00:00Z'
+  concept_approved: true
+  concept_reviewed_at: '2025-12-27T15:00:00Z'
+  owners:
+  - role: narrative_lead
+    contact: narrative@necp.game
+  tags:
+  - seattle
+  - cyberpunk
+  - dynamic-quest
+  - player-choice
+  - branching-narrative
+  - reputation-system
+  topics:
+  - corporate-ethics
+  - street-justice
+  - moral-choices
+  - long-term-consequences
+  related_systems:
+  - narrative-service
+  - quest-system
+  - reputation-system
+  - dynamic-quest-engine
+  - npc-relationship-system
+  related_documents:
+  - id: dynamic-quest-system-architecture
+    relation: implements
+    title: Dynamic Quest System Architecture
+  - id: canon-lore-timeline-author-index
+    relation: references
+  source: knowledge/implementation/architecture/dynamic-quest-system-architecture.yaml
+  visibility: internal
+  audience:
+  - narrative
+  - vision
+  - content
+  risk_level: high
+
+review:
+  chain:
+  - role: concept_director
+    reviewer: ''
+    reviewed_at: ''
+    status: pending
+  next_actions: []
+
+summary:
+  problem: В Сиэтле обнаружен корпоративный заговор по массовому внедрению экспериментальных имплантов без согласия граждан. Игроку предстоит решить, поддержать ли корпорацию ради награды, помочь уличному сопротивлению или найти третий путь.
+  goal: Пройти через серию моральных выборов, каждый из которых влияет на репутацию, отношения с NPC и открывает различные ветки сюжета с долгосрочными последствиями.
+  essence: |
+    Динамический квест с 7 ключевыми точками выбора, демонстрирующий систему ветвления на основе решений игрока.
+    
+    Каждый выбор влияет на:
+    - Репутацию (corporate/street)
+    - Отношения с NPC (Lena, Marcus, Dr. Chen, Rogue)
+    - Доступность будущих квестов и диалогов
+    - Финальный исход квеста (5 возможных концовок)
+    
+    Квест демонстрирует долгосрочные последствия выборов: решение в первой половине квеста может открыть или закрыть пути в финале.
+
+quest_definition:
+  quest_type: main
+  level_min: 15
+  level_max: 25
+  dynamic_quest: true
+  choice_points: 7
+  branching_factor: 3
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      corporate: 0
+      street: 0
+    required_items: []
+  objectives:
+  - id: discover_corporate_conspiracy
+    text: Обнаружить корпоративный заговор с экспериментальными имплантами
+    type: interact
+    target: corporate_leak_location
+    count: 1
+    optional: false
+    choice_point: 1
+  - id: first_moral_choice
+    text: Решить, кому сообщить о заговоре
+    type: choice
+    target: choice_point_1
+    options:
+    - Accept corporate offer
+    - Help street resistance
+    - Investigate independently
+    count: 1
+    optional: false
+    choice_point: 1
+  - id: investigate_independently_route
+    text: Независимо исследовать корпоративный заговор
+    type: interact
+    target: independent_investigation
+    count: 1
+    optional: true
+    conditional: choice_point_1 == "investigate_independently"
+    choice_point: 2
+  - id: meet_whistleblower
+    text: Встретиться с информатором внутри корпорации
+    type: interact
+    target: whistleblower_meeting
+    count: 1
+    optional: true
+    conditional: reputation.street > 100 OR choice_point_1 == "help_street"
+    choice_point: 2
+  - id: corporate_negotiation
+    text: Ведение переговоров с корпорацией
+    type: interact
+    target: corporate_negotiation
+    count: 1
+    optional: true
+    conditional: choice_point_1 == "accept_corporate" OR reputation.corporate > 200
+    choice_point: 2
+  - id: second_moral_choice
+    text: Решить судьбу экспериментальных данных
+    type: choice
+    target: choice_point_2
+    options:
+    - Destroy research data
+    - Leak to public
+    - Use for leverage
+    count: 1
+    optional: false
+    choice_point: 2
+  - id: confrontation_with_corporate_security
+    text: Противостояние с корпоративной охраной
+    type: combat
+    target: corporate_security_force
+    count: 1
+    optional: true
+    conditional: choice_point_2 == "leak_public" OR reputation.street > 150
+    choice_point: 3
+  - id: third_moral_choice
+    text: Решить судьбу корпоративного ученого
+    type: choice
+    target: choice_point_3
+    options:
+    - Spare and recruit
+    - Turn over to corporation
+    - Expose publicly
+    count: 1
+    optional: false
+    choice_point: 3
+  - id: fourth_moral_choice
+    text: Выбрать подход к финальному решению
+    type: choice
+    target: choice_point_4
+    options:
+    - Force corporate shutdown
+    - Negotiate compromise
+    - Expose and let public decide
+    count: 1
+    optional: false
+    choice_point: 4
+  - id: npc_relationship_choice
+    text: Решить судьбу отношений с ключевым NPC
+    type: choice
+    target: choice_point_5
+    options:
+    - Trust Lena (corporate handler)
+    - Trust Marcus (street leader)
+    - Trust no one
+    count: 1
+    optional: false
+    choice_point: 5
+  - id: final_moral_choice
+    text: Принять финальное решение о судьбе технологии
+    type: choice
+    target: choice_point_6
+    options:
+    - Destroy all research
+    - Public release
+    - Controlled corporate release
+    count: 1
+    optional: false
+    choice_point: 6
+  - id: seventh_choice_consequence
+    text: Определить личную позицию в конфликте
+    type: choice
+    target: choice_point_7
+    options:
+    - Join corporation permanently
+    - Join street resistance
+    - Remain independent
+    count: 1
+    optional: false
+    choice_point: 7
+  rewards:
+    experience: 5000
+    money: 8000
+    reputation:
+      corporate: 
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "accept_corporate"
+          then: 500
+          else: -200
+      street:
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "help_street"
+          then: 500
+          else: -200
+    items:
+    - id: experimental_implant_data
+      name: Данные об экспериментальных имплантах
+      type: data_chip
+      rarity: epic
+      quantity: 1
+      conditional: choice_point_2 != "destroy_research"
+    - id: corporate_leverage_evidence
+      name: Доказательства корпоративных нарушений
+      type: evidence
+      rarity: rare
+      quantity: 1
+      conditional: choice_point_2 == "use_leverage"
+    unlocks:
+    - quest: canon-quest-seattle-corporate-consequences
+      conditional: choice_point_1 == "accept_corporate" AND choice_point_6 == "controlled_release"
+    - quest: canon-quest-seattle-street-uprising
+      conditional: choice_point_1 == "help_street" AND choice_point_6 == "public_release"
+    - quest: canon-quest-seattle-independent-path
+      conditional: choice_point_1 == "investigate_independently" AND choice_point_7 == "remain_independent"
+    - faction: winning_faction
+      conditional: choice_point_7 != "remain_independent"
+    - npc_relationship: lena_trusted
+      conditional: choice_point_5 == "trust_lena" AND reputation.corporate > 300
+    - npc_relationship: marcus_trusted
+      conditional: choice_point_5 == "trust_marcus" AND reputation.street > 300
+
+content:
+  introduction: |
+    Дождливой ночью в Сиэтле ваш агент получает зашифрованное сообщение. "Найди меня в старом доке. 
+    Это касается тысяч жизней." Сообщение приходит от неизвестного отправителя, но в нем звучит 
+    настоящая срочность.
+    
+    В заброшенном доке вы находите доктора Эмму Чен, бывшего ведущего ученого корпорации Arasaka. 
+    Она дрожит от холода и страха. "Они тестируют экспериментальные импланты на людях без их 
+    согласия," - шепчет она, протягивая дата-чип. "Данные здесь. Но что ты с ними сделаешь - 
+    определит судьбу многих."
+    
+    В этот момент ваш агент взрывается звонками: Arasaka предлагает крупную награду за возвращение 
+    "похищенных" данных. Уличное сопротивление предлагает союз против корпораций. А доктор Чен 
+    смотрит на вас, ожидая решения, которое изменит все.
+
+  plot_points:
+  - id: discovery_point
+    title: Точка обнаружения
+    description: |
+      Игрок обнаруживает корпоративный заговор с экспериментальными имплантами. Это первая 
+      точка выбора: кому сообщить? Корпорации, уличному сопротивлению или исследовать самому?
+    choice_point: 1
+    consequences:
+      accept_corporate:
+        reputation:
+          corporate: 200
+          street: -100
+        narrative_path: corporate_alignment
+        unlocks: corporate_negotiation_path
+      help_street:
+        reputation:
+          corporate: -200
+          street: 200
+        narrative_path: street_alignment
+        unlocks: street_resistance_path
+      investigate_independently:
+        reputation:
+          corporate: -50
+          street: -50
+        narrative_path: independent_path
+        unlocks: neutral_investigation_path
+
+  - id: data_disposition
+    title: Распоряжение данными
+    description: |
+      Второй ключевой выбор: что делать с экспериментальными данными? Уничтожить, обнародовать 
+      или использовать как рычаг влияния? Выбор определяет дальнейший сюжет.
+    choice_point: 2
+    consequences:
+      destroy_research:
+        reputation:
+          corporate: -300
+          street: 300
+        narrative_path: moral_purity
+        long_term: prevents_future_corporate_research
+      leak_public:
+        reputation:
+          corporate: -400
+          street: 400
+        narrative_path: public_revelation
+        long_term: triggers_public_investigation
+      use_leverage:
+        reputation:
+          corporate: 100
+          street: -200
+        narrative_path: tactical_manipulation
+        long_term: gains_leverage_over_corporation
+
+  - id: scientist_fate
+    title: Судьба ученого
+    description: |
+      Третий выбор: судьба доктора Чен. Пощадить и завербовать? Выдать корпорации? Или обнародовать 
+      ее участие в заговоре? Это влияет на отношения с NPC и доступность будущих квестов.
+    choice_point: 3
+    consequences:
+      spare_recruit:
+        npc_relationship:
+          dr_chen: 100
+        unlocks: dr_chen_companion_quests
+        narrative_path: redemption_arc
+      turn_corporate:
+        npc_relationship:
+          dr_chen: -100
+          lena: 50
+        unlocks: corporate_traitor_questline
+        narrative_path: betrayal_path
+      expose_public:
+        npc_relationship:
+          dr_chen: -50
+        reputation:
+          corporate: -200
+          street: 200
+        unlocks: public_trial_questline
+        narrative_path: justice_path
+
+  - id: approach_choice
+    title: Выбор подхода
+    description: |
+      Четвертый выбор определяет общий подход к разрешению конфликта: жесткая сила, переговоры 
+      или демократический процесс. Это влияет на финальные концовки.
+    choice_point: 4
+    consequences:
+      force_shutdown:
+        reputation:
+          corporate: -500
+          street: 500
+        narrative_path: revolutionary_path
+        ending_available: [revolution_ending]
+      negotiate_compromise:
+        reputation:
+          corporate: 200
+          street: 200
+        narrative_path: diplomatic_path
+        ending_available: [compromise_ending]
+      public_decide:
+        reputation:
+          corporate: -100
+          street: -100
+        narrative_path: democratic_path
+        ending_available: [democracy_ending, chaos_ending]
+
+  - id: trust_choice
+    title: Выбор доверия
+    description: |
+      Пятый выбор: кому доверять? Это критический момент, определяющий, какие NPC будут доступны 
+      в будущих квестах и как сложатся отношения.
+    choice_point: 5
+    prerequisites:
+      trust_lena:
+        - OR:
+          - reputation.corporate > 200
+          - choice_point_1 == "accept_corporate"
+      trust_marcus:
+        - OR:
+          - reputation.street > 200
+          - choice_point_1 == "help_street"
+      trust_no_one:
+        - always_available: true
+    consequences:
+      trust_lena:
+        npc_relationship:
+          lena: 100
+          marcus: -50
+        unlocks: lena_romance_path
+        unlocks: corporate_favor_quests
+      trust_marcus:
+        npc_relationship:
+          marcus: 100
+          lena: -50
+        unlocks: marcus_companion_path
+        unlocks: street_leader_quests
+      trust_no_one:
+        npc_relationship:
+          lena: -30
+          marcus: -30
+        unlocks: lone_wolf_questline
+        narrative_path: independent_survival
+
+  - id: technology_fate
+    title: Судьба технологии
+    description: |
+      Шестой выбор: финальная судьба технологии экспериментальных имплантов. Уничтожить навсегда, 
+      обнародовать для всех или передать под корпоративный контроль с ограничениями. Это определяет 
+      одну из финальных концовок.
+    choice_point: 6
+    consequences:
+      destroy_all:
+        reputation:
+          corporate: -400
+          street: 400
+        ending: destruction_ending
+        long_term: technology_lost_forever
+        world_state_change: prevents_implant_advancement
+      public_release:
+        reputation:
+          corporate: -500
+          street: 500
+        ending: freedom_ending
+        long_term: democratizes_implant_technology
+        world_state_change: public_access_to_implants
+      controlled_release:
+        reputation:
+          corporate: 300
+          street: -300
+        ending: controlled_ending
+        long_term: corporate_monopoly_weakened
+        world_state_change: regulated_implant_market
+
+  - id: personal_alignment
+    title: Личное выравнивание
+    description: |
+      Седьмой и финальный выбор: личная позиция игрока в конфликте корпораций и уличного 
+      сопротивления. Это определяет доступность фракционных квестов в будущем и общую 
+      направленность персонажа.
+    choice_point: 7
+    consequences:
+      join_corporation:
+        faction_lock: corporate_aligned
+        reputation:
+          corporate: 500
+          street: -500
+        unlocks: corporate_main_questline
+        blocks: street_main_questline
+        ending_modifier: corporate_favor_ending
+      join_resistance:
+        faction_lock: street_aligned
+        reputation:
+          corporate: -500
+          street: 500
+        unlocks: street_main_questline
+        blocks: corporate_main_questline
+        ending_modifier: revolution_favor_ending
+      remain_independent:
+        faction_lock: neutral
+        reputation:
+          corporate: 0
+          street: 0
+        unlocks: independent_mercenary_questline
+        keeps_open: [corporate_side_quests, street_side_quests]
+        ending_modifier: balanced_ending
+
+  conclusion_variants:
+    corporate_aligned_ending: |
+      "Ты сделал правильный выбор," - говорит Лена, вручая вам новый контракт. "Корпорации 
+      управляют миром. Лучше быть внутри, чем снаружи." Но на улицах Сиэтла растет ненависть, 
+      и ваше имя становится символом предательства.
+    
+    street_aligned_ending: |
+      Маркус жмет вашу руку. "Мы победили. Технология теперь свободна для всех." Но корпорации 
+      не прощают. Ваше имя в черном списке Arasaka, и за вами охотятся наемники.
+    
+    independent_ending: |
+      Вы стоите на крыше, наблюдая за последствиями своих решений. Технология уничтожена, 
+      корпорации ослаблены, сопротивление получило моральную победу. Вы остались нейтральны, 
+      но мир изменился благодаря вам. Теперь вы свободны выбирать свой путь.
+    
+    compromise_ending: |
+      Компромисс достигнут. Технология остается под контролем, но с общественным надзором. 
+      Никто полностью не доволен, но никто не проиграл. Это хрупкое равновесие, и ваша роль 
+      в его создании не забыта.
+    
+    chaos_ending: |
+      Обнародование данных вызвало хаос. Корпорации в панике, улицы в огне, технологии 
+      используются без контроля. Вы хотели свободы, но получили анархию. Мир изменился, 
+      но не так, как вы ожидали.
+
+  dialogues:
+  - id: lena_corporate_offer
+    speaker: lena_kovač
+    text: |
+      "Думаешь, уличное сопротивление что-то изменит? Корпорации существовали до нас и будут 
+      существовать после. Работай с нами - получишь больше, чем можешь потратить. Предай нас - 
+      и твоя жизнь закончится быстро и болезненно."
+    conditional: choice_point_1 == "accept_corporate" OR reputation.corporate > 150
+    choice_point: 1
+
+  - id: marcus_street_call
+    speaker: marcus_reid
+    text: |
+      "Эти корпоративные ублюдки испытывают технологии на людях как на подопытных крысах! 
+      Присоединяйся к нам - мы вернем власть народу. Это не просто работа, это революция!"
+    conditional: choice_point_1 == "help_street" OR reputation.street > 150
+    choice_point: 1
+
+  - id: dr_chen_plea
+    speaker: dr_emma_chen
+    text: |
+      "Я знаю, что сделала неправильно. Но эта технология может спасти тысячи жизней, если 
+      использовать ее правильно. Не позволяй корпорациям превратить ее в оружие контроля."
+    conditional: choice_point_3 == "spare_recruit"
+    choice_point: 3
+
+  - id: lena_betrayal_warning
+    speaker: lena_kovač
+    text: |
+      "Если ты думаешь, что можешь нас обмануть... ты ошибаешься. Мы знаем все. Каждый выбор 
+      имеет цену. Выбирай мудро."
+    conditional: reputation.corporate > 200 AND choice_point_2 == "leak_public"
+    choice_point: 2
+
+  - id: marcus_trust_response
+    speaker: marcus_reid
+    text: |
+      "Ты доверился мне, когда другие бы не стали. Это значит больше, чем ты думаешь. Мы 
+      братья теперь. Братья по оружию, по цели, по будущему."
+    conditional: choice_point_5 == "trust_marcus"
+    choice_point: 5
+
+  - id: dr_chen_final_decision
+    speaker: dr_emma_chen
+    text: |
+      "Что бы ты ни решил... я понимаю. Мир сложен, и правильных ответов нет. Есть только 
+      последствия. Будь готов нести их."
+    conditional: choice_point_6 != null
+    choice_point: 6
+
+  npcs:
+  - id: lena_shadow_kovac
+    name: Лена 'Тень' Ковач
+    role: Корпоративный агент Arasaka
+    personality: Расчетливая, амбициозная, лояльная к корпорации
+    background: Бывший спецагент, поднявшийся по корпоративной лестнице через хладнокровие и эффективность
+    relationship_track: corporate_handler
+    initial_reputation: 0
+    reputation_modifiers:
+      accept_corporate_offer: 50
+      leak_corporate_secrets: -100
+      help_corporate: 30
+      betray_corporation: -200
+    romance_available: true
+    conditional: reputation.corporate > 200 AND choice_point_5 == "trust_lena"
+
+  - id: marcus_steel_reid
+    name: Маркус 'Стальной' Рид
+    role: Лидер уличного сопротивления
+    personality: Идеалистичный, харизматичный, безжалостный к корпорациям
+    background: Бывший военный, разочаровавшийся в системе и создавший сопротивление
+    relationship_track: street_leader
+    initial_reputation: 0
+    reputation_modifiers:
+      help_street: 50
+      betray_resistance: -100
+      fight_corporations: 40
+      accept_corporate_deal: -200
+    companion_available: true
+    conditional: reputation.street > 200 AND choice_point_5 == "trust_marcus"
+
+  - id: dr_emma_chen
+    name: Доктор Эмма Чен
+    role: Бывший корпоративный ученый, информатор
+    personality: Гениальная, морально конфликтующая, ищущая искупления
+    background: Ведущий ученый Arasaka, сбежавший с данными после осознания последствий экспериментов
+    relationship_track: whistleblower
+    initial_reputation: 0
+    reputation_modifiers:
+      spare_and_recruit: 100
+      turn_over_to_corp: -100
+      expose_publicly: -50
+      protect_her: 80
+    companion_available: true
+    conditional: choice_point_3 == "spare_recruit"
+
+  - id: rogue_netrunner
+    name: Роуг 'Эхо'
+    role: Независимый нетраннер-информатор
+    personality: Циничная, прагматичная, но с моральным компасом
+    background: Нетраннер, специализирующийся на корпоративных взломах и продаже информации
+    relationship_track: information_broker
+    initial_reputation: 0
+    reputation_modifiers:
+      pay_well: 30
+      betray_trust: -60
+      help_independent: 40
+    conditional: choice_point_1 == "investigate_independently" OR reputation.corporate < 0 AND reputation.street < 0
+
+  locations:
+  - id: abandoned_dock_seattle
+    name: Заброшенный док Сиэтла
+    description: Старый промышленный док, заброшенный после автоматизации портов
+    atmosphere: Тусклое освещение, звук дождя, ощущение изоляции и опасности
+    choice_point: 1
+
+  - id: corporate_tower_meeting_room
+    name: Переговорная корпоративной башни
+    description: Роскошный зал на верхних этажах Arasaka Tower с панорамным видом на Сиэтл
+    atmosphere: Искусственное освещение, тишина, ощущение власти и контроля
+    conditional: choice_point_1 == "accept_corporate" OR reputation.corporate > 200
+    choice_point: 2
+
+  - id: underground_resistance_hq
+    name: Штаб-квартира подпольного сопротивления
+    description: Секретная база в подвале заброшенного склада, оборудованная хакерскими станциями
+    atmosphere: Неоновый свет, запах пайки, атмосфера тайны и революции
+    conditional: choice_point_1 == "help_street" OR reputation.street > 200
+    choice_point: 2
+
+  - id: independent_safe_house
+    name: Независимое убежище
+    description: Съемная квартира, используемая как временная база операций
+    atmosphere: Минималистично, функционально, ощущение временности
+    conditional: choice_point_1 == "investigate_independently"
+    choice_point: 2
+
+  - id: corporate_lab_breach
+    name: Взломанная корпоративная лаборатория
+    description: Высокотехнологичная лаборатория Arasaka после взлома, с остатками экспериментов
+    atmosphere: Мигающие тревоги, поврежденное оборудование, следы спешки
+    choice_point: 3
+
+  - id: public_plaza_final_confrontation
+    name: Публичная площадь - финальное противостояние
+    description: Центральная площадь Сиэтла, где сходятся все нити заговора
+    atmosphere: Напряженная атмосфера, толпа зевак, медиа-дроны, ощущение решающего момента
+    choice_point: 6
+
+  items:
+  - id: experimental_implant_data_chip
+    name: Дата-чип с данными об экспериментальных имплантах
+    description: Зашифрованные данные о разработке и тестировании экспериментальных имплантов на людях без согласия
+    type: data_chip
+    rarity: epic
+    value: 15000
+    conditional: choice_point_2 != "destroy_research"
+
+  - id: corporate_leverage_evidence
+    name: Доказательства корпоративных нарушений
+    description: Неопровержимые доказательства незаконных экспериментов, достаточные для судебного преследования
+    type: evidence
+    rarity: rare
+    value: 8000
+    conditional: choice_point_2 == "use_leverage"
+
+  - id: arasaka_contract_chip
+    name: Контрактный чип Arasaka
+    description: Официальный корпоративный контракт с крупной наградой за "возвращение" данных
+    type: contract
+    rarity: uncommon
+    value: 10000
+    conditional: choice_point_1 == "accept_corporate"
+
+  - id: resistance_alliance_token
+    name: Токен союза сопротивления
+    description: Символ союза с уличным сопротивлением, дающий доступ к их ресурсам и поддержке
+    type: faction_token
+    rarity: rare
+    value: 5000
+    conditional: choice_point_1 == "help_street"
+
+  sections:
+  - id: overview
+    title: 'Обзор: Seattle 2020-2029 — Тени выбора'
+    body: |
+      Этот динамический main квест демонстрирует полную систему ветвления на основе выборов игрока. 
+      Квест содержит 7 ключевых точек выбора, каждая из которых влияет на репутацию, отношения с NPC 
+      и доступность различных путей прохождения.
+      
+      Квест спроектирован как демонстрация архитектуры динамических квестов, описанной в 
+      dynamic-quest-system-architecture.yaml. Все механизмы ветвления, системы последствий и 
+      долгосрочные эффекты реализованы согласно спецификации.
+    mechanics_links:
+    - dynamic-quest-system-architecture
+    - reputation-system
+    - npc-relationship-system
+    - choice-consequence-system
+    assets: []
+
+  - id: choice_points_detail
+    title: Детальное описание точек выбора
+    body: |
+      Квест содержит 7 пронумерованных точек выбора (choice_point: 1-7), каждая из которых влияет 
+      на последующие возможности:
+      
+      1. Первый выбор: Кому сообщить о заговоре (корпорация/сопротивление/самостоятельно)
+      2. Второй выбор: Что делать с данными (уничтожить/обнародовать/использовать)
+      3. Третий выбор: Судьба ученого (пощадить/выдать/обнародовать)
+      4. Четвертый выбор: Подход к решению (сила/переговоры/демократия)
+      5. Пятый выбор: Кому доверять (Лена/Маркус/никому)
+      6. Шестой выбор: Судьба технологии (уничтожить/обнародовать/контролируемый релиз)
+      7. Седьмой выбор: Личное выравнивание (корпорация/сопротивление/независимость)
+      
+      Каждый выбор имеет множественные последствия: немедленные (репутация), среднесрочные 
+      (доступность путей) и долгосрочные (финальные концовки, доступность будущих квестов).
+    mechanics_links:
+    - choice-point-system
+    - consequence-tracking
+    - branching-narrative-engine
+    assets: []
+
+  - id: endings_detail
+    title: Система концовок
+    body: |
+      Квест имеет 5 основных концовок, определяемых комбинациями выборов:
+      
+      1. Corporate Aligned Ending - игрок присоединяется к корпорации
+      2. Street Aligned Ending - игрок присоединяется к сопротивлению
+      3. Independent Ending - игрок остается нейтральным
+      4. Compromise Ending - достигается компромисс между сторонами
+      5. Chaos Ending - обнародование вызывает хаос
+      
+      Концовки определяются не только финальными выборами, но и совокупностью всех решений на 
+      протяжении квеста. Например, для достижения Compromise Ending необходимо иметь достаточно 
+      репутации в обеих фракциях и выбрать дипломатический подход.
+    mechanics_links:
+    - ending-system
+    - world-state-tracking
+    assets: []
+
+  - id: npc_relationships
+    title: Система отношений с NPC
+    body: |
+      Квест демонстрирует динамическую систему отношений с NPC:
+      
+      - Лена Ковач (корпоративный агент): отношения улучшаются при корпоративных выборах
+      - Маркус Рид (лидер сопротивления): отношения улучшаются при про-уличных выборах
+      - Доктор Эмма Чен (информатор): отношения зависят от решения ее судьбы
+      - Роуг 'Эхо' (нетраннер): доступна только на независимом пути
+      
+      Высокие отношения с NPC открывают дополнительные квесты, романтические пути (Лена) или 
+      возможности спутников (Маркус, доктор Чен).
+    mechanics_links:
+    - npc-relationship-tracker
+    - companion-system
+    - romance-system
+    assets: []
+
+  - id: long_term_consequences
+    title: Долгосрочные последствия
+    body: |
+      Выборы в этом квесте имеют долгосрочные последствия, проявляющиеся в будущих квестах:
+      
+      - Уничтожение данных блокирует будущие корпоративные исследования имплантов
+      - Обнародование данных запускает публичное расследование (новый квест)
+      - Присоединение к фракции блокирует противоположные main квесты
+      - Высокие отношения с NPC открывают персонализированные цепочки квестов
+      
+      Система отслеживает состояние мира (world_state_change) и использует его для определения 
+      доступности будущего контента.
+    mechanics_links:
+    - world-state-manager
+    - quest-unlock-system
+    - flag-tracking-system
+    assets: []
+
+narrative:
+  hook: |
+    Зашифрованное сообщение приходит глубокой ночью. "Найди меня в старом доке. Это касается 
+    тысяч жизней." Отправитель неизвестен, но в голосе слышна настоящая срочность. Что-то важное 
+    происходит в Сиэтле, и вы в центре этого.
+  
+  setting:
+    location: Seattle, Washington
+    time_period: 2020-2029
+    environment: Дождливый киберпанк-мегаполис с неоновыми огнями, корпоративными башнями и 
+      подпольным сопротивлением
+  
+  tone: Мрачный, морально неоднозначный, с акцентом на последствия выбора
+  
+  themes:
+    - Моральная амбивалентность
+    - Власть и ответственность
+    - Личная выгода vs общее благо
+    - Долгосрочные последствия выбора
+    - Отношения и доверие
+
+gameplay:
+  type: main
+  difficulty: medium
+  estimated_duration: 90-120 minutes
+  replayability: high
+  choice_impact: critical
+  
+  mechanics:
+    - Dynamic branching based on player choices
+    - Reputation system integration
+    - NPC relationship tracking
+    - Long-term consequence system
+    - Multiple ending paths
+    - Conditional quest unlocking
+  
+  challenges:
+    - Moral dilemmas without clear "correct" answers
+    - Balancing reputation between factions
+    - Managing NPC relationships
+    - Planning for long-term consequences
+  
+  player_agency: |
+    Игрок имеет полный контроль над направлением квеста через серию выборов. Каждый выбор 
+    открывает новые пути и закрывает другие, создавая уникальный опыт прохождения для каждого 
+    игрока. Система не навязывает "правильный" путь, позволяя игроку исследовать различные 
+    последствия своих решений.

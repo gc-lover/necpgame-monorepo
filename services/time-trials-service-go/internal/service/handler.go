@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -25,12 +27,78 @@ type Handler struct {
 	service *Service
 }
 
-// getPlayerIDFromContext extracts player ID from request context
-// TODO: Implement proper JWT token parsing and player ID extraction
+// getPlayerIDFromContext extracts player ID from request context with JWT validation
 func (h *Handler) getPlayerIDFromContext(ctx context.Context) string {
-	// Placeholder implementation - should extract from JWT token in auth middleware
-	// For now, return a default player ID for testing
-	return "player-123"
+	// Try to get token from context first (set by auth middleware)
+	if tokenStr, ok := ctx.Value("jwt_token").(string); ok && tokenStr != "" {
+		if playerID, err := h.parsePlayerIDFromJWT(tokenStr); err == nil {
+			return playerID
+		}
+	}
+
+	// Fallback: try to get from HTTP request context
+	if req, ok := ctx.Value("http_request").(*http.Request); ok {
+		authHeader := req.Header.Get("Authorization")
+		if authHeader != "" {
+			// Extract Bearer token
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				if playerID, err := h.parsePlayerIDFromJWT(parts[1]); err == nil {
+					return playerID
+				}
+			}
+		}
+	}
+
+	h.service.logger.Error("No valid JWT token found in context, using anonymous player")
+	return "anonymous-player"
+}
+
+// parsePlayerIDFromJWT validates JWT token and extracts player ID
+func (h *Handler) parsePlayerIDFromJWT(tokenString string) (string, error) {
+	// Parse and validate JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(h.service.config.JWTSecret), nil
+	})
+
+	if err != nil {
+		h.service.logger.Error("JWT token parsing failed", zap.Error(err))
+		return "", errors.Wrap(err, "invalid JWT token")
+	}
+
+	if !token.Valid {
+		h.service.logger.Error("JWT token validation failed")
+		return "", errors.New("invalid JWT token")
+	}
+
+	// Extract claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		h.service.logger.Error("Invalid JWT claims format")
+		return "", errors.New("invalid JWT claims")
+	}
+
+	// Extract player ID from claims (prefer player_id, fallback to sub)
+	var playerID string
+	if pid, exists := claims["player_id"]; exists && pid != nil {
+		playerID = pid.(string)
+	} else if sub, exists := claims["sub"]; exists && sub != nil {
+		playerID = sub.(string)
+	} else if uid, exists := claims["user_id"]; exists && uid != nil {
+		playerID = uid.(string)
+	} else {
+		h.service.logger.Error("No player_id, sub, or user_id claim in JWT")
+		return "", errors.New("player ID not found in JWT token")
+	}
+
+	h.service.logger.Debug("Successfully extracted player ID from JWT",
+		zap.String("player_id", playerID))
+
+	return playerID, nil
 }
 
 // NewHandler creates a new API handler

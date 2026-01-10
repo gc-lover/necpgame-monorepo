@@ -6,6 +6,7 @@ package reward
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -92,14 +93,41 @@ func (d *Distributor) DistributeRewards(ctx context.Context, playerID string, pa
 	ctx, span := d.tracer.Start(ctx, "reward.DistributeRewards")
 	defer span.End()
 
-	// TODO: Implement actual reward distribution
-	// This would integrate with economy service, achievement service, etc.
-
-	d.logger.Info("Rewards distributed",
+	d.logger.Info("Starting reward distribution",
 		zap.String("player_id", playerID),
 		zap.String("trial_id", package_.TrialID.String()),
 		zap.String("tier", string(package_.Tier)),
 		zap.Int("completion_time", package_.CompletionTime))
+
+	// Distribute experience points
+	if err := d.distributeExperience(ctx, playerID, package_.Rewards.Experience); err != nil {
+		d.logger.Error("Failed to distribute experience", zap.Error(err))
+		return errors.Wrap(err, "experience distribution failed")
+	}
+
+	// Distribute currency rewards
+	if err := d.distributeCurrency(ctx, playerID, &package_.Rewards.Currency); err != nil {
+		d.logger.Error("Failed to distribute currency", zap.Error(err))
+		return errors.Wrap(err, "currency distribution failed")
+	}
+
+	// Distribute item rewards
+	if err := d.distributeItems(ctx, playerID, package_.Rewards.Items); err != nil {
+		d.logger.Error("Failed to distribute items", zap.Error(err))
+		return errors.Wrap(err, "item distribution failed")
+	}
+
+	// Grant achievements
+	if err := d.grantAchievements(ctx, playerID, package_.Rewards.Achievements); err != nil {
+		d.logger.Error("Failed to grant achievements", zap.Error(err))
+		return errors.Wrap(err, "achievement granting failed")
+	}
+
+	// Record reward distribution in database
+	if err := d.recordRewardDistribution(ctx, playerID, package_); err != nil {
+		d.logger.Error("Failed to record reward distribution", zap.Error(err))
+		// Don't fail the entire operation for logging errors
+	}
 
 	// Cache reward distribution for tracking
 	rewardKey := "reward_distribution:" + uuid.New().String()
@@ -108,6 +136,10 @@ func (d *Distributor) DistributeRewards(ctx context.Context, playerID string, pa
 		"trial_id":        package_.TrialID.String(),
 		"tier":           string(package_.Tier),
 		"completion_time": package_.CompletionTime,
+		"experience":      package_.Rewards.Experience,
+		"gold":           package_.Rewards.Currency.Gold,
+		"seasonal_tokens": package_.Rewards.Currency.SeasonalTokens,
+		"items_count":    len(package_.Rewards.Items),
 		"timestamp":       time.Now().UTC().Unix(),
 	}
 
@@ -116,6 +148,16 @@ func (d *Distributor) DistributeRewards(ctx context.Context, playerID string, pa
 	} else {
 		d.redis.Expire(ctx, rewardKey, 24*time.Hour)
 	}
+
+	d.logger.Info("Rewards distributed successfully",
+		zap.String("player_id", playerID),
+		zap.String("trial_id", package_.TrialID.String()),
+		zap.String("tier", string(package_.Tier)),
+		zap.Int("experience", package_.Rewards.Experience),
+		zap.Int("gold", package_.Rewards.Currency.Gold),
+		zap.Int("seasonal_tokens", package_.Rewards.Currency.SeasonalTokens),
+		zap.Int("items_count", len(package_.Rewards.Items)),
+		zap.Int("achievements_count", len(package_.Rewards.Achievements)))
 
 	return nil
 }
@@ -240,6 +282,210 @@ type TrialConfig struct {
 	SilverRewards   RewardTiers `json:"silver_rewards"`
 	GoldRewards     RewardTiers `json:"gold_rewards"`
 	PlatinumRewards RewardTiers `json:"platinum_rewards"`
+}
+
+// distributeExperience adds experience points to player profile
+func (d *Distributor) distributeExperience(ctx context.Context, playerID string, experience int) error {
+	const query = `
+		UPDATE players
+		SET experience = experience + $1,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`
+
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return errors.Wrap(err, "invalid player ID format")
+	}
+
+	result, err := d.db.Exec(ctx, query, experience, playerUUID)
+	if err != nil {
+		return errors.Wrap(err, "failed to update player experience")
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		d.logger.Warn("Player not found for experience distribution",
+			zap.String("player_id", playerID))
+	}
+
+	d.logger.Debug("Experience distributed",
+		zap.String("player_id", playerID),
+		zap.Int("experience", experience))
+
+	return nil
+}
+
+// distributeCurrency adds currency to player economy balance
+func (d *Distributor) distributeCurrency(ctx context.Context, playerID string, currency *CurrencyReward) error {
+	if currency.Gold == 0 && currency.SeasonalTokens == 0 {
+		return nil // No currency to distribute
+	}
+
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return errors.Wrap(err, "invalid player ID format")
+	}
+
+	// Update gold balance
+	if currency.Gold > 0 {
+		const goldQuery = `
+			INSERT INTO player_economy (player_id, gold_balance, created_at, updated_at)
+			VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+			ON CONFLICT (player_id) DO UPDATE SET
+				gold_balance = player_economy.gold_balance + $2,
+				updated_at = CURRENT_TIMESTAMP
+		`
+
+		_, err := d.db.Exec(ctx, goldQuery, playerUUID, currency.Gold)
+		if err != nil {
+			return errors.Wrap(err, "failed to update gold balance")
+		}
+	}
+
+	// Update seasonal tokens
+	if currency.SeasonalTokens > 0 {
+		const tokenQuery = `
+			INSERT INTO player_seasonal_tokens (player_id, tokens, created_at, updated_at)
+			VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+			ON CONFLICT (player_id) DO UPDATE SET
+				tokens = player_seasonal_tokens.tokens + $2,
+				updated_at = CURRENT_TIMESTAMP
+		`
+
+		_, err := d.db.Exec(ctx, tokenQuery, playerUUID, currency.SeasonalTokens)
+		if err != nil {
+			return errors.Wrap(err, "failed to update seasonal tokens")
+		}
+	}
+
+	d.logger.Debug("Currency distributed",
+		zap.String("player_id", playerID),
+		zap.Int("gold", currency.Gold),
+		zap.Int("seasonal_tokens", currency.SeasonalTokens))
+
+	return nil
+}
+
+// distributeItems adds items to player inventory
+func (d *Distributor) distributeItems(ctx context.Context, playerID string, items []ItemReward) error {
+	if len(items) == 0 {
+		return nil // No items to distribute
+	}
+
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return errors.Wrap(err, "invalid player ID format")
+	}
+
+	for _, item := range items {
+		const query = `
+			INSERT INTO player_inventory (player_id, item_id, quantity, created_at, updated_at)
+			VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+			ON CONFLICT (player_id, item_id) DO UPDATE SET
+				quantity = player_inventory.quantity + $3,
+				updated_at = CURRENT_TIMESTAMP
+		`
+
+		_, err := d.db.Exec(ctx, query, playerUUID, item.ItemID, item.Quantity)
+		if err != nil {
+			d.logger.Error("Failed to add item to inventory",
+				zap.Error(err),
+				zap.String("player_id", playerID),
+				zap.String("item_id", item.ItemID),
+				zap.Int("quantity", item.Quantity))
+			continue // Continue with other items
+		}
+	}
+
+	d.logger.Debug("Items distributed",
+		zap.String("player_id", playerID),
+		zap.Int("items_count", len(items)))
+
+	return nil
+}
+
+// grantAchievements awards achievements to player
+func (d *Distributor) grantAchievements(ctx context.Context, playerID string, achievements []string) error {
+	if len(achievements) == 0 {
+		return nil // No achievements to grant
+	}
+
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return errors.Wrap(err, "invalid player ID format")
+	}
+
+	for _, achievementID := range achievements {
+		const query = `
+			INSERT INTO player_achievements (player_id, achievement_id, unlocked_at, created_at, updated_at)
+			VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+			ON CONFLICT (player_id, achievement_id) DO NOTHING
+		`
+
+		result, err := d.db.Exec(ctx, query, playerUUID, achievementID)
+		if err != nil {
+			d.logger.Error("Failed to grant achievement",
+				zap.Error(err),
+				zap.String("player_id", playerID),
+				zap.String("achievement_id", achievementID))
+			continue // Continue with other achievements
+		}
+
+		rowsAffected := result.RowsAffected()
+		if rowsAffected > 0 {
+			d.logger.Info("Achievement granted",
+				zap.String("player_id", playerID),
+				zap.String("achievement_id", achievementID))
+		}
+	}
+
+	d.logger.Debug("Achievements processed",
+		zap.String("player_id", playerID),
+		zap.Int("achievements_count", len(achievements)))
+
+	return nil
+}
+
+// recordRewardDistribution logs reward distribution to database
+func (d *Distributor) recordRewardDistribution(ctx context.Context, playerID string, package_ *RewardPackage) error {
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return errors.Wrap(err, "invalid player ID format")
+	}
+
+	rewardsJSON, err := json.Marshal(package_.Rewards)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal rewards")
+	}
+
+	const query = `
+		INSERT INTO time_trial_completions (
+			id, player_id, trial_id, completion_time, tier, rewards, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+	`
+
+	completionID := uuid.New()
+
+	_, err = d.db.Exec(ctx, query,
+		completionID,
+		playerUUID,
+		package_.TrialID,
+		package_.CompletionTime,
+		string(package_.Tier),
+		rewardsJSON,
+	)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to record reward distribution")
+	}
+
+	d.logger.Debug("Reward distribution recorded",
+		zap.String("completion_id", completionID.String()),
+		zap.String("player_id", playerID),
+		zap.String("trial_id", package_.TrialID.String()))
+
+	return nil
 }
 
 

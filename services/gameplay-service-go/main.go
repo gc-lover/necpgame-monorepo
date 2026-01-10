@@ -55,6 +55,8 @@ func main() {
 		Meter:       meter,
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		RedisURL:    os.Getenv("REDIS_URL"),
+		Environment: os.Getenv("ENVIRONMENT"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
 	})
 	if err != nil {
 		logger.Fatal("Failed to create gameplay service", zap.Error(err))

@@ -6,15 +6,15 @@ package api
 type OperationName = string
 
 const (
-	AnalyticsTrialsTrialIdPerformanceGetOperation   OperationName = "AnalyticsTrialsTrialIdPerformanceGet"
-	HealthGetOperation                              OperationName = "HealthGet"
-	LeaderboardsTrialIdGetOperation                 OperationName = "LeaderboardsTrialIdGet"
-	LeaderboardsTrialIdPersonalPlayerIdGetOperation OperationName = "LeaderboardsTrialIdPersonalPlayerIdGet"
-	TrialsGetOperation                              OperationName = "TrialsGet"
-	TrialsPostOperation                             OperationName = "TrialsPost"
-	TrialsTrialIdCompletePostOperation              OperationName = "TrialsTrialIdCompletePost"
-	TrialsTrialIdGetOperation                       OperationName = "TrialsTrialIdGet"
-	TrialsTrialIdPutOperation                       OperationName = "TrialsTrialIdPut"
-	TrialsTrialIdStartPostOperation                 OperationName = "TrialsTrialIdStartPost"
-	ValidationSessionsSessionIdReportPostOperation  OperationName = "ValidationSessionsSessionIdReportPost"
+	CompleteTrialSessionOperation         OperationName = "CompleteTrialSession"
+	CreateTrialOperation                  OperationName = "CreateTrial"
+	GetHealthOperation                    OperationName = "GetHealth"
+	GetPlayerPersonalRecordOperation      OperationName = "GetPlayerPersonalRecord"
+	GetTrialOperation                     OperationName = "GetTrial"
+	GetTrialLeaderboardOperation          OperationName = "GetTrialLeaderboard"
+	GetTrialPerformanceAnalyticsOperation OperationName = "GetTrialPerformanceAnalytics"
+	ListTrialsOperation                   OperationName = "ListTrials"
+	ReportSuspiciousSessionOperation      OperationName = "ReportSuspiciousSession"
+	StartTrialSessionOperation            OperationName = "StartTrialSession"
+	UpdateTrialOperation                  OperationName = "UpdateTrial"
 )

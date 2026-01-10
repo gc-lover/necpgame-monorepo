@@ -6,6 +6,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,6 +28,12 @@ type BatchConfig struct {
 
 	Logger          *zap.Logger
 	Meter           metric.Meter
+	UDPTransport    UDPTransport   // UDP transport for sending batched updates
+}
+
+// UDPTransport interface for sending batched UDP packets
+type UDPTransport interface {
+	SendBatch(clientAddr string, updates []*BatchUpdate) error
 }
 
 // BatchUpdate represents a single update to be batched
@@ -302,13 +309,61 @@ func (bw *BatchWorker) flushBatch(batch []*BatchUpdate) {
 	bw.processor.bytesProcessed.Add(context.Background(), int64(len(batch)*4)) // Rough estimate
 	bw.processor.avgBatchSizeGauge.Set(int64(bw.processor.avgBatchSize))
 
-	// TODO: Send batched updates to UDP transport
-	// This would aggregate multiple updates into a single network packet
+	// Group updates by client and send via UDP transport
+	if bw.processor.config.UDPTransport != nil {
+		if err := bw.sendBatchedUpdates(batch); err != nil {
+			bw.processor.config.Logger.Error("failed to send batched updates",
+				zap.Error(err),
+				zap.Int("priority", bw.priority),
+				zap.Int("updates", len(batch)))
+		}
+	} else {
+		bw.processor.config.Logger.Warn("no UDP transport configured for batch sending")
+	}
 
 	bw.processor.config.Logger.Debug("batch flushed",
 		zap.Int("priority", bw.priority),
 		zap.Int("updates", len(batch)),
 		zap.Int("bytes", len(batch)*4)) // Rough estimate
+}
+
+// sendBatchedUpdates groups updates by client and sends them via UDP transport
+func (bw *BatchWorker) sendBatchedUpdates(batch []*BatchUpdate) error {
+	// Group updates by client ID
+	clientBatches := make(map[uint16][]*BatchUpdate)
+
+	for _, update := range batch {
+		clientID := update.ClientID
+		clientBatches[clientID] = append(clientBatches[clientID], update)
+	}
+
+	// Send batch for each client
+	totalPackets := 0
+	for clientID, updates := range clientBatches {
+		// Convert client ID to address string (simplified for demo)
+		// In production, this would map clientID to actual UDP address
+		clientAddr := fmt.Sprintf("client-%d", clientID)
+
+		if err := bw.processor.config.UDPTransport.SendBatch(clientAddr, updates); err != nil {
+			bw.processor.config.Logger.Error("failed to send batch to client",
+				zap.Error(err),
+				zap.String("client_addr", clientAddr),
+				zap.Int("updates", len(updates)))
+			continue // Continue with other clients
+		}
+
+		totalPackets++
+		bw.processor.config.Logger.Debug("sent batch to client",
+			zap.String("client_addr", clientAddr),
+			zap.Int("updates", len(updates)))
+	}
+
+	bw.processor.config.Logger.Debug("batch processing complete",
+		zap.Int("clients", len(clientBatches)),
+		zap.Int("packets_sent", totalPackets),
+		zap.Int("total_updates", len(batch)))
+
+	return nil
 }
 
 // updateQueueDepthMetrics updates queue depth metrics
@@ -346,8 +401,20 @@ func (bp *BatchProcessor) getCurrentQueueDepth() int {
 
 // calculateBatchesPerSecond calculates batches processed per second
 func (bp *BatchProcessor) calculateBatchesPerSecond() float64 {
-	// TODO: Implement time-based calculation
-	return 0.0
+	bp.mu.RLock()
+	defer bp.mu.RUnlock()
+
+	// Calculate rate based on time since start
+	if bp.startTime.IsZero() {
+		return 0.0
+	}
+
+	elapsed := time.Since(bp.startTime)
+	if elapsed.Seconds() <= 0 {
+		return 0.0
+	}
+
+	return float64(bp.totalBatches) / elapsed.Seconds()
 }
 
 

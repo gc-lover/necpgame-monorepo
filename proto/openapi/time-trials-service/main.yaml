@@ -374,6 +374,7 @@ components:
 paths:
   /health:
     get:
+      operationId: getHealth
       summary: Health check endpoint
       description: Returns service health status and basic metrics
       tags:
@@ -415,9 +416,16 @@ paths:
                         type: number
                         minimum: 0
                         description: Average response time in milliseconds
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /trials:
     get:
+      operationId: listTrials
       summary: List time trials
       description: Retrieve paginated list of available time trials with filtering options
       tags:
@@ -483,8 +491,21 @@ paths:
                   offset:
                     type: integer
                     description: Pagination offset
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     post:
+      operationId: createTrial
       summary: Create time trial
       description: Create a new time trial configuration (admin only)
       tags:
@@ -516,9 +537,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /trials/{trialId}:
     get:
+      operationId: getTrial
       summary: Get time trial details
       description: Retrieve detailed information about a specific time trial
       tags:
@@ -544,8 +572,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     put:
+      operationId: updateTrial
       summary: Update time trial
       description: Update an existing time trial configuration (admin only)
       tags:
@@ -579,8 +614,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "404":
           description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -588,6 +641,7 @@ paths:
 
   /trials/{trialId}/start:
     post:
+      operationId: startTrialSession
       summary: Start time trial session
       description: Initialize a new time trial session for the authenticated player
       tags:
@@ -639,8 +693,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "404":
           description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -648,6 +720,7 @@ paths:
 
   /trials/{trialId}/complete:
     post:
+      operationId: completeTrialSession
       summary: Complete time trial session
       description: Submit completion data for an active time trial session
       tags:
@@ -719,9 +792,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - session already completed or invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /leaderboards/{trialId}:
     get:
+      operationId: getTrialLeaderboard
       summary: Get trial leaderboard
       description: Retrieve leaderboard rankings for a specific time trial
       tags:
@@ -785,9 +883,34 @@ paths:
                     type: string
                     format: date-time
                     description: Last leaderboard update timestamp
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /leaderboards/{trialId}/personal/{playerId}:
     get:
+      operationId: getPlayerPersonalRecord
       summary: Get player's personal record
       description: Retrieve a specific player's best time and ranking for a trial
       tags:
@@ -853,9 +976,34 @@ paths:
                           type: integer
                           minimum: 0
                     description: Rank history for the last 30 days
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial or player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /analytics/trials/{trialId}/performance:
     get:
+      operationId: getTrialPerformanceAnalytics
       summary: Get trial performance analytics
       description: Retrieve performance metrics and statistics for a time trial
       tags:
@@ -927,9 +1075,40 @@ paths:
                           legendary:
                             type: integer
                             minimum: 0
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized - analytics access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /validation/sessions/{sessionId}/report:
     post:
+      operationId: reportSuspiciousSession
       summary: Report suspicious trial session
       description: Allow players to report potentially cheated trial sessions
       tags:
@@ -981,6 +1160,24 @@ paths:
                 $ref: '#/components/schemas/Error'
         "404":
           description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - session already reported or under review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Too many reports - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Internal server error
           content:
             application/json:
               schema:

@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: world-event-service-go
+  namespace: necpgame
+  labels:
+    app: world-event-service-go
+    service: world-event
+    version: "1.0.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: world-event-service-go
+  template:
+    metadata:
+      labels:
+        app: world-event-service-go
+        service: world-event
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/health"
+    spec:
+      containers:
+      - name: world-event-service-go
+        image: necpgame/world-event-service-go:latest
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: connection-string
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-cluster:9092"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: GIN_MODE
+          value: "release"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 65534
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - world-event-service-go
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: "node-type"
+        operator: "Equal"
+        value: "backend"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: world-event-service-go
+  namespace: necpgame
+  labels:
+    app: world-event-service-go
+    service: world-event
+spec:
+  selector:
+    app: world-event-service-go
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: world-event-service-go-ingress
+  namespace: necpgame
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.necpgame.com
+    secretName: world-event-service-tls
+  rules:
+  - host: api.necpgame.com
+    http:
+      paths:
+      - path: /v1/world-event
+        pathType: Prefix
+        backend:
+          service:
+            name: world-event-service-go
+            port:
+              number: 80

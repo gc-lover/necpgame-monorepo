@@ -12,6 +12,7 @@ import (
 	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/otelogen"
 	"github.com/ogen-go/ogen/uri"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -27,72 +28,72 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// AnalyticsTrialsTrialIdPerformanceGet invokes GET /analytics/trials/{trialId}/performance operation.
-	//
-	// Retrieve performance metrics and statistics for a time trial.
-	//
-	// GET /analytics/trials/{trialId}/performance
-	AnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params AnalyticsTrialsTrialIdPerformanceGetParams) (*AnalyticsTrialsTrialIdPerformanceGetOK, error)
-	// HealthGet invokes GET /health operation.
-	//
-	// Returns service health status and basic metrics.
-	//
-	// GET /health
-	HealthGet(ctx context.Context) (*HealthGetOK, error)
-	// LeaderboardsTrialIdGet invokes GET /leaderboards/{trialId} operation.
-	//
-	// Retrieve leaderboard rankings for a specific time trial.
-	//
-	// GET /leaderboards/{trialId}
-	LeaderboardsTrialIdGet(ctx context.Context, params LeaderboardsTrialIdGetParams) (*LeaderboardsTrialIdGetOK, error)
-	// LeaderboardsTrialIdPersonalPlayerIdGet invokes GET /leaderboards/{trialId}/personal/{playerId} operation.
-	//
-	// Retrieve a specific player's best time and ranking for a trial.
-	//
-	// GET /leaderboards/{trialId}/personal/{playerId}
-	LeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context, params LeaderboardsTrialIdPersonalPlayerIdGetParams) (*LeaderboardsTrialIdPersonalPlayerIdGetOK, error)
-	// TrialsGet invokes GET /trials operation.
-	//
-	// Retrieve paginated list of available time trials with filtering options.
-	//
-	// GET /trials
-	TrialsGet(ctx context.Context, params TrialsGetParams) (*TrialsGetOK, error)
-	// TrialsPost invokes POST /trials operation.
-	//
-	// Create a new time trial configuration (admin only).
-	//
-	// POST /trials
-	TrialsPost(ctx context.Context, request *TimeTrial) (TrialsPostRes, error)
-	// TrialsTrialIdCompletePost invokes POST /trials/{trialId}/complete operation.
+	// CompleteTrialSession invokes completeTrialSession operation.
 	//
 	// Submit completion data for an active time trial session.
 	//
 	// POST /trials/{trialId}/complete
-	TrialsTrialIdCompletePost(ctx context.Context, request *TrialsTrialIdCompletePostReq, params TrialsTrialIdCompletePostParams) (TrialsTrialIdCompletePostRes, error)
-	// TrialsTrialIdGet invokes GET /trials/{trialId} operation.
+	CompleteTrialSession(ctx context.Context, request *CompleteTrialSessionReq, params CompleteTrialSessionParams) (CompleteTrialSessionRes, error)
+	// CreateTrial invokes createTrial operation.
+	//
+	// Create a new time trial configuration (admin only).
+	//
+	// POST /trials
+	CreateTrial(ctx context.Context, request *TimeTrial) (CreateTrialRes, error)
+	// GetHealth invokes getHealth operation.
+	//
+	// Returns service health status and basic metrics.
+	//
+	// GET /health
+	GetHealth(ctx context.Context) (GetHealthRes, error)
+	// GetPlayerPersonalRecord invokes getPlayerPersonalRecord operation.
+	//
+	// Retrieve a specific player's best time and ranking for a trial.
+	//
+	// GET /leaderboards/{trialId}/personal/{playerId}
+	GetPlayerPersonalRecord(ctx context.Context, params GetPlayerPersonalRecordParams) (GetPlayerPersonalRecordRes, error)
+	// GetTrial invokes getTrial operation.
 	//
 	// Retrieve detailed information about a specific time trial.
 	//
 	// GET /trials/{trialId}
-	TrialsTrialIdGet(ctx context.Context, params TrialsTrialIdGetParams) (TrialsTrialIdGetRes, error)
-	// TrialsTrialIdPut invokes PUT /trials/{trialId} operation.
+	GetTrial(ctx context.Context, params GetTrialParams) (GetTrialRes, error)
+	// GetTrialLeaderboard invokes getTrialLeaderboard operation.
 	//
-	// Update an existing time trial configuration (admin only).
+	// Retrieve leaderboard rankings for a specific time trial.
 	//
-	// PUT /trials/{trialId}
-	TrialsTrialIdPut(ctx context.Context, request *TimeTrial, params TrialsTrialIdPutParams) (TrialsTrialIdPutRes, error)
-	// TrialsTrialIdStartPost invokes POST /trials/{trialId}/start operation.
+	// GET /leaderboards/{trialId}
+	GetTrialLeaderboard(ctx context.Context, params GetTrialLeaderboardParams) (GetTrialLeaderboardRes, error)
+	// GetTrialPerformanceAnalytics invokes getTrialPerformanceAnalytics operation.
 	//
-	// Initialize a new time trial session for the authenticated player.
+	// Retrieve performance metrics and statistics for a time trial.
 	//
-	// POST /trials/{trialId}/start
-	TrialsTrialIdStartPost(ctx context.Context, request OptTrialsTrialIdStartPostReq, params TrialsTrialIdStartPostParams) (TrialsTrialIdStartPostRes, error)
-	// ValidationSessionsSessionIdReportPost invokes POST /validation/sessions/{sessionId}/report operation.
+	// GET /analytics/trials/{trialId}/performance
+	GetTrialPerformanceAnalytics(ctx context.Context, params GetTrialPerformanceAnalyticsParams) (GetTrialPerformanceAnalyticsRes, error)
+	// ListTrials invokes listTrials operation.
+	//
+	// Retrieve paginated list of available time trials with filtering options.
+	//
+	// GET /trials
+	ListTrials(ctx context.Context, params ListTrialsParams) (ListTrialsRes, error)
+	// ReportSuspiciousSession invokes reportSuspiciousSession operation.
 	//
 	// Allow players to report potentially cheated trial sessions.
 	//
 	// POST /validation/sessions/{sessionId}/report
-	ValidationSessionsSessionIdReportPost(ctx context.Context, request *ValidationSessionsSessionIdReportPostReq, params ValidationSessionsSessionIdReportPostParams) (ValidationSessionsSessionIdReportPostRes, error)
+	ReportSuspiciousSession(ctx context.Context, request *ReportSuspiciousSessionReq, params ReportSuspiciousSessionParams) (ReportSuspiciousSessionRes, error)
+	// StartTrialSession invokes startTrialSession operation.
+	//
+	// Initialize a new time trial session for the authenticated player.
+	//
+	// POST /trials/{trialId}/start
+	StartTrialSession(ctx context.Context, request OptStartTrialSessionReq, params StartTrialSessionParams) (StartTrialSessionRes, error)
+	// UpdateTrial invokes updateTrial operation.
+	//
+	// Update an existing time trial configuration (admin only).
+	//
+	// PUT /trials/{trialId}
+	UpdateTrial(ctx context.Context, request *TimeTrial, params UpdateTrialParams) (UpdateTrialRes, error)
 }
 
 // Client implements OAS client.
@@ -140,20 +141,21 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// AnalyticsTrialsTrialIdPerformanceGet invokes GET /analytics/trials/{trialId}/performance operation.
+// CompleteTrialSession invokes completeTrialSession operation.
 //
-// Retrieve performance metrics and statistics for a time trial.
+// Submit completion data for an active time trial session.
 //
-// GET /analytics/trials/{trialId}/performance
-func (c *Client) AnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params AnalyticsTrialsTrialIdPerformanceGetParams) (*AnalyticsTrialsTrialIdPerformanceGetOK, error) {
-	res, err := c.sendAnalyticsTrialsTrialIdPerformanceGet(ctx, params)
+// POST /trials/{trialId}/complete
+func (c *Client) CompleteTrialSession(ctx context.Context, request *CompleteTrialSessionReq, params CompleteTrialSessionParams) (CompleteTrialSessionRes, error) {
+	res, err := c.sendCompleteTrialSession(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, params AnalyticsTrialsTrialIdPerformanceGetParams) (res *AnalyticsTrialsTrialIdPerformanceGetOK, err error) {
+func (c *Client) sendCompleteTrialSession(ctx context.Context, request *CompleteTrialSessionReq, params CompleteTrialSessionParams) (res CompleteTrialSessionRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/analytics/trials/{trialId}/performance"),
+		otelogen.OperationID("completeTrialSession"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/trials/{trialId}/complete"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -169,7 +171,7 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, AnalyticsTrialsTrialIdPerformanceGetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, CompleteTrialSessionOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -187,7 +189,7 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/analytics/trials/"
+	pathParts[0] = "/trials/"
 	{
 		// Encode "trialId" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -206,34 +208,16 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 		}
 		pathParts[1] = encoded
 	}
-	pathParts[2] = "/performance"
+	pathParts[2] = "/complete"
 	uri.AddPathParts(u, pathParts[:]...)
 
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "timeframe" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "timeframe",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Timeframe.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
+	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCompleteTrialSessionRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	{
@@ -241,7 +225,7 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, AnalyticsTrialsTrialIdPerformanceGetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, CompleteTrialSessionOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -277,7 +261,7 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAnalyticsTrialsTrialIdPerformanceGetResponse(resp)
+	result, err := decodeCompleteTrialSessionResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -285,18 +269,128 @@ func (c *Client) sendAnalyticsTrialsTrialIdPerformanceGet(ctx context.Context, p
 	return result, nil
 }
 
-// HealthGet invokes GET /health operation.
+// CreateTrial invokes createTrial operation.
+//
+// Create a new time trial configuration (admin only).
+//
+// POST /trials
+func (c *Client) CreateTrial(ctx context.Context, request *TimeTrial) (CreateTrialRes, error) {
+	res, err := c.sendCreateTrial(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendCreateTrial(ctx context.Context, request *TimeTrial) (res CreateTrialRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("createTrial"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/trials"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateTrialOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/trials"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateTrialRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, CreateTrialOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCreateTrialResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetHealth invokes getHealth operation.
 //
 // Returns service health status and basic metrics.
 //
 // GET /health
-func (c *Client) HealthGet(ctx context.Context) (*HealthGetOK, error) {
-	res, err := c.sendHealthGet(ctx)
+func (c *Client) GetHealth(ctx context.Context) (GetHealthRes, error) {
+	res, err := c.sendGetHealth(ctx)
 	return res, err
 }
 
-func (c *Client) sendHealthGet(ctx context.Context) (res *HealthGetOK, err error) {
+func (c *Client) sendGetHealth(ctx context.Context) (res GetHealthRes, err error) {
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getHealth"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/health"),
 	}
@@ -314,7 +408,7 @@ func (c *Client) sendHealthGet(ctx context.Context) (res *HealthGetOK, err error
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, HealthGetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetHealthOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -346,7 +440,7 @@ func (c *Client) sendHealthGet(ctx context.Context) (res *HealthGetOK, err error
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, HealthGetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetHealthOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -382,7 +476,7 @@ func (c *Client) sendHealthGet(ctx context.Context) (res *HealthGetOK, err error
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeHealthGetResponse(resp)
+	result, err := decodeGetHealthResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -390,18 +484,286 @@ func (c *Client) sendHealthGet(ctx context.Context) (res *HealthGetOK, err error
 	return result, nil
 }
 
-// LeaderboardsTrialIdGet invokes GET /leaderboards/{trialId} operation.
+// GetPlayerPersonalRecord invokes getPlayerPersonalRecord operation.
+//
+// Retrieve a specific player's best time and ranking for a trial.
+//
+// GET /leaderboards/{trialId}/personal/{playerId}
+func (c *Client) GetPlayerPersonalRecord(ctx context.Context, params GetPlayerPersonalRecordParams) (GetPlayerPersonalRecordRes, error) {
+	res, err := c.sendGetPlayerPersonalRecord(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetPlayerPersonalRecord(ctx context.Context, params GetPlayerPersonalRecordParams) (res GetPlayerPersonalRecordRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPlayerPersonalRecord"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/leaderboards/{trialId}/personal/{playerId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPlayerPersonalRecordOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/leaderboards/"
+	{
+		// Encode "trialId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "trialId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.TrialId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/personal/"
+	{
+		// Encode "playerId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "playerId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.PlayerId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetPlayerPersonalRecordOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetPlayerPersonalRecordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTrial invokes getTrial operation.
+//
+// Retrieve detailed information about a specific time trial.
+//
+// GET /trials/{trialId}
+func (c *Client) GetTrial(ctx context.Context, params GetTrialParams) (GetTrialRes, error) {
+	res, err := c.sendGetTrial(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetTrial(ctx context.Context, params GetTrialParams) (res GetTrialRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrial"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/trials/{trialId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTrialOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/trials/"
+	{
+		// Encode "trialId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "trialId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.TrialId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetTrialOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetTrialResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetTrialLeaderboard invokes getTrialLeaderboard operation.
 //
 // Retrieve leaderboard rankings for a specific time trial.
 //
 // GET /leaderboards/{trialId}
-func (c *Client) LeaderboardsTrialIdGet(ctx context.Context, params LeaderboardsTrialIdGetParams) (*LeaderboardsTrialIdGetOK, error) {
-	res, err := c.sendLeaderboardsTrialIdGet(ctx, params)
+func (c *Client) GetTrialLeaderboard(ctx context.Context, params GetTrialLeaderboardParams) (GetTrialLeaderboardRes, error) {
+	res, err := c.sendGetTrialLeaderboard(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendLeaderboardsTrialIdGet(ctx context.Context, params LeaderboardsTrialIdGetParams) (res *LeaderboardsTrialIdGetOK, err error) {
+func (c *Client) sendGetTrialLeaderboard(ctx context.Context, params GetTrialLeaderboardParams) (res GetTrialLeaderboardRes, err error) {
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrialLeaderboard"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/leaderboards/{trialId}"),
 	}
@@ -419,7 +781,7 @@ func (c *Client) sendLeaderboardsTrialIdGet(ctx context.Context, params Leaderbo
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, LeaderboardsTrialIdGetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTrialLeaderboardOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -524,7 +886,7 @@ func (c *Client) sendLeaderboardsTrialIdGet(ctx context.Context, params Leaderbo
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, LeaderboardsTrialIdGetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetTrialLeaderboardOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -560,7 +922,7 @@ func (c *Client) sendLeaderboardsTrialIdGet(ctx context.Context, params Leaderbo
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeLeaderboardsTrialIdGetResponse(resp)
+	result, err := decodeGetTrialLeaderboardResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -568,20 +930,21 @@ func (c *Client) sendLeaderboardsTrialIdGet(ctx context.Context, params Leaderbo
 	return result, nil
 }
 
-// LeaderboardsTrialIdPersonalPlayerIdGet invokes GET /leaderboards/{trialId}/personal/{playerId} operation.
+// GetTrialPerformanceAnalytics invokes getTrialPerformanceAnalytics operation.
 //
-// Retrieve a specific player's best time and ranking for a trial.
+// Retrieve performance metrics and statistics for a time trial.
 //
-// GET /leaderboards/{trialId}/personal/{playerId}
-func (c *Client) LeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context, params LeaderboardsTrialIdPersonalPlayerIdGetParams) (*LeaderboardsTrialIdPersonalPlayerIdGetOK, error) {
-	res, err := c.sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx, params)
+// GET /analytics/trials/{trialId}/performance
+func (c *Client) GetTrialPerformanceAnalytics(ctx context.Context, params GetTrialPerformanceAnalyticsParams) (GetTrialPerformanceAnalyticsRes, error) {
+	res, err := c.sendGetTrialPerformanceAnalytics(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context, params LeaderboardsTrialIdPersonalPlayerIdGetParams) (res *LeaderboardsTrialIdPersonalPlayerIdGetOK, err error) {
+func (c *Client) sendGetTrialPerformanceAnalytics(ctx context.Context, params GetTrialPerformanceAnalyticsParams) (res GetTrialPerformanceAnalyticsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrialPerformanceAnalytics"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/leaderboards/{trialId}/personal/{playerId}"),
+		semconv.URLTemplateKey.String("/analytics/trials/{trialId}/performance"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -597,7 +960,7 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, LeaderboardsTrialIdPersonalPlayerIdGetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetTrialPerformanceAnalyticsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -614,8 +977,8 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [4]string
-	pathParts[0] = "/leaderboards/"
+	var pathParts [3]string
+	pathParts[0] = "/analytics/trials/"
 	{
 		// Encode "trialId" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -634,26 +997,29 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 		}
 		pathParts[1] = encoded
 	}
-	pathParts[2] = "/personal/"
-	{
-		// Encode "playerId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "playerId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.PlayerId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[3] = encoded
-	}
+	pathParts[2] = "/performance"
 	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "timeframe" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Timeframe.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"
 	r, err := ht.NewRequest(ctx, "GET", u)
@@ -666,7 +1032,7 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, LeaderboardsTrialIdPersonalPlayerIdGetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetTrialPerformanceAnalyticsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -702,7 +1068,7 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeLeaderboardsTrialIdPersonalPlayerIdGetResponse(resp)
+	result, err := decodeGetTrialPerformanceAnalyticsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -710,18 +1076,19 @@ func (c *Client) sendLeaderboardsTrialIdPersonalPlayerIdGet(ctx context.Context,
 	return result, nil
 }
 
-// TrialsGet invokes GET /trials operation.
+// ListTrials invokes listTrials operation.
 //
 // Retrieve paginated list of available time trials with filtering options.
 //
 // GET /trials
-func (c *Client) TrialsGet(ctx context.Context, params TrialsGetParams) (*TrialsGetOK, error) {
-	res, err := c.sendTrialsGet(ctx, params)
+func (c *Client) ListTrials(ctx context.Context, params ListTrialsParams) (ListTrialsRes, error) {
+	res, err := c.sendListTrials(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendTrialsGet(ctx context.Context, params TrialsGetParams) (res *TrialsGetOK, err error) {
+func (c *Client) sendListTrials(ctx context.Context, params ListTrialsParams) (res ListTrialsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listTrials"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/trials"),
 	}
@@ -739,7 +1106,7 @@ func (c *Client) sendTrialsGet(ctx context.Context, params TrialsGetParams) (res
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsGetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, ListTrialsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -860,7 +1227,7 @@ func (c *Client) sendTrialsGet(ctx context.Context, params TrialsGetParams) (res
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsGetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, ListTrialsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -896,7 +1263,7 @@ func (c *Client) sendTrialsGet(ctx context.Context, params TrialsGetParams) (res
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeTrialsGetResponse(resp)
+	result, err := decodeListTrialsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -904,629 +1271,19 @@ func (c *Client) sendTrialsGet(ctx context.Context, params TrialsGetParams) (res
 	return result, nil
 }
 
-// TrialsPost invokes POST /trials operation.
-//
-// Create a new time trial configuration (admin only).
-//
-// POST /trials
-func (c *Client) TrialsPost(ctx context.Context, request *TimeTrial) (TrialsPostRes, error) {
-	res, err := c.sendTrialsPost(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendTrialsPost(ctx context.Context, request *TimeTrial) (res TrialsPostRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/trials"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsPostOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/trials"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeTrialsPostRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsPostOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeTrialsPostResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// TrialsTrialIdCompletePost invokes POST /trials/{trialId}/complete operation.
-//
-// Submit completion data for an active time trial session.
-//
-// POST /trials/{trialId}/complete
-func (c *Client) TrialsTrialIdCompletePost(ctx context.Context, request *TrialsTrialIdCompletePostReq, params TrialsTrialIdCompletePostParams) (TrialsTrialIdCompletePostRes, error) {
-	res, err := c.sendTrialsTrialIdCompletePost(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendTrialsTrialIdCompletePost(ctx context.Context, request *TrialsTrialIdCompletePostReq, params TrialsTrialIdCompletePostParams) (res TrialsTrialIdCompletePostRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/trials/{trialId}/complete"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsTrialIdCompletePostOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/trials/"
-	{
-		// Encode "trialId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "trialId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.TrialId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/complete"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeTrialsTrialIdCompletePostRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsTrialIdCompletePostOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeTrialsTrialIdCompletePostResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// TrialsTrialIdGet invokes GET /trials/{trialId} operation.
-//
-// Retrieve detailed information about a specific time trial.
-//
-// GET /trials/{trialId}
-func (c *Client) TrialsTrialIdGet(ctx context.Context, params TrialsTrialIdGetParams) (TrialsTrialIdGetRes, error) {
-	res, err := c.sendTrialsTrialIdGet(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendTrialsTrialIdGet(ctx context.Context, params TrialsTrialIdGetParams) (res TrialsTrialIdGetRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/trials/{trialId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsTrialIdGetOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/trials/"
-	{
-		// Encode "trialId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "trialId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.TrialId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsTrialIdGetOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeTrialsTrialIdGetResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// TrialsTrialIdPut invokes PUT /trials/{trialId} operation.
-//
-// Update an existing time trial configuration (admin only).
-//
-// PUT /trials/{trialId}
-func (c *Client) TrialsTrialIdPut(ctx context.Context, request *TimeTrial, params TrialsTrialIdPutParams) (TrialsTrialIdPutRes, error) {
-	res, err := c.sendTrialsTrialIdPut(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendTrialsTrialIdPut(ctx context.Context, request *TimeTrial, params TrialsTrialIdPutParams) (res TrialsTrialIdPutRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/trials/{trialId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsTrialIdPutOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/trials/"
-	{
-		// Encode "trialId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "trialId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.TrialId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "PUT", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeTrialsTrialIdPutRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsTrialIdPutOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeTrialsTrialIdPutResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// TrialsTrialIdStartPost invokes POST /trials/{trialId}/start operation.
-//
-// Initialize a new time trial session for the authenticated player.
-//
-// POST /trials/{trialId}/start
-func (c *Client) TrialsTrialIdStartPost(ctx context.Context, request OptTrialsTrialIdStartPostReq, params TrialsTrialIdStartPostParams) (TrialsTrialIdStartPostRes, error) {
-	res, err := c.sendTrialsTrialIdStartPost(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendTrialsTrialIdStartPost(ctx context.Context, request OptTrialsTrialIdStartPostReq, params TrialsTrialIdStartPostParams) (res TrialsTrialIdStartPostRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/trials/{trialId}/start"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, TrialsTrialIdStartPostOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/trials/"
-	{
-		// Encode "trialId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "trialId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.TrialId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/start"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeTrialsTrialIdStartPostRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, TrialsTrialIdStartPostOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeTrialsTrialIdStartPostResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ValidationSessionsSessionIdReportPost invokes POST /validation/sessions/{sessionId}/report operation.
+// ReportSuspiciousSession invokes reportSuspiciousSession operation.
 //
 // Allow players to report potentially cheated trial sessions.
 //
 // POST /validation/sessions/{sessionId}/report
-func (c *Client) ValidationSessionsSessionIdReportPost(ctx context.Context, request *ValidationSessionsSessionIdReportPostReq, params ValidationSessionsSessionIdReportPostParams) (ValidationSessionsSessionIdReportPostRes, error) {
-	res, err := c.sendValidationSessionsSessionIdReportPost(ctx, request, params)
+func (c *Client) ReportSuspiciousSession(ctx context.Context, request *ReportSuspiciousSessionReq, params ReportSuspiciousSessionParams) (ReportSuspiciousSessionRes, error) {
+	res, err := c.sendReportSuspiciousSession(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendValidationSessionsSessionIdReportPost(ctx context.Context, request *ValidationSessionsSessionIdReportPostReq, params ValidationSessionsSessionIdReportPostParams) (res ValidationSessionsSessionIdReportPostRes, err error) {
+func (c *Client) sendReportSuspiciousSession(ctx context.Context, request *ReportSuspiciousSessionReq, params ReportSuspiciousSessionParams) (res ReportSuspiciousSessionRes, err error) {
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("reportSuspiciousSession"),
 		semconv.HTTPRequestMethodKey.String("POST"),
 		semconv.URLTemplateKey.String("/validation/sessions/{sessionId}/report"),
 	}
@@ -1544,7 +1301,7 @@ func (c *Client) sendValidationSessionsSessionIdReportPost(ctx context.Context, 
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ValidationSessionsSessionIdReportPostOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, ReportSuspiciousSessionOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -1589,7 +1346,7 @@ func (c *Client) sendValidationSessionsSessionIdReportPost(ctx context.Context, 
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeValidationSessionsSessionIdReportPostRequest(request, r); err != nil {
+	if err := encodeReportSuspiciousSessionRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -1598,7 +1355,7 @@ func (c *Client) sendValidationSessionsSessionIdReportPost(ctx context.Context, 
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ValidationSessionsSessionIdReportPostOperation, r); {
+			switch err := c.securityBearerAuth(ctx, ReportSuspiciousSessionOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -1634,7 +1391,262 @@ func (c *Client) sendValidationSessionsSessionIdReportPost(ctx context.Context, 
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeValidationSessionsSessionIdReportPostResponse(resp)
+	result, err := decodeReportSuspiciousSessionResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// StartTrialSession invokes startTrialSession operation.
+//
+// Initialize a new time trial session for the authenticated player.
+//
+// POST /trials/{trialId}/start
+func (c *Client) StartTrialSession(ctx context.Context, request OptStartTrialSessionReq, params StartTrialSessionParams) (StartTrialSessionRes, error) {
+	res, err := c.sendStartTrialSession(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendStartTrialSession(ctx context.Context, request OptStartTrialSessionReq, params StartTrialSessionParams) (res StartTrialSessionRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("startTrialSession"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/trials/{trialId}/start"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, StartTrialSessionOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/trials/"
+	{
+		// Encode "trialId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "trialId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.TrialId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/start"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeStartTrialSessionRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, StartTrialSessionOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeStartTrialSessionResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UpdateTrial invokes updateTrial operation.
+//
+// Update an existing time trial configuration (admin only).
+//
+// PUT /trials/{trialId}
+func (c *Client) UpdateTrial(ctx context.Context, request *TimeTrial, params UpdateTrialParams) (UpdateTrialRes, error) {
+	res, err := c.sendUpdateTrial(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendUpdateTrial(ctx context.Context, request *TimeTrial, params UpdateTrialParams) (res UpdateTrialRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateTrial"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/trials/{trialId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UpdateTrialOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/trials/"
+	{
+		// Encode "trialId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "trialId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.TrialId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUpdateTrialRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UpdateTrialOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeUpdateTrialResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

@@ -20,6 +20,12 @@ type Config struct {
 	Logger          *zap.Logger
 	Meter           metric.Meter
 	SessionManager  interface{} // Will be *session.Manager
+	EventPublisher  EventPublisher // For publishing events to event bus
+}
+
+// EventPublisher interface for publishing events
+type EventPublisher interface {
+	PublishEvent(ctx context.Context, topic string, key string, value []byte) error
 }
 
 // Handler handles protobuf message processing
@@ -29,6 +35,7 @@ type Handler struct {
 	bufferPool     *buffer.Pool
 	meter          metric.Meter
 	sessionManager *session.Manager
+	eventPublisher EventPublisher // For publishing events to event bus
 
 	// Metrics
 	messagesProcessed metric.Int64Counter
@@ -49,6 +56,7 @@ func NewHandler(config Config) *Handler {
 		bufferPool:     config.BufferPool,
 		meter:          config.Meter,
 		sessionManager: sm,
+		eventPublisher: config.EventPublisher,
 	}
 }
 
@@ -59,10 +67,7 @@ func (h *Handler) SetSessionManager(sm *session.Manager) {
 
 // routeToGameplayService routes player input to the gameplay service via event bus
 func (h *Handler) routeToGameplayService(ctx context.Context, sessionID string, msg *ParsedMessage) error {
-	// TODO: Implement actual event bus integration (Kafka, RabbitMQ, NATS, etc.)
-	// For now, this is a placeholder that demonstrates the routing logic
-
-	// Prepare gameplay event
+	// Prepare gameplay event for Kafka publishing
 	gameplayEvent := map[string]interface{}{
 		"event_type":   "player_input",
 		"session_id":   sessionID,
@@ -81,18 +86,26 @@ func (h *Handler) routeToGameplayService(ctx context.Context, sessionID string, 
 		return errors.Wrap(err, "failed to marshal gameplay event")
 	}
 
-	// TODO: Publish to event bus topic "gameplay.player_input"
-	// Example: h.eventBus.Publish("gameplay.player_input", eventJSON)
+	// Publish to Kafka topic "game.gameplay.player_input"
+	if h.eventPublisher != nil {
+		err = h.eventPublisher.PublishEvent(ctx, "game.gameplay.player_input", sessionID, eventJSON)
+		if err != nil {
+			h.logger.Error("Failed to publish gameplay event",
+				zap.String("session_id", sessionID),
+				zap.Error(err))
+			return errors.Wrap(err, "failed to publish gameplay event")
+		}
 
-	h.logger.Debug("Gameplay event prepared for routing",
-		zap.String("session_id", sessionID),
-		zap.String("event_type", "player_input"),
-		zap.Int("payload_size", len(eventJSON)))
+		h.logger.Debug("Gameplay event published to Kafka",
+			zap.String("session_id", sessionID),
+			zap.String("topic", "game.gameplay.player_input"),
+			zap.Int("payload_size", len(eventJSON)))
+	} else {
+		h.logger.Warn("Event publisher not configured, dropping gameplay event",
+			zap.String("session_id", sessionID))
+	}
 
-	// Placeholder: In real implementation, this would be:
-	// return h.eventBus.Publish(ctx, "gameplay.player_input", eventJSON)
-
-	return nil // Success for now
+	return nil
 }
 
 // ProtocolSwitchData contains information about a protocol switch operation

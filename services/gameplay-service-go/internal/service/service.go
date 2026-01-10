@@ -37,10 +37,13 @@ type Config struct {
 	Meter       metric.Meter
 	DatabaseURL string
 	RedisURL    string
+	Environment string
+	JWTSecret   string
 }
 
 // Service implements the gameplay affixes business logic
 type Service struct {
+	config     Config
 	logger     *zap.Logger
 	tracer     trace.Tracer
 	meter      metric.Meter
@@ -79,7 +82,13 @@ func NewGameplayService(cfg Config) (*Service, error) {
 		return nil, errors.New("logger is required")
 	}
 
+	// Validate JWT secret for production environments
+	if (cfg.Environment == "" || cfg.Environment == "production") && cfg.JWTSecret == "" {
+		return nil, errors.New("JWT_SECRET is required for production environment")
+	}
+
 	svc := &Service{
+		config:   cfg,
 		logger:   cfg.Logger,
 		tracer:   cfg.Tracer,
 		meter:    cfg.Meter,

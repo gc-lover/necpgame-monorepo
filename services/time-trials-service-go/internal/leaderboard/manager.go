@@ -163,7 +163,7 @@ func (m *Manager) GetPersonalRecord(ctx context.Context, trialID uuid.UUID, play
 	rank, err := m.redis.ZRank(ctx, key, playerID).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return &PersonalRecord{PlayerID: playerID, Rank: 0}, nil
+			return &PersonalRecord{PlayerID: playerID, CurrentRank: 0}, nil
 		}
 		return nil, errors.Wrap(err, "failed to get player rank")
 	}
@@ -218,7 +218,7 @@ func (m *Manager) GetRankHistory(ctx context.Context, trialID uuid.UUID, playerI
 // GetPlayerRank retrieves current rank for a player in a trial
 func (m *Manager) GetPlayerRank(ctx context.Context, trialID uuid.UUID, playerID string) (int, error) {
 	// Get leaderboard and find player position
-	entries, err := m.GetLeaderboard(ctx, trialID, Weekly, 1000) // Get top 1000 for rank calculation
+	entries, err := m.GetLeaderboard(ctx, trialID, TimeframeWeekly, 1000) // Get top 1000 for rank calculation
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get leaderboard for rank calculation")
 	}

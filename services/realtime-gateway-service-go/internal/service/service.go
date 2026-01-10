@@ -2,9 +2,13 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/go-faster/errors"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,6 +41,7 @@ type Service struct {
 	logger      *zap.Logger
 	db          *pgxpool.Pool
 	redis       *redis.Client
+	kafkaProducer sarama.SyncProducer
 	meter       metric.Meter
 
 	// Core components
@@ -107,6 +112,15 @@ func (s *Service) initComponents() error {
 		s.redis = redis.NewClient(opt)
 	}
 
+	// Initialize Kafka producer for event bus
+	if s.config.KafkaBrokers != "" {
+		s.kafkaProducer, err = s.initKafkaProducer()
+		if err != nil {
+			return errors.Wrap(err, "failed to initialize Kafka producer")
+		}
+		s.logger.Info("Kafka producer initialized", zap.String("brokers", s.config.KafkaBrokers))
+	}
+
 	// Initialize core components
 	s.bufferPool = buffer.NewPool(buffer.Config{
 		InitialSize: 1000,
@@ -119,6 +133,7 @@ func (s *Service) initComponents() error {
 		Logger:         s.logger,
 		Meter:          s.meter,
 		SessionManager: nil, // Will be set after sessionManager creation
+		EventPublisher: s,   // Pass service as event publisher
 	})
 
 	s.sessionManager = session.NewManager(session.Config{
@@ -157,6 +172,7 @@ func (s *Service) initComponents() error {
 		MaxBatchDelay:    16 * time.Millisecond,
 		WorkerCount:      3,
 		BufferSize:       1024,
+		UDPTransport:     s.udpTransport, // Pass UDP transport for batch sending
 		Logger:          s.logger,
 		Meter:           s.meter,
 	})
@@ -287,6 +303,12 @@ func (s *Service) Stop(ctx context.Context) error {
 		}
 	}
 
+	if s.kafkaProducer != nil {
+		if err := s.kafkaProducer.Close(); err != nil {
+			s.logger.Error("failed to close Kafka producer", zap.Error(err))
+		}
+	}
+
 	if s.db != nil {
 		s.db.Close()
 	}
@@ -322,7 +344,73 @@ func (s *Service) Health(ctx context.Context) (*HealthResponse, error) {
 		}
 	}
 
+	// Check Kafka
+	if s.kafkaProducer != nil {
+		// Test Kafka connectivity by publishing a test message
+		testMsg := []byte(`{"test": true, "timestamp": ` + fmt.Sprintf("%d", time.Now().Unix()) + `}`)
+		if err := s.PublishEvent(ctx, "game.system.health_check", "health-check", testMsg); err != nil {
+			health.Status = "degraded"
+			health.Services["kafka"] = "down"
+		} else {
+			health.Services["kafka"] = "up"
+		}
+	}
+
 	return health, nil
+}
+
+// initKafkaProducer initializes Kafka producer for event bus
+func (s *Service) initKafkaProducer() (sarama.SyncProducer, error) {
+	config := sarama.NewConfig()
+
+	// Configure for high-throughput, low-latency event publishing
+	config.Producer.RequiredAcks = sarama.WaitForLocal       // Wait for leader ack only
+	config.Producer.Compression = sarama.CompressionSnappy   // Compress messages
+	config.Producer.Flush.Frequency = 500 * time.Millisecond // Batch messages
+	config.Producer.Return.Successes = true                  // Return success/failure
+
+	// Security configuration for mTLS
+	config.Net.TLS.Enable = true
+	config.Net.TLS.Config = nil // Use system CA certificates
+
+	// SASL/SCRAM authentication for external clients (if needed)
+	config.Net.SASL.Enable = true
+	config.Net.SASL.User = os.Getenv("KAFKA_USERNAME")
+	config.Net.SASL.Password = os.Getenv("KAFKA_PASSWORD")
+	config.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
+
+	producer, err := sarama.NewSyncProducer(strings.Split(s.config.KafkaBrokers, ","), config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create Kafka producer")
+	}
+
+	return producer, nil
+}
+
+// PublishEvent publishes event to Kafka topic
+func (s *Service) PublishEvent(ctx context.Context, topic string, key string, value []byte) error {
+	if s.kafkaProducer == nil {
+		return errors.New("Kafka producer not initialized")
+	}
+
+	msg := &sarama.ProducerMessage{
+		Topic: topic,
+		Key:   sarama.StringEncoder(key),
+		Value: sarama.ByteEncoder(value),
+	}
+
+	partition, offset, err := s.kafkaProducer.SendMessage(msg)
+	if err != nil {
+		return errors.Wrap(err, "failed to publish event to Kafka")
+	}
+
+	s.logger.Debug("Event published to Kafka",
+		zap.String("topic", topic),
+		zap.String("key", key),
+		zap.Int32("partition", partition),
+		zap.Int64("offset", offset))
+
+	return nil
 }
 
 // HealthResponse represents health check response

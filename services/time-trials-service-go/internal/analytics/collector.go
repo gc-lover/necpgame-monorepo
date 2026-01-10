@@ -147,16 +147,38 @@ func (c *Collector) GetEngagementMetrics(ctx context.Context, trialID uuid.UUID)
 	ctx, span := c.tracer.Start(ctx, "analytics.GetEngagementMetrics")
 	defer span.End()
 
-	// TODO: Implement actual engagement metrics calculation
-	// This would analyze player events, retry patterns, etc.
+	metrics := &EngagementMetrics{
+		TrialID: trialID,
+	}
 
-	return &EngagementMetrics{
-		TrialID:              trialID,
-		UniquePlayers:        0, // Would be calculated from event data
-		AverageAttempts:      0,
-		CompletionRateTrend:  []float64{},
-		PopularTimeSlots:     []string{},
-	}, nil
+	// Calculate unique players who attempted this trial
+	if err := c.calculateUniquePlayers(ctx, trialID, metrics); err != nil {
+		c.logger.Error("Failed to calculate unique players", zap.Error(err))
+	}
+
+	// Calculate average attempts per player
+	if err := c.calculateAverageAttempts(ctx, trialID, metrics); err != nil {
+		c.logger.Error("Failed to calculate average attempts", zap.Error(err))
+	}
+
+	// Calculate completion rate trend over time
+	if err := c.calculateCompletionRateTrend(ctx, trialID, metrics); err != nil {
+		c.logger.Error("Failed to calculate completion rate trend", zap.Error(err))
+	}
+
+	// Find popular time slots for trial attempts
+	if err := c.calculatePopularTimeSlots(ctx, trialID, metrics); err != nil {
+		c.logger.Error("Failed to calculate popular time slots", zap.Error(err))
+	}
+
+	c.logger.Info("Engagement metrics calculated",
+		zap.String("trial_id", trialID.String()),
+		zap.Int("unique_players", metrics.UniquePlayers),
+		zap.Float64("average_attempts", metrics.AverageAttempts),
+		zap.Int("trend_points", len(metrics.CompletionRateTrend)),
+		zap.Int("time_slots", len(metrics.PopularTimeSlots)))
+
+	return metrics, nil
 }
 
 // getWeekNumber returns ISO week number
@@ -219,6 +241,124 @@ type EngagementMetrics struct {
 	AverageAttempts      float64   `json:"average_attempts"`
 	CompletionRateTrend  []float64 `json:"completion_rate_trend"`
 	PopularTimeSlots     []string  `json:"popular_time_slots"`
+}
+
+// calculateUniquePlayers counts distinct players who attempted the trial
+func (c *Collector) calculateUniquePlayers(ctx context.Context, trialID uuid.UUID, metrics *EngagementMetrics) error {
+	query := `
+		SELECT COUNT(DISTINCT player_id)
+		FROM time_trial_attempts
+		WHERE trial_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+	`
+
+	err := c.db.QueryRow(ctx, query, trialID).Scan(&metrics.UniquePlayers)
+	if err != nil {
+		return errors.Wrap(err, "failed to count unique players")
+	}
+
+	return nil
+}
+
+// calculateAverageAttempts calculates average number of attempts per player
+func (c *Collector) calculateAverageAttempts(ctx context.Context, trialID uuid.UUID, metrics *EngagementMetrics) error {
+	if metrics.UniquePlayers == 0 {
+		metrics.AverageAttempts = 0
+		return nil
+	}
+
+	query := `
+		SELECT AVG(attempt_count) as avg_attempts
+		FROM (
+			SELECT player_id, COUNT(*) as attempt_count
+			FROM time_trial_attempts
+			WHERE trial_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+			GROUP BY player_id
+		) player_attempts
+	`
+
+	err := c.db.QueryRow(ctx, query, trialID).Scan(&metrics.AverageAttempts)
+	if err != nil {
+		return errors.Wrap(err, "failed to calculate average attempts")
+	}
+
+	return nil
+}
+
+// calculateCompletionRateTrend calculates completion rate over the last 7 days
+func (c *Collector) calculateCompletionRateTrend(ctx context.Context, trialID uuid.UUID, metrics *EngagementMetrics) error {
+	query := `
+		WITH daily_stats AS (
+			SELECT
+				DATE(created_at) as attempt_date,
+				COUNT(*) as total_attempts,
+				COUNT(*) FILTER (WHERE completion_time > 0) as completions
+			FROM time_trial_attempts
+			WHERE trial_id = $1 AND created_at >= NOW() - INTERVAL '7 days'
+			GROUP BY DATE(created_at)
+			ORDER BY attempt_date
+		)
+		SELECT
+			CASE
+				WHEN total_attempts > 0 THEN CAST(completions AS FLOAT) / total_attempts
+				ELSE 0.0
+			END as completion_rate
+		FROM daily_stats
+		ORDER BY attempt_date
+	`
+
+	rows, err := c.db.Query(ctx, query, trialID)
+	if err != nil {
+		return errors.Wrap(err, "failed to query completion rates")
+	}
+	defer rows.Close()
+
+	metrics.CompletionRateTrend = make([]float64, 0, 7)
+	for rows.Next() {
+		var rate float64
+		if err := rows.Scan(&rate); err != nil {
+			return errors.Wrap(err, "failed to scan completion rate")
+		}
+		metrics.CompletionRateTrend = append(metrics.CompletionRateTrend, rate)
+	}
+
+	return rows.Err()
+}
+
+// calculatePopularTimeSlots finds the most active time slots for trial attempts
+func (c *Collector) calculatePopularTimeSlots(ctx context.Context, trialID uuid.UUID, metrics *EngagementMetrics) error {
+	query := `
+		SELECT
+			CASE
+				WHEN EXTRACT(HOUR FROM created_at) BETWEEN 0 AND 5 THEN 'Late Night (00-06)'
+				WHEN EXTRACT(HOUR FROM created_at) BETWEEN 6 AND 11 THEN 'Morning (06-12)'
+				WHEN EXTRACT(HOUR FROM created_at) BETWEEN 12 AND 17 THEN 'Afternoon (12-18)'
+				WHEN EXTRACT(HOUR FROM created_at) BETWEEN 18 AND 23 THEN 'Evening (18-24)'
+			END as time_slot,
+			COUNT(*) as attempt_count
+		FROM time_trial_attempts
+		WHERE trial_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+		GROUP BY time_slot
+		ORDER BY attempt_count DESC
+		LIMIT 3
+	`
+
+	rows, err := c.db.Query(ctx, query, trialID)
+	if err != nil {
+		return errors.Wrap(err, "failed to query time slots")
+	}
+	defer rows.Close()
+
+	metrics.PopularTimeSlots = make([]string, 0, 3)
+	for rows.Next() {
+		var timeSlot string
+		var count int
+		if err := rows.Scan(&timeSlot, &count); err != nil {
+			return errors.Wrap(err, "failed to scan time slot")
+		}
+		metrics.PopularTimeSlots = append(metrics.PopularTimeSlots, timeSlot)
+	}
+
+	return rows.Err()
 }
 
 

@@ -232,7 +232,7 @@ func (s *System) checkSpeedConsistency(ctx context.Context, data CompletionData)
 
 		// Calculate distance and time delta
 		distance := s.calculateDistance(prevPos, currPos)
-		timeDelta := currPos.Timestamp - prevPos.Timestamp
+		timeDelta := float64(currPos.Timestamp - prevPos.Timestamp)
 
 		if timeDelta <= 0 {
 			continue // Invalid timestamp, skip
@@ -296,12 +296,36 @@ func (s *System) storeValidationResult(ctx context.Context, sessionID uuid.UUID,
 	}
 }
 
+// Position represents a 3D coordinate with timestamp
+type Position struct {
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+	Z         float64 `json:"z"`
+	Timestamp int     `json:"timestamp"`
+}
+
+// TelemetryData represents detailed completion telemetry
+type TelemetryData struct {
+	PositionHistory []Position `json:"position_history,omitempty"`
+	Events          []Event    `json:"events,omitempty"`
+}
+
+// Event represents a telemetry event
+type Event struct {
+	Type      string                 `json:"type"`
+	Timestamp int                    `json:"timestamp"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+}
+
 // CompletionData represents trial completion telemetry
 type CompletionData struct {
-	CompletionTime int `json:"completion_time"`
-	ClientTime     int `json:"client_time"`
-	ServerTime     int `json:"server_time"`
-	Progress       int `json:"progress"`
+	SessionID      uuid.UUID `json:"session_id"`
+	TrialID        uuid.UUID `json:"trial_id"`
+	CompletionTime int       `json:"completion_time"`
+	ClientTime     int       `json:"client_time"`
+	ServerTime     int       `json:"server_time"`
+	Progress       int       `json:"progress"`
+	TelemetryData  *TelemetryData `json:"telemetry_data,omitempty"`
 }
 
 // ValidationResult represents the outcome of validation checks

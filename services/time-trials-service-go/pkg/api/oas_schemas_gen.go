@@ -9,214 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type AnalyticsTrialsTrialIdPerformanceGetOK struct {
-	TrialID   uuid.UUID                                     `json:"trial_id"`
-	Timeframe string                                        `json:"timeframe"`
-	Metrics   AnalyticsTrialsTrialIdPerformanceGetOKMetrics `json:"metrics"`
-}
-
-// GetTrialID returns the value of TrialID.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) GetTrialID() uuid.UUID {
-	return s.TrialID
-}
-
-// GetTimeframe returns the value of Timeframe.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) GetTimeframe() string {
-	return s.Timeframe
-}
-
-// GetMetrics returns the value of Metrics.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) GetMetrics() AnalyticsTrialsTrialIdPerformanceGetOKMetrics {
-	return s.Metrics
-}
-
-// SetTrialID sets the value of TrialID.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) SetTrialID(val uuid.UUID) {
-	s.TrialID = val
-}
-
-// SetTimeframe sets the value of Timeframe.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) SetTimeframe(val string) {
-	s.Timeframe = val
-}
-
-// SetMetrics sets the value of Metrics.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) SetMetrics(val AnalyticsTrialsTrialIdPerformanceGetOKMetrics) {
-	s.Metrics = val
-}
-
-type AnalyticsTrialsTrialIdPerformanceGetOKMetrics struct {
-	TotalCompletions      OptInt     `json:"total_completions"`
-	AverageCompletionTime OptFloat64 `json:"average_completion_time"`
-	FastestTime           OptInt     `json:"fastest_time"`
-	SlowestTime           OptInt     `json:"slowest_time"`
-	// Percentage of started trials that were completed.
-	CompletionRate         OptFloat64                                                             `json:"completion_rate"`
-	DifficultyDistribution OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution `json:"difficulty_distribution"`
-}
-
-// GetTotalCompletions returns the value of TotalCompletions.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetTotalCompletions() OptInt {
-	return s.TotalCompletions
-}
-
-// GetAverageCompletionTime returns the value of AverageCompletionTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetAverageCompletionTime() OptFloat64 {
-	return s.AverageCompletionTime
-}
-
-// GetFastestTime returns the value of FastestTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetFastestTime() OptInt {
-	return s.FastestTime
-}
-
-// GetSlowestTime returns the value of SlowestTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetSlowestTime() OptInt {
-	return s.SlowestTime
-}
-
-// GetCompletionRate returns the value of CompletionRate.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetCompletionRate() OptFloat64 {
-	return s.CompletionRate
-}
-
-// GetDifficultyDistribution returns the value of DifficultyDistribution.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) GetDifficultyDistribution() OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution {
-	return s.DifficultyDistribution
-}
-
-// SetTotalCompletions sets the value of TotalCompletions.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetTotalCompletions(val OptInt) {
-	s.TotalCompletions = val
-}
-
-// SetAverageCompletionTime sets the value of AverageCompletionTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetAverageCompletionTime(val OptFloat64) {
-	s.AverageCompletionTime = val
-}
-
-// SetFastestTime sets the value of FastestTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetFastestTime(val OptInt) {
-	s.FastestTime = val
-}
-
-// SetSlowestTime sets the value of SlowestTime.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetSlowestTime(val OptInt) {
-	s.SlowestTime = val
-}
-
-// SetCompletionRate sets the value of CompletionRate.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetCompletionRate(val OptFloat64) {
-	s.CompletionRate = val
-}
-
-// SetDifficultyDistribution sets the value of DifficultyDistribution.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) SetDifficultyDistribution(val OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) {
-	s.DifficultyDistribution = val
-}
-
-type AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution struct {
-	Normal    OptInt `json:"normal"`
-	Heroic    OptInt `json:"heroic"`
-	Mythic    OptInt `json:"mythic"`
-	Legendary OptInt `json:"legendary"`
-}
-
-// GetNormal returns the value of Normal.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) GetNormal() OptInt {
-	return s.Normal
-}
-
-// GetHeroic returns the value of Heroic.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) GetHeroic() OptInt {
-	return s.Heroic
-}
-
-// GetMythic returns the value of Mythic.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) GetMythic() OptInt {
-	return s.Mythic
-}
-
-// GetLegendary returns the value of Legendary.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) GetLegendary() OptInt {
-	return s.Legendary
-}
-
-// SetNormal sets the value of Normal.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) SetNormal(val OptInt) {
-	s.Normal = val
-}
-
-// SetHeroic sets the value of Heroic.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) SetHeroic(val OptInt) {
-	s.Heroic = val
-}
-
-// SetMythic sets the value of Mythic.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) SetMythic(val OptInt) {
-	s.Mythic = val
-}
-
-// SetLegendary sets the value of Legendary.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) SetLegendary(val OptInt) {
-	s.Legendary = val
-}
-
-type AnalyticsTrialsTrialIdPerformanceGetTimeframe string
-
-const (
-	AnalyticsTrialsTrialIdPerformanceGetTimeframeDaily    AnalyticsTrialsTrialIdPerformanceGetTimeframe = "daily"
-	AnalyticsTrialsTrialIdPerformanceGetTimeframeWeekly   AnalyticsTrialsTrialIdPerformanceGetTimeframe = "weekly"
-	AnalyticsTrialsTrialIdPerformanceGetTimeframeMonthly  AnalyticsTrialsTrialIdPerformanceGetTimeframe = "monthly"
-	AnalyticsTrialsTrialIdPerformanceGetTimeframeSeasonal AnalyticsTrialsTrialIdPerformanceGetTimeframe = "seasonal"
-)
-
-// AllValues returns all AnalyticsTrialsTrialIdPerformanceGetTimeframe values.
-func (AnalyticsTrialsTrialIdPerformanceGetTimeframe) AllValues() []AnalyticsTrialsTrialIdPerformanceGetTimeframe {
-	return []AnalyticsTrialsTrialIdPerformanceGetTimeframe{
-		AnalyticsTrialsTrialIdPerformanceGetTimeframeDaily,
-		AnalyticsTrialsTrialIdPerformanceGetTimeframeWeekly,
-		AnalyticsTrialsTrialIdPerformanceGetTimeframeMonthly,
-		AnalyticsTrialsTrialIdPerformanceGetTimeframeSeasonal,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s AnalyticsTrialsTrialIdPerformanceGetTimeframe) MarshalText() ([]byte, error) {
-	switch s {
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeDaily:
-		return []byte(s), nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeWeekly:
-		return []byte(s), nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeMonthly:
-		return []byte(s), nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeSeasonal:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetTimeframe) UnmarshalText(data []byte) error {
-	switch AnalyticsTrialsTrialIdPerformanceGetTimeframe(data) {
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeDaily:
-		*s = AnalyticsTrialsTrialIdPerformanceGetTimeframeDaily
-		return nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeWeekly:
-		*s = AnalyticsTrialsTrialIdPerformanceGetTimeframeWeekly
-		return nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeMonthly:
-		*s = AnalyticsTrialsTrialIdPerformanceGetTimeframeMonthly
-		return nil
-	case AnalyticsTrialsTrialIdPerformanceGetTimeframeSeasonal:
-		*s = AnalyticsTrialsTrialIdPerformanceGetTimeframeSeasonal
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -241,6 +33,192 @@ func (s *BearerAuth) SetToken(val string) {
 func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
+
+type CompleteTrialSessionBadRequest Error
+
+func (*CompleteTrialSessionBadRequest) completeTrialSessionRes() {}
+
+type CompleteTrialSessionConflict Error
+
+func (*CompleteTrialSessionConflict) completeTrialSessionRes() {}
+
+type CompleteTrialSessionInternalServerError Error
+
+func (*CompleteTrialSessionInternalServerError) completeTrialSessionRes() {}
+
+type CompleteTrialSessionNotFound Error
+
+func (*CompleteTrialSessionNotFound) completeTrialSessionRes() {}
+
+type CompleteTrialSessionOK struct {
+	Session TrialSession `json:"session"`
+	Rewards RewardTiers  `json:"rewards"`
+	// New leaderboard rank (0 = not ranked).
+	LeaderboardRank int `json:"leaderboard_rank"`
+	// Initial validation status.
+	ValidationStatus OptCompleteTrialSessionOKValidationStatus `json:"validation_status"`
+}
+
+// GetSession returns the value of Session.
+func (s *CompleteTrialSessionOK) GetSession() TrialSession {
+	return s.Session
+}
+
+// GetRewards returns the value of Rewards.
+func (s *CompleteTrialSessionOK) GetRewards() RewardTiers {
+	return s.Rewards
+}
+
+// GetLeaderboardRank returns the value of LeaderboardRank.
+func (s *CompleteTrialSessionOK) GetLeaderboardRank() int {
+	return s.LeaderboardRank
+}
+
+// GetValidationStatus returns the value of ValidationStatus.
+func (s *CompleteTrialSessionOK) GetValidationStatus() OptCompleteTrialSessionOKValidationStatus {
+	return s.ValidationStatus
+}
+
+// SetSession sets the value of Session.
+func (s *CompleteTrialSessionOK) SetSession(val TrialSession) {
+	s.Session = val
+}
+
+// SetRewards sets the value of Rewards.
+func (s *CompleteTrialSessionOK) SetRewards(val RewardTiers) {
+	s.Rewards = val
+}
+
+// SetLeaderboardRank sets the value of LeaderboardRank.
+func (s *CompleteTrialSessionOK) SetLeaderboardRank(val int) {
+	s.LeaderboardRank = val
+}
+
+// SetValidationStatus sets the value of ValidationStatus.
+func (s *CompleteTrialSessionOK) SetValidationStatus(val OptCompleteTrialSessionOKValidationStatus) {
+	s.ValidationStatus = val
+}
+
+func (*CompleteTrialSessionOK) completeTrialSessionRes() {}
+
+// Initial validation status.
+type CompleteTrialSessionOKValidationStatus string
+
+const (
+	CompleteTrialSessionOKValidationStatusPending CompleteTrialSessionOKValidationStatus = "pending"
+	CompleteTrialSessionOKValidationStatusValid   CompleteTrialSessionOKValidationStatus = "valid"
+	CompleteTrialSessionOKValidationStatusInvalid CompleteTrialSessionOKValidationStatus = "invalid"
+)
+
+// AllValues returns all CompleteTrialSessionOKValidationStatus values.
+func (CompleteTrialSessionOKValidationStatus) AllValues() []CompleteTrialSessionOKValidationStatus {
+	return []CompleteTrialSessionOKValidationStatus{
+		CompleteTrialSessionOKValidationStatusPending,
+		CompleteTrialSessionOKValidationStatusValid,
+		CompleteTrialSessionOKValidationStatusInvalid,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CompleteTrialSessionOKValidationStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case CompleteTrialSessionOKValidationStatusPending:
+		return []byte(s), nil
+	case CompleteTrialSessionOKValidationStatusValid:
+		return []byte(s), nil
+	case CompleteTrialSessionOKValidationStatusInvalid:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CompleteTrialSessionOKValidationStatus) UnmarshalText(data []byte) error {
+	switch CompleteTrialSessionOKValidationStatus(data) {
+	case CompleteTrialSessionOKValidationStatusPending:
+		*s = CompleteTrialSessionOKValidationStatusPending
+		return nil
+	case CompleteTrialSessionOKValidationStatusValid:
+		*s = CompleteTrialSessionOKValidationStatusValid
+		return nil
+	case CompleteTrialSessionOKValidationStatusInvalid:
+		*s = CompleteTrialSessionOKValidationStatusInvalid
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CompleteTrialSessionReq struct {
+	// Total completion time in seconds.
+	CompletionTime int `json:"completion_time"`
+	// Completion percentage.
+	ProgressPercentage int `json:"progress_percentage"`
+	// Additional telemetry and validation data.
+	TelemetryData *CompleteTrialSessionReqTelemetryData `json:"telemetry_data"`
+	// List of party member IDs.
+	PartyMembers []string `json:"party_members"`
+}
+
+// GetCompletionTime returns the value of CompletionTime.
+func (s *CompleteTrialSessionReq) GetCompletionTime() int {
+	return s.CompletionTime
+}
+
+// GetProgressPercentage returns the value of ProgressPercentage.
+func (s *CompleteTrialSessionReq) GetProgressPercentage() int {
+	return s.ProgressPercentage
+}
+
+// GetTelemetryData returns the value of TelemetryData.
+func (s *CompleteTrialSessionReq) GetTelemetryData() *CompleteTrialSessionReqTelemetryData {
+	return s.TelemetryData
+}
+
+// GetPartyMembers returns the value of PartyMembers.
+func (s *CompleteTrialSessionReq) GetPartyMembers() []string {
+	return s.PartyMembers
+}
+
+// SetCompletionTime sets the value of CompletionTime.
+func (s *CompleteTrialSessionReq) SetCompletionTime(val int) {
+	s.CompletionTime = val
+}
+
+// SetProgressPercentage sets the value of ProgressPercentage.
+func (s *CompleteTrialSessionReq) SetProgressPercentage(val int) {
+	s.ProgressPercentage = val
+}
+
+// SetTelemetryData sets the value of TelemetryData.
+func (s *CompleteTrialSessionReq) SetTelemetryData(val *CompleteTrialSessionReqTelemetryData) {
+	s.TelemetryData = val
+}
+
+// SetPartyMembers sets the value of PartyMembers.
+func (s *CompleteTrialSessionReq) SetPartyMembers(val []string) {
+	s.PartyMembers = val
+}
+
+// Additional telemetry and validation data.
+type CompleteTrialSessionReqTelemetryData struct{}
+
+type CompleteTrialSessionUnauthorized Error
+
+func (*CompleteTrialSessionUnauthorized) completeTrialSessionRes() {}
+
+type CreateTrialBadRequest Error
+
+func (*CreateTrialBadRequest) createTrialRes() {}
+
+type CreateTrialForbidden Error
+
+func (*CreateTrialForbidden) createTrialRes() {}
+
+type CreateTrialUnauthorized Error
+
+func (*CreateTrialUnauthorized) createTrialRes() {}
 
 // Ref: #/components/schemas/Error
 type Error struct {
@@ -282,8 +260,7 @@ func (s *Error) SetDetails(val *ErrorDetails) {
 	s.Details = val
 }
 
-func (*Error) trialsTrialIdCompletePostRes() {}
-func (*Error) trialsTrialIdGetRes()          {}
+func (*Error) getHealthRes() {}
 
 // Error code.
 type ErrorCode string
@@ -358,54 +335,56 @@ func (s *ErrorCode) UnmarshalText(data []byte) error {
 // Additional error details.
 type ErrorDetails struct{}
 
-type HealthGetOK struct {
-	Status    HealthGetOKStatus     `json:"status"`
+type GetHealthOK struct {
+	Status    GetHealthOKStatus     `json:"status"`
 	Timestamp time.Time             `json:"timestamp"`
 	Version   string                `json:"version"`
-	Metrics   OptHealthGetOKMetrics `json:"metrics"`
+	Metrics   OptGetHealthOKMetrics `json:"metrics"`
 }
 
 // GetStatus returns the value of Status.
-func (s *HealthGetOK) GetStatus() HealthGetOKStatus {
+func (s *GetHealthOK) GetStatus() GetHealthOKStatus {
 	return s.Status
 }
 
 // GetTimestamp returns the value of Timestamp.
-func (s *HealthGetOK) GetTimestamp() time.Time {
+func (s *GetHealthOK) GetTimestamp() time.Time {
 	return s.Timestamp
 }
 
 // GetVersion returns the value of Version.
-func (s *HealthGetOK) GetVersion() string {
+func (s *GetHealthOK) GetVersion() string {
 	return s.Version
 }
 
 // GetMetrics returns the value of Metrics.
-func (s *HealthGetOK) GetMetrics() OptHealthGetOKMetrics {
+func (s *GetHealthOK) GetMetrics() OptGetHealthOKMetrics {
 	return s.Metrics
 }
 
 // SetStatus sets the value of Status.
-func (s *HealthGetOK) SetStatus(val HealthGetOKStatus) {
+func (s *GetHealthOK) SetStatus(val GetHealthOKStatus) {
 	s.Status = val
 }
 
 // SetTimestamp sets the value of Timestamp.
-func (s *HealthGetOK) SetTimestamp(val time.Time) {
+func (s *GetHealthOK) SetTimestamp(val time.Time) {
 	s.Timestamp = val
 }
 
 // SetVersion sets the value of Version.
-func (s *HealthGetOK) SetVersion(val string) {
+func (s *GetHealthOK) SetVersion(val string) {
 	s.Version = val
 }
 
 // SetMetrics sets the value of Metrics.
-func (s *HealthGetOK) SetMetrics(val OptHealthGetOKMetrics) {
+func (s *GetHealthOK) SetMetrics(val OptGetHealthOKMetrics) {
 	s.Metrics = val
 }
 
-type HealthGetOKMetrics struct {
+func (*GetHealthOK) getHealthRes() {}
+
+type GetHealthOKMetrics struct {
 	// Number of active trial sessions.
 	ActiveSessions OptInt `json:"active_sessions"`
 	// Total configured trials.
@@ -415,60 +394,60 @@ type HealthGetOKMetrics struct {
 }
 
 // GetActiveSessions returns the value of ActiveSessions.
-func (s *HealthGetOKMetrics) GetActiveSessions() OptInt {
+func (s *GetHealthOKMetrics) GetActiveSessions() OptInt {
 	return s.ActiveSessions
 }
 
 // GetTotalTrials returns the value of TotalTrials.
-func (s *HealthGetOKMetrics) GetTotalTrials() OptInt {
+func (s *GetHealthOKMetrics) GetTotalTrials() OptInt {
 	return s.TotalTrials
 }
 
 // GetAvgResponseTime returns the value of AvgResponseTime.
-func (s *HealthGetOKMetrics) GetAvgResponseTime() OptFloat64 {
+func (s *GetHealthOKMetrics) GetAvgResponseTime() OptFloat64 {
 	return s.AvgResponseTime
 }
 
 // SetActiveSessions sets the value of ActiveSessions.
-func (s *HealthGetOKMetrics) SetActiveSessions(val OptInt) {
+func (s *GetHealthOKMetrics) SetActiveSessions(val OptInt) {
 	s.ActiveSessions = val
 }
 
 // SetTotalTrials sets the value of TotalTrials.
-func (s *HealthGetOKMetrics) SetTotalTrials(val OptInt) {
+func (s *GetHealthOKMetrics) SetTotalTrials(val OptInt) {
 	s.TotalTrials = val
 }
 
 // SetAvgResponseTime sets the value of AvgResponseTime.
-func (s *HealthGetOKMetrics) SetAvgResponseTime(val OptFloat64) {
+func (s *GetHealthOKMetrics) SetAvgResponseTime(val OptFloat64) {
 	s.AvgResponseTime = val
 }
 
-type HealthGetOKStatus string
+type GetHealthOKStatus string
 
 const (
-	HealthGetOKStatusHealthy   HealthGetOKStatus = "healthy"
-	HealthGetOKStatusDegraded  HealthGetOKStatus = "degraded"
-	HealthGetOKStatusUnhealthy HealthGetOKStatus = "unhealthy"
+	GetHealthOKStatusHealthy   GetHealthOKStatus = "healthy"
+	GetHealthOKStatusDegraded  GetHealthOKStatus = "degraded"
+	GetHealthOKStatusUnhealthy GetHealthOKStatus = "unhealthy"
 )
 
-// AllValues returns all HealthGetOKStatus values.
-func (HealthGetOKStatus) AllValues() []HealthGetOKStatus {
-	return []HealthGetOKStatus{
-		HealthGetOKStatusHealthy,
-		HealthGetOKStatusDegraded,
-		HealthGetOKStatusUnhealthy,
+// AllValues returns all GetHealthOKStatus values.
+func (GetHealthOKStatus) AllValues() []GetHealthOKStatus {
+	return []GetHealthOKStatus{
+		GetHealthOKStatusHealthy,
+		GetHealthOKStatusDegraded,
+		GetHealthOKStatusUnhealthy,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s HealthGetOKStatus) MarshalText() ([]byte, error) {
+func (s GetHealthOKStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case HealthGetOKStatusHealthy:
+	case GetHealthOKStatusHealthy:
 		return []byte(s), nil
-	case HealthGetOKStatusDegraded:
+	case GetHealthOKStatusDegraded:
 		return []byte(s), nil
-	case HealthGetOKStatusUnhealthy:
+	case GetHealthOKStatusUnhealthy:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -476,21 +455,655 @@ func (s HealthGetOKStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *HealthGetOKStatus) UnmarshalText(data []byte) error {
-	switch HealthGetOKStatus(data) {
-	case HealthGetOKStatusHealthy:
-		*s = HealthGetOKStatusHealthy
+func (s *GetHealthOKStatus) UnmarshalText(data []byte) error {
+	switch GetHealthOKStatus(data) {
+	case GetHealthOKStatusHealthy:
+		*s = GetHealthOKStatusHealthy
 		return nil
-	case HealthGetOKStatusDegraded:
-		*s = HealthGetOKStatusDegraded
+	case GetHealthOKStatusDegraded:
+		*s = GetHealthOKStatusDegraded
 		return nil
-	case HealthGetOKStatusUnhealthy:
-		*s = HealthGetOKStatusUnhealthy
+	case GetHealthOKStatusUnhealthy:
+		*s = GetHealthOKStatusUnhealthy
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+type GetPlayerPersonalRecordBadRequest Error
+
+func (*GetPlayerPersonalRecordBadRequest) getPlayerPersonalRecordRes() {}
+
+type GetPlayerPersonalRecordInternalServerError Error
+
+func (*GetPlayerPersonalRecordInternalServerError) getPlayerPersonalRecordRes() {}
+
+type GetPlayerPersonalRecordNotFound Error
+
+func (*GetPlayerPersonalRecordNotFound) getPlayerPersonalRecordRes() {}
+
+type GetPlayerPersonalRecordOK struct {
+	PlayerID     string                                `json:"player_id"`
+	TrialID      uuid.UUID                             `json:"trial_id"`
+	PersonalBest GetPlayerPersonalRecordOKPersonalBest `json:"personal_best"`
+	// Current global rank (0 = unranked).
+	CurrentRank int `json:"current_rank"`
+	// Rank history for the last 30 days.
+	RankHistory []GetPlayerPersonalRecordOKRankHistoryItem `json:"rank_history"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *GetPlayerPersonalRecordOK) GetPlayerID() string {
+	return s.PlayerID
+}
+
+// GetTrialID returns the value of TrialID.
+func (s *GetPlayerPersonalRecordOK) GetTrialID() uuid.UUID {
+	return s.TrialID
+}
+
+// GetPersonalBest returns the value of PersonalBest.
+func (s *GetPlayerPersonalRecordOK) GetPersonalBest() GetPlayerPersonalRecordOKPersonalBest {
+	return s.PersonalBest
+}
+
+// GetCurrentRank returns the value of CurrentRank.
+func (s *GetPlayerPersonalRecordOK) GetCurrentRank() int {
+	return s.CurrentRank
+}
+
+// GetRankHistory returns the value of RankHistory.
+func (s *GetPlayerPersonalRecordOK) GetRankHistory() []GetPlayerPersonalRecordOKRankHistoryItem {
+	return s.RankHistory
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *GetPlayerPersonalRecordOK) SetPlayerID(val string) {
+	s.PlayerID = val
+}
+
+// SetTrialID sets the value of TrialID.
+func (s *GetPlayerPersonalRecordOK) SetTrialID(val uuid.UUID) {
+	s.TrialID = val
+}
+
+// SetPersonalBest sets the value of PersonalBest.
+func (s *GetPlayerPersonalRecordOK) SetPersonalBest(val GetPlayerPersonalRecordOKPersonalBest) {
+	s.PersonalBest = val
+}
+
+// SetCurrentRank sets the value of CurrentRank.
+func (s *GetPlayerPersonalRecordOK) SetCurrentRank(val int) {
+	s.CurrentRank = val
+}
+
+// SetRankHistory sets the value of RankHistory.
+func (s *GetPlayerPersonalRecordOK) SetRankHistory(val []GetPlayerPersonalRecordOKRankHistoryItem) {
+	s.RankHistory = val
+}
+
+func (*GetPlayerPersonalRecordOK) getPlayerPersonalRecordRes() {}
+
+type GetPlayerPersonalRecordOKPersonalBest struct {
+	CompletionTime OptInt                                             `json:"completion_time"`
+	AchievedAt     OptDateTime                                        `json:"achieved_at"`
+	Difficulty     OptGetPlayerPersonalRecordOKPersonalBestDifficulty `json:"difficulty"`
+}
+
+// GetCompletionTime returns the value of CompletionTime.
+func (s *GetPlayerPersonalRecordOKPersonalBest) GetCompletionTime() OptInt {
+	return s.CompletionTime
+}
+
+// GetAchievedAt returns the value of AchievedAt.
+func (s *GetPlayerPersonalRecordOKPersonalBest) GetAchievedAt() OptDateTime {
+	return s.AchievedAt
+}
+
+// GetDifficulty returns the value of Difficulty.
+func (s *GetPlayerPersonalRecordOKPersonalBest) GetDifficulty() OptGetPlayerPersonalRecordOKPersonalBestDifficulty {
+	return s.Difficulty
+}
+
+// SetCompletionTime sets the value of CompletionTime.
+func (s *GetPlayerPersonalRecordOKPersonalBest) SetCompletionTime(val OptInt) {
+	s.CompletionTime = val
+}
+
+// SetAchievedAt sets the value of AchievedAt.
+func (s *GetPlayerPersonalRecordOKPersonalBest) SetAchievedAt(val OptDateTime) {
+	s.AchievedAt = val
+}
+
+// SetDifficulty sets the value of Difficulty.
+func (s *GetPlayerPersonalRecordOKPersonalBest) SetDifficulty(val OptGetPlayerPersonalRecordOKPersonalBestDifficulty) {
+	s.Difficulty = val
+}
+
+type GetPlayerPersonalRecordOKPersonalBestDifficulty string
+
+const (
+	GetPlayerPersonalRecordOKPersonalBestDifficultyNormal    GetPlayerPersonalRecordOKPersonalBestDifficulty = "normal"
+	GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic    GetPlayerPersonalRecordOKPersonalBestDifficulty = "heroic"
+	GetPlayerPersonalRecordOKPersonalBestDifficultyMythic    GetPlayerPersonalRecordOKPersonalBestDifficulty = "mythic"
+	GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary GetPlayerPersonalRecordOKPersonalBestDifficulty = "legendary"
+)
+
+// AllValues returns all GetPlayerPersonalRecordOKPersonalBestDifficulty values.
+func (GetPlayerPersonalRecordOKPersonalBestDifficulty) AllValues() []GetPlayerPersonalRecordOKPersonalBestDifficulty {
+	return []GetPlayerPersonalRecordOKPersonalBestDifficulty{
+		GetPlayerPersonalRecordOKPersonalBestDifficultyNormal,
+		GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic,
+		GetPlayerPersonalRecordOKPersonalBestDifficultyMythic,
+		GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetPlayerPersonalRecordOKPersonalBestDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyNormal:
+		return []byte(s), nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic:
+		return []byte(s), nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyMythic:
+		return []byte(s), nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetPlayerPersonalRecordOKPersonalBestDifficulty) UnmarshalText(data []byte) error {
+	switch GetPlayerPersonalRecordOKPersonalBestDifficulty(data) {
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyNormal:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyNormal
+		return nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic
+		return nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyMythic:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyMythic
+		return nil
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetPlayerPersonalRecordOKRankHistoryItem struct {
+	Date OptDate `json:"date"`
+	Rank OptInt  `json:"rank"`
+}
+
+// GetDate returns the value of Date.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) GetDate() OptDate {
+	return s.Date
+}
+
+// GetRank returns the value of Rank.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) GetRank() OptInt {
+	return s.Rank
+}
+
+// SetDate sets the value of Date.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) SetDate(val OptDate) {
+	s.Date = val
+}
+
+// SetRank sets the value of Rank.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) SetRank(val OptInt) {
+	s.Rank = val
+}
+
+type GetPlayerPersonalRecordTooManyRequests Error
+
+func (*GetPlayerPersonalRecordTooManyRequests) getPlayerPersonalRecordRes() {}
+
+type GetTrialInternalServerError Error
+
+func (*GetTrialInternalServerError) getTrialRes() {}
+
+type GetTrialLeaderboardBadRequest Error
+
+func (*GetTrialLeaderboardBadRequest) getTrialLeaderboardRes() {}
+
+type GetTrialLeaderboardInternalServerError Error
+
+func (*GetTrialLeaderboardInternalServerError) getTrialLeaderboardRes() {}
+
+type GetTrialLeaderboardNotFound Error
+
+func (*GetTrialLeaderboardNotFound) getTrialLeaderboardRes() {}
+
+type GetTrialLeaderboardOK struct {
+	TrialID   uuid.UUID                      `json:"trial_id"`
+	Timeframe GetTrialLeaderboardOKTimeframe `json:"timeframe"`
+	Entries   []LeaderboardEntry             `json:"entries"`
+	// Total number of valid completions.
+	TotalEntries int `json:"total_entries"`
+	// Last leaderboard update timestamp.
+	LastUpdated OptDateTime `json:"last_updated"`
+}
+
+// GetTrialID returns the value of TrialID.
+func (s *GetTrialLeaderboardOK) GetTrialID() uuid.UUID {
+	return s.TrialID
+}
+
+// GetTimeframe returns the value of Timeframe.
+func (s *GetTrialLeaderboardOK) GetTimeframe() GetTrialLeaderboardOKTimeframe {
+	return s.Timeframe
+}
+
+// GetEntries returns the value of Entries.
+func (s *GetTrialLeaderboardOK) GetEntries() []LeaderboardEntry {
+	return s.Entries
+}
+
+// GetTotalEntries returns the value of TotalEntries.
+func (s *GetTrialLeaderboardOK) GetTotalEntries() int {
+	return s.TotalEntries
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *GetTrialLeaderboardOK) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetTrialID sets the value of TrialID.
+func (s *GetTrialLeaderboardOK) SetTrialID(val uuid.UUID) {
+	s.TrialID = val
+}
+
+// SetTimeframe sets the value of Timeframe.
+func (s *GetTrialLeaderboardOK) SetTimeframe(val GetTrialLeaderboardOKTimeframe) {
+	s.Timeframe = val
+}
+
+// SetEntries sets the value of Entries.
+func (s *GetTrialLeaderboardOK) SetEntries(val []LeaderboardEntry) {
+	s.Entries = val
+}
+
+// SetTotalEntries sets the value of TotalEntries.
+func (s *GetTrialLeaderboardOK) SetTotalEntries(val int) {
+	s.TotalEntries = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *GetTrialLeaderboardOK) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+func (*GetTrialLeaderboardOK) getTrialLeaderboardRes() {}
+
+type GetTrialLeaderboardOKTimeframe string
+
+const (
+	GetTrialLeaderboardOKTimeframeDaily    GetTrialLeaderboardOKTimeframe = "daily"
+	GetTrialLeaderboardOKTimeframeWeekly   GetTrialLeaderboardOKTimeframe = "weekly"
+	GetTrialLeaderboardOKTimeframeMonthly  GetTrialLeaderboardOKTimeframe = "monthly"
+	GetTrialLeaderboardOKTimeframeAllTime  GetTrialLeaderboardOKTimeframe = "all_time"
+	GetTrialLeaderboardOKTimeframeSeasonal GetTrialLeaderboardOKTimeframe = "seasonal"
+)
+
+// AllValues returns all GetTrialLeaderboardOKTimeframe values.
+func (GetTrialLeaderboardOKTimeframe) AllValues() []GetTrialLeaderboardOKTimeframe {
+	return []GetTrialLeaderboardOKTimeframe{
+		GetTrialLeaderboardOKTimeframeDaily,
+		GetTrialLeaderboardOKTimeframeWeekly,
+		GetTrialLeaderboardOKTimeframeMonthly,
+		GetTrialLeaderboardOKTimeframeAllTime,
+		GetTrialLeaderboardOKTimeframeSeasonal,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTrialLeaderboardOKTimeframe) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTrialLeaderboardOKTimeframeDaily:
+		return []byte(s), nil
+	case GetTrialLeaderboardOKTimeframeWeekly:
+		return []byte(s), nil
+	case GetTrialLeaderboardOKTimeframeMonthly:
+		return []byte(s), nil
+	case GetTrialLeaderboardOKTimeframeAllTime:
+		return []byte(s), nil
+	case GetTrialLeaderboardOKTimeframeSeasonal:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTrialLeaderboardOKTimeframe) UnmarshalText(data []byte) error {
+	switch GetTrialLeaderboardOKTimeframe(data) {
+	case GetTrialLeaderboardOKTimeframeDaily:
+		*s = GetTrialLeaderboardOKTimeframeDaily
+		return nil
+	case GetTrialLeaderboardOKTimeframeWeekly:
+		*s = GetTrialLeaderboardOKTimeframeWeekly
+		return nil
+	case GetTrialLeaderboardOKTimeframeMonthly:
+		*s = GetTrialLeaderboardOKTimeframeMonthly
+		return nil
+	case GetTrialLeaderboardOKTimeframeAllTime:
+		*s = GetTrialLeaderboardOKTimeframeAllTime
+		return nil
+	case GetTrialLeaderboardOKTimeframeSeasonal:
+		*s = GetTrialLeaderboardOKTimeframeSeasonal
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetTrialLeaderboardTimeframe string
+
+const (
+	GetTrialLeaderboardTimeframeDaily    GetTrialLeaderboardTimeframe = "daily"
+	GetTrialLeaderboardTimeframeWeekly   GetTrialLeaderboardTimeframe = "weekly"
+	GetTrialLeaderboardTimeframeMonthly  GetTrialLeaderboardTimeframe = "monthly"
+	GetTrialLeaderboardTimeframeAllTime  GetTrialLeaderboardTimeframe = "all_time"
+	GetTrialLeaderboardTimeframeSeasonal GetTrialLeaderboardTimeframe = "seasonal"
+)
+
+// AllValues returns all GetTrialLeaderboardTimeframe values.
+func (GetTrialLeaderboardTimeframe) AllValues() []GetTrialLeaderboardTimeframe {
+	return []GetTrialLeaderboardTimeframe{
+		GetTrialLeaderboardTimeframeDaily,
+		GetTrialLeaderboardTimeframeWeekly,
+		GetTrialLeaderboardTimeframeMonthly,
+		GetTrialLeaderboardTimeframeAllTime,
+		GetTrialLeaderboardTimeframeSeasonal,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTrialLeaderboardTimeframe) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTrialLeaderboardTimeframeDaily:
+		return []byte(s), nil
+	case GetTrialLeaderboardTimeframeWeekly:
+		return []byte(s), nil
+	case GetTrialLeaderboardTimeframeMonthly:
+		return []byte(s), nil
+	case GetTrialLeaderboardTimeframeAllTime:
+		return []byte(s), nil
+	case GetTrialLeaderboardTimeframeSeasonal:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTrialLeaderboardTimeframe) UnmarshalText(data []byte) error {
+	switch GetTrialLeaderboardTimeframe(data) {
+	case GetTrialLeaderboardTimeframeDaily:
+		*s = GetTrialLeaderboardTimeframeDaily
+		return nil
+	case GetTrialLeaderboardTimeframeWeekly:
+		*s = GetTrialLeaderboardTimeframeWeekly
+		return nil
+	case GetTrialLeaderboardTimeframeMonthly:
+		*s = GetTrialLeaderboardTimeframeMonthly
+		return nil
+	case GetTrialLeaderboardTimeframeAllTime:
+		*s = GetTrialLeaderboardTimeframeAllTime
+		return nil
+	case GetTrialLeaderboardTimeframeSeasonal:
+		*s = GetTrialLeaderboardTimeframeSeasonal
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetTrialLeaderboardTooManyRequests Error
+
+func (*GetTrialLeaderboardTooManyRequests) getTrialLeaderboardRes() {}
+
+type GetTrialNotFound Error
+
+func (*GetTrialNotFound) getTrialRes() {}
+
+type GetTrialPerformanceAnalyticsBadRequest Error
+
+func (*GetTrialPerformanceAnalyticsBadRequest) getTrialPerformanceAnalyticsRes() {}
+
+type GetTrialPerformanceAnalyticsForbidden Error
+
+func (*GetTrialPerformanceAnalyticsForbidden) getTrialPerformanceAnalyticsRes() {}
+
+type GetTrialPerformanceAnalyticsInternalServerError Error
+
+func (*GetTrialPerformanceAnalyticsInternalServerError) getTrialPerformanceAnalyticsRes() {}
+
+type GetTrialPerformanceAnalyticsNotFound Error
+
+func (*GetTrialPerformanceAnalyticsNotFound) getTrialPerformanceAnalyticsRes() {}
+
+type GetTrialPerformanceAnalyticsOK struct {
+	TrialID   uuid.UUID                             `json:"trial_id"`
+	Timeframe string                                `json:"timeframe"`
+	Metrics   GetTrialPerformanceAnalyticsOKMetrics `json:"metrics"`
+}
+
+// GetTrialID returns the value of TrialID.
+func (s *GetTrialPerformanceAnalyticsOK) GetTrialID() uuid.UUID {
+	return s.TrialID
+}
+
+// GetTimeframe returns the value of Timeframe.
+func (s *GetTrialPerformanceAnalyticsOK) GetTimeframe() string {
+	return s.Timeframe
+}
+
+// GetMetrics returns the value of Metrics.
+func (s *GetTrialPerformanceAnalyticsOK) GetMetrics() GetTrialPerformanceAnalyticsOKMetrics {
+	return s.Metrics
+}
+
+// SetTrialID sets the value of TrialID.
+func (s *GetTrialPerformanceAnalyticsOK) SetTrialID(val uuid.UUID) {
+	s.TrialID = val
+}
+
+// SetTimeframe sets the value of Timeframe.
+func (s *GetTrialPerformanceAnalyticsOK) SetTimeframe(val string) {
+	s.Timeframe = val
+}
+
+// SetMetrics sets the value of Metrics.
+func (s *GetTrialPerformanceAnalyticsOK) SetMetrics(val GetTrialPerformanceAnalyticsOKMetrics) {
+	s.Metrics = val
+}
+
+func (*GetTrialPerformanceAnalyticsOK) getTrialPerformanceAnalyticsRes() {}
+
+type GetTrialPerformanceAnalyticsOKMetrics struct {
+	TotalCompletions      OptInt     `json:"total_completions"`
+	AverageCompletionTime OptFloat64 `json:"average_completion_time"`
+	FastestTime           OptInt     `json:"fastest_time"`
+	SlowestTime           OptInt     `json:"slowest_time"`
+	// Percentage of started trials that were completed.
+	CompletionRate         OptFloat64                                                     `json:"completion_rate"`
+	DifficultyDistribution OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution `json:"difficulty_distribution"`
+}
+
+// GetTotalCompletions returns the value of TotalCompletions.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetTotalCompletions() OptInt {
+	return s.TotalCompletions
+}
+
+// GetAverageCompletionTime returns the value of AverageCompletionTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetAverageCompletionTime() OptFloat64 {
+	return s.AverageCompletionTime
+}
+
+// GetFastestTime returns the value of FastestTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetFastestTime() OptInt {
+	return s.FastestTime
+}
+
+// GetSlowestTime returns the value of SlowestTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetSlowestTime() OptInt {
+	return s.SlowestTime
+}
+
+// GetCompletionRate returns the value of CompletionRate.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetCompletionRate() OptFloat64 {
+	return s.CompletionRate
+}
+
+// GetDifficultyDistribution returns the value of DifficultyDistribution.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) GetDifficultyDistribution() OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution {
+	return s.DifficultyDistribution
+}
+
+// SetTotalCompletions sets the value of TotalCompletions.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetTotalCompletions(val OptInt) {
+	s.TotalCompletions = val
+}
+
+// SetAverageCompletionTime sets the value of AverageCompletionTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetAverageCompletionTime(val OptFloat64) {
+	s.AverageCompletionTime = val
+}
+
+// SetFastestTime sets the value of FastestTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetFastestTime(val OptInt) {
+	s.FastestTime = val
+}
+
+// SetSlowestTime sets the value of SlowestTime.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetSlowestTime(val OptInt) {
+	s.SlowestTime = val
+}
+
+// SetCompletionRate sets the value of CompletionRate.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetCompletionRate(val OptFloat64) {
+	s.CompletionRate = val
+}
+
+// SetDifficultyDistribution sets the value of DifficultyDistribution.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) SetDifficultyDistribution(val OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) {
+	s.DifficultyDistribution = val
+}
+
+type GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution struct {
+	Normal    OptInt `json:"normal"`
+	Heroic    OptInt `json:"heroic"`
+	Mythic    OptInt `json:"mythic"`
+	Legendary OptInt `json:"legendary"`
+}
+
+// GetNormal returns the value of Normal.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) GetNormal() OptInt {
+	return s.Normal
+}
+
+// GetHeroic returns the value of Heroic.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) GetHeroic() OptInt {
+	return s.Heroic
+}
+
+// GetMythic returns the value of Mythic.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) GetMythic() OptInt {
+	return s.Mythic
+}
+
+// GetLegendary returns the value of Legendary.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) GetLegendary() OptInt {
+	return s.Legendary
+}
+
+// SetNormal sets the value of Normal.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) SetNormal(val OptInt) {
+	s.Normal = val
+}
+
+// SetHeroic sets the value of Heroic.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) SetHeroic(val OptInt) {
+	s.Heroic = val
+}
+
+// SetMythic sets the value of Mythic.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) SetMythic(val OptInt) {
+	s.Mythic = val
+}
+
+// SetLegendary sets the value of Legendary.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) SetLegendary(val OptInt) {
+	s.Legendary = val
+}
+
+type GetTrialPerformanceAnalyticsTimeframe string
+
+const (
+	GetTrialPerformanceAnalyticsTimeframeDaily    GetTrialPerformanceAnalyticsTimeframe = "daily"
+	GetTrialPerformanceAnalyticsTimeframeWeekly   GetTrialPerformanceAnalyticsTimeframe = "weekly"
+	GetTrialPerformanceAnalyticsTimeframeMonthly  GetTrialPerformanceAnalyticsTimeframe = "monthly"
+	GetTrialPerformanceAnalyticsTimeframeSeasonal GetTrialPerformanceAnalyticsTimeframe = "seasonal"
+)
+
+// AllValues returns all GetTrialPerformanceAnalyticsTimeframe values.
+func (GetTrialPerformanceAnalyticsTimeframe) AllValues() []GetTrialPerformanceAnalyticsTimeframe {
+	return []GetTrialPerformanceAnalyticsTimeframe{
+		GetTrialPerformanceAnalyticsTimeframeDaily,
+		GetTrialPerformanceAnalyticsTimeframeWeekly,
+		GetTrialPerformanceAnalyticsTimeframeMonthly,
+		GetTrialPerformanceAnalyticsTimeframeSeasonal,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetTrialPerformanceAnalyticsTimeframe) MarshalText() ([]byte, error) {
+	switch s {
+	case GetTrialPerformanceAnalyticsTimeframeDaily:
+		return []byte(s), nil
+	case GetTrialPerformanceAnalyticsTimeframeWeekly:
+		return []byte(s), nil
+	case GetTrialPerformanceAnalyticsTimeframeMonthly:
+		return []byte(s), nil
+	case GetTrialPerformanceAnalyticsTimeframeSeasonal:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetTrialPerformanceAnalyticsTimeframe) UnmarshalText(data []byte) error {
+	switch GetTrialPerformanceAnalyticsTimeframe(data) {
+	case GetTrialPerformanceAnalyticsTimeframeDaily:
+		*s = GetTrialPerformanceAnalyticsTimeframeDaily
+		return nil
+	case GetTrialPerformanceAnalyticsTimeframeWeekly:
+		*s = GetTrialPerformanceAnalyticsTimeframeWeekly
+		return nil
+	case GetTrialPerformanceAnalyticsTimeframeMonthly:
+		*s = GetTrialPerformanceAnalyticsTimeframeMonthly
+		return nil
+	case GetTrialPerformanceAnalyticsTimeframeSeasonal:
+		*s = GetTrialPerformanceAnalyticsTimeframeSeasonal
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetTrialPerformanceAnalyticsUnauthorized Error
+
+func (*GetTrialPerformanceAnalyticsUnauthorized) getTrialPerformanceAnalyticsRes() {}
 
 // Ref: #/components/schemas/LeaderboardEntry
 type LeaderboardEntry struct {
@@ -648,99 +1261,39 @@ func (s *LeaderboardEntryTrialDifficulty) UnmarshalText(data []byte) error {
 	}
 }
 
-type LeaderboardsTrialIdGetOK struct {
-	TrialID   uuid.UUID                         `json:"trial_id"`
-	Timeframe LeaderboardsTrialIdGetOKTimeframe `json:"timeframe"`
-	Entries   []LeaderboardEntry                `json:"entries"`
-	// Total number of valid completions.
-	TotalEntries int `json:"total_entries"`
-	// Last leaderboard update timestamp.
-	LastUpdated OptDateTime `json:"last_updated"`
-}
+type ListTrialsBadRequest Error
 
-// GetTrialID returns the value of TrialID.
-func (s *LeaderboardsTrialIdGetOK) GetTrialID() uuid.UUID {
-	return s.TrialID
-}
+func (*ListTrialsBadRequest) listTrialsRes() {}
 
-// GetTimeframe returns the value of Timeframe.
-func (s *LeaderboardsTrialIdGetOK) GetTimeframe() LeaderboardsTrialIdGetOKTimeframe {
-	return s.Timeframe
-}
-
-// GetEntries returns the value of Entries.
-func (s *LeaderboardsTrialIdGetOK) GetEntries() []LeaderboardEntry {
-	return s.Entries
-}
-
-// GetTotalEntries returns the value of TotalEntries.
-func (s *LeaderboardsTrialIdGetOK) GetTotalEntries() int {
-	return s.TotalEntries
-}
-
-// GetLastUpdated returns the value of LastUpdated.
-func (s *LeaderboardsTrialIdGetOK) GetLastUpdated() OptDateTime {
-	return s.LastUpdated
-}
-
-// SetTrialID sets the value of TrialID.
-func (s *LeaderboardsTrialIdGetOK) SetTrialID(val uuid.UUID) {
-	s.TrialID = val
-}
-
-// SetTimeframe sets the value of Timeframe.
-func (s *LeaderboardsTrialIdGetOK) SetTimeframe(val LeaderboardsTrialIdGetOKTimeframe) {
-	s.Timeframe = val
-}
-
-// SetEntries sets the value of Entries.
-func (s *LeaderboardsTrialIdGetOK) SetEntries(val []LeaderboardEntry) {
-	s.Entries = val
-}
-
-// SetTotalEntries sets the value of TotalEntries.
-func (s *LeaderboardsTrialIdGetOK) SetTotalEntries(val int) {
-	s.TotalEntries = val
-}
-
-// SetLastUpdated sets the value of LastUpdated.
-func (s *LeaderboardsTrialIdGetOK) SetLastUpdated(val OptDateTime) {
-	s.LastUpdated = val
-}
-
-type LeaderboardsTrialIdGetOKTimeframe string
+type ListTrialsDifficulty string
 
 const (
-	LeaderboardsTrialIdGetOKTimeframeDaily    LeaderboardsTrialIdGetOKTimeframe = "daily"
-	LeaderboardsTrialIdGetOKTimeframeWeekly   LeaderboardsTrialIdGetOKTimeframe = "weekly"
-	LeaderboardsTrialIdGetOKTimeframeMonthly  LeaderboardsTrialIdGetOKTimeframe = "monthly"
-	LeaderboardsTrialIdGetOKTimeframeAllTime  LeaderboardsTrialIdGetOKTimeframe = "all_time"
-	LeaderboardsTrialIdGetOKTimeframeSeasonal LeaderboardsTrialIdGetOKTimeframe = "seasonal"
+	ListTrialsDifficultyNormal    ListTrialsDifficulty = "normal"
+	ListTrialsDifficultyHeroic    ListTrialsDifficulty = "heroic"
+	ListTrialsDifficultyMythic    ListTrialsDifficulty = "mythic"
+	ListTrialsDifficultyLegendary ListTrialsDifficulty = "legendary"
 )
 
-// AllValues returns all LeaderboardsTrialIdGetOKTimeframe values.
-func (LeaderboardsTrialIdGetOKTimeframe) AllValues() []LeaderboardsTrialIdGetOKTimeframe {
-	return []LeaderboardsTrialIdGetOKTimeframe{
-		LeaderboardsTrialIdGetOKTimeframeDaily,
-		LeaderboardsTrialIdGetOKTimeframeWeekly,
-		LeaderboardsTrialIdGetOKTimeframeMonthly,
-		LeaderboardsTrialIdGetOKTimeframeAllTime,
-		LeaderboardsTrialIdGetOKTimeframeSeasonal,
+// AllValues returns all ListTrialsDifficulty values.
+func (ListTrialsDifficulty) AllValues() []ListTrialsDifficulty {
+	return []ListTrialsDifficulty{
+		ListTrialsDifficultyNormal,
+		ListTrialsDifficultyHeroic,
+		ListTrialsDifficultyMythic,
+		ListTrialsDifficultyLegendary,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s LeaderboardsTrialIdGetOKTimeframe) MarshalText() ([]byte, error) {
+func (s ListTrialsDifficulty) MarshalText() ([]byte, error) {
 	switch s {
-	case LeaderboardsTrialIdGetOKTimeframeDaily:
+	case ListTrialsDifficultyNormal:
 		return []byte(s), nil
-	case LeaderboardsTrialIdGetOKTimeframeWeekly:
+	case ListTrialsDifficultyHeroic:
 		return []byte(s), nil
-	case LeaderboardsTrialIdGetOKTimeframeMonthly:
+	case ListTrialsDifficultyMythic:
 		return []byte(s), nil
-	case LeaderboardsTrialIdGetOKTimeframeAllTime:
-		return []byte(s), nil
-	case LeaderboardsTrialIdGetOKTimeframeSeasonal:
+	case ListTrialsDifficultyLegendary:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -748,61 +1301,106 @@ func (s LeaderboardsTrialIdGetOKTimeframe) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *LeaderboardsTrialIdGetOKTimeframe) UnmarshalText(data []byte) error {
-	switch LeaderboardsTrialIdGetOKTimeframe(data) {
-	case LeaderboardsTrialIdGetOKTimeframeDaily:
-		*s = LeaderboardsTrialIdGetOKTimeframeDaily
+func (s *ListTrialsDifficulty) UnmarshalText(data []byte) error {
+	switch ListTrialsDifficulty(data) {
+	case ListTrialsDifficultyNormal:
+		*s = ListTrialsDifficultyNormal
 		return nil
-	case LeaderboardsTrialIdGetOKTimeframeWeekly:
-		*s = LeaderboardsTrialIdGetOKTimeframeWeekly
+	case ListTrialsDifficultyHeroic:
+		*s = ListTrialsDifficultyHeroic
 		return nil
-	case LeaderboardsTrialIdGetOKTimeframeMonthly:
-		*s = LeaderboardsTrialIdGetOKTimeframeMonthly
+	case ListTrialsDifficultyMythic:
+		*s = ListTrialsDifficultyMythic
 		return nil
-	case LeaderboardsTrialIdGetOKTimeframeAllTime:
-		*s = LeaderboardsTrialIdGetOKTimeframeAllTime
-		return nil
-	case LeaderboardsTrialIdGetOKTimeframeSeasonal:
-		*s = LeaderboardsTrialIdGetOKTimeframeSeasonal
+	case ListTrialsDifficultyLegendary:
+		*s = ListTrialsDifficultyLegendary
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type LeaderboardsTrialIdGetTimeframe string
+type ListTrialsInternalServerError Error
+
+func (*ListTrialsInternalServerError) listTrialsRes() {}
+
+type ListTrialsOK struct {
+	Trials []TimeTrial `json:"trials"`
+	// Total number of trials matching criteria.
+	Total int `json:"total"`
+	// Results per page.
+	Limit int `json:"limit"`
+	// Pagination offset.
+	Offset int `json:"offset"`
+}
+
+// GetTrials returns the value of Trials.
+func (s *ListTrialsOK) GetTrials() []TimeTrial {
+	return s.Trials
+}
+
+// GetTotal returns the value of Total.
+func (s *ListTrialsOK) GetTotal() int {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *ListTrialsOK) GetLimit() int {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *ListTrialsOK) GetOffset() int {
+	return s.Offset
+}
+
+// SetTrials sets the value of Trials.
+func (s *ListTrialsOK) SetTrials(val []TimeTrial) {
+	s.Trials = val
+}
+
+// SetTotal sets the value of Total.
+func (s *ListTrialsOK) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *ListTrialsOK) SetLimit(val int) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *ListTrialsOK) SetOffset(val int) {
+	s.Offset = val
+}
+
+func (*ListTrialsOK) listTrialsRes() {}
+
+type ListTrialsStatus string
 
 const (
-	LeaderboardsTrialIdGetTimeframeDaily    LeaderboardsTrialIdGetTimeframe = "daily"
-	LeaderboardsTrialIdGetTimeframeWeekly   LeaderboardsTrialIdGetTimeframe = "weekly"
-	LeaderboardsTrialIdGetTimeframeMonthly  LeaderboardsTrialIdGetTimeframe = "monthly"
-	LeaderboardsTrialIdGetTimeframeAllTime  LeaderboardsTrialIdGetTimeframe = "all_time"
-	LeaderboardsTrialIdGetTimeframeSeasonal LeaderboardsTrialIdGetTimeframe = "seasonal"
+	ListTrialsStatusActive     ListTrialsStatus = "active"
+	ListTrialsStatusInactive   ListTrialsStatus = "inactive"
+	ListTrialsStatusDeprecated ListTrialsStatus = "deprecated"
 )
 
-// AllValues returns all LeaderboardsTrialIdGetTimeframe values.
-func (LeaderboardsTrialIdGetTimeframe) AllValues() []LeaderboardsTrialIdGetTimeframe {
-	return []LeaderboardsTrialIdGetTimeframe{
-		LeaderboardsTrialIdGetTimeframeDaily,
-		LeaderboardsTrialIdGetTimeframeWeekly,
-		LeaderboardsTrialIdGetTimeframeMonthly,
-		LeaderboardsTrialIdGetTimeframeAllTime,
-		LeaderboardsTrialIdGetTimeframeSeasonal,
+// AllValues returns all ListTrialsStatus values.
+func (ListTrialsStatus) AllValues() []ListTrialsStatus {
+	return []ListTrialsStatus{
+		ListTrialsStatusActive,
+		ListTrialsStatusInactive,
+		ListTrialsStatusDeprecated,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s LeaderboardsTrialIdGetTimeframe) MarshalText() ([]byte, error) {
+func (s ListTrialsStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case LeaderboardsTrialIdGetTimeframeDaily:
+	case ListTrialsStatusActive:
 		return []byte(s), nil
-	case LeaderboardsTrialIdGetTimeframeWeekly:
+	case ListTrialsStatusInactive:
 		return []byte(s), nil
-	case LeaderboardsTrialIdGetTimeframeMonthly:
-		return []byte(s), nil
-	case LeaderboardsTrialIdGetTimeframeAllTime:
-		return []byte(s), nil
-	case LeaderboardsTrialIdGetTimeframeSeasonal:
+	case ListTrialsStatusDeprecated:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -810,153 +1408,51 @@ func (s LeaderboardsTrialIdGetTimeframe) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *LeaderboardsTrialIdGetTimeframe) UnmarshalText(data []byte) error {
-	switch LeaderboardsTrialIdGetTimeframe(data) {
-	case LeaderboardsTrialIdGetTimeframeDaily:
-		*s = LeaderboardsTrialIdGetTimeframeDaily
+func (s *ListTrialsStatus) UnmarshalText(data []byte) error {
+	switch ListTrialsStatus(data) {
+	case ListTrialsStatusActive:
+		*s = ListTrialsStatusActive
 		return nil
-	case LeaderboardsTrialIdGetTimeframeWeekly:
-		*s = LeaderboardsTrialIdGetTimeframeWeekly
+	case ListTrialsStatusInactive:
+		*s = ListTrialsStatusInactive
 		return nil
-	case LeaderboardsTrialIdGetTimeframeMonthly:
-		*s = LeaderboardsTrialIdGetTimeframeMonthly
-		return nil
-	case LeaderboardsTrialIdGetTimeframeAllTime:
-		*s = LeaderboardsTrialIdGetTimeframeAllTime
-		return nil
-	case LeaderboardsTrialIdGetTimeframeSeasonal:
-		*s = LeaderboardsTrialIdGetTimeframeSeasonal
+	case ListTrialsStatusDeprecated:
+		*s = ListTrialsStatusDeprecated
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type LeaderboardsTrialIdPersonalPlayerIdGetOK struct {
-	PlayerID     string                                               `json:"player_id"`
-	TrialID      uuid.UUID                                            `json:"trial_id"`
-	PersonalBest LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest `json:"personal_best"`
-	// Current global rank (0 = unranked).
-	CurrentRank int `json:"current_rank"`
-	// Rank history for the last 30 days.
-	RankHistory []LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem `json:"rank_history"`
-}
-
-// GetPlayerID returns the value of PlayerID.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) GetPlayerID() string {
-	return s.PlayerID
-}
-
-// GetTrialID returns the value of TrialID.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) GetTrialID() uuid.UUID {
-	return s.TrialID
-}
-
-// GetPersonalBest returns the value of PersonalBest.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) GetPersonalBest() LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest {
-	return s.PersonalBest
-}
-
-// GetCurrentRank returns the value of CurrentRank.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) GetCurrentRank() int {
-	return s.CurrentRank
-}
-
-// GetRankHistory returns the value of RankHistory.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) GetRankHistory() []LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem {
-	return s.RankHistory
-}
-
-// SetPlayerID sets the value of PlayerID.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) SetPlayerID(val string) {
-	s.PlayerID = val
-}
-
-// SetTrialID sets the value of TrialID.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) SetTrialID(val uuid.UUID) {
-	s.TrialID = val
-}
-
-// SetPersonalBest sets the value of PersonalBest.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) SetPersonalBest(val LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) {
-	s.PersonalBest = val
-}
-
-// SetCurrentRank sets the value of CurrentRank.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) SetCurrentRank(val int) {
-	s.CurrentRank = val
-}
-
-// SetRankHistory sets the value of RankHistory.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) SetRankHistory(val []LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) {
-	s.RankHistory = val
-}
-
-type LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest struct {
-	CompletionTime OptInt                                                            `json:"completion_time"`
-	AchievedAt     OptDateTime                                                       `json:"achieved_at"`
-	Difficulty     OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty `json:"difficulty"`
-}
-
-// GetCompletionTime returns the value of CompletionTime.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) GetCompletionTime() OptInt {
-	return s.CompletionTime
-}
-
-// GetAchievedAt returns the value of AchievedAt.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) GetAchievedAt() OptDateTime {
-	return s.AchievedAt
-}
-
-// GetDifficulty returns the value of Difficulty.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) GetDifficulty() OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty {
-	return s.Difficulty
-}
-
-// SetCompletionTime sets the value of CompletionTime.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) SetCompletionTime(val OptInt) {
-	s.CompletionTime = val
-}
-
-// SetAchievedAt sets the value of AchievedAt.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) SetAchievedAt(val OptDateTime) {
-	s.AchievedAt = val
-}
-
-// SetDifficulty sets the value of Difficulty.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) SetDifficulty(val OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) {
-	s.Difficulty = val
-}
-
-type LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty string
+type ListTrialsType string
 
 const (
-	LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal    LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty = "normal"
-	LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic    LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty = "heroic"
-	LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic    LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty = "mythic"
-	LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty = "legendary"
+	ListTrialsTypeSpeedrunRaid      ListTrialsType = "speedrun_raid"
+	ListTrialsTypeTimeAttackDungeon ListTrialsType = "time_attack_dungeon"
+	ListTrialsTypeWeeklyChallenge   ListTrialsType = "weekly_challenge"
+	ListTrialsTypeSeasonalTrial     ListTrialsType = "seasonal_trial"
 )
 
-// AllValues returns all LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty values.
-func (LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) AllValues() []LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty {
-	return []LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty{
-		LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal,
-		LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic,
-		LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic,
-		LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary,
+// AllValues returns all ListTrialsType values.
+func (ListTrialsType) AllValues() []ListTrialsType {
+	return []ListTrialsType{
+		ListTrialsTypeSpeedrunRaid,
+		ListTrialsTypeTimeAttackDungeon,
+		ListTrialsTypeWeeklyChallenge,
+		ListTrialsTypeSeasonalTrial,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) MarshalText() ([]byte, error) {
+func (s ListTrialsType) MarshalText() ([]byte, error) {
 	switch s {
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal:
+	case ListTrialsTypeSpeedrunRaid:
 		return []byte(s), nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic:
+	case ListTrialsTypeTimeAttackDungeon:
 		return []byte(s), nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic:
+	case ListTrialsTypeWeeklyChallenge:
 		return []byte(s), nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary:
+	case ListTrialsTypeSeasonalTrial:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -964,142 +1460,23 @@ func (s LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) MarshalT
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) UnmarshalText(data []byte) error {
-	switch LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty(data) {
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal
+func (s *ListTrialsType) UnmarshalText(data []byte) error {
+	switch ListTrialsType(data) {
+	case ListTrialsTypeSpeedrunRaid:
+		*s = ListTrialsTypeSpeedrunRaid
 		return nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic
+	case ListTrialsTypeTimeAttackDungeon:
+		*s = ListTrialsTypeTimeAttackDungeon
 		return nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic
+	case ListTrialsTypeWeeklyChallenge:
+		*s = ListTrialsTypeWeeklyChallenge
 		return nil
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary
+	case ListTrialsTypeSeasonalTrial:
+		*s = ListTrialsTypeSeasonalTrial
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-type LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem struct {
-	Date OptDate `json:"date"`
-	Rank OptInt  `json:"rank"`
-}
-
-// GetDate returns the value of Date.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) GetDate() OptDate {
-	return s.Date
-}
-
-// GetRank returns the value of Rank.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) GetRank() OptInt {
-	return s.Rank
-}
-
-// SetDate sets the value of Date.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) SetDate(val OptDate) {
-	s.Date = val
-}
-
-// SetRank sets the value of Rank.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) SetRank(val OptInt) {
-	s.Rank = val
-}
-
-// NewOptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution returns new OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution with value set to v.
-func NewOptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution(v AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution {
-	return OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution is optional AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution.
-type OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution struct {
-	Value AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution
-	Set   bool
-}
-
-// IsSet returns true if OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution was set.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) IsSet() bool {
-	return o.Set
-}
-
-// Reset unsets value.
-func (o *OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Reset() {
-	var v AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) SetTo(v AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Get() (v AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Or(d AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptAnalyticsTrialsTrialIdPerformanceGetTimeframe returns new OptAnalyticsTrialsTrialIdPerformanceGetTimeframe with value set to v.
-func NewOptAnalyticsTrialsTrialIdPerformanceGetTimeframe(v AnalyticsTrialsTrialIdPerformanceGetTimeframe) OptAnalyticsTrialsTrialIdPerformanceGetTimeframe {
-	return OptAnalyticsTrialsTrialIdPerformanceGetTimeframe{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAnalyticsTrialsTrialIdPerformanceGetTimeframe is optional AnalyticsTrialsTrialIdPerformanceGetTimeframe.
-type OptAnalyticsTrialsTrialIdPerformanceGetTimeframe struct {
-	Value AnalyticsTrialsTrialIdPerformanceGetTimeframe
-	Set   bool
-}
-
-// IsSet returns true if OptAnalyticsTrialsTrialIdPerformanceGetTimeframe was set.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetTimeframe) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptAnalyticsTrialsTrialIdPerformanceGetTimeframe) Reset() {
-	var v AnalyticsTrialsTrialIdPerformanceGetTimeframe
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAnalyticsTrialsTrialIdPerformanceGetTimeframe) SetTo(v AnalyticsTrialsTrialIdPerformanceGetTimeframe) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetTimeframe) Get() (v AnalyticsTrialsTrialIdPerformanceGetTimeframe, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetTimeframe) Or(d AnalyticsTrialsTrialIdPerformanceGetTimeframe) AnalyticsTrialsTrialIdPerformanceGetTimeframe {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
 }
 
 // NewOptBool returns new OptBool with value set to v.
@@ -1142,6 +1519,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompleteTrialSessionOKValidationStatus returns new OptCompleteTrialSessionOKValidationStatus with value set to v.
+func NewOptCompleteTrialSessionOKValidationStatus(v CompleteTrialSessionOKValidationStatus) OptCompleteTrialSessionOKValidationStatus {
+	return OptCompleteTrialSessionOKValidationStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompleteTrialSessionOKValidationStatus is optional CompleteTrialSessionOKValidationStatus.
+type OptCompleteTrialSessionOKValidationStatus struct {
+	Value CompleteTrialSessionOKValidationStatus
+	Set   bool
+}
+
+// IsSet returns true if OptCompleteTrialSessionOKValidationStatus was set.
+func (o OptCompleteTrialSessionOKValidationStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompleteTrialSessionOKValidationStatus) Reset() {
+	var v CompleteTrialSessionOKValidationStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompleteTrialSessionOKValidationStatus) SetTo(v CompleteTrialSessionOKValidationStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompleteTrialSessionOKValidationStatus) Get() (v CompleteTrialSessionOKValidationStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompleteTrialSessionOKValidationStatus) Or(d CompleteTrialSessionOKValidationStatus) CompleteTrialSessionOKValidationStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1286,38 +1709,38 @@ func (o OptFloat64) Or(d float64) float64 {
 	return d
 }
 
-// NewOptHealthGetOKMetrics returns new OptHealthGetOKMetrics with value set to v.
-func NewOptHealthGetOKMetrics(v HealthGetOKMetrics) OptHealthGetOKMetrics {
-	return OptHealthGetOKMetrics{
+// NewOptGetHealthOKMetrics returns new OptGetHealthOKMetrics with value set to v.
+func NewOptGetHealthOKMetrics(v GetHealthOKMetrics) OptGetHealthOKMetrics {
+	return OptGetHealthOKMetrics{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptHealthGetOKMetrics is optional HealthGetOKMetrics.
-type OptHealthGetOKMetrics struct {
-	Value HealthGetOKMetrics
+// OptGetHealthOKMetrics is optional GetHealthOKMetrics.
+type OptGetHealthOKMetrics struct {
+	Value GetHealthOKMetrics
 	Set   bool
 }
 
-// IsSet returns true if OptHealthGetOKMetrics was set.
-func (o OptHealthGetOKMetrics) IsSet() bool { return o.Set }
+// IsSet returns true if OptGetHealthOKMetrics was set.
+func (o OptGetHealthOKMetrics) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptHealthGetOKMetrics) Reset() {
-	var v HealthGetOKMetrics
+func (o *OptGetHealthOKMetrics) Reset() {
+	var v GetHealthOKMetrics
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptHealthGetOKMetrics) SetTo(v HealthGetOKMetrics) {
+func (o *OptGetHealthOKMetrics) SetTo(v GetHealthOKMetrics) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptHealthGetOKMetrics) Get() (v HealthGetOKMetrics, ok bool) {
+func (o OptGetHealthOKMetrics) Get() (v GetHealthOKMetrics, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1325,7 +1748,191 @@ func (o OptHealthGetOKMetrics) Get() (v HealthGetOKMetrics, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptHealthGetOKMetrics) Or(d HealthGetOKMetrics) HealthGetOKMetrics {
+func (o OptGetHealthOKMetrics) Or(d GetHealthOKMetrics) GetHealthOKMetrics {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetPlayerPersonalRecordOKPersonalBestDifficulty returns new OptGetPlayerPersonalRecordOKPersonalBestDifficulty with value set to v.
+func NewOptGetPlayerPersonalRecordOKPersonalBestDifficulty(v GetPlayerPersonalRecordOKPersonalBestDifficulty) OptGetPlayerPersonalRecordOKPersonalBestDifficulty {
+	return OptGetPlayerPersonalRecordOKPersonalBestDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetPlayerPersonalRecordOKPersonalBestDifficulty is optional GetPlayerPersonalRecordOKPersonalBestDifficulty.
+type OptGetPlayerPersonalRecordOKPersonalBestDifficulty struct {
+	Value GetPlayerPersonalRecordOKPersonalBestDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptGetPlayerPersonalRecordOKPersonalBestDifficulty was set.
+func (o OptGetPlayerPersonalRecordOKPersonalBestDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetPlayerPersonalRecordOKPersonalBestDifficulty) Reset() {
+	var v GetPlayerPersonalRecordOKPersonalBestDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetPlayerPersonalRecordOKPersonalBestDifficulty) SetTo(v GetPlayerPersonalRecordOKPersonalBestDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetPlayerPersonalRecordOKPersonalBestDifficulty) Get() (v GetPlayerPersonalRecordOKPersonalBestDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetPlayerPersonalRecordOKPersonalBestDifficulty) Or(d GetPlayerPersonalRecordOKPersonalBestDifficulty) GetPlayerPersonalRecordOKPersonalBestDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetTrialLeaderboardTimeframe returns new OptGetTrialLeaderboardTimeframe with value set to v.
+func NewOptGetTrialLeaderboardTimeframe(v GetTrialLeaderboardTimeframe) OptGetTrialLeaderboardTimeframe {
+	return OptGetTrialLeaderboardTimeframe{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTrialLeaderboardTimeframe is optional GetTrialLeaderboardTimeframe.
+type OptGetTrialLeaderboardTimeframe struct {
+	Value GetTrialLeaderboardTimeframe
+	Set   bool
+}
+
+// IsSet returns true if OptGetTrialLeaderboardTimeframe was set.
+func (o OptGetTrialLeaderboardTimeframe) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTrialLeaderboardTimeframe) Reset() {
+	var v GetTrialLeaderboardTimeframe
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTrialLeaderboardTimeframe) SetTo(v GetTrialLeaderboardTimeframe) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTrialLeaderboardTimeframe) Get() (v GetTrialLeaderboardTimeframe, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTrialLeaderboardTimeframe) Or(d GetTrialLeaderboardTimeframe) GetTrialLeaderboardTimeframe {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution returns new OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution with value set to v.
+func NewOptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution(v GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution {
+	return OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution is optional GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution.
+type OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution struct {
+	Value GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution
+	Set   bool
+}
+
+// IsSet returns true if OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution was set.
+func (o OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Reset() {
+	var v GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) SetTo(v GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Get() (v GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Or(d GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetTrialPerformanceAnalyticsTimeframe returns new OptGetTrialPerformanceAnalyticsTimeframe with value set to v.
+func NewOptGetTrialPerformanceAnalyticsTimeframe(v GetTrialPerformanceAnalyticsTimeframe) OptGetTrialPerformanceAnalyticsTimeframe {
+	return OptGetTrialPerformanceAnalyticsTimeframe{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetTrialPerformanceAnalyticsTimeframe is optional GetTrialPerformanceAnalyticsTimeframe.
+type OptGetTrialPerformanceAnalyticsTimeframe struct {
+	Value GetTrialPerformanceAnalyticsTimeframe
+	Set   bool
+}
+
+// IsSet returns true if OptGetTrialPerformanceAnalyticsTimeframe was set.
+func (o OptGetTrialPerformanceAnalyticsTimeframe) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetTrialPerformanceAnalyticsTimeframe) Reset() {
+	var v GetTrialPerformanceAnalyticsTimeframe
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetTrialPerformanceAnalyticsTimeframe) SetTo(v GetTrialPerformanceAnalyticsTimeframe) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetTrialPerformanceAnalyticsTimeframe) Get() (v GetTrialPerformanceAnalyticsTimeframe, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetTrialPerformanceAnalyticsTimeframe) Or(d GetTrialPerformanceAnalyticsTimeframe) GetTrialPerformanceAnalyticsTimeframe {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1424,38 +2031,38 @@ func (o OptLeaderboardEntryTrialDifficulty) Or(d LeaderboardEntryTrialDifficulty
 	return d
 }
 
-// NewOptLeaderboardsTrialIdGetTimeframe returns new OptLeaderboardsTrialIdGetTimeframe with value set to v.
-func NewOptLeaderboardsTrialIdGetTimeframe(v LeaderboardsTrialIdGetTimeframe) OptLeaderboardsTrialIdGetTimeframe {
-	return OptLeaderboardsTrialIdGetTimeframe{
+// NewOptListTrialsDifficulty returns new OptListTrialsDifficulty with value set to v.
+func NewOptListTrialsDifficulty(v ListTrialsDifficulty) OptListTrialsDifficulty {
+	return OptListTrialsDifficulty{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptLeaderboardsTrialIdGetTimeframe is optional LeaderboardsTrialIdGetTimeframe.
-type OptLeaderboardsTrialIdGetTimeframe struct {
-	Value LeaderboardsTrialIdGetTimeframe
+// OptListTrialsDifficulty is optional ListTrialsDifficulty.
+type OptListTrialsDifficulty struct {
+	Value ListTrialsDifficulty
 	Set   bool
 }
 
-// IsSet returns true if OptLeaderboardsTrialIdGetTimeframe was set.
-func (o OptLeaderboardsTrialIdGetTimeframe) IsSet() bool { return o.Set }
+// IsSet returns true if OptListTrialsDifficulty was set.
+func (o OptListTrialsDifficulty) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptLeaderboardsTrialIdGetTimeframe) Reset() {
-	var v LeaderboardsTrialIdGetTimeframe
+func (o *OptListTrialsDifficulty) Reset() {
+	var v ListTrialsDifficulty
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptLeaderboardsTrialIdGetTimeframe) SetTo(v LeaderboardsTrialIdGetTimeframe) {
+func (o *OptListTrialsDifficulty) SetTo(v ListTrialsDifficulty) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptLeaderboardsTrialIdGetTimeframe) Get() (v LeaderboardsTrialIdGetTimeframe, ok bool) {
+func (o OptListTrialsDifficulty) Get() (v ListTrialsDifficulty, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1463,45 +2070,45 @@ func (o OptLeaderboardsTrialIdGetTimeframe) Get() (v LeaderboardsTrialIdGetTimef
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptLeaderboardsTrialIdGetTimeframe) Or(d LeaderboardsTrialIdGetTimeframe) LeaderboardsTrialIdGetTimeframe {
+func (o OptListTrialsDifficulty) Or(d ListTrialsDifficulty) ListTrialsDifficulty {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty returns new OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty with value set to v.
-func NewOptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty(v LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty {
-	return OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty{
+// NewOptListTrialsStatus returns new OptListTrialsStatus with value set to v.
+func NewOptListTrialsStatus(v ListTrialsStatus) OptListTrialsStatus {
+	return OptListTrialsStatus{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty is optional LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty.
-type OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty struct {
-	Value LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty
+// OptListTrialsStatus is optional ListTrialsStatus.
+type OptListTrialsStatus struct {
+	Value ListTrialsStatus
 	Set   bool
 }
 
-// IsSet returns true if OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty was set.
-func (o OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) IsSet() bool { return o.Set }
+// IsSet returns true if OptListTrialsStatus was set.
+func (o OptListTrialsStatus) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Reset() {
-	var v LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty
+func (o *OptListTrialsStatus) Reset() {
+	var v ListTrialsStatus
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) SetTo(v LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) {
+func (o *OptListTrialsStatus) SetTo(v ListTrialsStatus) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Get() (v LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty, ok bool) {
+func (o OptListTrialsStatus) Get() (v ListTrialsStatus, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1509,7 +2116,53 @@ func (o OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Get()
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Or(d LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty {
+func (o OptListTrialsStatus) Or(d ListTrialsStatus) ListTrialsStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptListTrialsType returns new OptListTrialsType with value set to v.
+func NewOptListTrialsType(v ListTrialsType) OptListTrialsType {
+	return OptListTrialsType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptListTrialsType is optional ListTrialsType.
+type OptListTrialsType struct {
+	Value ListTrialsType
+	Set   bool
+}
+
+// IsSet returns true if OptListTrialsType was set.
+func (o OptListTrialsType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptListTrialsType) Reset() {
+	var v ListTrialsType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptListTrialsType) SetTo(v ListTrialsType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptListTrialsType) Get() (v ListTrialsType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptListTrialsType) Or(d ListTrialsType) ListTrialsType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1602,6 +2255,52 @@ func (o OptRewardTiersCurrency) Get() (v RewardTiersCurrency, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRewardTiersCurrency) Or(d RewardTiersCurrency) RewardTiersCurrency {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptStartTrialSessionReq returns new OptStartTrialSessionReq with value set to v.
+func NewOptStartTrialSessionReq(v StartTrialSessionReq) OptStartTrialSessionReq {
+	return OptStartTrialSessionReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptStartTrialSessionReq is optional StartTrialSessionReq.
+type OptStartTrialSessionReq struct {
+	Value StartTrialSessionReq
+	Set   bool
+}
+
+// IsSet returns true if OptStartTrialSessionReq was set.
+func (o OptStartTrialSessionReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptStartTrialSessionReq) Reset() {
+	var v StartTrialSessionReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptStartTrialSessionReq) SetTo(v StartTrialSessionReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptStartTrialSessionReq) Get() (v StartTrialSessionReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptStartTrialSessionReq) Or(d StartTrialSessionReq) StartTrialSessionReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1746,236 +2445,6 @@ func (o OptTrialSessionValidationStatus) Or(d TrialSessionValidationStatus) Tria
 	return d
 }
 
-// NewOptTrialsGetDifficulty returns new OptTrialsGetDifficulty with value set to v.
-func NewOptTrialsGetDifficulty(v TrialsGetDifficulty) OptTrialsGetDifficulty {
-	return OptTrialsGetDifficulty{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTrialsGetDifficulty is optional TrialsGetDifficulty.
-type OptTrialsGetDifficulty struct {
-	Value TrialsGetDifficulty
-	Set   bool
-}
-
-// IsSet returns true if OptTrialsGetDifficulty was set.
-func (o OptTrialsGetDifficulty) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTrialsGetDifficulty) Reset() {
-	var v TrialsGetDifficulty
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTrialsGetDifficulty) SetTo(v TrialsGetDifficulty) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTrialsGetDifficulty) Get() (v TrialsGetDifficulty, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTrialsGetDifficulty) Or(d TrialsGetDifficulty) TrialsGetDifficulty {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTrialsGetStatus returns new OptTrialsGetStatus with value set to v.
-func NewOptTrialsGetStatus(v TrialsGetStatus) OptTrialsGetStatus {
-	return OptTrialsGetStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTrialsGetStatus is optional TrialsGetStatus.
-type OptTrialsGetStatus struct {
-	Value TrialsGetStatus
-	Set   bool
-}
-
-// IsSet returns true if OptTrialsGetStatus was set.
-func (o OptTrialsGetStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTrialsGetStatus) Reset() {
-	var v TrialsGetStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTrialsGetStatus) SetTo(v TrialsGetStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTrialsGetStatus) Get() (v TrialsGetStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTrialsGetStatus) Or(d TrialsGetStatus) TrialsGetStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTrialsGetType returns new OptTrialsGetType with value set to v.
-func NewOptTrialsGetType(v TrialsGetType) OptTrialsGetType {
-	return OptTrialsGetType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTrialsGetType is optional TrialsGetType.
-type OptTrialsGetType struct {
-	Value TrialsGetType
-	Set   bool
-}
-
-// IsSet returns true if OptTrialsGetType was set.
-func (o OptTrialsGetType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTrialsGetType) Reset() {
-	var v TrialsGetType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTrialsGetType) SetTo(v TrialsGetType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTrialsGetType) Get() (v TrialsGetType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTrialsGetType) Or(d TrialsGetType) TrialsGetType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTrialsTrialIdCompletePostOKValidationStatus returns new OptTrialsTrialIdCompletePostOKValidationStatus with value set to v.
-func NewOptTrialsTrialIdCompletePostOKValidationStatus(v TrialsTrialIdCompletePostOKValidationStatus) OptTrialsTrialIdCompletePostOKValidationStatus {
-	return OptTrialsTrialIdCompletePostOKValidationStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTrialsTrialIdCompletePostOKValidationStatus is optional TrialsTrialIdCompletePostOKValidationStatus.
-type OptTrialsTrialIdCompletePostOKValidationStatus struct {
-	Value TrialsTrialIdCompletePostOKValidationStatus
-	Set   bool
-}
-
-// IsSet returns true if OptTrialsTrialIdCompletePostOKValidationStatus was set.
-func (o OptTrialsTrialIdCompletePostOKValidationStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTrialsTrialIdCompletePostOKValidationStatus) Reset() {
-	var v TrialsTrialIdCompletePostOKValidationStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTrialsTrialIdCompletePostOKValidationStatus) SetTo(v TrialsTrialIdCompletePostOKValidationStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTrialsTrialIdCompletePostOKValidationStatus) Get() (v TrialsTrialIdCompletePostOKValidationStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTrialsTrialIdCompletePostOKValidationStatus) Or(d TrialsTrialIdCompletePostOKValidationStatus) TrialsTrialIdCompletePostOKValidationStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTrialsTrialIdStartPostReq returns new OptTrialsTrialIdStartPostReq with value set to v.
-func NewOptTrialsTrialIdStartPostReq(v TrialsTrialIdStartPostReq) OptTrialsTrialIdStartPostReq {
-	return OptTrialsTrialIdStartPostReq{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTrialsTrialIdStartPostReq is optional TrialsTrialIdStartPostReq.
-type OptTrialsTrialIdStartPostReq struct {
-	Value TrialsTrialIdStartPostReq
-	Set   bool
-}
-
-// IsSet returns true if OptTrialsTrialIdStartPostReq was set.
-func (o OptTrialsTrialIdStartPostReq) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTrialsTrialIdStartPostReq) Reset() {
-	var v TrialsTrialIdStartPostReq
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTrialsTrialIdStartPostReq) SetTo(v TrialsTrialIdStartPostReq) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTrialsTrialIdStartPostReq) Get() (v TrialsTrialIdStartPostReq, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTrialsTrialIdStartPostReq) Or(d TrialsTrialIdStartPostReq) TrialsTrialIdStartPostReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptUUID returns new OptUUID with value set to v.
 func NewOptUUID(v uuid.UUID) OptUUID {
 	return OptUUID{
@@ -2067,6 +2536,121 @@ func (o OptValidationRules) Or(d ValidationRules) ValidationRules {
 	}
 	return d
 }
+
+type ReportSuspiciousSessionBadRequest Error
+
+func (*ReportSuspiciousSessionBadRequest) reportSuspiciousSessionRes() {}
+
+type ReportSuspiciousSessionConflict Error
+
+func (*ReportSuspiciousSessionConflict) reportSuspiciousSessionRes() {}
+
+type ReportSuspiciousSessionInternalServerError Error
+
+func (*ReportSuspiciousSessionInternalServerError) reportSuspiciousSessionRes() {}
+
+type ReportSuspiciousSessionNotFound Error
+
+func (*ReportSuspiciousSessionNotFound) reportSuspiciousSessionRes() {}
+
+type ReportSuspiciousSessionReq struct {
+	// Reason for reporting.
+	Reason ReportSuspiciousSessionReqReason `json:"reason"`
+	// Additional details about the suspicion.
+	Details OptString `json:"details"`
+	// Links to evidence (screenshots, videos).
+	Evidence []string `json:"evidence"`
+}
+
+// GetReason returns the value of Reason.
+func (s *ReportSuspiciousSessionReq) GetReason() ReportSuspiciousSessionReqReason {
+	return s.Reason
+}
+
+// GetDetails returns the value of Details.
+func (s *ReportSuspiciousSessionReq) GetDetails() OptString {
+	return s.Details
+}
+
+// GetEvidence returns the value of Evidence.
+func (s *ReportSuspiciousSessionReq) GetEvidence() []string {
+	return s.Evidence
+}
+
+// SetReason sets the value of Reason.
+func (s *ReportSuspiciousSessionReq) SetReason(val ReportSuspiciousSessionReqReason) {
+	s.Reason = val
+}
+
+// SetDetails sets the value of Details.
+func (s *ReportSuspiciousSessionReq) SetDetails(val OptString) {
+	s.Details = val
+}
+
+// SetEvidence sets the value of Evidence.
+func (s *ReportSuspiciousSessionReq) SetEvidence(val []string) {
+	s.Evidence = val
+}
+
+// Reason for reporting.
+type ReportSuspiciousSessionReqReason string
+
+const (
+	ReportSuspiciousSessionReqReasonSpeedHack         ReportSuspiciousSessionReqReason = "speed_hack"
+	ReportSuspiciousSessionReqReasonRouteExploit      ReportSuspiciousSessionReqReason = "route_exploit"
+	ReportSuspiciousSessionReqReasonInvalidCompletion ReportSuspiciousSessionReqReason = "invalid_completion"
+	ReportSuspiciousSessionReqReasonOther             ReportSuspiciousSessionReqReason = "other"
+)
+
+// AllValues returns all ReportSuspiciousSessionReqReason values.
+func (ReportSuspiciousSessionReqReason) AllValues() []ReportSuspiciousSessionReqReason {
+	return []ReportSuspiciousSessionReqReason{
+		ReportSuspiciousSessionReqReasonSpeedHack,
+		ReportSuspiciousSessionReqReasonRouteExploit,
+		ReportSuspiciousSessionReqReasonInvalidCompletion,
+		ReportSuspiciousSessionReqReasonOther,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ReportSuspiciousSessionReqReason) MarshalText() ([]byte, error) {
+	switch s {
+	case ReportSuspiciousSessionReqReasonSpeedHack:
+		return []byte(s), nil
+	case ReportSuspiciousSessionReqReasonRouteExploit:
+		return []byte(s), nil
+	case ReportSuspiciousSessionReqReasonInvalidCompletion:
+		return []byte(s), nil
+	case ReportSuspiciousSessionReqReasonOther:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ReportSuspiciousSessionReqReason) UnmarshalText(data []byte) error {
+	switch ReportSuspiciousSessionReqReason(data) {
+	case ReportSuspiciousSessionReqReasonSpeedHack:
+		*s = ReportSuspiciousSessionReqReasonSpeedHack
+		return nil
+	case ReportSuspiciousSessionReqReasonRouteExploit:
+		*s = ReportSuspiciousSessionReqReasonRouteExploit
+		return nil
+	case ReportSuspiciousSessionReqReasonInvalidCompletion:
+		*s = ReportSuspiciousSessionReqReasonInvalidCompletion
+		return nil
+	case ReportSuspiciousSessionReqReasonOther:
+		*s = ReportSuspiciousSessionReqReasonOther
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ReportSuspiciousSessionTooManyRequests Error
+
+func (*ReportSuspiciousSessionTooManyRequests) reportSuspiciousSessionRes() {}
 
 // Ref: #/components/schemas/RewardTiers
 type RewardTiers struct {
@@ -2171,6 +2755,84 @@ func (s *RewardTiersItemsItem) SetQuantity(val OptInt) {
 	s.Quantity = val
 }
 
+type StartTrialSessionBadRequest Error
+
+func (*StartTrialSessionBadRequest) startTrialSessionRes() {}
+
+type StartTrialSessionCreated struct {
+	Session TrialSession `json:"session"`
+	// Server timestamp for synchronization.
+	ServerTime time.Time `json:"server_time"`
+}
+
+// GetSession returns the value of Session.
+func (s *StartTrialSessionCreated) GetSession() TrialSession {
+	return s.Session
+}
+
+// GetServerTime returns the value of ServerTime.
+func (s *StartTrialSessionCreated) GetServerTime() time.Time {
+	return s.ServerTime
+}
+
+// SetSession sets the value of Session.
+func (s *StartTrialSessionCreated) SetSession(val TrialSession) {
+	s.Session = val
+}
+
+// SetServerTime sets the value of ServerTime.
+func (s *StartTrialSessionCreated) SetServerTime(val time.Time) {
+	s.ServerTime = val
+}
+
+func (*StartTrialSessionCreated) startTrialSessionRes() {}
+
+type StartTrialSessionInternalServerError Error
+
+func (*StartTrialSessionInternalServerError) startTrialSessionRes() {}
+
+type StartTrialSessionNotFound Error
+
+func (*StartTrialSessionNotFound) startTrialSessionRes() {}
+
+type StartTrialSessionReq struct {
+	// Party identifier for group trials.
+	PartyID OptUUID `json:"party_id"`
+	// Custom trial settings.
+	CustomSettings *StartTrialSessionReqCustomSettings `json:"custom_settings"`
+}
+
+// GetPartyID returns the value of PartyID.
+func (s *StartTrialSessionReq) GetPartyID() OptUUID {
+	return s.PartyID
+}
+
+// GetCustomSettings returns the value of CustomSettings.
+func (s *StartTrialSessionReq) GetCustomSettings() *StartTrialSessionReqCustomSettings {
+	return s.CustomSettings
+}
+
+// SetPartyID sets the value of PartyID.
+func (s *StartTrialSessionReq) SetPartyID(val OptUUID) {
+	s.PartyID = val
+}
+
+// SetCustomSettings sets the value of CustomSettings.
+func (s *StartTrialSessionReq) SetCustomSettings(val *StartTrialSessionReqCustomSettings) {
+	s.CustomSettings = val
+}
+
+// Custom trial settings.
+type StartTrialSessionReqCustomSettings struct{}
+
+type StartTrialSessionTooManyRequests Error
+
+func (*StartTrialSessionTooManyRequests) startTrialSessionRes() {}
+
+type StartTrialSessionUnauthorized Error
+
+func (*StartTrialSessionUnauthorized) startTrialSessionRes() {}
+
 // Ref: #/components/schemas/SuccessResponse
 type SuccessResponse struct {
 	Success bool `json:"success"`
@@ -2210,7 +2872,7 @@ func (s *SuccessResponse) SetMetadata(val *SuccessResponseMetadata) {
 	s.Metadata = val
 }
 
-func (*SuccessResponse) validationSessionsSessionIdReportPostRes() {}
+func (*SuccessResponse) reportSuspiciousSessionRes() {}
 
 // Response data.
 type SuccessResponseData struct{}
@@ -2388,9 +3050,9 @@ func (s *TimeTrial) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
-func (*TimeTrial) trialsPostRes()       {}
-func (*TimeTrial) trialsTrialIdGetRes() {}
-func (*TimeTrial) trialsTrialIdPutRes() {}
+func (*TimeTrial) createTrialRes() {}
+func (*TimeTrial) getTrialRes()    {}
+func (*TimeTrial) updateTrialRes() {}
 
 // Trial difficulty level.
 type TimeTrialDifficulty string
@@ -2914,449 +3576,25 @@ func (s *TrialSessionValidationStatus) UnmarshalText(data []byte) error {
 	}
 }
 
-type TrialsGetDifficulty string
+type UpdateTrialBadRequest Error
 
-const (
-	TrialsGetDifficultyNormal    TrialsGetDifficulty = "normal"
-	TrialsGetDifficultyHeroic    TrialsGetDifficulty = "heroic"
-	TrialsGetDifficultyMythic    TrialsGetDifficulty = "mythic"
-	TrialsGetDifficultyLegendary TrialsGetDifficulty = "legendary"
-)
+func (*UpdateTrialBadRequest) updateTrialRes() {}
 
-// AllValues returns all TrialsGetDifficulty values.
-func (TrialsGetDifficulty) AllValues() []TrialsGetDifficulty {
-	return []TrialsGetDifficulty{
-		TrialsGetDifficultyNormal,
-		TrialsGetDifficultyHeroic,
-		TrialsGetDifficultyMythic,
-		TrialsGetDifficultyLegendary,
-	}
-}
+type UpdateTrialForbidden Error
 
-// MarshalText implements encoding.TextMarshaler.
-func (s TrialsGetDifficulty) MarshalText() ([]byte, error) {
-	switch s {
-	case TrialsGetDifficultyNormal:
-		return []byte(s), nil
-	case TrialsGetDifficultyHeroic:
-		return []byte(s), nil
-	case TrialsGetDifficultyMythic:
-		return []byte(s), nil
-	case TrialsGetDifficultyLegendary:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
+func (*UpdateTrialForbidden) updateTrialRes() {}
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *TrialsGetDifficulty) UnmarshalText(data []byte) error {
-	switch TrialsGetDifficulty(data) {
-	case TrialsGetDifficultyNormal:
-		*s = TrialsGetDifficultyNormal
-		return nil
-	case TrialsGetDifficultyHeroic:
-		*s = TrialsGetDifficultyHeroic
-		return nil
-	case TrialsGetDifficultyMythic:
-		*s = TrialsGetDifficultyMythic
-		return nil
-	case TrialsGetDifficultyLegendary:
-		*s = TrialsGetDifficultyLegendary
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
+type UpdateTrialInternalServerError Error
 
-type TrialsGetOK struct {
-	Trials []TimeTrial `json:"trials"`
-	// Total number of trials matching criteria.
-	Total int `json:"total"`
-	// Results per page.
-	Limit int `json:"limit"`
-	// Pagination offset.
-	Offset int `json:"offset"`
-}
+func (*UpdateTrialInternalServerError) updateTrialRes() {}
 
-// GetTrials returns the value of Trials.
-func (s *TrialsGetOK) GetTrials() []TimeTrial {
-	return s.Trials
-}
+type UpdateTrialNotFound Error
 
-// GetTotal returns the value of Total.
-func (s *TrialsGetOK) GetTotal() int {
-	return s.Total
-}
+func (*UpdateTrialNotFound) updateTrialRes() {}
 
-// GetLimit returns the value of Limit.
-func (s *TrialsGetOK) GetLimit() int {
-	return s.Limit
-}
+type UpdateTrialUnauthorized Error
 
-// GetOffset returns the value of Offset.
-func (s *TrialsGetOK) GetOffset() int {
-	return s.Offset
-}
-
-// SetTrials sets the value of Trials.
-func (s *TrialsGetOK) SetTrials(val []TimeTrial) {
-	s.Trials = val
-}
-
-// SetTotal sets the value of Total.
-func (s *TrialsGetOK) SetTotal(val int) {
-	s.Total = val
-}
-
-// SetLimit sets the value of Limit.
-func (s *TrialsGetOK) SetLimit(val int) {
-	s.Limit = val
-}
-
-// SetOffset sets the value of Offset.
-func (s *TrialsGetOK) SetOffset(val int) {
-	s.Offset = val
-}
-
-type TrialsGetStatus string
-
-const (
-	TrialsGetStatusActive     TrialsGetStatus = "active"
-	TrialsGetStatusInactive   TrialsGetStatus = "inactive"
-	TrialsGetStatusDeprecated TrialsGetStatus = "deprecated"
-)
-
-// AllValues returns all TrialsGetStatus values.
-func (TrialsGetStatus) AllValues() []TrialsGetStatus {
-	return []TrialsGetStatus{
-		TrialsGetStatusActive,
-		TrialsGetStatusInactive,
-		TrialsGetStatusDeprecated,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s TrialsGetStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case TrialsGetStatusActive:
-		return []byte(s), nil
-	case TrialsGetStatusInactive:
-		return []byte(s), nil
-	case TrialsGetStatusDeprecated:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *TrialsGetStatus) UnmarshalText(data []byte) error {
-	switch TrialsGetStatus(data) {
-	case TrialsGetStatusActive:
-		*s = TrialsGetStatusActive
-		return nil
-	case TrialsGetStatusInactive:
-		*s = TrialsGetStatusInactive
-		return nil
-	case TrialsGetStatusDeprecated:
-		*s = TrialsGetStatusDeprecated
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type TrialsGetType string
-
-const (
-	TrialsGetTypeSpeedrunRaid      TrialsGetType = "speedrun_raid"
-	TrialsGetTypeTimeAttackDungeon TrialsGetType = "time_attack_dungeon"
-	TrialsGetTypeWeeklyChallenge   TrialsGetType = "weekly_challenge"
-	TrialsGetTypeSeasonalTrial     TrialsGetType = "seasonal_trial"
-)
-
-// AllValues returns all TrialsGetType values.
-func (TrialsGetType) AllValues() []TrialsGetType {
-	return []TrialsGetType{
-		TrialsGetTypeSpeedrunRaid,
-		TrialsGetTypeTimeAttackDungeon,
-		TrialsGetTypeWeeklyChallenge,
-		TrialsGetTypeSeasonalTrial,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s TrialsGetType) MarshalText() ([]byte, error) {
-	switch s {
-	case TrialsGetTypeSpeedrunRaid:
-		return []byte(s), nil
-	case TrialsGetTypeTimeAttackDungeon:
-		return []byte(s), nil
-	case TrialsGetTypeWeeklyChallenge:
-		return []byte(s), nil
-	case TrialsGetTypeSeasonalTrial:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *TrialsGetType) UnmarshalText(data []byte) error {
-	switch TrialsGetType(data) {
-	case TrialsGetTypeSpeedrunRaid:
-		*s = TrialsGetTypeSpeedrunRaid
-		return nil
-	case TrialsGetTypeTimeAttackDungeon:
-		*s = TrialsGetTypeTimeAttackDungeon
-		return nil
-	case TrialsGetTypeWeeklyChallenge:
-		*s = TrialsGetTypeWeeklyChallenge
-		return nil
-	case TrialsGetTypeSeasonalTrial:
-		*s = TrialsGetTypeSeasonalTrial
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type TrialsPostBadRequest Error
-
-func (*TrialsPostBadRequest) trialsPostRes() {}
-
-type TrialsPostUnauthorized Error
-
-func (*TrialsPostUnauthorized) trialsPostRes() {}
-
-type TrialsTrialIdCompletePostOK struct {
-	Session TrialSession `json:"session"`
-	Rewards RewardTiers  `json:"rewards"`
-	// New leaderboard rank (0 = not ranked).
-	LeaderboardRank int `json:"leaderboard_rank"`
-	// Initial validation status.
-	ValidationStatus OptTrialsTrialIdCompletePostOKValidationStatus `json:"validation_status"`
-}
-
-// GetSession returns the value of Session.
-func (s *TrialsTrialIdCompletePostOK) GetSession() TrialSession {
-	return s.Session
-}
-
-// GetRewards returns the value of Rewards.
-func (s *TrialsTrialIdCompletePostOK) GetRewards() RewardTiers {
-	return s.Rewards
-}
-
-// GetLeaderboardRank returns the value of LeaderboardRank.
-func (s *TrialsTrialIdCompletePostOK) GetLeaderboardRank() int {
-	return s.LeaderboardRank
-}
-
-// GetValidationStatus returns the value of ValidationStatus.
-func (s *TrialsTrialIdCompletePostOK) GetValidationStatus() OptTrialsTrialIdCompletePostOKValidationStatus {
-	return s.ValidationStatus
-}
-
-// SetSession sets the value of Session.
-func (s *TrialsTrialIdCompletePostOK) SetSession(val TrialSession) {
-	s.Session = val
-}
-
-// SetRewards sets the value of Rewards.
-func (s *TrialsTrialIdCompletePostOK) SetRewards(val RewardTiers) {
-	s.Rewards = val
-}
-
-// SetLeaderboardRank sets the value of LeaderboardRank.
-func (s *TrialsTrialIdCompletePostOK) SetLeaderboardRank(val int) {
-	s.LeaderboardRank = val
-}
-
-// SetValidationStatus sets the value of ValidationStatus.
-func (s *TrialsTrialIdCompletePostOK) SetValidationStatus(val OptTrialsTrialIdCompletePostOKValidationStatus) {
-	s.ValidationStatus = val
-}
-
-func (*TrialsTrialIdCompletePostOK) trialsTrialIdCompletePostRes() {}
-
-// Initial validation status.
-type TrialsTrialIdCompletePostOKValidationStatus string
-
-const (
-	TrialsTrialIdCompletePostOKValidationStatusPending TrialsTrialIdCompletePostOKValidationStatus = "pending"
-	TrialsTrialIdCompletePostOKValidationStatusValid   TrialsTrialIdCompletePostOKValidationStatus = "valid"
-	TrialsTrialIdCompletePostOKValidationStatusInvalid TrialsTrialIdCompletePostOKValidationStatus = "invalid"
-)
-
-// AllValues returns all TrialsTrialIdCompletePostOKValidationStatus values.
-func (TrialsTrialIdCompletePostOKValidationStatus) AllValues() []TrialsTrialIdCompletePostOKValidationStatus {
-	return []TrialsTrialIdCompletePostOKValidationStatus{
-		TrialsTrialIdCompletePostOKValidationStatusPending,
-		TrialsTrialIdCompletePostOKValidationStatusValid,
-		TrialsTrialIdCompletePostOKValidationStatusInvalid,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s TrialsTrialIdCompletePostOKValidationStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case TrialsTrialIdCompletePostOKValidationStatusPending:
-		return []byte(s), nil
-	case TrialsTrialIdCompletePostOKValidationStatusValid:
-		return []byte(s), nil
-	case TrialsTrialIdCompletePostOKValidationStatusInvalid:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *TrialsTrialIdCompletePostOKValidationStatus) UnmarshalText(data []byte) error {
-	switch TrialsTrialIdCompletePostOKValidationStatus(data) {
-	case TrialsTrialIdCompletePostOKValidationStatusPending:
-		*s = TrialsTrialIdCompletePostOKValidationStatusPending
-		return nil
-	case TrialsTrialIdCompletePostOKValidationStatusValid:
-		*s = TrialsTrialIdCompletePostOKValidationStatusValid
-		return nil
-	case TrialsTrialIdCompletePostOKValidationStatusInvalid:
-		*s = TrialsTrialIdCompletePostOKValidationStatusInvalid
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type TrialsTrialIdCompletePostReq struct {
-	// Total completion time in seconds.
-	CompletionTime int `json:"completion_time"`
-	// Completion percentage.
-	ProgressPercentage int `json:"progress_percentage"`
-	// Additional telemetry and validation data.
-	TelemetryData *TrialsTrialIdCompletePostReqTelemetryData `json:"telemetry_data"`
-	// List of party member IDs.
-	PartyMembers []string `json:"party_members"`
-}
-
-// GetCompletionTime returns the value of CompletionTime.
-func (s *TrialsTrialIdCompletePostReq) GetCompletionTime() int {
-	return s.CompletionTime
-}
-
-// GetProgressPercentage returns the value of ProgressPercentage.
-func (s *TrialsTrialIdCompletePostReq) GetProgressPercentage() int {
-	return s.ProgressPercentage
-}
-
-// GetTelemetryData returns the value of TelemetryData.
-func (s *TrialsTrialIdCompletePostReq) GetTelemetryData() *TrialsTrialIdCompletePostReqTelemetryData {
-	return s.TelemetryData
-}
-
-// GetPartyMembers returns the value of PartyMembers.
-func (s *TrialsTrialIdCompletePostReq) GetPartyMembers() []string {
-	return s.PartyMembers
-}
-
-// SetCompletionTime sets the value of CompletionTime.
-func (s *TrialsTrialIdCompletePostReq) SetCompletionTime(val int) {
-	s.CompletionTime = val
-}
-
-// SetProgressPercentage sets the value of ProgressPercentage.
-func (s *TrialsTrialIdCompletePostReq) SetProgressPercentage(val int) {
-	s.ProgressPercentage = val
-}
-
-// SetTelemetryData sets the value of TelemetryData.
-func (s *TrialsTrialIdCompletePostReq) SetTelemetryData(val *TrialsTrialIdCompletePostReqTelemetryData) {
-	s.TelemetryData = val
-}
-
-// SetPartyMembers sets the value of PartyMembers.
-func (s *TrialsTrialIdCompletePostReq) SetPartyMembers(val []string) {
-	s.PartyMembers = val
-}
-
-// Additional telemetry and validation data.
-type TrialsTrialIdCompletePostReqTelemetryData struct{}
-
-type TrialsTrialIdPutBadRequest Error
-
-func (*TrialsTrialIdPutBadRequest) trialsTrialIdPutRes() {}
-
-type TrialsTrialIdPutNotFound Error
-
-func (*TrialsTrialIdPutNotFound) trialsTrialIdPutRes() {}
-
-type TrialsTrialIdStartPostBadRequest Error
-
-func (*TrialsTrialIdStartPostBadRequest) trialsTrialIdStartPostRes() {}
-
-type TrialsTrialIdStartPostCreated struct {
-	Session TrialSession `json:"session"`
-	// Server timestamp for synchronization.
-	ServerTime time.Time `json:"server_time"`
-}
-
-// GetSession returns the value of Session.
-func (s *TrialsTrialIdStartPostCreated) GetSession() TrialSession {
-	return s.Session
-}
-
-// GetServerTime returns the value of ServerTime.
-func (s *TrialsTrialIdStartPostCreated) GetServerTime() time.Time {
-	return s.ServerTime
-}
-
-// SetSession sets the value of Session.
-func (s *TrialsTrialIdStartPostCreated) SetSession(val TrialSession) {
-	s.Session = val
-}
-
-// SetServerTime sets the value of ServerTime.
-func (s *TrialsTrialIdStartPostCreated) SetServerTime(val time.Time) {
-	s.ServerTime = val
-}
-
-func (*TrialsTrialIdStartPostCreated) trialsTrialIdStartPostRes() {}
-
-type TrialsTrialIdStartPostNotFound Error
-
-func (*TrialsTrialIdStartPostNotFound) trialsTrialIdStartPostRes() {}
-
-type TrialsTrialIdStartPostReq struct {
-	// Party identifier for group trials.
-	PartyID OptUUID `json:"party_id"`
-	// Custom trial settings.
-	CustomSettings *TrialsTrialIdStartPostReqCustomSettings `json:"custom_settings"`
-}
-
-// GetPartyID returns the value of PartyID.
-func (s *TrialsTrialIdStartPostReq) GetPartyID() OptUUID {
-	return s.PartyID
-}
-
-// GetCustomSettings returns the value of CustomSettings.
-func (s *TrialsTrialIdStartPostReq) GetCustomSettings() *TrialsTrialIdStartPostReqCustomSettings {
-	return s.CustomSettings
-}
-
-// SetPartyID sets the value of PartyID.
-func (s *TrialsTrialIdStartPostReq) SetPartyID(val OptUUID) {
-	s.PartyID = val
-}
-
-// SetCustomSettings sets the value of CustomSettings.
-func (s *TrialsTrialIdStartPostReq) SetCustomSettings(val *TrialsTrialIdStartPostReqCustomSettings) {
-	s.CustomSettings = val
-}
-
-// Custom trial settings.
-type TrialsTrialIdStartPostReqCustomSettings struct{}
+func (*UpdateTrialUnauthorized) updateTrialRes() {}
 
 // Ref: #/components/schemas/ValidationRules
 type ValidationRules struct {
@@ -3459,109 +3697,6 @@ func (s *ValidationRulesAllowedModifiersItem) UnmarshalText(data []byte) error {
 		return nil
 	case ValidationRulesAllowedModifiersItemAbilityMod:
 		*s = ValidationRulesAllowedModifiersItemAbilityMod
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type ValidationSessionsSessionIdReportPostBadRequest Error
-
-func (*ValidationSessionsSessionIdReportPostBadRequest) validationSessionsSessionIdReportPostRes() {}
-
-type ValidationSessionsSessionIdReportPostNotFound Error
-
-func (*ValidationSessionsSessionIdReportPostNotFound) validationSessionsSessionIdReportPostRes() {}
-
-type ValidationSessionsSessionIdReportPostReq struct {
-	// Reason for reporting.
-	Reason ValidationSessionsSessionIdReportPostReqReason `json:"reason"`
-	// Additional details about the suspicion.
-	Details OptString `json:"details"`
-	// Links to evidence (screenshots, videos).
-	Evidence []string `json:"evidence"`
-}
-
-// GetReason returns the value of Reason.
-func (s *ValidationSessionsSessionIdReportPostReq) GetReason() ValidationSessionsSessionIdReportPostReqReason {
-	return s.Reason
-}
-
-// GetDetails returns the value of Details.
-func (s *ValidationSessionsSessionIdReportPostReq) GetDetails() OptString {
-	return s.Details
-}
-
-// GetEvidence returns the value of Evidence.
-func (s *ValidationSessionsSessionIdReportPostReq) GetEvidence() []string {
-	return s.Evidence
-}
-
-// SetReason sets the value of Reason.
-func (s *ValidationSessionsSessionIdReportPostReq) SetReason(val ValidationSessionsSessionIdReportPostReqReason) {
-	s.Reason = val
-}
-
-// SetDetails sets the value of Details.
-func (s *ValidationSessionsSessionIdReportPostReq) SetDetails(val OptString) {
-	s.Details = val
-}
-
-// SetEvidence sets the value of Evidence.
-func (s *ValidationSessionsSessionIdReportPostReq) SetEvidence(val []string) {
-	s.Evidence = val
-}
-
-// Reason for reporting.
-type ValidationSessionsSessionIdReportPostReqReason string
-
-const (
-	ValidationSessionsSessionIdReportPostReqReasonSpeedHack         ValidationSessionsSessionIdReportPostReqReason = "speed_hack"
-	ValidationSessionsSessionIdReportPostReqReasonRouteExploit      ValidationSessionsSessionIdReportPostReqReason = "route_exploit"
-	ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion ValidationSessionsSessionIdReportPostReqReason = "invalid_completion"
-	ValidationSessionsSessionIdReportPostReqReasonOther             ValidationSessionsSessionIdReportPostReqReason = "other"
-)
-
-// AllValues returns all ValidationSessionsSessionIdReportPostReqReason values.
-func (ValidationSessionsSessionIdReportPostReqReason) AllValues() []ValidationSessionsSessionIdReportPostReqReason {
-	return []ValidationSessionsSessionIdReportPostReqReason{
-		ValidationSessionsSessionIdReportPostReqReasonSpeedHack,
-		ValidationSessionsSessionIdReportPostReqReasonRouteExploit,
-		ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion,
-		ValidationSessionsSessionIdReportPostReqReasonOther,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ValidationSessionsSessionIdReportPostReqReason) MarshalText() ([]byte, error) {
-	switch s {
-	case ValidationSessionsSessionIdReportPostReqReasonSpeedHack:
-		return []byte(s), nil
-	case ValidationSessionsSessionIdReportPostReqReasonRouteExploit:
-		return []byte(s), nil
-	case ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion:
-		return []byte(s), nil
-	case ValidationSessionsSessionIdReportPostReqReasonOther:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ValidationSessionsSessionIdReportPostReqReason) UnmarshalText(data []byte) error {
-	switch ValidationSessionsSessionIdReportPostReqReason(data) {
-	case ValidationSessionsSessionIdReportPostReqReasonSpeedHack:
-		*s = ValidationSessionsSessionIdReportPostReqReasonSpeedHack
-		return nil
-	case ValidationSessionsSessionIdReportPostReqReasonRouteExploit:
-		*s = ValidationSessionsSessionIdReportPostReqReasonRouteExploit
-		return nil
-	case ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion:
-		*s = ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion
-		return nil
-	case ValidationSessionsSessionIdReportPostReqReasonOther:
-		*s = ValidationSessionsSessionIdReportPostReqReasonOther
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

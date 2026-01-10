@@ -1,0 +1,636 @@
+metadata:
+  id: dynamic-quest-system-technical-spec
+  title: "Техническая Спецификация: Система Динамических Квестов"
+  document_type: implementation
+  category: technical_specification
+  status: design_complete
+  version: 1.0.0
+  last_updated: 2026-01-10 18:50:00+00:00
+  owners:
+  - role: technical_lead
+    contact: tech@necp.game
+  - role: backend_engineer
+    contact: backend@necp.game
+  tags:
+  - dynamic-quests
+  - technical-spec
+  - api-design
+  - data-architecture
+  topics:
+  - quest_system_architecture
+  - dynamic_content_generation
+  - player_choice_processing
+  - narrative_ai_integration
+  related_systems:
+  - quest-service
+  - narrative-service
+  - character-service
+  - ai-companion-service
+  related_documents:
+  - id: dynamic-quest-system-player-choice-driven
+    relation: implements
+  - id: quest-service-api
+    relation: extends
+
+technical_specification:
+  system_overview:
+    architecture_pattern: "Event-Driven Microservices with AI Orchestration"
+    primary_components:
+      - quest_engine_service: "Core quest processing and state management"
+      - narrative_ai_service: "AI-powered story generation and adaptation"
+      - choice_processor_service: "Real-time choice validation and consequence calculation"
+      - quest_state_persistence: "Distributed state storage with optimistic locking"
+
+    data_flow:
+      player_choice -> choice_processor -> consequence_calculation -> narrative_ai -> quest_state_update -> player_notification
+
+  api_design:
+
+    quest_engine_api:
+      base_path: "/api/v1/quest-engine"
+
+      endpoints:
+
+        get_active_quests:
+          method: GET
+          path: "/players/{playerId}/quests"
+          summary: "Получить активные квесты игрока"
+          parameters:
+            - name: playerId
+              in: path
+              required: true
+              schema:
+                type: string
+                format: uuid
+            - name: include_choices
+              in: query
+              schema:
+                type: boolean
+                default: true
+          responses:
+            '200':
+              description: "Список активных квестов"
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      quests:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QuestInstance'
+                      total_count:
+                        type: integer
+
+        make_choice:
+          method: POST
+          path: "/players/{playerId}/quests/{questId}/choices"
+          summary: "Сделать выбор в квесте"
+          parameters:
+            - name: playerId
+              in: path
+              required: true
+              schema:
+                type: string
+                format: uuid
+            - name: questId
+              in: path
+              required: true
+              schema:
+                type: string
+                format: uuid
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - choice_id
+                  properties:
+                    choice_id:
+                      type: string
+                      format: uuid
+                    choice_metadata:
+                      type: object
+                      additionalProperties: true
+          responses:
+            '200':
+              description: "Выбор принят"
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      quest_update:
+                        $ref: '#/components/schemas/QuestUpdate'
+                      immediate_effects:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GameEffect'
+                      narrative_response:
+                        type: string
+            '400':
+              description: "Неверный выбор или условия не выполнены"
+            '404':
+              description: "Квест или выбор не найдены"
+
+        get_quest_state:
+          method: GET
+          path: "/players/{playerId}/quests/{questId}/state"
+          summary: "Получить полное состояние квеста"
+          parameters:
+            - name: playerId
+              in: path
+              required: true
+              schema:
+                type: string
+                format: uuid
+            - name: questId
+              in: path
+              required: true
+              schema:
+                type: string
+                format: uuid
+          responses:
+            '200':
+              description: "Полное состояние квеста"
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/QuestState'
+
+    narrative_ai_api:
+      base_path: "/api/v1/narrative-ai"
+
+      endpoints:
+
+        generate_narrative:
+          method: POST
+          path: "/generate"
+          summary: "Сгенерировать нарративный контент"
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - context
+                    - prompt_type
+                  properties:
+                    context:
+                      $ref: '#/components/schemas/NarrativeContext'
+                    prompt_type:
+                      type: string
+                      enum: [dialogue, description, consequence, branch]
+                    player_history:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PlayerChoice'
+          responses:
+            '200':
+              description: "Сгенерированный контент"
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      metadata:
+                        type: object
+                        properties:
+                          coherence_score:
+                            type: number
+                            minimum: 0
+                            maximum: 1
+                          emotional_impact:
+                            type: string
+                            enum: [low, medium, high]
+
+  data_models:
+
+    QuestInstance:
+      type: object
+      required:
+        - quest_id
+        - player_id
+        - current_node_id
+        - status
+        - created_at
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: "Уникальный ID экземпляра квеста"
+        player_id:
+          type: string
+          format: uuid
+          description: "ID игрока"
+        quest_template_id:
+          type: string
+          format: uuid
+          description: "ID шаблона квеста"
+        current_node_id:
+          type: string
+          format: uuid
+          description: "Текущий узел квеста"
+        status:
+          type: string
+          enum: [active, paused, completed, failed, abandoned]
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        choice_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerChoice'
+        world_state_snapshot:
+          type: object
+          description: "Снимок состояния мира на момент создания квеста"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    PlayerChoice:
+      type: object
+      required:
+        - choice_id
+        - node_id
+        - choice_text
+        - timestamp
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        node_id:
+          type: string
+          format: uuid
+        choice_text:
+          type: string
+        consequences_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEffect'
+        narrative_impact:
+          type: object
+          description: "Влияние на нарратив"
+        timestamp:
+          type: string
+          format: date-time
+
+    GameEffect:
+      type: object
+      required:
+        - effect_type
+        - target_type
+        - target_id
+      properties:
+        effect_type:
+          type: string
+          enum: [stat_change, item_grant, reputation_change, relationship_change, world_state_change, quest_unlock]
+        target_type:
+          type: string
+          enum: [player, npc, faction, location, world]
+        target_id:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+          additionalProperties: true
+        delay_ticks:
+          type: integer
+          minimum: 0
+          description: "Задержка в игровых тиках"
+        duration_ticks:
+          type: integer
+          minimum: 0
+          description: "Длительность эффекта в тиках"
+
+    QuestNode:
+      type: object
+      required:
+        - node_id
+        - node_type
+        - content
+      properties:
+        node_id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum: [narrative, choice, event, consequence, end]
+        content:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            media_assets:
+              type: array
+              items:
+                type: string
+            choices:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChoiceOption'
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Condition'
+        metadata:
+          type: object
+          properties:
+            difficulty:
+              type: number
+              minimum: 0
+              maximum: 1
+            emotional_weight:
+              type: integer
+              minimum: 1
+              maximum: 10
+            world_impact:
+              type: string
+              enum: [none, local, regional, global]
+
+    ChoiceOption:
+      type: object
+      required:
+        - choice_id
+        - text
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Condition'
+        immediate_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEffect'
+        narrative_branches:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: "Node IDs для ветвления"
+
+    Condition:
+      type: object
+      required:
+        - condition_type
+      properties:
+        condition_type:
+          type: string
+          enum: [stat_check, item_check, reputation_check, quest_completed, world_state_check, relationship_check]
+        parameters:
+          type: object
+          additionalProperties: true
+        operator:
+          type: string
+          enum: [equals, greater_than, less_than, contains, not_contains]
+        value:
+          type: string
+
+    NarrativeContext:
+      type: object
+      required:
+        - player_id
+        - quest_context
+        - world_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quest_context:
+          type: object
+          properties:
+            quest_id:
+              type: string
+              format: uuid
+            current_node:
+              type: string
+              format: uuid
+            choice_history:
+              type: array
+              items:
+                $ref: '#/components/schemas/PlayerChoice'
+        world_state:
+          type: object
+          description: "Текущее состояние мира"
+        player_characteristics:
+          type: object
+          properties:
+            personality_traits:
+              type: array
+              items:
+                type: string
+            playstyle:
+              type: string
+              enum: [aggressive, diplomatic, stealthy, exploratory, social]
+            moral_alignment:
+              type: number
+              minimum: -1
+              maximum: 1
+
+  database_schema:
+
+    quest_instances:
+      table: gameplay.quest_instances
+      columns:
+        - name: quest_instance_id
+          type: uuid
+          primary_key: true
+        - name: player_id
+          type: uuid
+          not_null: true
+          foreign_key: characters.players(player_id)
+        - name: quest_template_id
+          type: uuid
+          not_null: true
+        - name: current_node_id
+          type: uuid
+          not_null: true
+        - name: status
+          type: varchar(20)
+          not_null: true
+          check: "status IN ('active', 'paused', 'completed', 'failed', 'abandoned')"
+        - name: progress_percentage
+          type: decimal(5,2)
+          default: 0
+        - name: choice_history
+          type: jsonb
+        - name: world_state_snapshot
+          type: jsonb
+        - name: created_at
+          type: timestamp
+          default: now()
+        - name: updated_at
+          type: timestamp
+          default: now()
+        - name: completed_at
+          type: timestamp
+
+    quest_nodes:
+      table: gameplay.quest_nodes
+      columns:
+        - name: node_id
+          type: uuid
+          primary_key: true
+        - name: quest_template_id
+          type: uuid
+          not_null: true
+        - name: node_type
+          type: varchar(20)
+          not_null: true
+        - name: content
+          type: jsonb
+          not_null: true
+        - name: conditions
+          type: jsonb
+        - name: metadata
+          type: jsonb
+
+    player_choices:
+      table: gameplay.player_choices
+      columns:
+        - name: choice_id
+          type: uuid
+          primary_key: true
+        - name: quest_instance_id
+          type: uuid
+          not_null: true
+          foreign_key: gameplay.quest_instances(quest_instance_id)
+        - name: node_id
+          type: uuid
+          not_null: true
+        - name: choice_text
+          type: text
+          not_null: true
+        - name: consequences_applied
+          type: jsonb
+        - name: narrative_impact
+          type: jsonb
+        - name: timestamp
+          type: timestamp
+          default: now()
+
+    game_effects:
+      table: gameplay.game_effects
+      columns:
+        - name: effect_id
+          type: uuid
+          primary_key: true
+        - name: choice_id
+          type: uuid
+          foreign_key: gameplay.player_choices(choice_id)
+        - name: effect_type
+          type: varchar(50)
+          not_null: true
+        - name: target_type
+          type: varchar(20)
+          not_null: true
+        - name: target_id
+          type: uuid
+          not_null: true
+        - name: parameters
+          type: jsonb
+        - name: delay_ticks
+          type: integer
+          default: 0
+        - name: duration_ticks
+          type: integer
+        - name: applied_at
+          type: timestamp
+          default: now()
+
+  performance_optimizations:
+
+    caching_strategy:
+      - quest_state_cache: "Redis cache for active quest states (TTL: 1 hour)"
+      - narrative_cache: "Cache for AI-generated content (TTL: 24 hours)"
+      - choice_validation_cache: "Cache for condition checks (TTL: 5 minutes)"
+
+    database_optimizations:
+      - partitioning: "Partition quest_instances by player_id"
+      - indexing: "Composite indexes on (player_id, status, updated_at)"
+      - json_optimization: "GIN indexes for JSONB fields"
+
+    ai_optimizations:
+      - batch_processing: "Batch AI requests for similar contexts"
+      - template_caching: "Cache narrative templates"
+      - quality_gates: "AI response validation before storage"
+
+  monitoring_and_observability:
+
+    metrics:
+      - quest_creation_rate: "Quests created per minute"
+      - choice_processing_latency: "Average time to process player choice"
+      - narrative_generation_time: "AI response time distribution"
+      - quest_completion_rate: "Percentage of completed quests"
+
+    alerts:
+      - high_latency: "Choice processing > 500ms"
+      - ai_failure_rate: "AI generation failures > 5%"
+      - database_connection_issues: "DB connection pool exhausted"
+
+  security_considerations:
+
+    input_validation:
+      - choice_id_validation: "UUID format validation"
+      - content_sanitization: "AI-generated content filtering"
+      - rate_limiting: "Max 10 choices per minute per player"
+
+    data_protection:
+      - pii_encryption: "Player data encryption at rest"
+      - audit_logging: "All choice history logged"
+      - backup_strategy: "Daily quest state backups"
+
+  deployment_strategy:
+
+    rollout_phases:
+      - phase_1: "Basic choice processing (no AI)"
+      - phase_2: "Add narrative AI for simple quests"
+      - phase_3: "Full dynamic quest generation"
+      - phase_4: "Cross-player interaction effects"
+
+    feature_flags:
+      - dynamic_quests_enabled: "Enable/disable dynamic quest system"
+      - ai_narrative_generation: "Enable AI-powered content"
+      - choice_consequences: "Enable consequence processing"
+
+implementation:
+  github_issue: 2244
+  priority: high
+  estimated_effort: "8 months"
+  team_size: "5 developers (2 backend, 2 AI/ML, 1 QA)"
+  blockers:
+    - narrative_ai_service_ready
+    - quest_state_database_migration
+
+validation:
+  testing_strategy:
+    - unit_tests: "Component-level testing for choice processing"
+    - integration_tests: "End-to-end quest flow testing"
+    - ai_quality_tests: "Narrative coherence validation"
+    - performance_tests: "Load testing with 1000+ concurrent players"
+    - player_acceptance_tests: "Beta testing with real players"
+
+  success_criteria:
+    - technical: "P99 latency < 200ms for choice processing"
+    - functional: "95% quest completion rate"
+    - quality: "4.8/5 player satisfaction rating"
+    - business: "20% increase in player retention"

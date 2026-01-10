@@ -1,0 +1,959 @@
+# Issue: #2244
+# Dynamic Quest System Implementation - Faction Conflict Quest Example
+# Content Writer Agent
+metadata:
+  id: canon-quest-seattle-037-dance-with-dragons
+  title: Seattle 2020-2029 — Танцы с Драконами
+  document_type: canon
+  category: quest
+  status: draft
+  version: 1.0.0
+  last_updated: '2026-01-10T18:15:00Z'
+  concept_approved: true
+  concept_reviewed_at: '2026-01-10T18:15:00Z'
+  owners:
+  - role: narrative_lead
+    contact: narrative@necp.game
+  tags:
+  - seattle
+  - cyberpunk
+  - dynamic-quest
+  - player-choice
+  - branching-narrative
+  - faction-conflict
+  - gang-warfare
+  - reputation-system
+  - territory-control
+  - alliance-system
+  topics:
+  - gang-politics
+  - street-power-struggle
+  - moral-choices
+  - faction-reputation
+  - territory-control
+  - dynamic-alliances
+  related_systems:
+  - narrative-service
+  - quest-system
+  - reputation-system
+  - dynamic-quest-engine
+  - faction-system
+  - territory-control-system
+  - alliance-system
+  related_documents:
+  - id: dynamic-quest-system-architecture
+    relation: implements
+    title: Dynamic Quest System Architecture
+  - id: dynamic-quest-system-player-choice-driven
+    relation: references
+    title: Dynamic Quest System Player Choice Driven
+  source: knowledge/idea/dynamic-quest-system-player-choice-driven.yaml
+  visibility: internal
+  audience:
+  - narrative
+  - vision
+  - content
+  risk_level: high
+
+review:
+  chain:
+  - role: concept_director
+    reviewer: ''
+    reviewed_at: ''
+    status: pending
+  next_actions: []
+
+summary:
+  problem: В Сиэтле разгорается война между двумя уличными бандами - "Ночные Драконы" и "Стальные Когти". Конфликт угрожает мирным жителям района, и игроку предстоит решить, на чью сторону встать, остаться нейтральным или попытаться установить мир любой ценой.
+  goal: Пройти через серию выборов, связанных с конфликтом между бандами, где каждый выбор влияет на репутацию с фракциями, контроль над территорией, динамические альянсы и открывает различные ветки сюжета с долгосрочными последствиями.
+  essence: |
+    Динамический квест с 6 ключевыми точками выбора, демонстрирующий систему ветвления на основе фракционных конфликтов и выбора игрока.
+    
+    Квест развивается в зависимости от того, как игрок вмешивается в конфликт между бандами:
+    - Первый выбор: На чью сторону встать (Драконы/Когти/нейтральный) - определяет начальную репутацию
+    - Второй выбор: Обнаружение лидера как корпоративного информатора (обнародовать/шантажировать/проигнорировать) - влияет на динамику конфликта
+    - Третий выбор: Полицейский рейд - спасти лейтенанта или сбежать (жертвовать/спасать) - влияет на лояльность банды
+    - Четвертый выбор: Альянс против общего врага (принять/отказаться) - влияет на баланс сил
+    - Пятый выбор: Контроль над территорией (драться за/делить/отдать) - определяет будущие возможности
+    - Шестой выбор: Личная позиция в конфликте (присоединиться к банде/остаться независимым/стать посредником) - влияет на финальный исход
+    
+    Каждый выбор влияет на:
+    - Репутацию с фракциями (Night Dragons/Steel Claws)
+    - Контроль над территорией (район Сиэтла)
+    - Динамические альянсы между фракциями
+    - Доступность будущих квестов и диалогов
+    - Финальный исход квеста (7 возможных концовок)
+    
+    Квест демонстрирует долгосрочные последствия выборов: решение в первой половине квеста может 
+    открыть или закрыть пути в финале, а контроль над территорией влияет на доступность будущих 
+    квестов и NPC.
+
+quest_definition:
+  quest_type: main
+  level_min: 20
+  level_max: 30
+  dynamic_quest: true
+  choice_points: 6
+  branching_factor: 3
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      corporate: 0
+      street: 0
+    required_items: []
+  objectives:
+  - id: discover_gang_conflict
+    text: Обнаружить конфликт между бандами Ночные Драконы и Стальные Когти
+    type: interact
+    target: conflict_zone_location
+    count: 1
+    optional: false
+    choice_point: 0
+  - id: first_faction_choice
+    text: Решить, на чью сторону встать в конфликте между бандами
+    type: choice
+    target: choice_point_1
+    options:
+    - Side with Night Dragons
+    - Side with Steel Claws
+    - Remain neutral
+    count: 1
+    optional: false
+    choice_point: 1
+  - id: discover_corporate_informant
+    text: Обнаружить, что лидер банды является корпоративным информатором
+    type: interact
+    target: corporate_informant_revelation
+    count: 1
+    optional: false
+    choice_point: 2
+  - id: informant_revelation_choice
+    text: Решить, как поступить с информацией о корпоративном информаторе
+    type: choice
+    target: choice_point_2
+    options:
+    - Expose leader as corporate informant
+    - Blackmail leader for personal gain
+    - Ignore information and continue
+    count: 1
+    optional: false
+    conditional: choice_point_1 != "remain_neutral"
+    choice_point: 2
+  - id: police_raid_crisis
+    text: Полицейский рейд - решить судьбу лейтенанта банды
+    type: choice
+    target: choice_point_3
+    options:
+    - Sacrifice lieutenant to escape
+    - Risk everything to save lieutenant
+    count: 1
+    optional: false
+    conditional: choice_point_1 != "remain_neutral"
+    choice_point: 3
+  - id: rival_gang_alliance_offer
+    text: Соперничающая банда предлагает альянс против общего врага
+    type: choice
+    target: choice_point_4
+    options:
+    - Accept alliance offer
+    - Decline alliance and stay independent
+    count: 1
+    optional: false
+    conditional: choice_point_2 == "expose_informant" OR choice_point_3 == "save_lieutenant"
+    choice_point: 4
+  - id: territory_control_choice
+    text: Решить, кто контролирует территорию после конфликта
+    type: choice
+    target: choice_point_5
+    options:
+    - Fight for full control
+    - Share territory between factions
+    - Give territory to one faction
+    count: 1
+    optional: false
+    conditional: choice_point_4 == "accept_alliance" OR choice_point_4 == "decline_alliance"
+    choice_point: 5
+  - id: final_faction_alignment
+    text: Определить личную позицию в фракционном конфликте
+    type: choice
+    target: choice_point_6
+    options:
+    - Join Night Dragons permanently
+    - Join Steel Claws permanently
+    - Remain independent mediator
+    count: 1
+    optional: false
+    conditional: choice_point_5 != null
+    choice_point: 6
+  rewards:
+    experience: 7500
+    money:
+      base: 5000
+      conditional_modifier:
+        if: choice_point_2 == "blackmail_leader"
+        then: 5000
+        elif: choice_point_5 == "fight_full_control"
+        then: 2000
+        else: 0
+    reputation:
+      night_dragons:
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "side_dragons"
+          then: 300
+          elif: choice_point_4 == "accept_alliance"
+          then: 150
+          elif: choice_point_1 == "side_claws"
+          then: -300
+          else: 0
+        additional_modifiers:
+          if: choice_point_3 == "save_lieutenant" AND choice_point_1 == "side_dragons"
+          then: 200
+          elif: choice_point_6 == "join_dragons"
+          then: 500
+          else: 0
+      steel_claws:
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "side_claws"
+          then: 300
+          elif: choice_point_4 == "accept_alliance"
+          then: 150
+          elif: choice_point_1 == "side_dragons"
+          then: -300
+          else: 0
+        additional_modifiers:
+          if: choice_point_3 == "save_lieutenant" AND choice_point_1 == "side_claws"
+          then: 200
+          elif: choice_point_6 == "join_claws"
+          then: 500
+          else: 0
+      street:
+        base: 0
+        conditional_modifier:
+          if: choice_point_2 == "expose_informant"
+          then: 400
+          elif: choice_point_5 == "share_territory"
+          then: 300
+          elif: choice_point_1 == "remain_neutral"
+          then: 200
+          else: 100
+      corporate:
+        base: 0
+        conditional_modifier:
+          if: choice_point_2 == "blackmail_leader"
+          then: 200
+          elif: choice_point_2 == "ignore_information"
+          then: 100
+          else: -100
+    items:
+    - id: territory_control_token
+      name: Токен контроля территории
+      type: territory_token
+      rarity: epic
+      quantity: 1
+      conditional: choice_point_5 == "fight_full_control" OR choice_point_5 == "give_territory"
+    - id: gang_alliance_medal
+      name: Медаль альянса банд
+      type: faction_medal
+      rarity: rare
+      quantity: 1
+      conditional: choice_point_4 == "accept_alliance"
+    - id: corporate_informant_evidence
+      name: Доказательства корпоративного информатора
+      type: evidence
+      rarity: rare
+      quantity: 1
+      conditional: choice_point_2 == "expose_informant" OR choice_point_2 == "blackmail_leader"
+    unlocks:
+    - quest: canon-quest-seattle-territory-war
+      conditional: choice_point_5 == "fight_full_control" AND choice_point_6 != "remain_mediator"
+    - quest: canon-quest-seattle-gang-alliance
+      conditional: choice_point_4 == "accept_alliance" AND choice_point_6 != "remain_mediator"
+    - quest: canon-quest-seattle-street-mediator
+      conditional: choice_point_6 == "remain_mediator" AND choice_point_1 == "remain_neutral"
+    - quest: canon-quest-seattle-corporate-blackmail
+      conditional: choice_point_2 == "blackmail_leader"
+    - faction: night_dragons_member
+      conditional: choice_point_6 == "join_dragons" AND reputation.night_dragons > 400
+    - faction: steel_claws_member
+      conditional: choice_point_6 == "join_claws" AND reputation.steel_claws > 400
+    - faction: independent_mediator
+      conditional: choice_point_6 == "remain_mediator" AND reputation.street > 300
+    - territory: seattle_conflict_zone_control
+      conditional: choice_point_5 == "fight_full_control" OR choice_point_5 == "share_territory"
+    - location: gang_safe_house_access
+      conditional: choice_point_6 != "remain_mediator" AND (reputation.night_dragons > 300 OR reputation.steel_claws > 300)
+
+content:
+  introduction: |
+    Дым и выстрелы в промышленном районе Сиэтла. Две уличные банды - "Ночные Драконы" и "Стальные 
+    Когти" - ведут ожесточенную борьбу за контроль над территорией. Вы оказались в эпицентре 
+    конфликта, и теперь ваш выбор определит не только исход этой войны, но и будущее всего района.
+    
+    Лидер "Ночных Драконов" - Кай "Дракон" Чжан - предлагает вам присоединиться к их борьбе за 
+    свободу улиц. Лидер "Стальных Когтей" - Маркус "Сталь" Хаммер - обещает силу и порядок. А 
+    мирные жители смотрят на вас, ожидая, что кто-то положит конец насилию.
+    
+    В этот момент вы получаете зашифрованное сообщение от неизвестного источника. В нем говорится, 
+    что один из лидеров - корпоративный информатор. Ваш выбор теперь станет еще сложнее.
+
+  plot_points:
+  - id: initial_faction_choice
+    title: Первый выбор фракции
+    description: |
+      Первый ключевой выбор квеста: на чью сторону встать? Ночные Драконы, Стальные Когти или 
+      остаться нейтральным?
+      
+      Этот выбор определяет начальную репутацию с фракциями и влияет на все последующие 
+      взаимодействия в квесте. Выбор Драконов открывает путь к свободе улиц, выбор Когтей открывает 
+      путь к силе и порядку, нейтралитет сохраняет гибкость, но может закрыть некоторые пути.
+    choice_point: 1
+    consequences:
+      side_dragons:
+        reputation:
+          night_dragons: 300
+          steel_claws: -300
+          street: 100
+        narrative_path: dragons_alignment
+        unlocks: dragons_path
+        relationship_change:
+          kai_dragon_zhang: 100
+          marcus_steel_hammer: -100
+        narrative_response: |
+          Вы решаете встать на сторону Ночных Драконов. Кай "Дракон" Чжан улыбается и протягивает 
+          руку. "Добро пожаловать, брат. Вместе мы освободим улицы от тирании."
+      side_claws:
+        reputation:
+          night_dragons: -300
+          steel_claws: 300
+          street: 100
+        narrative_path: claws_alignment
+        unlocks: claws_path
+        relationship_change:
+          kai_dragon_zhang: -100
+          marcus_steel_hammer: 100
+        narrative_response: |
+          Вы решаете встать на сторону Стальных Когтей. Маркус "Сталь" Хаммер кивает с одобрением. 
+          "Хорошо. Порядок и сила - вот что нужно этому городу. С нами ты обретешь и то, и другое."
+      remain_neutral:
+        reputation:
+          night_dragons: -50
+          steel_claws: -50
+          street: 200
+        narrative_path: neutral_path
+        unlocks: mediator_path
+        relationship_change:
+          kai_dragon_zhang: 0
+          marcus_steel_hammer: 0
+        narrative_response: |
+          Вы решаете остаться нейтральным. Оба лидера смотрят на вас с разочарованием, но уважают 
+          ваш выбор. "Твое дело," - говорит Кай. "Но в этой войне нет нейтральных. Рано или поздно 
+          придется выбрать сторону."
+
+  - id: corporate_informant_revelation
+    title: Откровение о корпоративном информаторе
+    description: |
+      Второй ключевой выбор: что делать с информацией о том, что лидер банды - корпоративный 
+      информатор? Обнародовать, шантажировать или проигнорировать?
+      
+      Выбор определяет динамику конфликта и влияет на репутацию. Обнародование разрушает доверие 
+      к лидеру и меняет баланс сил, шантаж дает личную выгоду, но портит репутацию, игнорирование 
+      сохраняет текущую динамику, но может привести к негативным последствиям позже.
+    choice_point: 2
+    consequences:
+      expose_informant:
+        reputation:
+          street: 400
+          corporate: -100
+        narrative_path: truth_revelation
+        unlocks: gang_war_intensification_path
+        relationship_change:
+          kai_dragon_zhang: 0
+          marcus_steel_hammer: -150
+        conditional_impact:
+          if: choice_point_1 == "side_claws"
+          then:
+            reputation:
+              steel_claws: -400
+              night_dragons: 200
+            narrative_branch: leader_betrayal_revealed
+          else:
+            reputation:
+              night_dragons: -400
+              steel_claws: 200
+            narrative_branch: leader_betrayal_revealed
+        narrative_response: |
+          Вы обнародуете информацию о том, что лидер банды работает на корпорации. Уличная сеть 
+          взрывается возмущением. Репутация информатора падает, а банда разрывается на части. 
+          "Предатель!" - кричат бывшие союзники. "В этом городе предателей не прощают."
+      blackmail_leader:
+        reputation:
+          street: -200
+          corporate: 200
+        narrative_path: manipulation_path
+        unlocks: blackmail_path
+        relationship_change:
+          kai_dragon_zhang: -50
+          marcus_steel_hammer: -50
+        money_modifier: 5000
+        narrative_response: |
+          Вы используете информацию для шантажа лидера, получая крупную сумму денег. Лидер вынужден 
+          платить, но теперь ненавидит вас. "Ты знаешь мою тайну," - шепчет он. "Но помни - секреты 
+          не живут вечно. И когда мой секрет станет известен, я найду тебя."
+      ignore_information:
+        reputation:
+          street: 0
+          corporate: 100
+        narrative_path: status_quo_path
+        unlocks: continuing_conflict_path
+        relationship_change:
+          kai_dragon_zhang: 0
+          marcus_steel_hammer: 0
+        narrative_response: |
+          Вы решаете проигнорировать информацию о корпоративном информаторе, продолжая текущую 
+          линию развития. Конфликт продолжается, но теперь вы знаете секрет, который может изменить 
+          все в любой момент.
+
+  - id: police_raid_crisis
+    title: Полицейский рейд - кризис лояльности
+    description: |
+      Третий ключевой выбор: полицейский рейд обрушивается на банду. Жертвовать лейтенантом ради 
+      выживания или рискнуть всем ради спасения лейтенанта?
+      
+      Выбор влияет на лояльность банды и отношения с NPC. Жертвование лейтенанта показывает 
+      прагматизм и выживание, но теряет доверие банды, спасение лейтенанта показывает героизм и 
+      лояльность, но может привести к поимке.
+    choice_point: 3
+    consequences:
+      sacrifice_lieutenant:
+        reputation:
+          street: -150
+        narrative_path: survival_path
+        unlocks: pragmatic_path
+        relationship_change:
+          kai_dragon_zhang: -100
+          marcus_steel_hammer: -100
+          gang_loyalty: -200
+        narrative_response: |
+          Вы решаете пожертвовать лейтенантом, чтобы остальные могли сбежать. Лейтенант смотрит на 
+          вас с пониманием, но болью в глазах. "Хорошо," - говорит он. "Сохрани банду. Это важнее, 
+          чем я." Банда сбегает, но доверие к вам разрушено. "Ты спас нас," - говорит лидер. "Но 
+          мы никогда не забудем цену этого спасения."
+      save_lieutenant:
+        reputation:
+          street: 300
+        narrative_path: heroism_path
+        unlocks: loyalty_path
+        relationship_change:
+          kai_dragon_zhang: 150
+          marcus_steel_hammer: 150
+          gang_loyalty: 300
+        conditional_success:
+          if: combat_skill > 0.7 OR stealth_skill > 0.7
+          then:
+            narrative_branch: successful_rescue
+            reputation:
+              street: 400
+          else:
+            narrative_branch: risky_rescue
+            reputation:
+              street: 200
+        narrative_response: |
+          Вы решаете рискнуть всем, чтобы спасти лейтенанта. Банда видит ваш героизм и лояльность. 
+          Лейтенант смотрит на вас с благодарностью. "Ты рискнул всем ради меня. Я никогда этого 
+          не забуду." Лидер банды кивает с уважением. "Ты показал, что лояльность важнее выживания. 
+          Таких людей в этом городе мало."
+
+  - id: rival_gang_alliance
+    title: Альянс против общего врага
+    description: |
+      Четвертый ключевой выбор: соперничающая банда предлагает альянс против общего врага. Принять 
+      или отказаться?
+      
+      Выбор влияет на баланс сил и динамические альянсы. Принятие альянса объединяет силы, но может 
+      изменить баланс власти, отказ сохраняет независимость, но может привести к изоляции.
+    choice_point: 4
+    consequences:
+      accept_alliance:
+        reputation:
+          night_dragons: 150
+          steel_claws: 150
+          street: 200
+        narrative_path: alliance_path
+        unlocks: unified_gangs_path
+        relationship_change:
+          kai_dragon_zhang: 100
+          marcus_steel_hammer: 100
+        narrative_response: |
+          Вы принимаете предложение альянса, объединяя силы двух банд против общего врага. Лидеры 
+          обмениваются рукопожатием - редкое зрелище. "Вместе мы сильнее," - говорит Кай. "Вместе 
+          мы освободим улицы," - отвечает Маркус. Уличная сеть с удивлением наблюдает за этим 
+          неожиданным союзом.
+      decline_alliance:
+        reputation:
+          night_dragons: -50
+          steel_claws: -50
+          street: 100
+        narrative_path: independence_path
+        unlocks: independent_faction_path
+        relationship_change:
+          kai_dragon_zhang: 0
+          marcus_steel_hammer: 0
+        narrative_response: |
+          Вы отказываетесь от альянса, предпочитая остаться независимым. Оба лидера разочарованы, 
+          но уважают ваш выбор. "Твое дело," - говорит Кай. "Но помни - в одиночку против всего 
+          города не выстоишь."
+
+  - id: territory_control
+    title: Контроль над территорией
+    description: |
+      Пятый ключевой выбор: кто контролирует территорию после конфликта? Драться за полный контроль, 
+      делить территорию или отдать одной фракции?
+      
+      Выбор определяет будущие возможности и доступность квестов. Полный контроль дает максимум 
+      власти, но создает врагов, разделение сохраняет баланс, но может привести к конфликтам, отдача 
+      одной фракции создает союзника, но теряет независимость.
+    choice_point: 5
+    consequences:
+      fight_full_control:
+        reputation:
+          street: -100
+        narrative_path: dominance_path
+        unlocks: territorial_war_path
+        relationship_change:
+          kai_dragon_zhang: -100
+          marcus_steel_hammer: -100
+        territory_control: full
+        narrative_response: |
+          Вы решаете драться за полный контроль над территорией. Конфликт обостряется, но вы получаете 
+          полную власть. "Территория теперь твоя," - говорит лидер проигравшей банды. "Но помни - 
+          власть требует постоянной защиты. И враги всегда рядом."
+      share_territory:
+        reputation:
+          street: 300
+        narrative_path: balance_path
+        unlocks: peaceful_coexistence_path
+        relationship_change:
+          kai_dragon_zhang: 100
+          marcus_steel_hammer: 100
+        territory_control: shared
+        narrative_response: |
+          Вы предлагаете разделить территорию между фракциями. Оба лидера соглашаются, хотя и неохотно. 
+          "Баланс," - говорит Кай. "Хрупкий, но лучше, чем война." "Согласен," - отвечает Маркус. 
+          "Может, так мы и выживем в этом городе."
+      give_territory:
+        reputation:
+          street: 150
+        narrative_path: alliance_favor_path
+        unlocks: faction_favor_path
+        relationship_change:
+          kai_dragon_zhang: 200
+          marcus_steel_hammer: 200
+        territory_control: faction_controlled
+        conditional_impact:
+          if: choice_point_1 == "side_dragons"
+          then:
+            reputation:
+              night_dragons: 300
+        else:
+          reputation:
+            steel_claws: 300
+        narrative_response: |
+          Вы решаете отдать территорию одной из фракций, получая взамен их вечную благодарность и 
+          поддержку. Лидер банды смотрит на вас с уважением. "Ты отдал нам территорию. Мы никогда 
+          этого не забудем. В этом городе ты всегда найдешь у нас поддержку."
+
+  - id: final_faction_alignment
+    title: Финальное выравнивание фракции
+    description: |
+      Шестой и финальный ключевой выбор: какова ваша личная позиция в фракционном конфликте? 
+      Присоединиться к Ночным Драконам, присоединиться к Стальным Когтям или остаться независимым 
+      посредником?
+      
+      Финальный выбор определяет доступ к фракционным квестам, долгосрочную репутацию и доступность 
+      целой ветки квестов. Присоединение к банде дает максимум возможностей, но теряет гибкость, 
+      независимость сохраняет гибкость, но может потерять преимущества членства.
+    choice_point: 6
+    consequences:
+      join_dragons:
+        narrative_path: dragons_member_path
+        unlocks: night_dragons_questline
+        relationship_change:
+          kai_dragon_zhang: 200
+          marcus_steel_hammer: -200
+        reputation:
+          night_dragons: 500
+          steel_claws: -300
+          street: 200
+        long_term_benefits:
+          faction_membership: night_dragons
+          access_to_faction_quests: true
+          faction_safe_houses: true
+          faction_resources: true
+        narrative_response: |
+          Вы решаете присоединиться к Ночным Драконам навсегда. Кай "Дракон" Чжан улыбается широкой 
+          улыбкой. "Добро пожаловать в семью, брат. Теперь ты один из нас. Вместе мы освободим 
+          улицы и построим новый Сиэтл."
+        ending_type: dragons_member_ending
+      join_claws:
+        narrative_path: claws_member_path
+        unlocks: steel_claws_questline
+        relationship_change:
+          kai_dragon_zhang: -200
+          marcus_steel_hammer: 200
+        reputation:
+          night_dragons: -300
+          steel_claws: 500
+          street: 200
+        long_term_benefits:
+          faction_membership: steel_claws
+          access_to_faction_quests: true
+          faction_safe_houses: true
+          faction_resources: true
+        narrative_response: |
+          Вы решаете присоединиться к Стальным Когтям навсегда. Маркус "Сталь" Хаммер кивает с 
+          одобрением. "Отлично. Порядок и сила - вот что нужно. С нами ты обретешь и то, и другое. 
+          Добро пожаловать в семью."
+        ending_type: claws_member_ending
+      remain_mediator:
+        narrative_path: independent_mediator_path
+        unlocks: mediator_questline
+        relationship_change:
+          kai_dragon_zhang: 50
+          marcus_steel_hammer: 50
+        reputation:
+          night_dragons: 100
+          steel_claws: 100
+          street: 400
+        long_term_benefits:
+          faction_membership: independent
+          access_to_both_faction_quests: true
+          mediator_status: true
+          neutral_reputation_bonus: true
+        narrative_response: |
+          Вы решаете остаться независимым посредником между фракциями. Оба лидера уважают ваш выбор. 
+          "Ты показал, что можно работать вместе, не теряя независимости," - говорит Кай. "Мы 
+          всегда будем нуждаться в таких, как ты," - добавляет Маркус. "В этом городе посредники 
+          - это баланс."
+        ending_type: mediator_ending
+
+  endings:
+  - id: ending_dragons_victory
+    title: Победа Ночных Драконов
+    description: |
+      Ночные Драконы победили в конфликте, и вы стали полноправным членом банды. Полный контроль 
+      над территорией, доступ к фракционным ресурсам и поддержка всей уличной сети Сиэтла теперь 
+      ваши.
+    requirements:
+      choice_point_1: side_dragons
+      choice_point_5: fight_full_control OR give_territory
+      choice_point_6: join_dragons
+    rewards_modifier:
+      reputation:
+        night_dragons: 600
+        street: 300
+      unlocks:
+        - night_dragons_faction_membership
+        - territory_control_full
+        - faction_exclusive_quests
+
+  - id: ending_claws_victory
+    title: Победа Стальных Когтей
+    description: |
+      Стальные Когти победили в конфликте, и вы стали полноправным членом банды. Порядок и сила 
+      установлены на улицах Сиэтла, и вы часть этой системы.
+    requirements:
+      choice_point_1: side_claws
+      choice_point_5: fight_full_control OR give_territory
+      choice_point_6: join_claws
+    rewards_modifier:
+      reputation:
+        steel_claws: 600
+        street: 300
+      unlocks:
+        - steel_claws_faction_membership
+        - territory_control_full
+        - faction_exclusive_quests
+
+  - id: ending_peaceful_alliance
+    title: Мирный альянс
+    description: |
+      Вы помогли установить мир между бандами, создав альянс против общего врага. Территория разделена, 
+      и обе фракции уважают вас как посредника и союзника.
+    requirements:
+      choice_point_4: accept_alliance
+      choice_point_5: share_territory
+      choice_point_6: remain_mediator
+    rewards_modifier:
+      reputation:
+        night_dragons: 200
+        steel_claws: 200
+        street: 500
+      unlocks:
+        - peaceful_alliance_status
+        - mediator_questline
+        - both_faction_access
+
+  - id: ending_territorial_war
+    title: Территориальная война
+    description: |
+      Конфликт за контроль над территорией обострился до полномасштабной войны. Вы контролируете 
+      территорию, но враги окружают вас со всех сторон, и постоянная защита необходима.
+    requirements:
+      choice_point_5: fight_full_control
+      choice_point_6: join_dragons OR join_claws
+    rewards_modifier:
+      reputation:
+        street: -100
+      territory_control: full
+      unlocks:
+        - territorial_war_questline
+        - constant_defense_mechanics
+
+  - id: ending_corporate_manipulation
+    title: Корпоративная манипуляция
+    description: |
+      Вы использовали информацию о корпоративном информаторе для шантажа и личной выгоды. Корпорации 
+      оценили вашу находчивость, но уличная репутация пострадала. Теперь вы балансируете между двумя 
+      мирами.
+    requirements:
+      choice_point_2: blackmail_leader
+      choice_point_6: remain_mediator
+    rewards_modifier:
+      reputation:
+        corporate: 300
+        street: -200
+      money: 5000
+      unlocks:
+        - corporate_espionage_quests
+        - street_network_hostility
+
+  - id: ending_street_hero
+    title: Герой улиц
+    description: |
+      Вы обнародовали правду о корпоративном информаторе, спасли лейтенанта и помогли установить мир 
+      между бандами. Уличная репутация достигла новых высот, и многие начинают видеть в вас лидера.
+    requirements:
+      choice_point_2: expose_informant
+      choice_point_3: save_lieutenant
+      choice_point_5: share_territory
+    rewards_modifier:
+      reputation:
+        street: 600
+      unlocks:
+        - street_hero_status
+        - leadership_questline
+        - high_street_reputation_benefits
+
+  - id: ending_independent_power
+    title: Независимая сила
+    description: |
+      Вы остались независимым посредником, балансируя между фракциями и используя свой статус для 
+      влияния на конфликты. Гибкость и нейтралитет стали вашим преимуществом в борьбе за влияние 
+      в Сиэтле.
+    requirements:
+      choice_point_1: remain_neutral
+      choice_point_4: decline_alliance
+      choice_point_6: remain_mediator
+    rewards_modifier:
+      reputation:
+        street: 400
+        night_dragons: 100
+        steel_claws: 100
+      unlocks:
+        - independent_mediator_status
+        - flexible_faction_access
+        - neutral_reputation_bonus
+
+npc_characters:
+  - id: kai_dragon_zhang
+    name: Кай "Дракон" Чжан
+    role: leader_night_dragons
+    location: night_dragons_safe_house
+    personality_traits:
+      - charismatic
+      - idealistic
+      - street_wise
+      - values_freedom
+      - protective
+    relationship_range: -200 to 200
+    initial_relationship: 0
+    dialogue_branches:
+      high_trust:
+        greeting: "Брат! Хорошо видеть тебя. У нас есть важная работа."
+        mission_brief: "Ты один из нас. Я могу доверить тебе самую важную миссию."
+      neutral:
+        greeting: "Привет. Нужна работа?"
+        mission_brief: "У меня есть задание. Готов?"
+      low_trust:
+        greeting: "Чего тебе нужно?"
+        mission_brief: "Есть задание. Но смотри - не подведи."
+
+  - id: marcus_steel_hammer
+    name: Маркус "Сталь" Хаммер
+    role: leader_steel_claws
+    location: steel_claws_safe_house
+    personality_traits:
+      - disciplined
+      - pragmatic
+      - strong
+      - values_order
+      - loyal
+    relationship_range: -200 to 200
+    initial_relationship: 0
+    dialogue_branches:
+      high_trust:
+        greeting: "Боец! Готов к новой задаче?"
+        mission_brief: "Ты доказал свою лояльность. Эта миссия только для тебя."
+      neutral:
+        greeting: "Что нужно?"
+        mission_brief: "Есть работа. Заинтересован?"
+      low_trust:
+        greeting: "Ты здесь. Зачем?"
+        mission_brief: "Есть задание. Но помни - мы следим."
+
+mechanics_integration:
+  faction_system:
+    reputation_tracking: "Репутация с Ночными Драконами и Стальными Когтями отслеживается отдельно"
+    reputation_levels:
+      ally: 400-600
+      friend: 200-399
+      neutral: -199 to 199
+      hostile: -400 to -200
+      enemy: -600 to -401
+    reputation_consequences:
+      ally: "Полное членство в фракции, доступ к эксклюзивным квестам и ресурсам"
+      friend: "Хорошие отношения, доступ к основным квестам, скидки на услуги"
+      neutral: "Стандартные отношения, базовый доступ"
+      hostile: "Враждебные отношения, затрудненный доступ, повышенные цены"
+      enemy: "Враги, блокировка доступа, потенциальные месть-квесты"
+  
+  territory_control_system:
+    territory_levels:
+      full_control: "Полный контроль над территорией, максимум возможностей"
+      shared_control: "Разделенный контроль, баланс сил"
+      faction_control: "Контроль одной фракции, преимущества для членов"
+      no_control: "Нет контроля, стандартные условия"
+    territory_benefits:
+      full_control: "Эксклюзивные квесты, скидки у торговцев, безопасные зоны"
+      shared_control: "Доступ к обеим фракциям, гибкость, нейтральные зоны"
+      faction_control: "Преимущества для членов фракции, враждебность соперников"
+  
+  alliance_system:
+    alliance_types:
+      permanent_alliance: "Постоянный альянс между фракциями, объединенные ресурсы"
+      temporary_alliance: "Временный альянс против общего врага"
+      no_alliance: "Нет альянса, независимые действия"
+    alliance_benefits:
+      permanent_alliance: "Объединенные квесты, общие ресурсы, взаимная защита"
+      temporary_alliance: "Совместные миссии, временная поддержка"
+      no_alliance: "Независимость, но изоляция и конкуренция"
+
+content:
+  sections:
+  - id: quest_overview
+    title: Обзор квеста
+    body: |
+      "Танцы с Драконами" - это динамический квест-пример, демонстрирующий систему ветвления на 
+      основе фракционных конфликтов и выбора игрока. Квест полностью адаптируется к выбору игрока, 
+      создавая уникальный опыт для каждого прохождения.
+      
+      Квест разработан как практическая демонстрация системы динамических квестов с фракционными 
+      конфликтами, описанной в архитектурных документах проекта. Каждый выбор имеет значимые 
+      последствия, влияющие не только на текущий квест, но и на будущие возможности игрока в 
+      фракционной системе.
+    mechanics_links:
+    - dynamic-quest-system
+    - faction-system
+    - territory-control-system
+    - alliance-system
+    - reputation-system
+    - choice-consequence-system
+    assets: []
+
+  - id: choice_points_detail
+    title: Детальное описание точек выбора
+    body: |
+      Квест содержит 6 пронумерованных точек выбора (choice_point: 1-6), каждая из которых влияет 
+      на последующие возможности:
+      
+      1. Первый выбор: На чью сторону встать (Драконы/Когти/нейтральный) - определяет начальную 
+         репутацию и доступность путей
+      2. Второй выбор: Обнаружение лидера как корпоративного информатора (обнародовать/шантажировать/ 
+         проигнорировать) - влияет на динамику конфликта и репутацию
+      3. Третий выбор: Полицейский рейд - судьба лейтенанта (жертвовать/спасать) - влияет на лояльность 
+         банды и отношения с NPC
+      4. Четвертый выбор: Альянс против общего врага (принять/отказаться) - влияет на баланс сил и 
+         динамические альянсы
+      5. Пятый выбор: Контроль над территорией (драться/делить/отдать) - определяет будущие возможности 
+         и доступность квестов
+      6. Шестой выбор: Личная позиция в конфликте (присоединиться к банде/остаться независимым) - 
+         влияет на доступ к фракционным квестам и долгосрочную репутацию
+      
+      Каждый выбор имеет множественные последствия: немедленные (репутация, деньги), среднесрочные 
+      (доступность путей, контроль территории) и долгосрочные (финальные концовки, доступность 
+      будущих квестов, фракционное членство).
+    mechanics_links:
+    - choice-point-system
+    - consequence-tracking
+    - branching-narrative-engine
+    - faction-dynamics
+    assets: []
+
+  - id: endings_system
+    title: Система концовок
+    body: |
+      Квест имеет 7 различных концовок, каждая из которых определяется комбинацией выборов игрока:
+      
+      1. Победа Ночных Драконов - лучшая концовка для членов банды Драконов
+      2. Победа Стальных Когтей - лучшая концовка для членов банды Когтей
+      3. Мирный альянс - моральная концовка с балансом сил
+      4. Территориальная война - конфликтная концовка с постоянной защитой
+      5. Корпоративная манипуляция - прагматичная концовка с корпоративной выгодой
+      6. Герой улиц - моральная концовка с высокой уличной репутацией
+      7. Независимая сила - нейтральная концовка с гибкостью и влиянием
+      
+      Концовки не имеют "правильного" или "неправильного" пути - каждый путь открывает различные 
+      возможности для дальнейшего развития персонажа в фракционной системе.
+    mechanics_links:
+    - multiple-endings-system
+    - consequence-chain-system
+    - faction-alignment-system
+    assets: []
+
+gameplay:
+  type: main
+  difficulty: hard
+  estimated_duration: 90-120 minutes
+  replayability: very_high
+  choice_impact: critical
+  
+  mechanics:
+    - Dynamic branching based on player choices
+    - Faction reputation tracking and evolution
+    - Territory control mechanics
+    - Dynamic alliance system
+    - Gang loyalty system
+    - Long-term consequence system
+    - Multiple ending paths
+    - Conditional quest unlocking
+  
+  challenges:
+    - Balancing reputation between factions
+    - Managing territory control
+    - Deciding between short-term and long-term gains
+    - Choosing between faction membership and independence
+    - Navigating gang politics and alliances
+  
+  player_agency: |
+    Игрок имеет полный контроль над направлением квеста через серию выборов. Каждый выбор открывает 
+    новые пути и закрывает другие, создавая уникальный опыт прохождения для каждого игрока. Система 
+    не навязывает "правильный" путь, позволяя игроку исследовать различные последствия своих решений 
+    и находить стиль игры, который ему подходит - от полной преданности одной фракции до независимого 
+    посредничества между всеми сторонами.
+
+# Issue: #2244
+# Dynamic Quest System Implementation - Faction Conflict Quest Example
+# Content Writer Agent - Ready for Backend import

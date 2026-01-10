@@ -55,6 +55,7 @@ func main() {
 		Meter:       meter,
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		RedisURL:    os.Getenv("REDIS_URL"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
 	})
 	if err != nil {
 		logger.Fatal("Failed to create time trials service", zap.Error(err))

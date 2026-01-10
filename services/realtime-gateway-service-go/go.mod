@@ -3,7 +3,8 @@ module github.com/gc-lover/necp-game/services/realtime-gateway-service-go
 go 1.24
 
 require (
-	github.com/go-faster/errors v1.0.1
+	github.com/Shopify/sarama v1.38.1
+	github.com/go-faster/errors v0.7.3
 	github.com/go-faster/jx v1.1.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1

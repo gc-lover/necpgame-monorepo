@@ -104,6 +104,18 @@ type HeartbeatPacket struct {
 	Timestamp uint32 // Client timestamp for latency calculation
 }
 
+// BatchUpdate represents a single update in a batch packet (to avoid circular imports)
+type BatchUpdate struct {
+	PacketType uint16 // UDP packet type
+	Data       []byte  // Packet data
+}
+
+// BatchPacket represents a batch of multiple updates sent in one UDP packet
+type BatchPacket struct {
+	UpdateCount uint8         // Number of updates in this batch (max 255)
+	Updates     []BatchUpdate // Array of updates
+}
+
 
 
 

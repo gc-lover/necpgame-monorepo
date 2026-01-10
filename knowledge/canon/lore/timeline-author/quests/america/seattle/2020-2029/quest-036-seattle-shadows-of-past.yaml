@@ -1,0 +1,795 @@
+# Issue: #2244
+# Dynamic Quest System Implementation - Character-Driven Quest Example
+# Content Writer Agent
+metadata:
+  id: canon-quest-seattle-036-shadows-of-past
+  title: Seattle 2020-2029 — Тени Прошлого
+  document_type: canon
+  category: quest
+  status: draft
+  version: 1.0.0
+  last_updated: '2026-01-10T18:00:00Z'
+  concept_approved: true
+  concept_reviewed_at: '2026-01-10T18:00:00Z'
+  owners:
+  - role: narrative_lead
+    contact: narrative@necp.game
+  tags:
+  - seattle
+  - cyberpunk
+  - dynamic-quest
+  - player-choice
+  - branching-narrative
+  - character-driven
+  - informant-quest
+  - reputation-system
+  - npc-relationship
+  topics:
+  - information-brokering
+  - street-credibility
+  - moral-choices
+  - relationship-dynamics
+  - trust-and-betrayal
+  related_systems:
+  - narrative-service
+  - quest-system
+  - reputation-system
+  - dynamic-quest-engine
+  - npc-relationship-system
+  - information-brokerage-system
+  related_documents:
+  - id: dynamic-quest-system-architecture
+    relation: implements
+    title: Dynamic Quest System Architecture
+  - id: dynamic-quest-system-player-choice-driven
+    relation: references
+    title: Dynamic Quest System Player Choice Driven
+  source: knowledge/idea/dynamic-quest-system-player-choice-driven.yaml
+  visibility: internal
+  audience:
+  - narrative
+  - vision
+  - content
+  risk_level: medium
+
+review:
+  chain:
+  - role: concept_director
+    reviewer: ''
+    reviewed_at: ''
+    status: pending
+  next_actions: []
+
+summary:
+  problem: В заброшенном баре Сиэтла вы встречаете таинственного информатора, который предлагает ценную информацию за плату. Ваш выбор в этом взаимодействии определит не только доступ к информации, но и будущие отношения с информатором и уличной сетью контактов.
+  goal: Пройти через серию взаимодействий с информатором, где каждый выбор влияет на доступность информации, цену, отношения с NPC и открывает различные пути развития сюжета с долгосрочными последствиями.
+  essence: |
+    Динамический квест с 5 ключевыми точками выбора, демонстрирующий систему ветвления на основе взаимодействий с NPC.
+    
+    Квест развивается в зависимости от того, как игрок взаимодействует с информатором:
+    - Первый выбор: как заплатить (премия/торг/отказ) - определяет начальные отношения
+    - Второй выбор: уровень доверия (поверить/проверить/подозревать) - влияет на качество информации
+    - Третий выбор: использование информации (использовать сам/продать/уничтожить) - влияет на репутацию
+    - Четвертый выбор: отношения после сделки (стать союзником/нейтральным/врагом) - определяет будущие квесты
+    - Пятый выбор: долгосрочное взаимодействие (постоянный контакт/одноразовая сделка/предать) - влияет на уличную репутацию
+    
+    Каждый выбор влияет на:
+    - Репутацию (street reputation)
+    - Отношения с информатором (Mikhail "Shadow" Volkov)
+    - Доступность будущих квестов и диалогов
+    - Доступ к информационной сети Сиэтла
+    - Финальный исход квеста (6 возможных концовок)
+
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: 20
+  dynamic_quest: true
+  choice_points: 5
+  branching_factor: 3
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      corporate: 0
+      street: 0
+    required_items: []
+  objectives:
+  - id: meet_informant
+    text: Встретиться с информатором в заброшенном баре
+    type: interact
+    target: abandoned_bar_location
+    count: 1
+    optional: false
+    choice_point: 0
+  - id: first_interaction_choice
+    text: Решить, как взаимодействовать с информатором при первой встрече
+    type: choice
+    target: choice_point_1
+    options:
+    - Pay premium price (1000 eddies)
+    - Negotiate for better price
+    - Refuse and leave
+    count: 1
+    optional: false
+    choice_point: 1
+  - id: trust_assessment_choice
+    text: Оценить доверие к информации информатора
+    type: choice
+    target: choice_point_2
+    options:
+    - Trust information completely
+    - Verify information independently
+    - Suspect information is false
+    count: 1
+    optional: false
+    conditional: choice_point_1 != "refuse_leave"
+    choice_point: 2
+  - id: information_usage_choice
+    text: Решить, как использовать полученную информацию
+    type: choice
+    target: choice_point_3
+    options:
+    - Use information for personal gain
+    - Sell information to highest bidder
+    - Destroy information to protect others
+    count: 1
+    optional: false
+    conditional: choice_point_2 == "trust_completely" OR choice_point_2 == "verify_independently"
+    choice_point: 3
+  - id: relationship_development_choice
+    text: Определить будущие отношения с информатором после сделки
+    type: choice
+    target: choice_point_4
+    options:
+    - Become long-term ally
+    - Remain neutral contact
+    - Turn into enemy
+    count: 1
+    optional: false
+    conditional: choice_point_3 != null
+    choice_point: 4
+  - id: long_term_interaction_choice
+    text: Принять решение о долгосрочном взаимодействии с информатором
+    type: choice
+    target: choice_point_5
+    options:
+    - Establish permanent contact network
+    - One-time transaction only
+    - Betray informant for reward
+    count: 1
+    optional: false
+    conditional: choice_point_4 == "become_ally" OR choice_point_4 == "neutral_contact"
+    choice_point: 5
+  rewards:
+    experience: 3000
+    money:
+      base: 0
+      conditional_modifier:
+        if: choice_point_1 == "pay_premium"
+        then: -1000
+        elif: choice_point_1 == "negotiate"
+        then: -700
+        else: 0
+        conditional_success:
+          if: choice_point_1 == "negotiate" AND social_skill > 0.6
+          then: -500
+    reputation:
+      street:
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "pay_premium"
+          then: 100
+          elif: choice_point_1 == "negotiate"
+          then: 50
+          elif: choice_point_1 == "refuse_leave"
+          then: -50
+          else: 0
+        additional_modifiers:
+          if: choice_point_3 == "destroy_information"
+          then: 200
+          elif: choice_point_3 == "sell_information"
+          then: -100
+          else: 0
+          if: choice_point_5 == "permanent_contact"
+          then: 150
+          elif: choice_point_5 == "betray_informant"
+          then: -300
+          else: 0
+    items:
+    - id: valuable_information_chip
+      name: Ценная информационная чип-карта
+      type: data_chip
+      rarity: rare
+      quantity: 1
+      conditional: choice_point_1 != "refuse_leave" AND choice_point_2 != "suspect_false"
+    - id: informant_contact_token
+      name: Токен контакта информатора
+      type: contact_token
+      rarity: uncommon
+      quantity: 1
+      conditional: choice_point_4 == "become_ally" OR choice_point_4 == "neutral_contact"
+    - id: street_network_access
+      name: Доступ к уличной информационной сети
+      type: network_access
+      rarity: epic
+      quantity: 1
+      conditional: choice_point_5 == "permanent_contact" AND reputation.street > 200
+    unlocks:
+    - quest: canon-quest-seattle-informant-network
+      conditional: choice_point_5 == "permanent_contact" AND reputation.street > 150
+    - quest: canon-quest-seattle-informant-betrayal
+      conditional: choice_point_5 == "betray_informant"
+    - quest: canon-quest-seattle-information-brokerage
+      conditional: choice_point_4 == "become_ally" AND choice_point_3 == "sell_information"
+    - npc_relationship: mikhail_shadow_volkov_trusted
+      conditional: choice_point_4 == "become_ally" AND choice_point_2 == "trust_completely"
+    - npc_relationship: mikhail_shadow_volkov_hostile
+      conditional: choice_point_5 == "betray_informant" OR choice_point_4 == "turn_enemy"
+    - faction: street_information_network
+      conditional: choice_point_5 == "permanent_contact" AND reputation.street > 250
+    - location: abandoned_bar_safe_house
+      conditional: choice_point_4 == "become_ally" AND choice_point_1 == "pay_premium"
+
+content:
+  introduction: |
+    Заброшенный бар в промышленном районе Сиэтла. Дождь барабанит по разбитым окнам, а внутри 
+    пахнет старым пивом и дымом от дешевых сигарет. Вы пришли сюда по наводке - говорят, здесь 
+    можно найти информацию.
+    
+    В дальнем углу, за столом покрытым слоем пыли, сидит человек в поношенном плаще. Он смотрит 
+    на вас оценивающим взглядом, а затем медленно вынимает дата-чип и кладет его на стол.
+    
+    "Михаил 'Тень' Волков," - представляется он, не протягивая руку. "У меня есть информация, 
+    которая может стоить тебе дорого. Или ничего. Все зависит от того, как ты себя поведешь."
+    
+    Он скользит пальцем по чипу. "Тысяча эдди. Премиум цена за премиум информацию. Или... можешь 
+    попробовать сторговаться. Но помни - я не терплю тех, кто пытается меня обмануть."
+
+  plot_points:
+  - id: initial_encounter
+    title: Первая встреча с информатором
+    description: |
+      Первый ключевой выбор квеста: как заплатить за информацию? Премиум цена, торг или отказ?
+      
+      Этот выбор определяет начальные отношения с информатором и влияет на все последующие 
+      взаимодействия в квесте. Премиум цена показывает серьезность намерений и открывает путь 
+      к лучшим отношениям, торг демонстрирует находчивость и может привести к скидке при 
+      наличии социальных навыков, отказ закрывает большинство путей развития.
+    choice_point: 1
+    consequences:
+      pay_premium:
+        reputation:
+          street: 100
+          corporate: 0
+        narrative_path: generous_payer
+        unlocks: premium_information_path
+        relationship_change:
+          mikhail_shadow_volkov: 50
+        narrative_response: |
+          Михаил улыбается, берет эдди и протягивает чип. "Хорошо. Ты знаешь цену информации. 
+          Может, мы еще поработаем вместе."
+      negotiate:
+        reputation:
+          street: 50
+          corporate: 0
+        narrative_path: skilled_negotiator
+        unlocks: negotiation_path
+        relationship_change:
+          mikhail_shadow_volkov: 20
+        conditional_success:
+          if: social_skill > 0.6
+          then:
+            money_modifier: -500
+            relationship_change:
+              mikhail_shadow_volkov: 30
+            narrative_response: |
+              "Ха! Ты умеешь торговаться," - смеется Михаил. "Ладно, семьсот. Но только потому, 
+              что ты не пытался меня обмануть."
+        narrative_response: |
+          Михаил изучает вас секунду, затем кивает. "Восемьсот. И это мой последний раз. Информация 
+          стоит того."
+      refuse_leave:
+        reputation:
+          street: -50
+          corporate: 0
+        narrative_path: missed_opportunity
+        unlocks: closed_path
+        relationship_change:
+          mikhail_shadow_volkov: -30
+        narrative_response: |
+          "Твое дело," - пожимает плечами Михаил, убирая чип. "Но помни - возможность не всегда 
+          стучится дважды. И в этом городе информация - это валюта."
+
+  - id: trust_assessment
+    title: Оценка доверия к информации
+    description: |
+      Второй ключевой выбор: как оценить полученную информацию? Поверить сразу, проверить 
+      независимо или подозревать обман?
+      
+      Выбор влияет на качество и полноту информации, доступность дополнительных деталей и 
+      отношения с информатором. Доверие открывает больше информации, но может быть рискованным, 
+      проверка дает безопасность, но требует времени и ресурсов, подозрение защищает от обмана, 
+      но портит отношения.
+    choice_point: 2
+    consequences:
+      trust_completely:
+        narrative_path: trusting_path
+        unlocks: full_information_access
+        relationship_change:
+          mikhail_shadow_volkov: 40
+        information_quality: high
+        narrative_response: |
+          Вы изучаете чип и решаете поверить информатору. Михаил кивает с одобрением. "Хорошо. 
+          Ты доверяешь мне - я доверю тебе. Вот дополнительные детали, которых нет в основном 
+          чипе."
+        additional_information:
+          location_hints: true
+          npc_contacts: true
+          timing_details: true
+      verify_independently:
+        narrative_path: cautious_path
+        unlocks: verified_information_path
+        relationship_change:
+          mikhail_shadow_volkov: 0
+        information_quality: medium
+        narrative_response: |
+          "Разумный подход," - говорит Михаил без осуждения. "Проверь сам. Но помни - пока ты 
+          проверяешь, информация может устареть. Информация в этом городе - скоропортящийся товар."
+        verification_required: true
+        verification_time: 24_hours_game_time
+        verification_success_modifier:
+          relationship_change:
+            mikhail_shadow_volkov: 20
+          information_quality_boost: high
+      suspect_false:
+        narrative_path: suspicious_path
+        unlocks: limited_information_path
+        relationship_change:
+          mikhail_shadow_volkov: -40
+        information_quality: low
+        narrative_response: |
+          Михаил хмурится. "Если не доверяешь - зачем вообще покупал? Информация есть, используй 
+          как хочешь. Но больше я с тобой работать не буду."
+        lost_future_opportunities: true
+
+  - id: information_usage
+    title: Использование информации
+    description: |
+      Третий ключевой выбор: как использовать полученную информацию? Для личной выгоды, продать 
+      или уничтожить для защиты других?
+      
+      Выбор существенно влияет на репутацию в уличной сети, доступность будущих контактов и 
+      финальные отношения с информатором. Личное использование нейтрально, продажа дает деньги, 
+      но портит репутацию, уничтожение защищает других и повышает репутацию.
+    choice_point: 3
+    consequences:
+      use_personal_gain:
+        reputation:
+          street: 0
+          corporate: 0
+        narrative_path: pragmatic_path
+        unlocks: neutral_reputation_path
+        relationship_change:
+          mikhail_shadow_volkov: 0
+        money_modifier: 0
+        narrative_response: |
+          Вы используете информацию для собственных целей. Михаил узнает об этом и одобрительно 
+          кивает. "Прагматичный подход. Каждый за себя - так и живет этот город."
+      sell_information:
+        reputation:
+          street: -100
+          corporate: 50
+        narrative_path: mercenary_path
+        unlocks: corporate_favor_path
+        relationship_change:
+          mikhail_shadow_volkov: -20
+        money_modifier: 2000
+        narrative_response: |
+          Вы продаете информацию самому высокому предложению. Михаил узнает об этом и качает 
+          головой. "Деньги важнее репутации? Твое право. Но в уличной сети об этом узнают. И не 
+          все будут довольны."
+        future_quest_modifier:
+          street_quests: -20_percent_availability
+          corporate_quests: 10_percent_availability
+      destroy_information:
+        reputation:
+          street: 200
+          corporate: -100
+        narrative_path: moral_path
+        unlocks: street_hero_path
+        relationship_change:
+          mikhail_shadow_volkov: 50
+        money_modifier: -500
+        narrative_response: |
+          Вы уничтожаете информацию, чтобы защитить тех, кого она могла бы навредить. Михаил 
+          узнает об этом и смотрит на вас с новым уважением. "Редко встретишь того, кто думает 
+          о других. Может, я ошибся в тебе. Давай еще поговорим."
+
+  - id: relationship_development
+    title: Развитие отношений
+    description: |
+      Четвертый ключевой выбор: какие отношения установить с информатором после сделки? Стать 
+      союзником, остаться нейтральным контактом или превратиться во врага?
+      
+      Выбор определяет доступность будущих квестов, качество информации в последующих 
+      взаимодействиях и долгосрочное влияние на репутацию. Союзничество открывает уникальные 
+      возможности, нейтралитет сохраняет гибкость, враждебность закрывает пути, но может открыть 
+      другие через месть или конкуренцию.
+    choice_point: 4
+    consequences:
+      become_ally:
+        narrative_path: alliance_path
+        unlocks: long_term_partnership_path
+        relationship_change:
+          mikhail_shadow_volkov: 100
+        reputation:
+          street: 150
+        future_benefits:
+          information_discounts: 30_percent
+          exclusive_quests: true
+          network_access: expanded
+        narrative_response: |
+          Вы предлагаете Михаилу стать постоянными партнерами. Он задумывается, затем протягивает 
+          руку. "Хорошо. В этом городе нужны люди, которым можно доверять. Добро пожаловать в 
+          сеть."
+      neutral_contact:
+        narrative_path: professional_path
+        unlocks: transactional_relationship_path
+        relationship_change:
+          mikhail_shadow_volkov: 0
+        reputation:
+          street: 0
+        future_benefits:
+          information_available: yes
+          no_special_discounts: true
+          standard_network_access: true
+        narrative_response: |
+          Вы решаете оставить отношения нейтральными - просто бизнес. Михаил кивает. "Понятно. 
+          Если нужна будет информация - знаешь, где меня найти."
+      turn_enemy:
+        narrative_path: conflict_path
+        unlocks: hostile_relationship_path
+        relationship_change:
+          mikhail_shadow_volkov: -100
+        reputation:
+          street: -200
+        future_consequences:
+          information_blocked: true
+          network_hostility: true
+          potential_revenge_quests: true
+        narrative_response: |
+          Вы даете понять, что отношения закончены и не будут продолжены. Михаил холодно смотрит 
+          на вас. "Хорошо. Но помни - в этом городе враги имеют долгую память. Удачи тебе."
+
+  - id: long_term_interaction
+    title: Долгосрочное взаимодействие
+    description: |
+      Пятый и финальный ключевой выбор: как строить долгосрочные отношения? Установить постоянную 
+      сеть контактов, оставить одноразовую сделку или предать информатора ради награды?
+      
+      Финальный выбор определяет доступ к информационной сети Сиэтла, долгосрочную репутацию и 
+      доступность целой ветки квестов. Постоянная сеть дает максимум возможностей, одноразовая 
+      сделка сохраняет гибкость, предательство дает быструю выгоду, но закрывает многие пути и 
+      создает врагов.
+    choice_point: 5
+    consequences:
+      permanent_contact:
+        narrative_path: network_expansion_path
+        unlocks: information_brokerage_network
+        relationship_change:
+          mikhail_shadow_volkov: 150
+        reputation:
+          street: 250
+        long_term_benefits:
+          access_to_network: full
+          multiple_informants: true
+          exclusive_information: true
+          quest_chain_access: information_network_questline
+        narrative_response: |
+          Вы предлагаете Михаилу установить постоянную сеть контактов и стать частью 
+          информационной сети Сиэтла. Он улыбается широкой улыбкой. "Отлично. Теперь ты часть 
+          семьи. Добро пожаловать в тени, где информация - это сила."
+        ending_type: best_ending_network_access
+      one_time_transaction:
+        narrative_path: single_deal_path
+        unlocks: closed_transaction_path
+        relationship_change:
+          mikhail_shadow_volkov: 0
+        reputation:
+          street: 0
+        long_term_benefits:
+          access_to_network: none
+          future_contact_possible: maybe
+          no_special_benefits: true
+        narrative_response: |
+          Вы решаете, что это одноразовая сделка. Михаил кивает без эмоций. "Как скажешь. Сделка 
+          есть сделка. Удачи."
+        ending_type: neutral_ending
+      betray_informant:
+        narrative_path: betrayal_path
+        unlocks: hostile_network_path
+        relationship_change:
+          mikhail_shadow_volkov: -200
+        reputation:
+          street: -300
+          corporate: 100
+        long_term_consequences:
+          network_hostility: complete
+          informant_revenge: high_probability
+          street_blacklist: true
+          corporate_favor: gained
+        narrative_response: |
+          Вы предаете Михаила, продавая информацию о его деятельности корпорациям. Он узнает об 
+          этом и смотрит на вас с холодной яростью. "Предатель. В этом городе предателей не 
+          прощают. Я найду тебя. И когда найду - ты пожалеешь о своем выборе."
+        ending_type: worst_ending_betrayal
+        unlocks_revenge_quest: true
+
+  endings:
+  - id: ending_network_master
+    title: Мастер информационной сети
+    description: |
+      Вы стали полноправным членом информационной сети Сиэтла, получив доступ к эксклюзивной 
+      информации и множеству контактов. Михаил стал вашим надежным союзником, а уличная репутация 
+      достигла новых высот.
+    requirements:
+      choice_point_1: pay_premium
+      choice_point_2: trust_completely
+      choice_point_3: destroy_information
+      choice_point_4: become_ally
+      choice_point_5: permanent_contact
+    rewards_modifier:
+      reputation:
+        street: 300
+      unlocks:
+        - information_network_full_access
+        - exclusive_informant_quests
+        - mikhail_shadow_volkov_ally_status
+
+  - id: ending_skilled_negotiator
+    title: Умелый переговорщик
+    description: |
+      Вы успешно договорились о скидке, проверили информацию и использовали ее прагматично. 
+      Отношения с Михаилом остались нейтральными, но профессиональными. Вы сохранили гибкость 
+      в выборе будущих действий.
+    requirements:
+      choice_point_1: negotiate
+      choice_point_2: verify_independently
+      choice_point_3: use_personal_gain
+      choice_point_4: neutral_contact
+      choice_point_5: one_time_transaction
+    rewards_modifier:
+      reputation:
+        street: 50
+      unlocks:
+        - mikhail_shadow_volkov_contact_available
+
+  - id: ending_street_hero
+    title: Герой улиц
+    description: |
+      Вы уничтожили опасную информацию, защитив многих людей. Уличная репутация значительно 
+      выросла, и многие начинают уважать ваши моральные принципы. Михаил стал вашим союзником, 
+      хотя долгосрочная сеть контактов не была установлена.
+    requirements:
+      choice_point_3: destroy_information
+      choice_point_4: become_ally
+    rewards_modifier:
+      reputation:
+        street: 350
+      unlocks:
+        - street_hero_reputation_bonus
+        - mikhail_shadow_volkov_respected_ally
+
+  - id: ending_corporate_mercenary
+    title: Корпоративный наемник
+    description: |
+      Вы продали информацию корпорациям, заработав хорошие деньги, но потеряв уличную репутацию. 
+      Михаил разочарован, но не враждебен. Корпорации теперь более благосклонны к вам.
+    requirements:
+      choice_point_3: sell_information
+      choice_point_4: neutral_contact OR turn_enemy
+    rewards_modifier:
+      reputation:
+        corporate: 100
+        street: -150
+      money: 2000
+      unlocks:
+        - corporate_favor_quests
+
+  - id: ending_missed_opportunity
+    title: Упущенная возможность
+    description: |
+      Вы отказались от сделки с самого начала, потеряв доступ к ценной информации и потенциальным 
+      контактам. Михаил запомнил ваш отказ, и будущие взаимодействия будут затруднены.
+    requirements:
+      choice_point_1: refuse_leave
+    rewards_modifier:
+      reputation:
+        street: -100
+      unlocks:
+        - mikhail_shadow_volkov_hostile
+
+  - id: ending_betrayal_consequences
+    title: Последствия предательства
+    description: |
+      Вы предали информатора ради корпоративной награды. Уличная сеть теперь враждебна к вам, 
+      репутация на улицах разрушена. Михаил поклялся отомстить. Но корпорации оценили вашу 
+      преданность деньгам и могут предложить новые возможности.
+    requirements:
+      choice_point_5: betray_informant
+    rewards_modifier:
+      reputation:
+        street: -400
+        corporate: 200
+      money: 5000
+      unlocks:
+        - corporate_espionage_quests
+        - mikhail_shadow_volkov_revenge_quest
+        - street_network_blacklist
+
+npc_characters:
+  - id: mikhail_shadow_volkov
+    name: Михаил "Тень" Волков
+    role: information_broker
+    location: abandoned_bar_seattle
+    personality_traits:
+      - cautious
+      - intelligent
+      - street_smart
+      - values_trust
+      - pragmatic
+    relationship_range: -200 to 200
+    initial_relationship: 0
+    relationship_factors:
+      trust: "Значение доверия основано на честности в сделках"
+      reputation: "Уличная репутация влияет на доступность"
+      loyalty: "Верность в выборе влияет на долгосрочные отношения"
+    dialogue_branches:
+      high_trust:
+        greeting: "Друг мой! Хорошо видеть тебя. У меня есть кое-что интересное для тебя."
+        information_offer: "Это эксклюзивная информация, только для тебя. Специальная цена."
+      neutral:
+        greeting: "А, это ты. Нужна информация?"
+        information_offer: "Стандартная цена. Никаких скидок."
+      low_trust:
+        greeting: "Чего тебе нужно?"
+        information_offer: "Полная цена. Авансом. И никаких вопросов."
+      hostile:
+        greeting: "Ты здесь. Хорошо, у меня есть кое-что сказать тебе."
+        threat: "В этом городе предателей не прощают. Следи за спиной."
+
+mechanics_integration:
+  reputation_system:
+    street_reputation_impact: "Все выборы влияют на уличную репутацию с разной силой"
+    corporate_reputation_impact: "Продажа информации корпорациям влияет на корпоративную репутацию"
+    reputation_thresholds:
+      high_street: 200
+      medium_street: 50
+      low_street: -100
+    reputation_consequences:
+      high_street: "Доступ к уличной информационной сети, скидки на информацию"
+      low_street: "Затрудненный доступ к информации, враждебность уличных контактов"
+  
+  npc_relationship_system:
+    relationship_tracking: "Отношения с Михаилом отслеживаются и влияют на все взаимодействия"
+    relationship_levels:
+      ally: 100-200
+      friend: 50-99
+      neutral: -49 to 49
+      hostile: -100 to -50
+      enemy: -200 to -101
+    relationship_benefits:
+      ally: "Эксклюзивная информация, скидки 30%, доступ к сети контактов"
+      friend: "Хорошая информация, скидки 15%, базовый доступ"
+      neutral: "Стандартная информация, полная цена"
+      hostile: "Ограниченная информация, повышенная цена"
+      enemy: "Блокировка доступа, потенциальные месть-квесты"
+
+  dynamic_branching:
+    conditional_objectives: "Объективы квеста меняются в зависимости от выборов"
+    conditional_dialogue: "Диалоги с NPC адаптируются к истории взаимодействий"
+    conditional_rewards: "Награды изменяются в зависимости от выбранного пути"
+    long_term_consequences: "Выборы влияют на доступность будущих квестов и контактов"
+
+  information_brokerage_mechanics:
+    information_quality: "Качество информации зависит от выбора доверия и отношений"
+    information_pricing: "Цена информации зависит от выбора оплаты и отношений"
+    information_network_access: "Доступ к сети зависит от финального выбора и репутации"
+
+content:
+  sections:
+  - id: quest_overview
+    title: Обзор квеста
+    body: |
+      "Тени Прошлого" - это динамический квест-пример, демонстрирующий систему ветвления на основе 
+      взаимодействий с NPC. Квест полностью адаптируется к выбору игрока, создавая уникальный опыт 
+      для каждого прохождения.
+      
+      Квест разработан как практическая демонстрация системы динамических квестов, описанной в 
+      архитектурных документах проекта. Каждый выбор имеет значимые последствия, влияющие не только 
+      на текущий квест, но и на будущие возможности игрока.
+    mechanics_links:
+    - dynamic-quest-system
+    - npc-relationship-system
+    - reputation-system
+    - choice-consequence-system
+    assets: []
+
+  - id: choice_points_detail
+    title: Детальное описание точек выбора
+    body: |
+      Квест содержит 5 пронумерованных точек выбора (choice_point: 1-5), каждая из которых влияет 
+      на последующие возможности:
+      
+      1. Первый выбор: Как заплатить за информацию (премиум/торг/отказ) - определяет начальные 
+         отношения и доступность путей
+      2. Второй выбор: Уровень доверия к информации (доверие/проверка/подозрение) - влияет на 
+         качество информации и отношения
+      3. Третий выбор: Использование информации (личное/продажа/уничтожение) - влияет на репутацию 
+         и доступность будущих путей
+      4. Четвертый выбор: Развитие отношений (союзник/нейтральный/враг) - определяет доступность 
+         будущих квестов и качество информации
+      5. Пятый выбор: Долгосрочное взаимодействие (постоянная сеть/одноразовая сделка/предательство) 
+         - влияет на доступ к информационной сети и долгосрочную репутацию
+      
+      Каждый выбор имеет множественные последствия: немедленные (репутация, деньги), среднесрочные 
+      (доступность путей, качество информации) и долгосрочные (доступ к сети, финальные концовки, 
+      доступность будущих квестов).
+    mechanics_links:
+    - choice-point-system
+    - consequence-tracking
+    - branching-narrative-engine
+    assets: []
+
+  - id: endings_system
+    title: Система концовок
+    body: |
+      Квест имеет 6 различных концовок, каждая из которых определяется комбинацией выборов игрока:
+      
+      1. Мастер информационной сети - лучшая концовка с полным доступом к сети
+      2. Умелый переговорщик - нейтральная концовка с сохранением гибкости
+      3. Герой улиц - моральная концовка с высокой уличной репутацией
+      4. Корпоративный наемник - прагматичная концовка с корпоративной выгодой
+      5. Упущенная возможность - негативная концовка из-за раннего отказа
+      6. Последствия предательства - худшая концовка с враждебностью сети, но корпоративными 
+         возможностями
+      
+      Концовки не имеют "правильного" или "неправильного" пути - каждый путь открывает различные 
+      возможности для дальнейшего развития персонажа.
+    mechanics_links:
+    - multiple-endings-system
+    - consequence-chain-system
+    assets: []
+
+gameplay:
+  type: side
+  difficulty: medium
+  estimated_duration: 30-45 minutes
+  replayability: very_high
+  choice_impact: critical
+  
+  mechanics:
+    - Dynamic branching based on player choices
+    - NPC relationship tracking and evolution
+    - Reputation system integration
+    - Information brokerage mechanics
+    - Long-term consequence system
+    - Multiple ending paths
+    - Conditional quest unlocking
+  
+  challenges:
+    - Balancing trust and caution
+    - Managing reputation between factions
+    - Deciding between short-term and long-term gains
+    - Choosing between money, reputation, and relationships
+  
+  player_agency: |
+    Игрок имеет полный контроль над направлением квеста через серию выборов. Каждый выбор открывает 
+    новые пути и закрывает другие, создавая уникальный опыт прохождения для каждого игрока. Система 
+    не навязывает "правильный" путь, позволяя игроку исследовать различные последствия своих решений 
+    и находить стиль игры, который ему подходит.
+
+# Issue: #2244
+# Dynamic Quest System Implementation - Character-Driven Quest Example
+# Content Writer Agent - Ready for Backend import

@@ -6,9 +6,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -23,45 +26,94 @@ type Handler struct {
 // checkAdminAuth verifies that the request has admin authorization
 // PERFORMANCE: Fast JWT token validation with caching for repeated requests
 func (h *Handler) checkAdminAuth(ctx context.Context) error {
-	// TODO: Implement proper JWT token parsing and admin role verification
-	// For now, check for admin header (placeholder implementation)
-
-	// In production, this would:
-	// 1. Extract JWT token from Authorization header
-	// 2. Validate token signature
-	// 3. Check admin role claims
-	// 4. Cache validation results for performance
-
-	// Placeholder: Accept any request with X-Admin-Token header
-	// This should be replaced with proper JWT validation
-
 	// Check if this is a test/development environment
 	if h.service.config.Environment == "test" || h.service.config.Environment == "development" {
 		h.service.logger.Debug("Admin auth bypassed for development/test environment")
 		return nil
 	}
 
-	// Production admin authentication
-	// Extract token from context or headers (placeholder)
-	adminToken := ctx.Value("admin_token")
-	if adminToken == nil {
+	// Production admin authentication with JWT
+	var tokenString string
+
+	// Try to get token from context first
+	if token, ok := ctx.Value("admin_token").(string); ok && token != "" {
+		tokenString = token
+	} else {
 		// Try to get from request context if available
 		if req, ok := ctx.Value("http_request").(*http.Request); ok {
-			adminToken = req.Header.Get("X-Admin-Token")
+			authHeader := req.Header.Get("Authorization")
+			if authHeader != "" {
+				// Extract Bearer token
+				parts := strings.SplitN(authHeader, " ", 2)
+				if len(parts) == 2 && parts[0] == "Bearer" {
+					tokenString = parts[1]
+				}
+			}
 		}
 	}
 
-	if adminToken == nil || adminToken == "" {
-		h.service.logger.Warn("Admin authentication failed: no admin token provided")
+	if tokenString == "" {
+		h.service.logger.Warn("Admin authentication failed: no JWT token provided")
 		return &AdminAuthError{
 			Message: "Admin authentication required",
 			Code:    "ADMIN_AUTH_REQUIRED",
 		}
 	}
 
-	// TODO: Validate admin token against auth service or JWT verification
-	// For now, accept any non-empty token
-	h.service.logger.Debug("Admin authentication successful")
+	// Validate JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(h.service.config.JWTSecret), nil
+	})
+
+	if err != nil {
+		h.service.logger.Warn("Admin authentication failed: invalid JWT token", zap.Error(err))
+		return &AdminAuthError{
+			Message: "Invalid admin token",
+			Code:    "ADMIN_AUTH_INVALID_TOKEN",
+		}
+	}
+
+	if !token.Valid {
+		h.service.logger.Warn("Admin authentication failed: token validation failed")
+		return &AdminAuthError{
+			Message: "Invalid admin token",
+			Code:    "ADMIN_AUTH_INVALID_TOKEN",
+		}
+	}
+
+	// Extract and validate claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		h.service.logger.Warn("Admin authentication failed: invalid token claims")
+		return &AdminAuthError{
+			Message: "Invalid admin token claims",
+			Code:    "ADMIN_AUTH_INVALID_CLAIMS",
+		}
+	}
+
+	// Check admin role
+	if role, exists := claims["role"]; !exists || role != "admin" {
+		h.service.logger.Warn("Admin authentication failed: insufficient permissions",
+			zap.Any("role", role))
+		return &AdminAuthError{
+			Message: "Admin role required",
+			Code:    "ADMIN_AUTH_INSUFFICIENT_PERMISSIONS",
+		}
+	}
+
+	// Optional: Check token expiration (already handled by jwt.Parse)
+	if exp, exists := claims["exp"]; exists {
+		h.service.logger.Debug("Admin token validated successfully",
+			zap.Any("exp", exp),
+			zap.Any("role", claims["role"]))
+	} else {
+		h.service.logger.Debug("Admin token validated successfully (no expiration)")
+	}
+
 	return nil
 }
 

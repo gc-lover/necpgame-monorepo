@@ -209,6 +209,85 @@ spec:
     cleanup.policy: delete
 
 ---
+# Simulation Tick Topics for Event-Driven Architecture (#2281)
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: world.tick.hourly
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    domain: simulation
+    security-level: high
+    managed-by: devops-agent
+  annotations:
+    description: "Hourly game time ticks for economy simulation - triggers Market.Clear()"
+    security-classification: "internal"
+    retention-policy: "24-hours"
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: 86400000   # 24 hours
+    segment.ms: 3600000      # 1 hour
+    compression.type: snappy
+    max.message.bytes: 16384  # 16KB
+    cleanup.policy: delete
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: world.tick.daily
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    domain: simulation
+    security-level: high
+    managed-by: devops-agent
+  annotations:
+    description: "Daily game time ticks for world simulation - triggers Diplomacy.Evaluate()"
+    security-classification: "internal"
+    retention-policy: "7-days"
+spec:
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: 604800000  # 7 days
+    segment.ms: 86400000     # 1 day
+    compression.type: snappy
+    max.message.bytes: 16384  # 16KB
+    cleanup.policy: delete
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: simulation.event
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    domain: simulation
+    security-level: high
+    managed-by: devops-agent
+  annotations:
+    description: "Simulation output events (crowd signals, diplomatic changes, market updates)"
+    security-classification: "internal"
+    retention-policy: "7-days"
+spec:
+  partitions: 12
+  replicas: 3
+  config:
+    retention.ms: 604800000  # 7 days
+    segment.ms: 3600000      # 1 hour
+    compression.type: snappy
+    max.message.bytes: 65536  # 64KB
+    cleanup.policy: delete
+
+---
 # Kafka ACLs Configuration
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaUser
@@ -269,6 +348,111 @@ spec:
           name: game.*
           patternType: prefix
         operation: Read
+        host: "*"
+
+---
+# Simulation Services Kafka Users (#2281)
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: economy-service
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    service: economy-service
+    managed-by: devops-agent
+spec:
+  authentication:
+    type: scram-sha-512
+    passwordSecret:
+      secretName: kafka-service-accounts
+      password: economy-service-scram-password
+  authorization:
+    type: simple
+    acls:
+      # Read access to hourly ticks
+      - resource:
+          type: topic
+          name: world.tick.hourly
+          patternType: literal
+        operation: Read
+        host: "*"
+      # Write access to simulation events
+      - resource:
+          type: topic
+          name: simulation.event
+          patternType: literal
+        operation: Write
+        host: "*"
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: world-simulation-service
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    service: world-simulation-service
+    managed-by: devops-agent
+spec:
+  authentication:
+    type: scram-sha-512
+    passwordSecret:
+      secretName: kafka-service-accounts
+      password: world-simulation-service-scram-password
+  authorization:
+    type: simple
+    acls:
+      # Read access to daily ticks
+      - resource:
+          type: topic
+          name: world.tick.daily
+          patternType: literal
+        operation: Read
+        host: "*"
+      # Write access to simulation events
+      - resource:
+          type: topic
+          name: simulation.event
+          patternType: literal
+        operation: Write
+        host: "*"
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: simulation-ticker-service
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    strimzi.io/cluster: necpgame-kafka-cluster
+    service: simulation-ticker-service
+    managed-by: devops-agent
+spec:
+  authentication:
+    type: scram-sha-512
+    passwordSecret:
+      secretName: kafka-service-accounts
+      password: simulation-ticker-service-scram-password
+  authorization:
+    type: simple
+    acls:
+      # Write access to tick topics
+      - resource:
+          type: topic
+          name: world.tick.hourly
+          patternType: literal
+        operation: Write
+        host: "*"
+      - resource:
+          type: topic
+          name: world.tick.daily
+          patternType: literal
+        operation: Write
         host: "*"
 
 ---

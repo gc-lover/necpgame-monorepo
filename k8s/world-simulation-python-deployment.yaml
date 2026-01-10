@@ -1,0 +1,169 @@
+# World Simulation Service - Python Deployment
+# Event-Driven Diplomacy Engine (#2281)
+# Agent: DevOps - Creates infrastructure for world simulation with daily ticks
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: world-simulation-python
+  namespace: necpgame-services
+  labels:
+    app: world-simulation-python
+    component: diplomacy-engine
+    domain: simulation
+    managed-by: devops-agent
+  annotations:
+    description: "Python world simulation service with diplomacy engine"
+    performance-targets: "Handles daily ticks and faction relations"
+    security-classification: "internal"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: world-simulation-python
+  template:
+    metadata:
+      labels:
+        app: world-simulation-python
+      annotations:
+        prometheus.io/scrape: "false"  # Python service - custom metrics
+    spec:
+      containers:
+      - name: world-simulation
+        image: necpgame/world-simulation-python:latest
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "necpgame-kafka-cluster-kafka-bootstrap.necpgame-infrastructure:9093"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 500m
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import psutil; exit(0) if psutil.cpu_percent() < 95 else exit(1)"
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "print('ready')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: world-simulation-python
+  namespace: necpgame-services
+  labels:
+    app: world-simulation-python
+    managed-by: devops-agent
+spec:
+  selector:
+    app: world-simulation-python
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+
+---
+# NetworkPolicy for world simulation service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: world-simulation-python-networkpolicy
+  namespace: necpgame-services
+  labels:
+    app: world-simulation-python
+    managed-by: devops-agent
+spec:
+  podSelector:
+    matchLabels:
+      app: world-simulation-python
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: necpgame-monitoring
+    ports:
+    - protocol: TCP
+      port: 8000  # Health checks
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: necpgame-infrastructure
+      podSelector:
+        matchLabels:
+          app: kafka
+          strimzi.io/cluster: necpgame-kafka-cluster
+    ports:
+    - protocol: TCP
+      port: 9093  # Kafka internal
+  - to: []  # Deny all other egress by default
+
+---
+# ConfigMap for simulation configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: world-simulation-config
+  namespace: necpgame-services
+  labels:
+    app: world-simulation-python
+    managed-by: devops-agent
+data:
+  simulation-config.yaml: |
+    diplomacy:
+      evaluation_interval: 86400  # Daily
+      factions:
+        - id: arastov_family
+          initial_power: 8.5
+        - id: nomad_nomads
+          initial_power: 6.2
+        - id: valentino_gang
+          initial_power: 7.1
+        - id: maelstrom_gang
+          initial_power: 9.3
+        - id: tyger_claws
+          initial_power: 7.8

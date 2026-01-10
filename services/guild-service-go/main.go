@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -48,13 +49,47 @@ func main() {
 	// Initialize meter
 	meter := otel.Meter("guild-service")
 
+	// Parse guild configuration
+	minFounderLevel := 5
+	if env := os.Getenv("GUILD_MIN_FOUNDER_LEVEL"); env != "" {
+		if val, err := strconv.Atoi(env); err == nil {
+			minFounderLevel = val
+		}
+	}
+
+	minFounderGold := 1000
+	if env := os.Getenv("GUILD_MIN_FOUNDER_GOLD"); env != "" {
+		if val, err := strconv.Atoi(env); err == nil {
+			minFounderGold = val
+		}
+	}
+
+	defaultGuildLevel := 1
+	if env := os.Getenv("GUILD_DEFAULT_LEVEL"); env != "" {
+		if val, err := strconv.Atoi(env); err == nil {
+			defaultGuildLevel = val
+		}
+	}
+
+	defaultGuildGold := 100
+	if env := os.Getenv("GUILD_DEFAULT_GOLD"); env != "" {
+		if val, err := strconv.Atoi(env); err == nil {
+			defaultGuildGold = val
+		}
+	}
+
 	// Create service instance with optimizations
 	svc, err := service.NewGuildService(service.Config{
-		Logger:      logger,
-		Tracer:      tracer,
-		Meter:       meter,
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		RedisURL:    os.Getenv("REDIS_URL"),
+		Logger:             logger,
+		Tracer:             tracer,
+		Meter:              meter,
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
+		RedisURL:           os.Getenv("REDIS_URL"),
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		MinFounderLevel:    minFounderLevel,
+		MinFounderGold:     minFounderGold,
+		DefaultGuildLevel:  defaultGuildLevel,
+		DefaultGuildGold:   defaultGuildGold,
 	})
 	if err != nil {
 		logger.Fatal("Failed to create guild service", zap.Error(err))

@@ -1,0 +1,487 @@
+# Random Patch Implants Balance Configuration
+# Issue: #1672 - Game Balance for random patch implants mechanic
+# Agent: GameBalance - Creates comprehensive balance configuration for random patch implants
+
+metadata:
+  id: random-patch-implants-balance
+  title: "Random Patch Implants Balance System - NECPGAME"
+  version: "1.0.0"
+  description: "Comprehensive balance configuration for random patch implants with risk/reward mechanics, probability tables, and TTK impact calculations"
+  last_updated: "2026-01-06"
+  author: "GameBalance Agent"
+  applicable_to: "implant system, combat mechanics, risk/reward systems"
+
+# Core Balance Constants
+patch_constants:
+  # Activation Requirements
+  activation:
+    channel_time: 1.5          # seconds to channel activation
+    interruptible: true         # can be interrupted during channel
+    cost_biofuel: 1            # biofuel units required
+    cost_stamina_percent: 10   # percentage of max stamina
+    minimum_stamina_percent: 20 # cannot activate below this stamina
+    
+  # Cooldown System
+  cooldowns:
+    chaos_mode: 45.0           # seconds cooldown for chaos mode
+    control_mode: 55.0         # seconds cooldown for control mode
+    stabilizer_chaos: 90.0     # doubled cooldown with stabilizer (chaos)
+    stabilizer_control: 110.0  # doubled cooldown with stabilizer (control)
+    lockout_tier2: 20.0        # lockout after Tier2 debuff (Lag Spike, Thermal Throttle)
+    
+  # Safety Window
+  safety_window:
+    rollback_window: 3.0       # seconds after activation to cancel
+    rollback_stamina_cost: 5   # percentage stamina cost for rollback
+    rollback_cooldown: 60.0    # cooldown before next rollback available
+
+# Mode Configuration
+patch_modes:
+  chaos_mode:
+    name: "Chaos Mode"
+    description: "High risk, high reward - 50/50 chance of buff or debuff with full power effects"
+    buff_probability: 0.50     # 50% chance for buff
+    debuff_probability: 0.50   # 50% chance for debuff
+    effect_multiplier: 1.0     # 100% effect strength
+    cooldown: 45.0
+    pvp_limit: null            # no limit in PvP
+    
+  control_mode:
+    name: "Control Mode"
+    description: "Safer option with 70% buff chance but reduced effect strength"
+    buff_probability: 0.70     # 70% chance for buff
+    debuff_probability: 0.30   # 30% chance for debuff
+    effect_multiplier: 0.7     # 70% effect strength
+    cooldown: 55.0
+    pvp_limit: 2               # max 2 activations per PvP match
+    
+  stabilizer_mode:
+    name: "Stabilizer Mode"
+    description: "Reduced debuff chance but doubled cooldown"
+    chaos_buff_probability: 0.60   # 60% chance with stabilizer in chaos
+    chaos_debuff_probability: 0.40 # 40% chance with stabilizer in chaos
+    control_buff_probability: 0.80 # 80% chance with stabilizer in control
+    control_debuff_probability: 0.20 # 20% chance with stabilizer in control
+    cooldown_multiplier: 2.0   # doubles base cooldown
+    effect_multiplier: 1.0     # effect strength unchanged
+
+# Effect Tables with Weights
+effect_tables:
+  buff_effects:
+    - id: "overclock"
+      name: "Overclock"
+      description: "Increased rate of fire and reload speed"
+      weight: 24
+      duration: 8.0
+      effects:
+        rate_of_fire_percent: 15
+        reload_speed_percent: 8
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      
+    - id: "focus"
+      name: "Focus"
+      description: "Reduced spread and recoil"
+      weight: 22
+      duration: 10.0
+      effects:
+        spread_reduction_percent: 12
+        recoil_reduction_percent: 10
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      
+    - id: "adrenal_surge"
+      name: "Adrenal Surge"
+      description: "Increased movement speed and melee damage"
+      weight: 18
+      duration: 8.0
+      effects:
+        movement_speed_percent: 10
+        melee_damage_percent: 10
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      
+    - id: "stability_weave"
+      name: "Stability Weave"
+      description: "Improved stability when aiming down sights"
+      weight: 16
+      duration: 9.0
+      effects:
+        ads_stability_percent: 14
+        sway_resistance_percent: 10
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      
+    - id: "nano_kinetic"
+      name: "Nano-Kinetic"
+      description: "Increased bullet damage and penetration"
+      weight: 12
+      duration: 7.0
+      effects:
+        bullet_damage_percent: 8
+        penetration_percent: 6
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      
+  debuff_effects:
+    - id: "lag_spike"
+      name: "Lag Spike"
+      tier: 2
+      description: "Increased input delay and spread"
+      weight: 24
+      duration: 8.0
+      effects:
+        input_delay_percent: 15
+        ads_delay_percent: 15
+        spread_increase_percent: 10
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      triggers_lockout: true
+      
+    - id: "drain"
+      name: "Drain"
+      tier: 1
+      description: "Reduced stamina regeneration and movement speed"
+      weight: 22
+      duration: 10.0
+      effects:
+        stamina_regen_reduction_percent: 12
+        movement_speed_reduction_percent: 8
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      triggers_lockout: false
+      
+    - id: "sensor_noise"
+      name: "Sensor Noise"
+      tier: 1
+      description: "Reduced detection range and movement accuracy"
+      weight: 18
+      duration: 9.0
+      effects:
+        detection_range_reduction_percent: 15
+        movement_accuracy_reduction_percent: 10
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      triggers_lockout: false
+      
+    - id: "jitter"
+      name: "Jitter"
+      tier: 1
+      description: "Increased vertical recoil and sway"
+      weight: 16
+      duration: 9.0
+      effects:
+        vertical_recoil_increase_percent: 12
+        sway_increase_percent: 8
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      triggers_lockout: false
+      
+    - id: "thermal_throttle"
+      name: "Thermal Throttle"
+      tier: 2
+      description: "Reduced rate of fire and increased overheat chance"
+      weight: 12
+      duration: 7.0
+      effects:
+        rate_of_fire_reduction_percent: 8
+        overheat_chance_increase_percent: 5
+      chaos_multiplier: 1.0
+      control_multiplier: 0.7
+      triggers_lockout: true
+
+# Effect Calculation Formulas
+effect_formulas:
+  # Weighted Random Selection
+  weighted_selection: |
+    total_weight = sum(all_effect_weights)
+    random_value = random(0, total_weight)
+    selected_effect = first_effect_where(cumulative_weight >= random_value)
+    
+  # Effect Strength Application
+  effect_strength: |
+    base_effect = effect_base_value
+    mode_multiplier = chaos_mode ? 1.0 : 0.7
+    final_effect = base_effect * mode_multiplier
+    
+  # Duration Calculation
+  duration: |
+    base_duration = effect_duration
+    # Duration is not affected by mode multiplier
+    
+  # TTK Impact Calculation (PvP)
+  ttk_impact_buff: |
+    base_ttk = current_weapon_ttk
+    damage_increase = bullet_damage_percent / 100
+    rof_increase = rate_of_fire_percent / 100
+    new_ttk = base_ttk / ((1 + damage_increase) * (1 + rof_increase))
+    ttk_delta = base_ttk - new_ttk
+    # Cap at +12% TTK improvement in PvP
+    capped_ttk_delta = min(ttk_delta, base_ttk * 0.12)
+    
+  ttk_impact_debuff: |
+    base_ttk = current_weapon_ttk
+    rof_decrease = rate_of_fire_reduction_percent / 100
+    spread_increase = spread_increase_percent / 100
+    accuracy_penalty = 1 / (1 + spread_increase)
+    new_ttk = base_ttk / ((1 - rof_decrease) * accuracy_penalty)
+    ttk_delta = new_ttk - base_ttk
+    # Cap at -8% TTK penalty in PvP (max 8% slower)
+    capped_ttk_delta = min(ttk_delta, base_ttk * 0.08)
+
+# PvP Balance Caps
+pvp_balance:
+  # TTK Modification Limits
+  ttk_limits:
+    max_ttk_improvement_percent: 12   # buffs cannot improve TTK by more than 12%
+    max_ttk_penalty_percent: 8        # debuffs cannot slow TTK by more than 8%
+    
+  # Control Mode Restrictions
+  control_mode_limits:
+    max_activations_per_match: 2      # only 2 control mode activations per PvP match
+    after_limit_mode: "chaos"         # switch to chaos mode after limit
+    
+  # Effect Duration Modifiers
+  duration_modifiers:
+    buff_duration_reduction: 0.0      # no reduction for buffs
+    debuff_duration_reduction: 0.0    # no reduction for debuffs
+
+# PvE Balance Modifiers
+pve_balance:
+  # Boss Resistance
+  boss_resistance:
+    buff_resistance_percent: 30       # bosses have 30% resistance to player buffs
+    debuff_application: 1.0           # no resistance to debuffs on player
+    
+  # Effect Strength
+  effect_strength:
+    buff_multiplier: 1.0              # full effect strength
+    debuff_multiplier: 1.0            # full effect strength
+    
+  # No Activation Limits
+  activation_limits:
+    control_mode_limit: null          # no limit in PvE
+    chaos_mode_limit: null            # no limit in PvE
+
+# Anti-Mod: Safe Rollback
+safe_rollback:
+  description: "One-time per combat ability to cancel a debuff effect"
+  activation_time: 1.0                # 1 second channel time
+  stamina_cost_percent: 5             # 5% stamina cost
+  cooldown: 60.0                      # 60 seconds cooldown
+  uses_per_combat: 1                  # only usable once per combat encounter
+  rollback_window: 3.0                # can rollback within 3 seconds of activation
+  
+  # What can be rolled back
+  rollbackable_effects:
+    - "lag_spike"
+    - "drain"
+    - "sensor_noise"
+    - "jitter"
+    - "thermal_throttle"
+    
+  # Effect
+  rollback_effect: |
+    current_debuff = active_debuff_effect
+    remove_debuff(current_debuff)
+    apply_stamina_cost(5%)  # -5% stamina
+    start_cooldown(60.0)
+
+# Repeat Prevention
+repeat_prevention:
+  enabled: true
+  description: "Same effect cannot occur twice in a row"
+  implementation: |
+    last_effect_id = get_last_activated_effect()
+    available_effects = all_effects.filter(effect != last_effect_id)
+    selected_effect = weighted_random(available_effects)
+    set_last_activated_effect(selected_effect)
+
+# Resource Cost Stacking
+cost_stacking:
+  description: "Repeated activations within 2 minutes cost more"
+  stack_window: 120.0                 # 2 minutes window
+  base_cost:
+    biofuel: 1
+    stamina_percent: 10
+    
+  stack_multipliers:
+    activation_2:
+      biofuel_multiplier: 1.0         # +1 biofuel = 2 total
+      stamina_multiplier: 1.5         # +5% stamina = 15% total
+    activation_3:
+      biofuel_multiplier: 1.0         # +1 biofuel = 3 total
+      stamina_multiplier: 2.0         # +10% stamina = 20% total
+    activation_4_plus:
+      biofuel_multiplier: 1.0         # +1 biofuel per activation
+      stamina_multiplier: 2.5         # +15% stamina per activation (capped at stamina threshold)
+
+# Restrictions and Limitations
+restrictions:
+  # Stamina Requirements
+  stamina_requirements:
+    minimum_stamina_percent: 20       # cannot activate below 20% stamina
+    check_before_activation: true
+    
+  # Hard CC Prevention
+  hard_cc_prevention:
+    cannot_activate_during: 
+      - "stun"
+      - "knockdown"
+      - "freeze"
+      - "disorient"
+    check_before_activation: true
+    
+  # Lockout Conditions
+  lockout_conditions:
+    tier2_debuff_lockout:
+      duration: 20.0
+      triggers:
+        - "lag_spike"
+        - "thermal_throttle"
+      prevents: "all_patch_activations"
+
+# DPS and TTK Impact Calculations
+performance_metrics:
+  # DPS Calculation
+  dps_impact_buff: |
+    base_dps = weapon_damage * fire_rate
+    damage_buff = 1 + (bullet_damage_percent / 100)
+    rof_buff = 1 + (rate_of_fire_percent / 100)
+    new_dps = base_dps * damage_buff * rof_buff
+    dps_delta = new_dps - base_dps
+    dps_increase_percent = (dps_delta / base_dps) * 100
+    
+  dps_impact_debuff: |
+    base_dps = weapon_damage * fire_rate
+    rof_debuff = 1 - (rate_of_fire_reduction_percent / 100)
+    accuracy_penalty = 1 / (1 + (spread_increase_percent / 100))
+    new_dps = base_dps * rof_debuff * accuracy_penalty
+    dps_delta = base_dps - new_dps
+    dps_decrease_percent = (dps_delta / base_dps) * 100
+    
+  # TTK Calculation
+  ttk_impact: |
+    # See effect_formulas section for detailed TTK calculations
+    # PvP: Capped at +12% improvement, -8% penalty
+    # PvE: Full effect with boss resistance to buffs
+
+# Monitoring Metrics
+monitoring_metrics:
+  telemetry:
+    - metric: "random_patch.activations.chaos"
+      description: "Total chaos mode activations"
+      aggregation: "count"
+      
+    - metric: "random_patch.activations.control"
+      description: "Total control mode activations"
+      aggregation: "count"
+      
+    - metric: "random_patch.activations.stabilizer"
+      description: "Total stabilizer mode activations"
+      aggregation: "count"
+      
+    - metric: "random_patch.unique_users"
+      description: "Unique users activating patches"
+      aggregation: "unique_count"
+      
+    - metric: "random_patch.buff_rate"
+      description: "Percentage of activations resulting in buffs"
+      aggregation: "percentage"
+      calculation: "buffs / total_activations"
+      
+    - metric: "random_patch.debuff_rate"
+      description: "Percentage of activations resulting in debuffs"
+      aggregation: "percentage"
+      calculation: "debuffs / total_activations"
+      
+    - metric: "random_patch.effect_distribution"
+      description: "Distribution of each effect type"
+      aggregation: "histogram"
+      
+    - metric: "random_patch.dps_delta"
+      description: "Average DPS change during effect window"
+      aggregation: "average"
+      window: "effect_duration"
+      
+    - metric: "random_patch.ttk_delta_ms"
+      description: "Average TTK change in milliseconds"
+      aggregation: "average"
+      window: "effect_duration"
+      
+    - metric: "random_patch.rollback_uses"
+      description: "Count of safe rollback activations"
+      aggregation: "count"
+      
+    - metric: "random_patch.stabilizer_usage"
+      description: "Percentage of activations using stabilizer"
+      aggregation: "percentage"
+      
+    - metric: "random_patch.lockout_triggered"
+      description: "Count of Tier2 debuff lockouts"
+      aggregation: "count"
+      
+    - metric: "random_patch.cost_stacking_usage"
+      description: "Count of stacked activations within 2 minutes"
+      aggregation: "count"
+
+# Balance Validation Rules
+balance_validation:
+  # Target Metrics
+  target_metrics:
+    buff_rate_chaos: 0.50            # 50% buff rate in chaos mode
+    buff_rate_control: 0.70          # 70% buff rate in control mode
+    avg_dps_increase_buff: [5, 15]   # 5-15% DPS increase from buffs
+    avg_dps_decrease_debuff: [5, 12] # 5-12% DPS decrease from debuffs
+    usage_rate: [0.3, 0.7]           # 30-70% of players should use this
+    
+  # Validation Rules
+  validation_rules:
+    - "Buff rate in chaos mode should be approximately 50% (±5%)"
+    - "Buff rate in control mode should be approximately 70% (±5%)"
+    - "PvP TTK changes should not exceed caps (+12% / -8%)"
+    - "Tier2 debuffs should trigger lockout 100% of the time"
+    - "Repeat prevention should prevent same effect twice in a row"
+    - "Stamina requirements should prevent activation below 20%"
+    - "Cost stacking should apply correctly within 2-minute window"
+    - "Safe rollback should be usable once per combat encounter"
+    - "Control mode should be limited to 2 activations per PvP match"
+    - "Bosses should have 30% resistance to player buffs in PvE"
+
+# Emergency Balance Patches
+emergency_patches:
+  buff_nerfs:
+    - condition: "buff_rate > 0.65 AND avg_dps_increase > 20%"
+      action: "reduce_buff_effect_strength_by_10%"
+      cooldown: "24_hours"
+      
+  debuff_buffs:
+    - condition: "debuff_rate > 0.55 AND avg_dps_decrease < 5%"
+      action: "increase_debuff_effect_strength_by_10%"
+      cooldown: "24_hours"
+      
+  mode_balance:
+    - condition: "control_mode_usage < 0.1 AND chaos_mode_usage > 0.8"
+      action: "reduce_control_mode_cooldown_by_10s"
+      cooldown: "48_hours"
+      
+  meta_breaking:
+    - condition: "single_effect_pick_rate > 0.6"
+      action: "adjust_effect_weights"
+      cooldown: "72_hours"
+
+# Version History
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-06"
+    changes:
+      - "Initial comprehensive balance configuration for random patch implants"
+      - "Chaos and control mode probability tables"
+      - "Effect weights and distributions"
+      - "PvP and PvE balance modifiers"
+      - "TTK and DPS impact calculations"
+      - "Safe rollback anti-mod configuration"
+      - "Cost stacking and restriction systems"
+      - "Comprehensive monitoring metrics"
+    author: "GameBalance Agent"
+    issue: "#1672"

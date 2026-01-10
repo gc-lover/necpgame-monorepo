@@ -1,6 +1,6 @@
 # Kafka Topic Configuration for NECPGAME
-# Issue: #2216
-# Agent: API Designer
+# Issue: #2216, #2281
+# Agent: API Designer, DevOps
 
 topics:
   # Combat Domain - HOT PATH (20k EPS)
@@ -108,6 +108,38 @@ topics:
     max_message_bytes: 1048576  # 1MB
     description: Dead letter queue for failed event processing
 
+  # Simulation Tick Domain - Event-Driven World Simulation
+  # Issue: #2281 - Event-Driven Simulation Tick Infrastructure
+  - name: world.tick.hourly
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 3600000       # 1 hour
+    cleanup_policy: delete
+    compression_type: lz4
+    max_message_bytes: 524288  # 512KB
+    description: Game Hour tick events - drives Economy Market.Clear() operations. Emitted hourly by Ticker Service.
+
+  - name: world.tick.daily
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 7776000000  # 90 days
+    segment_ms: 86400000      # 1 day
+    cleanup_policy: delete
+    compression_type: lz4
+    max_message_bytes: 524288  # 512KB
+    description: Game Day tick events - drives Diplomacy.Evaluate() operations. Emitted daily by Ticker Service.
+
+  - name: simulation.event
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 3600000       # 1 hour
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 1048576  # 1MB
+    description: Output events from world simulations (Mesa agents, crowd simulation, aggregated signals). Consumed by economy-service and social-service.
+
 # Consumer Groups Configuration
 consumer_groups:
   combat_processor:
@@ -146,6 +178,27 @@ consumer_groups:
     session_timeout_ms: 30000
     heartbeat_interval_ms: 3000
 
+  economy_tick_consumer:
+    topics: [ world.tick.hourly ]
+    partitions_per_consumer: 2
+    session_timeout_ms: 60000
+    heartbeat_interval_ms: 5000
+    description: Economy service consumers for hourly market clearing events
+
+  world_simulation_consumer:
+    topics: [ world.tick.daily, simulation.event ]
+    partitions_per_consumer: 3
+    session_timeout_ms: 60000
+    heartbeat_interval_ms: 5000
+    description: World simulation service consumers for daily diplomacy evaluation and simulation events
+
+  simulation_output_consumer:
+    topics: [ simulation.event ]
+    partitions_per_consumer: 4
+    session_timeout_ms: 45000
+    heartbeat_interval_ms: 3000
+    description: Multiple services consuming simulation output events (economy, social, analytics)
+
 # Performance Benchmarks
 performance_targets:
   combat_events:
@@ -161,6 +214,21 @@ performance_targets:
   social_events:
     throughput: 1000   # events/sec
     latency_p99: 200   # ms
+    durability: 0.9999    # 4 9's
+
+  world_tick_hourly:
+    throughput: 1      # events/hour (1 tick per hour)
+    latency_p99: 5000  # ms (5 seconds acceptable for hourly ticks)
+    durability: 0.99999   # 5 9's (critical for economy simulation)
+
+  world_tick_daily:
+    throughput: 1      # events/day (1 tick per day)
+    latency_p99: 10000 # ms (10 seconds acceptable for daily ticks)
+    durability: 0.99999   # 5 9's (critical for diplomacy simulation)
+
+  simulation_events:
+    throughput: 100    # events/sec (aggregated from Mesa agents)
+    latency_p99: 1000  # ms (1 second acceptable for background simulation)
     durability: 0.9999    # 4 9's
 
 # Scaling Rules
@@ -179,3 +247,13 @@ scaling_rules:
     action: "reduce_retention"
     topic_pattern: "game.analytics.*"
     min_retention_days: 7
+
+  - condition: "consumer_lag > 1"
+    action: "alert_operator"
+    topic_pattern: "world.tick.*"
+    description: Tick events must be consumed immediately - lag indicates system issue
+
+  - condition: "producer_latency > 10000"
+    action: "scale_producers"
+    topic_pattern: "simulation.event"
+    max_producers: 10

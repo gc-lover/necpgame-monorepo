@@ -1,0 +1,528 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/simulation-events.json",
+  "title": "Simulation Output Events",
+  "description": "Output events from world simulations (Mesa agents, crowd simulation, aggregated signals). Memory-optimized for high-volume background simulation data. Issue: #2281 - Event-Driven Simulation Tick Infrastructure.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../core/base-event.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "enum": [
+            "simulation.event.agent_action",
+            "simulation.event.crowd_signal",
+            "simulation.event.aggregated_stats",
+            "simulation.event.demand_signal",
+            "simulation.event.population_movement",
+            "simulation.event.social_trend"
+          ]
+        },
+        "data": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/AgentActionData"
+            },
+            {
+              "$ref": "#/definitions/CrowdSignalData"
+            },
+            {
+              "$ref": "#/definitions/AggregatedStatsData"
+            },
+            {
+              "$ref": "#/definitions/DemandSignalData"
+            },
+            {
+              "$ref": "#/definitions/PopulationMovementData"
+            },
+            {
+              "$ref": "#/definitions/SocialTrendData"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "AgentActionData": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "action_type",
+        "location",
+        "timestamp"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "Unique agent identifier in Mesa simulation",
+          "examples": [
+            "crowd-agent-001"
+          ]
+        },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "walk",
+            "buy_food",
+            "tweet",
+            "trade",
+            "socialize",
+            "rest"
+          ],
+          "description": "Type of action performed by agent",
+          "examples": [
+            "buy_food"
+          ]
+        },
+        "location": {
+          "type": "string",
+          "description": "Game location/zone where action occurred",
+          "examples": [
+            "night_city_sector_4",
+            "badlands_trading_post"
+          ]
+        },
+        "sector": {
+          "type": "string",
+          "description": "City sector identifier",
+          "examples": [
+            "Sector 4",
+            "Downtown"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When action occurred in simulation time"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Action-specific metadata",
+          "additionalProperties": true,
+          "examples": [
+            {
+              "item_type": "food",
+              "quantity": 1,
+              "price": 50
+            }
+          ]
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Individual agent actions from Mesa simulation."
+    },
+    "CrowdSignalData": {
+      "type": "object",
+      "required": [
+        "signal_type",
+        "location",
+        "magnitude",
+        "aggregation_timestamp"
+      ],
+      "properties": {
+        "signal_type": {
+          "type": "string",
+          "enum": [
+            "food_demand_rising",
+            "food_demand_falling",
+            "population_influx",
+            "population_exodus",
+            "economic_activity_spike",
+            "social_unrest",
+            "trading_volume_change"
+          ],
+          "description": "Type of aggregated signal from crowd simulation",
+          "examples": [
+            "food_demand_rising"
+          ]
+        },
+        "location": {
+          "type": "string",
+          "description": "Game location/zone affected",
+          "examples": [
+            "night_city_sector_4",
+            "badlands_trading_post"
+          ]
+        },
+        "sector": {
+          "type": "string",
+          "description": "City sector identifier",
+          "examples": [
+            "Sector 4"
+          ]
+        },
+        "magnitude": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Signal strength (0-100)",
+          "examples": [
+            75.5
+          ]
+        },
+        "change_percent": {
+          "type": "number",
+          "description": "Percentage change from previous period",
+          "examples": [
+            15.2,
+            -8.5
+          ]
+        },
+        "agent_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of agents contributing to this signal",
+          "examples": [
+            150
+          ]
+        },
+        "aggregation_timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When signal was aggregated from agent actions"
+        },
+        "time_window_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Time window used for aggregation",
+          "examples": [
+            60
+          ]
+        },
+        "predicted_duration_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Predicted signal duration based on agent behavior patterns",
+          "examples": [
+            120
+          ]
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Aggregated signals from Mesa crowd simulation optimized for economy service consumption."
+    },
+    "AggregatedStatsData": {
+      "type": "object",
+      "required": [
+        "location",
+        "stats_type",
+        "timestamp",
+        "metrics"
+      ],
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Game location/zone",
+          "examples": [
+            "night_city_sector_4"
+          ]
+        },
+        "stats_type": {
+          "type": "string",
+          "enum": [
+            "hourly_summary",
+            "daily_summary",
+            "agent_behavior",
+            "economic_activity",
+            "social_interactions"
+          ],
+          "description": "Type of aggregated statistics",
+          "examples": [
+            "hourly_summary"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Statistics aggregation timestamp"
+        },
+        "time_window_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Time window for aggregation",
+          "examples": [
+            60,
+            1440
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Aggregated metrics",
+          "properties": {
+            "total_agent_actions": {
+              "type": "integer",
+              "minimum": 0,
+              "examples": [
+                15000
+              ]
+            },
+            "unique_agents": {
+              "type": "integer",
+              "minimum": 0,
+              "examples": [
+                500
+              ]
+            },
+            "average_actions_per_agent": {
+              "type": "number",
+              "minimum": 0,
+              "examples": [
+                30.0
+              ]
+            },
+            "total_transactions": {
+              "type": "integer",
+              "minimum": 0,
+              "examples": [
+                2500
+              ]
+            },
+            "total_transaction_volume": {
+              "type": "integer",
+              "minimum": 0,
+              "examples": [
+                125000
+              ]
+            }
+          }
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Aggregated statistics from simulation for analytics and monitoring."
+    },
+    "DemandSignalData": {
+      "type": "object",
+      "required": [
+        "commodity_type",
+        "location",
+        "demand_level",
+        "timestamp"
+      ],
+      "properties": {
+        "commodity_type": {
+          "type": "string",
+          "enum": [
+            "food",
+            "water",
+            "medicine",
+            "weapons",
+            "ammunition",
+            "cyberware",
+            "vehicles"
+          ],
+          "description": "Type of commodity with changing demand",
+          "examples": [
+            "food"
+          ]
+        },
+        "location": {
+          "type": "string",
+          "description": "Game location/zone with demand change",
+          "examples": [
+            "night_city_sector_4"
+          ]
+        },
+        "demand_level": {
+          "type": "string",
+          "enum": [
+            "very_low",
+            "low",
+            "normal",
+            "high",
+            "very_high",
+            "critical"
+          ],
+          "description": "Current demand level",
+          "examples": [
+            "high"
+          ]
+        },
+        "demand_change_percent": {
+          "type": "number",
+          "description": "Percentage change in demand",
+          "examples": [
+            25.5,
+            -10.2
+          ]
+        },
+        "predicted_price_impact_percent": {
+          "type": "number",
+          "description": "Predicted price impact based on demand change",
+          "examples": [
+            15.0
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When demand signal was generated"
+        },
+        "agent_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of agents showing demand for this commodity",
+          "examples": [
+            150
+          ]
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Demand signals for economy service market pricing optimization."
+    },
+    "PopulationMovementData": {
+      "type": "object",
+      "required": [
+        "from_location",
+        "to_location",
+        "movement_type",
+        "agent_count",
+        "timestamp"
+      ],
+      "properties": {
+        "from_location": {
+          "type": "string",
+          "description": "Origin location/zone",
+          "examples": [
+            "night_city_sector_3"
+          ]
+        },
+        "to_location": {
+          "type": "string",
+          "description": "Destination location/zone",
+          "examples": [
+            "night_city_sector_4"
+          ]
+        },
+        "movement_type": {
+          "type": "string",
+          "enum": [
+            "migration",
+            "temporary",
+            "commute",
+            "event_driven"
+          ],
+          "description": "Type of population movement",
+          "examples": [
+            "migration"
+          ]
+        },
+        "agent_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of agents moving",
+          "examples": [
+            50
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When movement occurred"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "economic_opportunity",
+            "safety_concerns",
+            "resource_availability",
+            "social_attraction",
+            "event_triggered"
+          ],
+          "description": "Reason for movement",
+          "examples": [
+            "economic_opportunity"
+          ]
+        },
+        "estimated_duration_hours": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated duration of movement/stay",
+          "examples": [
+            24,
+            168
+          ]
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Population movement events for world state tracking."
+    },
+    "SocialTrendData": {
+      "type": "object",
+      "required": [
+        "trend_type",
+        "location",
+        "trend_strength",
+        "timestamp"
+      ],
+      "properties": {
+        "trend_type": {
+          "type": "string",
+          "enum": [
+            "rumor",
+            "social_movement",
+            "cultural_shift",
+            "public_opinion",
+            "viral_content"
+          ],
+          "description": "Type of social trend",
+          "examples": [
+            "rumor"
+          ]
+        },
+        "location": {
+          "type": "string",
+          "description": "Game location/zone where trend is active",
+          "examples": [
+            "night_city_sector_4"
+          ]
+        },
+        "trend_strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Trend strength/virality (0-100)",
+          "examples": [
+            65.5
+          ]
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Topic/subject of the trend",
+          "examples": [
+            "Food prices rising in Sector 4",
+            "New tech available downtown"
+          ]
+        },
+        "agent_participation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of agents participating in trend",
+          "examples": [
+            200
+          ]
+        },
+        "spread_rate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How quickly trend is spreading (agents/hour)",
+          "examples": [
+            15.5
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When trend was detected"
+        },
+        "estimated_duration_hours": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated trend duration",
+          "examples": [
+            48
+          ]
+        }
+      },
+      "description": "BACKEND NOTE: Fields ordered for struct alignment (large → small). Social trend events for social-service and world state management."
+    }
+  }
+}

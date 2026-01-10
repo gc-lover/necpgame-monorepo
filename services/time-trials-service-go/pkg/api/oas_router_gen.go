@@ -94,7 +94,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						// Leaf node.
 						switch r.Method {
 						case "GET":
-							s.handleAnalyticsTrialsTrialIdPerformanceGetRequest([1]string{
+							s.handleGetTrialPerformanceAnalyticsRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
@@ -118,7 +118,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleHealthGetRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleGetHealthRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET")
 					}
@@ -146,7 +146,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleLeaderboardsTrialIdGetRequest([1]string{
+						s.handleGetTrialLeaderboardRequest([1]string{
 							args[0],
 						}, elemIsEscaped, w, r)
 					default:
@@ -177,7 +177,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						// Leaf node.
 						switch r.Method {
 						case "GET":
-							s.handleLeaderboardsTrialIdPersonalPlayerIdGetRequest([2]string{
+							s.handleGetPlayerPersonalRecordRequest([2]string{
 								args[0],
 								args[1],
 							}, elemIsEscaped, w, r)
@@ -201,9 +201,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleTrialsGetRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleListTrialsRequest([0]string{}, elemIsEscaped, w, r)
 					case "POST":
-						s.handleTrialsPostRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleCreateTrialRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET,POST")
 					}
@@ -231,11 +231,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					if len(elem) == 0 {
 						switch r.Method {
 						case "GET":
-							s.handleTrialsTrialIdGetRequest([1]string{
+							s.handleGetTrialRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						case "PUT":
-							s.handleTrialsTrialIdPutRequest([1]string{
+							s.handleUpdateTrialRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
@@ -269,7 +269,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								// Leaf node.
 								switch r.Method {
 								case "POST":
-									s.handleTrialsTrialIdCompletePostRequest([1]string{
+									s.handleCompleteTrialSessionRequest([1]string{
 										args[0],
 									}, elemIsEscaped, w, r)
 								default:
@@ -291,7 +291,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								// Leaf node.
 								switch r.Method {
 								case "POST":
-									s.handleTrialsTrialIdStartPostRequest([1]string{
+									s.handleStartTrialSessionRequest([1]string{
 										args[0],
 									}, elemIsEscaped, w, r)
 								default:
@@ -340,7 +340,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						// Leaf node.
 						switch r.Method {
 						case "POST":
-							s.handleValidationSessionsSessionIdReportPostRequest([1]string{
+							s.handleReportSuspiciousSessionRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
@@ -485,9 +485,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						// Leaf node.
 						switch method {
 						case "GET":
-							r.name = AnalyticsTrialsTrialIdPerformanceGetOperation
+							r.name = GetTrialPerformanceAnalyticsOperation
 							r.summary = "Get trial performance analytics"
-							r.operationID = ""
+							r.operationID = "getTrialPerformanceAnalytics"
 							r.operationGroup = ""
 							r.pathPattern = "/analytics/trials/{trialId}/performance"
 							r.args = args
@@ -512,9 +512,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = HealthGetOperation
+						r.name = GetHealthOperation
 						r.summary = "Health check endpoint"
-						r.operationID = ""
+						r.operationID = "getHealth"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
 						r.args = args
@@ -545,9 +545,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = LeaderboardsTrialIdGetOperation
+						r.name = GetTrialLeaderboardOperation
 						r.summary = "Get trial leaderboard"
-						r.operationID = ""
+						r.operationID = "getTrialLeaderboard"
 						r.operationGroup = ""
 						r.pathPattern = "/leaderboards/{trialId}"
 						r.args = args
@@ -579,9 +579,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						// Leaf node.
 						switch method {
 						case "GET":
-							r.name = LeaderboardsTrialIdPersonalPlayerIdGetOperation
+							r.name = GetPlayerPersonalRecordOperation
 							r.summary = "Get player's personal record"
-							r.operationID = ""
+							r.operationID = "getPlayerPersonalRecord"
 							r.operationGroup = ""
 							r.pathPattern = "/leaderboards/{trialId}/personal/{playerId}"
 							r.args = args
@@ -605,18 +605,18 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = TrialsGetOperation
+						r.name = ListTrialsOperation
 						r.summary = "List time trials"
-						r.operationID = ""
+						r.operationID = "listTrials"
 						r.operationGroup = ""
 						r.pathPattern = "/trials"
 						r.args = args
 						r.count = 0
 						return r, true
 					case "POST":
-						r.name = TrialsPostOperation
+						r.name = CreateTrialOperation
 						r.summary = "Create time trial"
-						r.operationID = ""
+						r.operationID = "createTrial"
 						r.operationGroup = ""
 						r.pathPattern = "/trials"
 						r.args = args
@@ -647,18 +647,18 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					if len(elem) == 0 {
 						switch method {
 						case "GET":
-							r.name = TrialsTrialIdGetOperation
+							r.name = GetTrialOperation
 							r.summary = "Get time trial details"
-							r.operationID = ""
+							r.operationID = "getTrial"
 							r.operationGroup = ""
 							r.pathPattern = "/trials/{trialId}"
 							r.args = args
 							r.count = 1
 							return r, true
 						case "PUT":
-							r.name = TrialsTrialIdPutOperation
+							r.name = UpdateTrialOperation
 							r.summary = "Update time trial"
-							r.operationID = ""
+							r.operationID = "updateTrial"
 							r.operationGroup = ""
 							r.pathPattern = "/trials/{trialId}"
 							r.args = args
@@ -693,9 +693,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								// Leaf node.
 								switch method {
 								case "POST":
-									r.name = TrialsTrialIdCompletePostOperation
+									r.name = CompleteTrialSessionOperation
 									r.summary = "Complete time trial session"
-									r.operationID = ""
+									r.operationID = "completeTrialSession"
 									r.operationGroup = ""
 									r.pathPattern = "/trials/{trialId}/complete"
 									r.args = args
@@ -718,9 +718,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								// Leaf node.
 								switch method {
 								case "POST":
-									r.name = TrialsTrialIdStartPostOperation
+									r.name = StartTrialSessionOperation
 									r.summary = "Start time trial session"
-									r.operationID = ""
+									r.operationID = "startTrialSession"
 									r.operationGroup = ""
 									r.pathPattern = "/trials/{trialId}/start"
 									r.args = args
@@ -770,9 +770,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						// Leaf node.
 						switch method {
 						case "POST":
-							r.name = ValidationSessionsSessionIdReportPostOperation
+							r.name = ReportSuspiciousSessionOperation
 							r.summary = "Report suspicious trial session"
-							r.operationID = ""
+							r.operationID = "reportSuspiciousSession"
 							r.operationGroup = ""
 							r.pathPattern = "/validation/sessions/{sessionId}/report"
 							r.args = args

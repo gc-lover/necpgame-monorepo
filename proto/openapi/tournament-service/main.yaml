@@ -1,41 +1,31 @@
 openapi: 3.0.3
 info:
-  title: Tournament Service API - Enterprise-Grade Tournament Management
-  description: '**Enterprise-Grade Tournament and Competition Management API for NECPGAME**
+  title: Tournament Service API - Enterprise-Grade Tournament Management System
+  description: '**Enterprise-Grade Tournament Management API for NECPGAME**
 
-    This API manages competitive tournaments, bracket systems, and competitive events
-    in Night City, providing tournament creation, management, and player progression.
+    This API manages competitive tournaments, leaderboards, matchmaking, and
+    competitive gameplay experiences in Night City.
 
     ## Key Features
 
-    - **Tournament Management**: Create and manage competitive tournaments with automated brackets
-    - **Bracket Systems**: Single-elimination, double-elimination, round-robin, Swiss-system
-    - **Competition Events**: Tournament events, matches, scheduling, and live updates
-    - **Player Progression**: Tournament rankings, Elo ratings, advancement systems
-    - **Prize Distribution**: Automated reward and prize management with fair allocation
-    - **Spectator System**: Live tournament viewing with real-time match updates
-    - **Performance Optimized**: High-throughput tournament operations with <30ms P99 latency
+    - **Tournament Management**: Create and manage competitive tournaments - **Matchmaking**:
+    Advanced player matching algorithms - **Leaderboards**: Real-time ranking systems
+    - **Bracket Systems**: Single elimination, double elimination, round-robin
+    - **Prize Distribution**: Automated reward allocation - **Spectator Mode**: Live tournament viewing
+    - **Scalability**: Support for massive concurrent tournaments - **Performance Optimized**:
+    High-throughput tournament operations with <15ms P99 latency
 
     ## Domain Purpose
 
-    The Tournament domain handles all competitive events and tournaments in Night City.
-    Players participate in tournaments, compete in various bracket formats, advance through
-    stages, earn rankings, and receive rewards through comprehensive tournament management.
+    The Tournament domain handles all competitive gameplay and tournament systems in Night City.
+    Players participate in ranked matches, tournaments, and competitive events through
+    comprehensive tournament management systems.
 
     ## Performance Targets
 
-    - P99 Latency: <30ms for tournament operations
-    - Memory: <35KB per active tournament session
-    - Concurrent users: 100,000+ simultaneous tournament operations
-    - Throughput: 30,000+ operations per second
-    - Real-time updates: <100ms latency for live tournament data
-
-    ## SOLID/DRY Architecture
-
-    This service follows domain separation principles:
-    - **Infrastructure Domain**: Tournament persistence, caching, health monitoring
-    - **Game Domain**: Tournament logic, bracket management, match progression
-    - **Social Domain**: Player rankings, spectator systems, tournament communities
+    - P99 Latency: <15ms for tournament operations - Memory: <25KB per active tournament session
+    - Concurrent users: 100,000+ simultaneous tournament participants - Tournament throughput: 30,000+
+    operations per second
 
     '
   version: 1.0.0
@@ -57,449 +47,32 @@ security:
 - BearerAuth: []
 tags:
 - name: Tournament Management
-  description: Core tournament creation, configuration, and lifecycle management
-- name: Bracket Operations
-  description: Bracket generation, progression, and match management
-- name: Player Participation
-  description: Tournament registration, progression, and rankings
-- name: Prize Distribution
-  description: Automated reward allocation and prize management
-- name: Spectator System
-  description: Live tournament viewing and real-time updates
+  description: Core tournament operations and management
+- name: Matchmaking
+  description: Player matching and tournament bracket systems
+- name: Leaderboards
+  description: Ranking and statistics systems
+- name: Tournament Participation
+  description: Player registration and tournament participation
+- name: Tournament Scoring
+  description: Match score registration and tournament progression
 - name: Tournament Analytics
-  description: Tournament statistics, performance metrics, and insights
+  description: Tournament statistics, leaderboards, and spectator data
 - name: Health Monitoring
-  description: System health, performance monitoring, and diagnostics
+  description: System health and performance monitoring
 paths:
-  # Tournament Management
-  /tournaments:
-    post:
-      summary: Create a new tournament
-      operationId: createTournament
-      tags:
-        - Tournament Management
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTournamentRequest'
-      responses:
-        '201':
-          description: Tournament created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentResponse'
-        '400':
-          $ref: '../common-service/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-    get:
-      summary: List tournaments with filtering
-      operationId: listTournaments
-      tags:
-        - Tournament Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [draft, registration_open, in_progress, completed, cancelled]
-        - name: game_mode
-          in: query
-          schema:
-            type: string
-            enum: [solo, team, battle_royale, ranked]
-        - name: bracket_type
-          in: query
-          schema:
-            type: string
-            enum: [single_elimination, double_elimination, round_robin, swiss]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        '200':
-          description: List of tournaments
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentListResponse'
-        '400':
-          $ref: '../common-service/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  /tournaments/{tournamentId}:
-    get:
-      summary: Get tournament details
-      operationId: getTournament
-      tags:
-        - Tournament Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Tournament details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentResponse'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-    put:
-      summary: Update tournament configuration
-      operationId: updateTournament
-      tags:
-        - Tournament Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTournamentRequest'
-      responses:
-        '200':
-          description: Tournament updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentResponse'
-        '400':
-          $ref: '../common-service/responses/error.yaml#/BadRequest'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-    delete:
-      summary: Cancel tournament
-      operationId: cancelTournament
-      tags:
-        - Tournament Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Tournament cancelled successfully
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  # Player Participation
-  /tournaments/{tournamentId}/register:
-    post:
-      summary: Register player for tournament
-      operationId: registerForTournament
-      tags:
-        - Player Participation
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TournamentRegistrationRequest'
-      responses:
-        '201':
-          description: Player registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentRegistrationResponse'
-        '400':
-          $ref: '../common-service/responses/error.yaml#/BadRequest'
-        '409':
-          $ref: '../common-service/responses/error.yaml#/Conflict'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  /tournaments/{tournamentId}/unregister:
-    delete:
-      summary: Unregister player from tournament
-      operationId: unregisterFromTournament
-      tags:
-        - Player Participation
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Player unregistered successfully
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  # Bracket Operations
-  /tournaments/{tournamentId}/bracket:
-    get:
-      summary: Get tournament bracket
-      operationId: getTournamentBracket
-      tags:
-        - Bracket Operations
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: round
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-      responses:
-        '200':
-          description: Tournament bracket data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentBracketResponse'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  /tournaments/{tournamentId}/matches/{matchId}:
-    get:
-      summary: Get match details
-      operationId: getMatchDetails
-      tags:
-        - Bracket Operations
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Match details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MatchDetailsResponse'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-    put:
-      summary: Update match result
-      operationId: updateMatchResult
-      tags:
-        - Bracket Operations
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMatchResultRequest'
-      responses:
-        '200':
-          description: Match result updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MatchDetailsResponse'
-        '400':
-          $ref: '../common-service/responses/error.yaml#/BadRequest'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  # Spectator System
-  /tournaments/{tournamentId}/spectate:
-    get:
-      summary: Get live tournament data for spectators
-      operationId: spectateTournament
-      tags:
-        - Spectator System
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_live_matches
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - name: include_bracket
-          in: query
-          schema:
-            type: boolean
-            default: true
-      responses:
-        '200':
-          description: Live tournament spectator data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentSpectatorData'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  # Tournament Analytics
-  /tournaments/{tournamentId}/analytics:
-    get:
-      summary: Get tournament analytics and statistics
-      operationId: getTournamentAnalytics
-      tags:
-        - Tournament Analytics
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: metric_type
-          in: query
-          schema:
-            type: string
-            enum: [performance, participation, engagement, competitive]
-            default: performance
-      responses:
-        '200':
-          description: Tournament analytics data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentAnalyticsResponse'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
-  # Prize Distribution
-  /tournaments/{tournamentId}/prizes:
-    get:
-      summary: Get tournament prize distribution
-      operationId: getTournamentPrizes
-      tags:
-        - Prize Distribution
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Tournament prize distribution
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TournamentPrizesResponse'
-        '404':
-          $ref: '../common-service/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common-service/responses/error.yaml#/Unauthorized'
-
   /health:
     get:
       summary: Tournament service health check
       description: '**Enterprise-grade health check endpoint**
 
+
         Provides real-time health status of the tournament service microservice.
-        Critical for service discovery, load balancing, and tournament system monitoring.
+
+        Critical for service discovery, load balancing, and monitoring.
+
 
         **Performance:** <1ms response time, cached for 30 seconds
-        **Concurrent users:** Health checks support 1000+ concurrent requests
 
         '
       operationId: tournamentServiceHealthCheck
@@ -525,7 +98,7 @@ paths:
             ETag:
               schema:
                 type: string
-                example: '"tournament-health-v1.0"'
+                example: '"health-v1.0"'
             Content-Encoding:
               schema:
                 type: string
@@ -533,16 +106,6 @@ paths:
                 - gzip
                 - deflate
                 - br
-          content:
-            application/json:
-              schema:
-                $ref: '../common-service/schemas/health.yaml#/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common-service/schemas/error.yaml#/Error'
           content:
             application/json:
               schema:
@@ -572,8 +135,8 @@ paths:
                 $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
+      summary: Batch health check for tournament services
+      description: '**Performance optimization:** Check multiple tournament service health in
         single request
 
 
@@ -604,7 +167,7 @@ paths:
                     enum:
                     - tournament-service
                     - system-domain
-                    - matchmaking-service
+                    - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
@@ -666,7 +229,7 @@ paths:
             enum:
             - tournament-service
             - system-domain
-            - matchmaking-service
+            - specialized-domain
         description: Services to monitor (optional, monitors all if not specified)
       responses:
         '200':
@@ -733,10 +296,1249 @@ paths:
             application/json:
               schema:
                 $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments:
+    get:
+      summary: List tournaments with filtering and pagination
+      description: '**Enterprise-grade tournament listing endpoint**
+
+
+        Supports complex filtering by type, status, skill level, and pagination.
+
+        Optimized for high-throughput tournament browsing with proper indexing.
+
+
+        **Performance:** <10ms P95, supports 1000+ concurrent tournament searches
+
+        '
+      operationId: listTournaments
+      tags:
+      - Tournament Management
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - start_time
+          - prize_pool
+          - participant_count
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - registration_open
+          - in_progress
+          - completed
+          - cancelled
+        description: Filter by tournament status
+      - name: game_mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - king_of_the_hill
+          - battle_royale
+        description: Filter by game mode
+      - name: skill_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          - legendary
+        description: Filter by required skill level
+      responses:
+        '200':
+          $ref: '#/components/responses/TournamentListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create new tournament
+      description: '**Enterprise-grade creation endpoint**
+
+
+        Validates business rules, applies security checks, and ensures data consistency.
+
+        Supports optimistic locking for concurrent operations.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        '
+      operationId: createTournament
+      tags:
+      - Tournament Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTournamentRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/TournamentCreated'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Conflict - tournament with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}:
+    get:
+      summary: Get specific tournament by ID
+      description: '**Enterprise-grade retrieval endpoint**
+
+
+        Optimized with proper caching strategies and database indexing.
+
+        Supports conditional requests with ETags.
+
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getTournament
+      tags:
+      - Tournament Management
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
+      responses:
+        '200':
+          $ref: '#/components/responses/TournamentRetrieved'
+        '304':
+          description: Not modified - resource has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"tournament-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '400':
+          description: Invalid request - malformed tournament ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update existing tournament
+      description: '**Enterprise-grade update endpoint**
+
+
+        Supports partial updates, optimistic locking, and audit trails.
+
+        Ensures data consistency with event sourcing patterns.
+
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateTournament
+      tags:
+      - Tournament Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this
+          time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTournamentRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TournamentUpdated'
+        '400':
+          description: Invalid request - malformed data or tournament ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Conflict - version conflict (optimistic locking) or precondition
+            failed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"tournament-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '412':
+          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"tournament-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete tournament
+      description: '**Enterprise-grade deletion endpoint**
+
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+
+        Ensures referential integrity and cascading deletes.
+
+
+        **Performance:** <15ms P95, includes cleanup operations
+
+        '
+      operationId: deleteTournament
+      tags:
+      - Tournament Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      responses:
+        '204':
+          description: Tournament deleted successfully
+        '400':
+          description: Invalid request - malformed tournament ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Conflict - tournament cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/join:
+    post:
+      summary: Join a tournament
+      description: '**Player registration for tournament participation**
+
+        Handles tournament registration with validation of entry requirements,
+        participant limits, and registration deadlines.
+
+        **Business Logic:**
+        - Validates tournament status (must be registration_open)
+        - Checks participant capacity
+        - Verifies player eligibility
+        - Reserves participant slot
+
+        '
+      operationId: joinTournament
+      tags:
+      - Tournament Participation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinTournamentRequest'
+      responses:
+        '201':
+          description: Successfully joined tournament
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentParticipantResponse'
+        '400':
+          description: Invalid request - tournament full or registration closed
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Player already registered for this tournament
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - registration rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/leave:
+    post:
+      summary: Leave a tournament
+      description: '**Player withdrawal from tournament participation**
+
+        Handles tournament withdrawal with proper cleanup of participant records
+        and slot release.
+
+        **Business Logic:**
+        - Validates tournament status (must not be completed)
+        - Removes participant record
+        - Releases participant slot
+        - Updates tournament statistics
+
+        '
+      operationId: leaveTournament
+      tags:
+      - Tournament Participation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveTournamentRequest'
+      responses:
+        '200':
+          description: Successfully left tournament
+        '400':
+          description: Invalid request - tournament already started or completed
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament or participant record not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - withdrawal rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/scores:
+    post:
+      summary: Register tournament match score
+      description: '**Match result registration for tournament progression**
+
+        Records match outcomes with validation and automatic tournament bracket
+        advancement calculation.
+
+        **Business Logic:**
+        - Validates match authenticity
+        - Updates participant scores
+        - Calculates tournament standings
+        - Advances tournament bracket
+        - Triggers elimination logic
+
+        **Performance:** Sub-millisecond score validation and ranking updates
+
+        '
+      operationId: registerTournamentScore
+      tags:
+      - Tournament Scoring
+      security:
+      - ServiceAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterTournamentScoreRequest'
+      responses:
+        '201':
+          description: Score registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentScoreResponse'
+        '400':
+          description: Invalid request - malformed score data or tournament rules violation
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament or participant not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Score already registered for this match
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - scoring rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/leaderboard:
+    get:
+      summary: Get tournament leaderboard
+      description: '**Real-time tournament standings and rankings**
+
+        Provides current tournament leaderboard with player rankings, scores,
+        and progression statistics.
+
+        **Performance:** <5ms response time with cached rankings
+        **Caching:** 30-second cache with real-time invalidation on score updates
+
+        '
+      operationId: getTournamentLeaderboard
+      tags:
+      - Tournament Analytics
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of leaderboard entries to return
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"leaderboard-v1.0-tournament-uuid"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentLeaderboardResponse'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - leaderboard rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/bracket:
+    get:
+      summary: Get tournament bracket structure
+      description: '**Tournament bracket visualization and management**
+
+        Retrieves the current tournament bracket structure with all matches, rounds,
+        and participant positions. Supports real-time bracket updates during tournament progression.
+
+        **Business Logic:**
+        - Returns bracket structure based on tournament format (single/double elimination, round-robin)
+        - Includes match status, participant positions, and next round information
+        - Real-time updates during match progression
+
+        **Performance:** <10ms response time with cached bracket structure
+
+        '
+      operationId: getTournamentBracket
+      tags:
+      - Matchmaking
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      - name: include_matches
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include detailed match information in bracket
+      responses:
+        '200':
+          description: Tournament bracket retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"bracket-v1.0-tournament-uuid"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentBracketResponse'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - bracket rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Generate tournament bracket
+      description: '**Bracket generation for tournament start**
+
+        Generates tournament bracket structure based on registered participants and tournament format.
+        Supports automatic seeding and bracket distribution algorithms.
+
+        **Business Logic:**
+        - Validates tournament status (must have sufficient participants)
+        - Generates bracket based on tournament format (single/double elimination, round-robin)
+        - Applies seeding algorithm if participants have seed values
+        - Distributes participants across bracket positions
+
+        **Performance:** <100ms for bracket generation with up to 128 participants
+
+        '
+      operationId: generateTournamentBracket
+      tags:
+      - Matchmaking
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateBracketRequest'
+      responses:
+        '201':
+          description: Tournament bracket generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentBracketResponse'
+        '400':
+          description: Invalid request - insufficient participants or invalid tournament status
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Conflict - bracket already generated for this tournament
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - bracket generation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/spectators:
+    get:
+      summary: Get tournament spectator list
+      description: '**Live spectator management for tournament viewing**
+
+        Retrieves list of current spectators watching the tournament, with spectator count
+        and spectator activity statistics.
+
+        **Business Logic:**
+        - Returns current spectator count
+        - Includes spectator activity metrics
+        - Supports pagination for large spectator lists
+
+        **Performance:** <5ms response time with cached spectator data
+
+        '
+      operationId: getTournamentSpectators
+      tags:
+      - Tournament Analytics
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of spectator entries to return
+      responses:
+        '200':
+          description: Tournament spectators retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=10, s-maxage=20
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSpectatorsResponse'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - spectator list rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /tournaments/{tournament_id}/spectate:
+    get:
+      summary: Real-time tournament spectator WebSocket
+      description: '**Live tournament viewing with real-time updates**
+
+        WebSocket endpoint for real-time tournament spectator mode. Provides live match updates,
+        bracket progression, and tournament statistics without polling.
+
+        **Protocol:** WebSocket with JSON payloads
+        **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff
+
+        **Message Types:**
+        - match_start: Match has started
+        - match_update: Match score/status update
+        - match_end: Match has completed
+        - bracket_update: Bracket structure has changed
+        - tournament_update: Tournament status change
+
+        **Performance:** Sub-millisecond message delivery, supports 10,000+ concurrent spectators
+
+        '
+      operationId: tournamentSpectatorWebSocket
+      tags:
+      - Tournament Analytics
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament unique identifier
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/tournament/550e8400-e29b-41d4-a716-446655440000/spectate
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - tournament-spectator-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSpectatorMessage'
+        '400':
+          description: Invalid request - malformed tournament ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '401':
+          description: Unauthorized - authentication required for spectator mode
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
+          description: Too many requests - spectator WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /leaderboards:
+    get:
+      summary: Get global tournament leaderboards
+      description: '**Enterprise-grade leaderboard retrieval endpoint**
+
+        Retrieves global tournament leaderboards across all tournaments and time periods.
+        Supports filtering by tournament type, time range, and ranking criteria.
+
+        **Performance:** <50ms P99 latency, cached for 5 minutes, supports 10,000+ concurrent requests
+
+        **Use Cases:**
+        - Global player rankings
+        - Tournament statistics
+        - Historical performance analysis
+        - Competitive insights
+
+        '
+      operationId: getGlobalLeaderboards
+      tags:
+      - Leaderboards
+      - Tournament Analytics
+      parameters:
+      - name: tournament_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - ranked
+          - casual
+          - championship
+          default: all
+        description: Filter by tournament type
+        example: ranked
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - all_time
+          - this_month
+          - this_week
+          - today
+          default: all_time
+        description: Filter by time range
+        example: this_month
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum number of entries to return
+        example: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of entries to skip
+        example: 0
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - total_score
+          - win_rate
+          - tournaments_won
+          - avg_placement
+          default: total_score
+        description: Sort leaderboard by criteria
+        example: total_score
+      responses:
+        '200':
+          description: Global leaderboards retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"leaderboard-global-2025-12-v1"'
+            Last-Modified:
+              schema:
+                type: string
+                format: date-time
+                example: '2025-12-25T12:00:00Z'
+            X-Total-Count:
+              schema:
+                type: integer
+                example: 50000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentLeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   responses:
     HealthBatchSuccess:
       $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+    TournamentListSuccess:
+      description: Tournaments retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of tournaments matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TournamentListResponse'
+    TournamentCreated:
+      description: Tournament created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/tournaments/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created tournament
+        ETag:
+          schema:
+            type: string
+            example: '"tournament-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TournamentResponse'
+    TournamentRetrieved:
+      description: Tournament retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"tournament-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TournamentResponse'
+    TournamentUpdated:
+      description: Tournament updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"tournament-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TournamentResponse'
+    OK:
       $ref: ../common-service/responses/success.yaml#/OK
     Created:
       $ref: ../common-service/responses/success.yaml#/Created
@@ -755,288 +1557,475 @@ components:
     HealthOK:
       $ref: ../common-service/responses/success.yaml#/HealthOK
   schemas:
-    # Common references
     HealthResponse:
       $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Error:
       $ref: ../common-service/schemas/error.yaml#/Error
-
-    # Tournament Core Schemas
     Tournament:
       type: object
       required:
-      - tournament_id
+      - id
       - name
       - game_mode
-      - bracket_type
       - status
       - created_at
       properties:
-        tournament_id:
+        id:
           type: string
           format: uuid
-          description: Unique tournament identifier
-          example: 550e8400-e29b-41d4-a716-446655440001
+          description: Tournament unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
-          minLength: 3
+          minLength: 1
           maxLength: 100
           description: Tournament display name
-          example: "Night City Championship 2027"
+          example: Winter Championship 2025
         description:
           type: string
           maxLength: 1000
-          description: Tournament description and rules
-          example: "Elite tournament for top players in Night City"
+          description: Detailed tournament description
+          example: A competitive tournament featuring the best players in elimination matches with cash prizes.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-21T10:00:00Z'
         game_mode:
           type: string
-          enum: [solo, team, battle_royale, ranked]
-          description: Tournament game mode
-          example: solo
-        bracket_type:
+          enum:
+          - elimination
+          - round-robin
+          - swiss-system
+          - single-elimination
+          - double-elimination
+          description: Tournament game mode format
+          example: single-elimination
+        tournament_type:
           type: string
-          enum: [single_elimination, double_elimination, round_robin, swiss]
-          description: Tournament bracket system
-          example: single_elimination
-        status:
+          enum:
+          - ranked
+          - casual
+          - championship
+          - seasonal
+          - special-event
+          description: Type of tournament
+          example: championship
+        tournament_difficulty:
           type: string
-          enum: [draft, registration_open, in_progress, completed, cancelled]
-          description: Current tournament status
-          example: registration_open
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          - master
+          description: Tournament difficulty level
+          example: expert
         max_participants:
           type: integer
           minimum: 2
-          maximum: 10000
+          maximum: 1000
           description: Maximum number of participants
           example: 128
         current_participants:
           type: integer
           minimum: 0
+          default: 0
           description: Current number of registered participants
-          example: 67
-        entry_fee:
-          type: object
-          description: Tournament entry fee
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-              example: eddies
-            amount:
-              type: integer
-              minimum: 0
-              example: 500
-        prize_pool:
-          type: object
-          description: Total prize pool
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-              example: eddies
-            amount:
-              type: integer
-              minimum: 0
-              example: 50000
-        start_time:
+          example: 87
+        start_date:
           type: string
           format: date-time
-          description: Tournament scheduled start time
-        end_time:
+          description: Tournament start date and time
+          example: '2025-12-25T18:00:00Z'
+        end_date:
           type: string
           format: date-time
-          description: Tournament completion time
-        created_at:
+          description: Tournament end date and time
+          example: '2025-12-27T22:00:00Z'
+        status:
+          $ref: '#/components/schemas/TournamentStatus'
+        reward:
+          $ref: '#/components/schemas/TournamentReward'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentObjective'
+          maxItems: 10
+          description: Tournament objectives to complete
+        region:
           type: string
-          format: date-time
-          description: Tournament creation timestamp
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-        created_by:
-          type: string
-          format: uuid
-          description: Player ID who created the tournament
-        version:
-          type: integer
-          minimum: 1
-          description: Optimistic locking version
-          example: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Tournament core data optimized for frequent queries.'
-
-    Player:
-      type: object
-      required:
-      - player_id
-      - display_name
-      - level
-      properties:
-        player_id:
-          type: string
-          format: uuid
-          description: Unique player identifier
-          example: 550e8400-e29b-41d4-a716-446655440002
-        display_name:
-          type: string
-          minLength: 1
           maxLength: 50
-          description: Player display name
-          example: "ShadowRunner_2077"
-        level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Player level
-          example: 45
-        avatar_url:
-          type: string
-          format: uri
-          description: Player avatar image URL
-        rating:
+          description: Geographic region for the tournament
+          example: "North America"
+        entry_fee:
           type: integer
           minimum: 0
-          maximum: 10000
-          description: Player tournament rating (Elo-like)
-          example: 1850
-        country_code:
-          type: string
-          minLength: 2
-          maxLength: 3
-          description: Player country code (ISO 3166-1 alpha-2)
-          example: "US"
+          description: Entry fee in game currency
+          example: 1000
+        prize_pool:
+          type: integer
+          minimum: 0
+          description: Total prize pool in game currency
+          example: 50000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Player data optimized for leaderboard queries.'
-
-    # Tournament Request/Response Schemas
+        Expected memory savings: 30-50%. Hot path optimization required.'
     CreateTournamentRequest:
       type: object
       required:
       - name
       - game_mode
-      - bracket_type
+      - tournament_type
+      - start_date
+      - end_date
       properties:
         name:
           type: string
-          minLength: 3
+          minLength: 1
           maxLength: 100
           description: Tournament display name
-          example: "Night City Championship 2027"
+          example: Winter Championship 2025
         description:
           type: string
           maxLength: 1000
-          description: Tournament description and rules
-          example: "Elite tournament for top players in Night City"
+          description: Tournament description
+          example: A competitive tournament featuring the best players in elimination matches with cash prizes.
         game_mode:
           type: string
-          enum: [solo, team, battle_royale, ranked]
-          description: Tournament game mode
-          example: solo
-        bracket_type:
+          enum:
+          - elimination
+          - round-robin
+          - swiss-system
+          - single-elimination
+          - double-elimination
+          description: Tournament game mode format
+          example: single-elimination
+        tournament_type:
           type: string
-          enum: [single_elimination, double_elimination, round_robin, swiss]
-          description: Tournament bracket system
-          example: single_elimination
+          enum:
+          - ranked
+          - casual
+          - championship
+          - seasonal
+          - special-event
+          description: Type of tournament
+          example: championship
+        tournament_difficulty:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          - master
+          description: Tournament difficulty level
+          example: expert
         max_participants:
           type: integer
           minimum: 2
-          maximum: 10000
+          maximum: 1000
           description: Maximum number of participants
           example: 128
-        entry_fee:
-          type: object
-          description: Tournament entry fee
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-              example: eddies
-            amount:
-              type: integer
-              minimum: 0
-              example: 500
-        prize_pool:
-          type: object
-          description: Initial prize pool
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-              example: eddies
-            amount:
-              type: integer
-              minimum: 0
-              example: 50000
-        start_time:
+        start_date:
           type: string
           format: date-time
-          description: Tournament scheduled start time
-          example: '2027-12-21T18:00:00Z'
-        rules:
+          description: Tournament start date and time
+          example: '2025-12-25T18:00:00Z'
+        end_date:
           type: string
-          maxLength: 5000
-          description: Tournament-specific rules and regulations
+          format: date-time
+          description: Tournament end date and time
+          example: '2025-12-27T22:00:00Z'
+        region:
+          type: string
+          maxLength: 50
+          description: Geographic region for the tournament
+          example: "North America"
+        entry_fee:
+          type: integer
+          minimum: 0
+          description: Entry fee in game currency
+          example: 1000
+        prize_pool:
+          type: integer
+          minimum: 0
+          description: Total prize pool in game currency
+          example: 50000
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentObjective'
+          maxItems: 10
+          description: Tournament objectives to complete
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Tournament creation optimized for validation.'
+        Expected memory savings: 30-50%.'
+    TournamentStatus:
+      type: string
+      enum:
+      - upcoming
+      - registration_open
+      - registration_closed
+      - in_progress
+      - completed
+      - cancelled
+      description: Current tournament status
+      example: registration_open
+    TournamentReward:
+      type: object
+      properties:
+        currency_amount:
+          type: integer
+          minimum: 0
+          description: Reward amount in game currency
+          example: 10000
+        items:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          maxItems: 5
+          description: List of reward items
+          example:
+          - "Legendary Sword"
+          - "Gold Trophy"
+        experience_points:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 5000
+        title:
+          type: string
+          maxLength: 100
+          description: Tournament title/achievement
+          example: "Winter Champion"
+      description: Tournament completion rewards
+    TournamentObjective:
+      type: object
+      required:
+      - type
+      - description
+      properties:
+        type:
+          type: string
+          enum:
+          - win_matches
+          - score_points
+          - survive_rounds
+          - complete_challenges
+          description: Type of tournament objective
+          example: win_matches
+        description:
+          type: string
+          maxLength: 200
+          description: Objective description
+          example: "Win 5 consecutive matches"
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to achieve
+          example: 5
+        current_value:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Current progress value
+          example: 2
+      description: Individual tournament objective
+    TournamentParticipant:
+      type: object
+      required:
+      - tournament_id
+      - player_id
+      - registered_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Participant unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        tournament_id:
+          type: string
+          format: uuid
+          description: Associated tournament ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440002
+        registered_at:
+          type: string
+          format: date-time
+          description: Registration timestamp
+          example: '2025-12-20T15:30:00Z'
+        status:
+          type: string
+          enum:
+          - registered
+          - active
+          - eliminated
+          - disqualified
+          - winner
+          default: registered
+          description: Participation status
+          example: active
+        seed:
+          type: integer
+          minimum: 1
+          description: Tournament seeding position
+          example: 1
+        bracket_position:
+          type: string
+          maxLength: 50
+          description: Current bracket position
+          example: "Quarterfinal A"
+      description: Tournament participant information
+    TournamentScore:
+      type: object
+      required:
+      - participant_id
+      - match_id
+      - score
+      - recorded_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Score record unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        participant_id:
+          type: string
+          format: uuid
+          description: Associated participant ID
+          example: 550e8400-e29b-41d4-a716-446655440001
+        match_id:
+          type: string
+          format: uuid
+          description: Associated match ID
+          example: 550e8400-e29b-41d4-a716-446655440004
+        score:
+          type: integer
+          minimum: 0
+          description: Points scored in the match
+          example: 1500
+        rank:
+          type: integer
+          minimum: 1
+          description: Final rank in the match
+          example: 1
+        recorded_at:
+          type: string
+          format: date-time
+          description: Score recording timestamp
+          example: '2025-12-25T19:30:00Z'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional match statistics
+          example:
+            kills: "25"
+            deaths: "3"
+            assists: "12"
+      description: Tournament match score record
     UpdateTournamentRequest:
       type: object
       properties:
         name:
           type: string
-          minLength: 3
+          minLength: 1
           maxLength: 100
-          description: New tournament name
-          example: "Updated Championship 2027"
+          description: Updated tournament name
+          example: Updated Winter Championship 2025
         description:
           type: string
           maxLength: 1000
-          description: New tournament description
+          description: Updated tournament description
+          example: Updated tournament description with new prizes
+        tournament_difficulty:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          - expert
+          - master
+          description: Updated tournament difficulty level
+          example: master
         max_participants:
           type: integer
           minimum: 2
-          maximum: 10000
-          description: New maximum participants
-        entry_fee:
-          type: object
-          description: Updated entry fee
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-            amount:
-              type: integer
-              minimum: 0
-        start_time:
+          maximum: 1000
+          description: Updated maximum participants
+          example: 256
+        start_date:
           type: string
           format: date-time
-          description: New start time
-        rules:
+          description: Updated start date and time
+          example: '2025-12-26T18:00:00Z'
+        end_date:
           type: string
-          maxLength: 5000
-          description: Updated tournament rules
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Tournament updates optimized for partial changes.'
-
-    TournamentRegistrationRequest:
-      type: object
-      properties:
-        team_name:
+          format: date-time
+          description: Updated end date and time
+          example: '2025-12-28T22:00:00Z'
+        status:
+          $ref: '#/components/schemas/TournamentStatus'
+        region:
           type: string
-          minLength: 1
           maxLength: 50
-          description: Team name (for team tournaments)
-          example: "Night City Guardians"
-        team_members:
+          description: Updated geographic region
+          example: "Europe"
+        entry_fee:
+          type: integer
+          minimum: 0
+          description: Updated entry fee
+          example: 1500
+        prize_pool:
+          type: integer
+          minimum: 0
+          description: Updated prize pool
+          example: 75000
+        objectives:
           type: array
           items:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/TournamentObjective'
           maxItems: 10
-          description: Additional team member player IDs
+          description: Replace tournament objectives
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Registration optimized for solo and team modes.'
-
+        Expected memory savings: 30-50%.'
     TournamentResponse:
       type: object
       required:
@@ -1045,8 +2034,7 @@ components:
         tournament:
           $ref: '#/components/schemas/Tournament'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Single tournament response optimized.'
-
+        Expected memory savings: 30-50%.'
     TournamentListResponse:
       type: object
       required:
@@ -1066,7 +2054,7 @@ components:
         total_count:
           type: integer
           description: Total number of tournaments matching criteria
-          example: 25
+          example: 150
         page:
           type: integer
           description: Current page number
@@ -1076,647 +2064,534 @@ components:
           description: Items per page
           example: 20
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Paginated tournament responses optimized for memory efficiency.'
-
-    TournamentRegistrationResponse:
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency.'
+    PaginationParams:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+    TournamentParticipantResponse:
       type: object
       required:
-      - registration_id
-      - tournament_id
-      - player_id
-      - status
-      - registered_at
+      - participant
       properties:
-        registration_id:
-          type: string
-          format: uuid
-          description: Unique registration identifier
-          example: 550e8400-e29b-41d4-a716-446655440003
-        tournament_id:
-          type: string
-          format: uuid
-          description: Tournament ID
-        player_id:
-          type: string
-          format: uuid
-          description: Registered player ID
-        team_name:
-          type: string
-          maxLength: 50
-          description: Team name (if applicable)
-        status:
-          type: string
-          enum: [pending, confirmed, cancelled]
-          description: Registration status
-          example: confirmed
-        registered_at:
+        participant:
+          $ref: '#/components/schemas/TournamentParticipant'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    TournamentScoreResponse:
+      type: object
+      required:
+      - score
+      properties:
+        score:
+          $ref: '#/components/schemas/TournamentScore'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    TournamentLeaderboardResponse:
+      type: object
+      required:
+      - leaderboard
+      - total_participants
+      properties:
+        leaderboard:
+          type: array
+          items:
+            type: object
+            properties:
+              participant_id:
+                type: string
+                format: uuid
+                description: Participant unique identifier
+                example: 550e8400-e29b-41d4-a716-446655440001
+              player_name:
+                type: string
+                maxLength: 100
+                description: Player display name
+                example: "ProGamer2025"
+              total_score:
+                type: integer
+                minimum: 0
+                description: Total tournament score
+                example: 15000
+              rank:
+                type: integer
+                minimum: 1
+                description: Current leaderboard rank
+                example: 1
+              matches_played:
+                type: integer
+                minimum: 0
+                description: Number of matches completed
+                example: 12
+              win_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Win rate percentage
+                example: 0.85
+          description: Tournament leaderboard entries
+        total_participants:
+          type: integer
+          minimum: 0
+          description: Total number of participants
+          example: 128
+        last_updated:
           type: string
           format: date-time
-          description: Registration timestamp
-        seed_number:
+          description: Last leaderboard update timestamp
+          example: '2025-12-25T20:00:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Leaderboard optimized for fast lookups.'
+    LeaderboardEntry:
+      type: object
+      required:
+      - participant_id
+      - player_name
+      - total_score
+      - rank
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+          description: Participant unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        player_name:
+          type: string
+          maxLength: 100
+          description: Player display name
+          example: "ProGamer2025"
+        total_score:
+          type: integer
+          minimum: 0
+          description: Total tournament score
+          example: 15000
+        rank:
           type: integer
           minimum: 1
-          description: Tournament seeding number
+          description: Current leaderboard rank
+          example: 1
+        matches_played:
+          type: integer
+          minimum: 0
+          description: Number of matches completed
+          example: 12
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Win rate percentage
+          example: 0.85
+        tournaments_won:
+          type: integer
+          minimum: 0
+          description: Number of tournaments won
+          example: 3
+        avg_placement:
+          type: number
+          minimum: 1
+          description: Average tournament placement
+          example: 2.3
+        last_active:
+          type: string
+          format: date-time
+          description: Last tournament activity timestamp
+          example: '2025-12-25T15:30:00Z'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Registration response optimized for confirmation.'
-
-    TournamentBracketResponse:
+        Expected memory savings: 30-50%. Leaderboard entries optimized for sorting and pagination.'
+    RegisterTournamentScoreRequest:
+      type: object
+      required:
+      - participant_id
+      - match_id
+      - score
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+          description: Participant unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        match_id:
+          type: string
+          format: uuid
+          description: Match unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440004
+        score:
+          type: integer
+          minimum: 0
+          description: Points scored in the match
+          example: 1500
+        rank:
+          type: integer
+          minimum: 1
+          description: Final rank in the match
+          example: 1
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional match statistics
+          example:
+            kills: "25"
+            deaths: "3"
+            assists: "12"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    JoinTournamentRequest:
       type: object
       required:
       - tournament_id
-      - rounds
       properties:
         tournament_id:
           type: string
           format: uuid
-          description: Tournament ID
-        current_round:
+          description: Tournament to join
+          example: 550e8400-e29b-41d4-a716-446655440000
+        seed:
           type: integer
           minimum: 1
-          description: Current active round
-          example: 3
-        total_rounds:
-          type: integer
-          minimum: 1
-          description: Total number of rounds
-          example: 7
+          description: Requested seeding position
+          example: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    LeaveTournamentRequest:
+      type: object
+      required:
+      - tournament_id
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament to leave
+          example: 550e8400-e29b-41d4-a716-446655440000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    TournamentBracket:
+      type: object
+      required:
+      - tournament_id
+      - bracket_type
+      - total_rounds
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
         rounds:
           type: array
           items:
             type: object
-            required:
-            - round_number
-            - matches
             properties:
               round_number:
                 type: integer
                 minimum: 1
-              round_name:
-                type: string
-                maxLength: 50
-                example: "Quarter Finals"
+                description: Round number in bracket
+                example: 1
               matches:
                 type: array
                 items:
                   type: object
-                  required:
-                  - match_id
-                  - status
                   properties:
                     match_id:
                       type: string
                       format: uuid
+                      description: Match unique identifier
+                      example: 550e8400-e29b-41d4-a716-446655440001
+                    participant_1:
+                      type: string
+                      format: uuid
+                      description: First participant ID
+                      example: 550e8400-e29b-41d4-a716-446655440002
+                    participant_2:
+                      type: string
+                      format: uuid
+                      description: Second participant ID
+                      example: 550e8400-e29b-41d4-a716-446655440003
+                    winner:
+                      type: string
+                      format: uuid
+                      nullable: true
+                      description: Winner participant ID (null if match not completed)
+                      example: 550e8400-e29b-41d4-a716-446655440002
                     status:
                       type: string
-                      enum: [scheduled, in_progress, completed, cancelled]
-                    scheduled_time:
-                      type: string
-                      format: date-time
-                    player1_id:
-                      type: string
-                      format: uuid
-                    player2_id:
-                      type: string
-                      format: uuid
-                    winner_id:
-                      type: string
-                      format: uuid
-          description: Tournament bracket structure
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Bracket data optimized for complex tournament structures.'
-
-    MatchDetailsResponse:
-      type: object
-      required:
-      - match
-      properties:
-        match:
-          type: object
-          required:
-          - match_id
-          - tournament_id
-          - round_number
-          - status
-          properties:
-            match_id:
-              type: string
-              format: uuid
-              description: Unique match identifier
-            tournament_id:
-              type: string
-              format: uuid
-              description: Parent tournament ID
-            round_number:
-              type: integer
-              minimum: 1
-              description: Tournament round
-              example: 3
-            match_number:
-              type: integer
-              minimum: 1
-              description: Match number within round
-              example: 5
-            status:
-              type: string
-              enum: [scheduled, in_progress, completed, cancelled]
-              description: Match status
-              example: in_progress
-            scheduled_time:
-              type: string
-              format: date-time
-              description: Match scheduled start time
-            started_at:
-              type: string
-              format: date-time
-              description: Match actual start time
-            completed_at:
-              type: string
-              format: date-time
-              description: Match completion time
-            player1_id:
-              type: string
-              format: uuid
-              description: First player/participant ID
-            player2_id:
-              type: string
-              format: uuid
-              description: Second player/participant ID
-            winner_id:
-              type: string
-              format: uuid
-              description: Winner player ID
-            score_player1:
-              type: integer
-              minimum: 0
-              description: Player 1 score
-              example: 15
-            score_player2:
-              type: integer
-              minimum: 0
-              description: Player 2 score
-              example: 12
-            match_duration_seconds:
-              type: integer
-              minimum: 0
-              description: Match duration in seconds
-              example: 847
-            spectators_count:
-              type: integer
-              minimum: 0
-              description: Number of spectators watching
-              example: 1250
-            version:
-              type: integer
-              minimum: 1
-              description: Optimistic locking version
-              example: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Match details optimized for real-time updates.'
-
-    UpdateMatchResultRequest:
-      type: object
-      required:
-      - winner_id
-      - score_player1
-      - score_player2
-      properties:
-        winner_id:
-          type: string
-          format: uuid
-          description: Winner player ID
-        score_player1:
-          type: integer
-          minimum: 0
-          description: Final score for player 1
-          example: 16
-        score_player2:
-          type: integer
-          minimum: 0
-          description: Final score for player 2
-          example: 14
-        match_duration_seconds:
-          type: integer
-          minimum: 1
-          description: Total match duration
-          example: 923
-        notes:
-          type: string
-          maxLength: 1000
-          description: Match result notes (disqualifications, technical issues, etc.)
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Match result updates optimized for quick processing.'
-
-    TournamentSpectatorData:
-      type: object
-      required:
-      - tournament_id
-      - status
-      - live_matches
-      properties:
-        tournament_id:
-          type: string
-          format: uuid
-          description: Tournament ID
-        tournament_name:
-          type: string
-          description: Tournament display name
-          example: "Night City Championship 2027"
-        status:
-          type: string
-          enum: [registration_open, in_progress, completed, cancelled]
-          description: Tournament status
-          example: in_progress
+                      enum:
+                      - pending
+                      - in_progress
+                      - completed
+                      - cancelled
+                      default: pending
+                      description: Match status
+                      example: completed
+                  description: Match in tournament bracket
+                description: Matches in this round
+            description: Tournament round in bracket
+          description: All rounds in tournament bracket
         current_round:
           type: integer
           minimum: 1
-          description: Current active round
-          example: 3
-        total_participants:
+          nullable: true
+          description: Current active round (null if bracket not started)
+          example: 1
+        total_rounds:
           type: integer
-          minimum: 0
-          description: Total registered participants
-          example: 128
-        active_participants:
-          type: integer
-          minimum: 0
-          description: Currently active participants
-          example: 32
-        live_matches:
-          type: array
-          items:
-            type: object
-            required:
-            - match_id
-            - status
-            - player1
-            - player2
-            properties:
-              match_id:
-                type: string
-                format: uuid
-              status:
-                type: string
-                enum: [scheduled, in_progress, completed]
-              player1:
-                $ref: '#/components/schemas/Player'
-              player2:
-                $ref: '#/components/schemas/Player'
-              current_score:
-                type: object
-                properties:
-                  player1_score:
-                    type: integer
-                    example: 12
-                  player2_score:
-                    type: integer
-                    example: 15
-              time_remaining_seconds:
-                type: integer
-                minimum: 0
-                example: 245
-          description: Currently active matches
-        upcoming_matches:
-          type: array
-          items:
-            type: object
-            required:
-            - match_id
-            - scheduled_time
-            - player1
-            - player2
-            properties:
-              match_id:
-                type: string
-                format: uuid
-              scheduled_time:
-                type: string
-                format: date-time
-              player1:
-                $ref: '#/components/schemas/Player'
-              player2:
-                $ref: '#/components/schemas/Player'
-          maxItems: 10
-          description: Next scheduled matches
-        recent_results:
-          type: array
-          items:
-            type: object
-            required:
-            - match_id
-            - winner
-            - completed_at
-            properties:
-              match_id:
-                type: string
-                format: uuid
-              winner:
-                $ref: '#/components/schemas/Player'
-              final_score:
-                type: string
-                example: "16-14"
-              completed_at:
-                type: string
-                format: date-time
-          maxItems: 5
-          description: Recently completed matches
-        total_spectators:
-          type: integer
-          minimum: 0
-          description: Total number of spectators watching
-          example: 15420
+          minimum: 1
+          description: Total number of rounds
+          example: 4
+        bracket_type:
+          type: string
+          enum:
+          - single-elimination
+          - double-elimination
+          - round-robin
+          description: Type of tournament bracket
+          example: single-elimination
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Spectator data optimized for live tournament viewing.'
-
-    TournamentAnalyticsResponse:
+        Expected memory savings: 30-50%. Bracket optimized for tournament visualization.'
+    TournamentBracketResponse:
       type: object
       required:
-      - tournament_id
-      - analytics_type
-      - data
+      - bracket
       properties:
+        bracket:
+          $ref: '#/components/schemas/TournamentBracket'
+        include_matches:
+          type: boolean
+          description: Whether detailed match information was included
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Bracket response optimized for tournament visualization.'
+    GenerateBracketRequest:
+      type: object
+      properties:
+        seeding_algorithm:
+          type: string
+          enum:
+          - random
+          - skill_based
+          - manual
+          default: random
+          description: Algorithm for participant seeding
+          example: skill_based
+        bracket_type:
+          type: string
+          enum:
+          - single-elimination
+          - double-elimination
+          - round-robin
+          default: single-elimination
+          description: Type of bracket to generate
+          example: single-elimination
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    TournamentSpectatorsResponse:
+      type: object
+      required:
+      - spectators
+      - total_count
+      properties:
+        spectators:
+          type: array
+          items:
+            type: object
+            properties:
+              spectator_id:
+                type: string
+                format: uuid
+                description: Spectator unique identifier
+                example: 550e8400-e29b-41d4-a716-446655440000
+              player_name:
+                type: string
+                maxLength: 100
+                description: Spectator display name
+                example: "Spectator2025"
+              joined_at:
+                type: string
+                format: date-time
+                description: When spectator joined
+                example: '2025-12-25T20:00:00Z'
+              activity_status:
+                type: string
+                enum:
+                - active
+                - inactive
+                - away
+                default: active
+                description: Current spectator activity
+                example: active
+            description: Tournament spectator
+          description: List of current spectators
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of spectators
+          example: 1250
+        last_updated:
+          type: string
+          format: date-time
+          description: Last spectator list update
+          example: '2025-12-25T20:05:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Spectator list optimized for live updates.'
+    TournamentSpectatorMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+          - spectator_joined
+          - spectator_left
+          - match_started
+          - match_ended
+          - score_updated
+          - bracket_updated
+          - tournament_ended
+          description: Type of spectator event
+          example: match_started
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the spectator message
+          maxLength: 1000
+        match_id:
+          type: string
+          format: uuid
+          description: Associated match ID (if applicable)
+          example: 550e8400-e29b-41d4-a716-446655440001
+        participant_1_score:
+          type: integer
+          minimum: 0
+          description: Score of participant 1
+          example: 1500
+        participant_2_score:
+          type: integer
+          minimum: 0
+          description: Score of participant 2
+          example: 1200
+        winner_id:
+          type: string
+          format: uuid
+          description: Winner participant ID
+          example: 550e8400-e29b-41d4-a716-446655440002
+        bracket_position:
+          type: string
+          maxLength: 100
+          description: Updated bracket position
+          example: "Quarterfinal A"
+        spectator_count:
+          type: integer
+          minimum: 0
+          description: Current spectator count
+          example: 1250
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. WebSocket messages optimized for real-time spectator updates.'
+    Match:
+      type: object
+      required:
+      - id
+      - tournament_id
+      - participant_1_id
+      - participant_2_id
+      - status
+      - start_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique match identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
         tournament_id:
           type: string
           format: uuid
-          description: Tournament ID
-        analytics_type:
-          type: string
-          enum: [performance, participation, engagement, competitive]
-          description: Type of analytics data
-          example: performance
-        data:
-          type: object
-          description: Analytics data payload
-          oneOf:
-            - $ref: '#/components/schemas/PerformanceAnalytics'
-            - $ref: '#/components/schemas/ParticipationAnalytics'
-            - $ref: '#/components/schemas/EngagementAnalytics'
-            - $ref: '#/components/schemas/CompetitiveAnalytics'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Analytics response optimized for flexible data structures.'
-
-    PerformanceAnalytics:
-      type: object
-      properties:
-        average_match_duration:
-          type: number
-          format: float
-          description: Average match duration in seconds
-          example: 845.5
-        total_matches_completed:
-          type: integer
-          minimum: 0
-          example: 67
-        average_score_difference:
-          type: number
-          format: float
-          description: Average score difference between winners and losers
-          example: 3.2
-        completion_rate_percentage:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Percentage of matches completed successfully
-          example: 98.5
-        system_performance_metrics:
-          type: object
-          properties:
-            average_response_time_ms:
-              type: number
-              format: float
-              example: 12.3
-            error_rate_percentage:
-              type: number
-              format: float
-              example: 0.1
-            peak_concurrent_users:
-              type: integer
-              example: 15420
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Performance analytics optimized for monitoring.'
-
-    ParticipationAnalytics:
-      type: object
-      properties:
-        total_registrations:
-          type: integer
-          minimum: 0
-          example: 150
-        unique_participants:
-          type: integer
-          minimum: 0
-          example: 145
-        registration_trends:
-          type: object
-          properties:
-            registrations_per_day:
-              type: array
-              items:
-                type: object
-                properties:
-                  date:
-                    type: string
-                    format: date
-                  count:
-                    type: integer
-                    minimum: 0
-              maxItems: 30
-        geographic_distribution:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
-          description: Participant count by country code
-          example: {"US": 45, "DE": 23, "JP": 18}
-        skill_level_distribution:
-          type: object
-          properties:
-            beginner:
-              type: integer
-              minimum: 0
-              example: 30
-            intermediate:
-              type: integer
-              minimum: 0
-              example: 65
-            advanced:
-              type: integer
-              minimum: 0
-              example: 35
-            expert:
-              type: integer
-              minimum: 0
-              example: 15
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Participation analytics optimized for demographics.'
-
-    EngagementAnalytics:
-      type: object
-      properties:
-        total_spectator_hours:
-          type: number
-          format: float
-          description: Total spectator viewing hours
-          example: 12547.5
-        peak_spectator_count:
-          type: integer
-          minimum: 0
-          example: 18750
-        average_spectators_per_match:
-          type: number
-          format: float
-          example: 1247.8
-        spectator_retention_rate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Percentage of spectators staying for full match
-          example: 78.5
-        social_media_mentions:
-          type: integer
-          minimum: 0
-          description: Number of social media mentions
-          example: 3450
-        live_stream_views:
-          type: integer
-          minimum: 0
-          description: Total live stream view count
-          example: 89200
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Engagement analytics optimized for audience metrics.'
-
-    CompetitiveAnalytics:
-      type: object
-      properties:
-        average_elo_change:
-          type: number
-          format: float
-          description: Average Elo rating change per match
-          example: 24.7
-        upset_frequency_percentage:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Percentage of matches where lower-rated player wins
-          example: 12.3
-        dominant_strategies:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy_name:
-                type: string
-                example: "Aggressive Rushdown"
-              usage_percentage:
-                type: number
-                format: float
-                example: 34.5
-              win_rate_percentage:
-                type: number
-                format: float
-                example: 68.2
-          maxItems: 10
-          description: Most used winning strategies
-        match_length_distribution:
-          type: object
-          properties:
-            quick_matches:
-              type: integer
-              minimum: 0
-              description: Matches completed in <5 minutes
-              example: 23
-            standard_matches:
-              type: integer
-              minimum: 0
-              description: Matches completed in 5-15 minutes
-              example: 78
-            long_matches:
-              type: integer
-              minimum: 0
-              description: Matches completed in >15 minutes
-              example: 12
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Competitive analytics optimized for strategy insights.'
-
-    TournamentPrizesResponse:
-      type: object
-      required:
-      - tournament_id
-      - prize_distribution
-      properties:
-        tournament_id:
+          description: Parent tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        participant_1_id:
           type: string
           format: uuid
-          description: Tournament ID
-        prize_pool_total:
-          type: object
-          properties:
-            currency:
-              type: string
-              enum: [eddies, credits, tokens]
-              example: eddies
-            amount:
-              type: integer
-              example: 50000
-          description: Total prize pool
-        prize_distribution:
-          type: array
-          items:
-            type: object
-            required:
-            - position
-            - prize
-            properties:
-              position:
-                type: integer
-                minimum: 1
-                description: Tournament position (1st, 2nd, etc.)
-                example: 1
-              position_name:
-                type: string
-                example: "1st Place"
-              prize:
-                type: object
-                required:
-                - currency
-                - amount
-                properties:
-                  currency:
-                    type: string
-                    enum: [eddies, credits, tokens]
-                    example: eddies
-                  amount:
-                    type: integer
-                    minimum: 0
-                    example: 25000
-                  percentage_of_pool:
-                    type: number
-                    format: float
-                    minimum: 0
-                    maximum: 100
-                    example: 50.0
-              bonus_prizes:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [item, title, cosmetic, experience]
-                      example: title
-                    value:
-                      type: string
-                      example: "Tournament Champion"
-                description: Additional bonus prizes
-          description: Prize distribution by position
-        distribution_rules:
+          description: First participant identifier
+          example: 550e8400-e29b-41d4-a716-446655440002
+        participant_2_id:
           type: string
-          maxLength: 2000
-          description: Rules for prize distribution and claiming
+          format: uuid
+          description: Second participant identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        winner_id:
+          type: string
+          format: uuid
+          description: Winner participant identifier (null if match not completed)
+          nullable: true
+          example: 550e8400-e29b-41d4-a716-446655440002
+        status:
+          type: string
+          enum:
+          - scheduled
+          - in_progress
+          - completed
+          - cancelled
+          description: Current match status
+          example: in_progress
+        start_time:
+          type: string
+          format: date-time
+          description: Match scheduled start time
+          example: '2025-12-25T20:00:00Z'
+        end_time:
+          type: string
+          format: date-time
+          description: Match actual end time (null if not completed)
+          nullable: true
+          example: '2025-12-25T20:15:30Z'
+        participant_1_score:
+          type: integer
+          minimum: 0
+          description: Final score of participant 1
+          example: 1500
+        participant_2_score:
+          type: integer
+          minimum: 0
+          description: Final score of participant 2
+          example: 1200
+        round:
+          type: integer
+          minimum: 1
+          description: Tournament round number
+          example: 1
+        bracket_position:
+          type: string
+          maxLength: 50
+          description: Position in tournament bracket (e.g., "A1", "SF1")
+          example: "QF1"
+        match_duration_seconds:
+          type: integer
+          minimum: 0
+          description: Actual match duration in seconds
+          example: 900
+        spectator_count:
+          type: integer
+          minimum: 0
+          description: Number of spectators during match
+          example: 250
+        created_at:
+          type: string
+          format: date-time
+          description: Match creation timestamp
+          example: '2025-12-25T19:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last match update timestamp
+          example: '2025-12-25T20:15:30Z'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Prize distribution optimized for fair allocation.'
+        Expected memory savings: 30-50%. Match data optimized for tournament bracket calculations.'
   securitySchemes:
     BearerAuth:
       $ref: ../common-service/security/security.yaml#/BearerAuth

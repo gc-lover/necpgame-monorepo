@@ -11,6 +11,7 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/ogen-go/ogen/otelogen"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
@@ -32,21 +33,22 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 	return c.ResponseWriter
 }
 
-// handleAnalyticsTrialsTrialIdPerformanceGetRequest handles GET /analytics/trials/{trialId}/performance operation.
+// handleCompleteTrialSessionRequest handles completeTrialSession operation.
 //
-// Retrieve performance metrics and statistics for a time trial.
+// Submit completion data for an active time trial session.
 //
-// GET /analytics/trials/{trialId}/performance
-func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /trials/{trialId}/complete
+func (s *Server) handleCompleteTrialSessionRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/analytics/trials/{trialId}/performance"),
+		otelogen.OperationID("completeTrialSession"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/trials/{trialId}/complete"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), AnalyticsTrialsTrialIdPerformanceGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), CompleteTrialSessionOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -101,15 +103,15 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: AnalyticsTrialsTrialIdPerformanceGetOperation,
-			ID:   "",
+			Name: CompleteTrialSessionOperation,
+			ID:   "completeTrialSession",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, AnalyticsTrialsTrialIdPerformanceGetOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, CompleteTrialSessionOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -149,7 +151,7 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 			return
 		}
 	}
-	params, err := decodeAnalyticsTrialsTrialIdPerformanceGetParams(args, argsEscaped, r)
+	params, err := decodeCompleteTrialSessionParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -161,33 +163,44 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 	}
 
 	var rawBody []byte
+	request, rawBody, close, err := s.decodeCompleteTrialSessionRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
 
-	var response *AnalyticsTrialsTrialIdPerformanceGetOK
+	var response CompleteTrialSessionRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    AnalyticsTrialsTrialIdPerformanceGetOperation,
-			OperationSummary: "Get trial performance analytics",
-			OperationID:      "",
-			Body:             nil,
+			OperationName:    CompleteTrialSessionOperation,
+			OperationSummary: "Complete time trial session",
+			OperationID:      "completeTrialSession",
+			Body:             request,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
 					Name: "trialId",
 					In:   "path",
 				}: params.TrialId,
-				{
-					Name: "timeframe",
-					In:   "query",
-				}: params.Timeframe,
 			},
 			Raw: r,
 		}
 
 		type (
-			Request  = struct{}
-			Params   = AnalyticsTrialsTrialIdPerformanceGetParams
-			Response = *AnalyticsTrialsTrialIdPerformanceGetOK
+			Request  = *CompleteTrialSessionReq
+			Params   = CompleteTrialSessionParams
+			Response = CompleteTrialSessionRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -196,14 +209,14 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 		](
 			m,
 			mreq,
-			unpackAnalyticsTrialsTrialIdPerformanceGetParams,
+			unpackCompleteTrialSessionParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.AnalyticsTrialsTrialIdPerformanceGet(ctx, params)
+				response, err = s.h.CompleteTrialSession(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.AnalyticsTrialsTrialIdPerformanceGet(ctx, params)
+		response, err = s.h.CompleteTrialSession(ctx, request, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -211,7 +224,7 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 		return
 	}
 
-	if err := encodeAnalyticsTrialsTrialIdPerformanceGetResponse(response, w, span); err != nil {
+	if err := encodeCompleteTrialSessionResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -220,21 +233,22 @@ func (s *Server) handleAnalyticsTrialsTrialIdPerformanceGetRequest(args [1]strin
 	}
 }
 
-// handleHealthGetRequest handles GET /health operation.
+// handleCreateTrialRequest handles createTrial operation.
 //
-// Returns service health status and basic metrics.
+// Create a new time trial configuration (admin only).
 //
-// GET /health
-func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /trials
+func (s *Server) handleCreateTrialRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/health"),
+		otelogen.OperationID("createTrial"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/trials"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), HealthGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), CreateTrialOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -289,15 +303,15 @@ func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: HealthGetOperation,
-			ID:   "",
+			Name: CreateTrialOperation,
+			ID:   "createTrial",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, HealthGetOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, CreateTrialOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -339,24 +353,39 @@ func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http
 	}
 
 	var rawBody []byte
+	request, rawBody, close, err := s.decodeCreateTrialRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
 
-	var response *HealthGetOK
+	var response CreateTrialRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    HealthGetOperation,
-			OperationSummary: "Health check endpoint",
-			OperationID:      "",
-			Body:             nil,
+			OperationName:    CreateTrialOperation,
+			OperationSummary: "Create time trial",
+			OperationID:      "createTrial",
+			Body:             request,
 			RawBody:          rawBody,
 			Params:           middleware.Parameters{},
 			Raw:              r,
 		}
 
 		type (
-			Request  = struct{}
+			Request  = *TimeTrial
 			Params   = struct{}
-			Response = *HealthGetOK
+			Response = CreateTrialRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -367,12 +396,12 @@ func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.HealthGet(ctx)
+				response, err = s.h.CreateTrial(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.HealthGet(ctx)
+		response, err = s.h.CreateTrial(ctx, request)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -380,7 +409,7 @@ func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http
 		return
 	}
 
-	if err := encodeHealthGetResponse(response, w, span); err != nil {
+	if err := encodeCreateTrialResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -389,21 +418,22 @@ func (s *Server) handleHealthGetRequest(args [0]string, argsEscaped bool, w http
 	}
 }
 
-// handleLeaderboardsTrialIdGetRequest handles GET /leaderboards/{trialId} operation.
+// handleGetHealthRequest handles getHealth operation.
 //
-// Retrieve leaderboard rankings for a specific time trial.
+// Returns service health status and basic metrics.
 //
-// GET /leaderboards/{trialId}
-func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /health
+func (s *Server) handleGetHealthRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getHealth"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/leaderboards/{trialId}"),
+		semconv.HTTPRouteKey.String("/health"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), LeaderboardsTrialIdGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetHealthOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -458,15 +488,15 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: LeaderboardsTrialIdGetOperation,
-			ID:   "",
+			Name: GetHealthOperation,
+			ID:   "getHealth",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, LeaderboardsTrialIdGetOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, GetHealthOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -506,7 +536,177 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 			return
 		}
 	}
-	params, err := decodeLeaderboardsTrialIdGetParams(args, argsEscaped, r)
+
+	var rawBody []byte
+
+	var response GetHealthRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetHealthOperation,
+			OperationSummary: "Health check endpoint",
+			OperationID:      "getHealth",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = GetHealthRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetHealth(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetHealth(ctx)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetHealthResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetPlayerPersonalRecordRequest handles getPlayerPersonalRecord operation.
+//
+// Retrieve a specific player's best time and ranking for a trial.
+//
+// GET /leaderboards/{trialId}/personal/{playerId}
+func (s *Server) handleGetPlayerPersonalRecordRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPlayerPersonalRecord"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/leaderboards/{trialId}/personal/{playerId}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetPlayerPersonalRecordOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetPlayerPersonalRecordOperation,
+			ID:   "getPlayerPersonalRecord",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetPlayerPersonalRecordOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetPlayerPersonalRecordParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -519,13 +719,387 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 
 	var rawBody []byte
 
-	var response *LeaderboardsTrialIdGetOK
+	var response GetPlayerPersonalRecordRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    LeaderboardsTrialIdGetOperation,
+			OperationName:    GetPlayerPersonalRecordOperation,
+			OperationSummary: "Get player's personal record",
+			OperationID:      "getPlayerPersonalRecord",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "trialId",
+					In:   "path",
+				}: params.TrialId,
+				{
+					Name: "playerId",
+					In:   "path",
+				}: params.PlayerId,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetPlayerPersonalRecordParams
+			Response = GetPlayerPersonalRecordRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetPlayerPersonalRecordParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetPlayerPersonalRecord(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetPlayerPersonalRecord(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetPlayerPersonalRecordResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTrialRequest handles getTrial operation.
+//
+// Retrieve detailed information about a specific time trial.
+//
+// GET /trials/{trialId}
+func (s *Server) handleGetTrialRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrial"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/trials/{trialId}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTrialOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTrialOperation,
+			ID:   "getTrial",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTrialOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTrialParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTrialRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTrialOperation,
+			OperationSummary: "Get time trial details",
+			OperationID:      "getTrial",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "trialId",
+					In:   "path",
+				}: params.TrialId,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = GetTrialParams
+			Response = GetTrialRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackGetTrialParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetTrial(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetTrial(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeGetTrialResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleGetTrialLeaderboardRequest handles getTrialLeaderboard operation.
+//
+// Retrieve leaderboard rankings for a specific time trial.
+//
+// GET /leaderboards/{trialId}
+func (s *Server) handleGetTrialLeaderboardRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrialLeaderboard"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/leaderboards/{trialId}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTrialLeaderboardOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetTrialLeaderboardOperation,
+			ID:   "getTrialLeaderboard",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTrialLeaderboardOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeGetTrialLeaderboardParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response GetTrialLeaderboardRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetTrialLeaderboardOperation,
 			OperationSummary: "Get trial leaderboard",
-			OperationID:      "",
+			OperationID:      "getTrialLeaderboard",
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
@@ -551,8 +1125,8 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 
 		type (
 			Request  = struct{}
-			Params   = LeaderboardsTrialIdGetParams
-			Response = *LeaderboardsTrialIdGetOK
+			Params   = GetTrialLeaderboardParams
+			Response = GetTrialLeaderboardRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -561,14 +1135,14 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 		](
 			m,
 			mreq,
-			unpackLeaderboardsTrialIdGetParams,
+			unpackGetTrialLeaderboardParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.LeaderboardsTrialIdGet(ctx, params)
+				response, err = s.h.GetTrialLeaderboard(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.LeaderboardsTrialIdGet(ctx, params)
+		response, err = s.h.GetTrialLeaderboard(ctx, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -576,7 +1150,7 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 		return
 	}
 
-	if err := encodeLeaderboardsTrialIdGetResponse(response, w, span); err != nil {
+	if err := encodeGetTrialLeaderboardResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -585,21 +1159,22 @@ func (s *Server) handleLeaderboardsTrialIdGetRequest(args [1]string, argsEscaped
 	}
 }
 
-// handleLeaderboardsTrialIdPersonalPlayerIdGetRequest handles GET /leaderboards/{trialId}/personal/{playerId} operation.
+// handleGetTrialPerformanceAnalyticsRequest handles getTrialPerformanceAnalytics operation.
 //
-// Retrieve a specific player's best time and ranking for a trial.
+// Retrieve performance metrics and statistics for a time trial.
 //
-// GET /leaderboards/{trialId}/personal/{playerId}
-func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /analytics/trials/{trialId}/performance
+func (s *Server) handleGetTrialPerformanceAnalyticsRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getTrialPerformanceAnalytics"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/leaderboards/{trialId}/personal/{playerId}"),
+		semconv.HTTPRouteKey.String("/analytics/trials/{trialId}/performance"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), LeaderboardsTrialIdPersonalPlayerIdGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetTrialPerformanceAnalyticsOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -654,15 +1229,15 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: LeaderboardsTrialIdPersonalPlayerIdGetOperation,
-			ID:   "",
+			Name: GetTrialPerformanceAnalyticsOperation,
+			ID:   "getTrialPerformanceAnalytics",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, LeaderboardsTrialIdPersonalPlayerIdGetOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, GetTrialPerformanceAnalyticsOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -702,7 +1277,7 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 			return
 		}
 	}
-	params, err := decodeLeaderboardsTrialIdPersonalPlayerIdGetParams(args, argsEscaped, r)
+	params, err := decodeGetTrialPerformanceAnalyticsParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -715,13 +1290,13 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 
 	var rawBody []byte
 
-	var response *LeaderboardsTrialIdPersonalPlayerIdGetOK
+	var response GetTrialPerformanceAnalyticsRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    LeaderboardsTrialIdPersonalPlayerIdGetOperation,
-			OperationSummary: "Get player's personal record",
-			OperationID:      "",
+			OperationName:    GetTrialPerformanceAnalyticsOperation,
+			OperationSummary: "Get trial performance analytics",
+			OperationID:      "getTrialPerformanceAnalytics",
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
@@ -730,17 +1305,17 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 					In:   "path",
 				}: params.TrialId,
 				{
-					Name: "playerId",
-					In:   "path",
-				}: params.PlayerId,
+					Name: "timeframe",
+					In:   "query",
+				}: params.Timeframe,
 			},
 			Raw: r,
 		}
 
 		type (
 			Request  = struct{}
-			Params   = LeaderboardsTrialIdPersonalPlayerIdGetParams
-			Response = *LeaderboardsTrialIdPersonalPlayerIdGetOK
+			Params   = GetTrialPerformanceAnalyticsParams
+			Response = GetTrialPerformanceAnalyticsRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -749,14 +1324,14 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 		](
 			m,
 			mreq,
-			unpackLeaderboardsTrialIdPersonalPlayerIdGetParams,
+			unpackGetTrialPerformanceAnalyticsParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.LeaderboardsTrialIdPersonalPlayerIdGet(ctx, params)
+				response, err = s.h.GetTrialPerformanceAnalytics(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.LeaderboardsTrialIdPersonalPlayerIdGet(ctx, params)
+		response, err = s.h.GetTrialPerformanceAnalytics(ctx, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -764,7 +1339,7 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 		return
 	}
 
-	if err := encodeLeaderboardsTrialIdPersonalPlayerIdGetResponse(response, w, span); err != nil {
+	if err := encodeGetTrialPerformanceAnalyticsResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -773,21 +1348,22 @@ func (s *Server) handleLeaderboardsTrialIdPersonalPlayerIdGetRequest(args [2]str
 	}
 }
 
-// handleTrialsGetRequest handles GET /trials operation.
+// handleListTrialsRequest handles listTrials operation.
 //
 // Retrieve paginated list of available time trials with filtering options.
 //
 // GET /trials
-func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleListTrialsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listTrials"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.HTTPRouteKey.String("/trials"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), ListTrialsOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -842,15 +1418,15 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsGetOperation,
-			ID:   "",
+			Name: ListTrialsOperation,
+			ID:   "listTrials",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsGetOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, ListTrialsOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -890,7 +1466,7 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 			return
 		}
 	}
-	params, err := decodeTrialsGetParams(args, argsEscaped, r)
+	params, err := decodeListTrialsParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -903,13 +1479,13 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 
 	var rawBody []byte
 
-	var response *TrialsGetOK
+	var response ListTrialsRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    TrialsGetOperation,
+			OperationName:    ListTrialsOperation,
 			OperationSummary: "List time trials",
-			OperationID:      "",
+			OperationID:      "listTrials",
 			Body:             nil,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
@@ -939,8 +1515,8 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 
 		type (
 			Request  = struct{}
-			Params   = TrialsGetParams
-			Response = *TrialsGetOK
+			Params   = ListTrialsParams
+			Response = ListTrialsRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -949,14 +1525,14 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 		](
 			m,
 			mreq,
-			unpackTrialsGetParams,
+			unpackListTrialsParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsGet(ctx, params)
+				response, err = s.h.ListTrials(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.TrialsGet(ctx, params)
+		response, err = s.h.ListTrials(ctx, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -964,7 +1540,7 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 		return
 	}
 
-	if err := encodeTrialsGetResponse(response, w, span); err != nil {
+	if err := encodeListTrialsResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -973,986 +1549,22 @@ func (s *Server) handleTrialsGetRequest(args [0]string, argsEscaped bool, w http
 	}
 }
 
-// handleTrialsPostRequest handles POST /trials operation.
-//
-// Create a new time trial configuration (admin only).
-//
-// POST /trials
-func (s *Server) handleTrialsPostRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/trials"),
-	}
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsPostOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsPostOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsPostOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeTrialsPostRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response TrialsPostRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    TrialsPostOperation,
-			OperationSummary: "Create time trial",
-			OperationID:      "",
-			Body:             request,
-			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
-		}
-
-		type (
-			Request  = *TimeTrial
-			Params   = struct{}
-			Response = TrialsPostRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			nil,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsPost(ctx, request)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.TrialsPost(ctx, request)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeTrialsPostResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleTrialsTrialIdCompletePostRequest handles POST /trials/{trialId}/complete operation.
-//
-// Submit completion data for an active time trial session.
-//
-// POST /trials/{trialId}/complete
-func (s *Server) handleTrialsTrialIdCompletePostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/trials/{trialId}/complete"),
-	}
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsTrialIdCompletePostOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsTrialIdCompletePostOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsTrialIdCompletePostOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-	params, err := decodeTrialsTrialIdCompletePostParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeTrialsTrialIdCompletePostRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response TrialsTrialIdCompletePostRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    TrialsTrialIdCompletePostOperation,
-			OperationSummary: "Complete time trial session",
-			OperationID:      "",
-			Body:             request,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "trialId",
-					In:   "path",
-				}: params.TrialId,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = *TrialsTrialIdCompletePostReq
-			Params   = TrialsTrialIdCompletePostParams
-			Response = TrialsTrialIdCompletePostRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackTrialsTrialIdCompletePostParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsTrialIdCompletePost(ctx, request, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.TrialsTrialIdCompletePost(ctx, request, params)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeTrialsTrialIdCompletePostResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleTrialsTrialIdGetRequest handles GET /trials/{trialId} operation.
-//
-// Retrieve detailed information about a specific time trial.
-//
-// GET /trials/{trialId}
-func (s *Server) handleTrialsTrialIdGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/trials/{trialId}"),
-	}
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsTrialIdGetOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsTrialIdGetOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsTrialIdGetOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-	params, err := decodeTrialsTrialIdGetParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-
-	var response TrialsTrialIdGetRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    TrialsTrialIdGetOperation,
-			OperationSummary: "Get time trial details",
-			OperationID:      "",
-			Body:             nil,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "trialId",
-					In:   "path",
-				}: params.TrialId,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = struct{}
-			Params   = TrialsTrialIdGetParams
-			Response = TrialsTrialIdGetRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackTrialsTrialIdGetParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsTrialIdGet(ctx, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.TrialsTrialIdGet(ctx, params)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeTrialsTrialIdGetResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleTrialsTrialIdPutRequest handles PUT /trials/{trialId} operation.
-//
-// Update an existing time trial configuration (admin only).
-//
-// PUT /trials/{trialId}
-func (s *Server) handleTrialsTrialIdPutRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/trials/{trialId}"),
-	}
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsTrialIdPutOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsTrialIdPutOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsTrialIdPutOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-	params, err := decodeTrialsTrialIdPutParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeTrialsTrialIdPutRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response TrialsTrialIdPutRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    TrialsTrialIdPutOperation,
-			OperationSummary: "Update time trial",
-			OperationID:      "",
-			Body:             request,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "trialId",
-					In:   "path",
-				}: params.TrialId,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = *TimeTrial
-			Params   = TrialsTrialIdPutParams
-			Response = TrialsTrialIdPutRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackTrialsTrialIdPutParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsTrialIdPut(ctx, request, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.TrialsTrialIdPut(ctx, request, params)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeTrialsTrialIdPutResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleTrialsTrialIdStartPostRequest handles POST /trials/{trialId}/start operation.
-//
-// Initialize a new time trial session for the authenticated player.
-//
-// POST /trials/{trialId}/start
-func (s *Server) handleTrialsTrialIdStartPostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/trials/{trialId}/start"),
-	}
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), TrialsTrialIdStartPostOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: TrialsTrialIdStartPostOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securityBearerAuth(ctx, TrialsTrialIdStartPostOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "BearerAuth",
-					Err:              err,
-				}
-				defer recordError("Security:BearerAuth", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-	params, err := decodeTrialsTrialIdStartPostParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeTrialsTrialIdStartPostRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response TrialsTrialIdStartPostRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    TrialsTrialIdStartPostOperation,
-			OperationSummary: "Start time trial session",
-			OperationID:      "",
-			Body:             request,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "trialId",
-					In:   "path",
-				}: params.TrialId,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = OptTrialsTrialIdStartPostReq
-			Params   = TrialsTrialIdStartPostParams
-			Response = TrialsTrialIdStartPostRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackTrialsTrialIdStartPostParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.TrialsTrialIdStartPost(ctx, request, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.TrialsTrialIdStartPost(ctx, request, params)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeTrialsTrialIdStartPostResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleValidationSessionsSessionIdReportPostRequest handles POST /validation/sessions/{sessionId}/report operation.
+// handleReportSuspiciousSessionRequest handles reportSuspiciousSession operation.
 //
 // Allow players to report potentially cheated trial sessions.
 //
 // POST /validation/sessions/{sessionId}/report
-func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleReportSuspiciousSessionRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("reportSuspiciousSession"),
 		semconv.HTTPRequestMethodKey.String("POST"),
 		semconv.HTTPRouteKey.String("/validation/sessions/{sessionId}/report"),
 	}
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), ValidationSessionsSessionIdReportPostOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), ReportSuspiciousSessionOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -2007,15 +1619,15 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: ValidationSessionsSessionIdReportPostOperation,
-			ID:   "",
+			Name: ReportSuspiciousSessionOperation,
+			ID:   "reportSuspiciousSession",
 		}
 	)
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securityBearerAuth(ctx, ValidationSessionsSessionIdReportPostOperation, r)
+			sctx, ok, err := s.securityBearerAuth(ctx, ReportSuspiciousSessionOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -2055,7 +1667,7 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 			return
 		}
 	}
-	params, err := decodeValidationSessionsSessionIdReportPostParams(args, argsEscaped, r)
+	params, err := decodeReportSuspiciousSessionParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -2067,7 +1679,7 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeValidationSessionsSessionIdReportPostRequest(r)
+	request, rawBody, close, err := s.decodeReportSuspiciousSessionRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -2083,13 +1695,13 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 		}
 	}()
 
-	var response ValidationSessionsSessionIdReportPostRes
+	var response ReportSuspiciousSessionRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    ValidationSessionsSessionIdReportPostOperation,
+			OperationName:    ReportSuspiciousSessionOperation,
 			OperationSummary: "Report suspicious trial session",
-			OperationID:      "",
+			OperationID:      "reportSuspiciousSession",
 			Body:             request,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
@@ -2102,9 +1714,9 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 		}
 
 		type (
-			Request  = *ValidationSessionsSessionIdReportPostReq
-			Params   = ValidationSessionsSessionIdReportPostParams
-			Response = ValidationSessionsSessionIdReportPostRes
+			Request  = *ReportSuspiciousSessionReq
+			Params   = ReportSuspiciousSessionParams
+			Response = ReportSuspiciousSessionRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2113,14 +1725,14 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 		](
 			m,
 			mreq,
-			unpackValidationSessionsSessionIdReportPostParams,
+			unpackReportSuspiciousSessionParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.ValidationSessionsSessionIdReportPost(ctx, request, params)
+				response, err = s.h.ReportSuspiciousSession(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.ValidationSessionsSessionIdReportPost(ctx, request, params)
+		response, err = s.h.ReportSuspiciousSession(ctx, request, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -2128,7 +1740,407 @@ func (s *Server) handleValidationSessionsSessionIdReportPostRequest(args [1]stri
 		return
 	}
 
-	if err := encodeValidationSessionsSessionIdReportPostResponse(response, w, span); err != nil {
+	if err := encodeReportSuspiciousSessionResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleStartTrialSessionRequest handles startTrialSession operation.
+//
+// Initialize a new time trial session for the authenticated player.
+//
+// POST /trials/{trialId}/start
+func (s *Server) handleStartTrialSessionRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("startTrialSession"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/trials/{trialId}/start"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), StartTrialSessionOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: StartTrialSessionOperation,
+			ID:   "startTrialSession",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, StartTrialSessionOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeStartTrialSessionParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeStartTrialSessionRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response StartTrialSessionRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    StartTrialSessionOperation,
+			OperationSummary: "Start time trial session",
+			OperationID:      "startTrialSession",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "trialId",
+					In:   "path",
+				}: params.TrialId,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = OptStartTrialSessionReq
+			Params   = StartTrialSessionParams
+			Response = StartTrialSessionRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackStartTrialSessionParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.StartTrialSession(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.StartTrialSession(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeStartTrialSessionResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleUpdateTrialRequest handles updateTrial operation.
+//
+// Update an existing time trial configuration (admin only).
+//
+// PUT /trials/{trialId}
+func (s *Server) handleUpdateTrialRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateTrial"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.HTTPRouteKey.String("/trials/{trialId}"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), UpdateTrialOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: UpdateTrialOperation,
+			ID:   "updateTrial",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securityBearerAuth(ctx, UpdateTrialOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "BearerAuth",
+					Err:              err,
+				}
+				defer recordError("Security:BearerAuth", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeUpdateTrialParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeUpdateTrialRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response UpdateTrialRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    UpdateTrialOperation,
+			OperationSummary: "Update time trial",
+			OperationID:      "updateTrial",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "trialId",
+					In:   "path",
+				}: params.TrialId,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *TimeTrial
+			Params   = UpdateTrialParams
+			Response = UpdateTrialRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackUpdateTrialParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.UpdateTrial(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.UpdateTrial(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeUpdateTrialResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

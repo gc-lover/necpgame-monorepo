@@ -15,15 +15,13 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// AnalyticsTrialsTrialIdPerformanceGetParams is parameters of GET /analytics/trials/{trialId}/performance operation.
-type AnalyticsTrialsTrialIdPerformanceGetParams struct {
+// CompleteTrialSessionParams is parameters of completeTrialSession operation.
+type CompleteTrialSessionParams struct {
 	// Time trial identifier.
 	TrialId uuid.UUID
-	// Analytics timeframe.
-	Timeframe OptAnalyticsTrialsTrialIdPerformanceGetTimeframe `json:",omitempty,omitzero"`
 }
 
-func unpackAnalyticsTrialsTrialIdPerformanceGetParams(packed middleware.Parameters) (params AnalyticsTrialsTrialIdPerformanceGetParams) {
+func unpackCompleteTrialSessionParams(packed middleware.Parameters) (params CompleteTrialSessionParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "trialId",
@@ -31,20 +29,10 @@ func unpackAnalyticsTrialsTrialIdPerformanceGetParams(packed middleware.Paramete
 		}
 		params.TrialId = packed[key].(uuid.UUID)
 	}
-	{
-		key := middleware.ParameterKey{
-			Name: "timeframe",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Timeframe = v.(OptAnalyticsTrialsTrialIdPerformanceGetTimeframe)
-		}
-	}
 	return params
 }
 
-func decodeAnalyticsTrialsTrialIdPerformanceGetParams(args [1]string, argsEscaped bool, r *http.Request) (params AnalyticsTrialsTrialIdPerformanceGetParams, _ error) {
-	q := uri.NewQueryDecoder(r.URL.Query())
+func decodeCompleteTrialSessionParams(args [1]string, argsEscaped bool, r *http.Request) (params CompleteTrialSessionParams, _ error) {
 	// Decode path: trialId.
 	if err := func() error {
 		param := args[0]
@@ -90,83 +78,208 @@ func decodeAnalyticsTrialsTrialIdPerformanceGetParams(args [1]string, argsEscape
 			Err:  err,
 		}
 	}
-	// Set default value for query: timeframe.
+	return params, nil
+}
+
+// GetPlayerPersonalRecordParams is parameters of getPlayerPersonalRecord operation.
+type GetPlayerPersonalRecordParams struct {
+	// Time trial identifier.
+	TrialId uuid.UUID
+	// Player identifier.
+	PlayerId string
+}
+
+func unpackGetPlayerPersonalRecordParams(packed middleware.Parameters) (params GetPlayerPersonalRecordParams) {
 	{
-		val := AnalyticsTrialsTrialIdPerformanceGetTimeframe("weekly")
-		params.Timeframe.SetTo(val)
-	}
-	// Decode query: timeframe.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "timeframe",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
+		key := middleware.ParameterKey{
+			Name: "trialId",
+			In:   "path",
 		}
+		params.TrialId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "playerId",
+			In:   "path",
+		}
+		params.PlayerId = packed[key].(string)
+	}
+	return params
+}
 
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotTimeframeVal AnalyticsTrialsTrialIdPerformanceGetTimeframe
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
+func decodeGetPlayerPersonalRecordParams(args [2]string, argsEscaped bool, r *http.Request) (params GetPlayerPersonalRecordParams, _ error) {
+	// Decode path: trialId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "trialId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
 
-					c, err := conv.ToString(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotTimeframeVal = AnalyticsTrialsTrialIdPerformanceGetTimeframe(c)
-					return nil
-				}(); err != nil {
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
 					return err
 				}
-				params.Timeframe.SetTo(paramsDotTimeframeVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.Timeframe.Get(); ok {
-					if err := func() error {
-						if err := value.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
 				}
+
+				params.TrialId = c
 				return nil
 			}(); err != nil {
 				return err
 			}
+		} else {
+			return validate.ErrFieldRequired
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "timeframe",
-			In:   "query",
+			Name: "trialId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: playerId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "playerId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.PlayerId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "playerId",
+			In:   "path",
 			Err:  err,
 		}
 	}
 	return params, nil
 }
 
-// LeaderboardsTrialIdGetParams is parameters of GET /leaderboards/{trialId} operation.
-type LeaderboardsTrialIdGetParams struct {
+// GetTrialParams is parameters of getTrial operation.
+type GetTrialParams struct {
+	// Time trial identifier.
+	TrialId uuid.UUID
+}
+
+func unpackGetTrialParams(packed middleware.Parameters) (params GetTrialParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "trialId",
+			In:   "path",
+		}
+		params.TrialId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetTrialParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTrialParams, _ error) {
+	// Decode path: trialId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "trialId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TrialId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "trialId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetTrialLeaderboardParams is parameters of getTrialLeaderboard operation.
+type GetTrialLeaderboardParams struct {
 	// Time trial identifier.
 	TrialId uuid.UUID
 	// Time period for rankings.
-	Timeframe OptLeaderboardsTrialIdGetTimeframe `json:",omitempty,omitzero"`
+	Timeframe OptGetTrialLeaderboardTimeframe `json:",omitempty,omitzero"`
 	// Number of top results to return.
 	Limit OptInt `json:",omitempty,omitzero"`
 	// Filter for specific player's ranking context.
 	PlayerID OptString `json:",omitempty,omitzero"`
 }
 
-func unpackLeaderboardsTrialIdGetParams(packed middleware.Parameters) (params LeaderboardsTrialIdGetParams) {
+func unpackGetTrialLeaderboardParams(packed middleware.Parameters) (params GetTrialLeaderboardParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "trialId",
@@ -180,7 +293,7 @@ func unpackLeaderboardsTrialIdGetParams(packed middleware.Parameters) (params Le
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Timeframe = v.(OptLeaderboardsTrialIdGetTimeframe)
+			params.Timeframe = v.(OptGetTrialLeaderboardTimeframe)
 		}
 	}
 	{
@@ -204,7 +317,7 @@ func unpackLeaderboardsTrialIdGetParams(packed middleware.Parameters) (params Le
 	return params
 }
 
-func decodeLeaderboardsTrialIdGetParams(args [1]string, argsEscaped bool, r *http.Request) (params LeaderboardsTrialIdGetParams, _ error) {
+func decodeGetTrialLeaderboardParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTrialLeaderboardParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode path: trialId.
 	if err := func() error {
@@ -253,7 +366,7 @@ func decodeLeaderboardsTrialIdGetParams(args [1]string, argsEscaped bool, r *htt
 	}
 	// Set default value for query: timeframe.
 	{
-		val := LeaderboardsTrialIdGetTimeframe("all_time")
+		val := GetTrialLeaderboardTimeframe("all_time")
 		params.Timeframe.SetTo(val)
 	}
 	// Decode query: timeframe.
@@ -266,7 +379,7 @@ func decodeLeaderboardsTrialIdGetParams(args [1]string, argsEscaped bool, r *htt
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotTimeframeVal LeaderboardsTrialIdGetTimeframe
+				var paramsDotTimeframeVal GetTrialLeaderboardTimeframe
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -278,7 +391,7 @@ func decodeLeaderboardsTrialIdGetParams(args [1]string, argsEscaped bool, r *htt
 						return err
 					}
 
-					paramsDotTimeframeVal = LeaderboardsTrialIdGetTimeframe(c)
+					paramsDotTimeframeVal = GetTrialLeaderboardTimeframe(c)
 					return nil
 				}(); err != nil {
 					return err
@@ -427,15 +540,15 @@ func decodeLeaderboardsTrialIdGetParams(args [1]string, argsEscaped bool, r *htt
 	return params, nil
 }
 
-// LeaderboardsTrialIdPersonalPlayerIdGetParams is parameters of GET /leaderboards/{trialId}/personal/{playerId} operation.
-type LeaderboardsTrialIdPersonalPlayerIdGetParams struct {
+// GetTrialPerformanceAnalyticsParams is parameters of getTrialPerformanceAnalytics operation.
+type GetTrialPerformanceAnalyticsParams struct {
 	// Time trial identifier.
 	TrialId uuid.UUID
-	// Player identifier.
-	PlayerId string
+	// Analytics timeframe.
+	Timeframe OptGetTrialPerformanceAnalyticsTimeframe `json:",omitempty,omitzero"`
 }
 
-func unpackLeaderboardsTrialIdPersonalPlayerIdGetParams(packed middleware.Parameters) (params LeaderboardsTrialIdPersonalPlayerIdGetParams) {
+func unpackGetTrialPerformanceAnalyticsParams(packed middleware.Parameters) (params GetTrialPerformanceAnalyticsParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "trialId",
@@ -445,15 +558,18 @@ func unpackLeaderboardsTrialIdPersonalPlayerIdGetParams(packed middleware.Parame
 	}
 	{
 		key := middleware.ParameterKey{
-			Name: "playerId",
-			In:   "path",
+			Name: "timeframe",
+			In:   "query",
 		}
-		params.PlayerId = packed[key].(string)
+		if v, ok := packed[key]; ok {
+			params.Timeframe = v.(OptGetTrialPerformanceAnalyticsTimeframe)
+		}
 	}
 	return params
 }
 
-func decodeLeaderboardsTrialIdPersonalPlayerIdGetParams(args [2]string, argsEscaped bool, r *http.Request) (params LeaderboardsTrialIdPersonalPlayerIdGetParams, _ error) {
+func decodeGetTrialPerformanceAnalyticsParams(args [1]string, argsEscaped bool, r *http.Request) (params GetTrialPerformanceAnalyticsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode path: trialId.
 	if err := func() error {
 		param := args[0]
@@ -499,76 +615,92 @@ func decodeLeaderboardsTrialIdPersonalPlayerIdGetParams(args [2]string, argsEsca
 			Err:  err,
 		}
 	}
-	// Decode path: playerId.
+	// Set default value for query: timeframe.
+	{
+		val := GetTrialPerformanceAnalyticsTimeframe("weekly")
+		params.Timeframe.SetTo(val)
+	}
+	// Decode query: timeframe.
 	if err := func() error {
-		param := args[1]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[1])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "timeframe",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
 		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "playerId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
 
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeframeVal GetTrialPerformanceAnalyticsTimeframe
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTimeframeVal = GetTrialPerformanceAnalyticsTimeframe(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Timeframe.SetTo(paramsDotTimeframeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
 			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
+				if value, ok := params.Timeframe.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
 				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.PlayerId = c
 				return nil
 			}(); err != nil {
 				return err
 			}
-		} else {
-			return validate.ErrFieldRequired
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "playerId",
-			In:   "path",
+			Name: "timeframe",
+			In:   "query",
 			Err:  err,
 		}
 	}
 	return params, nil
 }
 
-// TrialsGetParams is parameters of GET /trials operation.
-type TrialsGetParams struct {
+// ListTrialsParams is parameters of listTrials operation.
+type ListTrialsParams struct {
 	// Filter by trial status.
-	Status OptTrialsGetStatus `json:",omitempty,omitzero"`
+	Status OptListTrialsStatus `json:",omitempty,omitzero"`
 	// Filter by trial type.
-	Type OptTrialsGetType `json:",omitempty,omitzero"`
+	Type OptListTrialsType `json:",omitempty,omitzero"`
 	// Filter by difficulty.
-	Difficulty OptTrialsGetDifficulty `json:",omitempty,omitzero"`
+	Difficulty OptListTrialsDifficulty `json:",omitempty,omitzero"`
 	// Number of results per page.
 	Limit OptInt `json:",omitempty,omitzero"`
 	// Pagination offset.
 	Offset OptInt `json:",omitempty,omitzero"`
 }
 
-func unpackTrialsGetParams(packed middleware.Parameters) (params TrialsGetParams) {
+func unpackListTrialsParams(packed middleware.Parameters) (params ListTrialsParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "status",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Status = v.(OptTrialsGetStatus)
+			params.Status = v.(OptListTrialsStatus)
 		}
 	}
 	{
@@ -577,7 +709,7 @@ func unpackTrialsGetParams(packed middleware.Parameters) (params TrialsGetParams
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Type = v.(OptTrialsGetType)
+			params.Type = v.(OptListTrialsType)
 		}
 	}
 	{
@@ -586,7 +718,7 @@ func unpackTrialsGetParams(packed middleware.Parameters) (params TrialsGetParams
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Difficulty = v.(OptTrialsGetDifficulty)
+			params.Difficulty = v.(OptListTrialsDifficulty)
 		}
 	}
 	{
@@ -610,7 +742,7 @@ func unpackTrialsGetParams(packed middleware.Parameters) (params TrialsGetParams
 	return params
 }
 
-func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (params TrialsGetParams, _ error) {
+func decodeListTrialsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListTrialsParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode query: status.
 	if err := func() error {
@@ -622,7 +754,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotStatusVal TrialsGetStatus
+				var paramsDotStatusVal ListTrialsStatus
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -634,7 +766,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 						return err
 					}
 
-					paramsDotStatusVal = TrialsGetStatus(c)
+					paramsDotStatusVal = ListTrialsStatus(c)
 					return nil
 				}(); err != nil {
 					return err
@@ -678,7 +810,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotTypeVal TrialsGetType
+				var paramsDotTypeVal ListTrialsType
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -690,7 +822,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 						return err
 					}
 
-					paramsDotTypeVal = TrialsGetType(c)
+					paramsDotTypeVal = ListTrialsType(c)
 					return nil
 				}(); err != nil {
 					return err
@@ -734,7 +866,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotDifficultyVal TrialsGetDifficulty
+				var paramsDotDifficultyVal ListTrialsDifficulty
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -746,7 +878,7 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 						return err
 					}
 
-					paramsDotDifficultyVal = TrialsGetDifficulty(c)
+					paramsDotDifficultyVal = ListTrialsDifficulty(c)
 					return nil
 				}(); err != nil {
 					return err
@@ -925,277 +1057,13 @@ func decodeTrialsGetParams(args [0]string, argsEscaped bool, r *http.Request) (p
 	return params, nil
 }
 
-// TrialsTrialIdCompletePostParams is parameters of POST /trials/{trialId}/complete operation.
-type TrialsTrialIdCompletePostParams struct {
-	// Time trial identifier.
-	TrialId uuid.UUID
-}
-
-func unpackTrialsTrialIdCompletePostParams(packed middleware.Parameters) (params TrialsTrialIdCompletePostParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "trialId",
-			In:   "path",
-		}
-		params.TrialId = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeTrialsTrialIdCompletePostParams(args [1]string, argsEscaped bool, r *http.Request) (params TrialsTrialIdCompletePostParams, _ error) {
-	// Decode path: trialId.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "trialId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.TrialId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "trialId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// TrialsTrialIdGetParams is parameters of GET /trials/{trialId} operation.
-type TrialsTrialIdGetParams struct {
-	// Time trial identifier.
-	TrialId uuid.UUID
-}
-
-func unpackTrialsTrialIdGetParams(packed middleware.Parameters) (params TrialsTrialIdGetParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "trialId",
-			In:   "path",
-		}
-		params.TrialId = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeTrialsTrialIdGetParams(args [1]string, argsEscaped bool, r *http.Request) (params TrialsTrialIdGetParams, _ error) {
-	// Decode path: trialId.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "trialId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.TrialId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "trialId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// TrialsTrialIdPutParams is parameters of PUT /trials/{trialId} operation.
-type TrialsTrialIdPutParams struct {
-	// Time trial identifier.
-	TrialId uuid.UUID
-}
-
-func unpackTrialsTrialIdPutParams(packed middleware.Parameters) (params TrialsTrialIdPutParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "trialId",
-			In:   "path",
-		}
-		params.TrialId = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeTrialsTrialIdPutParams(args [1]string, argsEscaped bool, r *http.Request) (params TrialsTrialIdPutParams, _ error) {
-	// Decode path: trialId.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "trialId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.TrialId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "trialId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// TrialsTrialIdStartPostParams is parameters of POST /trials/{trialId}/start operation.
-type TrialsTrialIdStartPostParams struct {
-	// Time trial identifier.
-	TrialId uuid.UUID
-}
-
-func unpackTrialsTrialIdStartPostParams(packed middleware.Parameters) (params TrialsTrialIdStartPostParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "trialId",
-			In:   "path",
-		}
-		params.TrialId = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeTrialsTrialIdStartPostParams(args [1]string, argsEscaped bool, r *http.Request) (params TrialsTrialIdStartPostParams, _ error) {
-	// Decode path: trialId.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "trialId",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.TrialId = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "trialId",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// ValidationSessionsSessionIdReportPostParams is parameters of POST /validation/sessions/{sessionId}/report operation.
-type ValidationSessionsSessionIdReportPostParams struct {
+// ReportSuspiciousSessionParams is parameters of reportSuspiciousSession operation.
+type ReportSuspiciousSessionParams struct {
 	// Trial session identifier.
 	SessionId uuid.UUID
 }
 
-func unpackValidationSessionsSessionIdReportPostParams(packed middleware.Parameters) (params ValidationSessionsSessionIdReportPostParams) {
+func unpackReportSuspiciousSessionParams(packed middleware.Parameters) (params ReportSuspiciousSessionParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "sessionId",
@@ -1206,7 +1074,7 @@ func unpackValidationSessionsSessionIdReportPostParams(packed middleware.Paramet
 	return params
 }
 
-func decodeValidationSessionsSessionIdReportPostParams(args [1]string, argsEscaped bool, r *http.Request) (params ValidationSessionsSessionIdReportPostParams, _ error) {
+func decodeReportSuspiciousSessionParams(args [1]string, argsEscaped bool, r *http.Request) (params ReportSuspiciousSessionParams, _ error) {
 	// Decode path: sessionId.
 	if err := func() error {
 		param := args[0]
@@ -1248,6 +1116,138 @@ func decodeValidationSessionsSessionIdReportPostParams(args [1]string, argsEscap
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "sessionId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// StartTrialSessionParams is parameters of startTrialSession operation.
+type StartTrialSessionParams struct {
+	// Time trial identifier.
+	TrialId uuid.UUID
+}
+
+func unpackStartTrialSessionParams(packed middleware.Parameters) (params StartTrialSessionParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "trialId",
+			In:   "path",
+		}
+		params.TrialId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeStartTrialSessionParams(args [1]string, argsEscaped bool, r *http.Request) (params StartTrialSessionParams, _ error) {
+	// Decode path: trialId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "trialId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TrialId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "trialId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// UpdateTrialParams is parameters of updateTrial operation.
+type UpdateTrialParams struct {
+	// Time trial identifier.
+	TrialId uuid.UUID
+}
+
+func unpackUpdateTrialParams(packed middleware.Parameters) (params UpdateTrialParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "trialId",
+			In:   "path",
+		}
+		params.TrialId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeUpdateTrialParams(args [1]string, argsEscaped bool, r *http.Request) (params UpdateTrialParams, _ error) {
+	// Decode path: trialId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "trialId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.TrialId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "trialId",
 			In:   "path",
 			Err:  err,
 		}

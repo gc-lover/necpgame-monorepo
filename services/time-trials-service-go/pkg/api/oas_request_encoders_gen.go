@@ -10,7 +10,21 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeTrialsPostRequest(
+func encodeCompleteTrialSessionRequest(
+	req *CompleteTrialSessionReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeCreateTrialRequest(
 	req *TimeTrial,
 	r *http.Request,
 ) error {
@@ -24,8 +38,8 @@ func encodeTrialsPostRequest(
 	return nil
 }
 
-func encodeTrialsTrialIdCompletePostRequest(
-	req *TrialsTrialIdCompletePostReq,
+func encodeReportSuspiciousSessionRequest(
+	req *ReportSuspiciousSessionReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -38,22 +52,8 @@ func encodeTrialsTrialIdCompletePostRequest(
 	return nil
 }
 
-func encodeTrialsTrialIdPutRequest(
-	req *TimeTrial,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeTrialsTrialIdStartPostRequest(
-	req OptTrialsTrialIdStartPostReq,
+func encodeStartTrialSessionRequest(
+	req OptStartTrialSessionReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -72,8 +72,8 @@ func encodeTrialsTrialIdStartPostRequest(
 	return nil
 }
 
-func encodeValidationSessionsSessionIdReportPostRequest(
-	req *ValidationSessionsSessionIdReportPostReq,
+func encodeUpdateTrialRequest(
+	req *TimeTrial,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

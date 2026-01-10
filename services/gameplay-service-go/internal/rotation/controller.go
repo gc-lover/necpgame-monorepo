@@ -7,6 +7,7 @@ package rotation
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -49,6 +50,15 @@ type Rotation struct {
 	Affixes        []*api.Affix
 }
 
+// CachedRotationData represents cached rotation data for Redis
+type CachedRotationData struct {
+	ID             uuid.UUID     `json:"id"`
+	WeekStart      time.Time     `json:"week_start"`
+	WeekEnd        time.Time     `json:"week_end"`
+	SeasonalAffixID *uuid.UUID    `json:"seasonal_affix_id,omitempty"`
+	Affixes        []*api.Affix  `json:"affixes"`
+}
+
 // NewController creates a new rotation controller
 func NewController(cfg Config) (*Controller, error) {
 	if cfg.DB == nil {
@@ -75,7 +85,27 @@ func (c *Controller) GetCurrentRotation(ctx context.Context) (*Rotation, []*api.
 	// Try cache first
 	cacheKey := "current_rotation"
 	if c.redis != nil {
-		// TODO: Implement cache
+		cachedData, err := c.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			// Cache hit - deserialize and return
+			var cachedRotation CachedRotationData
+			if err := json.Unmarshal([]byte(cachedData), &cachedRotation); err == nil {
+				rotation := &Rotation{
+					ID:             cachedRotation.ID,
+					WeekStart:      cachedRotation.WeekStart,
+					WeekEnd:        cachedRotation.WeekEnd,
+					SeasonalAffixID: cachedRotation.SeasonalAffixID,
+				}
+
+				c.metrics.cacheHits.Add(ctx, 1)
+				c.logger.Debug("Rotation cache hit", zap.String("rotation_id", rotation.ID.String()))
+				return rotation, cachedRotation.Affixes, nil
+			}
+			// If unmarshal fails, continue to database query
+			c.logger.Warn("Failed to unmarshal cached rotation data", zap.Error(err))
+		}
+		// Cache miss - proceed to database query
+		c.metrics.cacheMisses.Add(ctx, 1)
 	}
 
 	query := `
@@ -154,6 +184,33 @@ func (c *Controller) GetCurrentRotation(ctx context.Context) (*Rotation, []*api.
 	}
 
 	rotation.Affixes = affixes
+
+	// Cache the result for future requests
+	if c.redis != nil {
+		cachedData := CachedRotationData{
+			ID:             rotation.ID,
+			WeekStart:      rotation.WeekStart,
+			WeekEnd:        rotation.WeekEnd,
+			SeasonalAffixID: rotation.SeasonalAffixID,
+			Affixes:        affixes,
+		}
+
+		cacheJSON, err := json.Marshal(cachedData)
+		if err != nil {
+			c.logger.Error("Failed to marshal rotation data for cache", zap.Error(err))
+		} else {
+			// Cache for 1 hour (rotations change weekly, but cache shorter for freshness)
+			err := c.redis.Set(ctx, cacheKey, string(cacheJSON), time.Hour).Err()
+			if err != nil {
+				c.logger.Error("Failed to cache rotation data", zap.Error(err))
+			} else {
+				c.logger.Debug("Rotation data cached",
+					zap.String("rotation_id", rotation.ID.String()),
+					zap.Int("affixes_count", len(affixes)))
+			}
+		}
+	}
+
 	return rotation, affixes, nil
 }
 

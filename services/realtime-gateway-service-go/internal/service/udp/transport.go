@@ -290,6 +290,19 @@ func (t *Transport) SendToClient(clientAddr string, packetType PacketType, data 
 	return t.sendPacket(client.Addr, packetType, client.ID, data)
 }
 
+// SendBatch sends multiple updates in a single UDP packet (syscall optimization)
+func (t *Transport) SendBatch(clientAddr string, updates []*BatchUpdate) error {
+	t.clientsMu.RLock()
+	client, exists := t.clients[clientAddr]
+	t.clientsMu.RUnlock()
+
+	if !exists {
+		return errors.New("client not found")
+	}
+
+	return t.sendBatchPacket(client.Addr, client.ID, updates)
+}
+
 // BroadcastToNearby broadcasts to clients near a position (spatial partitioning)
 func (t *Transport) BroadcastToNearby(position Vec3, packetType PacketType, data []byte, maxDistance float32) error {
 	nearbyClients := t.spatialGrid.GetNearbyClients(position, maxDistance)
@@ -339,6 +352,84 @@ func (t *Transport) sendPacket(addr *net.UDPAddr, packetType PacketType, clientI
 	// Update metrics
 	t.packetsSent.Add(context.Background(), 1)
 	t.bytesSent.Add(context.Background(), int64(n))
+
+	return nil
+}
+
+// sendBatchPacket sends multiple updates in a single UDP packet (syscall optimization)
+func (t *Transport) sendBatchPacket(addr *net.UDPAddr, clientID uint16, updates []*BatchUpdate) error {
+	if len(updates) == 0 {
+		return errors.New("no updates to send")
+	}
+
+	if len(updates) > 255 {
+		return errors.New("too many updates in batch (max 255)")
+	}
+
+	t.connMu.RLock()
+	conn := t.conn
+	t.connMu.RUnlock()
+
+	if conn == nil {
+		return errors.New("UDP connection not available")
+	}
+
+	// Calculate total packet size
+	packetSize := 2 + 1 // Header: clientID (2) + updateCount (1)
+
+	for _, update := range updates {
+		packetSize += 2 + len(update.Data) // packetType (2) + data length
+	}
+
+	if packetSize > t.config.MaxPacketSize {
+		return errors.New("batch packet too large for UDP MTU")
+	}
+
+	if packetSize > len(t.writeBuf) {
+		return errors.New("batch packet exceeds write buffer size")
+	}
+
+	// Build batch packet
+	buf := t.writeBuf[:0]
+
+	// Header: client ID (big endian)
+	binary.BigEndian.PutUint16(buf[0:2], clientID)
+	buf = buf[2:]
+
+	// Update count
+	buf[0] = uint8(len(updates))
+	buf = buf[1:]
+
+	// Pack updates
+	for _, update := range updates {
+		// Packet type (big endian)
+		binary.BigEndian.PutUint16(buf[0:2], update.PacketType)
+		buf = buf[2:]
+
+		// Data
+		copy(buf, update.Data)
+		buf = buf[len(update.Data):]
+	}
+
+	// Set write deadline
+	if err := conn.SetWriteDeadline(time.Now().Add(t.config.WriteTimeout)); err != nil {
+		return errors.Wrap(err, "failed to set write deadline")
+	}
+
+	// Send batch packet
+	n, err := conn.WriteToUDP(t.writeBuf[:packetSize], addr)
+	if err != nil {
+		return errors.Wrap(err, "failed to send UDP batch packet")
+	}
+
+	// Update metrics
+	t.packetsSent.Add(context.Background(), 1)
+	t.bytesSent.Add(context.Background(), int64(n))
+
+	t.logger.Debug("sent UDP batch packet",
+		zap.String("client_addr", addr.String()),
+		zap.Int("updates", len(updates)),
+		zap.Int("bytes", n))
 
 	return nil
 }

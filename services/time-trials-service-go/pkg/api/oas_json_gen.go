@@ -13,84 +13,251 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// Encode encodes CompleteTrialSessionBadRequest as json.
+func (s *CompleteTrialSessionBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CompleteTrialSessionBadRequest from json.
+func (s *CompleteTrialSessionBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CompleteTrialSessionBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CompleteTrialSessionConflict as json.
+func (s *CompleteTrialSessionConflict) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CompleteTrialSessionConflict from json.
+func (s *CompleteTrialSessionConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionConflict to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CompleteTrialSessionConflict(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CompleteTrialSessionInternalServerError as json.
+func (s *CompleteTrialSessionInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CompleteTrialSessionInternalServerError from json.
+func (s *CompleteTrialSessionInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CompleteTrialSessionInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CompleteTrialSessionNotFound as json.
+func (s *CompleteTrialSessionNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CompleteTrialSessionNotFound from json.
+func (s *CompleteTrialSessionNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CompleteTrialSessionNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) Encode(e *jx.Encoder) {
+func (s *CompleteTrialSessionOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) encodeFields(e *jx.Encoder) {
+func (s *CompleteTrialSessionOK) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("trial_id")
-		json.EncodeUUID(e, s.TrialID)
+		e.FieldStart("session")
+		s.Session.Encode(e)
 	}
 	{
-		e.FieldStart("timeframe")
-		e.Str(s.Timeframe)
+		e.FieldStart("rewards")
+		s.Rewards.Encode(e)
 	}
 	{
-		e.FieldStart("metrics")
-		s.Metrics.Encode(e)
+		e.FieldStart("leaderboard_rank")
+		e.Int(s.LeaderboardRank)
+	}
+	{
+		if s.ValidationStatus.Set {
+			e.FieldStart("validation_status")
+			s.ValidationStatus.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfAnalyticsTrialsTrialIdPerformanceGetOK = [3]string{
-	0: "trial_id",
-	1: "timeframe",
-	2: "metrics",
+var jsonFieldsNameOfCompleteTrialSessionOK = [4]string{
+	0: "session",
+	1: "rewards",
+	2: "leaderboard_rank",
+	3: "validation_status",
 }
 
-// Decode decodes AnalyticsTrialsTrialIdPerformanceGetOK from json.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) Decode(d *jx.Decoder) error {
+// Decode decodes CompleteTrialSessionOK from json.
+func (s *CompleteTrialSessionOK) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AnalyticsTrialsTrialIdPerformanceGetOK to nil")
+		return errors.New("invalid: unable to decode CompleteTrialSessionOK to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "trial_id":
+		case "session":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.TrialID = v
-				if err != nil {
+				if err := s.Session.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"trial_id\"")
+				return errors.Wrap(err, "decode field \"session\"")
 			}
-		case "timeframe":
+		case "rewards":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Str()
-				s.Timeframe = string(v)
+				if err := s.Rewards.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rewards\"")
+			}
+		case "leaderboard_rank":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int()
+				s.LeaderboardRank = int(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"timeframe\"")
+				return errors.Wrap(err, "decode field \"leaderboard_rank\"")
 			}
-		case "metrics":
-			requiredBitSet[0] |= 1 << 2
+		case "validation_status":
 			if err := func() error {
-				if err := s.Metrics.Decode(d); err != nil {
+				s.ValidationStatus.Reset()
+				if err := s.ValidationStatus.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metrics\"")
+				return errors.Wrap(err, "decode field \"validation_status\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AnalyticsTrialsTrialIdPerformanceGetOK")
+		return errors.Wrap(err, "decode CompleteTrialSessionOK")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -107,8 +274,8 @@ func (s *AnalyticsTrialsTrialIdPerformanceGetOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfAnalyticsTrialsTrialIdPerformanceGetOK) {
-					name = jsonFieldsNameOfAnalyticsTrialsTrialIdPerformanceGetOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCompleteTrialSessionOK) {
+					name = jsonFieldsNameOfCompleteTrialSessionOK[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -129,276 +296,414 @@ func (s *AnalyticsTrialsTrialIdPerformanceGetOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) MarshalJSON() ([]byte, error) {
+func (s *CompleteTrialSessionOK) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOK) UnmarshalJSON(data []byte) error {
+func (s *CompleteTrialSessionOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
+// Encode encodes CompleteTrialSessionOKValidationStatus as json.
+func (s CompleteTrialSessionOKValidationStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
 }
 
-// encodeFields encodes fields.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) encodeFields(e *jx.Encoder) {
-	{
-		if s.TotalCompletions.Set {
-			e.FieldStart("total_completions")
-			s.TotalCompletions.Encode(e)
-		}
-	}
-	{
-		if s.AverageCompletionTime.Set {
-			e.FieldStart("average_completion_time")
-			s.AverageCompletionTime.Encode(e)
-		}
-	}
-	{
-		if s.FastestTime.Set {
-			e.FieldStart("fastest_time")
-			s.FastestTime.Encode(e)
-		}
-	}
-	{
-		if s.SlowestTime.Set {
-			e.FieldStart("slowest_time")
-			s.SlowestTime.Encode(e)
-		}
-	}
-	{
-		if s.CompletionRate.Set {
-			e.FieldStart("completion_rate")
-			s.CompletionRate.Encode(e)
-		}
-	}
-	{
-		if s.DifficultyDistribution.Set {
-			e.FieldStart("difficulty_distribution")
-			s.DifficultyDistribution.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfAnalyticsTrialsTrialIdPerformanceGetOKMetrics = [6]string{
-	0: "total_completions",
-	1: "average_completion_time",
-	2: "fastest_time",
-	3: "slowest_time",
-	4: "completion_rate",
-	5: "difficulty_distribution",
-}
-
-// Decode decodes AnalyticsTrialsTrialIdPerformanceGetOKMetrics from json.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) Decode(d *jx.Decoder) error {
+// Decode decodes CompleteTrialSessionOKValidationStatus from json.
+func (s *CompleteTrialSessionOKValidationStatus) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AnalyticsTrialsTrialIdPerformanceGetOKMetrics to nil")
+		return errors.New("invalid: unable to decode CompleteTrialSessionOKValidationStatus to nil")
 	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "total_completions":
-			if err := func() error {
-				s.TotalCompletions.Reset()
-				if err := s.TotalCompletions.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total_completions\"")
-			}
-		case "average_completion_time":
-			if err := func() error {
-				s.AverageCompletionTime.Reset()
-				if err := s.AverageCompletionTime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"average_completion_time\"")
-			}
-		case "fastest_time":
-			if err := func() error {
-				s.FastestTime.Reset()
-				if err := s.FastestTime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"fastest_time\"")
-			}
-		case "slowest_time":
-			if err := func() error {
-				s.SlowestTime.Reset()
-				if err := s.SlowestTime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"slowest_time\"")
-			}
-		case "completion_rate":
-			if err := func() error {
-				s.CompletionRate.Reset()
-				if err := s.CompletionRate.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"completion_rate\"")
-			}
-		case "difficulty_distribution":
-			if err := func() error {
-				s.DifficultyDistribution.Reset()
-				if err := s.DifficultyDistribution.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"difficulty_distribution\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode AnalyticsTrialsTrialIdPerformanceGetOKMetrics")
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch CompleteTrialSessionOKValidationStatus(v) {
+	case CompleteTrialSessionOKValidationStatusPending:
+		*s = CompleteTrialSessionOKValidationStatusPending
+	case CompleteTrialSessionOKValidationStatusValid:
+		*s = CompleteTrialSessionOKValidationStatusValid
+	case CompleteTrialSessionOKValidationStatusInvalid:
+		*s = CompleteTrialSessionOKValidationStatusInvalid
+	default:
+		*s = CompleteTrialSessionOKValidationStatus(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) MarshalJSON() ([]byte, error) {
+func (s CompleteTrialSessionOKValidationStatus) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetrics) UnmarshalJSON(data []byte) error {
+func (s *CompleteTrialSessionOKValidationStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Encode(e *jx.Encoder) {
+func (s *CompleteTrialSessionReq) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) encodeFields(e *jx.Encoder) {
+func (s *CompleteTrialSessionReq) encodeFields(e *jx.Encoder) {
 	{
-		if s.Normal.Set {
-			e.FieldStart("normal")
-			s.Normal.Encode(e)
+		e.FieldStart("completion_time")
+		e.Int(s.CompletionTime)
+	}
+	{
+		e.FieldStart("progress_percentage")
+		e.Int(s.ProgressPercentage)
+	}
+	{
+		if s.TelemetryData != nil {
+			e.FieldStart("telemetry_data")
+			s.TelemetryData.Encode(e)
 		}
 	}
 	{
-		if s.Heroic.Set {
-			e.FieldStart("heroic")
-			s.Heroic.Encode(e)
-		}
-	}
-	{
-		if s.Mythic.Set {
-			e.FieldStart("mythic")
-			s.Mythic.Encode(e)
-		}
-	}
-	{
-		if s.Legendary.Set {
-			e.FieldStart("legendary")
-			s.Legendary.Encode(e)
+		if s.PartyMembers != nil {
+			e.FieldStart("party_members")
+			e.ArrStart()
+			for _, elem := range s.PartyMembers {
+				e.Str(elem)
+			}
+			e.ArrEnd()
 		}
 	}
 }
 
-var jsonFieldsNameOfAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution = [4]string{
-	0: "normal",
-	1: "heroic",
-	2: "mythic",
-	3: "legendary",
+var jsonFieldsNameOfCompleteTrialSessionReq = [4]string{
+	0: "completion_time",
+	1: "progress_percentage",
+	2: "telemetry_data",
+	3: "party_members",
 }
 
-// Decode decodes AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution from json.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Decode(d *jx.Decoder) error {
+// Decode decodes CompleteTrialSessionReq from json.
+func (s *CompleteTrialSessionReq) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution to nil")
+		return errors.New("invalid: unable to decode CompleteTrialSessionReq to nil")
 	}
+	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "normal":
+		case "completion_time":
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				s.Normal.Reset()
-				if err := s.Normal.Decode(d); err != nil {
+				v, err := d.Int()
+				s.CompletionTime = int(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"normal\"")
+				return errors.Wrap(err, "decode field \"completion_time\"")
 			}
-		case "heroic":
+		case "progress_percentage":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Heroic.Reset()
-				if err := s.Heroic.Decode(d); err != nil {
+				v, err := d.Int()
+				s.ProgressPercentage = int(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"heroic\"")
+				return errors.Wrap(err, "decode field \"progress_percentage\"")
 			}
-		case "mythic":
+		case "telemetry_data":
 			if err := func() error {
-				s.Mythic.Reset()
-				if err := s.Mythic.Decode(d); err != nil {
+				s.TelemetryData = nil
+				var elem CompleteTrialSessionReqTelemetryData
+				if err := elem.Decode(d); err != nil {
 					return err
 				}
+				s.TelemetryData = &elem
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"mythic\"")
+				return errors.Wrap(err, "decode field \"telemetry_data\"")
 			}
-		case "legendary":
+		case "party_members":
 			if err := func() error {
-				s.Legendary.Reset()
-				if err := s.Legendary.Decode(d); err != nil {
+				s.PartyMembers = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.PartyMembers = append(s.PartyMembers, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"legendary\"")
+				return errors.Wrap(err, "decode field \"party_members\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution")
+		return errors.Wrap(err, "decode CompleteTrialSessionReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfCompleteTrialSessionReq) {
+					name = jsonFieldsNameOfCompleteTrialSessionReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) MarshalJSON() ([]byte, error) {
+func (s *CompleteTrialSessionReq) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) UnmarshalJSON(data []byte) error {
+func (s *CompleteTrialSessionReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *CompleteTrialSessionReqTelemetryData) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *CompleteTrialSessionReqTelemetryData) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfCompleteTrialSessionReqTelemetryData = [0]string{}
+
+// Decode decodes CompleteTrialSessionReqTelemetryData from json.
+func (s *CompleteTrialSessionReqTelemetryData) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionReqTelemetryData to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode CompleteTrialSessionReqTelemetryData")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionReqTelemetryData) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionReqTelemetryData) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CompleteTrialSessionUnauthorized as json.
+func (s *CompleteTrialSessionUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CompleteTrialSessionUnauthorized from json.
+func (s *CompleteTrialSessionUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CompleteTrialSessionUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CompleteTrialSessionUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CompleteTrialSessionUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CompleteTrialSessionUnauthorized) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTrialBadRequest as json.
+func (s *CreateTrialBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CreateTrialBadRequest from json.
+func (s *CreateTrialBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTrialBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CreateTrialBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CreateTrialBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTrialBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTrialForbidden as json.
+func (s *CreateTrialForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CreateTrialForbidden from json.
+func (s *CreateTrialForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTrialForbidden to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CreateTrialForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CreateTrialForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTrialForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateTrialUnauthorized as json.
+func (s *CreateTrialUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes CreateTrialUnauthorized from json.
+func (s *CreateTrialUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode CreateTrialUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = CreateTrialUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *CreateTrialUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *CreateTrialUnauthorized) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -626,14 +931,14 @@ func (s *ErrorDetails) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
-func (s *HealthGetOK) Encode(e *jx.Encoder) {
+func (s *GetHealthOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *HealthGetOK) encodeFields(e *jx.Encoder) {
+func (s *GetHealthOK) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("status")
 		s.Status.Encode(e)
@@ -654,17 +959,17 @@ func (s *HealthGetOK) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfHealthGetOK = [4]string{
+var jsonFieldsNameOfGetHealthOK = [4]string{
 	0: "status",
 	1: "timestamp",
 	2: "version",
 	3: "metrics",
 }
 
-// Decode decodes HealthGetOK from json.
-func (s *HealthGetOK) Decode(d *jx.Decoder) error {
+// Decode decodes GetHealthOK from json.
+func (s *GetHealthOK) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode HealthGetOK to nil")
+		return errors.New("invalid: unable to decode GetHealthOK to nil")
 	}
 	var requiredBitSet [1]uint8
 
@@ -719,7 +1024,7 @@ func (s *HealthGetOK) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode HealthGetOK")
+		return errors.Wrap(err, "decode GetHealthOK")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -736,8 +1041,8 @@ func (s *HealthGetOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfHealthGetOK) {
-					name = jsonFieldsNameOfHealthGetOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfGetHealthOK) {
+					name = jsonFieldsNameOfGetHealthOK[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -758,27 +1063,27 @@ func (s *HealthGetOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *HealthGetOK) MarshalJSON() ([]byte, error) {
+func (s *GetHealthOK) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *HealthGetOK) UnmarshalJSON(data []byte) error {
+func (s *GetHealthOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *HealthGetOKMetrics) Encode(e *jx.Encoder) {
+func (s *GetHealthOKMetrics) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *HealthGetOKMetrics) encodeFields(e *jx.Encoder) {
+func (s *GetHealthOKMetrics) encodeFields(e *jx.Encoder) {
 	{
 		if s.ActiveSessions.Set {
 			e.FieldStart("active_sessions")
@@ -799,16 +1104,16 @@ func (s *HealthGetOKMetrics) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfHealthGetOKMetrics = [3]string{
+var jsonFieldsNameOfGetHealthOKMetrics = [3]string{
 	0: "active_sessions",
 	1: "total_trials",
 	2: "avg_response_time",
 }
 
-// Decode decodes HealthGetOKMetrics from json.
-func (s *HealthGetOKMetrics) Decode(d *jx.Decoder) error {
+// Decode decodes GetHealthOKMetrics from json.
+func (s *GetHealthOKMetrics) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode HealthGetOKMetrics to nil")
+		return errors.New("invalid: unable to decode GetHealthOKMetrics to nil")
 	}
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
@@ -848,63 +1153,1634 @@ func (s *HealthGetOKMetrics) Decode(d *jx.Decoder) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode HealthGetOKMetrics")
+		return errors.Wrap(err, "decode GetHealthOKMetrics")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *HealthGetOKMetrics) MarshalJSON() ([]byte, error) {
+func (s *GetHealthOKMetrics) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *HealthGetOKMetrics) UnmarshalJSON(data []byte) error {
+func (s *GetHealthOKMetrics) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes HealthGetOKStatus as json.
-func (s HealthGetOKStatus) Encode(e *jx.Encoder) {
+// Encode encodes GetHealthOKStatus as json.
+func (s GetHealthOKStatus) Encode(e *jx.Encoder) {
 	e.Str(string(s))
 }
 
-// Decode decodes HealthGetOKStatus from json.
-func (s *HealthGetOKStatus) Decode(d *jx.Decoder) error {
+// Decode decodes GetHealthOKStatus from json.
+func (s *GetHealthOKStatus) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode HealthGetOKStatus to nil")
+		return errors.New("invalid: unable to decode GetHealthOKStatus to nil")
 	}
 	v, err := d.StrBytes()
 	if err != nil {
 		return err
 	}
 	// Try to use constant string.
-	switch HealthGetOKStatus(v) {
-	case HealthGetOKStatusHealthy:
-		*s = HealthGetOKStatusHealthy
-	case HealthGetOKStatusDegraded:
-		*s = HealthGetOKStatusDegraded
-	case HealthGetOKStatusUnhealthy:
-		*s = HealthGetOKStatusUnhealthy
+	switch GetHealthOKStatus(v) {
+	case GetHealthOKStatusHealthy:
+		*s = GetHealthOKStatusHealthy
+	case GetHealthOKStatusDegraded:
+		*s = GetHealthOKStatusDegraded
+	case GetHealthOKStatusUnhealthy:
+		*s = GetHealthOKStatusUnhealthy
 	default:
-		*s = HealthGetOKStatus(v)
+		*s = GetHealthOKStatus(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s HealthGetOKStatus) MarshalJSON() ([]byte, error) {
+func (s GetHealthOKStatus) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *HealthGetOKStatus) UnmarshalJSON(data []byte) error {
+func (s *GetHealthOKStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordBadRequest as json.
+func (s *GetPlayerPersonalRecordBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetPlayerPersonalRecordBadRequest from json.
+func (s *GetPlayerPersonalRecordBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetPlayerPersonalRecordBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordInternalServerError as json.
+func (s *GetPlayerPersonalRecordInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetPlayerPersonalRecordInternalServerError from json.
+func (s *GetPlayerPersonalRecordInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetPlayerPersonalRecordInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordNotFound as json.
+func (s *GetPlayerPersonalRecordNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetPlayerPersonalRecordNotFound from json.
+func (s *GetPlayerPersonalRecordNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetPlayerPersonalRecordNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetPlayerPersonalRecordOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetPlayerPersonalRecordOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("player_id")
+		e.Str(s.PlayerID)
+	}
+	{
+		e.FieldStart("trial_id")
+		json.EncodeUUID(e, s.TrialID)
+	}
+	{
+		e.FieldStart("personal_best")
+		s.PersonalBest.Encode(e)
+	}
+	{
+		e.FieldStart("current_rank")
+		e.Int(s.CurrentRank)
+	}
+	{
+		e.FieldStart("rank_history")
+		e.ArrStart()
+		for _, elem := range s.RankHistory {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfGetPlayerPersonalRecordOK = [5]string{
+	0: "player_id",
+	1: "trial_id",
+	2: "personal_best",
+	3: "current_rank",
+	4: "rank_history",
+}
+
+// Decode decodes GetPlayerPersonalRecordOK from json.
+func (s *GetPlayerPersonalRecordOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "player_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.PlayerID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "trial_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TrialID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trial_id\"")
+			}
+		case "personal_best":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.PersonalBest.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"personal_best\"")
+			}
+		case "current_rank":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.CurrentRank = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"current_rank\"")
+			}
+		case "rank_history":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				s.RankHistory = make([]GetPlayerPersonalRecordOKRankHistoryItem, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem GetPlayerPersonalRecordOKRankHistoryItem
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.RankHistory = append(s.RankHistory, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank_history\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetPlayerPersonalRecordOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00011111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetPlayerPersonalRecordOK) {
+					name = jsonFieldsNameOfGetPlayerPersonalRecordOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetPlayerPersonalRecordOKPersonalBest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetPlayerPersonalRecordOKPersonalBest) encodeFields(e *jx.Encoder) {
+	{
+		if s.CompletionTime.Set {
+			e.FieldStart("completion_time")
+			s.CompletionTime.Encode(e)
+		}
+	}
+	{
+		if s.AchievedAt.Set {
+			e.FieldStart("achieved_at")
+			s.AchievedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Difficulty.Set {
+			e.FieldStart("difficulty")
+			s.Difficulty.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetPlayerPersonalRecordOKPersonalBest = [3]string{
+	0: "completion_time",
+	1: "achieved_at",
+	2: "difficulty",
+}
+
+// Decode decodes GetPlayerPersonalRecordOKPersonalBest from json.
+func (s *GetPlayerPersonalRecordOKPersonalBest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordOKPersonalBest to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "completion_time":
+			if err := func() error {
+				s.CompletionTime.Reset()
+				if err := s.CompletionTime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completion_time\"")
+			}
+		case "achieved_at":
+			if err := func() error {
+				s.AchievedAt.Reset()
+				if err := s.AchievedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achieved_at\"")
+			}
+		case "difficulty":
+			if err := func() error {
+				s.Difficulty.Reset()
+				if err := s.Difficulty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"difficulty\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetPlayerPersonalRecordOKPersonalBest")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordOKPersonalBest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordOKPersonalBest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordOKPersonalBestDifficulty as json.
+func (s GetPlayerPersonalRecordOKPersonalBestDifficulty) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GetPlayerPersonalRecordOKPersonalBestDifficulty from json.
+func (s *GetPlayerPersonalRecordOKPersonalBestDifficulty) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordOKPersonalBestDifficulty to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GetPlayerPersonalRecordOKPersonalBestDifficulty(v) {
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyNormal:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyNormal
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyHeroic
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyMythic:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyMythic
+	case GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficultyLegendary
+	default:
+		*s = GetPlayerPersonalRecordOKPersonalBestDifficulty(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GetPlayerPersonalRecordOKPersonalBestDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordOKPersonalBestDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.Date.Set {
+			e.FieldStart("date")
+			s.Date.Encode(e, json.EncodeDate)
+		}
+	}
+	{
+		if s.Rank.Set {
+			e.FieldStart("rank")
+			s.Rank.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetPlayerPersonalRecordOKRankHistoryItem = [2]string{
+	0: "date",
+	1: "rank",
+}
+
+// Decode decodes GetPlayerPersonalRecordOKRankHistoryItem from json.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordOKRankHistoryItem to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "date":
+			if err := func() error {
+				s.Date.Reset()
+				if err := s.Date.Decode(d, json.DecodeDate); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"date\"")
+			}
+		case "rank":
+			if err := func() error {
+				s.Rank.Reset()
+				if err := s.Rank.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetPlayerPersonalRecordOKRankHistoryItem")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordOKRankHistoryItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordTooManyRequests as json.
+func (s *GetPlayerPersonalRecordTooManyRequests) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetPlayerPersonalRecordTooManyRequests from json.
+func (s *GetPlayerPersonalRecordTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetPlayerPersonalRecordTooManyRequests to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetPlayerPersonalRecordTooManyRequests(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetPlayerPersonalRecordTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetPlayerPersonalRecordTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialInternalServerError as json.
+func (s *GetTrialInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialInternalServerError from json.
+func (s *GetTrialInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialLeaderboardBadRequest as json.
+func (s *GetTrialLeaderboardBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialLeaderboardBadRequest from json.
+func (s *GetTrialLeaderboardBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialLeaderboardBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialLeaderboardBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialLeaderboardInternalServerError as json.
+func (s *GetTrialLeaderboardInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialLeaderboardInternalServerError from json.
+func (s *GetTrialLeaderboardInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialLeaderboardInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialLeaderboardInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialLeaderboardNotFound as json.
+func (s *GetTrialLeaderboardNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialLeaderboardNotFound from json.
+func (s *GetTrialLeaderboardNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialLeaderboardNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialLeaderboardNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTrialLeaderboardOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTrialLeaderboardOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("trial_id")
+		json.EncodeUUID(e, s.TrialID)
+	}
+	{
+		e.FieldStart("timeframe")
+		s.Timeframe.Encode(e)
+	}
+	{
+		e.FieldStart("entries")
+		e.ArrStart()
+		for _, elem := range s.Entries {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("total_entries")
+		e.Int(s.TotalEntries)
+	}
+	{
+		if s.LastUpdated.Set {
+			e.FieldStart("last_updated")
+			s.LastUpdated.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTrialLeaderboardOK = [5]string{
+	0: "trial_id",
+	1: "timeframe",
+	2: "entries",
+	3: "total_entries",
+	4: "last_updated",
+}
+
+// Decode decodes GetTrialLeaderboardOK from json.
+func (s *GetTrialLeaderboardOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "trial_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TrialID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trial_id\"")
+			}
+		case "timeframe":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.Timeframe.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timeframe\"")
+			}
+		case "entries":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				s.Entries = make([]LeaderboardEntry, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem LeaderboardEntry
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Entries = append(s.Entries, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"entries\"")
+			}
+		case "total_entries":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.TotalEntries = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_entries\"")
+			}
+		case "last_updated":
+			if err := func() error {
+				s.LastUpdated.Reset()
+				if err := s.LastUpdated.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"last_updated\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTrialLeaderboardOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTrialLeaderboardOK) {
+					name = jsonFieldsNameOfGetTrialLeaderboardOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialLeaderboardOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialLeaderboardOKTimeframe as json.
+func (s GetTrialLeaderboardOKTimeframe) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes GetTrialLeaderboardOKTimeframe from json.
+func (s *GetTrialLeaderboardOKTimeframe) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardOKTimeframe to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch GetTrialLeaderboardOKTimeframe(v) {
+	case GetTrialLeaderboardOKTimeframeDaily:
+		*s = GetTrialLeaderboardOKTimeframeDaily
+	case GetTrialLeaderboardOKTimeframeWeekly:
+		*s = GetTrialLeaderboardOKTimeframeWeekly
+	case GetTrialLeaderboardOKTimeframeMonthly:
+		*s = GetTrialLeaderboardOKTimeframeMonthly
+	case GetTrialLeaderboardOKTimeframeAllTime:
+		*s = GetTrialLeaderboardOKTimeframeAllTime
+	case GetTrialLeaderboardOKTimeframeSeasonal:
+		*s = GetTrialLeaderboardOKTimeframeSeasonal
+	default:
+		*s = GetTrialLeaderboardOKTimeframe(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s GetTrialLeaderboardOKTimeframe) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardOKTimeframe) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialLeaderboardTooManyRequests as json.
+func (s *GetTrialLeaderboardTooManyRequests) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialLeaderboardTooManyRequests from json.
+func (s *GetTrialLeaderboardTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialLeaderboardTooManyRequests to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialLeaderboardTooManyRequests(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialLeaderboardTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialLeaderboardTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialNotFound as json.
+func (s *GetTrialNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialNotFound from json.
+func (s *GetTrialNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsBadRequest as json.
+func (s *GetTrialPerformanceAnalyticsBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsBadRequest from json.
+func (s *GetTrialPerformanceAnalyticsBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialPerformanceAnalyticsBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsForbidden as json.
+func (s *GetTrialPerformanceAnalyticsForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsForbidden from json.
+func (s *GetTrialPerformanceAnalyticsForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsForbidden to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialPerformanceAnalyticsForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsInternalServerError as json.
+func (s *GetTrialPerformanceAnalyticsInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsInternalServerError from json.
+func (s *GetTrialPerformanceAnalyticsInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialPerformanceAnalyticsInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsNotFound as json.
+func (s *GetTrialPerformanceAnalyticsNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsNotFound from json.
+func (s *GetTrialPerformanceAnalyticsNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialPerformanceAnalyticsNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTrialPerformanceAnalyticsOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("trial_id")
+		json.EncodeUUID(e, s.TrialID)
+	}
+	{
+		e.FieldStart("timeframe")
+		e.Str(s.Timeframe)
+	}
+	{
+		e.FieldStart("metrics")
+		s.Metrics.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfGetTrialPerformanceAnalyticsOK = [3]string{
+	0: "trial_id",
+	1: "timeframe",
+	2: "metrics",
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsOK from json.
+func (s *GetTrialPerformanceAnalyticsOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "trial_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.TrialID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"trial_id\"")
+			}
+		case "timeframe":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Timeframe = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timeframe\"")
+			}
+		case "metrics":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Metrics.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"metrics\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTrialPerformanceAnalyticsOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfGetTrialPerformanceAnalyticsOK) {
+					name = jsonFieldsNameOfGetTrialPerformanceAnalyticsOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsOK) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) encodeFields(e *jx.Encoder) {
+	{
+		if s.TotalCompletions.Set {
+			e.FieldStart("total_completions")
+			s.TotalCompletions.Encode(e)
+		}
+	}
+	{
+		if s.AverageCompletionTime.Set {
+			e.FieldStart("average_completion_time")
+			s.AverageCompletionTime.Encode(e)
+		}
+	}
+	{
+		if s.FastestTime.Set {
+			e.FieldStart("fastest_time")
+			s.FastestTime.Encode(e)
+		}
+	}
+	{
+		if s.SlowestTime.Set {
+			e.FieldStart("slowest_time")
+			s.SlowestTime.Encode(e)
+		}
+	}
+	{
+		if s.CompletionRate.Set {
+			e.FieldStart("completion_rate")
+			s.CompletionRate.Encode(e)
+		}
+	}
+	{
+		if s.DifficultyDistribution.Set {
+			e.FieldStart("difficulty_distribution")
+			s.DifficultyDistribution.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTrialPerformanceAnalyticsOKMetrics = [6]string{
+	0: "total_completions",
+	1: "average_completion_time",
+	2: "fastest_time",
+	3: "slowest_time",
+	4: "completion_rate",
+	5: "difficulty_distribution",
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsOKMetrics from json.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsOKMetrics to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "total_completions":
+			if err := func() error {
+				s.TotalCompletions.Reset()
+				if err := s.TotalCompletions.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_completions\"")
+			}
+		case "average_completion_time":
+			if err := func() error {
+				s.AverageCompletionTime.Reset()
+				if err := s.AverageCompletionTime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"average_completion_time\"")
+			}
+		case "fastest_time":
+			if err := func() error {
+				s.FastestTime.Reset()
+				if err := s.FastestTime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"fastest_time\"")
+			}
+		case "slowest_time":
+			if err := func() error {
+				s.SlowestTime.Reset()
+				if err := s.SlowestTime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"slowest_time\"")
+			}
+		case "completion_rate":
+			if err := func() error {
+				s.CompletionRate.Reset()
+				if err := s.CompletionRate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completion_rate\"")
+			}
+		case "difficulty_distribution":
+			if err := func() error {
+				s.DifficultyDistribution.Reset()
+				if err := s.DifficultyDistribution.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"difficulty_distribution\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTrialPerformanceAnalyticsOKMetrics")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetrics) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) encodeFields(e *jx.Encoder) {
+	{
+		if s.Normal.Set {
+			e.FieldStart("normal")
+			s.Normal.Encode(e)
+		}
+	}
+	{
+		if s.Heroic.Set {
+			e.FieldStart("heroic")
+			s.Heroic.Encode(e)
+		}
+	}
+	{
+		if s.Mythic.Set {
+			e.FieldStart("mythic")
+			s.Mythic.Encode(e)
+		}
+	}
+	{
+		if s.Legendary.Set {
+			e.FieldStart("legendary")
+			s.Legendary.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution = [4]string{
+	0: "normal",
+	1: "heroic",
+	2: "mythic",
+	3: "legendary",
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution from json.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "normal":
+			if err := func() error {
+				s.Normal.Reset()
+				if err := s.Normal.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"normal\"")
+			}
+		case "heroic":
+			if err := func() error {
+				s.Heroic.Reset()
+				if err := s.Heroic.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"heroic\"")
+			}
+		case "mythic":
+			if err := func() error {
+				s.Mythic.Reset()
+				if err := s.Mythic.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"mythic\"")
+			}
+		case "legendary":
+			if err := func() error {
+				s.Legendary.Reset()
+				if err := s.Legendary.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"legendary\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsUnauthorized as json.
+func (s *GetTrialPerformanceAnalyticsUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsUnauthorized from json.
+func (s *GetTrialPerformanceAnalyticsUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode GetTrialPerformanceAnalyticsUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = GetTrialPerformanceAnalyticsUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *GetTrialPerformanceAnalyticsUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *GetTrialPerformanceAnalyticsUnauthorized) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1168,128 +3044,189 @@ func (s *LeaderboardEntryTrialDifficulty) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes ListTrialsBadRequest as json.
+func (s *ListTrialsBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ListTrialsBadRequest from json.
+func (s *ListTrialsBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListTrialsBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ListTrialsBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListTrialsBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListTrialsBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ListTrialsInternalServerError as json.
+func (s *ListTrialsInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ListTrialsInternalServerError from json.
+func (s *ListTrialsInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ListTrialsInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ListTrialsInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ListTrialsInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ListTrialsInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
-func (s *LeaderboardsTrialIdGetOK) Encode(e *jx.Encoder) {
+func (s *ListTrialsOK) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *LeaderboardsTrialIdGetOK) encodeFields(e *jx.Encoder) {
+func (s *ListTrialsOK) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("trial_id")
-		json.EncodeUUID(e, s.TrialID)
-	}
-	{
-		e.FieldStart("timeframe")
-		s.Timeframe.Encode(e)
-	}
-	{
-		e.FieldStart("entries")
+		e.FieldStart("trials")
 		e.ArrStart()
-		for _, elem := range s.Entries {
+		for _, elem := range s.Trials {
 			elem.Encode(e)
 		}
 		e.ArrEnd()
 	}
 	{
-		e.FieldStart("total_entries")
-		e.Int(s.TotalEntries)
+		e.FieldStart("total")
+		e.Int(s.Total)
 	}
 	{
-		if s.LastUpdated.Set {
-			e.FieldStart("last_updated")
-			s.LastUpdated.Encode(e, json.EncodeDateTime)
-		}
+		e.FieldStart("limit")
+		e.Int(s.Limit)
+	}
+	{
+		e.FieldStart("offset")
+		e.Int(s.Offset)
 	}
 }
 
-var jsonFieldsNameOfLeaderboardsTrialIdGetOK = [5]string{
-	0: "trial_id",
-	1: "timeframe",
-	2: "entries",
-	3: "total_entries",
-	4: "last_updated",
+var jsonFieldsNameOfListTrialsOK = [4]string{
+	0: "trials",
+	1: "total",
+	2: "limit",
+	3: "offset",
 }
 
-// Decode decodes LeaderboardsTrialIdGetOK from json.
-func (s *LeaderboardsTrialIdGetOK) Decode(d *jx.Decoder) error {
+// Decode decodes ListTrialsOK from json.
+func (s *ListTrialsOK) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdGetOK to nil")
+		return errors.New("invalid: unable to decode ListTrialsOK to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "trial_id":
+		case "trials":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.TrialID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"trial_id\"")
-			}
-		case "timeframe":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Timeframe.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"timeframe\"")
-			}
-		case "entries":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				s.Entries = make([]LeaderboardEntry, 0)
+				s.Trials = make([]TimeTrial, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem LeaderboardEntry
+					var elem TimeTrial
 					if err := elem.Decode(d); err != nil {
 						return err
 					}
-					s.Entries = append(s.Entries, elem)
+					s.Trials = append(s.Trials, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"entries\"")
+				return errors.Wrap(err, "decode field \"trials\"")
 			}
-		case "total_entries":
-			requiredBitSet[0] |= 1 << 3
+		case "total":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Int()
-				s.TotalEntries = int(v)
+				s.Total = int(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total_entries\"")
+				return errors.Wrap(err, "decode field \"total\"")
 			}
-		case "last_updated":
+		case "limit":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				s.LastUpdated.Reset()
-				if err := s.LastUpdated.Decode(d, json.DecodeDateTime); err != nil {
+				v, err := d.Int()
+				s.Limit = int(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"last_updated\"")
+				return errors.Wrap(err, "decode field \"limit\"")
+			}
+		case "offset":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int()
+				s.Offset = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"offset\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode LeaderboardsTrialIdGetOK")
+		return errors.Wrap(err, "decode ListTrialsOK")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
@@ -1306,8 +3243,8 @@ func (s *LeaderboardsTrialIdGetOK) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfLeaderboardsTrialIdGetOK) {
-					name = jsonFieldsNameOfLeaderboardsTrialIdGetOK[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfListTrialsOK) {
+					name = jsonFieldsNameOfListTrialsOK[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -1328,486 +3265,14 @@ func (s *LeaderboardsTrialIdGetOK) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *LeaderboardsTrialIdGetOK) MarshalJSON() ([]byte, error) {
+func (s *ListTrialsOK) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdGetOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes LeaderboardsTrialIdGetOKTimeframe as json.
-func (s LeaderboardsTrialIdGetOKTimeframe) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes LeaderboardsTrialIdGetOKTimeframe from json.
-func (s *LeaderboardsTrialIdGetOKTimeframe) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdGetOKTimeframe to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch LeaderboardsTrialIdGetOKTimeframe(v) {
-	case LeaderboardsTrialIdGetOKTimeframeDaily:
-		*s = LeaderboardsTrialIdGetOKTimeframeDaily
-	case LeaderboardsTrialIdGetOKTimeframeWeekly:
-		*s = LeaderboardsTrialIdGetOKTimeframeWeekly
-	case LeaderboardsTrialIdGetOKTimeframeMonthly:
-		*s = LeaderboardsTrialIdGetOKTimeframeMonthly
-	case LeaderboardsTrialIdGetOKTimeframeAllTime:
-		*s = LeaderboardsTrialIdGetOKTimeframeAllTime
-	case LeaderboardsTrialIdGetOKTimeframeSeasonal:
-		*s = LeaderboardsTrialIdGetOKTimeframeSeasonal
-	default:
-		*s = LeaderboardsTrialIdGetOKTimeframe(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s LeaderboardsTrialIdGetOKTimeframe) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdGetOKTimeframe) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("player_id")
-		e.Str(s.PlayerID)
-	}
-	{
-		e.FieldStart("trial_id")
-		json.EncodeUUID(e, s.TrialID)
-	}
-	{
-		e.FieldStart("personal_best")
-		s.PersonalBest.Encode(e)
-	}
-	{
-		e.FieldStart("current_rank")
-		e.Int(s.CurrentRank)
-	}
-	{
-		e.FieldStart("rank_history")
-		e.ArrStart()
-		for _, elem := range s.RankHistory {
-			elem.Encode(e)
-		}
-		e.ArrEnd()
-	}
-}
-
-var jsonFieldsNameOfLeaderboardsTrialIdPersonalPlayerIdGetOK = [5]string{
-	0: "player_id",
-	1: "trial_id",
-	2: "personal_best",
-	3: "current_rank",
-	4: "rank_history",
-}
-
-// Decode decodes LeaderboardsTrialIdPersonalPlayerIdGetOK from json.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdPersonalPlayerIdGetOK to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "player_id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.PlayerID = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"player_id\"")
-			}
-		case "trial_id":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.TrialID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"trial_id\"")
-			}
-		case "personal_best":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.PersonalBest.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"personal_best\"")
-			}
-		case "current_rank":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.CurrentRank = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"current_rank\"")
-			}
-		case "rank_history":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				s.RankHistory = make([]LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.RankHistory = append(s.RankHistory, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rank_history\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode LeaderboardsTrialIdPersonalPlayerIdGetOK")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00011111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfLeaderboardsTrialIdPersonalPlayerIdGetOK) {
-					name = jsonFieldsNameOfLeaderboardsTrialIdPersonalPlayerIdGetOK[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) encodeFields(e *jx.Encoder) {
-	{
-		if s.CompletionTime.Set {
-			e.FieldStart("completion_time")
-			s.CompletionTime.Encode(e)
-		}
-	}
-	{
-		if s.AchievedAt.Set {
-			e.FieldStart("achieved_at")
-			s.AchievedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.Difficulty.Set {
-			e.FieldStart("difficulty")
-			s.Difficulty.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest = [3]string{
-	0: "completion_time",
-	1: "achieved_at",
-	2: "difficulty",
-}
-
-// Decode decodes LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest from json.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "completion_time":
-			if err := func() error {
-				s.CompletionTime.Reset()
-				if err := s.CompletionTime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"completion_time\"")
-			}
-		case "achieved_at":
-			if err := func() error {
-				s.AchievedAt.Reset()
-				if err := s.AchievedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"achieved_at\"")
-			}
-		case "difficulty":
-			if err := func() error {
-				s.Difficulty.Reset()
-				if err := s.Difficulty.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"difficulty\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty as json.
-func (s LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty from json.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty(v) {
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyNormal
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyHeroic
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyMythic
-	case LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficultyLegendary
-	default:
-		*s = LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) encodeFields(e *jx.Encoder) {
-	{
-		if s.Date.Set {
-			e.FieldStart("date")
-			s.Date.Encode(e, json.EncodeDate)
-		}
-	}
-	{
-		if s.Rank.Set {
-			e.FieldStart("rank")
-			s.Rank.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfLeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem = [2]string{
-	0: "date",
-	1: "rank",
-}
-
-// Decode decodes LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem from json.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "date":
-			if err := func() error {
-				s.Date.Reset()
-				if err := s.Date.Decode(d, json.DecodeDate); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"date\"")
-			}
-		case "rank":
-			if err := func() error {
-				s.Rank.Reset()
-				if err := s.Rank.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rank\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *LeaderboardsTrialIdPersonalPlayerIdGetOKRankHistoryItem) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution as json.
-func (o OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	o.Value.Encode(e)
-}
-
-// Decode decodes AnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution from json.
-func (o *OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptAnalyticsTrialsTrialIdPerformanceGetOKMetricsDifficultyDistribution) UnmarshalJSON(data []byte) error {
+func (s *ListTrialsOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1843,6 +3308,39 @@ func (s OptBool) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CompleteTrialSessionOKValidationStatus as json.
+func (o OptCompleteTrialSessionOKValidationStatus) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes CompleteTrialSessionOKValidationStatus from json.
+func (o *OptCompleteTrialSessionOKValidationStatus) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptCompleteTrialSessionOKValidationStatus to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptCompleteTrialSessionOKValidationStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptCompleteTrialSessionOKValidationStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1952,18 +3450,18 @@ func (s *OptFloat64) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes HealthGetOKMetrics as json.
-func (o OptHealthGetOKMetrics) Encode(e *jx.Encoder) {
+// Encode encodes GetHealthOKMetrics as json.
+func (o OptGetHealthOKMetrics) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	o.Value.Encode(e)
 }
 
-// Decode decodes HealthGetOKMetrics from json.
-func (o *OptHealthGetOKMetrics) Decode(d *jx.Decoder) error {
+// Decode decodes GetHealthOKMetrics from json.
+func (o *OptGetHealthOKMetrics) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptHealthGetOKMetrics to nil")
+		return errors.New("invalid: unable to decode OptGetHealthOKMetrics to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -1973,14 +3471,80 @@ func (o *OptHealthGetOKMetrics) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptHealthGetOKMetrics) MarshalJSON() ([]byte, error) {
+func (s OptGetHealthOKMetrics) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptHealthGetOKMetrics) UnmarshalJSON(data []byte) error {
+func (s *OptGetHealthOKMetrics) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetPlayerPersonalRecordOKPersonalBestDifficulty as json.
+func (o OptGetPlayerPersonalRecordOKPersonalBestDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes GetPlayerPersonalRecordOKPersonalBestDifficulty from json.
+func (o *OptGetPlayerPersonalRecordOKPersonalBestDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGetPlayerPersonalRecordOKPersonalBestDifficulty to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGetPlayerPersonalRecordOKPersonalBestDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGetPlayerPersonalRecordOKPersonalBestDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution as json.
+func (o OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes GetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution from json.
+func (o *OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptGetTrialPerformanceAnalyticsOKMetricsDifficultyDistribution) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2053,39 +3617,6 @@ func (s *OptLeaderboardEntryTrialDifficulty) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty as json.
-func (o OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes LeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty from json.
-func (o *OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptLeaderboardsTrialIdPersonalPlayerIdGetOKPersonalBestDifficulty) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes RewardTiers as json.
 func (o OptRewardTiers) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2148,6 +3679,39 @@ func (s OptRewardTiersCurrency) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptRewardTiersCurrency) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionReq as json.
+func (o OptStartTrialSessionReq) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes StartTrialSessionReq from json.
+func (o *OptStartTrialSessionReq) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptStartTrialSessionReq to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptStartTrialSessionReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptStartTrialSessionReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2253,72 +3817,6 @@ func (s *OptTrialSessionValidationStatus) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes TrialsTrialIdCompletePostOKValidationStatus as json.
-func (o OptTrialsTrialIdCompletePostOKValidationStatus) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes TrialsTrialIdCompletePostOKValidationStatus from json.
-func (o *OptTrialsTrialIdCompletePostOKValidationStatus) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptTrialsTrialIdCompletePostOKValidationStatus to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptTrialsTrialIdCompletePostOKValidationStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptTrialsTrialIdCompletePostOKValidationStatus) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes TrialsTrialIdStartPostReq as json.
-func (o OptTrialsTrialIdStartPostReq) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	o.Value.Encode(e)
-}
-
-// Decode decodes TrialsTrialIdStartPostReq from json.
-func (o *OptTrialsTrialIdStartPostReq) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptTrialsTrialIdStartPostReq to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptTrialsTrialIdStartPostReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptTrialsTrialIdStartPostReq) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes uuid.UUID as json.
 func (o OptUUID) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2383,6 +3881,381 @@ func (s OptValidationRules) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptValidationRules) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionBadRequest as json.
+func (s *ReportSuspiciousSessionBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ReportSuspiciousSessionBadRequest from json.
+func (s *ReportSuspiciousSessionBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ReportSuspiciousSessionBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionConflict as json.
+func (s *ReportSuspiciousSessionConflict) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ReportSuspiciousSessionConflict from json.
+func (s *ReportSuspiciousSessionConflict) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionConflict to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ReportSuspiciousSessionConflict(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionConflict) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionConflict) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionInternalServerError as json.
+func (s *ReportSuspiciousSessionInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ReportSuspiciousSessionInternalServerError from json.
+func (s *ReportSuspiciousSessionInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ReportSuspiciousSessionInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionNotFound as json.
+func (s *ReportSuspiciousSessionNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ReportSuspiciousSessionNotFound from json.
+func (s *ReportSuspiciousSessionNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ReportSuspiciousSessionNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ReportSuspiciousSessionReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ReportSuspiciousSessionReq) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("reason")
+		s.Reason.Encode(e)
+	}
+	{
+		if s.Details.Set {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+	{
+		if s.Evidence != nil {
+			e.FieldStart("evidence")
+			e.ArrStart()
+			for _, elem := range s.Evidence {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfReportSuspiciousSessionReq = [3]string{
+	0: "reason",
+	1: "details",
+	2: "evidence",
+}
+
+// Decode decodes ReportSuspiciousSessionReq from json.
+func (s *ReportSuspiciousSessionReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionReq to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "reason":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Reason.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"reason\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details.Reset()
+				if err := s.Details.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		case "evidence":
+			if err := func() error {
+				s.Evidence = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Evidence = append(s.Evidence, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"evidence\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ReportSuspiciousSessionReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfReportSuspiciousSessionReq) {
+					name = jsonFieldsNameOfReportSuspiciousSessionReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionReqReason as json.
+func (s ReportSuspiciousSessionReqReason) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ReportSuspiciousSessionReqReason from json.
+func (s *ReportSuspiciousSessionReqReason) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionReqReason to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ReportSuspiciousSessionReqReason(v) {
+	case ReportSuspiciousSessionReqReasonSpeedHack:
+		*s = ReportSuspiciousSessionReqReasonSpeedHack
+	case ReportSuspiciousSessionReqReasonRouteExploit:
+		*s = ReportSuspiciousSessionReqReasonRouteExploit
+	case ReportSuspiciousSessionReqReasonInvalidCompletion:
+		*s = ReportSuspiciousSessionReqReasonInvalidCompletion
+	case ReportSuspiciousSessionReqReasonOther:
+		*s = ReportSuspiciousSessionReqReasonOther
+	default:
+		*s = ReportSuspiciousSessionReqReason(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ReportSuspiciousSessionReqReason) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionReqReason) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ReportSuspiciousSessionTooManyRequests as json.
+func (s *ReportSuspiciousSessionTooManyRequests) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes ReportSuspiciousSessionTooManyRequests from json.
+func (s *ReportSuspiciousSessionTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReportSuspiciousSessionTooManyRequests to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = ReportSuspiciousSessionTooManyRequests(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReportSuspiciousSessionTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReportSuspiciousSessionTooManyRequests) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2681,6 +4554,433 @@ func (s *RewardTiersItemsItem) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *RewardTiersItemsItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionBadRequest as json.
+func (s *StartTrialSessionBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes StartTrialSessionBadRequest from json.
+func (s *StartTrialSessionBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionBadRequest to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = StartTrialSessionBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StartTrialSessionCreated) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StartTrialSessionCreated) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("session")
+		s.Session.Encode(e)
+	}
+	{
+		e.FieldStart("server_time")
+		json.EncodeDateTime(e, s.ServerTime)
+	}
+}
+
+var jsonFieldsNameOfStartTrialSessionCreated = [2]string{
+	0: "session",
+	1: "server_time",
+}
+
+// Decode decodes StartTrialSessionCreated from json.
+func (s *StartTrialSessionCreated) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionCreated to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "session":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Session.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"session\"")
+			}
+		case "server_time":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.ServerTime = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"server_time\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StartTrialSessionCreated")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStartTrialSessionCreated) {
+					name = jsonFieldsNameOfStartTrialSessionCreated[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionCreated) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionCreated) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionInternalServerError as json.
+func (s *StartTrialSessionInternalServerError) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes StartTrialSessionInternalServerError from json.
+func (s *StartTrialSessionInternalServerError) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionInternalServerError to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = StartTrialSessionInternalServerError(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionInternalServerError) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionInternalServerError) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionNotFound as json.
+func (s *StartTrialSessionNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes StartTrialSessionNotFound from json.
+func (s *StartTrialSessionNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionNotFound to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = StartTrialSessionNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StartTrialSessionReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StartTrialSessionReq) encodeFields(e *jx.Encoder) {
+	{
+		if s.PartyID.Set {
+			e.FieldStart("party_id")
+			s.PartyID.Encode(e)
+		}
+	}
+	{
+		if s.CustomSettings != nil {
+			e.FieldStart("custom_settings")
+			s.CustomSettings.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStartTrialSessionReq = [2]string{
+	0: "party_id",
+	1: "custom_settings",
+}
+
+// Decode decodes StartTrialSessionReq from json.
+func (s *StartTrialSessionReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionReq to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "party_id":
+			if err := func() error {
+				s.PartyID.Reset()
+				if err := s.PartyID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"party_id\"")
+			}
+		case "custom_settings":
+			if err := func() error {
+				s.CustomSettings = nil
+				var elem StartTrialSessionReqCustomSettings
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.CustomSettings = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"custom_settings\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StartTrialSessionReq")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StartTrialSessionReqCustomSettings) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StartTrialSessionReqCustomSettings) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfStartTrialSessionReqCustomSettings = [0]string{}
+
+// Decode decodes StartTrialSessionReqCustomSettings from json.
+func (s *StartTrialSessionReqCustomSettings) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionReqCustomSettings to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode StartTrialSessionReqCustomSettings")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionReqCustomSettings) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionReqCustomSettings) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionTooManyRequests as json.
+func (s *StartTrialSessionTooManyRequests) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes StartTrialSessionTooManyRequests from json.
+func (s *StartTrialSessionTooManyRequests) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionTooManyRequests to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = StartTrialSessionTooManyRequests(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionTooManyRequests) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionTooManyRequests) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StartTrialSessionUnauthorized as json.
+func (s *StartTrialSessionUnauthorized) Encode(e *jx.Encoder) {
+	unwrapped := (*Error)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes StartTrialSessionUnauthorized from json.
+func (s *StartTrialSessionUnauthorized) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StartTrialSessionUnauthorized to nil")
+	}
+	var unwrapped Error
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = StartTrialSessionUnauthorized(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StartTrialSessionUnauthorized) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StartTrialSessionUnauthorized) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3934,174 +6234,17 @@ func (s *TrialSessionValidationStatus) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *TrialsGetOK) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsGetOK) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("trials")
-		e.ArrStart()
-		for _, elem := range s.Trials {
-			elem.Encode(e)
-		}
-		e.ArrEnd()
-	}
-	{
-		e.FieldStart("total")
-		e.Int(s.Total)
-	}
-	{
-		e.FieldStart("limit")
-		e.Int(s.Limit)
-	}
-	{
-		e.FieldStart("offset")
-		e.Int(s.Offset)
-	}
-}
-
-var jsonFieldsNameOfTrialsGetOK = [4]string{
-	0: "trials",
-	1: "total",
-	2: "limit",
-	3: "offset",
-}
-
-// Decode decodes TrialsGetOK from json.
-func (s *TrialsGetOK) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsGetOK to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "trials":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				s.Trials = make([]TimeTrial, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem TimeTrial
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.Trials = append(s.Trials, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"trials\"")
-			}
-		case "total":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Int()
-				s.Total = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"total\"")
-			}
-		case "limit":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Int()
-				s.Limit = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"limit\"")
-			}
-		case "offset":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Int()
-				s.Offset = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"offset\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsGetOK")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00001111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfTrialsGetOK) {
-					name = jsonFieldsNameOfTrialsGetOK[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsGetOK) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsGetOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes TrialsPostBadRequest as json.
-func (s *TrialsPostBadRequest) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTrialBadRequest as json.
+func (s *UpdateTrialBadRequest) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
 
 	unwrapped.Encode(e)
 }
 
-// Decode decodes TrialsPostBadRequest from json.
-func (s *TrialsPostBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTrialBadRequest from json.
+func (s *UpdateTrialBadRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode TrialsPostBadRequest to nil")
+		return errors.New("invalid: unable to decode UpdateTrialBadRequest to nil")
 	}
 	var unwrapped Error
 	if err := func() error {
@@ -4112,34 +6255,34 @@ func (s *TrialsPostBadRequest) Decode(d *jx.Decoder) error {
 	}(); err != nil {
 		return errors.Wrap(err, "alias")
 	}
-	*s = TrialsPostBadRequest(unwrapped)
+	*s = UpdateTrialBadRequest(unwrapped)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsPostBadRequest) MarshalJSON() ([]byte, error) {
+func (s *UpdateTrialBadRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsPostBadRequest) UnmarshalJSON(data []byte) error {
+func (s *UpdateTrialBadRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes TrialsPostUnauthorized as json.
-func (s *TrialsPostUnauthorized) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTrialForbidden as json.
+func (s *UpdateTrialForbidden) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
 
 	unwrapped.Encode(e)
 }
 
-// Decode decodes TrialsPostUnauthorized from json.
-func (s *TrialsPostUnauthorized) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTrialForbidden from json.
+func (s *UpdateTrialForbidden) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode TrialsPostUnauthorized to nil")
+		return errors.New("invalid: unable to decode UpdateTrialForbidden to nil")
 	}
 	var unwrapped Error
 	if err := func() error {
@@ -4150,425 +6293,34 @@ func (s *TrialsPostUnauthorized) Decode(d *jx.Decoder) error {
 	}(); err != nil {
 		return errors.Wrap(err, "alias")
 	}
-	*s = TrialsPostUnauthorized(unwrapped)
+	*s = UpdateTrialForbidden(unwrapped)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsPostUnauthorized) MarshalJSON() ([]byte, error) {
+func (s *UpdateTrialForbidden) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsPostUnauthorized) UnmarshalJSON(data []byte) error {
+func (s *UpdateTrialForbidden) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdCompletePostOK) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdCompletePostOK) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("session")
-		s.Session.Encode(e)
-	}
-	{
-		e.FieldStart("rewards")
-		s.Rewards.Encode(e)
-	}
-	{
-		e.FieldStart("leaderboard_rank")
-		e.Int(s.LeaderboardRank)
-	}
-	{
-		if s.ValidationStatus.Set {
-			e.FieldStart("validation_status")
-			s.ValidationStatus.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfTrialsTrialIdCompletePostOK = [4]string{
-	0: "session",
-	1: "rewards",
-	2: "leaderboard_rank",
-	3: "validation_status",
-}
-
-// Decode decodes TrialsTrialIdCompletePostOK from json.
-func (s *TrialsTrialIdCompletePostOK) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdCompletePostOK to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "session":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Session.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"session\"")
-			}
-		case "rewards":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Rewards.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rewards\"")
-			}
-		case "leaderboard_rank":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Int()
-				s.LeaderboardRank = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"leaderboard_rank\"")
-			}
-		case "validation_status":
-			if err := func() error {
-				s.ValidationStatus.Reset()
-				if err := s.ValidationStatus.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"validation_status\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdCompletePostOK")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfTrialsTrialIdCompletePostOK) {
-					name = jsonFieldsNameOfTrialsTrialIdCompletePostOK[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdCompletePostOK) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdCompletePostOK) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes TrialsTrialIdCompletePostOKValidationStatus as json.
-func (s TrialsTrialIdCompletePostOKValidationStatus) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes TrialsTrialIdCompletePostOKValidationStatus from json.
-func (s *TrialsTrialIdCompletePostOKValidationStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdCompletePostOKValidationStatus to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch TrialsTrialIdCompletePostOKValidationStatus(v) {
-	case TrialsTrialIdCompletePostOKValidationStatusPending:
-		*s = TrialsTrialIdCompletePostOKValidationStatusPending
-	case TrialsTrialIdCompletePostOKValidationStatusValid:
-		*s = TrialsTrialIdCompletePostOKValidationStatusValid
-	case TrialsTrialIdCompletePostOKValidationStatusInvalid:
-		*s = TrialsTrialIdCompletePostOKValidationStatusInvalid
-	default:
-		*s = TrialsTrialIdCompletePostOKValidationStatus(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s TrialsTrialIdCompletePostOKValidationStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdCompletePostOKValidationStatus) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdCompletePostReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdCompletePostReq) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("completion_time")
-		e.Int(s.CompletionTime)
-	}
-	{
-		e.FieldStart("progress_percentage")
-		e.Int(s.ProgressPercentage)
-	}
-	{
-		if s.TelemetryData != nil {
-			e.FieldStart("telemetry_data")
-			s.TelemetryData.Encode(e)
-		}
-	}
-	{
-		if s.PartyMembers != nil {
-			e.FieldStart("party_members")
-			e.ArrStart()
-			for _, elem := range s.PartyMembers {
-				e.Str(elem)
-			}
-			e.ArrEnd()
-		}
-	}
-}
-
-var jsonFieldsNameOfTrialsTrialIdCompletePostReq = [4]string{
-	0: "completion_time",
-	1: "progress_percentage",
-	2: "telemetry_data",
-	3: "party_members",
-}
-
-// Decode decodes TrialsTrialIdCompletePostReq from json.
-func (s *TrialsTrialIdCompletePostReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdCompletePostReq to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "completion_time":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Int()
-				s.CompletionTime = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"completion_time\"")
-			}
-		case "progress_percentage":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Int()
-				s.ProgressPercentage = int(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"progress_percentage\"")
-			}
-		case "telemetry_data":
-			if err := func() error {
-				s.TelemetryData = nil
-				var elem TrialsTrialIdCompletePostReqTelemetryData
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.TelemetryData = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"telemetry_data\"")
-			}
-		case "party_members":
-			if err := func() error {
-				s.PartyMembers = make([]string, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
-						return err
-					}
-					s.PartyMembers = append(s.PartyMembers, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"party_members\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdCompletePostReq")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfTrialsTrialIdCompletePostReq) {
-					name = jsonFieldsNameOfTrialsTrialIdCompletePostReq[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdCompletePostReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdCompletePostReq) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdCompletePostReqTelemetryData) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdCompletePostReqTelemetryData) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfTrialsTrialIdCompletePostReqTelemetryData = [0]string{}
-
-// Decode decodes TrialsTrialIdCompletePostReqTelemetryData from json.
-func (s *TrialsTrialIdCompletePostReqTelemetryData) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdCompletePostReqTelemetryData to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdCompletePostReqTelemetryData")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdCompletePostReqTelemetryData) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdCompletePostReqTelemetryData) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes TrialsTrialIdPutBadRequest as json.
-func (s *TrialsTrialIdPutBadRequest) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTrialInternalServerError as json.
+func (s *UpdateTrialInternalServerError) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
 
 	unwrapped.Encode(e)
 }
 
-// Decode decodes TrialsTrialIdPutBadRequest from json.
-func (s *TrialsTrialIdPutBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTrialInternalServerError from json.
+func (s *UpdateTrialInternalServerError) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdPutBadRequest to nil")
+		return errors.New("invalid: unable to decode UpdateTrialInternalServerError to nil")
 	}
 	var unwrapped Error
 	if err := func() error {
@@ -4579,34 +6331,34 @@ func (s *TrialsTrialIdPutBadRequest) Decode(d *jx.Decoder) error {
 	}(); err != nil {
 		return errors.Wrap(err, "alias")
 	}
-	*s = TrialsTrialIdPutBadRequest(unwrapped)
+	*s = UpdateTrialInternalServerError(unwrapped)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdPutBadRequest) MarshalJSON() ([]byte, error) {
+func (s *UpdateTrialInternalServerError) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdPutBadRequest) UnmarshalJSON(data []byte) error {
+func (s *UpdateTrialInternalServerError) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes TrialsTrialIdPutNotFound as json.
-func (s *TrialsTrialIdPutNotFound) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTrialNotFound as json.
+func (s *UpdateTrialNotFound) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
 
 	unwrapped.Encode(e)
 }
 
-// Decode decodes TrialsTrialIdPutNotFound from json.
-func (s *TrialsTrialIdPutNotFound) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTrialNotFound from json.
+func (s *UpdateTrialNotFound) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdPutNotFound to nil")
+		return errors.New("invalid: unable to decode UpdateTrialNotFound to nil")
 	}
 	var unwrapped Error
 	if err := func() error {
@@ -4617,34 +6369,34 @@ func (s *TrialsTrialIdPutNotFound) Decode(d *jx.Decoder) error {
 	}(); err != nil {
 		return errors.Wrap(err, "alias")
 	}
-	*s = TrialsTrialIdPutNotFound(unwrapped)
+	*s = UpdateTrialNotFound(unwrapped)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdPutNotFound) MarshalJSON() ([]byte, error) {
+func (s *UpdateTrialNotFound) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdPutNotFound) UnmarshalJSON(data []byte) error {
+func (s *UpdateTrialNotFound) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes TrialsTrialIdStartPostBadRequest as json.
-func (s *TrialsTrialIdStartPostBadRequest) Encode(e *jx.Encoder) {
+// Encode encodes UpdateTrialUnauthorized as json.
+func (s *UpdateTrialUnauthorized) Encode(e *jx.Encoder) {
 	unwrapped := (*Error)(s)
 
 	unwrapped.Encode(e)
 }
 
-// Decode decodes TrialsTrialIdStartPostBadRequest from json.
-func (s *TrialsTrialIdStartPostBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes UpdateTrialUnauthorized from json.
+func (s *UpdateTrialUnauthorized) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdStartPostBadRequest to nil")
+		return errors.New("invalid: unable to decode UpdateTrialUnauthorized to nil")
 	}
 	var unwrapped Error
 	if err := func() error {
@@ -4655,294 +6407,19 @@ func (s *TrialsTrialIdStartPostBadRequest) Decode(d *jx.Decoder) error {
 	}(); err != nil {
 		return errors.Wrap(err, "alias")
 	}
-	*s = TrialsTrialIdStartPostBadRequest(unwrapped)
+	*s = UpdateTrialUnauthorized(unwrapped)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdStartPostBadRequest) MarshalJSON() ([]byte, error) {
+func (s *UpdateTrialUnauthorized) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdStartPostBadRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdStartPostCreated) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdStartPostCreated) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("session")
-		s.Session.Encode(e)
-	}
-	{
-		e.FieldStart("server_time")
-		json.EncodeDateTime(e, s.ServerTime)
-	}
-}
-
-var jsonFieldsNameOfTrialsTrialIdStartPostCreated = [2]string{
-	0: "session",
-	1: "server_time",
-}
-
-// Decode decodes TrialsTrialIdStartPostCreated from json.
-func (s *TrialsTrialIdStartPostCreated) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdStartPostCreated to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "session":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Session.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"session\"")
-			}
-		case "server_time":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.ServerTime = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"server_time\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdStartPostCreated")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000011,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfTrialsTrialIdStartPostCreated) {
-					name = jsonFieldsNameOfTrialsTrialIdStartPostCreated[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdStartPostCreated) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdStartPostCreated) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes TrialsTrialIdStartPostNotFound as json.
-func (s *TrialsTrialIdStartPostNotFound) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes TrialsTrialIdStartPostNotFound from json.
-func (s *TrialsTrialIdStartPostNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdStartPostNotFound to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = TrialsTrialIdStartPostNotFound(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdStartPostNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdStartPostNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdStartPostReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdStartPostReq) encodeFields(e *jx.Encoder) {
-	{
-		if s.PartyID.Set {
-			e.FieldStart("party_id")
-			s.PartyID.Encode(e)
-		}
-	}
-	{
-		if s.CustomSettings != nil {
-			e.FieldStart("custom_settings")
-			s.CustomSettings.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfTrialsTrialIdStartPostReq = [2]string{
-	0: "party_id",
-	1: "custom_settings",
-}
-
-// Decode decodes TrialsTrialIdStartPostReq from json.
-func (s *TrialsTrialIdStartPostReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdStartPostReq to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "party_id":
-			if err := func() error {
-				s.PartyID.Reset()
-				if err := s.PartyID.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"party_id\"")
-			}
-		case "custom_settings":
-			if err := func() error {
-				s.CustomSettings = nil
-				var elem TrialsTrialIdStartPostReqCustomSettings
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.CustomSettings = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"custom_settings\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdStartPostReq")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdStartPostReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdStartPostReq) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *TrialsTrialIdStartPostReqCustomSettings) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *TrialsTrialIdStartPostReqCustomSettings) encodeFields(e *jx.Encoder) {
-}
-
-var jsonFieldsNameOfTrialsTrialIdStartPostReqCustomSettings = [0]string{}
-
-// Decode decodes TrialsTrialIdStartPostReqCustomSettings from json.
-func (s *TrialsTrialIdStartPostReqCustomSettings) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode TrialsTrialIdStartPostReqCustomSettings to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		default:
-			return d.Skip()
-		}
-	}); err != nil {
-		return errors.Wrap(err, "decode TrialsTrialIdStartPostReqCustomSettings")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *TrialsTrialIdStartPostReqCustomSettings) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *TrialsTrialIdStartPostReqCustomSettings) UnmarshalJSON(data []byte) error {
+func (s *UpdateTrialUnauthorized) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -5113,267 +6590,6 @@ func (s ValidationRulesAllowedModifiersItem) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ValidationRulesAllowedModifiersItem) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ValidationSessionsSessionIdReportPostBadRequest as json.
-func (s *ValidationSessionsSessionIdReportPostBadRequest) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes ValidationSessionsSessionIdReportPostBadRequest from json.
-func (s *ValidationSessionsSessionIdReportPostBadRequest) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ValidationSessionsSessionIdReportPostBadRequest to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = ValidationSessionsSessionIdReportPostBadRequest(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ValidationSessionsSessionIdReportPostBadRequest) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ValidationSessionsSessionIdReportPostBadRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ValidationSessionsSessionIdReportPostNotFound as json.
-func (s *ValidationSessionsSessionIdReportPostNotFound) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes ValidationSessionsSessionIdReportPostNotFound from json.
-func (s *ValidationSessionsSessionIdReportPostNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ValidationSessionsSessionIdReportPostNotFound to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = ValidationSessionsSessionIdReportPostNotFound(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ValidationSessionsSessionIdReportPostNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ValidationSessionsSessionIdReportPostNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ValidationSessionsSessionIdReportPostReq) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ValidationSessionsSessionIdReportPostReq) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("reason")
-		s.Reason.Encode(e)
-	}
-	{
-		if s.Details.Set {
-			e.FieldStart("details")
-			s.Details.Encode(e)
-		}
-	}
-	{
-		if s.Evidence != nil {
-			e.FieldStart("evidence")
-			e.ArrStart()
-			for _, elem := range s.Evidence {
-				e.Str(elem)
-			}
-			e.ArrEnd()
-		}
-	}
-}
-
-var jsonFieldsNameOfValidationSessionsSessionIdReportPostReq = [3]string{
-	0: "reason",
-	1: "details",
-	2: "evidence",
-}
-
-// Decode decodes ValidationSessionsSessionIdReportPostReq from json.
-func (s *ValidationSessionsSessionIdReportPostReq) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ValidationSessionsSessionIdReportPostReq to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "reason":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Reason.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"reason\"")
-			}
-		case "details":
-			if err := func() error {
-				s.Details.Reset()
-				if err := s.Details.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"details\"")
-			}
-		case "evidence":
-			if err := func() error {
-				s.Evidence = make([]string, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem string
-					v, err := d.Str()
-					elem = string(v)
-					if err != nil {
-						return err
-					}
-					s.Evidence = append(s.Evidence, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"evidence\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ValidationSessionsSessionIdReportPostReq")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfValidationSessionsSessionIdReportPostReq) {
-					name = jsonFieldsNameOfValidationSessionsSessionIdReportPostReq[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ValidationSessionsSessionIdReportPostReq) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ValidationSessionsSessionIdReportPostReq) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ValidationSessionsSessionIdReportPostReqReason as json.
-func (s ValidationSessionsSessionIdReportPostReqReason) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ValidationSessionsSessionIdReportPostReqReason from json.
-func (s *ValidationSessionsSessionIdReportPostReqReason) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ValidationSessionsSessionIdReportPostReqReason to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ValidationSessionsSessionIdReportPostReqReason(v) {
-	case ValidationSessionsSessionIdReportPostReqReasonSpeedHack:
-		*s = ValidationSessionsSessionIdReportPostReqReasonSpeedHack
-	case ValidationSessionsSessionIdReportPostReqReasonRouteExploit:
-		*s = ValidationSessionsSessionIdReportPostReqReasonRouteExploit
-	case ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion:
-		*s = ValidationSessionsSessionIdReportPostReqReasonInvalidCompletion
-	case ValidationSessionsSessionIdReportPostReqReasonOther:
-		*s = ValidationSessionsSessionIdReportPostReqReasonOther
-	default:
-		*s = ValidationSessionsSessionIdReportPostReqReason(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ValidationSessionsSessionIdReportPostReqReason) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ValidationSessionsSessionIdReportPostReqReason) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

@@ -1,0 +1,539 @@
+# Swarm Flies Turrets Balance Configuration
+# Issue: #1673 - Game Balance for swarm flies turrets distraction mechanic
+# Agent: GameBalance - Creates comprehensive balance configuration for swarm flies turret distraction
+
+metadata:
+  id: swarm-flies-turrets-balance
+  title: "Swarm Flies Turrets Balance System - NECPGAME"
+  version: "1.0.0"
+  description: "Comprehensive balance configuration for swarm flies turret distraction with effectiveness rates, resource costs, and tactical impact calculations"
+  last_updated: "2026-01-06"
+  author: "GameBalance Agent"
+  applicable_to: "turret system, tactical mechanics, distraction systems, drone mechanics"
+
+# Core Balance Constants
+swarm_constants:
+  # Deployment Requirements
+  deployment:
+    activation_time: 2.0           # seconds to deploy swarm
+    range: 50.0                    # meters deployment range
+    minimum_swarm_size: 5          # minimum drones in swarm
+    maximum_swarm_size: 100        # maximum drones in swarm
+    
+  # Swarm Behavior
+  behavior:
+    formation_time: 1.0            # seconds to form swarm formation
+    target_acquisition_time: 0.5   # seconds to acquire turret target
+    movement_speed: 8.0            # m/s swarm movement speed
+    lifetime_base: 120.0           # seconds base lifetime (before destruction)
+    
+  # Destruction Mechanics
+  destruction:
+    health_per_drone: 1            # HP per drone (instantly destroyed)
+    turret_damage_per_second: 10   # DPS turret deals to swarm
+    environmental_damage_multiplier: 1.5  # increased damage in bad weather
+
+# Drone Type Balance
+drone_types:
+  basic_flies:
+    name: "Basic Flies"
+    description: "Simple drones with basic distraction capability"
+    cost_per_drone: 10             # credits per drone
+    energy_per_drone: 2            # energy units per drone
+    distraction_value: 1.0         # base distraction value
+    detection_radius: 15.0         # meters detection radius
+    movement_speed: 8.0            # m/s
+    health: 1
+    swarm_size_range: [5, 25]      # drones in small-medium swarm
+    
+  decoy_flies:
+    name: "Decoy Flies"
+    description: "Decoy drones with false signatures to confuse sensors"
+    cost_per_drone: 25
+    energy_per_drone: 3
+    distraction_value: 1.5         # 50% more effective
+    detection_radius: 20.0
+    movement_speed: 7.0
+    health: 1
+    false_signature_strength: 1.2  # 20% stronger false signal
+    swarm_size_range: [10, 30]
+    
+  jammer_flies:
+    name: "Jammer Flies"
+    description: "Jamming drones that disrupt turret sensors"
+    cost_per_drone: 40
+    energy_per_drone: 5
+    distraction_value: 2.0         # 100% more effective
+    detection_radius: 25.0
+    movement_speed: 6.0
+    health: 1
+    jamming_strength: 0.3          # 30% sensor disruption
+    swarm_size_range: [8, 25]
+    
+  explosive_flies:
+    name: "Explosive Flies"
+    description: "Kamikaze drones with destructive potential"
+    cost_per_drone: 60
+    energy_per_drone: 8
+    distraction_value: 1.8
+    detection_radius: 18.0
+    movement_speed: 9.0
+    health: 1
+    explosion_damage: 50           # damage on explosion
+    explosion_radius: 3.0          # meters explosion radius
+    swarm_size_range: [5, 20]
+    
+  stealth_flies:
+    name: "Stealth Flies"
+    description: "Stealth drones with reduced detectability"
+    cost_per_drone: 75
+    energy_per_drone: 6
+    distraction_value: 1.2
+    detection_radius: 10.0         # 50% smaller detection radius
+    movement_speed: 7.5
+    health: 1
+    stealth_multiplier: 0.5        # 50% harder to detect
+    swarm_size_range: [5, 15]
+
+# Deployment Method Balance
+deployment_methods:
+  manual_placement:
+    name: "Manual Placement"
+    description: "Player places swarm at chosen location"
+    precision: 1.0                 # 100% precision (exact placement)
+    deployment_time: 2.0
+    cost_multiplier: 1.0
+    energy_multiplier: 1.0
+    
+  automated_scatter:
+    name: "Automated Scatter"
+    description: "Automatic distribution across area"
+    precision: 0.7                 # 70% precision (scattered)
+    deployment_time: 3.0
+    cost_multiplier: 1.1
+    energy_multiplier: 1.2
+    area_coverage: 20.0            # meters radius coverage
+    
+  targeted_swarm:
+    name: "Targeted Swarm"
+    description: "Concentrated attack on specific turrets"
+    precision: 1.2                 # 120% precision (concentrated)
+    deployment_time: 2.5
+    cost_multiplier: 1.3
+    energy_multiplier: 1.4
+    target_bonus: 1.5              # 50% more effective on target
+    
+  perimeter_guard:
+    name: "Perimeter Guard"
+    description: "Defensive perimeter around player position"
+    precision: 0.8
+    deployment_time: 4.0
+    cost_multiplier: 1.5
+    energy_multiplier: 1.6
+    defensive_bonus: 2.0           # 100% more effective defensively
+    radius: 15.0                   # meters defensive radius
+
+# Turret Interaction Balance
+turret_interaction:
+  attention_diversion:
+    target_redirection:
+      description: "Turrets redirect fire to swarm"
+      priority_override: 0.8       # 80% priority override
+      redirection_time: 1.0        # seconds to redirect
+      fire_duration: 30.0          # seconds firing at swarm
+      
+    sensor_overload:
+      description: "Sensor overload from multiple false targets"
+      overload_threshold: 5        # drones needed for overload
+      sensor_reduction_percent: 40 # 40% sensor effectiveness reduction
+      overload_duration: 45.0
+      
+    tracking_disruption:
+      description: "Tracking system disruption"
+      tracking_reduction_percent: 30  # 30% tracking accuracy reduction
+      disruption_duration: 60.0
+      
+    alarm_suppression:
+      description: "Alarm signal suppression"
+      suppression_chance: 0.6      # 60% chance to suppress alarms
+      suppression_duration: 90.0
+      
+  distraction_duration:
+    short_distraction:
+      duration_range: [10, 30]     # seconds
+      effectiveness: 0.7           # 70% effectiveness
+      condition: "basic_flies OR small_swarm"
+      
+    medium_distraction:
+      duration_range: [30, 90]     # seconds
+      effectiveness: 1.0           # 100% effectiveness
+      condition: "medium_swarm OR decoy_flies"
+      
+    long_distraction:
+      duration_range: [120, 300]   # seconds (2-5 minutes)
+      effectiveness: 1.5           # 150% effectiveness
+      condition: "large_swarm OR jammer_flies"
+      
+    permanent_diversion:
+      duration: "until_destroyed"  # until swarm or turret destroyed
+      effectiveness: 2.0           # 200% effectiveness
+      condition: "elite_swarm OR all_turrets_destroyed"
+
+# Turret Vulnerability Balance
+turret_vulnerability:
+  basic_turrets:
+    name: "Basic Turrets"
+    description: "Standard security turrets with basic sensors"
+    distraction_success_rate: 0.90  # 90% success rate
+    distraction_duration: 60.0      # seconds
+    sensor_strength: 0.5            # weak sensors
+    countermeasure_chance: 0.1      # 10% chance of countermeasures
+    
+  advanced_turrets:
+    name: "Advanced Turrets"
+    description: "Upgraded turrets with improved sensors"
+    distraction_success_rate: 0.70  # 70% success rate
+    distraction_duration: 45.0      # seconds
+    sensor_strength: 0.7            # moderate sensors
+    countermeasure_chance: 0.3      # 30% chance of countermeasures
+    
+  elite_turrets:
+    name: "Elite Turrets"
+    description: "Military-grade turrets with advanced AI"
+    distraction_success_rate: 0.50  # 50% success rate
+    distraction_duration: 30.0      # seconds
+    sensor_strength: 0.9            # strong sensors
+    countermeasure_chance: 0.5      # 50% chance of countermeasures
+    
+  prototype_turrets:
+    name: "Prototype Turrets"
+    description: "Experimental turrets with cutting-edge technology"
+    distraction_success_rate: 0.30  # 30% success rate
+    distraction_duration: 15.0      # seconds
+    sensor_strength: 1.2            # very strong sensors
+    countermeasure_chance: 0.7      # 70% chance of countermeasures
+
+# Environmental Modifiers
+environmental_modifiers:
+  urban_density:
+    description: "Urban environments with many cover objects"
+    effectiveness_bonus: 0.25       # +25% effectiveness
+    detection_reduction: 0.15       # -15% detection chance
+    condition: "location_type == 'urban'"
+    
+  weather_conditions:
+    rain:
+      effectiveness_penalty: -0.30  # -30% effectiveness
+      detection_increase: 0.20      # +20% detection (easier to spot in rain)
+      movement_speed_penalty: -0.15 # -15% movement speed
+      
+    fog:
+      effectiveness_bonus: 0.10     # +10% effectiveness (harder to see)
+      detection_reduction: -0.25    # -25% detection (harder to spot)
+      movement_speed_penalty: -0.10 # -10% movement speed
+      
+    clear:
+      effectiveness_bonus: 0.0      # no modifier
+      detection_increase: 0.0       # no modifier
+      movement_speed_penalty: 0.0   # no modifier
+      
+  electromagnetic_noise:
+    description: "Areas with high EM interference"
+    effectiveness_bonus: 0.20       # +20% effectiveness
+    sensor_disruption_bonus: 0.30   # +30% sensor disruption
+    condition: "em_noise_level > 0.7"
+    
+  lighting_conditions:
+    day:
+      effectiveness_penalty: -0.10  # -10% effectiveness (easier to spot)
+      detection_increase: 0.15      # +15% detection chance
+      
+    night:
+      effectiveness_bonus: 0.15     # +15% effectiveness (harder to spot)
+      detection_reduction: -0.20    # -20% detection chance
+      
+    low_light:
+      effectiveness_bonus: 0.05     # +5% effectiveness
+      detection_reduction: -0.10    # -10% detection chance
+
+# Resource Management Balance
+resource_management:
+  swarm_sizes:
+    small_swarm:
+      drone_count_range: [5, 10]
+      total_cost_range: [50, 250]     # credits (5-10 drones * 10-25 cost)
+      total_energy_range: [10, 50]    # energy units
+      deployment_time: 2.0
+      
+    medium_swarm:
+      drone_count_range: [15, 25]
+      total_cost_range: [375, 1250]   # credits
+      total_energy_range: [45, 200]   # energy units
+      deployment_time: 3.0
+      
+    large_swarm:
+      drone_count_range: [30, 50]
+      total_cost_range: [1500, 5000]  # credits
+      total_energy_range: [150, 400]  # energy units
+      deployment_time: 4.0
+      
+    elite_swarm:
+      drone_count_range: [60, 100]
+      total_cost_range: [6000, 15000] # credits (mixing drone types)
+      total_energy_range: [400, 800]  # energy units
+      deployment_time: 5.0
+      
+  energy_requirements:
+    basic_deployment:
+      base_energy: 50
+      energy_per_drone: 2
+      total_energy: "base + (drone_count * energy_per_drone)"
+      
+    advanced_deployment:
+      base_energy: 100
+      energy_per_drone: 3
+      total_energy: "base + (drone_count * energy_per_drone * 1.5)"
+      
+    synchronized_attack:
+      base_energy: 200
+      energy_per_drone: 4
+      synchronization_bonus: 0.8      # 20% energy reduction for sync
+      total_energy: "(base + drone_energy) * synchronization_bonus"
+      
+    area_saturation:
+      base_energy: 500
+      energy_per_drone: 5
+      saturation_radius: 30.0         # meters
+      total_energy: "base + (drone_count * energy_per_drone * area_factor)"
+      
+  cooldown_systems:
+    short_cooldown:
+      duration: 30.0                  # seconds
+      condition: "small_swarm OR basic_flies"
+      description: "Quick recharge for basic deployments"
+      
+    medium_cooldown:
+      duration: 120.0                 # 2 minutes
+      condition: "medium_swarm OR standard_deployment"
+      description: "Standard cooldown for regular use"
+      
+    long_cooldown:
+      duration: 300.0                 # 5 minutes
+      condition: "large_swarm OR swarm_destroyed"
+      description: "Extended cooldown after swarm destruction"
+      
+    emergency_cooldown:
+      duration: 10.0                  # 10 seconds
+      condition: "emergency_situation OR low_health"
+      description: "Emergency deployment with minimal cooldown"
+      cost_multiplier: 2.0            # doubles cost and energy
+
+# Tactical Impact Calculations
+tactical_impact:
+  # Safe Passage Calculation
+  safe_passage: |
+    distraction_effectiveness = base_success_rate * environmental_modifier
+    turret_fire_rate = turret_base_fire_rate * (1 - distraction_effectiveness)
+    safe_passage_duration = distraction_duration * (1 - turret_fire_rate)
+    
+  # Flanking Opportunity Calculation
+  flanking_opportunity: |
+    distraction_active = swarm_active AND distraction_success
+    turret_attention = 1.0 - distraction_effectiveness
+    flanking_angle_bonus = turret_attention < 0.3 ? 1.5 : 1.0
+    flanking_damage_bonus = base_flank_bonus * flanking_angle_bonus
+    
+  # Turret Bypass Calculation
+  turret_bypass: |
+    bypass_success = distraction_success_rate * swarm_size_factor
+    bypass_duration = distraction_duration * (bypass_success > 0.7 ? 1.2 : 1.0)
+    detection_chance = base_detection * (1 - stealth_multiplier) * environmental_modifier
+
+# Risk/Reward Balance
+risk_reward:
+  # Tactical Benefits
+  tactical_benefits:
+    safe_passage_value: 1.0          # value multiplier for safe passage
+    flanking_value: 1.5              # value multiplier for flanking
+    turret_bypass_value: 2.0         # value multiplier for bypass
+    suppression_value: 0.8           # value multiplier for suppression
+    
+  # Resource Costs
+  resource_costs:
+    small_swarm_cost_effectiveness: 0.7    # 70% cost-effective
+    medium_swarm_cost_effectiveness: 1.0   # 100% cost-effective
+    large_swarm_cost_effectiveness: 1.2    # 120% cost-effective (diminishing returns)
+    elite_swarm_cost_effectiveness: 1.0    # 100% cost-effective
+    
+  # Risk Factors
+  risk_factors:
+    detection_risk: 0.3              # 30% chance of detection by guards
+    turret_countermeasure_risk: 0.2  # 20% chance of countermeasures
+    swarm_destruction_risk: 0.4      # 40% chance of swarm being destroyed
+    energy_depletion_risk: 0.25      # 25% chance of energy depletion
+
+# Effectiveness Calculation Formulas
+effectiveness_formulas:
+  # Base Success Rate
+  base_success_rate: |
+    turret_type_factor = turret_vulnerability.distraction_success_rate
+    drone_type_factor = drone_type.distraction_value
+    swarm_size_factor = min(drone_count / 25, 1.0)  # caps at 25 drones
+    base_rate = turret_type_factor * drone_type_factor * (0.5 + swarm_size_factor * 0.5)
+    
+  # Environmental Modifier
+  environmental_modifier: |
+    urban_bonus = location_type == "urban" ? 0.25 : 0.0
+    weather_modifier = weather_conditions.modifier
+    em_noise_bonus = em_noise_level > 0.7 ? 0.20 : 0.0
+    lighting_modifier = lighting_conditions.modifier
+    total_modifier = 1.0 + urban_bonus + weather_modifier + em_noise_bonus + lighting_modifier
+    
+  # Final Effectiveness
+  final_effectiveness: |
+    base_rate = calculate_base_success_rate()
+    env_modifier = calculate_environmental_modifier()
+    final_rate = base_rate * env_modifier
+    capped_rate = min(final_rate, 0.95)  # cap at 95% success rate
+    
+  # Distraction Duration
+  distraction_duration: |
+    base_duration = turret_vulnerability.distraction_duration
+    swarm_size_multiplier = 1.0 + (min(drone_count / 50, 1.0) * 0.5)  # up to 1.5x
+    drone_type_multiplier = drone_type.duration_multiplier
+    final_duration = base_duration * swarm_size_multiplier * drone_type_multiplier
+
+# Cost-Effectiveness Analysis
+cost_effectiveness:
+  # Credits per Second of Distraction
+  credits_per_second: |
+    total_cost = drone_count * drone_cost
+    effective_duration = distraction_duration * success_rate
+    cost_per_second = total_cost / effective_duration
+    
+  # Energy Efficiency
+  energy_per_second: |
+    total_energy = deployment_energy + (drone_count * energy_per_drone)
+    effective_duration = distraction_duration * success_rate
+    energy_per_second = total_energy / effective_duration
+    
+  # Value Score
+  value_score: |
+    tactical_value = (safe_passage_bonus + flanking_bonus + bypass_bonus) / 3
+    cost_efficiency = 1.0 / (credits_per_second / 100)  # normalize to 0-1
+    energy_efficiency = 1.0 / (energy_per_second / 10)  # normalize to 0-1
+    value_score = (tactical_value * 0.5) + (cost_efficiency * 0.25) + (energy_efficiency * 0.25)
+
+# Monitoring Metrics
+monitoring_metrics:
+  telemetry:
+    - metric: "swarm_flies.usage_frequency"
+      description: "Percentage of players using swarm flies regularly"
+      aggregation: "percentage"
+      target: [0.3, 0.7]            # 30-70% of players should use
+      
+    - metric: "swarm_flies.success_rate"
+      description: "Ratio of successful to failed distractions"
+      aggregation: "percentage"
+      calculation: "successful_distractions / total_distractions"
+      target: [0.6, 0.9]            # 60-90% success rate
+      
+    - metric: "swarm_flies.turret_efficiency_impact"
+      description: "Impact on overall turret efficiency"
+      aggregation: "average"
+      calculation: "turret_kill_rate_with_swarm / turret_kill_rate_without_swarm"
+      target: [0.5, 0.8]            # 50-80% of normal efficiency
+      
+    - metric: "swarm_flies.player_satisfaction"
+      description: "Player satisfaction with tactical opportunities"
+      aggregation: "average_rating"
+      target: [3.5, 5.0]            # 3.5-5.0 out of 5.0
+      
+    - metric: "swarm_flies.drone_type_distribution"
+      description: "Distribution of drone types used"
+      aggregation: "histogram"
+      
+    - metric: "swarm_flies.deployment_method_distribution"
+      description: "Distribution of deployment methods"
+      aggregation: "histogram"
+      
+    - metric: "swarm_flies.resource_cost_analysis"
+      description: "Average resource cost per successful distraction"
+      aggregation: "average"
+      
+    - metric: "swarm_flies.environmental_impact"
+      description: "Impact of environmental modifiers on success rate"
+      aggregation: "correlation_analysis"
+
+# Balance Validation Rules
+balance_validation:
+  # Target Metrics
+  target_metrics:
+    usage_rate: [0.3, 0.7]              # 30-70% of players should use
+    success_rate_basic: 0.90            # 90% success on basic turrets
+    success_rate_advanced: 0.70         # 70% success on advanced turrets
+    success_rate_elite: 0.50            # 50% success on elite turrets
+    success_rate_prototype: 0.30        # 30% success on prototype turrets
+    cost_effectiveness: [0.8, 1.2]      # 80-120% cost-effectiveness
+    turret_efficiency_reduction: [0.2, 0.5]  # 20-50% reduction in turret efficiency
+    
+  # Validation Rules
+  validation_rules:
+    - "Basic turrets should have 90% distraction success rate (±5%)"
+    - "Advanced turrets should have 70% distraction success rate (±5%)"
+    - "Elite turrets should have 50% distraction success rate (±5%)"
+    - "Prototype turrets should have 30% distraction success rate (±5%)"
+    - "Urban environments should provide +25% effectiveness bonus"
+    - "Rain should reduce effectiveness by -30%"
+    - "Small swarms (5-10 drones) should cost 50-250 credits"
+    - "Medium swarms (15-25 drones) should cost 375-1250 credits"
+    - "Large swarms (30-50 drones) should cost 1500-5000 credits"
+    - "Elite swarms (60-100 drones) should cost 6000-15000 credits"
+    - "Short cooldown should be 30 seconds for small swarms"
+    - "Medium cooldown should be 2 minutes for standard deployments"
+    - "Long cooldown should be 5 minutes after swarm destruction"
+    - "Environmental modifiers should affect success rate appropriately"
+    - "Cost-effectiveness should be balanced across swarm sizes"
+
+# Emergency Balance Patches
+emergency_patches:
+  effectiveness_nerfs:
+    - condition: "success_rate > 0.95 AND usage_rate > 0.8"
+      action: "reduce_success_rate_by_10%"
+      cooldown: "24_hours"
+      
+  effectiveness_buffs:
+    - condition: "success_rate < 0.4 AND usage_rate < 0.2"
+      action: "increase_success_rate_by_15%"
+      cooldown: "24_hours"
+      
+  cost_adjustments:
+    - condition: "cost_effectiveness < 0.6 AND usage_rate < 0.3"
+      action: "reduce_cost_by_20%"
+      cooldown: "48_hours"
+      
+    - condition: "cost_effectiveness > 1.5 AND usage_rate > 0.8"
+      action: "increase_cost_by_15%"
+      cooldown: "48_hours"
+      
+  meta_breaking:
+    - condition: "single_drone_type_pick_rate > 0.7"
+      action: "rebalance_drone_types"
+      cooldown: "72_hours"
+
+# Version History
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-06"
+    changes:
+      - "Initial comprehensive balance configuration for swarm flies turrets"
+      - "Drone type balance and cost-effectiveness"
+      - "Deployment method balance"
+      - "Turret vulnerability by tier"
+      - "Environmental modifier system"
+      - "Resource management and cooldown systems"
+      - "Tactical impact calculations"
+      - "Cost-effectiveness analysis"
+      - "Comprehensive monitoring metrics"
+    author: "GameBalance Agent"
+    issue: "#1673"
