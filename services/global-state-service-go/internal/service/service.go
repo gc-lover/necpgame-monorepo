@@ -261,8 +261,8 @@ func (s *Service) GetAggregateEvents(ctx context.Context, aggregateType, aggrega
 	return events, total, nil
 }
 
-// GetStateAnalytics provides analytics about state changes
-func (s *Service) GetStateAnalytics(ctx context.Context, aggregateType *string, timeRange string, groupBy string) (map[string]interface{}, error) {
+// GetStateAnalyticsMap provides analytics about state changes (returns map)
+func (s *Service) GetStateAnalyticsMap(ctx context.Context, aggregateType *string, timeRange string, groupBy string) (map[string]interface{}, error) {
 	// Create timeout context
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
@@ -316,7 +316,7 @@ func (s *Service) SynchronizeState(ctx context.Context, aggregates []string, sou
 	// 4. Transfer state changes
 	// 5. Update sync metadata
 
-	for _, aggregate := range aggregates {
+	for range aggregates {
 		// Mock sync logic - in real implementation would sync each aggregate
 		syncedAggregates++
 	}

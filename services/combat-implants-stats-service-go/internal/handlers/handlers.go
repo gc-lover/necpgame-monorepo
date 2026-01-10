@@ -283,7 +283,7 @@ func (h *Handler) calculateCyberpsychosisCorrelation(stats []*repository.Implant
 }
 
 // buildAggregatedStatsResponse builds aggregated stats response
-func (h *Handler) buildAggregatedStatsResponse(aggregatedData *service.AggregatedStats) *api.AggregatedStatsResponse {
+func (h *Handler) buildAggregatedStatsResponse(aggregatedData *repository.AggregatedStats) *api.AggregatedStatsResponse {
 	statsByType := make(map[string]api.TypeStats)
 	for implantType, typeStats := range aggregatedData.StatsByType {
 		statsByType[implantType] = api.TypeStats{
@@ -319,7 +319,7 @@ func (h *Handler) buildAggregatedStatsResponse(aggregatedData *service.Aggregate
 }
 
 // buildTrendsResponse builds trends response
-func (h *Handler) buildTrendsResponse(trendsData *service.UsageTrendsData) *api.TrendsResponse {
+func (h *Handler) buildTrendsResponse(trendsData *repository.UsageTrendsData) *api.TrendsResponse {
 	var dataPoints []api.TrendPoint
 	for _, point := range trendsData.DataPoints {
 		dataPoints = append(dataPoints, api.TrendPoint{
@@ -338,7 +338,7 @@ func (h *Handler) buildTrendsResponse(trendsData *service.UsageTrendsData) *api.
 }
 
 // buildAnomaliesResponse builds anomalies response
-func (h *Handler) buildAnomaliesResponse(anomaliesData *service.AnomaliesData) *api.AnomaliesResponse {
+func (h *Handler) buildAnomaliesResponse(anomaliesData *repository.AnomaliesData) *api.AnomaliesResponse {
 	var detectedAnomalies []api.Anomaly
 	for _, anomaly := range anomaliesData.DetectedAnomalies {
 		// Convert implant ID string to UUID (simplified)

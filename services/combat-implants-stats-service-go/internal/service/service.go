@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
 	"time"
 
 	"combat-implants-stats-service-go/internal/repository"
@@ -96,170 +98,317 @@ func (s *Service) CalculateImplantEfficiency(ctx context.Context, implantID stri
 	return efficiency, nil
 }
 
-// AggregatedStats represents aggregated statistics across all implants
-type AggregatedStats struct {
-	TotalImplants   int
-	TotalRequests   int64
-	StatsByType     map[string]*TypeStats
-	TopPerforming   []*repository.ImplantStats
-}
-
-// TypeStats represents statistics for a specific implant type
-type TypeStats struct {
-	Count         int
-	AvgSuccessRate float64
-	TotalUsage    int64
-}
+// AggregatedStats and TypeStats are defined in repository package
 
 // GetAggregatedStats retrieves aggregated statistics across all implants
-func (s *Service) GetAggregatedStats(ctx context.Context) (*AggregatedStats, error) {
-	// TODO: Implement proper database aggregation query
-	// For now, return mock data
-	return &AggregatedStats{
-		TotalImplants: 150,
-		TotalRequests: 2500,
-		StatsByType: map[string]*TypeStats{
-			"combat": {
-				Count:         45,
-				AvgSuccessRate: 0.82,
-				TotalUsage:    1200,
-			},
-			"stealth": {
-				Count:         38,
-				AvgSuccessRate: 0.75,
-				TotalUsage:    800,
-			},
-			"hacking": {
-				Count:         67,
-				AvgSuccessRate: 0.68,
-				TotalUsage:    500,
-			},
-		},
-		TopPerforming: []*repository.ImplantStats{}, // TODO: Implement top performing query
-	}, nil
-}
-
-// UsageTrendsData represents usage trends data
-type UsageTrendsData struct {
-	TrendType    string
-	Period       string
-	OverallTrend string
-	DataPoints   []TrendPoint
-}
-
-// TrendPoint represents a single data point in trends
-type TrendPoint struct {
-	Timestamp  time.Time
-	Value      float64
-	Confidence float64
-}
-
-// GetUsageTrends retrieves usage trends data
-func (s *Service) GetUsageTrends(ctx context.Context, trendType, period string) (*UsageTrendsData, error) {
-	// TODO: Implement proper trends calculation from database
-	// For now, return mock trend data
-	now := time.Now()
-	dataPoints := []TrendPoint{
-		{Timestamp: now.Add(-24 * time.Hour), Value: 85.0, Confidence: 0.9},
-		{Timestamp: now.Add(-18 * time.Hour), Value: 88.0, Confidence: 0.85},
-		{Timestamp: now.Add(-12 * time.Hour), Value: 82.0, Confidence: 0.92},
-		{Timestamp: now.Add(-6 * time.Hour), Value: 90.0, Confidence: 0.88},
-		{Timestamp: now, Value: 87.0, Confidence: 0.91},
+func (s *Service) GetAggregatedStats(ctx context.Context) (*repository.AggregatedStats, error) {
+	// Use repository method to get real aggregated data from database
+	aggregatedData, err := s.repo.GetAggregatedStats(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aggregated stats from repository: %w", err)
 	}
 
-	return &UsageTrendsData{
-		TrendType:    trendType,
-		Period:       period,
-		OverallTrend: "stable", // stable, increasing, decreasing
-		DataPoints:   dataPoints,
-	}, nil
+	return aggregatedData, nil
 }
 
-// AnomaliesData represents detected anomalies data
-type AnomaliesData struct {
-	DetectedAnomalies []AnomalyData
-	AnomalyScore      float64
-	TotalScanned      int
+// UsageTrendsData and TrendPoint are defined in repository package
+
+// GetUsageTrends retrieves usage trends data
+func (s *Service) GetUsageTrends(ctx context.Context, trendType, period string) (*repository.UsageTrendsData, error) {
+	// Use repository method to get real trends data from database
+	trendsData, err := s.repo.GetUsageTrends(ctx, trendType, period)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get usage trends from repository: %w", err)
+	}
+
+	return trendsData, nil
 }
 
-// AnomalyData represents a single detected anomaly
-type AnomalyData struct {
-	ImplantID         string
-	AnomalyType       string
-	Description       string
-	DetectedAt        time.Time
-	RecommendedAction string
-	SeverityScore     float64
-}
+// AnomaliesData and AnomalyData are defined in repository package
 
 // DetectAnomalies performs anomaly detection on implant usage
-func (s *Service) DetectAnomalies(ctx context.Context, playerID [16]byte, implantType string, sensitivity float64) (*AnomaliesData, error) {
-	// TODO: Implement proper anomaly detection algorithms
-	// For now, return mock anomalies based on simple heuristics
-
-	var anomalies []AnomalyData
-	totalScanned := 0
-	anomalyScore := 0.0
-
-	// Get all implant stats for analysis
-	// This is simplified - in real implementation would filter by player/implant type
+func (s *Service) DetectAnomalies(ctx context.Context, playerID [16]byte, implantType string, sensitivity float64) (*repository.AnomaliesData, error) {
+	// Get comprehensive stats for statistical analysis
 	allStats, err := s.repo.GetAllImplantStats(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get implant stats for anomaly detection: %w", err)
 	}
 
-	totalScanned = len(allStats)
+	// Calculate statistical baselines
+	statsBaseline := s.calculateStatisticalBaseline(allStats)
 
-	// Simple anomaly detection based on success rate deviations
-	for _, stat := range allStats {
-		// Check for suspiciously high success rates (possible cheating)
-		if stat.SuccessRate > 0.95 && stat.UsageCount > 10 {
-			anomalies = append(anomalies, AnomalyData{
-				ImplantID:         stat.ImplantID,
-				AnomalyType:       "unusually_high_success",
-				Description:       "Success rate significantly above normal threshold",
-				DetectedAt:        time.Now(),
-				RecommendedAction: "investigate",
-				SeverityScore:     0.8,
-			})
-			anomalyScore += 0.8
-		}
+	// Apply multiple anomaly detection algorithms
+	anomalies := s.detectAnomaliesWithAlgorithms(allStats, statsBaseline, sensitivity)
 
-		// Check for failed implants with high usage (possible malfunction)
-		if stat.SuccessRate < 0.3 && stat.UsageCount > 20 {
-			anomalies = append(anomalies, AnomalyData{
-				ImplantID:         stat.ImplantID,
-				AnomalyType:       "persistent_failure",
-				Description:       "Implant consistently failing despite high usage",
-				DetectedAt:        time.Now(),
-				RecommendedAction: "maintenance",
-				SeverityScore:     0.6,
-			})
-			anomalyScore += 0.6
-		}
+	// Calculate overall anomaly score
+	anomalyScore := s.calculateAnomalyScore(anomalies, len(allStats))
 
-		// Check for rapid usage increase (possible abuse)
-		if stat.UsageCount > 100 {
-			anomalies = append(anomalies, AnomalyData{
-				ImplantID:         stat.ImplantID,
-				AnomalyType:       "high_usage",
-				Description:       "Implant used excessively, potential health risk",
-				DetectedAt:        time.Now(),
-				RecommendedAction: "monitor",
-				SeverityScore:     0.4,
-			})
-			anomalyScore += 0.4
-		}
-	}
-
-	// Normalize anomaly score
-	if totalScanned > 0 {
-		anomalyScore = anomalyScore / float64(totalScanned)
-	}
-
-	return &AnomaliesData{
+	return &repository.AnomaliesData{
 		DetectedAnomalies: anomalies,
 		AnomalyScore:      anomalyScore,
-		TotalScanned:      totalScanned,
+		TotalScanned:      len(allStats),
 	}, nil
+}
+
+// StatisticalBaseline represents statistical properties of the implant population
+type StatisticalBaseline struct {
+	MeanSuccessRate     float64
+	StdDevSuccessRate   float64
+	MeanUsageCount      float64
+	StdDevUsageCount    float64
+	MeanDuration        float64
+	StdDevDuration      float64
+	SuccessRateQuartiles [4]float64 // Q1, median, Q3, max
+}
+
+// calculateStatisticalBaseline calculates statistical properties for anomaly detection
+func (s *Service) calculateStatisticalBaseline(stats []*repository.ImplantStats) StatisticalBaseline {
+	if len(stats) == 0 {
+		return StatisticalBaseline{}
+	}
+
+	// Extract values for statistical calculations
+	var successRates []float64
+	var usageCounts []float64
+	var durations []float64
+
+	for _, stat := range stats {
+		successRates = append(successRates, stat.SuccessRate)
+		usageCounts = append(usageCounts, float64(stat.UsageCount))
+		durations = append(durations, stat.AvgDuration)
+	}
+
+	baseline := StatisticalBaseline{
+		MeanSuccessRate:   s.calculateMean(successRates),
+		StdDevSuccessRate: s.calculateStdDev(successRates),
+		MeanUsageCount:    s.calculateMean(usageCounts),
+		StdDevUsageCount:  s.calculateStdDev(usageCounts),
+		MeanDuration:      s.calculateMean(durations),
+		StdDevDuration:    s.calculateStdDev(durations),
+	}
+
+	// Calculate quartiles for success rate
+	baseline.SuccessRateQuartiles = s.calculateQuartiles(successRates)
+
+	return baseline
+}
+
+// detectAnomaliesWithAlgorithms applies multiple anomaly detection algorithms
+func (s *Service) detectAnomaliesWithAlgorithms(stats []*repository.ImplantStats, baseline StatisticalBaseline, sensitivity float64) []repository.AnomalyData {
+	var anomalies []repository.AnomalyData
+
+	for _, stat := range stats {
+		// Algorithm 1: Z-Score based outlier detection
+		if anomaly := s.detectZScoreAnomaly(stat, baseline, sensitivity); anomaly != nil {
+			anomalies = append(anomalies, *anomaly)
+		}
+
+		// Algorithm 2: Quartile-based outlier detection
+		if anomaly := s.detectQuartileAnomaly(stat, baseline, sensitivity); anomaly != nil {
+			anomalies = append(anomalies, *anomaly)
+		}
+
+		// Algorithm 3: Pattern-based anomaly detection
+		if anomaly := s.detectPatternAnomaly(stat, baseline, sensitivity); anomaly != nil {
+			anomalies = append(anomalies, *anomaly)
+		}
+
+		// Algorithm 4: Threshold-based detection for extreme values
+		if anomaly := s.detectThresholdAnomaly(stat, baseline, sensitivity); anomaly != nil {
+			anomalies = append(anomalies, *anomaly)
+		}
+	}
+
+	return anomalies
+}
+
+// detectZScoreAnomaly detects anomalies using Z-Score method
+func (s *Service) detectZScoreAnomaly(stat *repository.ImplantStats, baseline StatisticalBaseline, sensitivity float64) *repository.AnomalyData {
+	zScoreThreshold := 3.0 * sensitivity // More sensitive = lower threshold
+
+	// Z-Score for success rate
+	if baseline.StdDevSuccessRate > 0 {
+		zScore := (stat.SuccessRate - baseline.MeanSuccessRate) / baseline.StdDevSuccessRate
+		if zScore > zScoreThreshold {
+			return &repository.AnomalyData{
+				ImplantID:         stat.ImplantID,
+				AnomalyType:       "statistical_outlier_high_success",
+				Description:       fmt.Sprintf("Success rate %.2f is %.1f standard deviations above mean", stat.SuccessRate, zScore),
+				DetectedAt:        time.Now(),
+				RecommendedAction: "investigate_performance",
+				SeverityScore:     s.calculateSeverityScore(zScore, zScoreThreshold),
+			}
+		} else if zScore < -zScoreThreshold {
+			return &repository.AnomalyData{
+				ImplantID:         stat.ImplantID,
+				AnomalyType:       "statistical_outlier_low_success",
+				Description:       fmt.Sprintf("Success rate %.2f is %.1f standard deviations below mean", stat.SuccessRate, -zScore),
+				DetectedAt:        time.Now(),
+				RecommendedAction: "maintenance_required",
+				SeverityScore:     s.calculateSeverityScore(-zScore, zScoreThreshold),
+			}
+		}
+	}
+
+	return nil
+}
+
+// detectQuartileAnomaly detects anomalies using quartile method (IQR)
+func (s *Service) detectQuartileAnomaly(stat *repository.ImplantStats, baseline StatisticalBaseline, sensitivity float64) *repository.AnomalyData {
+	iqr := baseline.SuccessRateQuartiles[2] - baseline.SuccessRateQuartiles[0] // Q3 - Q1
+	upperFence := baseline.SuccessRateQuartiles[2] + (iqr * 1.5 * sensitivity)
+	lowerFence := baseline.SuccessRateQuartiles[0] - (iqr * 1.5 * sensitivity)
+
+	if stat.SuccessRate > upperFence {
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "quartile_outlier_high_success",
+			Description:       fmt.Sprintf("Success rate %.2f exceeds upper quartile fence (%.2f)", stat.SuccessRate, upperFence),
+			DetectedAt:        time.Now(),
+			RecommendedAction: "performance_review",
+			SeverityScore:     0.7,
+		}
+	} else if stat.SuccessRate < lowerFence {
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "quartile_outlier_low_success",
+			Description:       fmt.Sprintf("Success rate %.2f below lower quartile fence (%.2f)", stat.SuccessRate, lowerFence),
+			DetectedAt:        time.Now(),
+			RecommendedAction: "failure_analysis",
+			SeverityScore:     0.6,
+		}
+	}
+
+	return nil
+}
+
+// detectPatternAnomaly detects pattern-based anomalies
+func (s *Service) detectPatternAnomaly(stat *repository.ImplantStats, baseline StatisticalBaseline, sensitivity float64) *repository.AnomalyData {
+	// High usage with low success rate (inefficient implant)
+	if stat.UsageCount > int64(baseline.MeanUsageCount+baseline.StdDevUsageCount*sensitivity) &&
+		stat.SuccessRate < baseline.MeanSuccessRate-baseline.StdDevSuccessRate*sensitivity {
+
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "inefficient_usage_pattern",
+			Description:       "High usage count with abnormally low success rate indicates inefficiency",
+			DetectedAt:        time.Now(),
+			RecommendedAction: "optimize_usage",
+			SeverityScore:     0.5,
+		}
+	}
+
+	// Perfect success rate with minimal usage (possible data manipulation)
+	if stat.SuccessRate > 0.99 && stat.UsageCount < 5 {
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "suspicious_perfection",
+			Description:       "Perfect success rate with minimal usage may indicate data issues",
+			DetectedAt:        time.Now(),
+			RecommendedAction: "data_validation",
+			SeverityScore:     0.8,
+		}
+	}
+
+	return nil
+}
+
+// detectThresholdAnomaly detects extreme threshold violations
+func (s *Service) detectThresholdAnomaly(stat *repository.ImplantStats, baseline StatisticalBaseline, sensitivity float64) *repository.AnomalyData {
+	// Extremely high usage (potential abuse/health risk)
+	abuseThreshold := int64(baseline.MeanUsageCount + baseline.StdDevUsageCount*3*sensitivity)
+	if stat.UsageCount > abuseThreshold {
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "excessive_usage",
+			Description:       fmt.Sprintf("Usage count %d significantly exceeds normal threshold", stat.UsageCount),
+			DetectedAt:        time.Now(),
+			RecommendedAction: "health_monitoring",
+			SeverityScore:     0.9,
+		}
+	}
+
+	// Complete failure rate
+	if stat.SuccessRate < 0.01 && stat.UsageCount > 10 {
+		return &repository.AnomalyData{
+			ImplantID:         stat.ImplantID,
+			AnomalyType:       "complete_failure",
+			Description:       "Implant has 0% success rate with significant usage",
+			DetectedAt:        time.Now(),
+			RecommendedAction: "immediate_replacement",
+			SeverityScore:     1.0,
+		}
+	}
+
+	return nil
+}
+
+// calculateSeverityScore calculates anomaly severity score
+func (s *Service) calculateSeverityScore(deviation, threshold float64) float64 {
+	score := deviation / threshold
+	if score > 1.0 {
+		score = 1.0
+	}
+	return score
+}
+
+// calculateAnomalyScore calculates overall anomaly score
+func (s *Service) calculateAnomalyScore(anomalies []repository.AnomalyData, totalScanned int) float64 {
+	if totalScanned == 0 {
+		return 0.0
+	}
+
+	totalSeverity := 0.0
+	for _, anomaly := range anomalies {
+		totalSeverity += anomaly.SeverityScore
+	}
+
+	return totalSeverity / float64(totalScanned)
+}
+
+// Helper statistical functions
+func (s *Service) calculateMean(values []float64) float64 {
+	if len(values) == 0 {
+		return 0.0
+	}
+	sum := 0.0
+	for _, v := range values {
+		sum += v
+	}
+	return sum / float64(len(values))
+}
+
+func (s *Service) calculateStdDev(values []float64) float64 {
+	if len(values) < 2 {
+		return 0.0
+	}
+
+	mean := s.calculateMean(values)
+	sumSquares := 0.0
+	for _, v := range values {
+		diff := v - mean
+		sumSquares += diff * diff
+	}
+
+	return math.Sqrt(sumSquares / float64(len(values)-1))
+}
+
+func (s *Service) calculateQuartiles(values []float64) [4]float64 {
+	if len(values) == 0 {
+		return [4]float64{0, 0, 0, 0}
+	}
+
+	sorted := make([]float64, len(values))
+	copy(sorted, values)
+	sort.Float64s(sorted)
+
+	var quartiles [4]float64
+	n := len(sorted)
+
+	quartiles[0] = sorted[n/4]           // Q1
+	quartiles[1] = sorted[n/2]           // Median
+	quartiles[2] = sorted[3*n/4]         // Q3
+	quartiles[3] = sorted[n-1]           // Max
+
+	return quartiles
 }
