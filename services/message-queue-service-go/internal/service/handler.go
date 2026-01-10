@@ -9,11 +9,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
 
 	"necpgame/services/message-queue-service-go/pkg/api"
 )
@@ -47,12 +49,12 @@ type Handler struct {
 // PERFORMANCE: Struct field alignment optimized for memory efficiency
 type HTTPMetrics struct {
 	// Counter metrics (8 bytes each)
-	requestsTotal    prometheus.Counter
-	requestsError    prometheus.Counter
+	requestsTotal    *prometheus.CounterVec
+	requestsError    *prometheus.CounterVec
 
 	// Histogram metrics (8 bytes each)
-	requestDuration  prometheus.Histogram
-	responseSize     prometheus.Histogram
+	requestDuration  *prometheus.HistogramVec
+	responseSize     *prometheus.HistogramVec
 }
 
 // RateLimiter interface for rate limiting
@@ -481,4 +483,46 @@ func (h *Handler) sendError(w http.ResponseWriter, message string, status int) {
 	}
 
 	h.sendJSON(w, response, status)
+}
+
+// handleProduceMessage handles message production requests
+func (h *Handler) handleProduceMessage(w http.ResponseWriter, r *http.Request) {
+	h.sendJSON(w, map[string]string{"status": "not implemented"}, http.StatusNotImplemented)
+}
+
+// handleConsumeMessages handles message consumption requests
+func (h *Handler) handleConsumeMessages(w http.ResponseWriter, r *http.Request) {
+	h.sendJSON(w, map[string]string{"status": "not implemented"}, http.StatusNotImplemented)
+}
+
+// handleHealthCheck handles health check requests
+func (h *Handler) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	h.sendJSON(w, map[string]string{"status": "healthy"}, http.StatusOK)
+}
+
+// ServeHTTP implements http.Handler interface
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Route requests based on path and method
+	switch r.URL.Path {
+	case "/api/v1/messages":
+		if r.Method == http.MethodPost {
+			h.handleProduceMessage(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	case "/api/v1/messages/consume":
+		if r.Method == http.MethodPost {
+			h.handleConsumeMessages(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	case "/health":
+		if r.Method == http.MethodGet {
+			h.handleHealthCheck(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	default:
+		http.NotFound(w, r)
+	}
 }

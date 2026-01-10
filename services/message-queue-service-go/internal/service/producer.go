@@ -5,7 +5,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"

@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"global-state-service-go/internal/handlers"
-	"global-state-service-go/internal/repository"
-	"global-state-service-go/internal/service"
-	"global-state-service-go/pkg/api"
+	"necpgame/services/global-state-service-go/internal/handlers"
+	"necpgame/services/global-state-service-go/internal/repository"
+	"necpgame/services/global-state-service-go/internal/service"
+	"necpgame/services/global-state-service-go/pkg/api"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

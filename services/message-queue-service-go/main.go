@@ -16,8 +16,6 @@ import (
 
 	"github.com/go-faster/errors"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"necpgame/services/message-queue-service-go/config"
@@ -71,7 +69,7 @@ func main() {
 	}
 
 	// Create API handler with message processing optimizations
-	handler := service.NewHandler(svc)
+	handler := service.NewHandler(svc, nil, nil)
 
 	// Create HTTP server with message-queue-specific performance optimizations
 	// PERFORMANCE: Tuned for high-volume message processing and inter-service communication
@@ -106,6 +104,10 @@ func main() {
 		}
 	}()
 
+	// Create context for shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Start message processing monitoring
 	go func() {
 		logger.Info("Starting message processing monitoring")
@@ -121,20 +123,22 @@ func main() {
 
 	logger.Info("Shutting down message queue servers...")
 
+	// Cancel context to signal shutdown
+	cancel()
+
 	// Give outstanding message processing a deadline for completion
 	// PERFORMANCE: Reasonable timeout for active message processing
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
 	defer cancel()
 
 	// Shutdown main server
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("Message queue server forced to shutdown", zap.Error(err))
 	}
 
 	// Shutdown message queue service with cleanup
-	if err := svc.Shutdown(ctx); err != nil {
-		logger.Error("Message queue service shutdown error", zap.Error(err))
-	}
+	svc.Shutdown()
 
 	logger.Info("Message queue servers exited gracefully")
 }

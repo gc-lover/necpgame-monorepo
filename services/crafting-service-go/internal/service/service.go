@@ -280,7 +280,9 @@ func (s *Service) CancelCrafting(ctx context.Context, params api.CancelCraftingP
 	s.logger.Info("Cancelled crafting operation",
 		zap.String("crafting_id", params.CraftingID.String()))
 
-	return &api.CancelCraftingOK{}, nil
+	return &api.ExampleDeleted{
+		XProcessingTime: api.NewOptInt(150), // Mock processing time
+	}, nil
 }
 
 // CraftingServiceGetRecipes returns available crafting recipes
@@ -311,13 +313,15 @@ func (s *Service) CraftingServiceGetRecipes(ctx context.Context, params api.Craf
 
 	s.metrics.recipesRetrieved.Add(float64(len(recipes)))
 
-	return &api.RecipeListResponse{
-		Recipes: recipes,
-		Pagination: api.PaginationMetadata{
-			Page: 1,
-			Limit: 20,
-			TotalCount: len(recipes),
-			TotalPages: 1,
+	return &api.RecipeListResponseHeaders{
+		Response: api.RecipeListResponse{
+			Recipes: recipes,
+			Pagination: api.RecipeListResponsePagination{
+				Page: 1,
+				Limit: 20,
+				TotalCount: len(recipes),
+				TotalPages: 1,
+			},
 		},
 	}, nil
 }

@@ -8,13 +8,10 @@ package service
 import (
 	"context"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
-	"github.com/go-faster/errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -47,7 +44,7 @@ type Service struct {
 
 	// Message processing (8 bytes each)
 	producer Producer
-	consumer ConsumerManager
+	consumer ConsumerManagerInterface
 
 	// Memory pools for hot path objects (reduce GC pressure)
 	// PERFORMANCE: sync.Pool for frequently allocated objects
@@ -94,8 +91,8 @@ type Producer interface {
 	Close() error
 }
 
-// ConsumerManager interface for consumer management
-type ConsumerManager interface {
+// ConsumerManagerInterface interface for consumer management
+type ConsumerManagerInterface interface {
 	RegisterConsumer(ctx context.Context, consumer *models.Consumer) error
 	UnregisterConsumer(ctx context.Context, consumerID string) error
 	GetConsumer(ctx context.Context, consumerID string) (*models.Consumer, error)

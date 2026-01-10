@@ -1,0 +1,526 @@
+openapi: 3.0.3
+info:
+  title: Progression Service API
+  description: 'Endgame progression system with Paragon, Prestige, and Mastery for NECPGAME MMOFPS RPG'
+  version: 1.0.0
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Development server
+  - url: https://progression.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: []
+tags:
+  - name: Paragon
+    description: Paragon level progression system
+  - name: Prestige
+    description: Prestige reset and bonuses system
+  - name: Mastery
+    description: Mastery specialization system
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: HealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Paragon endpoints
+  /paragon/levels:
+    get:
+      tags:
+        - Paragon
+      summary: Get paragon levels for character
+      operationId: GetParagonLevels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paragon levels retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParagonLevels'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /paragon/distribute:
+    post:
+      tags:
+        - Paragon
+      summary: Distribute paragon points
+      operationId: DistributeParagonPoints
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/DistributeParagonPointsReq'
+      responses:
+        '200':
+          description: Points distributed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParagonLevels'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /paragon/stats:
+    get:
+      tags:
+        - Paragon
+      summary: Get paragon statistics
+      operationId: GetParagonStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParagonStats'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Prestige endpoints
+  /prestige/info:
+    get:
+      tags:
+        - Prestige
+      summary: Get prestige information
+      operationId: GetPrestigeInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Prestige info retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeInfo'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /prestige/reset:
+    post:
+      tags:
+        - Prestige
+      summary: Reset prestige level
+      operationId: ResetPrestige
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/ResetPrestigeReq'
+      responses:
+        '200':
+          description: Prestige reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeInfo'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /prestige/bonuses:
+    get:
+      tags:
+        - Prestige
+      summary: Get prestige bonuses
+      operationId: GetPrestigeBonuses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bonuses retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeBonuses'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Mastery endpoints
+  /mastery/levels:
+    get:
+      tags:
+        - Mastery
+      summary: Get mastery levels
+      operationId: GetMasteryLevels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mastery levels retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryLevels'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mastery/{type}/progress:
+    get:
+      tags:
+        - Mastery
+      summary: Get mastery progress
+      operationId: GetMasteryProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Progress retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryProgress'
+        '404':
+          description: Mastery type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mastery/rewards:
+    get:
+      tags:
+        - Mastery
+      summary: Get mastery rewards
+      operationId: GetMasteryRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rewards retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryRewards'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+        activeConnections:
+          type: integer
+        cacheHitRate:
+          type: number
+          format: float
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+        - message
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ParagonLevels:
+      type: object
+      properties:
+        currentLevel:
+          type: integer
+        totalXp:
+          type: integer
+          format: int64
+        availablePoints:
+          type: integer
+        pointsDistributed:
+          $ref: '#/components/schemas/PointsDistributed'
+        xpToNextLevel:
+          type: integer
+          format: int64
+        xpProgress:
+          type: number
+          format: float
+        lastUpdated:
+          type: string
+          format: date-time
+
+    PointsDistributed:
+      type: object
+      properties:
+        strength:
+          type: integer
+        agility:
+          type: integer
+        intelligence:
+          type: integer
+        vitality:
+          type: integer
+        luck:
+          type: integer
+
+    DistributeParagonPointsReq:
+      type: object
+      required:
+        - characterId
+        - distribution
+      properties:
+        characterId:
+          type: string
+        distribution:
+          $ref: '#/components/schemas/PointsDistribution'
+
+    PointsDistribution:
+      type: object
+      properties:
+        strength:
+          type: integer
+        agility:
+          type: integer
+        intelligence:
+          type: integer
+        vitality:
+          type: integer
+        luck:
+          type: integer
+
+    ParagonStats:
+      type: object
+      properties:
+        characterCount:
+          type: integer
+        averageLevel:
+          type: number
+          format: float
+        totalPointsDistributed:
+          type: integer
+        percentile:
+          type: number
+          format: float
+
+    PrestigeInfo:
+      type: object
+      properties:
+        currentLevel:
+          type: integer
+        totalResets:
+          type: integer
+        bonusMultiplier:
+          type: number
+          format: float
+        lastReset:
+          type: string
+          format: date-time
+        canReset:
+          type: boolean
+        resetCost:
+          type: integer
+          format: int64
+
+    ResetPrestigeReq:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+
+    PrestigeBonuses:
+      type: object
+      properties:
+        xpBonus:
+          type: number
+          format: float
+        currencyBonus:
+          type: number
+          format: float
+        dropRateBonus:
+          type: number
+          format: float
+        maxPrestigeLevel:
+          type: integer
+
+    MasteryLevels:
+      type: object
+      properties:
+        masteries:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MasteryInfo'
+
+    MasteryInfo:
+      type: object
+      properties:
+        type:
+          type: string
+        currentLevel:
+          type: integer
+        currentXp:
+          type: integer
+          format: int64
+        totalXp:
+          type: integer
+          format: int64
+        rewards:
+          type: array
+          items:
+            type: string
+
+    MasteryProgress:
+      type: object
+      properties:
+        type:
+          type: string
+        currentLevel:
+          type: integer
+        currentXp:
+          type: integer
+          format: int64
+        xpToNextLevel:
+          type: integer
+          format: int64
+        progressPercentage:
+          type: number
+          format: float
+        unlockedAt:
+          type: string
+          format: date-time
+
+    MasteryRewards:
+      type: object
+      properties:
+        type:
+          type: string
+        unlockedRewards:
+          type: array
+          items:
+            type: string
+        nextReward:
+          type: string
+        nextRewardLevel:
+          type: integer

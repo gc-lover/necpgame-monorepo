@@ -103,3 +103,35 @@ func (r *Repository) GetPlayerImplantAnalytics(ctx context.Context, playerID str
 
 	return stats, nil
 }
+
+// GetAllImplantStats retrieves all implant statistics for anomaly detection
+func (r *Repository) GetAllImplantStats(ctx context.Context) ([]*ImplantStats, error) {
+	query := `
+		SELECT implant_id, player_id, usage_count, success_rate, avg_duration, last_used, created_at, updated_at
+		FROM combat.implant_stats
+		ORDER BY last_used DESC
+		LIMIT 1000  -- Limit for performance, focus on recent activity
+	`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []*ImplantStats
+	for rows.Next() {
+		var stat ImplantStats
+		err := rows.Scan(
+			&stat.ImplantID, &stat.PlayerID, &stat.UsageCount,
+			&stat.SuccessRate, &stat.AvgDuration, &stat.LastUsed,
+			&stat.CreatedAt, &stat.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		stats = append(stats, &stat)
+	}
+
+	return stats, nil
+}

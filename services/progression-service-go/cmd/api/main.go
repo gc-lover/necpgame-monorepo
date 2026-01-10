@@ -12,7 +12,7 @@ import (
 
 	"necpgame/services/progression-service-go/internal/handlers"
 	"necpgame/services/progression-service-go/internal/service"
-	api "necpgame/services/progression-service-go"
+	"necpgame/services/progression-service-go/pkg/api"
 )
 
 func main() {
@@ -22,10 +22,10 @@ func main() {
 	progressionSvc := service.NewProgressionService()
 
 	// Create HTTP handlers with ogen-generated interfaces
-	httpHandlers := handlers.NewProgressionHandlers(progressionSvc)
+	httpHandlers := handlers.NewHandler(progressionSvc)
 
 	// Create security handler
-	securityHandler := handlers.NewProgressionSecurityHandler()
+	securityHandler := &handlers.SecurityHandler{}
 
 	// Create ogen server
 	server, err := api.NewServer(httpHandlers, securityHandler)
