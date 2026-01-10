@@ -98,16 +98,16 @@ func main() {
 	// Create API handler
 	handler := service.NewHandler(svc)
 
-	// Create server with optimizations
+	// Create server with enterprise-grade optimizations for MMOFPS guild operations
 	srv := &http.Server{
 		Addr: addr,
 		Handler: api.NewServer(handler, api.WithTracer(tracer),
 			api.WithMeter(meter)),
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       120 * time.Second,
-		ReadHeaderTimeout: 5 * time.Second,
-		MaxHeaderBytes:    1 << 20, // 1MB
+		ReadTimeout:       30 * time.Second, // BACKEND NOTE: Increased for complex guild operations
+		WriteTimeout:      30 * time.Second, // BACKEND NOTE: For guild response generation
+		IdleTimeout:       120 * time.Second, // BACKEND NOTE: Keep connections alive for guild sessions
+		ReadHeaderTimeout: 3 * time.Second, // BACKEND NOTE: Fast header processing for guild requests
+		MaxHeaderBytes:    1 << 20, // BACKEND NOTE: 1MB max headers for security
 	}
 
 	// Start metrics server

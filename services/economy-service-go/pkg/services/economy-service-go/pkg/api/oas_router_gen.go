@@ -205,9 +205,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					switch elem[0] {
-					case 'o': // Prefix: "orders"
+					case 'o': // Prefix: "orderbook"
 
-						if l := len("orders"); len(elem) >= l && elem[0:l] == "orders" {
+						if l := len("orderbook"); len(elem) >= l && elem[0:l] == "orderbook" {
 							elem = elem[l:]
 						} else {
 							break
@@ -216,12 +216,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						if len(elem) == 0 {
 							// Leaf node.
 							switch r.Method {
+							case "GET":
+								s.handleGetOrderBookRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
 							case "POST":
 								s.handlePlaceOrderRequest([1]string{
 									args[0],
 								}, elemIsEscaped, w, r)
 							default:
-								s.notAllowed(w, r, "POST")
+								s.notAllowed(w, r, "GET,POST")
 							}
 
 							return
@@ -596,9 +600,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 					switch elem[0] {
-					case 'o': // Prefix: "orders"
+					case 'o': // Prefix: "orderbook"
 
-						if l := len("orders"); len(elem) >= l && elem[0:l] == "orders" {
+						if l := len("orderbook"); len(elem) >= l && elem[0:l] == "orderbook" {
 							elem = elem[l:]
 						} else {
 							break
@@ -607,12 +611,21 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						if len(elem) == 0 {
 							// Leaf node.
 							switch method {
+							case "GET":
+								r.name = GetOrderBookOperation
+								r.summary = "Get current order book for commodity"
+								r.operationID = "getOrderBook"
+								r.operationGroup = ""
+								r.pathPattern = "/market/{commodity}/orderbook"
+								r.args = args
+								r.count = 1
+								return r, true
 							case "POST":
 								r.name = PlaceOrderOperation
 								r.summary = "Place trading order"
 								r.operationID = "placeOrder"
 								r.operationGroup = ""
-								r.pathPattern = "/market/{commodity}/orders"
+								r.pathPattern = "/market/{commodity}/orderbook"
 								r.args = args
 								r.count = 1
 								return r, true

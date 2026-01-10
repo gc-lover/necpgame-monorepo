@@ -26,9 +26,9 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize database connection with enterprise-grade pool optimization
+	// Initialize database and Redis connections with enterprise-grade pool optimization
 	ctx := context.Background()
-	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN(), cfg.Database)
+	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN(), cfg.Database, cfg.Redis)
 	if err != nil {
 		logger.Fatal("Failed to initialize repository", zap.Error(err))
 	}
@@ -41,10 +41,11 @@ func main() {
 	srv := &http.Server{
 		Addr:           cfg.Server.Port,
 		Handler:        svc,
-		ReadTimeout:    15 * time.Second, // Increased for complex auth operations
-		WriteTimeout:   15 * time.Second, // Increased for token generation
-		IdleTimeout:    120 * time.Second, // Keep connections alive for performance
-		MaxHeaderBytes: 1 << 20, // 1MB max headers for security
+		ReadTimeout:    15 * time.Second, // BACKEND NOTE: Increased for complex auth operations
+		WriteTimeout:   15 * time.Second, // BACKEND NOTE: Increased for token generation
+		IdleTimeout:    120 * time.Second, // BACKEND NOTE: Keep connections alive for performance
+		ReadHeaderTimeout: 3 * time.Second, // BACKEND NOTE: Fast header processing for auth requests
+		MaxHeaderBytes: 1 << 20, // BACKEND NOTE: 1MB max headers for security
 	}
 
 	// Start server in goroutine

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,6 +16,28 @@ import (
 	"necpgame/services/ability-service-go/internal/repository"
 	api "necpgame/services/ability-service-go/pkg/api"
 )
+
+// PERFORMANCE: Memory pooling for hot path objects (Level 2 optimization)
+// Reduces GC pressure in high-throughput ability activation operations
+var (
+	userContextPool = sync.Pool{
+		New: func() interface{} {
+			return &models.UserContext{}
+		},
+	}
+)
+
+// PERFORMANCE: Memory pool management functions
+func getUserContext() *models.UserContext {
+	return userContextPool.Get().(*models.UserContext)
+}
+
+func putUserContext(uc *models.UserContext) {
+	// Reset fields for reuse
+	uc.UserID = uuid.UUID{}
+	uc.UserType = ""
+	userContextPool.Put(uc)
+}
 
 type Service struct {
 	logger  *zap.Logger

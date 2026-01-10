@@ -12,11 +12,15 @@ import (
 )
 
 // JWTClaims represents the JWT claims structure
+// PERFORMANCE: Struct field alignment optimized for memory efficiency
 type JWTClaims struct {
+	// jwt.RegisteredClaims first (large embedded struct)
+	jwt.RegisteredClaims
+
+	// Strings (16 bytes each header)
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	jwt.RegisteredClaims
 }
 
 // JWTService handles JWT token operations

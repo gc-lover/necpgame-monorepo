@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"necpgame/services/matchmaking-service-go/internal/database"
 	"necpgame/services/matchmaking-service-go/internal/service"
@@ -44,12 +45,16 @@ func (h *MatchmakingHandlers) HealthCheck(ctx context.Context) (*api.HealthCheck
 
 // JoinQueue implements queue join endpoint
 func (h *MatchmakingHandlers) JoinQueue(ctx context.Context, req *api.JoinQueueReq) (api.JoinQueueRes, error) {
+	// BACKEND NOTE: Context timeout for queue join (prevents hanging in high-load matchmaking)
+	joinCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	playerID := req.PlayerID.String()
 	gameMode := string(req.GameMode)
 	log.Printf("Player %s joining queue for mode %s", playerID, gameMode)
 
 	// Call service to join queue
-	result, err := h.matchmakingSvc.JoinQueue(ctx, playerID, gameMode)
+	result, err := h.matchmakingSvc.JoinQueue(joinCtx, playerID, gameMode)
 	if err != nil {
 		log.Printf("Failed to join queue for player %s: %v", req.PlayerID, err)
 		return &api.JoinQueueAccepted{}, nil // Still return accepted for async processing
@@ -109,5 +114,4 @@ func (h *MatchmakingHandlers) FindMatch(ctx context.Context, req *api.FindMatchR
 func (h *MatchmakingHandlers) MountRoutes(mux interface{}) error {
 	// This would be implemented based on how ogen mounts routes
 	// For now, this is a placeholder
-	return fmt.Errorf("MountRoutes not implemented - depends on ogen router structure")
-}
+	return fmt.Errorf("MountRoutes not implemented - depends on ogen router struc

@@ -1,0 +1,770 @@
+openapi: 3.0.3
+info:
+  title: NECPGAME Event Bus Service API
+  description: Enterprise-grade event-driven architecture service with Kafka integration
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Local development server
+  - url: https://api.necpgame.com/event-bus
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /events/publish:
+    post:
+      summary: Publish a generic event to the event bus
+      description: Publishes an event to the specified Kafka topic with full metadata tracking
+      operationId: PublishEvent
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishEventRequest'
+      responses:
+        '200':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPublishResponse'
+        '500':
+          description: Publishing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/game/publish:
+    post:
+      summary: Publish a game-specific event
+      description: Publishes a game event with structured gameplay data
+      operationId: PublishGameEvent
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishGameEventRequest'
+      responses:
+        '200':
+          description: Game event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPublishResponse'
+        '500':
+          description: Publishing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{eventId}/status:
+    get:
+      summary: Get event status and metadata
+      description: Retrieves the current status and processing information for an event
+      operationId: GetEventStatus
+      tags:
+        - Events
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique event identifier
+      responses:
+        '200':
+          description: Event status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStatusResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /topics:
+    post:
+      summary: Create a new Kafka topic
+      description: Creates a new Kafka topic with specified configuration
+      operationId: CreateTopic
+      tags:
+        - Topics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTopicRequest'
+      responses:
+        '201':
+          description: Topic created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '500':
+          description: Topic creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List all topics
+      description: Retrieves a paginated list of all Kafka topics
+      operationId: ListTopics
+      tags:
+        - Topics
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Topics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicSummary'
+
+  /topics/{topicName}:
+    get:
+      summary: Get topic information
+      description: Retrieves detailed information about a specific topic
+      operationId: GetTopicInfo
+      tags:
+        - Topics
+      parameters:
+        - name: topicName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Topic information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicInfoResponse'
+        '404':
+          description: Topic not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subscriptions:
+    post:
+      summary: Create event subscription
+      description: Creates a new subscription for event consumption
+      operationId: SubscribeToEvents
+      tags:
+        - Subscriptions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeToEventsRequest'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '500':
+          description: Subscription creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List subscriptions
+      description: Retrieves a paginated list of event subscriptions
+      operationId: ListSubscriptions
+      tags:
+        - Subscriptions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionSummary'
+
+  /replay:
+    post:
+      summary: Initiate event replay
+      description: Starts replaying events from a specified time range
+      operationId: ReplayEvents
+      tags:
+        - Replay
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplayEventsRequest'
+      responses:
+        '202':
+          description: Replay initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayResponse'
+        '500':
+          description: Replay initiation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /replay/{replayId}/status:
+    get:
+      summary: Get replay status
+      description: Retrieves the current status of an event replay operation
+      operationId: GetReplayStatus
+      tags:
+        - Replay
+      parameters:
+        - name: replayId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Replay status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayStatusResponse'
+        '404':
+          description: Replay not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stats:
+    get:
+      summary: Get event processing statistics
+      description: Retrieves comprehensive statistics about event processing
+      operationId: GetEventStats
+      tags:
+        - Statistics
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStatsResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status
+      operationId: HealthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    # Event publishing schemas
+    PublishEventRequest:
+      type: object
+      required:
+        - event_type
+        - topic
+        - source
+        - payload
+      properties:
+        event_type:
+          type: string
+          description: Type of the event (e.g., "user.created", "game.match_ended")
+        topic:
+          type: string
+          description: Kafka topic to publish to
+        source:
+          type: string
+          description: Service or component that generated the event
+        payload:
+          type: string
+          description: JSON payload of the event
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+        is_replayable:
+          type: boolean
+          default: true
+
+    PublishGameEventRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - topic
+      properties:
+        player_id:
+          type: string
+          description: Player identifier
+        session_id:
+          type: string
+          description: Game session identifier
+        action_type:
+          type: string
+          enum: [join, leave, kill, death, score, ability_used, item_used, match_start, match_end]
+        topic:
+          type: string
+          description: Target Kafka topic
+        game_mode:
+          type: string
+          description: Game mode (battle_royale, team_deathmatch, etc.)
+        map_name:
+          type: string
+          description: Map or location name
+        action_data:
+          type: object
+          description: Additional action-specific data
+        position:
+          $ref: '#/components/schemas/Position'
+        server_id:
+          type: string
+          description: Game server identifier
+        region:
+          type: string
+          description: Server region
+        version:
+          type: string
+          description: Game version
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    EventPublishResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+        topic:
+          type: string
+        partition:
+          type: integer
+        offset:
+          type: integer
+        published:
+          type: boolean
+
+    EventStatusResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        partition:
+          type: integer
+        offset:
+          type: integer
+        retry_count:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+
+    # Topic management schemas
+    CreateTopicRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        schema:
+          type: string
+          description: Avro or JSON schema definition
+        partitions:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 3
+        replication_factor:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 2
+        retention_hours:
+          type: integer
+          minimum: 1
+          maximum: 8760
+          default: 168
+        category:
+          type: string
+          enum: [game, system, analytics, audit]
+          default: game
+        owner_service:
+          type: string
+        is_system_topic:
+          type: boolean
+          default: false
+        requires_auth:
+          type: boolean
+          default: false
+        enable_dlq:
+          type: boolean
+          default: true
+
+    TopicResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        partitions:
+          type: integer
+        replication_factor:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+        category:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TopicSummary:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        partitions:
+          type: integer
+        replication_factor:
+          type: integer
+        status:
+          type: string
+        category:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TopicInfoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        partitions:
+          type: integer
+        replication_factor:
+          type: integer
+        status:
+          type: string
+        category:
+          type: string
+        owner_service:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # Subscription schemas
+    SubscribeToEventsRequest:
+      type: object
+      required:
+        - service_name
+        - method
+      properties:
+        service_name:
+          type: string
+          description: Name of the subscribing service
+        topic_pattern:
+          type: string
+          default: "*"
+          description: Topic pattern to match (supports wildcards)
+        event_types:
+          type: array
+          items:
+            type: string
+          description: Specific event types to subscribe to
+        endpoint:
+          type: string
+          description: HTTP endpoint for webhook deliveries
+        method:
+          type: string
+          enum: [kafka, webhook, queue]
+          default: kafka
+        auth_token:
+          type: string
+          description: Authentication token for webhook calls
+        max_retries:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 3
+        retry_delay:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          default: 60
+          description: Delay between retries in seconds
+        rate_limit_per_min:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+        enable_batching:
+          type: boolean
+          default: false
+        requires_ack:
+          type: boolean
+          default: true
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subscription_id:
+          type: string
+        service_name:
+          type: string
+        topic_pattern:
+          type: string
+        method:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    SubscriptionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_name:
+          type: string
+        topic_pattern:
+          type: string
+        method:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    # Replay schemas
+    ReplayEventsRequest:
+      type: object
+      required:
+        - topic
+        - start_time
+        - end_time
+      properties:
+        topic:
+          type: string
+          description: Topic to replay events from
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        filter:
+          type: string
+          description: JSON filter for events to replay
+
+    ReplayResponse:
+      type: object
+      properties:
+        replay_id:
+          type: string
+        status:
+          type: string
+        topic:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        initiated_at:
+          type: string
+          format: date-time
+
+    ReplayStatusResponse:
+      type: object
+      properties:
+        replay_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        total_events:
+          type: integer
+        processed_events:
+          type: integer
+        failed_events:
+          type: integer
+        progress_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    # Statistics schemas
+    EventStatsResponse:
+      type: object
+      properties:
+        total_events_published:
+          type: integer
+        total_events_consumed:
+          type: integer
+        active_topics:
+          type: integer
+        active_subscriptions:
+          type: integer
+        average_processing_time:
+          type: number
+        error_rate:
+          type: number
+        throughput_per_second:
+          type: number
+
+    # Common schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        domain:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - code
+        - message
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -8,32 +8,31 @@ info:
 
     ## Key Features
 
-    - **BazaarBot AI**: Intelligent trading agents with personality-based decision making
-    - **Real-Time Markets**: Live commodity trading with order book mechanics
-    - **Economic Simulation**: Hourly tick-based market evolution (#2281)
-    - **Player Trading**: Direct market participation and portfolio management
-    - **Anti-Cheat Protection**: Economic fraud detection and prevention
-    - **Performance Optimized**: MMOFPS-grade performance with <25ms P99 latency
+    - **BazaarBot AI**: Intelligent trading agents with personality-based decision
+    making - **Real-Time Markets**: Live commodity trading with order book mechanics
+    - **Economic Simulation**: Hourly tick-based market evolution (#2281) - **Player
+    Trading**: Direct market participation and portfolio management - **Anti-Cheat
+    Protection**: Economic fraud detection and prevention - **Performance Optimized**:
+    MMOFPS-grade performance with <25ms P99 latency
 
     ## BazaarBot Intelligence
 
-    The BazaarBot system implements advanced AI trading agents with:
-    - **Personality Traits**: Risk tolerance, impatience, social influence
-    - **Belief Systems**: Dynamic price belief adaptation based on market conditions
-    - **Learning Algorithms**: Reinforcement learning for optimal trading strategies
-    - **Market Psychology**: Herding behavior and sentiment analysis
+    The BazaarBot system implements advanced AI trading agents with: - **Personality
+    Traits**: Risk tolerance, impatience, social influence - **Belief Systems**: Dynamic
+    price belief adaptation based on market conditions - **Learning Algorithms**:
+    Reinforcement learning for optimal trading strategies - **Market Psychology**:
+    Herding behavior and sentiment analysis
 
     ## Domain Purpose
 
-    The Economy domain handles all player economic interactions in Night City,
-    from basic trading to complex BazaarBot-driven market dynamics.
+    The Economy domain handles all player economic interactions in Night City, from
+    basic trading to complex BazaarBot-driven market dynamics.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for trading operations
-    - Concurrent Traders: 10,000+ simultaneous market participants
-    - Memory: <512KB per active BazaarBot agent
-    - Market Clearing: <100ms for 1000+ concurrent orders
+    - P99 Latency: <25ms for trading operations - Concurrent Traders: 10,000+ simultaneous
+    market participants - Memory: <512KB per active BazaarBot agent - Market Clearing:
+    <100ms for 1000+ concurrent orders
 
     '
   version: 1.0.0
@@ -72,7 +71,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-  /market/{commodity}/orders:
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /market/{commodity}/orderbook:
     get:
       summary: Get current order book for commodity
       operationId: getOrderBook
@@ -82,6 +87,15 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Commodity'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of orders to return per side
       responses:
         '200':
           description: Current order book
@@ -89,7 +103,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderBook'
-  /market/{commodity}/orders:
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Place trading order
       operationId: placeOrder
@@ -112,6 +131,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /market/{commodity}/price:
     get:
       summary: Get current market price for commodity
@@ -129,6 +154,65 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MarketPrice'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /market/{commodity}/trades:
+    get:
+      summary: Get recent trades for commodity
+      operationId: getMarketTrades
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of trades to return
+      responses:
+        '200':
+          description: Recent trades for the commodity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trade'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+      parameters:
+      - name: commodity
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Commodity'
+      responses:
+        '200':
+          description: Current market price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketPrice'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /player/{playerId}/portfolio:
     get:
       summary: Get player economic portfolio
@@ -147,6 +231,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlayerPortfolio'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /player/{playerId}/orders:
     get:
       summary: Get player active orders
@@ -165,6 +255,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlayerOrders'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /bazaarbot/status:
     get:
       summary: Get BazaarBot simulation status
@@ -176,6 +272,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BazaarBotStatus'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /bazaarbot/agents:
     get:
       summary: Get BazaarBot agents information
@@ -187,6 +289,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BazaarBotAgents'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /market/history/{commodity}:
     get:
       summary: Get market price history
@@ -211,7 +319,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MarketHistory'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   schemas:
     HealthResponse:
@@ -219,7 +332,9 @@ components:
       properties:
         status:
           type: string
-          enum: [healthy, unhealthy]
+          enum:
+          - healthy
+          - unhealthy
         timestamp:
           type: string
           format: date-time
@@ -228,12 +343,17 @@ components:
         uptime:
           type: integer
           description: Uptime in seconds
-
     Commodity:
       type: string
-      enum: [food, water, medicine, weapons, cyberware, vehicles, real_estate]
+      enum:
+      - food
+      - water
+      - medicine
+      - weapons
+      - cyberware
+      - vehicles
+      - real_estate
       description: Market commodities
-
     OrderBook:
       type: object
       properties:
@@ -252,7 +372,6 @@ components:
           format: float
         volume24h:
           type: integer
-
     Order:
       type: object
       properties:
@@ -264,7 +383,9 @@ components:
           format: uuid
         type:
           type: string
-          enum: [buy, sell]
+          enum:
+          - buy
+          - sell
         commodity:
           $ref: '#/components/schemas/Commodity'
         price:
@@ -277,14 +398,63 @@ components:
         createdAt:
           type: string
           format: date-time
-
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique trade identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the trade was executed
+        commodity:
+          $ref: '#/components/schemas/Commodity'
+        buyerId:
+          type: string
+          format: uuid
+          description: ID of the buyer
+        sellerId:
+          type: string
+          format: uuid
+          description: ID of the seller
+        price:
+          type: number
+          format: float
+          minimum: 0.01
+          description: Trade price per unit
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity traded
+        orderType:
+          type: string
+          enum:
+          - limit
+          - market
+          description: Type of order that created this trade
+        tradeValue:
+          type: number
+          format: float
+          description: Total value of the trade (price * quantity)
+        fee:
+          type: number
+          format: float
+          minimum: 0
+          description: Trading fee charged
     PlaceOrderRequest:
       type: object
-      required: [type, price, quantity]
+      required:
+      - type
+      - price
+      - quantity
       properties:
         type:
           type: string
-          enum: [buy, sell]
+          enum:
+          - buy
+          - sell
         price:
           type: number
           format: float
@@ -292,7 +462,6 @@ components:
         quantity:
           type: integer
           minimum: 1
-
     OrderResponse:
       type: object
       properties:
@@ -301,10 +470,12 @@ components:
           format: uuid
         status:
           type: string
-          enum: [pending, filled, cancelled]
+          enum:
+          - pending
+          - filled
+          - cancelled
         message:
           type: string
-
     MarketPrice:
       type: object
       properties:
@@ -321,7 +492,6 @@ components:
         lastUpdate:
           type: string
           format: date-time
-
     PlayerPortfolio:
       type: object
       properties:
@@ -339,12 +509,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Order'
-
     PlayerOrders:
       type: array
       items:
         $ref: '#/components/schemas/Order'
-
     BazaarBotStatus:
       type: object
       properties:
@@ -360,7 +528,6 @@ components:
         simulationUptime:
           type: integer
           description: Uptime in seconds
-
     BazaarBotAgents:
       type: object
       properties:
@@ -368,7 +535,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BazaarBotAgent'
-
     BazaarBotAgent:
       type: object
       properties:
@@ -407,7 +573,6 @@ components:
         lastActivity:
           type: string
           format: date-time
-
     MarketHistory:
       type: object
       properties:

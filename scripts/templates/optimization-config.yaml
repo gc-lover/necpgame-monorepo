@@ -1,0 +1,185 @@
+# Optimization Configuration for NECPGAME Services
+# This file defines optimization parameters for different service types
+
+# Database pool configurations by service type
+database_pools:
+  combat_service:
+    max_conns: 40
+    max_conns_desc: "High pool for combat operations"
+    min_conns: 15
+    min_conns_desc: "Keep more connections for combat"
+    max_conn_lifetime: "10m"
+    max_conn_lifetime_desc: "Shorter for real-time ops"
+    max_conn_idle_time: "1m"
+    max_conn_idle_time_desc: "Quick cleanup for combat"
+
+  ability_service:
+    max_conns: 35
+    max_conns_desc: "High pool for ability operations"
+    min_conns: 12
+    min_conns_desc: "Keep connections for ability activation"
+    max_conn_lifetime: "8m"
+    max_conn_lifetime_desc: "Balanced for ability operations"
+    max_conn_idle_time: "45s"
+    max_conn_idle_time_desc: "Moderate cleanup"
+
+  auth_service:
+    max_conns: 25
+    max_conns_desc: "Balanced pool for auth operations"
+    min_conns: 8
+    min_conns_desc: "Stable connections for auth"
+    max_conn_lifetime: "15m"
+    max_conn_lifetime_desc: "Longer for session management"
+    max_conn_idle_time: "2m"
+    max_conn_idle_time_desc: "Conservative cleanup"
+
+  user_facing_service:
+    max_conns: 30
+    max_conns_desc: "Balanced pool for user operations"
+    min_conns: 10
+    min_conns_desc: "Stable connections for users"
+    max_conn_lifetime: "12m"
+    max_conn_lifetime_desc: "Balanced lifetime"
+    max_conn_idle_time: "90s"
+    max_conn_idle_time_desc: "Moderate cleanup"
+
+# Redis pool configurations by service type
+redis_pools:
+  combat_service:
+    pool_size: 25
+    pool_size_desc: "High pool for combat data"
+    min_idle_conns: 8
+    min_idle_conns_desc: "Keep connections ready for combat"
+    conn_max_lifetime: "8m"
+    conn_max_lifetime_desc: "Match DB lifetime"
+
+  ability_service:
+    pool_size: 20
+    pool_size_desc: "Balanced pool for ability data"
+    min_idle_conns: 6
+    min_idle_conns_desc: "Keep connections for abilities"
+    conn_max_lifetime: "6m"
+    conn_max_lifetime_desc: "Shorter for ability ops"
+
+  auth_service:
+    pool_size: 15
+    pool_size_desc: "Moderate pool for session data"
+    min_idle_conns: 4
+    min_idle_conns_desc: "Stable for sessions"
+    conn_max_lifetime: "10m"
+    conn_max_lifetime_desc: "Longer for sessions"
+
+# HTTP server configurations by service type
+http_servers:
+  combat_service:
+    read_timeout: "12s"
+    read_timeout_desc: "Fast combat queries"
+    write_timeout: "18s"
+    write_timeout_desc: "Allow time for complex combat responses"
+    idle_timeout: "75s"
+    idle_timeout_desc: "Combat sessions can be active"
+    read_header_timeout: "2s"
+    read_header_timeout_desc: "Faster header processing"
+    max_header_bytes: "1MB"
+    max_header_bytes_desc: "1MB header limit"
+
+  ability_service:
+    read_timeout: "10s"
+    read_timeout_desc: "Fast ability queries"
+    write_timeout: "15s"
+    write_timeout_desc: "Allow time for ability responses"
+    idle_timeout: "60s"
+    idle_timeout_desc: "Ability sessions active"
+    read_header_timeout: "2s"
+    read_header_timeout_desc: "Faster header processing"
+    max_header_bytes: "1MB"
+    max_header_bytes_desc: "1MB header limit"
+
+  auth_service:
+    read_timeout: "8s"
+    read_timeout_desc: "Fast auth queries"
+    write_timeout: "12s"
+    write_timeout_desc: "Allow time for token generation"
+    idle_timeout: "90s"
+    idle_timeout_desc: "Keep auth connections alive"
+    read_header_timeout: "2s"
+    read_header_timeout_desc: "Faster header processing"
+    max_header_bytes: "1MB"
+    max_header_bytes_desc: "1MB header limit"
+
+# Pprof configurations by service type
+pprof_configs:
+  combat_service:
+    addr: ":6063"
+    gc_value: 50
+    performance_target: "P99 <25ms"
+    optimization_level: "Level 3 (Game Server)"
+
+  ability_service:
+    addr: ":6064"
+    gc_value: 50
+    performance_target: "P99 <20ms"
+    optimization_level: "Level 3 (Game Server)"
+
+  auth_service:
+    addr: ":6065"
+    gc_value: 75
+    performance_target: "P99 <15ms"
+    optimization_level: "Level 2 (User-Facing)"
+
+# Context timeout configurations
+context_timeouts:
+  database_operation: "5s"
+  redis_operation: "3s"
+  external_api_call: "10s"
+  combat_action: "15s"
+  ability_activation: "10s"
+  auth_operation: "8s"
+
+# Memory pool configurations
+memory_pools:
+  combat_service:
+    - name: "CombatEvent"
+      fields:
+        - name: "ID"
+          default: "\"\""
+        - name: "Type"
+          default: "\"\""
+        - name: "Timestamp"
+          default: "time.Time{}"
+        - name: "Participant"
+          default: "\"\""
+        - name: "Description"
+          default: "\"\""
+
+    - name: "CombatParticipant"
+      fields:
+        - name: "ID"
+          default: "\"\""
+        - name: "Name"
+          default: "\"\""
+        - name: "Type"
+          default: "\"\""
+        - name: "IsActive"
+          default: "false"
+
+  auth_service:
+    - name: "JWTClaims"
+      fields:
+        - name: "UserID"
+          default: "\"\""
+        - name: "Username"
+          default: "\"\""
+        - name: "Email"
+          default: "\"\""
+
+    - name: "UserSession"
+      fields:
+        - name: "UserID"
+          default: "\"\""
+        - name: "Token"
+          default: "\"\""
+        - name: "CreatedAt"
+          default: "time.Time{}"
+        - name: "ExpiresAt"
+          default: "time.Time{}"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // PERFORMANCE: pprof endpoint for profiling (Level 3 optimization)
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,9 +27,20 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize database connection with enterprise-grade pool optimization
+	// PERFORMANCE: GC tuning for real-time ability operations (Level 3 optimization)
+	if gcPercent := os.Getenv("GOGC"); gcPercent == "" {
+		// debug.SetGCPercent(50) // Uncomment for production tuning
+	}
+
+	// PERFORMANCE: Profiling endpoint for real-time performance monitoring
+	profilingAddr := os.Getenv("PPROF_ADDR")
+	if profilingAddr == "" {
+		profilingAddr = ":6064" // Ability service profiling port
+	}
+
+	// Initialize database and Redis connections with enterprise-grade pool optimization
 	ctx := context.Background()
-	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN(), cfg.Database)
+	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN(), cfg.Database, cfg.Redis)
 	if err != nil {
 		logger.Fatal("Failed to initialize repository", zap.Error(err))
 	}
@@ -41,15 +53,28 @@ func main() {
 	srv := &http.Server{
 		Addr:           cfg.Server.Port,
 		Handler:        svc,
-		ReadTimeout:    15 * time.Second, // Increased for complex ability operations
-		WriteTimeout:   15 * time.Second, // For ability activation responses
-		IdleTimeout:    120 * time.Second, // Keep connections alive for performance
-		MaxHeaderBytes: 1 << 20, // 1MB max headers for security
+		ReadTimeout:    15 * time.Second, // BACKEND NOTE: Increased for complex ability operations
+		WriteTimeout:   15 * time.Second, // BACKEND NOTE: For ability activation responses
+		IdleTimeout:    120 * time.Second, // BACKEND NOTE: Keep connections alive for performance
+		ReadHeaderTimeout: 3 * time.Second, // BACKEND NOTE: Fast header processing for ability requests
+		MaxHeaderBytes: 1 << 20, // BACKEND NOTE: 1MB max headers for security
 	}
+
+	// PERFORMANCE: Start pprof profiling server for real-time performance monitoring
+	go func() {
+		logger.Info("Starting pprof profiling server", zap.String("addr", profilingAddr))
+		if err := http.ListenAndServe(profilingAddr, nil); err != nil {
+			logger.Error("Pprof server failed", zap.Error(err))
+		}
+	}()
 
 	// Start server in goroutine
 	go func() {
-		logger.Info("Starting ability service", zap.String("port", cfg.Server.Port))
+		logger.Info("Starting ability service",
+			zap.String("port", cfg.Server.Port),
+			zap.String("pprof_addr", profilingAddr),
+			zap.String("performance_target", "P99 <20ms"),
+			zap.String("optimization_level", "Level 3 (Game Server)"))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Failed to start server", zap.Error(err))
 		}

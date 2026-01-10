@@ -493,11 +493,12 @@ func (m *MarketLogic) ClearMarket() []*Trade {
 
 			// Create trade
 			trade := &Trade{
-				ID:        fmt.Sprintf("trade-%d", time.Now().UnixNano()),
-				BuyerID:   bid.PlayerID,
-				SellerID:  ask.PlayerID,
-				Price:     tradePrice,
-				Quantity:  tradeQuantity,
+				ID:         fmt.Sprintf("trade-%d", time.Now().UnixNano()),
+				Commodity:  m.Commodity,
+				BuyerID:    bid.PlayerID,
+				SellerID:   ask.PlayerID,
+				Price:      tradePrice,
+				Quantity:   tradeQuantity,
 				ExecutedAt: time.Now(),
 			}
 			trades = append(trades, trade)

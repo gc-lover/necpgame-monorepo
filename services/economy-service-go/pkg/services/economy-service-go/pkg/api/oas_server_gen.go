@@ -38,6 +38,12 @@ type Handler interface {
 	//
 	// GET /market/{commodity}/price
 	GetMarketPrice(ctx context.Context, params GetMarketPriceParams) (*MarketPrice, error)
+	// GetOrderBook implements getOrderBook operation.
+	//
+	// Get current order book for commodity.
+	//
+	// GET /market/{commodity}/orderbook
+	GetOrderBook(ctx context.Context, params GetOrderBookParams) (*OrderBook, error)
 	// GetPlayerOrders implements getPlayerOrders operation.
 	//
 	// Get player active orders.
@@ -54,8 +60,12 @@ type Handler interface {
 	//
 	// Place trading order.
 	//
-	// POST /market/{commodity}/orders
+	// POST /market/{commodity}/orderbook
 	PlaceOrder(ctx context.Context, req *PlaceOrderRequest, params PlaceOrderParams) (*OrderResponse, error)
+	// NewError creates *ErrRespStatusCode from error returned by handler.
+	//
+	// Used for common default response.
+	NewError(ctx context.Context, err error) *ErrRespStatusCode
 }
 
 // Server implements http server based on OpenAPI v3 specification and

@@ -190,8 +190,7 @@ func (h *Handler) CancelEvent(ctx context.Context, params api.CancelEventParams)
 	}
 
 	return &api.CancelEventOK{
-		Code:    "200",
-		Message: "Event cancelled successfully",
+		Message: api.NewOptString("Event cancelled successfully"),
 	}, nil
 }
 
@@ -200,22 +199,26 @@ func (h *Handler) JoinEvent(ctx context.Context, req *api.JoinEventReq, params a
 	playerID, err := uuid.Parse(req.PlayerId)
 	if err != nil {
 		return &api.JoinEventBadRequest{
-			Code:    "400",
 			Message: "Invalid player ID format",
 		}, nil
 	}
 
-	_, err = h.repo.JoinEvent(ctx, playerID, params.EventId)
+	participant, err := h.repo.JoinEvent(ctx, playerID, params.EventId)
 	if err != nil {
 		return &api.JoinEventBadRequest{
-			Code:    "400",
 			Message: fmt.Sprintf("Failed to join event: %v", err),
 		}, nil
 	}
 
-	return &api.Error{
-		Code:    "200",
-		Message: "Successfully joined event",
+	return &api.EventParticipant{
+		ID:             participant.ID,
+		PlayerId:       participant.PlayerID.String(),
+		EventId:        participant.EventID,
+		Status:         api.ParticipationStatus(participant.Status),
+		JoinedAt:       participant.JoinedAt,
+		LastActivityAt: participant.LastActivityAt,
+		CreatedAt:      participant.CreatedAt,
+		UpdatedAt:      participant.UpdatedAt,
 	}, nil
 }
 
@@ -224,7 +227,6 @@ func (h *Handler) LeaveEvent(ctx context.Context, params api.LeaveEventParams) (
 	playerID, err := uuid.Parse(params.PlayerId)
 	if err != nil {
 		return &api.LeaveEventBadRequest{
-			Code:    "400",
 			Message: "Invalid player ID format",
 		}, nil
 	}
@@ -232,13 +234,11 @@ func (h *Handler) LeaveEvent(ctx context.Context, params api.LeaveEventParams) (
 	err = h.repo.LeaveEvent(ctx, playerID, params.EventId)
 	if err != nil {
 		return &api.LeaveEventBadRequest{
-			Code:    "400",
 			Message: fmt.Sprintf("Failed to leave event: %v", err),
 		}, nil
 	}
 
 	return &api.LeaveEventOK{
-		Code:    "200",
 		Message: "Successfully left event",
 	}, nil
 }
@@ -261,8 +261,8 @@ func (h *Handler) GetEventParticipants(ctx context.Context, params api.GetEventP
 	var apiParticipants []api.EventParticipant
 	for _, p := range participants {
 		apiParticipants = append(apiParticipants, api.EventParticipant{
-			Id:             p.ID,
-			PlayerId:       p.PlayerID,
+			ID:             p.ID,
+			PlayerId:       p.PlayerID.String(),
 			EventId:        p.EventID,
 			Status:         api.ParticipationStatus(p.Status),
 			JoinedAt:       p.JoinedAt,

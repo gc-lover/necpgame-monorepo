@@ -57,6 +57,12 @@ type Invoker interface {
 	//
 	// GET /market/{commodity}/price
 	GetMarketPrice(ctx context.Context, params GetMarketPriceParams) (*MarketPrice, error)
+	// GetOrderBook invokes getOrderBook operation.
+	//
+	// Get current order book for commodity.
+	//
+	// GET /market/{commodity}/orderbook
+	GetOrderBook(ctx context.Context, params GetOrderBookParams) (*OrderBook, error)
 	// GetPlayerOrders invokes getPlayerOrders operation.
 	//
 	// Get player active orders.
@@ -73,7 +79,7 @@ type Invoker interface {
 	//
 	// Place trading order.
 	//
-	// POST /market/{commodity}/orders
+	// POST /market/{commodity}/orderbook
 	PlaceOrder(ctx context.Context, request *PlaceOrderRequest, params PlaceOrderParams) (*OrderResponse, error)
 }
 
@@ -82,8 +88,12 @@ type Client struct {
 	serverURL *url.URL
 	baseClient
 }
+type errorHandler interface {
+	NewError(ctx context.Context, err error) *ErrRespStatusCode
+}
 
 var _ Handler = struct {
+	errorHandler
 	*Client
 }{}
 
@@ -543,6 +553,119 @@ func (c *Client) sendGetMarketPrice(ctx context.Context, params GetMarketPricePa
 	return result, nil
 }
 
+// GetOrderBook invokes getOrderBook operation.
+//
+// Get current order book for commodity.
+//
+// GET /market/{commodity}/orderbook
+func (c *Client) GetOrderBook(ctx context.Context, params GetOrderBookParams) (*OrderBook, error) {
+	res, err := c.sendGetOrderBook(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetOrderBook(ctx context.Context, params GetOrderBookParams) (res *OrderBook, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getOrderBook"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/market/{commodity}/orderbook"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetOrderBookOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/market/"
+	{
+		// Encode "commodity" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "commodity",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(string(params.Commodity)))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/orderbook"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetOrderBookResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetPlayerOrders invokes getPlayerOrders operation.
 //
 // Get player active orders.
@@ -731,7 +854,7 @@ func (c *Client) sendGetPlayerPortfolio(ctx context.Context, params GetPlayerPor
 //
 // Place trading order.
 //
-// POST /market/{commodity}/orders
+// POST /market/{commodity}/orderbook
 func (c *Client) PlaceOrder(ctx context.Context, request *PlaceOrderRequest, params PlaceOrderParams) (*OrderResponse, error) {
 	res, err := c.sendPlaceOrder(ctx, request, params)
 	return res, err
@@ -741,7 +864,7 @@ func (c *Client) sendPlaceOrder(ctx context.Context, request *PlaceOrderRequest,
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("placeOrder"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/market/{commodity}/orders"),
+		semconv.URLTemplateKey.String("/market/{commodity}/orderbook"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -794,7 +917,7 @@ func (c *Client) sendPlaceOrder(ctx context.Context, request *PlaceOrderRequest,
 		}
 		pathParts[1] = encoded
 	}
-	pathParts[2] = "/orders"
+	pathParts[2] = "/orderbook"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"

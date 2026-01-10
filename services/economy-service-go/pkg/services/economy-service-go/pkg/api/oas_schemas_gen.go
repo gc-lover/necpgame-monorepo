@@ -3,11 +3,16 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 )
+
+func (s *ErrRespStatusCode) Error() string {
+	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
+}
 
 // Ref: #/components/schemas/BazaarBotAgent
 type BazaarBotAgent struct {
@@ -279,6 +284,73 @@ func (s *Commodity) UnmarshalText(data []byte) error {
 	}
 }
 
+// Standard error response format.
+type ErrResp struct {
+	Code    int32  `json:"code"`
+	Message string `json:"message"`
+	// Additional error details.
+	Details *ErrRespDetails `json:"details"`
+}
+
+// GetCode returns the value of Code.
+func (s *ErrResp) GetCode() int32 {
+	return s.Code
+}
+
+// GetMessage returns the value of Message.
+func (s *ErrResp) GetMessage() string {
+	return s.Message
+}
+
+// GetDetails returns the value of Details.
+func (s *ErrResp) GetDetails() *ErrRespDetails {
+	return s.Details
+}
+
+// SetCode sets the value of Code.
+func (s *ErrResp) SetCode(val int32) {
+	s.Code = val
+}
+
+// SetMessage sets the value of Message.
+func (s *ErrResp) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetDetails sets the value of Details.
+func (s *ErrResp) SetDetails(val *ErrRespDetails) {
+	s.Details = val
+}
+
+// Additional error details.
+type ErrRespDetails struct{}
+
+// ErrRespStatusCode wraps ErrResp with StatusCode.
+type ErrRespStatusCode struct {
+	StatusCode int
+	Response   ErrResp
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *ErrRespStatusCode) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetResponse returns the value of Response.
+func (s *ErrRespStatusCode) GetResponse() ErrResp {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *ErrRespStatusCode) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ErrRespStatusCode) SetResponse(val ErrResp) {
+	s.Response = val
+}
+
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
 	Status    OptHealthResponseStatus `json:"status"`
@@ -395,41 +467,7 @@ func (s *MarketHistory) SetPrices(val []MarketHistoryPricesItem) {
 	s.Prices = val
 }
 
-type MarketHistoryPricesItem struct {
-	Timestamp OptDateTime `json:"timestamp"`
-	Price     OptFloat32  `json:"price"`
-	Volume    OptInt      `json:"volume"`
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *MarketHistoryPricesItem) GetTimestamp() OptDateTime {
-	return s.Timestamp
-}
-
-// GetPrice returns the value of Price.
-func (s *MarketHistoryPricesItem) GetPrice() OptFloat32 {
-	return s.Price
-}
-
-// GetVolume returns the value of Volume.
-func (s *MarketHistoryPricesItem) GetVolume() OptInt {
-	return s.Volume
-}
-
-// SetTimestamp sets the value of Timestamp.
-func (s *MarketHistoryPricesItem) SetTimestamp(val OptDateTime) {
-	s.Timestamp = val
-}
-
-// SetPrice sets the value of Price.
-func (s *MarketHistoryPricesItem) SetPrice(val OptFloat32) {
-	s.Price = val
-}
-
-// SetVolume sets the value of Volume.
-func (s *MarketHistoryPricesItem) SetVolume(val OptInt) {
-	s.Volume = val
-}
+type MarketHistoryPricesItem struct{}
 
 // Ref: #/components/schemas/MarketPrice
 type MarketPrice struct {
@@ -1167,6 +1205,65 @@ func (s *Order) SetQuantity(val OptInt) {
 // SetCreatedAt sets the value of CreatedAt.
 func (s *Order) SetCreatedAt(val OptDateTime) {
 	s.CreatedAt = val
+}
+
+// Ref: #/components/schemas/OrderBook
+type OrderBook struct {
+	Commodity OptCommodity `json:"commodity"`
+	Bids      []Order      `json:"bids"`
+	Asks      []Order      `json:"asks"`
+	LastPrice OptFloat32   `json:"lastPrice"`
+	Volume24h OptInt       `json:"volume24h"`
+}
+
+// GetCommodity returns the value of Commodity.
+func (s *OrderBook) GetCommodity() OptCommodity {
+	return s.Commodity
+}
+
+// GetBids returns the value of Bids.
+func (s *OrderBook) GetBids() []Order {
+	return s.Bids
+}
+
+// GetAsks returns the value of Asks.
+func (s *OrderBook) GetAsks() []Order {
+	return s.Asks
+}
+
+// GetLastPrice returns the value of LastPrice.
+func (s *OrderBook) GetLastPrice() OptFloat32 {
+	return s.LastPrice
+}
+
+// GetVolume24h returns the value of Volume24h.
+func (s *OrderBook) GetVolume24h() OptInt {
+	return s.Volume24h
+}
+
+// SetCommodity sets the value of Commodity.
+func (s *OrderBook) SetCommodity(val OptCommodity) {
+	s.Commodity = val
+}
+
+// SetBids sets the value of Bids.
+func (s *OrderBook) SetBids(val []Order) {
+	s.Bids = val
+}
+
+// SetAsks sets the value of Asks.
+func (s *OrderBook) SetAsks(val []Order) {
+	s.Asks = val
+}
+
+// SetLastPrice sets the value of LastPrice.
+func (s *OrderBook) SetLastPrice(val OptFloat32) {
+	s.LastPrice = val
+}
+
+// SetVolume24h sets the value of Volume24h.
+func (s *OrderBook) SetVolume24h(val OptInt) {
+	s.Volume24h = val
 }
 
 // Ref: #/components/schemas/OrderResponse

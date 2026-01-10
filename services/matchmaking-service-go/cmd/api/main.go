@@ -65,13 +65,15 @@ func main() {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
-	// Configure HTTP server with enterprise-grade timeouts
+	// Configure HTTP server with enterprise-grade timeouts for MMOFPS matchmaking
 	httpServer := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
-		Handler:      server,
-		ReadTimeout:  cfg.Server.ReadTimeout,
-		WriteTimeout: cfg.Server.WriteTimeout,
-		IdleTimeout:  cfg.Server.IdleTimeout,
+		Addr:              ":" + cfg.Server.Port,
+		Handler:           server,
+		ReadTimeout:       cfg.Server.ReadTimeout,       // BACKEND NOTE: Increased for complex matchmaking operations
+		WriteTimeout:      cfg.Server.WriteTimeout,      // BACKEND NOTE: For matchmaking response generation
+		IdleTimeout:       cfg.Server.IdleTimeout,       // BACKEND NOTE: Keep connections alive for matchmaking sessions
+		ReadHeaderTimeout: cfg.Server.ReadHeaderTimeout, // BACKEND NOTE: Fast header processing for matchmaking requests
+		MaxHeaderBytes:    1 << 20, // BACKEND NOTE: 1MB max headers for security
 	}
 
 	// Start server in goroutine

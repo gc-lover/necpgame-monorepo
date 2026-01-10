@@ -58,6 +58,15 @@ func (UnimplementedHandler) GetMarketPrice(ctx context.Context, params GetMarket
 	return r, ht.ErrNotImplemented
 }
 
+// GetOrderBook implements getOrderBook operation.
+//
+// Get current order book for commodity.
+//
+// GET /market/{commodity}/orderbook
+func (UnimplementedHandler) GetOrderBook(ctx context.Context, params GetOrderBookParams) (r *OrderBook, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetPlayerOrders implements getPlayerOrders operation.
 //
 // Get player active orders.
@@ -80,7 +89,15 @@ func (UnimplementedHandler) GetPlayerPortfolio(ctx context.Context, params GetPl
 //
 // Place trading order.
 //
-// POST /market/{commodity}/orders
+// POST /market/{commodity}/orderbook
 func (UnimplementedHandler) PlaceOrder(ctx context.Context, req *PlaceOrderRequest, params PlaceOrderParams) (r *OrderResponse, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// NewError creates *ErrRespStatusCode from error returned by handler.
+//
+// Used for common default response.
+func (UnimplementedHandler) NewError(ctx context.Context, err error) (r *ErrRespStatusCode) {
+	r = new(ErrRespStatusCode)
+	return r
 }

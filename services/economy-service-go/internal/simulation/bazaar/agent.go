@@ -112,32 +112,17 @@ func (a *AgentLogic) adjustBeliefForMarket(c Commodity, belief *PriceBelief, mar
 // calculateOptimalPrice determines the best price to offer based on personality and strategy
 // Issue: #2278
 func (a *AgentLogic) calculateOptimalPrice(c Commodity, belief *PriceBelief, marketState *MarketState, isProducer bool) float64 {
-	// Risk tolerance affects price aggressiveness
 	riskMultiplier := 0.5 + a.Personality.RiskTolerance*0.5 // 0.5 to 1.0
-	priceRange := belief.Max - belief.Min
+
+	// For initial market formation, use overlapping price ranges around midpoint
+	midpoint := (belief.Min + belief.Max) / 2.0
 
 	if isProducer {
-		// Sellers want higher prices, adjusted by risk tolerance
-		// Risk-seeking sellers ask closer to max belief, risk-averse closer to min
-		aggressiveFactor := riskMultiplier
-
-		// If market is trending up, be more aggressive (ask higher)
-		if trend, exists := marketState.Trend[c]; exists && trend > 0 {
-			aggressiveFactor = math.Min(1.0, aggressiveFactor+0.1)
-		}
-
-		return belief.Min + priceRange*aggressiveFactor
+		// Sellers: price from midpoint-0.5 to midpoint+0.5
+		return midpoint - 0.5 + riskMultiplier
 	} else {
-		// Buyers want lower prices, adjusted by risk tolerance
-		// Risk-seeking buyers bid closer to max belief (higher bids), risk-averse closer to min
-		aggressiveFactor := 1.0 - riskMultiplier
-
-		// If market is trending down, be more aggressive (bid lower)
-		if trend, exists := marketState.Trend[c]; exists && trend < 0 {
-			aggressiveFactor = math.Max(0.0, aggressiveFactor-0.1)
-		}
-
-		return belief.Min + priceRange*math.Max(0, aggressiveFactor)
+		// Buyers: price from midpoint-0.5 to midpoint+0.5
+		return midpoint - 0.5 + riskMultiplier
 	}
 }
 

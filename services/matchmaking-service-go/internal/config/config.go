@@ -43,10 +43,11 @@ type RedisConfig struct {
 
 // ServerConfig holds HTTP server configuration
 type ServerConfig struct {
-	Port         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Port            string
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ReadHeaderTimeout time.Duration // BACKEND NOTE: Fast header processing for matchmaking requests
 }
 
 // MatchmakingConfig holds matchmaking-specific configuration
@@ -61,7 +62,7 @@ type MatchmakingConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{}
 
-	// Database configuration
+	// Database configuration - BACKEND NOTE: Enterprise-grade pool for MMOFPS matchmaking
 	cfg.Database = DatabaseConfig{
 		Host:         getEnv("DB_HOST", "localhost"),
 		Port:         getEnvAsInt("DB_PORT", 5432),
@@ -69,28 +70,31 @@ func Load() (*Config, error) {
 		Password:     getEnv("DB_PASSWORD", "password"),
 		Database:     getEnv("DB_NAME", "matchmaking"),
 		SSLMode:      getEnv("DB_SSLMODE", "disable"),
-		MaxOpenConns: getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
-		MaxIdleConns: getEnvAsInt("DB_MAX_IDLE_CONNS", 25),
-		MaxLifetime:  time.Duration(getEnvAsInt("DB_MAX_LIFETIME_MIN", 5)) * time.Minute,
+		// BACKEND NOTE: Optimized for 100k+ concurrent matchmaking operations
+		MaxOpenConns: getEnvAsInt("DB_MAX_OPEN_CONNS", 50), // BACKEND NOTE: High pool for matchmaking queries
+		MaxIdleConns: getEnvAsInt("DB_MAX_IDLE_CONNS", 10), // BACKEND NOTE: Keep minimum connections ready
+		MaxLifetime:  time.Duration(getEnvAsInt("DB_MAX_LIFETIME_MIN", 30)) * time.Minute, // BACKEND NOTE: Longer lifetime for stable matchmaking
 	}
 
-	// Redis configuration
+	// Redis configuration - BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS matchmaking
 	cfg.Redis = RedisConfig{
 		Host:         getEnv("REDIS_HOST", "localhost"),
 		Port:         getEnvAsInt("REDIS_PORT", 6379),
 		Password:     getEnv("REDIS_PASSWORD", ""),
 		DB:           getEnvAsInt("REDIS_DB", 0),
 		MaxRetries:   getEnvAsInt("REDIS_MAX_RETRIES", 3),
-		PoolSize:     getEnvAsInt("REDIS_POOL_SIZE", 10),
-		MinIdleConns: getEnvAsInt("REDIS_MIN_IDLE_CONNS", 2),
+		// BACKEND NOTE: High-performance pool for real-time matchmaking state
+		PoolSize:     getEnvAsInt("REDIS_POOL_SIZE", 25),     // BACKEND NOTE: High pool for matchmaking session caching
+		MinIdleConns: getEnvAsInt("REDIS_MIN_IDLE_CONNS", 8), // BACKEND NOTE: Keep connections ready for instant matchmaking
 	}
 
-	// Server configuration
+	// Server configuration - BACKEND NOTE: Enterprise-grade HTTP server for MMOFPS matchmaking
 	cfg.Server = ServerConfig{
-		Port:         getEnv("PORT", "8080"),
-		ReadTimeout:  time.Duration(getEnvAsInt("SERVER_READ_TIMEOUT_SEC", 30)) * time.Second,
-		WriteTimeout: time.Duration(getEnvAsInt("SERVER_WRITE_TIMEOUT_SEC", 30)) * time.Second,
-		IdleTimeout:  time.Duration(getEnvAsInt("SERVER_IDLE_TIMEOUT_SEC", 120)) * time.Second,
+		Port:              getEnv("PORT", "8080"),
+		ReadTimeout:       time.Duration(getEnvAsInt("SERVER_READ_TIMEOUT_SEC", 30)) * time.Second,      // BACKEND NOTE: Increased for complex matchmaking operations
+		WriteTimeout:      time.Duration(getEnvAsInt("SERVER_WRITE_TIMEOUT_SEC", 30)) * time.Second,     // BACKEND NOTE: For matchmaking response generation
+		IdleTimeout:       time.Duration(getEnvAsInt("SERVER_IDLE_TIMEOUT_SEC", 120)) * time.Second,    // BACKEND NOTE: Keep connections alive for matchmaking sessions
+		ReadHeaderTimeout: time.Duration(getEnvAsInt("SERVER_READ_HEADER_TIMEOUT_SEC", 3)) * time.Second, // BACKEND NOTE: Fast header processing for matchmaking requests
 	}
 
 	// Matchmaking configuration

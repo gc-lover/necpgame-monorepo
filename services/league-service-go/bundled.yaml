@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: NECPGAME League Service API
+  description: Enterprise-grade competitive gaming league system for NECPGAME
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+  - url: https://api.necpgame.com/league
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /players/register:
+    post:
+      summary: Register a new player in the league system
+      description: Creates a new player account with initial ranking and statistics
+      operationId: RegisterPlayer
+      tags:
+        - Players
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterPlayerRequest'
+      responses:
+        '201':
+          description: Player registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerResponse'
+        '400':
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /players/{playerId}/profile:
+    get:
+      summary: Get player profile and statistics
+      description: Retrieves detailed player information including ranking and performance metrics
+      operationId: GetPlayerProfile
+      tags:
+        - Players
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Player profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfileResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /leaderboard/{divisionId}:
+    get:
+      summary: Get division leaderboard
+      description: Retrieves the current leaderboard for a specific division with ranking information
+      operationId: GetLeaderboard
+      tags:
+        - Leaderboard
+      parameters:
+        - name: divisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournaments:
+    post:
+      summary: Create a new tournament
+      description: Creates a new competitive tournament with specified parameters
+      operationId: CreateTournament
+      tags:
+        - Tournaments
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTournamentRequest'
+      responses:
+        '201':
+          description: Tournament created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentResponse'
+        '400':
+          description: Invalid tournament data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get active tournaments
+      description: Retrieves list of currently active tournaments
+      operationId: GetActiveTournaments
+      tags:
+        - Tournaments
+      responses:
+        '200':
+          description: Active tournaments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TournamentSummary'
+
+  /tournaments/{tournamentId}/register:
+    post:
+      summary: Register for tournament
+      description: Registers the authenticated player for a tournament
+      operationId: RegisterForTournament
+      tags:
+        - Tournaments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterForTournamentRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Registration failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournaments/{tournamentId}:
+    get:
+      summary: Get tournament details
+      description: Retrieves detailed information about a specific tournament
+      operationId: GetTournamentDetails
+      tags:
+        - Tournaments
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tournament details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentDetailsResponse'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/result:
+    post:
+      summary: Submit match result
+      description: Submits the result of a completed competitive match for ranking calculations
+      operationId: SubmitMatchResult
+      tags:
+        - Matches
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMatchResultRequest'
+      responses:
+        '200':
+          description: Match result processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResultResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Match processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /players/{playerId}/matches:
+    get:
+      summary: Get player match history
+      description: Retrieves a player's competitive match history
+      operationId: GetPlayerMatchHistory
+      tags:
+        - Players
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Match history retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchHistoryEntry'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status
+      operationId: HealthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    # Request schemas
+    RegisterPlayerRequest:
+      type: object
+      required:
+        - player_id
+        - nickname
+      properties:
+        player_id:
+          type: string
+          description: Unique player identifier
+        nickname:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Player display name
+
+    CreateTournamentRequest:
+      type: object
+      required:
+        - name
+        - game_mode
+        - start_date
+        - end_date
+        - registration_deadline
+        - max_participants
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        game_mode:
+          type: string
+          enum: [battle_royale, team_deathmatch, capture_the_flag, ranked_solo]
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        registration_deadline:
+          type: string
+          format: date-time
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+        entry_fee:
+          type: integer
+          minimum: 0
+          default: 0
+        prize_pool:
+          type: integer
+          minimum: 0
+          default: 0
+        min_division_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+        tournament_type:
+          type: string
+          enum: [single_elimination, double_elimination, round_robin, swiss]
+          default: single_elimination
+        is_ranked:
+          type: boolean
+          default: true
+        requires_qualification:
+          type: boolean
+          default: false
+
+    RegisterForTournamentRequest:
+      type: object
+      description: Empty request body for tournament registration
+
+    SubmitMatchResultRequest:
+      type: object
+      required:
+        - game_mode
+        - map_name
+        - division_id
+        - start_time
+        - end_time
+        - duration_seconds
+        - participants
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        game_mode:
+          type: string
+        map_name:
+          type: string
+        division_id:
+          type: integer
+          minimum: 1
+          maximum: 10
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+          minimum: 0
+        max_score:
+          type: integer
+          minimum: 0
+        is_ranked:
+          type: boolean
+          default: true
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchParticipant'
+          minItems: 1
+
+    MatchParticipant:
+      type: object
+      required:
+        - player_id
+        - score
+        - position
+      properties:
+        player_id:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+        kills:
+          type: integer
+          minimum: 0
+          default: 0
+        deaths:
+          type: integer
+          minimum: 0
+          default: 0
+        assists:
+          type: integer
+          minimum: 0
+          default: 0
+        position:
+          type: integer
+          minimum: 1
+        kd_ratio:
+          type: number
+          minimum: 0
+        performance_score:
+          type: number
+          minimum: 0
+
+    # Response schemas
+    PlayerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        nickname:
+          type: string
+        current_division_id:
+          type: integer
+        rating:
+          type: integer
+        is_active:
+          type: boolean
+        is_provisional:
+          type: boolean
+        joined_at:
+          type: string
+          format: date-time
+
+    PlayerProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        nickname:
+          type: string
+        current_division_id:
+          type: integer
+        current_rank:
+          type: integer
+        rating:
+          type: integer
+        games_played:
+          type: integer
+        games_won:
+          type: integer
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        average_score:
+          type: number
+        performance_rating:
+          type: number
+        is_active:
+          type: boolean
+        is_provisional:
+          type: boolean
+        joined_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        player_id:
+          type: string
+        nickname:
+          type: string
+        rating:
+          type: integer
+        games_played:
+          type: integer
+        games_won:
+          type: integer
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        avg_score:
+          type: number
+        division_name:
+          type: string
+        is_provisional:
+          type: boolean
+        last_active:
+          type: string
+          format: date-time
+
+    TournamentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        game_mode:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        registration_deadline:
+          type: string
+          format: date-time
+        max_participants:
+          type: integer
+        current_participants:
+          type: integer
+        entry_fee:
+          type: integer
+        prize_pool:
+          type: integer
+        min_division_level:
+          type: integer
+        status:
+          type: string
+          enum: [upcoming, registering, in_progress, completed, cancelled]
+        tournament_type:
+          type: string
+        is_ranked:
+          type: boolean
+        requires_qualification:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    TournamentDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        game_mode:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        registration_deadline:
+          type: string
+          format: date-time
+        max_participants:
+          type: integer
+        current_participants:
+          type: integer
+        entry_fee:
+          type: integer
+        prize_pool:
+          type: integer
+        min_division_level:
+          type: integer
+        status:
+          type: string
+        tournament_type:
+          type: string
+        is_ranked:
+          type: boolean
+        requires_qualification:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    TournamentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        game_mode:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        max_participants:
+          type: integer
+        current_participants:
+          type: integer
+        entry_fee:
+          type: integer
+        prize_pool:
+          type: integer
+        status:
+          type: string
+        is_ranked:
+          type: boolean
+
+    MatchResultResponse:
+      type: object
+      properties:
+        match_id:
+          type: string
+        winner_id:
+          type: string
+        processed:
+          type: boolean
+
+    MatchHistoryEntry:
+      type: object
+      properties:
+        match_id:
+          type: string
+        game_mode:
+          type: string
+        map_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+        score:
+          type: integer
+        position:
+          type: integer
+        is_winner:
+          type: boolean
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        domain:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - code
+        - message
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -44,10 +44,12 @@ type JWTConfig struct {
 }
 
 type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
+	Host         string
+	Port         string
+	Password     string
+	DB           int
+	PoolSize     int // BACKEND NOTE: Redis connection pool size for MMOFPS
+	MinIdleConns int // BACKEND NOTE: Minimum idle connections to maintain
 }
 
 func Load() *Config {
@@ -64,21 +66,24 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "ability_password"),
 			DBName:   getEnv("DB_NAME", "ability_db"),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
-			// Enterprise-grade database pool optimization for MMOFPS
-			MaxConns:        getEnvInt("DB_MAX_CONNS", 25), // Optimized for 100k+ concurrent users
-			MinConns:        getEnvInt("DB_MIN_CONNS", 5),  // Maintain minimum connections
-			MaxConnLifetime: time.Duration(getEnvInt("DB_MAX_CONN_LIFETIME_MIN", 60)) * time.Minute, // 1 hour
-			MaxConnIdleTime: time.Duration(getEnvInt("DB_MAX_CONN_IDLE_MIN", 30)) * time.Minute,     // 30 minutes
+			// BACKEND NOTE: Enterprise-grade database pool optimization for MMOFPS (100k+ concurrent users)
+			MaxConns:        getEnvInt("DB_MAX_CONNS", 50), // BACKEND NOTE: High pool for ability operations (50 max connections)
+			MinConns:        getEnvInt("DB_MIN_CONNS", 10), // BACKEND NOTE: Keep minimum connections ready for instant ability access
+			MaxConnLifetime: time.Duration(getEnvInt("DB_MAX_CONN_LIFETIME_MIN", 30)) * time.Minute, // BACKEND NOTE: Shorter lifetime for real-time ability ops
+			MaxConnIdleTime: time.Duration(getEnvInt("DB_MAX_CONN_IDLE_MIN", 5)) * time.Minute,      // BACKEND NOTE: Quick cleanup for active ability sessions
 		},
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 			Expiration: time.Duration(getEnvInt("JWT_EXPIRATION_HOURS", 24)) * time.Hour,
 		},
 		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getEnvInt("REDIS_DB", 1),
+			Host:         getEnv("REDIS_HOST", "localhost"),
+			Port:         getEnv("REDIS_PORT", "6379"),
+			Password:     getEnv("REDIS_PASSWORD", ""),
+			DB:           getEnvInt("REDIS_DB", 1),
+			// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS ability caching
+			PoolSize:     getEnvInt("REDIS_POOL_SIZE", 25),     // BACKEND NOTE: High pool for ability session caching
+			MinIdleConns: getEnvInt("REDIS_MIN_IDLE_CONNS", 8), // BACKEND NOTE: Keep connections ready for instant ability access
 		},
 	}
 }

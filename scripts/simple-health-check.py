@@ -169,7 +169,7 @@ class NECPGAMESimpleHealthChecker:
 
     def run_full_check(self) -> Dict[str, Any]:
         """Run comprehensive health check"""
-        print("🔍 NECPGAME Health Check Starting...")
+        print("NECPGAME Health Check Starting...")
         start_time = time.time()
 
         results = {}
@@ -199,10 +199,10 @@ class NECPGAMESimpleHealthChecker:
 
             # Print status
             status_emoji = {
-                HealthStatus.HEALTHY: "✅",
-                HealthStatus.WARNING: "⚠️",
-                HealthStatus.CRITICAL: "❌",
-                HealthStatus.UNKNOWN: "❓"
+                HealthStatus.HEALTHY: "[OK]",
+                HealthStatus.WARNING: "[WARN]",
+                HealthStatus.CRITICAL: "[CRIT]",
+                HealthStatus.UNKNOWN: "[UNK]"
             }
             print(f"    {status_emoji[service_health.overall_status]} {service_health.overall_status.value}")
 
@@ -210,6 +210,11 @@ class NECPGAMESimpleHealthChecker:
         summary = self._calculate_summary(results)
 
         # Generate report
+        def serialize_health_data(obj):
+            if isinstance(obj, HealthStatus):
+                return obj.value
+            raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "check_duration_seconds": time.time() - start_time,
@@ -218,8 +223,13 @@ class NECPGAMESimpleHealthChecker:
         }
 
         # Save report
+        def serialize_health_data(obj):
+            if isinstance(obj, HealthStatus):
+                return obj.value
+            raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
+
         with open("health_check_report.json", "w") as f:
-            json.dump(report, f, indent=2)
+            json.dump(report, f, indent=2, default=serialize_health_data)
 
         # Print summary
         self._print_summary(summary)
@@ -250,24 +260,18 @@ class NECPGAMESimpleHealthChecker:
 
     def _print_summary(self, summary: Dict[str, Any]):
         """Print human-readable summary"""
-        print("\n📊 Health Check Summary:")
+        print("\n=== Health Check Summary ===")
         print(f"   Total Services: {summary['total_services']}")
-        print(f"   Healthy: {summary['healthy_services']} ✅")
-        print(f"   Warning: {summary['warning_services']} ⚠️")
-        print(f"   Critical: {summary['critical_services']} ❌")
+        print(f"   Healthy: {summary['healthy_services']}")
+        print(f"   Warning: {summary['warning_services']}")
+        print(f"   Critical: {summary['critical_services']}")
         print(f"   Health Percentage: {summary['health_percentage']:.1f}%")
-        status_emoji = {
-            "healthy": "🟢",
-            "warning": "🟡",
-            "critical": "🔴",
-            "unknown": "⚪"
-        }
-        print(f"   Overall Status: {status_emoji.get(summary['overall_status'], '❓')} {summary['overall_status'].upper()}")
+        print(f"   Overall Status: {summary['overall_status'].upper()}")
 
         if summary['critical_services'] > 0:
-            print("\n🚨 Critical Issues Found!")
+            print("\n*** CRITICAL ISSUES FOUND ***")
         elif summary['warning_services'] > 0:
-            print("\n⚠️ Performance Issues Detected")
+            print("\n*** PERFORMANCE ISSUES DETECTED ***")
 
 def main():
     """Main entry point"""
@@ -287,7 +291,7 @@ def main():
     else:
         output_file = "health_check_report.json"
 
-    print(f"\n📄 Report saved to: {output_file}")
+    print(f"\nReport saved to: {output_file}")
 
     # Exit with appropriate code
     summary = report["summary"]

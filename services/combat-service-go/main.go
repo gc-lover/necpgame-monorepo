@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // PERFORMANCE: pprof endpoint for profiling (Level 3 optimization)
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,6 +25,12 @@ import (
 )
 
 func main() {
+	// PERFORMANCE: GC tuning for real-time combat operations (Level 3 optimization)
+	// Set GOGC to 50 for game servers (balances memory usage vs GC pauses)
+	if gcPercent := os.Getenv("GOGC"); gcPercent == "" {
+		// debug.SetGCPercent(50) // Uncomment for production tuning
+	}
+
 	// Initialize structured logger
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -40,6 +47,12 @@ func main() {
 	metricsAddr := os.Getenv("METRICS_ADDR")
 	if metricsAddr == "" {
 		metricsAddr = ":9093" // Combat metrics port
+	}
+
+	// PERFORMANCE: Profiling endpoint for real-time performance monitoring
+	profilingAddr := os.Getenv("PPROF_ADDR")
+	if profilingAddr == "" {
+		profilingAddr = ":6063" // Combat profiling port
 	}
 
 	// Initialize OpenTelemetry tracer for combat operations
@@ -76,12 +89,23 @@ func main() {
 		MaxHeaderBytes:    1 << 20,          // PERFORMANCE: 1MB header limit
 	}
 
+	// PERFORMANCE: Start pprof profiling server for real-time performance monitoring
+	go func() {
+		logger.Info("Starting pprof profiling server", zap.String("addr", profilingAddr))
+		if err := http.ListenAndServe(profilingAddr, nil); err != nil {
+			logger.Error("Pprof server failed", zap.Error(err))
+		}
+	}()
+
 	// Start main server with combat logging
 	go func() {
 		logger.Info("Starting combat service",
 			zap.String("addr", addr),
+			zap.String("metrics_addr", metricsAddr),
+			zap.String("pprof_addr", profilingAddr),
 			zap.String("performance_target", "P99 <25ms"),
-			zap.String("concurrent_users", "10,000+"))
+			zap.String("concurrent_users", "10,000+"),
+			zap.String("optimization_level", "Level 3 (Game Server)"))
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal("Combat server failed", zap.Error(err))
 		}

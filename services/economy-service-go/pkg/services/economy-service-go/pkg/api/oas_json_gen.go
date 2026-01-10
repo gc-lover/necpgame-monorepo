@@ -570,6 +570,182 @@ func (s *Commodity) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *ErrResp) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ErrResp) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("code")
+		e.Int32(s.Code)
+	}
+	{
+		e.FieldStart("message")
+		e.Str(s.Message)
+	}
+	{
+		if s.Details != nil {
+			e.FieldStart("details")
+			s.Details.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfErrResp = [3]string{
+	0: "code",
+	1: "message",
+	2: "details",
+}
+
+// Decode decodes ErrResp from json.
+func (s *ErrResp) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ErrResp to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "code":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Int32()
+				s.Code = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
+		case "message":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Message = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "details":
+			if err := func() error {
+				s.Details = nil
+				var elem ErrRespDetails
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Details = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"details\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ErrResp")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfErrResp) {
+					name = jsonFieldsNameOfErrResp[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ErrResp) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ErrResp) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ErrRespDetails) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ErrRespDetails) encodeFields(e *jx.Encoder) {
+}
+
+var jsonFieldsNameOfErrRespDetails = [0]string{}
+
+// Decode decodes ErrRespDetails from json.
+func (s *ErrRespDetails) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ErrRespDetails to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		default:
+			return d.Skip()
+		}
+	}); err != nil {
+		return errors.Wrap(err, "decode ErrRespDetails")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ErrRespDetails) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ErrRespDetails) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *HealthResponse) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -823,31 +999,9 @@ func (s *MarketHistoryPricesItem) Encode(e *jx.Encoder) {
 
 // encodeFields encodes fields.
 func (s *MarketHistoryPricesItem) encodeFields(e *jx.Encoder) {
-	{
-		if s.Timestamp.Set {
-			e.FieldStart("timestamp")
-			s.Timestamp.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.Price.Set {
-			e.FieldStart("price")
-			s.Price.Encode(e)
-		}
-	}
-	{
-		if s.Volume.Set {
-			e.FieldStart("volume")
-			s.Volume.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfMarketHistoryPricesItem = [3]string{
-	0: "timestamp",
-	1: "price",
-	2: "volume",
-}
+var jsonFieldsNameOfMarketHistoryPricesItem = [0]string{}
 
 // Decode decodes MarketHistoryPricesItem from json.
 func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
@@ -857,40 +1011,9 @@ func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "timestamp":
-			if err := func() error {
-				s.Timestamp.Reset()
-				if err := s.Timestamp.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"timestamp\"")
-			}
-		case "price":
-			if err := func() error {
-				s.Price.Reset()
-				if err := s.Price.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"price\"")
-			}
-		case "volume":
-			if err := func() error {
-				s.Volume.Reset()
-				if err := s.Volume.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"volume\"")
-			}
 		default:
 			return d.Skip()
 		}
-		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode MarketHistoryPricesItem")
 	}
@@ -1646,6 +1769,159 @@ func (s *Order) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Order) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *OrderBook) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *OrderBook) encodeFields(e *jx.Encoder) {
+	{
+		if s.Commodity.Set {
+			e.FieldStart("commodity")
+			s.Commodity.Encode(e)
+		}
+	}
+	{
+		if s.Bids != nil {
+			e.FieldStart("bids")
+			e.ArrStart()
+			for _, elem := range s.Bids {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Asks != nil {
+			e.FieldStart("asks")
+			e.ArrStart()
+			for _, elem := range s.Asks {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.LastPrice.Set {
+			e.FieldStart("lastPrice")
+			s.LastPrice.Encode(e)
+		}
+	}
+	{
+		if s.Volume24h.Set {
+			e.FieldStart("volume24h")
+			s.Volume24h.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfOrderBook = [5]string{
+	0: "commodity",
+	1: "bids",
+	2: "asks",
+	3: "lastPrice",
+	4: "volume24h",
+}
+
+// Decode decodes OrderBook from json.
+func (s *OrderBook) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode OrderBook to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "commodity":
+			if err := func() error {
+				s.Commodity.Reset()
+				if err := s.Commodity.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"commodity\"")
+			}
+		case "bids":
+			if err := func() error {
+				s.Bids = make([]Order, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Order
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Bids = append(s.Bids, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bids\"")
+			}
+		case "asks":
+			if err := func() error {
+				s.Asks = make([]Order, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Order
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Asks = append(s.Asks, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"asks\"")
+			}
+		case "lastPrice":
+			if err := func() error {
+				s.LastPrice.Reset()
+				if err := s.LastPrice.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"lastPrice\"")
+			}
+		case "volume24h":
+			if err := func() error {
+				s.Volume24h.Reset()
+				if err := s.Volume24h.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume24h\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode OrderBook")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *OrderBook) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OrderBook) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

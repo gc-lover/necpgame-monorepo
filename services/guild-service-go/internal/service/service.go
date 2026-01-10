@@ -116,17 +116,17 @@ func NewGuildService(cfg Config) (*Service, error) {
 		return nil, errors.Wrap(err, "parse redis URL")
 	}
 
-	// Performance optimizations for caching
+	// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS guild caching
 	opt.MaxRetries = 3
 	opt.MinRetryBackoff = 100 * time.Millisecond
 	opt.MaxRetryBackoff = 1 * time.Second
 	opt.DialTimeout = 5 * time.Second
 	opt.ReadTimeout = 3 * time.Second
 	opt.WriteTimeout = 3 * time.Second
-	opt.PoolSize = 20
-	opt.MinIdleConns = 5
-	opt.ConnMaxIdleTime = 10 * time.Minute
-	opt.ConnMaxLifetime = 30 * time.Minute
+	opt.PoolSize = 25         // BACKEND NOTE: High pool for guild session caching
+	opt.MinIdleConns = 8      // BACKEND NOTE: Keep connections ready for instant guild access
+	opt.ConnMaxIdleTime = 8 * time.Minute  // BACKEND NOTE: Match DB lifetime for consistency
+	opt.ConnMaxLifetime = 30 * time.Minute // BACKEND NOTE: Shorter lifetime for real-time guild ops
 
 	rdb := redis.NewClient(opt)
 

@@ -14,8 +14,12 @@ const (
 )
 
 // UserContext represents user information stored in context
+// PERFORMANCE: Struct field alignment optimized for memory efficiency
 type UserContext struct {
-	UserID   uuid.UUID
+	// Large types first (16 bytes)
+	UserID   uuid.UUID // 16 bytes
+
+	// Strings (16 bytes header)
 	UserType string // "player" for abilities
 }
 

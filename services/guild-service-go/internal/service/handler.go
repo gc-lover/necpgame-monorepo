@@ -82,8 +82,12 @@ func (h *Handler) GuildBatchHealthCheck(ctx context.Context) (api.GuildBatchHeal
 
 // CreateGuild implements guild creation
 func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildRequest) (api.CreateGuildRes, error) {
+	// BACKEND NOTE: Context timeout for guild creation (prevents hanging)
+	createCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	// Get user ID from context (would be set by auth middleware)
-	userID, err := h.getUserIDFromContext(ctx)
+	userID, err := h.getUserIDFromContext(createCtx)
 	if err != nil {
 		return &api.CreateGuildResDefault{
 			StatusCode: http.StatusUnauthorized,
@@ -94,7 +98,7 @@ func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildRequest) 
 		}, nil
 	}
 
-	guild, err := h.service.CreateGuild(ctx, req, userID)
+	guild, err := h.service.CreateGuild(createCtx, req, userID)
 	if err != nil {
 		h.service.logger.Error("Create guild failed", zap.Error(err), zap.String("user_id", userID.String()))
 		return &api.CreateGuildResDefault{
@@ -124,6 +128,10 @@ func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildRequest) 
 
 // GetGuild implements guild retrieval
 func (h *Handler) GetGuild(ctx context.Context, params api.GetGuildParams) (api.GetGuildRes, error) {
+	// BACKEND NOTE: Context timeout for guild retrieval (prevents hanging)
+	getCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	guildID, err := uuid.Parse(params.GuildId)
 	if err != nil {
 		return &api.GetGuildResDefault{
@@ -135,7 +143,7 @@ func (h *Handler) GetGuild(ctx context.Context, params api.GetGuildParams) (api.
 		}, nil
 	}
 
-	guild, err := h.service.GetGuild(ctx, guildID)
+	guild, err := h.service.GetGuild(getCtx, guildID)
 	if err != nil {
 		h.service.logger.Error("Get guild failed", zap.Error(err), zap.String("guild_id", params.GuildId))
 		return &api.GetGuildResDefault{
@@ -341,6 +349,10 @@ func (h *Handler) SearchGuilds(ctx context.Context, params api.SearchGuildsParam
 
 // GetGuildMembers implements member listing
 func (h *Handler) GetGuildMembers(ctx context.Context, params api.GetGuildMembersParams) (api.GetGuildMembersRes, error) {
+	// BACKEND NOTE: Context timeout for guild members retrieval (prevents hanging)
+	membersCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	guildID, err := uuid.Parse(params.GuildId)
 	if err != nil {
 		return &api.GetGuildMembersResDefault{
@@ -352,7 +364,7 @@ func (h *Handler) GetGuildMembers(ctx context.Context, params api.GetGuildMember
 		}, nil
 	}
 
-	members, total, err := h.service.memberRepo.GetMembers(ctx, guildID, params)
+	members, total, err := h.service.memberRepo.GetMembers(membersCtx, guildID, params)
 	if err != nil {
 		h.service.logger.Error("Get guild members failed", zap.Error(err), zap.String("guild_id", params.GuildId))
 		return &api.GetGuildMembersResDefault{

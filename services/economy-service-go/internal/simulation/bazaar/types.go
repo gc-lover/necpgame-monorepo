@@ -82,6 +82,7 @@ type MarketState struct {
 // Trade represents a completed trade between buyer and seller
 type Trade struct {
 	ID         string    // Unique trade ID
+	Commodity  Commodity // Commodity being traded
 	BuyerID    string    // ID of buyer
 	SellerID   string    // ID of seller
 	Price      float64   // Execution price

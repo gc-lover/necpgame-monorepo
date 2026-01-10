@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	Redis    RedisConfig
+	Kafka    KafkaConfig // Added for event-driven architecture - Issue #2237
 }
 
 type ServerConfig struct {
@@ -46,6 +47,17 @@ type RedisConfig struct {
 	Port     string
 	Password string
 	DB       int
+}
+
+// KafkaConfig holds Kafka consumer configuration for event-driven architecture
+// Issue: #2237
+type KafkaConfig struct {
+	Brokers            []string      // Kafka broker addresses
+	GroupID            string        // Consumer group ID
+	SessionTimeout     time.Duration // Consumer session timeout
+	HeartbeatInterval  time.Duration // Consumer heartbeat interval
+	CommitInterval     time.Duration // Offset commit interval
+	MaxProcessingTime  time.Duration // Maximum time to process a message
 }
 
 func (db DatabaseConfig) GetDSN() string {
@@ -84,6 +96,14 @@ func Load() *Config {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getEnvInt("REDIS_DB", 1),
+		},
+		Kafka: KafkaConfig{ // Event-driven architecture configuration - Issue #2237
+			Brokers:            []string{getEnv("KAFKA_BROKERS", "localhost:9092")},
+			GroupID:            getEnv("KAFKA_GROUP_ID", "economy-service-tick-consumer"),
+			SessionTimeout:     time.Duration(getEnvInt("KAFKA_SESSION_TIMEOUT_SEC", 30)) * time.Second,
+			HeartbeatInterval:  time.Duration(getEnvInt("KAFKA_HEARTBEAT_INTERVAL_SEC", 3)) * time.Second,
+			CommitInterval:     time.Duration(getEnvInt("KAFKA_COMMIT_INTERVAL_MS", 1000)) * time.Millisecond,
+			MaxProcessingTime:  time.Duration(getEnvInt("KAFKA_MAX_PROCESSING_TIME_SEC", 30)) * time.Second,
 		},
 	}
 }

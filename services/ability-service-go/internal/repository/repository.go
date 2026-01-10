@@ -6,15 +6,19 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+
+	"necpgame/services/ability-service-go/config"
 )
 
 type Repository struct {
 	pool   *pgxpool.Pool
+	redis  *redis.Client
 	logger *zap.Logger
 }
 
-func NewRepository(ctx context.Context, logger *zap.Logger, dsn string, dbConfig interface{}) (*Repository, error) {
+func NewRepository(ctx context.Context, logger *zap.Logger, dsn string, dbConfig interface{}, redisConfig config.RedisConfig) (*Repository, error) {
 	// PERFORMANCE: Configure database connection pool for MMOFPS scale
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -55,8 +59,31 @@ func NewRepository(ctx context.Context, logger *zap.Logger, dsn string, dbConfig
 		zap.Int32("max_conns", config.MaxConns),
 		zap.Int32("min_conns", config.MinConns))
 
+	// Initialize Redis with enterprise-grade pool optimization
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", redisConfig.Host, redisConfig.Port),
+		Password:     redisConfig.Password,
+		DB:           redisConfig.DB,
+		// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS ability caching
+		PoolSize:     redisConfig.PoolSize,     // BACKEND NOTE: High pool for ability session caching
+		MinIdleConns: redisConfig.MinIdleConns, // BACKEND NOTE: Keep connections ready for instant ability access
+	})
+
+	// Test Redis connection with timeout - BACKEND NOTE: Context timeout for Redis validation
+	redisCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := redisClient.Ping(redisCtx).Err(); err != nil {
+		return nil, fmt.Errorf("failed to ping redis: %w", err)
+	}
+
+	logger.Info("Connected to ability Redis",
+		zap.Int("pool_size", redisConfig.PoolSize),
+		zap.Int("min_idle_conns", redisConfig.MinIdleConns))
+
 	return &Repository{
 		pool:   pool,
+		redis:  redisClient,
 		logger: logger,
 	}, nil
 }
@@ -65,6 +92,13 @@ func (r *Repository) Close() {
 	if r.pool != nil {
 		r.pool.Close()
 		r.logger.Info("Ability database connection closed")
+	}
+	if r.redis != nil {
+		if err := r.redis.Close(); err != nil {
+			r.logger.Error("Error closing Redis connection", zap.Error(err))
+		} else {
+			r.logger.Info("Ability Redis connection closed")
+		}
 	}
 }
 

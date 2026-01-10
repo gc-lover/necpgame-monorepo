@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: NECPGAME Security Service API
+  description: Enterprise-grade authentication and authorization service for NECPGAME
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+  - url: https://api.necpgame.com/security
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /register:
+    post:
+      summary: Register a new user account
+      description: Creates a new user account with secure password hashing and validation
+      operationId: RegisterUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /login:
+    post:
+      summary: Authenticate user and get tokens
+      description: Validates user credentials and returns JWT access and refresh tokens
+      operationId: LoginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logout:
+    post:
+      summary: Logout user and invalidate session
+      description: Invalidates the current user session and access token
+      operationId: LogoutUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutUserRequest'
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /refresh:
+    post:
+      summary: Refresh access token
+      description: Uses refresh token to generate new access token
+      operationId: RefreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /validate:
+    post:
+      summary: Validate JWT token
+      description: Validates JWT token and returns claims information
+      operationId: ValidateToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTokenRequest'
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenValidationResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /authorize:
+    post:
+      summary: Check user authorization
+      description: Verifies if user has permission to perform specified action on resource
+      operationId: AuthorizeAction
+      tags:
+        - Authorization
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeActionRequest'
+      responses:
+        '200':
+          description: Authorization check successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{userID}/profile:
+    get:
+      summary: Get user profile
+      description: Retrieves user profile information
+      operationId: GetUserProfile
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update user profile
+      description: Updates user profile information
+      operationId: UpdateUserProfile
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status
+      operationId: HealthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    # Request schemas
+    RegisterUserRequest:
+      type: object
+      required:
+        - email
+        - username
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Unique username
+        password:
+          type: string
+          minLength: 8
+          description: User password
+
+    LoginUserRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      properties:
+        identifier:
+          type: string
+          description: Email or username
+        password:
+          type: string
+          description: User password
+
+    LogoutUserRequest:
+      type: object
+      description: Empty request body for logout
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token
+
+    ValidateTokenRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT token to validate
+
+    AuthorizeActionRequest:
+      type: object
+      required:
+        - resource
+        - action
+      properties:
+        resource:
+          type: string
+          description: Resource name (e.g., 'users', 'games')
+        action:
+          type: string
+          description: Action name (e.g., 'read', 'write', 'delete')
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+
+    # Response schemas
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, banned]
+        role:
+          type: string
+          enum: [player, moderator, admin]
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        is_verified:
+          type: boolean
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: JWT refresh token
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: string
+          description: Token expiration time in seconds
+
+    TokenRefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: string
+
+    TokenValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+
+    AuthorizationResponse:
+      type: object
+      properties:
+        authorized:
+          type: boolean
+        resource:
+          type: string
+        action:
+          type: string
+
+    UserProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, banned]
+        role:
+          type: string
+          enum: [player, moderator, admin]
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        is_verified:
+          type: boolean
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        domain:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - code
+        - message
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
