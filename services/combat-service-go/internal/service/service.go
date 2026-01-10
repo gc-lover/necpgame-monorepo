@@ -540,5 +540,565 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Combat session management methods would go here
-// TODO: Implement combat session creation, state management, action processing, etc.
+// Combat Session Management Methods
+// ================================
+
+// CreateCombatSession creates a new combat session
+func (s *Service) CreateCombatSession(ctx context.Context, creatorID string, sessionConfig *CombatSessionConfig) (*CombatSession, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	sessionID := uuid.New().String()
+
+	// Validate session configuration
+	if err := s.validateSessionConfig(sessionConfig); err != nil {
+		s.logger.Error("Invalid combat session configuration",
+			zap.String("creator_id", creatorID),
+			zap.Error(err))
+		return nil, fmt.Errorf("invalid session config: %w", err)
+	}
+
+	// Create initial session state
+	session := &CombatSession{
+		ID:              sessionID,
+		Name:            sessionConfig.Name,
+		Description:     sessionConfig.Description,
+		Status:          "waiting",
+		MaxParticipants: sessionConfig.MaxParticipants,
+		MinParticipants: sessionConfig.MinParticipants,
+		Difficulty:      sessionConfig.Difficulty,
+		Environment: &CombatEnvironment{
+			Type:        sessionConfig.EnvironmentType,
+			Description: sessionConfig.EnvironmentDescription,
+		},
+		Participants:    make(map[string]*CombatParticipant),
+		TurnOrder:       []string{},
+		CurrentTurn:     "",
+		CombatLog:       []*CombatEvent{},
+		CreatedAt:       time.Now().UTC(),
+		UpdatedAt:       time.Now().UTC(),
+	}
+
+	// Add creator as first participant
+	creatorParticipant := &CombatParticipant{
+		ID:         creatorID,
+		Name:       sessionConfig.CreatorName,
+		Type:       "player",
+		Health:     s.createDefaultHealthStats(),
+		Position:   &Position{X: 0, Y: 0, Z: 0},
+		Status:     []string{},
+		Inventory:  []*CombatItem{},
+		Abilities:  s.getDefaultPlayerAbilities(),
+		JoinedAt:   time.Now().UTC(),
+		LastAction: time.Now().UTC(),
+		IsActive:   true,
+	}
+
+	session.Participants[creatorID] = creatorParticipant
+	session.TurnOrder = append(session.TurnOrder, creatorID)
+
+	// Store session in memory (in production, persist to database)
+	s.mu.Lock()
+	s.combatSessions[sessionID] = session
+	s.mu.Unlock()
+
+	s.logger.Info("Combat session created",
+		zap.String("session_id", sessionID),
+		zap.String("creator_id", creatorID),
+		zap.String("name", session.Name),
+		zap.Int("max_participants", session.MaxParticipants))
+
+	return session, nil
+}
+
+// JoinCombatSession allows a participant to join an existing combat session
+func (s *Service) JoinCombatSession(ctx context.Context, sessionID, participantID, participantName string) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	session, exists := s.combatSessions[sessionID]
+	if !exists {
+		return fmt.Errorf("combat session not found: %s", sessionID)
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Check if session is accepting new participants
+	if session.Status != "waiting" {
+		return fmt.Errorf("combat session is not accepting new participants: %s", session.Status)
+	}
+
+	// Check participant limit
+	if len(session.Participants) >= session.MaxParticipants {
+		return fmt.Errorf("combat session is full: %d/%d participants", len(session.Participants), session.MaxParticipants)
+	}
+
+	// Check if participant already joined
+	if _, exists := session.Participants[participantID]; exists {
+		return fmt.Errorf("participant already joined this session: %s", participantID)
+	}
+
+	// Create participant
+	participant := &CombatParticipant{
+		ID:         participantID,
+		Name:       participantName,
+		Type:       "player",
+		Health:     s.createDefaultHealthStats(),
+		Position:   s.generateRandomPosition(len(session.Participants)),
+		Status:     []string{},
+		Inventory:  []*CombatItem{},
+		Abilities:  s.getDefaultPlayerAbilities(),
+		JoinedAt:   time.Now().UTC(),
+		LastAction: time.Now().UTC(),
+		IsActive:   true,
+	}
+
+	session.Participants[participantID] = participant
+	session.TurnOrder = append(session.TurnOrder, participantID)
+	session.UpdatedAt = time.Now().UTC()
+
+	// Log participant joined
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "participant_joined",
+		Timestamp:   time.Now().UTC(),
+		Participant: participantID,
+		Description: fmt.Sprintf("%s joined the combat", participantName),
+		Data: map[string]interface{}{
+			"participant_name": participantName,
+		},
+	}
+	session.CombatLog = append(session.CombatLog, event)
+
+	s.logger.Info("Participant joined combat session",
+		zap.String("session_id", sessionID),
+		zap.String("participant_id", participantID),
+		zap.String("participant_name", participantName),
+		zap.Int("total_participants", len(session.Participants)))
+
+	return nil
+}
+
+// StartCombatSession transitions a session from waiting to active state
+func (s *Service) StartCombatSession(ctx context.Context, sessionID, initiatorID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	session, exists := s.combatSessions[sessionID]
+	if !exists {
+		return fmt.Errorf("combat session not found: %s", sessionID)
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Verify initiator has permission
+	if _, exists := session.Participants[initiatorID]; !exists {
+		return fmt.Errorf("only session participants can start combat: %s", initiatorID)
+	}
+
+	// Check minimum participants
+	if len(session.Participants) < session.MinParticipants {
+		return fmt.Errorf("insufficient participants to start combat: %d/%d", len(session.Participants), session.MinParticipants)
+	}
+
+	// Check if already started
+	if session.Status != "waiting" {
+		return fmt.Errorf("combat session cannot be started: %s", session.Status)
+	}
+
+	// Initialize combat
+	session.Status = "active"
+	session.CurrentTurn = session.TurnOrder[0] // First participant goes first
+	session.UpdatedAt = time.Now().UTC()
+
+	// Log combat started
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "combat_started",
+		Timestamp:   time.Now().UTC(),
+		Description: "Combat has begun!",
+		Data: map[string]interface{}{
+			"initiator": initiatorID,
+			"participant_count": len(session.Participants),
+		},
+	}
+	session.CombatLog = append(session.CombatLog, event)
+
+	s.logger.Info("Combat session started",
+		zap.String("session_id", sessionID),
+		zap.String("initiator_id", initiatorID),
+		zap.Int("participants", len(session.Participants)),
+		zap.String("first_turn", session.CurrentTurn))
+
+	return nil
+}
+
+// ExecuteCombatAction processes a combat action from a participant
+func (s *Service) ExecuteCombatAction(ctx context.Context, sessionID, participantID string, action *CombatActionRequest) (*CombatActionResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	session, exists := s.combatSessions[sessionID]
+	if !exists {
+		return nil, fmt.Errorf("combat session not found: %s", sessionID)
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Validate session state
+	if session.Status != "active" {
+		return nil, fmt.Errorf("combat session is not active: %s", session.Status)
+	}
+
+	// Validate turn
+	if session.CurrentTurn != participantID {
+		return nil, fmt.Errorf("not participant's turn: %s != %s", session.CurrentTurn, participantID)
+	}
+
+	participant, exists := session.Participants[participantID]
+	if !exists {
+		return nil, fmt.Errorf("participant not found in session: %s", participantID)
+	}
+
+	// Validate participant is active
+	if !participant.IsActive {
+		return nil, fmt.Errorf("participant is not active: %s", participantID)
+	}
+
+	// Process the action
+	result, err := s.processCombatAction(session, participant, action)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process combat action: %w", err)
+	}
+
+	// Update participant last action time
+	participant.LastAction = time.Now().UTC()
+	session.UpdatedAt = time.Now().UTC()
+
+	// Move to next turn
+	s.advanceTurn(session)
+
+	// Check for combat end conditions
+	if s.checkCombatEndConditions(session) {
+		session.Status = "completed"
+		s.logger.Info("Combat session completed",
+			zap.String("session_id", sessionID),
+			zap.Int("remaining_participants", s.countActiveParticipants(session)))
+	}
+
+	return result, nil
+}
+
+// GetCombatSession retrieves current state of a combat session
+func (s *Service) GetCombatSession(ctx context.Context, sessionID, viewerID string) (*CombatSession, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	session, exists := s.combatSessions[sessionID]
+	if !exists {
+		return nil, fmt.Errorf("combat session not found: %s", sessionID)
+	}
+
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+
+	// Verify viewer has access
+	if _, exists := session.Participants[viewerID]; !exists {
+		return nil, fmt.Errorf("viewer is not a participant in this session: %s", viewerID)
+	}
+
+	return session, nil
+}
+
+// LeaveCombatSession allows a participant to leave a combat session
+func (s *Service) LeaveCombatSession(ctx context.Context, sessionID, participantID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	session, exists := s.combatSessions[sessionID]
+	if !exists {
+		return fmt.Errorf("combat session not found: %s", sessionID)
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	participant, exists := session.Participants[participantID]
+	if !exists {
+		return fmt.Errorf("participant not found in session: %s", participantID)
+	}
+
+	// Mark participant as inactive
+	participant.IsActive = false
+	participant.LastAction = time.Now().UTC()
+	session.UpdatedAt = time.Now().UTC()
+
+	// Remove from turn order
+	s.removeFromTurnOrder(session, participantID)
+
+	// Log participant left
+	event := &CombatEvent{
+		ID:          uuid.New().String(),
+		Type:        "participant_left",
+		Timestamp:   time.Now().UTC(),
+		Participant: participantID,
+		Description: fmt.Sprintf("%s left the combat", participant.Name),
+		Data: map[string]interface{}{
+			"participant_name": participant.Name,
+		},
+	}
+	session.CombatLog = append(session.CombatLog, event)
+
+	// Check for combat end
+	activeCount := s.countActiveParticipants(session)
+	if activeCount <= 1 {
+		session.Status = "completed"
+	}
+
+	s.logger.Info("Participant left combat session",
+		zap.String("session_id", sessionID),
+		zap.String("participant_id", participantID),
+		zap.String("participant_name", participant.Name),
+		zap.Int("remaining_active", activeCount))
+
+	return nil
+}
+
+// Helper Methods for Combat Session Management
+// ===========================================
+
+func (s *Service) validateSessionConfig(config *CombatSessionConfig) error {
+	if config.Name == "" {
+		return fmt.Errorf("session name is required")
+	}
+	if config.MaxParticipants < 2 || config.MaxParticipants > 8 {
+		return fmt.Errorf("max participants must be between 2 and 8")
+	}
+	if config.MinParticipants < 2 || config.MinParticipants > config.MaxParticipants {
+		return fmt.Errorf("min participants must be between 2 and max participants")
+	}
+	if config.Difficulty == "" {
+		config.Difficulty = "normal"
+	}
+	return nil
+}
+
+func (s *Service) createDefaultHealthStats() *HealthStats {
+	return &HealthStats{
+		CurrentHP: 100,
+		MaxHP:     100,
+		Armor:     10,
+		MagicResist: 5,
+	}
+}
+
+func (s *Service) generateRandomPosition(existingParticipants int) *Position {
+	// Simple grid positioning
+	x := (existingParticipants % 3) * 2
+	y := (existingParticipants / 3) * 2
+	return &Position{X: x, Y: y, Z: 0}
+}
+
+func (s *Service) getDefaultPlayerAbilities() []*CombatAbility {
+	return []*CombatAbility{
+		{
+			ID:          "attack",
+			Name:        "Basic Attack",
+			Description: "A simple melee attack",
+			Type:        "physical",
+			Damage:      15,
+			Cooldown:    0,
+			ManaCost:    0,
+		},
+		{
+			ID:          "defend",
+			Name:        "Defend",
+			Description: "Increase armor for one turn",
+			Type:        "defensive",
+			ArmorBonus:  10,
+			Cooldown:    3,
+			ManaCost:    5,
+		},
+	}
+}
+
+func (s *Service) processCombatAction(session *CombatSession, participant *CombatParticipant, action *CombatActionRequest) (*CombatActionResult, error) {
+	result := &CombatActionResult{
+		ActionID:     uuid.New().String(),
+		Participant:  participant.ID,
+		ActionType:   action.ActionType,
+		Timestamp:    time.Now().UTC(),
+		Effects:      []*CombatEffect{},
+	}
+
+	// Process action based on type
+	switch action.ActionType {
+	case "attack":
+		effect := s.processAttackAction(session, participant, action)
+		result.Effects = append(result.Effects, effect)
+
+	case "defend":
+		effect := s.processDefendAction(session, participant, action)
+		result.Effects = append(result.Effects, effect)
+
+	case "ability":
+		effects := s.processAbilityAction(session, participant, action)
+		result.Effects = append(result.Effects, effects...)
+
+	case "move":
+		effect := s.processMoveAction(session, participant, action)
+		result.Effects = append(result.Effects, effect)
+
+	default:
+		return nil, fmt.Errorf("unknown action type: %s", action.ActionType)
+	}
+
+	// Create combat event
+	event := &CombatEvent{
+		ID:          result.ActionID,
+		Type:        "action_executed",
+		Timestamp:   result.Timestamp,
+		Participant: participant.ID,
+		Description: fmt.Sprintf("%s performed %s", participant.Name, action.ActionType),
+		Data: map[string]interface{}{
+			"action_type": action.ActionType,
+			"effects_count": len(result.Effects),
+		},
+	}
+	session.CombatLog = append(session.CombatLog, event)
+
+	return result, nil
+}
+
+func (s *Service) advanceTurn(session *CombatSession) {
+	if len(session.TurnOrder) == 0 {
+		return
+	}
+
+	// Find current turn index
+	currentIndex := -1
+	for i, pid := range session.TurnOrder {
+		if pid == session.CurrentTurn {
+			currentIndex = i
+			break
+		}
+	}
+
+	// Move to next active participant
+	nextIndex := currentIndex
+	for i := 0; i < len(session.TurnOrder); i++ {
+		nextIndex = (nextIndex + 1) % len(session.TurnOrder)
+		participantID := session.TurnOrder[nextIndex]
+		if participant, exists := session.Participants[participantID]; exists && participant.IsActive {
+			session.CurrentTurn = participantID
+			break
+		}
+	}
+}
+
+func (s *Service) checkCombatEndConditions(session *CombatSession) bool {
+	activeCount := s.countActiveParticipants(session)
+	return activeCount <= 1
+}
+
+func (s *Service) countActiveParticipants(session *CombatSession) int {
+	count := 0
+	for _, participant := range session.Participants {
+		if participant.IsActive {
+			count++
+		}
+	}
+	return count
+}
+
+func (s *Service) removeFromTurnOrder(session *CombatSession, participantID string) {
+	newOrder := []string{}
+	for _, pid := range session.TurnOrder {
+		if pid != participantID {
+			newOrder = append(newOrder, pid)
+		}
+	}
+	session.TurnOrder = newOrder
+}
+
+// Action Processing Methods
+// ========================
+
+func (s *Service) processAttackAction(session *CombatSession, participant *CombatParticipant, action *CombatActionRequest) *CombatEffect {
+	// Simple attack implementation - target first enemy
+	var targetID string
+	for pid, p := range session.Participants {
+		if pid != participant.ID && p.IsActive {
+			targetID = pid
+			break
+		}
+	}
+
+	if targetID == "" {
+		return &CombatEffect{
+			Type:        "no_target",
+			Description: "No valid targets available",
+		}
+	}
+
+	target := session.Participants[targetID]
+	damage := 15 + rand.Intn(10) // 15-24 damage
+	target.Health.CurrentHP -= damage
+
+	return &CombatEffect{
+		Type:        "damage",
+		Target:      targetID,
+		Value:       damage,
+		Description: fmt.Sprintf("%s attacked %s for %d damage", participant.Name, target.Name, damage),
+	}
+}
+
+func (s *Service) processDefendAction(session *CombatSession, participant *CombatParticipant, action *CombatActionRequest) *CombatEffect {
+	participant.Status = append(participant.Status, "defending")
+
+	return &CombatEffect{
+		Type:        "buff",
+		Target:      participant.ID,
+		Description: fmt.Sprintf("%s is defending (+10 armor)", participant.Name),
+	}
+}
+
+func (s *Service) processAbilityAction(session *CombatSession, participant *CombatParticipant, action *CombatActionRequest) []*CombatEffect {
+	// Placeholder for ability processing
+	return []*CombatEffect{
+		{
+			Type:        "ability_used",
+			Description: fmt.Sprintf("%s used ability: %s", participant.Name, action.AbilityID),
+		},
+	}
+}
+
+func (s *Service) processMoveAction(session *CombatSession, participant *CombatParticipant, action *CombatActionRequest) *CombatEffect {
+	if action.TargetPosition != nil {
+		participant.Position = action.TargetPosition
+	}
+
+	return &CombatEffect{
+		Type:        "movement",
+		Description: fmt.Sprintf("%s moved to position (%d, %d, %d)",
+			participant.Name, participant.Position.X, participant.Position.Y, participant.Position.Z),
+	}
+}

@@ -93,12 +93,22 @@ func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderB
 
 // PlaceOrder implements placeOrder operation.
 func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderRequest, params api.PlaceOrderParams) (*api.OrderResponse, error) {
+	// Get user ID from context (set by SecurityHandler)
+	userIDVal := ctx.Value("user_id")
+	if userIDVal == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+	userID, ok := userIDVal.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid user ID format")
+	}
+
 	h.logger.Info("PlaceOrder called",
 		zap.String("commodity", string(params.Commodity)),
 		zap.String("order_type", string(req.Type)),
 		zap.Float64("price", req.Price),
 		zap.Int("quantity", req.Quantity),
-		zap.String("player_id", req.PlayerID))
+		zap.String("user_id", userID))
 
 	// Get market for commodity
 	market, exists := h.markets[bazaar.Commodity(params.Commodity)]
@@ -112,7 +122,7 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 		Type:     bazaar.OrderType(req.Type),
 		Price:    req.Price,
 		Quantity: req.Quantity,
-		PlayerID: req.PlayerID,
+		PlayerID: userID,
 		CreatedAt: time.Now(),
 	}
 

@@ -72,11 +72,13 @@ func main() {
 
 	// Initialize database connection pool
 	ctx := context.Background()
-	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN())
-	if err != nil {
-		logger.Fatal("Failed to initialize repository", zap.Error(err))
+	if err := initDatabasePool(ctx, cfg, logger); err != nil {
+		logger.Fatal("Failed to initialize database pool", zap.Error(err))
 	}
-	defer repo.Close()
+	defer dbPool.Close()
+
+	// Initialize repository
+	repo := repository.NewRepository(dbPool, logger.Named("economy-repo"))
 
 	// Initialize service
 	svc := service.NewService(logger, repo, cfg)
