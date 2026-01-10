@@ -1,0 +1,658 @@
+openapi: 3.0.3
+info:
+  title: Technology Progression Service API
+  description: |
+    **Enterprise-Grade Technology Progression API for NECPGAME**
+
+    Timeline-based technology unlocking system for Cyberpunk 2020-2093 lore integration.
+
+    ## Key Features
+
+    - **Timeline-based unlocking** (2020-2093) aligned with Cyberpunk lore
+    - **Multi-condition requirements** (time, quests, reputation, events)
+    - **Real-time availability checks** for inventory/character systems
+    - **Notification system** for technology unlocks
+    - **Integration APIs** for League, Inventory, Character, Quest, World services
+
+    ## Domain Purpose
+
+    Manages technology progression based on league timeline, ensuring players experience
+    the natural technological advancement of the Cyberpunk universe.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for availability checks
+    - Memory: <15KB per technology list request
+    - Concurrent users: 100,000+ simultaneous checks
+    - Data consistency: Real-time sync with league progression
+
+    ## Enterprise Architecture
+
+    - **Microservice domain:** progression-domain (technology systems)
+    - **Data source:** PostgreSQL with league timeline data
+    - **Caching:** Redis for technology availability states
+    - **Integration:** REST APIs with other progression services
+    - **Security:** JWT authentication with technology access control
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: http://localhost:8160
+  description: Local development server
+- url: https://api.necpgame.com/technology-progression/v1
+  description: Production server
+security:
+- BearerAuth: []
+tags:
+- name: Technology Progression domain
+  description: Technology progression domain endpoints
+- name: Technology Management
+  description: Technology availability and unlocking
+- name: Timeline Integration
+  description: League timeline integration
+paths:
+  /health:
+    get:
+      summary: Technology progression domain health check
+      operationId: technologyProgressionHealthCheck
+      tags:
+      - Technology Progression domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-technology-progression-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /technologies:
+    get:
+      summary: Get available technologies for current league year
+      operationId: getAvailableTechnologies
+      tags:
+      - Technology Management
+      description: |
+        Returns all technologies available for the current league year.
+        Filters out locked technologies based on timeline, quests, and reputation.
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: include_locked
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: Include locked technologies in response
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
+        description: Filter by technology category
+      responses:
+        '200':
+          description: Available technologies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyListResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=60, s-maxage=120
+            ETag:
+              schema:
+                type: string
+                example: '"tech-list-v1.0"'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /technologies/{technology_id}/check:
+    get:
+      summary: Check technology availability
+      operationId: checkTechnologyAvailability
+      tags:
+      - Technology Management
+      description: Check if specific technology is available for character
+      parameters:
+      - name: technology_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Technology identifier
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      responses:
+        '200':
+          description: Technology availability status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyAvailabilityResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /timeline:
+    get:
+      summary: Get technology timeline for current league
+      operationId: getTechnologyTimeline
+      tags:
+      - Timeline Integration
+      description: Get upcoming technology unlocks for current league year
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: future_years
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        description: How many future years to include
+      responses:
+        '200':
+          description: Technology timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyTimelineResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications:
+    get:
+      summary: Get technology unlock notifications
+      operationId: getTechnologyNotifications
+      tags:
+      - Technology Management
+      description: Get recent technology unlock notifications for character
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character UUID
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Maximum number of notifications to return
+      responses:
+        '200':
+          description: Technology notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyNotificationsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-28T10:00:00Z"
+          maxLength: 255
+        version:
+          type: string
+          example: "1.0.0"
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: "Internal server error"
+          maxLength: 1000
+        details:
+          type: object
+          description: "Additional error details"
+      description: "Standard error response format"
+
+    Technology:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - unlock_year
+        - unlock_phase
+        - availability_status
+      properties:
+        id:
+          type: string
+          description: Unique technology identifier
+          example: "cyberware-basic"
+          maxLength: 100
+        name:
+          type: string
+          description: Human-readable technology name
+          example: "Кибернетические имплантаты (базовые)"
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed technology description
+          example: "Киберпротезы, базовые нейроинтерфейсы, простые кибернетические модификации"
+          maxLength: 2000
+        category:
+          type: string
+          enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
+          description: Technology category
+          example: "cyberware"
+        unlock_year:
+          type: integer
+          description: Year when technology becomes available
+          minimum: 2020
+          maximum: 2093
+          example: 2020
+        unlock_phase:
+          type: string
+          enum: [Start, Rise, Peak, Fall, End]
+          description: League phase when technology unlocks
+          example: "Start"
+        availability_status:
+          type: string
+          enum: [available, locked, upcoming]
+          description: Current availability status for the player
+          example: "available"
+        unlock_conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnlockCondition'
+          description: Conditions required to unlock this technology
+        availability:
+          $ref: '#/components/schemas/TechnologyAvailability'
+        examples:
+          type: array
+          items:
+            type: string
+          description: Specific examples of this technology
+          example: ["Базовые киберруки", "Простые нейроинтерфейсы"]
+        lore_context:
+          type: string
+          description: Lore context explaining this technology
+          maxLength: 1000
+          example: "Первое поколение кибернетики, доступное широкой публике после корпорационных войн"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    UnlockCondition:
+      type: object
+      required:
+        - type
+        - condition
+      properties:
+        type:
+          type: string
+          enum: [time, quest, reputation, event]
+          description: Type of unlock condition
+          example: "time"
+        condition:
+          type: string
+          description: Condition expression
+          example: "league_year >= 2020"
+        description:
+          type: string
+          description: Human-readable condition description
+          maxLength: 255
+          example: "Достигнуть 2020 года в лиге"
+
+    TechnologyAvailability:
+      type: object
+      properties:
+        vendors:
+          type: string
+          enum: [all, elite_vendors, medical_vendors, tech_vendors, corporate_only, entertainment_vendors]
+          description: Available through vendor types
+          example: "all"
+        corporations:
+          type: array
+          items:
+            type: string
+          description: Corporations that provide this technology
+          example: ["Arasaka", "Militech", "Biotechnica"]
+        black_market:
+          type: boolean
+          description: Available on black market
+          example: false
+        restrictions:
+          type: array
+          items:
+            type: string
+          description: Special restrictions or requirements
+          example: ["Требуется лицензия", "Ограничено репутацией"]
+
+    TechnologyListResponse:
+      type: object
+      required:
+        - technologies
+        - current_league_year
+        - total_available
+        - total_locked
+      properties:
+        technologies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Technology'
+          description: List of technologies with their availability status
+        current_league_year:
+          type: integer
+          description: Current league year
+          example: 2025
+        total_available:
+          type: integer
+          description: Total number of available technologies
+          example: 15
+        total_locked:
+          type: integer
+          description: Total number of locked technologies
+          example: 45
+        next_unlock_year:
+          type: integer
+          description: Next year when technologies will unlock
+          example: 2030
+        upcoming_technologies:
+          type: integer
+          description: Number of technologies unlocking in next year
+          example: 8
+
+    TechnologyAvailabilityResponse:
+      type: object
+      required:
+        - technology_id
+        - available
+        - availability_status
+      properties:
+        technology_id:
+          type: string
+          description: Technology identifier
+          example: "cyberware-basic"
+        available:
+          type: boolean
+          description: Whether technology is available for the character
+          example: true
+        availability_status:
+          type: string
+          enum: [available, locked_time, locked_quest, locked_reputation, locked_event]
+          description: Detailed availability status
+          example: "available"
+        reason:
+          type: string
+          description: Reason why technology is locked (if applicable)
+          maxLength: 500
+          example: "Требуется завершить квест 'Neurointerface Revolution'"
+        unlock_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnlockCondition'
+          description: Requirements needed to unlock this technology
+        estimated_unlock_time:
+          type: string
+          description: Estimated time until unlock (if locked by time)
+          example: "2 года 3 месяца"
+
+    TechnologyTimelineResponse:
+      type: object
+      required:
+        - current_year
+        - timeline
+      properties:
+        current_year:
+          type: integer
+          description: Current league year
+          example: 2025
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEntry'
+          description: Technology unlocks by year
+
+    TimelineEntry:
+      type: object
+      required:
+        - year
+        - phase
+        - technologies
+      properties:
+        year:
+          type: integer
+          description: League year
+          example: 2030
+        phase:
+          type: string
+          enum: [Start, Rise, Peak, Fall, End]
+          description: League phase
+          example: "Rise"
+        technologies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Technology'
+          description: Technologies unlocking this year
+        total_technologies:
+          type: integer
+          description: Total technologies in this year
+          example: 8
+
+    TechnologyNotificationsResponse:
+      type: object
+      required:
+        - notifications
+        - total_count
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/TechnologyNotification'
+          description: List of recent technology unlock notifications
+        total_count:
+          type: integer
+          description: Total number of notifications
+          example: 25
+
+    TechnologyNotification:
+      type: object
+      required:
+        - id
+        - technology_id
+        - technology_name
+        - unlocked_at
+        - unlock_reason
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Notification unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        technology_id:
+          type: string
+          description: Technology that was unlocked
+          example: "neurointerface-advanced"
+        technology_name:
+          type: string
+          description: Human-readable technology name
+          example: "Продвинутые нейроинтерфейсы"
+        unlocked_at:
+          type: string
+          format: date-time
+          description: When technology was unlocked
+          example: "2025-12-28T10:00:00Z"
+        unlock_reason:
+          type: string
+          enum: [time_progression, quest_completion, reputation_achieved, event_triggered]
+          description: Reason for unlock
+          example: "time_progression"
+        character_id:
+          type: string
+          format: uuid
+          description: Character that unlocked the technology
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        additional_info:
+          type: object
+          description: Additional context about the unlock
+          properties:
+            quest_name:
+              type: string
+              description: Name of completed quest (if applicable)
+              example: "Neurointerface Revolution"
+            reputation_gained:
+              type: integer
+              description: Reputation points gained (if applicable)
+              example: 50
+      description: "BACKEND NOTE: Fields ordered for struct alignment optimization."
