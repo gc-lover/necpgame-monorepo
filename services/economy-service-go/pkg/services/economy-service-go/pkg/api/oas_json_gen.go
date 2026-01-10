@@ -999,9 +999,31 @@ func (s *MarketHistoryPricesItem) Encode(e *jx.Encoder) {
 
 // encodeFields encodes fields.
 func (s *MarketHistoryPricesItem) encodeFields(e *jx.Encoder) {
+	{
+		if s.Timestamp.Set {
+			e.FieldStart("timestamp")
+			s.Timestamp.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Price.Set {
+			e.FieldStart("price")
+			s.Price.Encode(e)
+		}
+	}
+	{
+		if s.Volume.Set {
+			e.FieldStart("volume")
+			s.Volume.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfMarketHistoryPricesItem = [0]string{}
+var jsonFieldsNameOfMarketHistoryPricesItem = [3]string{
+	0: "timestamp",
+	1: "price",
+	2: "volume",
+}
 
 // Decode decodes MarketHistoryPricesItem from json.
 func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
@@ -1011,9 +1033,40 @@ func (s *MarketHistoryPricesItem) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "timestamp":
+			if err := func() error {
+				s.Timestamp.Reset()
+				if err := s.Timestamp.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"timestamp\"")
+			}
+		case "price":
+			if err := func() error {
+				s.Price.Reset()
+				if err := s.Price.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"price\"")
+			}
+		case "volume":
+			if err := func() error {
+				s.Volume.Reset()
+				if err := s.Volume.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"volume\"")
+			}
 		default:
 			return d.Skip()
 		}
+		return nil
 	}); err != nil {
 		return errors.Wrap(err, "decode MarketHistoryPricesItem")
 	}

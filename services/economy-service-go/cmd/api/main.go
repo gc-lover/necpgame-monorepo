@@ -84,13 +84,15 @@ func main() {
 	svc := service.NewService(logger, repo, cfg)
 
 	// Create enterprise-grade HTTP server with MMOFPS optimizations
+	// Configure HTTP server with enterprise-grade timeouts for MMOFPS economy operations
 	srv := &http.Server{
-		Addr:           cfg.Server.Port,
-		Handler:        svc,
-		ReadTimeout:    cfg.Server.ReadTimeout,
-		WriteTimeout:   cfg.Server.WriteTimeout,
-		IdleTimeout:    cfg.Server.IdleTimeout,
-		MaxHeaderBytes: cfg.Server.MaxHeaderBytes,
+		Addr:              cfg.Server.Port,
+		Handler:           svc,
+		ReadTimeout:       cfg.Server.ReadTimeout,       // BACKEND NOTE: Increased for complex economy operations
+		WriteTimeout:      cfg.Server.WriteTimeout,      // BACKEND NOTE: For economy transaction responses
+		IdleTimeout:       cfg.Server.IdleTimeout,       // BACKEND NOTE: Keep connections alive for economy sessions
+		ReadHeaderTimeout: cfg.Server.ReadHeaderTimeout, // BACKEND NOTE: Fast header processing for economy requests
+		MaxHeaderBytes:    cfg.Server.MaxHeaderBytes,    // BACKEND NOTE: 1MB max headers for security
 	}
 
 	// Start HTTP server in goroutine

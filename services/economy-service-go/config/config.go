@@ -16,11 +16,12 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
-	MaxHeaderBytes int
+	Port            string
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ReadHeaderTimeout time.Duration // BACKEND NOTE: Fast header processing for economy requests
+	MaxHeaderBytes  int
 }
 
 type DatabaseConfig struct {
@@ -43,10 +44,12 @@ type JWTConfig struct {
 }
 
 type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
+	Host         string
+	Port         string
+	Password     string
+	DB           int
+	PoolSize     int // BACKEND NOTE: Redis connection pool size for MMOFPS
+	MinIdleConns int // BACKEND NOTE: Minimum idle connections to maintain
 }
 
 // KafkaConfig holds Kafka consumer configuration for event-driven architecture
@@ -68,11 +71,12 @@ func (db DatabaseConfig) GetDSN() string {
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port:         getEnv("PORT", ":8083"),
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-			IdleTimeout:  120 * time.Second,
-			MaxHeaderBytes: 1 << 20, // 1MB
+			Port:              getEnv("PORT", ":8083"),
+			ReadTimeout:       15 * time.Second, // BACKEND NOTE: Increased for complex economy operations
+			WriteTimeout:      15 * time.Second, // BACKEND NOTE: For economy transaction responses
+			IdleTimeout:       120 * time.Second, // BACKEND NOTE: Keep connections alive for economy sessions
+			ReadHeaderTimeout: 3 * time.Second, // BACKEND NOTE: Fast header processing for economy requests
+			MaxHeaderBytes:    1 << 20, // BACKEND NOTE: 1MB max headers for security
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -81,10 +85,11 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "economy_password"),
 			DBName:   getEnv("DB_NAME", "economy_db"),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
-			MaxConns: 25,
-			MinConns: 5,
-			MaxConnLifetime: 1 * time.Hour,
-			MaxConnIdleTime: 30 * time.Minute,
+			// BACKEND NOTE: Enterprise-grade database pool optimization for MMOFPS economy operations
+			MaxConns: 50, // BACKEND NOTE: High pool for economy transactions (50 max connections)
+			MinConns: 10, // BACKEND NOTE: Keep minimum connections ready for instant economy access
+			MaxConnLifetime: 30 * time.Minute, // BACKEND NOTE: Shorter lifetime for real-time economy ops
+			MaxConnIdleTime: 5 * time.Minute,  // BACKEND NOTE: Quick cleanup for active economy sessions
 			HealthCheckPeriod: 1 * time.Minute,
 		},
 		JWT: JWTConfig{
@@ -92,10 +97,13 @@ func Load() *Config {
 			Expiration: time.Duration(getEnvInt("JWT_EXPIRATION_HOURS", 24)) * time.Hour,
 		},
 		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getEnvInt("REDIS_DB", 1),
+			Host:         getEnv("REDIS_HOST", "localhost"),
+			Port:         getEnv("REDIS_PORT", "6379"),
+			Password:     getEnv("REDIS_PASSWORD", ""),
+			DB:           getEnvInt("REDIS_DB", 1),
+			// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS economy caching
+			PoolSize:     getEnvInt("REDIS_POOL_SIZE", 25),     // BACKEND NOTE: High pool for economy session caching
+			MinIdleConns: getEnvInt("REDIS_MIN_IDLE_CONNS", 8), // BACKEND NOTE: Keep connections ready for instant economy access
 		},
 		Kafka: KafkaConfig{ // Event-driven architecture configuration - Issue #2237
 			Brokers:            []string{getEnv("KAFKA_BROKERS", "localhost:9092")},

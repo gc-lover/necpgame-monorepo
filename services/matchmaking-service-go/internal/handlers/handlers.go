@@ -69,11 +69,15 @@ func (h *MatchmakingHandlers) JoinQueue(ctx context.Context, req *api.JoinQueueR
 
 // LeaveQueue implements queue leave endpoint
 func (h *MatchmakingHandlers) LeaveQueue(ctx context.Context, params api.LeaveQueueParams) (api.LeaveQueueRes, error) {
+	// BACKEND NOTE: Context timeout for queue leave (prevents hanging)
+	leaveCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	playerID := params.PlayerID.String()
 	log.Printf("Player %s leaving queue", playerID)
 
 	// Call service to leave queue
-	err := h.matchmakingSvc.LeaveQueue(ctx, playerID)
+	err := h.matchmakingSvc.LeaveQueue(leaveCtx, playerID)
 	if err != nil {
 		log.Printf("Failed to leave queue for player %s: %v", playerID, err)
 		return &api.LeaveQueueNotFound{}, nil
@@ -114,4 +118,5 @@ func (h *MatchmakingHandlers) FindMatch(ctx context.Context, req *api.FindMatchR
 func (h *MatchmakingHandlers) MountRoutes(mux interface{}) error {
 	// This would be implemented based on how ogen mounts routes
 	// For now, this is a placeholder
-	return fmt.Errorf("MountRoutes not implemented - depends on ogen router struc
+	return fmt.Errorf("MountRoutes not implemented - depends on ogen router structure")
+}

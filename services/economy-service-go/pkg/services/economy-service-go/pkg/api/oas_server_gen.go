@@ -38,6 +38,12 @@ type Handler interface {
 	//
 	// GET /market/{commodity}/price
 	GetMarketPrice(ctx context.Context, params GetMarketPriceParams) (*MarketPrice, error)
+	// GetMarketTrades implements getMarketTrades operation.
+	//
+	// Get recent trades for commodity.
+	//
+	// GET /market/{commodity}/trades
+	GetMarketTrades(ctx context.Context, params GetMarketTradesParams) (*MarketPrice, error)
 	// GetOrderBook implements getOrderBook operation.
 	//
 	// Get current order book for commodity.

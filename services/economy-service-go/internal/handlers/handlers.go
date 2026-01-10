@@ -204,9 +204,9 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 }
 
 // convertTrades converts bazaar trades to API format
-// TODO: Use when Trade API type is properly integrated
+// Note: Trade schema added to OpenAPI spec, but type not generated until used in operations
 func convertTrades(trades []*bazaar.Trade) []interface{} {
-	// Placeholder implementation - returns empty slice
+	// Placeholder implementation until Trade type is used in API operations
 	return make([]interface{}, len(trades))
 }
 
@@ -356,11 +356,11 @@ func (h *EconomyHandlers) GetBazaarBotAgents(ctx context.Context) (*api.BazaarBo
 
 		// Convert personality
 		personality := &api.BazaarBotAgentPersonality{}
-		if state.Personality != nil {
-			personality.RiskTolerance.SetTo(state.Personality.RiskTolerance)
-			personality.ImpatienceFactor.SetTo(state.Personality.ImpatienceFactor)
-			personality.SocialInfluence.SetTo(state.Personality.SocialInfluence)
-			personality.LearningRate.SetTo(state.Personality.LearningRate)
+		if agentLogic.Personality != nil {
+			personality.RiskTolerance.SetTo(float32(agentLogic.Personality.RiskTolerance))
+			personality.ImpatienceFactor.SetTo(float32(agentLogic.Personality.ImpatienceFactor))
+			personality.SocialInfluence.SetTo(float32(agentLogic.Personality.SocialInfluence))
+			personality.LearningRate.SetTo(float32(agentLogic.Personality.LearningRate))
 		}
 
 		// Convert inventory

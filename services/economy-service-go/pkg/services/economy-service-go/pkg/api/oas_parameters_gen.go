@@ -243,6 +243,79 @@ func decodeGetMarketPriceParams(args [1]string, argsEscaped bool, r *http.Reques
 	return params, nil
 }
 
+// GetMarketTradesParams is parameters of getMarketTrades operation.
+type GetMarketTradesParams struct {
+	Commodity Commodity
+}
+
+func unpackGetMarketTradesParams(packed middleware.Parameters) (params GetMarketTradesParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "commodity",
+			In:   "path",
+		}
+		params.Commodity = packed[key].(Commodity)
+	}
+	return params
+}
+
+func decodeGetMarketTradesParams(args [1]string, argsEscaped bool, r *http.Request) (params GetMarketTradesParams, _ error) {
+	// Decode path: commodity.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "commodity",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Commodity = Commodity(c)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.Commodity.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "commodity",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetOrderBookParams is parameters of getOrderBook operation.
 type GetOrderBookParams struct {
 	Commodity Commodity

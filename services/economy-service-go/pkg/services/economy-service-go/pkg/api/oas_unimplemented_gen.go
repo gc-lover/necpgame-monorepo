@@ -58,6 +58,15 @@ func (UnimplementedHandler) GetMarketPrice(ctx context.Context, params GetMarket
 	return r, ht.ErrNotImplemented
 }
 
+// GetMarketTrades implements getMarketTrades operation.
+//
+// Get recent trades for commodity.
+//
+// GET /market/{commodity}/trades
+func (UnimplementedHandler) GetMarketTrades(ctx context.Context, params GetMarketTradesParams) (r *MarketPrice, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetOrderBook implements getOrderBook operation.
 //
 // Get current order book for commodity.

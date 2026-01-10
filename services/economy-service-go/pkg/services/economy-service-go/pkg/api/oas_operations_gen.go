@@ -11,6 +11,7 @@ const (
 	GetBazaarBotStatusOperation OperationName = "GetBazaarBotStatus"
 	GetMarketHistoryOperation   OperationName = "GetMarketHistory"
 	GetMarketPriceOperation     OperationName = "GetMarketPrice"
+	GetMarketTradesOperation    OperationName = "GetMarketTrades"
 	GetOrderBookOperation       OperationName = "GetOrderBook"
 	GetPlayerOrdersOperation    OperationName = "GetPlayerOrders"
 	GetPlayerPortfolioOperation OperationName = "GetPlayerPortfolio"

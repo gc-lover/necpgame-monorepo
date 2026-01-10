@@ -253,6 +253,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
+					case 't': // Prefix: "trades"
+
+						if l := len("trades"); len(elem) >= l && elem[0:l] == "trades" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetMarketTradesRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -651,6 +673,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.operationID = "getMarketPrice"
 								r.operationGroup = ""
 								r.pathPattern = "/market/{commodity}/price"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 't': // Prefix: "trades"
+
+						if l := len("trades"); len(elem) >= l && elem[0:l] == "trades" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetMarketTradesOperation
+								r.summary = "Get recent trades for commodity"
+								r.operationID = "getMarketTrades"
+								r.operationGroup = ""
+								r.pathPattern = "/market/{commodity}/trades"
 								r.args = args
 								r.count = 1
 								return r, true

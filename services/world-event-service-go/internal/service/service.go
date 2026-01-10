@@ -26,7 +26,7 @@ func NewHandler(logger *zap.Logger, repo *repository.Repository) *Handler {
 // NewError implements api.Handler.NewError.
 func (h *Handler) NewError(ctx context.Context, err error) *api.Error {
 	return &api.Error{
-		Code:    500,
+		Code:    "500",
 		Message: err.Error(),
 	}
 }

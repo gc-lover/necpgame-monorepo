@@ -467,7 +467,41 @@ func (s *MarketHistory) SetPrices(val []MarketHistoryPricesItem) {
 	s.Prices = val
 }
 
-type MarketHistoryPricesItem struct{}
+type MarketHistoryPricesItem struct {
+	Timestamp OptDateTime `json:"timestamp"`
+	Price     OptFloat32  `json:"price"`
+	Volume    OptInt      `json:"volume"`
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *MarketHistoryPricesItem) GetTimestamp() OptDateTime {
+	return s.Timestamp
+}
+
+// GetPrice returns the value of Price.
+func (s *MarketHistoryPricesItem) GetPrice() OptFloat32 {
+	return s.Price
+}
+
+// GetVolume returns the value of Volume.
+func (s *MarketHistoryPricesItem) GetVolume() OptInt {
+	return s.Volume
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *MarketHistoryPricesItem) SetTimestamp(val OptDateTime) {
+	s.Timestamp = val
+}
+
+// SetPrice sets the value of Price.
+func (s *MarketHistoryPricesItem) SetPrice(val OptFloat32) {
+	s.Price = val
+}
+
+// SetVolume sets the value of Volume.
+func (s *MarketHistoryPricesItem) SetVolume(val OptInt) {
+	s.Volume = val
+}
 
 // Ref: #/components/schemas/MarketPrice
 type MarketPrice struct {
