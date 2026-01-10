@@ -15,12 +15,9 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
-	"necpgame/services/voice-chat-service-go/config"
 	"necpgame/services/voice-chat-service-go/internal/service"
 )
 
@@ -37,9 +34,6 @@ func main() {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
-
-	// Load configuration
-	cfg := config.Load()
 
 	// Get configuration from environment with voice-chat-specific defaults
 	addr := os.Getenv("ADDR")
@@ -63,11 +57,6 @@ func main() {
 		profilingAddr = ":6066" // Voice chat profiling port
 	}
 
-	// Initialize OpenTelemetry tracer for voice communication processing
-	tracer := otel.Tracer("voice-chat-service")
-
-	// Initialize meter for voice chat metrics
-	meter := otel.Meter("voice-chat-service")
 
 	// Create service instance with voice-chat-specific optimizations
 	svc, err := service.NewService(nil, nil, nil, logger)
@@ -75,14 +64,16 @@ func main() {
 		logger.Fatal("Failed to create voice chat service", zap.Error(err))
 	}
 
-	// Create API handler with voice communication optimizations
+	// Create HTTP router and handler
+	router := mux.NewRouter()
 	handler := service.NewHandler(svc, nil, nil)
+	handler.RegisterRoutes(router)
 
 	// Create HTTP server with voice-chat-specific performance optimizations
 	// PERFORMANCE: Tuned for real-time WebRTC signaling and voice data processing
 	srv := &http.Server{
 		Addr: addr,
-		Handler: handler,
+		Handler: router,
 		ReadTimeout:       30 * time.Second,  // PERFORMANCE: Allow time for complex signaling operations
 		WriteTimeout:      30 * time.Second,  // PERFORMANCE: Allow time for signaling responses
 		IdleTimeout:       120 * time.Second, // PERFORMANCE: Keep connections for voice sessions
@@ -165,9 +156,7 @@ func main() {
 	}
 
 	// Shutdown voice chat service with cleanup
-	if err := svc.Shutdown(ctx); err != nil {
-		logger.Error("Voice chat service shutdown error", zap.Error(err))
-	}
+	svc.Shutdown()
 
 	logger.Info("Voice chat servers exited gracefully")
 }

@@ -6,11 +6,11 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 
 	"necpgame/services/voice-chat-service-go/pkg/api"
 )
@@ -53,12 +54,12 @@ type Handler struct {
 // PERFORMANCE: Struct field alignment optimized for memory efficiency
 type HTTPMetrics struct {
 	// Counter metrics (8 bytes each)
-	requestsTotal    prometheus.Counter
-	requestsError    prometheus.Counter
+	requestsTotal    *prometheus.CounterVec
+	requestsError    *prometheus.CounterVec
 
 	// Histogram metrics (8 bytes each)
-	requestDuration  prometheus.Histogram
-	responseSize     prometheus.Histogram
+	requestDuration  *prometheus.HistogramVec
+	responseSize     *prometheus.HistogramVec
 }
 
 // RateLimiter interface for rate limiting
@@ -603,29 +604,150 @@ func (h *Handler) sendMetrics(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, map[string]string{"status": "received"}, http.StatusOK)
 }
 
-// updateRoom handles room update requests (placeholder)
-func (h *Handler) updateRoom(w http.ResponseWriter, r *http.Request) {
-	h.sendError(w, "Not implemented", http.StatusNotImplemented)
-}
 
-// deleteRoom handles room deletion requests (placeholder)
-func (h *Handler) deleteRoom(w http.ResponseWriter, r *http.Request) {
-	h.sendError(w, "Not implemented", http.StatusNotImplemented)
-}
-
-// createInvite handles invite creation requests (placeholder)
-func (h *Handler) createInvite(w http.ResponseWriter, r *http.Request) {
-	h.sendError(w, "Not implemented", http.StatusNotImplemented)
-}
-
-// acceptInvite handles invite acceptance requests (placeholder)
-func (h *Handler) acceptInvite(w http.ResponseWriter, r *http.Request) {
-	h.sendError(w, "Not implemented", http.StatusNotImplemented)
-}
-
-// websocketSignaling handles WebSocket connections for real-time signaling (placeholder)
+// websocketSignaling handles WebSocket connections for real-time signaling
 func (h *Handler) websocketSignaling(w http.ResponseWriter, r *http.Request) {
-	h.sendError(w, "Not implemented", http.StatusNotImplemented)
+	// This is handled by the signaling server in main.go
+	// The WebSocket endpoint is served by NewSignalingHandler
+	h.sendError(w, "Use /ws/rooms/{roomID} endpoint", http.StatusNotFound)
+}
+
+// createInvite handles invite creation requests
+func (h *Handler) createInvite(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		h.requestMetrics.requestDuration.WithLabelValues("POST", "/api/v1/rooms/{roomID}/invites").Observe(time.Since(start).Seconds())
+	}()
+
+	vars := mux.Vars(r)
+	roomID := vars["roomID"]
+	claims := r.Context().Value("claims").(*Claims)
+
+	req := &api.CreateInviteRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("POST", "/api/v1/rooms/{roomID}/invites", "decode_error").Inc()
+		h.sendError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Set room ID and inviter from context
+	req.RoomID = roomID
+	req.InviterID = claims.UserID
+
+	// Set defaults
+	if req.ExpiresIn == 0 {
+		req.ExpiresIn = 24 * 60 * 60 // 24 hours default
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	resp, err := h.service.CreateInvite(ctx, req)
+	if err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("POST", "/api/v1/rooms/{roomID}/invites", "service_error").Inc()
+		h.sendError(w, fmt.Sprintf("Failed to create invite: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	h.requestMetrics.requestsTotal.WithLabelValues("POST", "/api/v1/rooms/{roomID}/invites", "200").Inc()
+	h.sendJSON(w, resp, http.StatusCreated)
+}
+
+// acceptInvite handles invite acceptance requests
+func (h *Handler) acceptInvite(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		h.requestMetrics.requestDuration.WithLabelValues("POST", "/api/v1/invites/{inviteID}/accept").Observe(time.Since(start).Seconds())
+	}()
+
+	vars := mux.Vars(r)
+	inviteID := vars["inviteID"]
+	claims := r.Context().Value("claims").(*Claims)
+
+	req := &api.AcceptInviteRequest{
+		InviteID: inviteID,
+		UserID:   claims.UserID,
+		Token:    claims.UserID, // Use user ID as token for simplicity
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	resp, err := h.service.AcceptInvite(ctx, req)
+	if err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("POST", "/api/v1/invites/{inviteID}/accept", "service_error").Inc()
+		h.sendError(w, fmt.Sprintf("Failed to accept invite: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	h.requestMetrics.requestsTotal.WithLabelValues("POST", "/api/v1/invites/{inviteID}/accept", "200").Inc()
+	h.sendJSON(w, resp, http.StatusOK)
+}
+
+// updateRoom handles room update requests
+func (h *Handler) updateRoom(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		h.requestMetrics.requestDuration.WithLabelValues("PUT", "/api/v1/rooms/{roomID}").Observe(time.Since(start).Seconds())
+	}()
+
+	vars := mux.Vars(r)
+	roomID := vars["roomID"]
+	claims := r.Context().Value("claims").(*Claims)
+
+	req := &api.UpdateRoomRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("PUT", "/api/v1/rooms/{roomID}", "decode_error").Inc()
+		h.sendError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Set room ID and requester from context
+	req.RoomID = roomID
+	req.RequesterID = claims.UserID
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	err := h.service.UpdateVoiceRoom(ctx, req)
+	if err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("PUT", "/api/v1/rooms/{roomID}", "service_error").Inc()
+		h.sendError(w, fmt.Sprintf("Failed to update room: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	h.requestMetrics.requestsTotal.WithLabelValues("PUT", "/api/v1/rooms/{roomID}", "200").Inc()
+	h.sendJSON(w, map[string]string{"status": "updated"}, http.StatusOK)
+}
+
+// deleteRoom handles room deletion requests
+func (h *Handler) deleteRoom(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		h.requestMetrics.requestDuration.WithLabelValues("DELETE", "/api/v1/rooms/{roomID}").Observe(time.Since(start).Seconds())
+	}()
+
+	vars := mux.Vars(r)
+	roomID := vars["roomID"]
+	claims := r.Context().Value("claims").(*Claims)
+
+	req := &api.DeleteRoomRequest{
+		RoomID:      roomID,
+		RequesterID: claims.UserID,
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	err := h.service.DeleteVoiceRoom(ctx, req)
+	if err != nil {
+		h.requestMetrics.requestsError.WithLabelValues("DELETE", "/api/v1/rooms/{roomID}", "service_error").Inc()
+		h.sendError(w, fmt.Sprintf("Failed to delete room: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	h.requestMetrics.requestsTotal.WithLabelValues("DELETE", "/api/v1/rooms/{roomID}", "200").Inc()
+	h.sendJSON(w, map[string]string{"status": "deleted"}, http.StatusOK)
 }
 
 // healthCheck handles health check requests

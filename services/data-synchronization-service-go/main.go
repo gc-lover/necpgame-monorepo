@@ -56,10 +56,15 @@ func main() {
 		logger.Fatal("failed to initialize service", zap.Error(err))
 	}
 
-	// Initialize HTTP server
+	// Initialize HTTP server with enterprise-grade timeouts for MMOFPS data sync operations
 	httpServer := &http.Server{
-		Addr:    addr,
-		Handler: svc.Handler(),
+		Addr:              addr,
+		Handler:           svc.Handler(),
+		ReadTimeout:       15 * time.Second, // BACKEND NOTE: Increased for complex sync operations
+		WriteTimeout:      15 * time.Second, // BACKEND NOTE: For sync response generation
+		IdleTimeout:       120 * time.Second, // BACKEND NOTE: Keep connections alive for sync sessions
+		ReadHeaderTimeout: 3 * time.Second, // BACKEND NOTE: Fast header processing for sync requests
+		MaxHeaderBytes:    1 << 20, // BACKEND NOTE: 1MB max headers for security
 	}
 
 	// Initialize metrics server

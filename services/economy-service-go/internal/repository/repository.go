@@ -10,21 +10,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"necpgame/services/economy-service-go/config"
 	"necpgame/services/economy-service-go/internal/simulation/bazaar"
 )
 
 // Repository handles database operations for economy service
 type Repository struct {
 	pool   *pgxpool.Pool
+	redis  *redis.Client
 	logger *zap.Logger
 }
 
-// NewRepository creates a new repository instance
-func NewRepository(pool *pgxpool.Pool, logger *zap.Logger) *Repository {
+// NewRepository creates a new repository instance with Redis support
+func NewRepository(pool *pgxpool.Pool, redisClient *redis.Client, logger *zap.Logger) *Repository {
 	return &Repository{
 		pool:   pool,
+		redis:  redisClient,
 		logger: logger,
 	}
 }

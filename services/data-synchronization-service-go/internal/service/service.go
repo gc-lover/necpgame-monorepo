@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -68,21 +69,67 @@ func (s *Service) initComponents() error {
 	// Initialize meter
 	s.meter = metric.NewMeterProvider().Meter("data-sync-service")
 
-	// Initialize database connection
+	// Initialize database connection with enterprise-grade pool optimization
 	if s.config.DatabaseURL != "" {
-		s.db, err = pgxpool.New(context.Background(), s.config.DatabaseURL)
+		// BACKEND NOTE: Enterprise-grade database pool for MMOFPS data synchronization
+		poolConfig, err := pgxpool.ParseConfig(s.config.DatabaseURL)
 		if err != nil {
-			return errors.Wrap(err, "failed to connect to database")
+			return errors.Wrap(err, "failed to parse database config")
 		}
+
+		// BACKEND NOTE: Optimized pool settings for high-throughput data sync operations
+		poolConfig.MaxConns = 50                    // BACKEND NOTE: High pool for data sync operations (50 max connections)
+		poolConfig.MinConns = 10                    // BACKEND NOTE: Keep minimum connections ready for instant sync access
+		poolConfig.MaxConnLifetime = 30 * time.Minute // BACKEND NOTE: Shorter lifetime for real-time sync ops
+		poolConfig.MaxConnIdleTime = 5 * time.Minute  // BACKEND NOTE: Quick cleanup for active sync sessions
+		poolConfig.HealthCheckPeriod = 30 * time.Second // BACKEND NOTE: Health checks for connection reliability
+
+		s.db, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
+		if err != nil {
+			return errors.Wrap(err, "failed to create database pool")
+		}
+
+		// Test connection with timeout - BACKEND NOTE: Validate database connectivity
+		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.db.Ping(dbCtx); err != nil {
+			return errors.Wrap(err, "failed to ping database")
+		}
+
+		s.logger.Info("Database connection established with enterprise-grade pool optimization",
+			zap.Int32("max_conns", poolConfig.MaxConns),
+			zap.Int32("min_conns", poolConfig.MinConns))
 	}
 
-	// Initialize Redis connection
+	// Initialize Redis connection with enterprise-grade pool optimization
 	if s.config.RedisURL != "" {
 		opt, err := redis.ParseURL(s.config.RedisURL)
 		if err != nil {
 			return errors.Wrap(err, "failed to parse Redis URL")
 		}
+
+		// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS data sync caching
+		opt.PoolSize = 25         // BACKEND NOTE: High pool for data sync session caching
+		opt.MinIdleConns = 8      // BACKEND NOTE: Keep connections ready for instant sync access
+		opt.ConnMaxLifetime = 30 * time.Minute // BACKEND NOTE: Match DB lifetime for consistency
+		opt.ConnMaxIdleTime = 8 * time.Minute  // BACKEND NOTE: Reasonable cleanup for active sync sessions
+		opt.MaxRetries = 3       // BACKEND NOTE: Retry failed operations
+		opt.DialTimeout = 5 * time.Second
+		opt.ReadTimeout = 3 * time.Second
+		opt.WriteTimeout = 3 * time.Second
+
 		s.redis = redis.NewClient(opt)
+
+		// Test Redis connection with timeout - BACKEND NOTE: Validate Redis connectivity
+		redisCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.redis.Ping(redisCtx).Err(); err != nil {
+			return errors.Wrap(err, "failed to ping Redis")
+		}
+
+		s.logger.Info("Redis connection established with enterprise-grade pool optimization",
+			zap.Int("pool_size", opt.PoolSize),
+			zap.Int("min_idle_conns", opt.MinIdleConns))
 	}
 
 	// Initialize core components

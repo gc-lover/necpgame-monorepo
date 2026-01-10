@@ -1,0 +1,880 @@
+openapi: 3.0.3
+info:
+  title: Message Queue Service API
+  description: Enterprise-grade message queue service for NECPGAME inter-service communication
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Local development server
+  - url: https://message-queue.necpgame.com/api/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /messages:
+    post:
+      summary: Produce a message to the queue
+      description: Send a message to a specific topic for processing by consumers
+      operationId: produceMessage
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProduceMessageRequest'
+            example:
+              topic: "user-events"
+              key: "user-123"
+              content: "{\"event\":\"login\",\"user_id\":\"123\"}"
+              headers:
+                source: "auth-service"
+              priority: 1
+              ttl: 3600000000000
+      responses:
+        '200':
+          description: Message produced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProduceMessageResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /messages/consume:
+    post:
+      summary: Consume messages from the queue
+      description: Retrieve messages from a topic for processing
+      operationId: consumeMessages
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumeMessageRequest'
+            example:
+              topic: "user-events"
+              group_id: "user-processor"
+              consumer_id: "consumer-1"
+              max_messages: 10
+              timeout: 30000000000
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumeMessageResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /messages/acknowledge:
+    post:
+      summary: Acknowledge message processing
+      description: Confirm that a message has been successfully processed
+      operationId: acknowledgeMessage
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeMessageRequest'
+            example:
+              message_id: "msg-12345"
+              topic: "user-events"
+              success: true
+              group_id: "user-processor"
+      responses:
+        '200':
+          description: Message acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "acknowledged"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /topics:
+    post:
+      summary: Create a new topic
+      description: Create a message topic with specified configuration
+      operationId: createTopic
+      tags:
+        - Topics
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTopicRequest'
+            example:
+              name: "user-events"
+              partitions: 3
+              replication: 3
+              retention: 604800000000000
+              max_size: 1073741824
+      responses:
+        '201':
+          description: Topic created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTopicResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Topic already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /topics/{name}:
+    get:
+      summary: Get topic information
+      description: Retrieve detailed information about a specific topic
+      operationId: getTopicInfo
+      tags:
+        - Topics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Topic name
+          example: "user-events"
+      responses:
+        '200':
+          description: Topic information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTopicInfoResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Topic not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /consumers:
+    post:
+      summary: Register a consumer
+      description: Register a new message consumer with the service
+      operationId: registerConsumer
+      tags:
+        - Consumers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterConsumerRequest'
+            example:
+              consumer_id: "consumer-1"
+              group_id: "user-processor"
+              topics: ["user-events", "order-events"]
+              max_concurrency: 5
+              rate_limit: 100
+      responses:
+        '201':
+          description: Consumer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterConsumerResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Consumer already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics:
+    get:
+      summary: Get queue metrics
+      description: Retrieve performance and operational metrics for the message queue
+      operationId: getQueueMetrics
+      tags:
+        - Monitoring
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start time for metrics collection
+          example: "2024-01-01T00:00:00Z"
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End time for metrics collection
+          example: "2024-01-02T00:00:00Z"
+        - name: topic
+          in: query
+          schema:
+            type: string
+          description: Filter metrics by topic
+          example: "user-events"
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQueueMetricsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Check service health and dependency status
+      operationId: healthCheck
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ProduceMessageRequest:
+      type: object
+      required:
+        - topic
+        - content
+      properties:
+        topic:
+          type: string
+          description: Target topic name
+          example: "user-events"
+        key:
+          type: string
+          description: Message partitioning key
+          example: "user-123"
+        content:
+          type: string
+          format: byte
+          description: Message payload (base64 encoded)
+          example: "eyJldmVudCI6ImxvZ2luIiwidXNlcl9pZCI6IjEyMyJ9"
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom message headers
+          example:
+            source: "auth-service"
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 0
+          description: Message priority (higher = more important)
+          example: 1
+        producer_id:
+          type: string
+          description: Producer service identifier
+          example: "auth-service"
+        source:
+          type: string
+          description: Source service name
+          example: "auth-service"
+        ttl:
+          type: integer
+          format: int64
+          description: Time-to-live in nanoseconds
+          example: 3600000000000
+
+    ProduceMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: Unique message identifier
+          example: "msg-12345"
+        topic:
+          type: string
+          description: Topic name
+          example: "user-events"
+        partition:
+          type: integer
+          description: Partition number
+          example: 0
+        offset:
+          type: integer
+          format: int64
+          description: Message offset
+          example: 12345
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Message expiration time
+
+    ConsumeMessageRequest:
+      type: object
+      required:
+        - topic
+        - group_id
+      properties:
+        topic:
+          type: string
+          description: Topic to consume from
+          example: "user-events"
+        group_id:
+          type: string
+          description: Consumer group identifier
+          example: "user-processor"
+        consumer_id:
+          type: string
+          description: Consumer instance identifier
+          example: "consumer-1"
+        max_messages:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum messages to return
+          example: 10
+        timeout:
+          type: integer
+          format: int64
+          description: Consumption timeout in nanoseconds
+          example: 30000000000
+
+    ConsumeMessageResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageInfo'
+          description: Retrieved messages
+        count:
+          type: integer
+          description: Number of messages returned
+          example: 2
+        has_more:
+          type: boolean
+          description: Whether more messages are available
+          example: false
+
+    MessageInfo:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: Unique message identifier
+          example: "msg-12345"
+        topic:
+          type: string
+          description: Topic name
+          example: "user-events"
+        key:
+          type: string
+          description: Message key
+          example: "user-123"
+        partition:
+          type: integer
+          description: Partition number
+          example: 0
+        offset:
+          type: integer
+          format: int64
+          description: Message offset
+          example: 12345
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        priority:
+          type: integer
+          description: Message priority
+          example: 1
+        retry_count:
+          type: integer
+          description: Number of retry attempts
+          example: 0
+        content:
+          type: string
+          format: byte
+          description: Message payload
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Message headers
+
+    AcknowledgeMessageRequest:
+      type: object
+      required:
+        - message_id
+        - topic
+        - group_id
+      properties:
+        message_id:
+          type: string
+          description: Message to acknowledge
+          example: "msg-12345"
+        topic:
+          type: string
+          description: Topic name
+          example: "user-events"
+        success:
+          type: boolean
+          default: true
+          description: Whether processing was successful
+          example: true
+        error_msg:
+          type: string
+          description: Error message if processing failed
+          example: "processing failed"
+        group_id:
+          type: string
+          description: Consumer group identifier
+          example: "user-processor"
+
+    CreateTopicRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "user-events"
+        partitions:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 3
+          description: Number of partitions
+          example: 3
+        replication:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+          description: Replication factor
+          example: 3
+        retention:
+          type: integer
+          format: int64
+          description: Retention period in nanoseconds
+          example: 604800000000000
+        max_size:
+          type: integer
+          format: int64
+          description: Maximum topic size in bytes
+          example: 1073741824
+
+    CreateTopicResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "user-events"
+        partitions:
+          type: integer
+          description: Number of partitions
+          example: 3
+        status:
+          type: string
+          description: Topic status
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    GetTopicInfoRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "user-events"
+
+    GetTopicInfoResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Topic name
+          example: "user-events"
+        partitions:
+          type: integer
+          description: Number of partitions
+          example: 3
+        replication:
+          type: integer
+          description: Replication factor
+          example: 3
+        status:
+          type: string
+          description: Topic status
+          example: "active"
+        message_count:
+          type: integer
+          format: int64
+          description: Total messages in topic
+          example: 12345
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        last_message:
+          type: string
+          format: date-time
+          description: Timestamp of last message
+
+    RegisterConsumerRequest:
+      type: object
+      required:
+        - consumer_id
+        - group_id
+        - topics
+      properties:
+        consumer_id:
+          type: string
+          description: Unique consumer identifier
+          example: "consumer-1"
+        group_id:
+          type: string
+          description: Consumer group identifier
+          example: "user-processor"
+        topics:
+          type: array
+          items:
+            type: string
+          description: Topics to consume from
+          example: ["user-events", "order-events"]
+        max_concurrency:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: Maximum concurrent processing
+          example: 5
+        rate_limit:
+          type: integer
+          description: Messages per second limit
+          example: 100
+
+    RegisterConsumerResponse:
+      type: object
+      properties:
+        consumer_id:
+          type: string
+          description: Consumer identifier
+          example: "consumer-1"
+        group_id:
+          type: string
+          description: Consumer group
+          example: "user-processor"
+        status:
+          type: string
+          description: Consumer status
+          example: "active"
+        registered_at:
+          type: string
+          format: date-time
+          description: Registration timestamp
+
+    GetQueueMetricsRequest:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+          description: Metrics start time
+        end_time:
+          type: string
+          format: date-time
+          description: Metrics end time
+        topic:
+          type: string
+          description: Topic filter
+
+    GetQueueMetricsResponse:
+      type: object
+      properties:
+        metrics:
+          $ref: '#/components/schemas/QueueMetricsInfo'
+        start_time:
+          type: string
+          format: date-time
+          description: Metrics period start
+        end_time:
+          type: string
+          format: date-time
+          description: Metrics period end
+
+    QueueMetricsInfo:
+      type: object
+      properties:
+        messages_produced:
+          type: integer
+          format: int64
+          description: Total messages produced
+          example: 10000
+        messages_consumed:
+          type: integer
+          format: int64
+          description: Total messages consumed
+          example: 9500
+        messages_pending:
+          type: integer
+          format: int64
+          description: Messages waiting to be processed
+          example: 500
+        messages_failed:
+          type: integer
+          format: int64
+          description: Failed messages
+          example: 50
+        avg_processing_time:
+          type: string
+          description: Average processing time
+          example: "50ms"
+        p95_processing_time:
+          type: string
+          description: 95th percentile processing time
+          example: "200ms"
+        active_consumers:
+          type: integer
+          description: Number of active consumers
+          example: 3
+        total_consumers:
+          type: integer
+          description: Total registered consumers
+          example: 5
+        topic_count:
+          type: integer
+          description: Number of topics
+          example: 10
+        messages_per_second:
+          type: number
+          format: float
+          description: Current throughput
+          example: 150.5
+        error_rate:
+          type: number
+          format: float
+          description: Error rate (0-1)
+          example: 0.005
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: "healthy"
+        service:
+          type: string
+          description: Service name
+          example: "message-queue-service"
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: Check timestamp
+        uptime:
+          type: string
+          description: Service uptime
+          example: "2h30m45s"
+        database:
+          type: string
+          description: Database health
+          example: "healthy"
+        kafka:
+          type: string
+          description: Kafka health
+          example: "healthy"
+        redis:
+          type: string
+          description: Redis health
+          example: "healthy"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request body"
+        timestamp:
+          type: integer
+          format: int64
+          description: Error timestamp (Unix)
+          example: 1703123456
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for service authentication

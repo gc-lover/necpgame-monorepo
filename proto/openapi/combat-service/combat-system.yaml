@@ -1,46 +1,45 @@
+# Issue: #2231
 openapi: 3.0.3
 info:
-  title: Combat System API
+  title: Combat System API - Enterprise Grade
+  description: 'Enterprise-Grade Combat System API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** specialized-domain
+
+    **Module:** combat-system-service-go
+
+    **Purpose:** Complete combat system orchestration, player actions, weapon systems, damage calculations, and anti-cheat validation.
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for combat structs.
+
+    Context timeouts: 25ms for action processing, 50ms for session management.
+
+    DB pool config: Read replicas for analytics, connection pooling for concurrent combat operations.
+
+    **Features:**
+
+    - Real-time combat session orchestration (1000+ RPS) - Player action validation and processing - Weapon and ability system management
+    - Advanced damage calculation engine - Anti-cheat position and action validation - Combat statistics and performance analytics
+
+    **Performance:** P99 <25ms for actions, P99 <50ms for sessions, zero allocations in hot path '
   version: 1.0.0
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  description: 'Combat System API for MMOFPS RPG.
-
-    This API provides endpoints for managing combat sessions, player actions,
-
-    weapon systems, damage calculations, and real-time combat state synchronization.
-
-    ## Key Features
-
-    - Real-time combat session management
-
-    - Player action validation and processing
-
-    - Weapon and ability systems
-
-    - Damage calculation and effects
-
-    - Anti-cheat validation
-
-    - Performance monitoring
-
-    ## Performance Requirements
-
-    - Action processing: 1000+ RPS with P99 <25ms
-
-    - Session management: 500+ RPS with P99 <50ms
-
-    - Memory optimized with struct alignment
-
-    - Context timeouts on all operations
-
-    '
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME Combat API Support
+    url: https://necpgame.com/support
+    email: api@combat.necpgame.com
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1/combat
-    description: Production API
+  - url: http://localhost:8086/api/v1
+    description: Combat System Service Go (development)
+  - url: https://combat-system-go.necpgame.com/api/v1
+    description: Combat System Service Go (production)
+
+security:
+  - BearerAuth: [ ]
 tags:
   - name: sessions
     description: Combat session lifecycle management
@@ -574,6 +573,8 @@ components:
               error:
                 type: string
                 example: Internal server error
+
+components:
   schemas:
     CombatSession:
       type: object
@@ -1003,3 +1004,9 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

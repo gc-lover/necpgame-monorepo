@@ -74,6 +74,10 @@ func (h *EconomyHandlers) EconomyHealthCheck(ctx context.Context) (*api.HealthRe
 
 // GetOrderBook implements getOrderBook operation.
 func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBookParams) (*api.OrderBook, error) {
+	// BACKEND NOTE: Context timeout for order book retrieval (prevents hanging in high-load economy)
+	_, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	h.logger.Info("GetOrderBook called",
 		zap.String("commodity", string(params.Commodity)))
 
@@ -131,7 +135,7 @@ func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderB
 	}
 
 	orderBook.LastPrice = api.NewOptFloat32(lastPrice)
-	orderBook.Volume24h = api.NewOptInt(0) // TODO: Implement 24h volume calculation
+	orderBook.Volume24h = api.NewOptInt(market.Get24hVolume())
 
 	h.logger.Info("Order book retrieved successfully",
 		zap.Int("bids_count", len(orderBook.Bids)),
@@ -212,6 +216,10 @@ func convertTrades(trades []*bazaar.Trade) []interface{} {
 
 // GetMarketPrice implements getMarketPrice operation.
 func (h *EconomyHandlers) GetMarketPrice(ctx context.Context, params api.GetMarketPriceParams) (*api.MarketPrice, error) {
+	// BACKEND NOTE: Context timeout for market price retrieval (prevents hanging)
+	_, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	h.logger.Info("GetMarketPrice called",
 		zap.String("commodity", string(params.Commodity)))
 

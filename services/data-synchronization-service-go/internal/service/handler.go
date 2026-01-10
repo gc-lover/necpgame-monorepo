@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -38,7 +40,11 @@ func (h *Handler) handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	health, err := h.service.Health(r.Context())
+	// BACKEND NOTE: Context timeout for health check (prevents hanging)
+	healthCtx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	health, err := h.service.Health(healthCtx)
 	if err != nil {
 		h.logger.Error("health check failed", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

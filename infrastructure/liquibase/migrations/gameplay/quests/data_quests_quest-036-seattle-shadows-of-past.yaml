@@ -1,0 +1,127 @@
+databaseChangeLog:
+- changeSet:
+    id: quests-quest-036-seattle-shadows-of-past
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: gameplay.quest_definitions
+        columns:
+        - column:
+            name: id
+            value: '6819783606761044'
+        - column:
+            name: metadata
+            value: '{"id": "canon-quest-seattle-036-shadows-of-past", "version": "1.0.0",
+              "source_file": "knowledge\\canon\\lore\\timeline-author\\quests\\america\\seattle\\2020-2029\\quest-036-seattle-shadows-of-past.yaml"}'
+        - column:
+            name: title
+            value: Seattle 2020-2029 — Тени Прошлого
+        - column:
+            name: description
+            value: 'Динамический квест с 5 ключевыми точками выбора, демонстрирующий
+              систему ветвления на основе взаимодействий с NPC.
+
+
+              Квест развивается в зависимости от того, как игрок взаимодействует с
+              информатором:
+
+              - Первый выбор: как заплатить (премия/торг/отказ) - определяет начальные
+              отношения
+
+              - Второй выбор: уровень доверия (поверить/проверить/подозревать) - влияет
+              на качество информации
+
+              - Третий выбор: использование информации (использовать сам/продать/уничтожить)
+              - влияет на репутацию
+
+              - Четвертый выбор: отношения после сделки (стать союзником/нейтральным/врагом)
+              - определяет будущие квесты
+
+              - Пятый выбор: долгосрочное взаимодействие (постоянный контакт/одноразовая
+              сделка/предать) - влияет на уличную репутацию
+
+
+              Каждый выбор влияет на:
+
+              - Репутацию (street reputation)
+
+              - Отношения с информатором (Mikhail "Shadow" Volkov)
+
+              - Доступность будущих квестов и диалогов
+
+              - Доступ к информационной сети Сиэтла
+
+              - Финальный исход квеста (6 возможных концовок)
+
+              '
+        - column:
+            name: status
+            value: active
+        - column:
+            name: level_min
+            value: 10
+        - column:
+            name: level_max
+            value: 20
+        - column:
+            name: rewards
+            value: '{"experience": 3000, "money": {"base": 0, "conditional_modifier":
+              {"if": "choice_point_1 == \"pay_premium\"", "then": -700, "elif": "choice_point_1
+              == \"negotiate\"", "else": 0, "conditional_success": {"if": "choice_point_1
+              == \"negotiate\" AND social_skill > 0.6", "then": -500}}}, "reputation":
+              {"street": {"base": 0, "conditional_modifier": {"if": "choice_point_1
+              == \"pay_premium\"", "then": -50, "elif": "choice_point_1 == \"refuse_leave\"",
+              "else": 0}, "additional_modifiers": {"if": "choice_point_5 == \"permanent_contact\"",
+              "then": -300, "elif": "choice_point_5 == \"betray_informant\"", "else":
+              0}}}, "items": [{"id": "valuable_information_chip", "name": "Ценная
+              информационная чип-карта", "type": "data_chip", "rarity": "rare", "quantity":
+              1, "conditional": "choice_point_1 != \"refuse_leave\" AND choice_point_2
+              != \"suspect_false\""}, {"id": "informant_contact_token", "name": "Токен
+              контакта информатора", "type": "contact_token", "rarity": "uncommon",
+              "quantity": 1, "conditional": "choice_point_4 == \"become_ally\" OR
+              choice_point_4 == \"neutral_contact\""}, {"id": "street_network_access",
+              "name": "Доступ к уличной информационной сети", "type": "network_access",
+              "rarity": "epic", "quantity": 1, "conditional": "choice_point_5 == \"permanent_contact\"
+              AND reputation.street > 200"}], "unlocks": [{"quest": "canon-quest-seattle-informant-network",
+              "conditional": "choice_point_5 == \"permanent_contact\" AND reputation.street
+              > 150"}, {"quest": "canon-quest-seattle-informant-betrayal", "conditional":
+              "choice_point_5 == \"betray_informant\""}, {"quest": "canon-quest-seattle-information-brokerage",
+              "conditional": "choice_point_4 == \"become_ally\" AND choice_point_3
+              == \"sell_information\""}, {"npc_relationship": "mikhail_shadow_volkov_trusted",
+              "conditional": "choice_point_4 == \"become_ally\" AND choice_point_2
+              == \"trust_completely\""}, {"npc_relationship": "mikhail_shadow_volkov_hostile",
+              "conditional": "choice_point_5 == \"betray_informant\" OR choice_point_4
+              == \"turn_enemy\""}, {"faction": "street_information_network", "conditional":
+              "choice_point_5 == \"permanent_contact\" AND reputation.street > 250"},
+              {"location": "abandoned_bar_safe_house", "conditional": "choice_point_4
+              == \"become_ally\" AND choice_point_1 == \"pay_premium\""}]}'
+        - column:
+            name: objectives
+            value: '[{"id": "meet_informant", "text": "Встретиться с информатором
+              в заброшенном баре", "type": "interact", "target": "abandoned_bar_location",
+              "count": 1, "optional": false, "choice_point": 0}, {"id": "first_interaction_choice",
+              "text": "Решить, как взаимодействовать с информатором при первой встрече",
+              "type": "choice", "target": "choice_point_1", "options": ["Pay premium
+              price (1000 eddies)", "Negotiate for better price", "Refuse and leave"],
+              "count": 1, "optional": false, "choice_point": 1}, {"id": "trust_assessment_choice",
+              "text": "Оценить доверие к информации информатора", "type": "choice",
+              "target": "choice_point_2", "options": ["Trust information completely",
+              "Verify information independently", "Suspect information is false"],
+              "count": 1, "optional": false, "conditional": "choice_point_1 != \"refuse_leave\"",
+              "choice_point": 2}, {"id": "information_usage_choice", "text": "Решить,
+              как использовать полученную информацию", "type": "choice", "target":
+              "choice_point_3", "options": ["Use information for personal gain", "Sell
+              information to highest bidder", "Destroy information to protect others"],
+              "count": 1, "optional": false, "conditional": "choice_point_2 == \"trust_completely\"
+              OR choice_point_2 == \"verify_independently\"", "choice_point": 3},
+              {"id": "relationship_development_choice", "text": "Определить будущие
+              отношения с информатором после сделки", "type": "choice", "target":
+              "choice_point_4", "options": ["Become long-term ally", "Remain neutral
+              contact", "Turn into enemy"], "count": 1, "optional": false, "conditional":
+              "choice_point_3 != null", "choice_point": 4}, {"id": "long_term_interaction_choice",
+              "text": "Принять решение о долгосрочном взаимодействии с информатором",
+              "type": "choice", "target": "choice_point_5", "options": ["Establish
+              permanent contact network", "One-time transaction only", "Betray informant
+              for reward"], "count": 1, "optional": false, "conditional": "choice_point_4
+              == \"become_ally\" OR choice_point_4 == \"neutral_contact\"", "choice_point":
+              5}]'

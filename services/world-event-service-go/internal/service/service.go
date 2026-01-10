@@ -11,8 +11,9 @@ import (
 
 // Handler implements api.Handler.
 type Handler struct {
-	logger *zap.Logger
-	repo   *repository.Repository
+	api.UnimplementedHandler // Embed to get default implementations
+	logger                   *zap.Logger
+	repo                     *repository.Repository
 }
 
 // NewHandler creates a new handler.
@@ -24,10 +25,13 @@ func NewHandler(logger *zap.Logger, repo *repository.Repository) *Handler {
 }
 
 // NewError implements api.Handler.NewError.
-func (h *Handler) NewError(ctx context.Context, err error) *api.Error {
-	return &api.Error{
-		Code:    "500",
-		Message: err.Error(),
+func (h *Handler) NewError(ctx context.Context, err error) *api.ErrorStatusCode {
+	return &api.ErrorStatusCode{
+		StatusCode: 500,
+		Response: api.Error{
+			Code:    "500",
+			Message: err.Error(),
+		},
 	}
 }
 

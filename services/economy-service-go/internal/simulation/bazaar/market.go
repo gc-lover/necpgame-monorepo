@@ -32,15 +32,17 @@ type MarketLogic struct {
 	Bids      []*Order // Buy orders
 	Asks      []*Order // Sell orders
 	History   []float64
+	TradeHistory []TradeRecord // History of completed trades with timestamps
 }
 
 // NewMarketLogic creates a new market for a commodity
 func NewMarketLogic(c Commodity) *MarketLogic {
 	return &MarketLogic{
-		Commodity: c,
-		Bids:      make([]*Order, 0, 100), // Preallocate for performance
-		Asks:      make([]*Order, 0, 100),
-		History:   make([]float64, 0, 1000),
+		Commodity:   c,
+		Bids:        make([]*Order, 0, 100), // Preallocate for performance
+		Asks:        make([]*Order, 0, 100),
+		History:     make([]float64, 0, 1000),
+		TradeHistory: make([]TradeRecord, 0, 1000), // Preallocate for trade history
 	}
 }
 
@@ -148,6 +150,18 @@ func (m *MarketLogic) clearOrders() ClearResult {
 		}
 		tradeResults = append(tradeResults, tradeResult)
 
+		// Record trade in history for volume calculations
+		tradeRecord := TradeRecord{
+			Timestamp:   time.Now().Unix(),
+			Commodity:   m.Commodity,
+			Type:        OrderTypeAsk, // Assume seller's perspective for simplicity
+			Price:       clearingPrice,
+			Quantity:    tradeQty,
+			ProfitLoss:  0, // Not calculated here for performance
+			WasExpected: true, // Simplified
+		}
+		m.TradeHistory = append(m.TradeHistory, tradeRecord)
+
 		// Update volume and price-volume sum for weighted average
 		totalVolume += tradeQty
 		totalPriceVolume += clearingPrice * float64(tradeQty)
@@ -177,6 +191,11 @@ func (m *MarketLogic) clearOrders() ClearResult {
 
 	// Record in history
 	m.History = append(m.History, clearingPrice)
+
+	// Cleanup old trades periodically (every 100 clearings to avoid performance impact)
+	if len(m.TradeHistory) > 0 && len(m.TradeHistory)%100 == 0 {
+		m.CleanupOldTrades()
+	}
 
 	// Reset order books for next round (clear unfilled orders)
 	m.Bids = make([]*Order, 0, 100)
@@ -340,6 +359,41 @@ func (m *MarketLogic) GetVolume() int {
 	// This would need to be stored from last clearing
 	// For now, return 0 as placeholder
 	return 0
+}
+
+// Get24hVolume returns total volume traded in the last 24 hours
+func (m *MarketLogic) Get24hVolume() int {
+	currentTime := time.Now().Unix()
+	dayAgo := currentTime - (24 * 60 * 60) // 24 hours in seconds
+
+	totalVolume := 0
+	for _, trade := range m.TradeHistory {
+		if trade.Timestamp >= dayAgo {
+			totalVolume += trade.Quantity
+		}
+	}
+
+	return totalVolume
+}
+
+// CleanupOldTrades removes trades older than 30 days to prevent memory bloat
+func (m *MarketLogic) CleanupOldTrades() {
+	currentTime := time.Now().Unix()
+	monthAgo := currentTime - (30 * 24 * 60 * 60) // 30 days in seconds
+
+	// Find first trade within last 30 days
+	cutoffIndex := -1
+	for i, trade := range m.TradeHistory {
+		if trade.Timestamp >= monthAgo {
+			cutoffIndex = i
+			break
+		}
+	}
+
+	// Remove old trades
+	if cutoffIndex > 0 {
+		m.TradeHistory = m.TradeHistory[cutoffIndex:]
+	}
 }
 
 // ClearLegacy is a legacy method for backward compatibility

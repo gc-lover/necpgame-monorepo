@@ -1,0 +1,662 @@
+openapi: 3.0.3
+info:
+  title: NECPGAME World Events Service API
+  description: Enterprise-grade world events management service with real-time event scheduling and Kafka integration
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8084
+    description: Local development server
+  - url: https://api.necpgame.com/world-events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /events:
+    post:
+      summary: Create a new world event
+      description: Creates and schedules a new world event with full configuration
+      operationId: CreateWorldEvent
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorldEventRequest'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventResponse'
+        '500':
+          description: Creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List world events
+      description: Retrieves a paginated list of world events with filtering options
+      operationId: ListWorldEvents
+      tags:
+        - Events
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, active, completed, cancelled]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [natural_disaster, festival, invasion, trade, seasonal, random]
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorldEventSummary'
+
+  /events/{eventId}:
+    get:
+      summary: Get world event details
+      description: Retrieves detailed information about a specific world event
+      operationId: GetWorldEvent
+      tags:
+        - Events
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique event identifier
+      responses:
+        '200':
+          description: Event details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update world event
+      description: Updates an existing world event's status and properties
+      operationId: UpdateWorldEvent
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResponse'
+        '500':
+          description: Update failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete world event
+      description: Cancels and deletes a scheduled world event
+      operationId: DeleteWorldEvent
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '500':
+          description: Deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{eventId}/join:
+    post:
+      summary: Join world event
+      description: Allows a player to join an active world event
+      operationId: JoinWorldEvent
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinWorldEventRequest'
+      responses:
+        '200':
+          description: Successfully joined event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinEventResponse'
+        '500':
+          description: Join failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{eventId}/leave:
+    post:
+      summary: Leave world event
+      description: Allows a player to leave an active world event
+      operationId: LeaveWorldEvent
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveEventResponse'
+        '500':
+          description: Leave failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{eventId}/participants:
+    get:
+      summary: Get event participants
+      description: Retrieves a list of participants for a specific world event
+      operationId: GetEventParticipants
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventParticipant'
+
+  /stats:
+    get:
+      summary: Get world event statistics
+      description: Retrieves comprehensive statistics about world events
+      operationId: GetWorldEventStats
+      tags:
+        - Statistics
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventStatsResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status and event scheduler information
+      operationId: HealthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    # Event creation and management schemas
+    CreateWorldEventRequest:
+      type: object
+      required:
+        - event_type
+        - title
+        - category
+      properties:
+        event_type:
+          type: string
+          description: Type of world event (e.g., "earthquake", "victory_festival")
+        title:
+          type: string
+          maxLength: 255
+          description: Human-readable event title
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed event description
+        region:
+          type: string
+          description: Geographic region where event occurs
+        server_id:
+          type: string
+          description: Game server identifier
+        category:
+          type: string
+          enum: [natural_disaster, festival, invasion, trade, seasonal, random]
+          description: Event category
+        intensity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Event intensity (1-10 scale)
+        max_participants:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          default: 100
+          description: Maximum number of participants
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Event center latitude
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Event center longitude
+        radius:
+          type: number
+          format: float
+          minimum: 100
+          maximum: 10000
+          default: 1000
+          description: Event area radius in game units
+        scheduled_at:
+          type: string
+          format: date-time
+          description: When the event should start
+        is_global:
+          type: boolean
+          default: false
+          description: Whether event affects entire world
+        is_recurring:
+          type: boolean
+          default: false
+          description: Whether event repeats periodically
+        allow_late_join:
+          type: boolean
+          default: true
+          description: Whether players can join after start
+        effects:
+          type: object
+          description: Game effects and modifiers
+        rewards:
+          type: object
+          description: Completion rewards
+        requirements:
+          type: object
+          description: Participation requirements
+
+    WorldEventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+        event_type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        region:
+          type: string
+        server_id:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        category:
+          type: string
+        priority:
+          type: string
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        radius:
+          type: number
+          format: float
+        scheduled_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        intensity:
+          type: integer
+        participant_count:
+          type: integer
+        max_participants:
+          type: integer
+        is_global:
+          type: boolean
+        is_recurring:
+          type: boolean
+        allow_late_join:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    WorldEventSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+        event_type:
+          type: string
+        title:
+          type: string
+        region:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        scheduled_at:
+          type: string
+          format: date-time
+        intensity:
+          type: integer
+        participant_count:
+          type: integer
+        max_participants:
+          type: integer
+        is_global:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateWorldEventRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        participant_count:
+          type: integer
+
+    UpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    # Participation schemas
+    JoinWorldEventRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          description: Player identifier
+        position:
+          $ref: '#/components/schemas/Position'
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    JoinEventResponse:
+      type: object
+      properties:
+        participant_id:
+          type: string
+        event_id:
+          type: string
+        player_id:
+          type: string
+        status:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+
+    LeaveEventResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+        player_id:
+          type: string
+        left_at:
+          type: string
+          format: date-time
+
+    EventParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+        player_id:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, completed, disqualified]
+        role:
+          type: string
+          enum: [participant, leader, organizer]
+        contribution:
+          type: integer
+        rank:
+          type: integer
+        joined_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+
+    # Statistics schemas
+    WorldEventStatsResponse:
+      type: object
+      properties:
+        total_events:
+          type: integer
+        active_events:
+          type: integer
+        total_participants:
+          type: integer
+        events_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+        events_by_region:
+          type: object
+          additionalProperties:
+            type: integer
+        average_intensity:
+          type: number
+        average_duration:
+          type: string
+        success_rate:
+          type: number
+
+    # Common schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        domain:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - code
+        - message
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

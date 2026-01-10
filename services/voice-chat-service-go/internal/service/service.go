@@ -11,11 +11,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
 	"github.com/pion/webrtc/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -212,14 +214,6 @@ type RedisClient interface {
 // NewService creates a new voice chat service instance
 func NewService(cfg *config.Config, db Database, redis RedisClient, logger *zap.Logger) (*Service, error) {
 	// Initialize WebRTC API with STUN/TURN servers
-	webrtcConfig := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
-			},
-		},
-	}
-
 	api := webrtc.NewAPI()
 
 	// Initialize metrics
@@ -1162,5 +1156,315 @@ func (w *FileAudioWriter) WriteAudio(data []byte, participantID string) error {
 
 func (w *FileAudioWriter) Close() error {
 	// Placeholder implementation
+	return nil
+}
+
+// NewSignalingHandler creates a new WebRTC signaling handler
+func NewSignalingHandler(svc *Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Extract room ID from URL
+		vars := mux.Vars(r)
+		roomID := vars["roomID"]
+
+		// Get room manager
+		svc.roomsMutex.RLock()
+		roomManager, exists := svc.rooms[roomID]
+		svc.roomsMutex.RUnlock()
+
+		if !exists {
+			http.Error(w, "Room not found", http.StatusNotFound)
+			return
+		}
+
+		// Upgrade connection to WebSocket
+		conn, err := svc.signaling.upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			svc.logger.Error("WebSocket upgrade failed", zap.Error(err))
+			return
+		}
+		defer conn.Close()
+
+		// Get user ID from context (should be set by auth middleware)
+		claims := r.Context().Value("claims").(*Claims)
+		userID := claims.UserID
+
+		// Register connection
+		svc.signaling.mutex.Lock()
+		if svc.signaling.rooms[roomID] == nil {
+			svc.signaling.rooms[roomID] = make(map[string]bool)
+		}
+		svc.signaling.rooms[roomID][userID] = true
+		svc.signaling.connections[userID] = conn
+		svc.signaling.mutex.Unlock()
+
+		// Cleanup on disconnect
+		defer func() {
+			svc.signaling.mutex.Lock()
+			delete(svc.signaling.connections, userID)
+			if svc.signaling.rooms[roomID] != nil {
+				delete(svc.signaling.rooms[roomID], userID)
+			}
+			svc.signaling.mutex.Unlock()
+		}()
+
+		// Handle WebSocket messages
+		for {
+			var msg SignalingMessage
+			err := conn.ReadJSON(&msg)
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					svc.logger.Error("WebSocket error", zap.Error(err))
+				}
+				break
+			}
+
+			// Set message metadata
+			msg.RoomID = roomID
+			msg.FromUser = userID
+			msg.Timestamp = time.Now()
+
+			// Handle signaling message
+			if err := svc.handleWebRTCSignaling(roomManager, &msg); err != nil {
+				svc.logger.Error("Failed to handle signaling message", zap.Error(err))
+			}
+		}
+	}
+}
+
+// handleWebRTCSignaling handles WebRTC signaling messages via WebSocket
+func (s *Service) handleWebRTCSignaling(roomManager *VoiceRoomManager, msg *SignalingMessage) error {
+	// Validate target user is in the room
+	roomManager.mutex.RLock()
+	_, exists := roomManager.participants[msg.ToUser]
+	roomManager.mutex.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("target user not in room")
+	}
+
+	// Get target connection
+	s.signaling.mutex.RLock()
+	targetConn, exists := s.signaling.connections[msg.ToUser]
+	s.signaling.mutex.RUnlock()
+
+	if !exists {
+		// Target user not connected via WebSocket, use HTTP signaling
+		return s.SendSignalingMessage(context.Background(), &api.SignalingMessage{
+			RoomID:       msg.RoomID,
+			SessionID:    msg.SessionID,
+			FromUser:     msg.FromUser,
+			ToUser:       msg.ToUser,
+			MessageType:  msg.MessageType,
+			SDP:          msg.SDP,
+			Candidate:    msg.Candidate,
+			CandidateType: msg.CandidateType,
+		})
+	}
+
+	// Send via WebSocket
+	return targetConn.WriteJSON(msg)
+}
+
+// SignalingMessage represents a WebRTC signaling message for WebSocket transport
+type SignalingMessage struct {
+	RoomID        string    `json:"room_id"`
+	SessionID     string    `json:"session_id"`
+	FromUser      string    `json:"from_user"`
+	ToUser        string    `json:"to_user"`
+	MessageType   string    `json:"message_type"`
+	SDP           string    `json:"sdp,omitempty"`
+	Candidate     string    `json:"candidate,omitempty"`
+	CandidateType string    `json:"candidate_type,omitempty"`
+	Timestamp     time.Time `json:"timestamp"`
+}
+
+// CreateInvite creates an invitation to join a voice room
+func (s *Service) CreateInvite(ctx context.Context, req *api.CreateInviteRequest) (*api.CreateInviteResponse, error) {
+	// Check permissions (only owner or moderators can create invites)
+	s.roomsMutex.RLock()
+	roomManager, exists := s.rooms[req.RoomID]
+	s.roomsMutex.RUnlock()
+
+	if !exists {
+		return nil, fmt.Errorf("room not found")
+	}
+
+	roomManager.mutex.RLock()
+	participant, exists := roomManager.participants[req.InviterID]
+	roomManager.mutex.RUnlock()
+
+	if !exists || (participant.Role != "owner" && participant.Role != "moderator") {
+		return nil, fmt.Errorf("insufficient permissions")
+	}
+
+	// Generate invite code
+	inviteID := uuid.New().String()
+	expiresAt := time.Now().Add(time.Duration(req.ExpiresIn) * time.Second)
+
+	invite := &models.VoiceRoomInvite{
+		ID:         uuid.New().String(),
+		InviteID:   inviteID,
+		RoomID:     req.RoomID,
+		InviterID:  req.InviterID,
+		InviteeID:  req.InviteeID,
+		CreatedAt:  time.Now(),
+		ExpiresAt:  expiresAt,
+		Status:     "pending",
+	}
+
+	// Save invite
+	if err := s.db.CreateInvite(ctx, invite); err != nil {
+		return nil, fmt.Errorf("failed to create invite: %w", err)
+	}
+
+	s.logger.Info("Created room invite",
+		zap.String("room_id", req.RoomID),
+		zap.String("invite_id", inviteID),
+		zap.String("inviter_id", req.InviterID))
+
+	return &api.CreateInviteResponse{
+		InviteID: inviteID,
+	}, nil
+}
+
+// AcceptInvite allows a user to accept an invitation
+func (s *Service) AcceptInvite(ctx context.Context, req *api.AcceptInviteRequest) (*api.AcceptInviteResponse, error) {
+	// Get invite
+	invite, err := s.db.GetInvite(ctx, req.InviteID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get invite: %w", err)
+	}
+
+	// Check if invite is valid
+	if invite.Status != "pending" {
+		return nil, fmt.Errorf("invite is not active")
+	}
+
+	if invite.ExpiresAt.Before(time.Now()) {
+		return nil, fmt.Errorf("invite has expired")
+	}
+
+	// Try to join the room
+	joinReq := &api.JoinRoomRequest{
+		RoomID:   invite.RoomID,
+		UserID:   req.UserID,
+		Username: fmt.Sprintf("User_%s", req.UserID[:8]), // Generate username
+	}
+
+	resp, err := s.JoinVoiceRoom(ctx, joinReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to join room: %w", err)
+	}
+
+	// Update invite status
+	invite.Status = "accepted"
+	now := time.Now()
+	invite.AcceptedAt = &now
+	if err := s.db.UpdateInvite(ctx, invite); err != nil {
+		s.logger.Error("Failed to update invite status", zap.Error(err))
+	}
+
+	s.logger.Info("User accepted room invite",
+		zap.String("invite_id", req.InviteID),
+		zap.String("user_id", req.UserID),
+		zap.String("room_id", invite.RoomID))
+
+	return &api.AcceptInviteResponse{
+		RoomID:      invite.RoomID,
+		SessionID:   resp.SessionID,
+		WebRTCConfig: resp.WebRTCConfig,
+	}, nil
+}
+
+// UpdateVoiceRoom updates room settings
+func (s *Service) UpdateVoiceRoom(ctx context.Context, req *api.UpdateRoomRequest) error {
+	// Get room
+	room, err := s.db.GetVoiceRoom(ctx, req.RoomID)
+	if err != nil {
+		return fmt.Errorf("failed to get room: %w", err)
+	}
+
+	// Check permissions (only owner can update room)
+	if room.OwnerID != req.RequesterID {
+		return fmt.Errorf("insufficient permissions")
+	}
+
+	// Update fields if provided
+	if req.Name != nil {
+		room.RoomName = *req.Name
+	}
+	if req.Description != nil {
+		room.Description = *req.Description
+	}
+	if req.MaxParticipants != nil {
+		room.MaxParticipants = *req.MaxParticipants
+	}
+	if req.Bitrate != nil {
+		room.Bitrate = *req.Bitrate
+	}
+	if req.QualityPreset != nil {
+		room.QualityPreset = *req.QualityPreset
+	}
+	if req.IsPrivate != nil {
+		room.IsPrivate = *req.IsPrivate
+	}
+	if req.AllowRecording != nil {
+		room.AllowRecording = *req.AllowRecording
+	}
+
+	// Save updates
+	if err := s.db.UpdateVoiceRoom(ctx, room); err != nil {
+		return fmt.Errorf("failed to update room: %w", err)
+	}
+
+	// Notify participants about room update (implementation would broadcast to WebSocket connections)
+	s.logger.Info("Updated voice room",
+		zap.String("room_id", req.RoomID),
+		zap.String("requester_id", req.RequesterID))
+
+	return nil
+}
+
+// DeleteVoiceRoom deletes a voice room
+func (s *Service) DeleteVoiceRoom(ctx context.Context, req *api.DeleteRoomRequest) error {
+	// Get room
+	room, err := s.db.GetVoiceRoom(ctx, req.RoomID)
+	if err != nil {
+		return fmt.Errorf("failed to get room: %w", err)
+	}
+
+	// Check permissions (only owner can delete room)
+	if room.OwnerID != req.RequesterID {
+		return fmt.Errorf("insufficient permissions")
+	}
+
+	// Get room manager
+	s.roomsMutex.RLock()
+	roomManager, exists := s.rooms[req.RoomID]
+	s.roomsMutex.RUnlock()
+
+	if exists {
+		// Shutdown room manager
+		roomManager.shutdown()
+
+		// Remove from active rooms
+		s.roomsMutex.Lock()
+		delete(s.rooms, req.RoomID)
+		s.roomsMutex.Unlock()
+	}
+
+	// Delete from database
+	if err := s.db.DeleteVoiceRoom(ctx, req.RoomID); err != nil {
+		return fmt.Errorf("failed to delete room: %w", err)
+	}
+
+	// Update metrics
+	s.metrics.roomsDestroyed.Inc()
+	s.metrics.activeRooms.Dec()
+
+	s.logger.Info("Deleted voice room",
+		zap.String("room_id", req.RoomID),
+		zap.String("requester_id", req.RequesterID))
+
 	return nil
 }

@@ -304,3 +304,32 @@ type HealthResponse struct {
 	ActiveRooms int  `json:"active_rooms"`
 	ActiveParticipants int `json:"active_participants"`
 }
+
+// UpdateRoomRequest represents a request to update room settings
+// PERFORMANCE: Struct field alignment optimized for memory efficiency
+type UpdateRoomRequest struct {
+	// String fields (16 bytes each header)
+	RoomID       string  `json:"room_id" validate:"required"`
+	RequesterID  string  `json:"requester_id" validate:"required"`
+	Name         *string `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Description  *string `json:"description,omitempty" validate:"omitempty,max=500"`
+
+	// Integer pointer fields (8 bytes each)
+	MaxParticipants *int `json:"max_participants,omitempty" validate:"omitempty,min=1,max=100"`
+	Bitrate         *int `json:"bitrate,omitempty" validate:"omitempty,min=8000,max=256000"`
+
+	// String pointer fields (16 bytes each)
+	QualityPreset *string `json:"quality_preset,omitempty" validate:"omitempty,oneof=high medium low"`
+
+	// Boolean pointer fields
+	IsPrivate      *bool `json:"is_private,omitempty"`
+	AllowRecording *bool `json:"allow_recording,omitempty"`
+}
+
+// DeleteRoomRequest represents a request to delete a voice room
+// PERFORMANCE: Struct field alignment optimized for memory efficiency
+type DeleteRoomRequest struct {
+	// String fields (16 bytes each header)
+	RoomID      string `json:"room_id" validate:"required"`
+	RequesterID string `json:"requester_id" validate:"required"`
+}

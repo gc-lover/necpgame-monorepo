@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
@@ -24,8 +25,11 @@ import (
 	"necpgame/services/economy-service-go/internal/simulation/bazaar"
 )
 
-// Global database connection pool for enterprise-grade performance
-var dbPool *pgxpool.Pool
+// Global connection pools for enterprise-grade performance
+var (
+	dbPool   *pgxpool.Pool
+	redisClient *redis.Client
+)
 
 func initDatabasePool(ctx context.Context, cfg *config.Config, logger *zap.Logger) error {
 	// PERFORMANCE: Configure database connection pool for MMOFPS scale
@@ -57,6 +61,31 @@ func initDatabasePool(ctx context.Context, cfg *config.Config, logger *zap.Logge
 	return nil
 }
 
+func initRedis(ctx context.Context, cfg *config.Config, logger *zap.Logger) error {
+	// PERFORMANCE: Initialize Redis with enterprise-grade pool optimization for MMOFPS economy caching
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
+		Password:     cfg.Redis.Password,
+		DB:           cfg.Redis.DB,
+		// BACKEND NOTE: Enterprise-grade Redis pool for MMOFPS economy caching
+		PoolSize:     cfg.Redis.PoolSize,     // BACKEND NOTE: High pool for economy session caching
+		MinIdleConns: cfg.Redis.MinIdleConns, // BACKEND NOTE: Keep connections ready for instant economy access
+	})
+
+	// Test Redis connection with timeout - BACKEND NOTE: Context timeout for Redis validation
+	redisCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := redisClient.Ping(redisCtx).Err(); err != nil {
+		return fmt.Errorf("failed to ping redis: %w", err)
+	}
+
+	logger.Info("Redis connection initialized with enterprise-grade pool optimization",
+		zap.Int("pool_size", cfg.Redis.PoolSize),
+		zap.Int("min_idle_conns", cfg.Redis.MinIdleConns))
+	return nil
+}
+
 func main() {
 	// Initialize structured logger
 	logger, err := zap.NewProduction()
@@ -70,15 +99,20 @@ func main() {
 
 	logger.Info("Economy Service Starting", zap.String("port", cfg.Server.Port))
 
-	// Initialize database connection pool
+	// Initialize database and Redis connection pools
 	ctx := context.Background()
 	if err := initDatabasePool(ctx, cfg, logger); err != nil {
 		logger.Fatal("Failed to initialize database pool", zap.Error(err))
 	}
 	defer dbPool.Close()
 
-	// Initialize repository
-	repo := repository.NewRepository(dbPool, logger.Named("economy-repo"))
+	if err := initRedis(ctx, cfg, logger); err != nil {
+		logger.Fatal("Failed to initialize Redis", zap.Error(err))
+	}
+	defer redisClient.Close()
+
+	// Initialize repository with Redis support
+	repo := repository.NewRepository(dbPool, redisClient, logger.Named("economy-repo"))
 
 	// Initialize service
 	svc := service.NewService(logger, repo, cfg)

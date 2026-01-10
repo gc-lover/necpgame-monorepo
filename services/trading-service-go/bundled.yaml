@@ -1,0 +1,481 @@
+openapi: 3.0.0
+info:
+  title: Trading Service API
+  description: 'Trade Service обеспечивает безопасную P2P торговлю между игроками.'
+  version: 1.0.0
+  license:
+    name: MIT
+servers:
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
+tags:
+  - name: Trade Sessions
+    description: Управление торговыми сессиями
+  - name: Trade History
+    description: История сделок
+paths:
+  /health:
+    get:
+      operationId: HealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/trade/sessions:
+    post:
+      tags:
+        - Trade Sessions
+      summary: Создать торговую сессию
+      operationId: CreateTradeSession
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeRequest'
+      responses:
+        '200':
+          description: Торговая сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Игрок уже в торговой сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/trade/sessions/{sessionId}:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Trade Sessions
+      summary: Получить торговую сессию
+      operationId: GetTradeSession
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: Торговая сессия найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Trade Sessions
+      summary: Обновить торговую сессию
+      operationId: UpdateTradeSession
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTradeRequest'
+      responses:
+        '200':
+          description: Торговая сессия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Trade Sessions
+      summary: Отменить торговую сессию
+      operationId: CancelTradeSession
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: Торговая сессия отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelTradeResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/trade/sessions/list/{playerId}:
+    parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Trade Sessions
+      summary: Получить список торговых сессий
+      operationId: ListTradeSessions
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: Список торговых сессий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSessionList'
+  /api/v1/trade/sessions/{sessionId}/execute:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Trade Sessions
+      summary: Выполнить сделку
+      operationId: ExecuteTrade
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteTradeRequest'
+      responses:
+        '200':
+          description: Сделка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeResult'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/trade/history/{playerId}:
+    parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    get:
+      tags:
+        - Trade History
+      summary: Получить историю сделок
+      operationId: GetTradeHistory
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeHistoryResponse'
+security:
+  - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - message
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        message:
+          type: string
+          example: "Trading service is operational"
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "400"
+        message:
+          type: string
+          example: "Bad Request"
+    CreateTradeRequest:
+      type: object
+      required:
+        - player_id
+        - participant_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID инициатора сделки
+        participant_id:
+          type: string
+          format: uuid
+          description: ID участника сделки
+    TradeSessionResponse:
+      type: object
+      required:
+        - id
+        - initiator_id
+        - participant_id
+        - status
+        - currency_type
+        - total_value
+        - created_at
+        - expires_at
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, active, completed, cancelled, expired]
+        currency_type:
+          type: string
+          example: "eurodollars"
+        total_value:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+    UpdateTradeRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, active, completed, cancelled, expired]
+        currency_type:
+          type: string
+        total_value:
+          type: integer
+          format: int64
+    CancelTradeResponse:
+      type: object
+      required:
+        - session_id
+        - status
+        - message
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, active, completed, cancelled, expired]
+        message:
+          type: string
+    TradeSessionList:
+      type: object
+      required:
+        - sessions
+        - total
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeSessionResponse'
+        total:
+          type: integer
+          format: int64
+    ExecuteTradeRequest:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - total_price
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+        total_price:
+          type: integer
+          format: int64
+    TradeResult:
+      type: object
+      required:
+        - trade_id
+        - session_id
+        - buyer_id
+        - seller_id
+        - item_id
+        - quantity
+        - total_price
+        - currency_type
+        - executed_at
+        - success
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+        total_price:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+        transaction_fee:
+          type: integer
+          format: int64
+        executed_at:
+          type: string
+          format: date-time
+        success:
+          type: boolean
+    TradeTransaction:
+      type: object
+      required:
+        - id
+        - session_id
+        - buyer_id
+        - seller_id
+        - item_id
+        - quantity
+        - total_price
+        - currency_type
+        - transaction_fee
+        - status
+        - executed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+        total_price:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+        transaction_fee:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        executed_at:
+          type: string
+          format: date-time
+    TradeHistoryResponse:
+      type: object
+      required:
+        - transactions
+        - total
+        - limit
+        - offset
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeTransaction'
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        offset:
+          type: integer
+          format: int64
