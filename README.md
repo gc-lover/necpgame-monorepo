@@ -46,8 +46,8 @@ A high-performance MMOFPS RPG backend built with Go, featuring enterprise-grade 
 - **Auth Service** (`:8080`) - Enterprise JWT authentication & session management
 - **Ability Service** (`:8081`) - Character abilities & cooldowns
 - **Matchmaking Service** (`:8082`) - Player matchmaking & queue management
-- **Economy Service** (`:8083`) - BazaarBot AI trading & marketplace
-- **Combat Service** (`:8084`) - Enterprise real-time combat system
+- **Economy Service** (`:8083`) - BazaarBot AI trading & marketplace ✅
+- **Combat Service** (`:8084`) - Enterprise real-time combat system ✅
 - **World Event Service** - Dynamic world events
 
 ### Infrastructure

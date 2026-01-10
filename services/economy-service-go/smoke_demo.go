@@ -61,7 +61,7 @@ func main() {
 		for _, agent := range agents {
 			// Buyers (first 5) try to buy, sellers (last 5) try to sell
 			isProducer := agent.State.ID[0] == 's' // seller-* agents
-			order := agent.DecideTrade(bazaar.CommodityFood, market.GetState(), isProducer)
+			order := agent.DecideTrade(bazaar.CommodityFood, nil, isProducer)
 			if order != nil {
 				orders = append(orders, order)
 				fmt.Printf("  %s: %s %d units @ $%.2f\n",
@@ -69,11 +69,16 @@ func main() {
 			}
 		}
 
+		// Add orders to market first
+		for _, order := range orders {
+			market.AddOrder(order)
+		}
+
 		// Clear the market
-		result := market.ClearMarket(orders)
+		trades := market.ClearMarket()
 
 		// Update agents based on results
-		for _, trade := range result.ClearedTrades {
+		for _, trade := range trades {
 			// Find buyer and seller agents
 			var buyer, seller *bazaar.AgentLogic
 			for _, agent := range agents {
@@ -86,35 +91,53 @@ func main() {
 			}
 
 			if buyer != nil {
-				// Buyer perspective: bought at price, expected to pay less
-				expectedPrice := (buyer.State.PriceBeliefs[bazaar.CommodityFood].Min +
-					buyer.State.PriceBeliefs[bazaar.CommodityFood].Max) / 2
-				wasExpected := trade.Price <= expectedPrice*1.2 // Within 20% of expectation
-				buyer.UpdateBelief(bazaar.CommodityFood, false, trade.Price, wasExpected, trade.Quantity, trade.TotalValue)
+				// Simple wealth and inventory update
+				buyer.State.Wealth -= trade.Price * float64(trade.Quantity)
+				if buyer.State.Inventory == nil {
+					buyer.State.Inventory = make(map[bazaar.Commodity]int)
+				}
+				buyer.State.Inventory[bazaar.CommodityFood] += trade.Quantity
+				fmt.Printf("  %s bought %d units @ $%.2f\n", buyer.State.ID, trade.Quantity, trade.Price)
 			}
 
 			if seller != nil {
-				// Seller perspective: sold at price, expected to sell higher
-				expectedPrice := (seller.State.PriceBeliefs[bazaar.CommodityFood].Min +
-					seller.State.PriceBeliefs[bazaar.CommodityFood].Max) / 2
-				wasExpected := trade.Price >= expectedPrice*0.8 // Within 20% of expectation
-				seller.UpdateBelief(bazaar.CommodityFood, true, trade.Price, wasExpected, trade.Quantity, trade.TotalValue)
+				// Simple wealth and inventory update
+				seller.State.Wealth += trade.Price * float64(trade.Quantity)
+				if seller.State.Inventory == nil {
+					seller.State.Inventory = make(map[bazaar.Commodity]int)
+				}
+				seller.State.Inventory[bazaar.CommodityFood] -= trade.Quantity
+				fmt.Printf("  %s sold %d units @ $%.2f\n", seller.State.ID, trade.Quantity, trade.Price)
 			}
 		}
 
-		// Update market state
-		market.UpdateState(result)
-
-		// Record price
-		if result.NewPrices[bazaar.CommodityFood] > 0 {
-			prices = append(prices, result.NewPrices[bazaar.CommodityFood])
+		// Record last price for convergence analysis
+		if len(trades) > 0 {
+			lastPrice := trades[len(trades)-1].Price
+			prices = append(prices, lastPrice)
 		}
 
-		fmt.Printf("  Market cleared: %d trades, total volume: %d units, efficiency: %.1f%%\n",
-			len(result.ClearedTrades), result.TotalVolume, result.MarketEfficiency*100)
+		// Calculate total volume
+		totalVolume := 0
+		for _, trade := range trades {
+			totalVolume += trade.Quantity
+		}
 
-		if len(result.ClearedTrades) > 0 {
-			fmt.Printf("  New market price: $%.2f\n", result.NewPrices[bazaar.CommodityFood])
+		fmt.Printf("  Market cleared: %d trades, total volume: %d units\n",
+			len(trades), totalVolume)
+
+		if len(trades) > 0 {
+			// Calculate average price
+			totalValue := 0.0
+			totalQty := 0
+			for _, trade := range trades {
+				totalValue += trade.Price * float64(trade.Quantity)
+				totalQty += trade.Quantity
+			}
+			if totalQty > 0 {
+				avgPrice := totalValue / float64(totalQty)
+				fmt.Printf("  Average market price: $%.2f\n", avgPrice)
+			}
 		}
 		fmt.Println()
 	}

@@ -12,10 +12,27 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 
 	"github.com/your-org/necpgame/scripts/core/error-handling"
 )
+
+// JWTConfig holds JWT configuration
+type JWTConfig struct {
+	Secret           string        `json:"secret"`
+	Issuer           string        `json:"issuer"`
+	Audience         string        `json:"audience"`
+	Expiration       time.Duration `json:"expiration"`
+	RefreshExpiration time.Duration `json:"refresh_expiration"`
+}
+
+// JWTClaims represents JWT claims structure
+type JWTClaims struct {
+	UserID   string `json:"user_id"`
+	UserType string `json:"user_type,omitempty"`
+	jwt.RegisteredClaims
+}
 
 // HTTPErrorResponse represents structured error response
 type HTTPErrorResponse struct {
@@ -245,34 +262,121 @@ func RateLimitMiddleware(logger *logging.Logger) func(http.Handler) http.Handler
 }
 
 // AuthMiddleware provides JWT authentication with proper error handling
-func AuthMiddleware(logger *logging.Logger) func(http.Handler) http.Handler {
+func AuthMiddleware(logger *logging.Logger, jwtConfig *JWTConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID := middleware.GetReqID(r.Context())
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				logger.WithRequestID(requestID).Warnw("Missing authorization header")
+				logger.WithRequestID(requestID).Warnw("Missing authorization header",
+					"path", r.URL.Path,
+					"method", r.Method)
 				respondWithGameError(w, errors.NewAuthenticationError("MISSING_AUTH", "Missing authorization header"))
 				return
 			}
 
 			if !strings.HasPrefix(authHeader, "Bearer ") {
-				logger.WithRequestID(requestID).Warnw("Invalid authorization format")
+				logger.WithRequestID(requestID).Warnw("Invalid authorization format",
+					"header", authHeader[:min(20, len(authHeader))]+"...")
 				respondWithGameError(w, errors.NewAuthenticationError("INVALID_FORMAT", "Invalid authorization format"))
 				return
 			}
 
-			token := strings.TrimPrefix(authHeader, "Bearer ")
-			if token == "" {
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == "" {
 				logger.WithRequestID(requestID).Warnw("Empty token")
 				respondWithGameError(w, errors.NewAuthenticationError("EMPTY_TOKEN", "Empty token"))
 				return
 			}
 
-			// TODO: Implement proper JWT validation
-			// For now, just check if token exists
-			// In production: validate JWT signature, expiration, claims, etc.
+			// Parse and validate JWT token
+			token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+				// Validate signing method
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(jwtConfig.Secret), nil
+			})
+
+			if err != nil {
+				logger.WithRequestID(requestID).Warnw("JWT parsing failed",
+					"error", err.Error(),
+					"token_prefix", tokenString[:min(10, len(tokenString))]+"...")
+				respondWithGameError(w, errors.NewAuthenticationError("INVALID_TOKEN", "Invalid JWT token"))
+				return
+			}
+
+			if !token.Valid {
+				logger.WithRequestID(requestID).Warnw("Invalid JWT token")
+				respondWithGameError(w, errors.NewAuthenticationError("INVALID_TOKEN", "Invalid JWT token"))
+				return
+			}
+
+			// Extract claims
+			claims, ok := token.Claims.(*JWTClaims)
+			if !ok {
+				logger.WithRequestID(requestID).Errorw("Failed to extract JWT claims")
+				respondWithGameError(w, errors.NewAuthenticationError("INVALID_CLAIMS", "Invalid token claims"))
+				return
+			}
+
+			// Validate standard claims
+			if err := claims.Valid(); err != nil {
+				logger.WithRequestID(requestID).Warnw("JWT claims validation failed",
+					"error", err.Error())
+				respondWithGameError(w, errors.NewAuthenticationError("EXPIRED_TOKEN", "Token has expired"))
+				return
+			}
+
+			// Validate issuer if configured
+			if jwtConfig.Issuer != "" && claims.Issuer != jwtConfig.Issuer {
+				logger.WithRequestID(requestID).Warnw("Invalid token issuer",
+					"expected", jwtConfig.Issuer,
+					"actual", claims.Issuer)
+				respondWithGameError(w, errors.NewAuthenticationError("INVALID_ISSUER", "Invalid token issuer"))
+				return
+			}
+
+			// Validate audience if configured
+			if jwtConfig.Audience != "" && claims.Audience != nil {
+				found := false
+				for _, aud := range claims.Audience {
+					if aud == jwtConfig.Audience {
+						found = true
+						break
+					}
+				}
+				if !found {
+					logger.WithRequestID(requestID).Warnw("Invalid token audience",
+						"expected", jwtConfig.Audience,
+						"actual", claims.Audience)
+					respondWithGameError(w, errors.NewAuthenticationError("INVALID_AUDIENCE", "Invalid token audience"))
+					return
+				}
+			}
+
+			// Validate user ID
+			if claims.UserID == "" {
+				logger.WithRequestID(requestID).Warnw("Missing user_id in token")
+				respondWithGameError(w, errors.NewAuthenticationError("MISSING_USER_ID", "Missing user ID in token"))
+				return
+			}
+
+			// Add user information to context
+			ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
+			if claims.UserType != "" {
+				ctx = context.WithValue(ctx, "user_type", claims.UserType)
+			}
+			ctx = context.WithValue(ctx, "token_issued_at", claims.IssuedAt)
+			ctx = context.WithValue(ctx, "token_expires_at", claims.ExpiresAt)
+
+			r = r.WithContext(ctx)
+
+			logger.WithRequestID(requestID).Debugw("JWT authentication successful",
+				"user_id", claims.UserID,
+				"user_type", claims.UserType,
+				"token_expires_at", claims.ExpiresAt)
 
 			next.ServeHTTP(w, r)
 		})
@@ -378,4 +482,95 @@ func (rl *RateLimiter) Allow(key string) bool {
 	// Add current request
 	rl.requests[key] = append(rl.requests[key], now)
 	return true
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// CreateJWTToken creates a new JWT token with the given claims
+func CreateJWTToken(userID, userType string, config *JWTConfig) (string, error) {
+	now := time.Now().UTC()
+
+	claims := JWTClaims{
+		UserID:   userID,
+		UserType: userType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    config.Issuer,
+			Audience:  jwt.ClaimStrings{config.Audience},
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(now.Add(config.Expiration)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			ID:        fmt.Sprintf("%s-%d", userID, now.Unix()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(config.Secret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign JWT token: %w", err)
+	}
+
+	return tokenString, nil
+}
+
+// CreateRefreshToken creates a new refresh token
+func CreateRefreshToken(userID string, config *JWTConfig) (string, error) {
+	now := time.Now().UTC()
+
+	claims := JWTClaims{
+		UserID:   userID,
+		UserType: "refresh",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    config.Issuer,
+			Audience:  jwt.ClaimStrings{config.Audience},
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(now.Add(config.RefreshExpiration)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			ID:        fmt.Sprintf("refresh-%s-%d", userID, now.Unix()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(config.Secret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign refresh token: %w", err)
+	}
+
+	return tokenString, nil
+}
+
+// ValidateRefreshToken validates a refresh token and returns the user ID
+func ValidateRefreshToken(tokenString string, config *JWTConfig) (string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(config.Secret), nil
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to parse refresh token: %w", err)
+	}
+
+	if !token.Valid {
+		return "", fmt.Errorf("invalid refresh token")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return "", fmt.Errorf("invalid refresh token claims")
+	}
+
+	if claims.UserType != "refresh" {
+		return "", fmt.Errorf("token is not a refresh token")
+	}
+
+	return claims.UserID, nil
 }

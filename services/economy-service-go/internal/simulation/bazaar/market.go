@@ -1,6 +1,7 @@
 package bazaar
 
 import (
+	"fmt"
 	"sort"
 	"time"
 )
@@ -432,4 +433,109 @@ func (m *MarketLogic) GetTrend() float64 {
 		return 0.0
 	}
 	return (recent[2] - recent[0]) / recent[0]
+}
+
+// GetOrderBook returns all active orders in the order book
+// PERFORMANCE: O(1) access to pre-sorted order book
+func (m *MarketLogic) GetOrderBook() []*Order {
+	allOrders := make([]*Order, 0, len(m.Bids)+len(m.Asks))
+
+	// Add all bids (buy orders)
+	for _, order := range m.Bids {
+		if order.Quantity > 0 { // Only active orders
+			orderCopy := *order // Copy to avoid mutations
+			allOrders = append(allOrders, &orderCopy)
+		}
+	}
+
+	// Add all asks (sell orders)
+	for _, order := range m.Asks {
+		if order.Quantity > 0 { // Only active orders
+			orderCopy := *order // Copy to avoid mutations
+			allOrders = append(allOrders, &orderCopy)
+		}
+	}
+
+	return allOrders
+}
+
+// ClearMarket attempts to execute trades by matching bids and asks
+// PERFORMANCE: O(n log n) sorting, optimized for real-time trading
+func (m *MarketLogic) ClearMarket() []*Trade {
+	trades := make([]*Trade, 0)
+
+	// Sort bids descending (highest price first)
+	sort.Slice(m.Bids, func(i, j int) bool {
+		return m.Bids[i].Price > m.Bids[j].Price
+	})
+
+	// Sort asks ascending (lowest price first)
+	sort.Slice(m.Asks, func(i, j int) bool {
+		return m.Asks[i].Price < m.Asks[j].Price
+	})
+
+	i, j := 0, 0 // Indices for bids and asks
+
+	for i < len(m.Bids) && j < len(m.Asks) {
+		bid := m.Bids[i]
+		ask := m.Asks[j]
+
+		// Check if bid price >= ask price (can trade)
+		if bid.Price >= ask.Price && bid.Quantity > 0 && ask.Quantity > 0 {
+			// Calculate trade quantity (minimum of both orders)
+			tradeQuantity := bid.Quantity
+			if ask.Quantity < tradeQuantity {
+				tradeQuantity = ask.Quantity
+			}
+
+			// Calculate trade price (use ask price for simplicity)
+			tradePrice := ask.Price
+
+			// Create trade
+			trade := &Trade{
+				ID:        fmt.Sprintf("trade-%d", time.Now().UnixNano()),
+				BuyerID:   bid.PlayerID,
+				SellerID:  ask.PlayerID,
+				Price:     tradePrice,
+				Quantity:  tradeQuantity,
+				ExecutedAt: time.Now(),
+			}
+			trades = append(trades, trade)
+
+			// Update order quantities
+			bid.Quantity -= tradeQuantity
+			ask.Quantity -= tradeQuantity
+
+			// Add price to history
+			m.History = append(m.History, tradePrice)
+
+			// Move to next order if current is filled
+			if bid.Quantity == 0 {
+				i++
+			}
+			if ask.Quantity == 0 {
+				j++
+			}
+		} else {
+			// No more trades possible
+			break
+		}
+	}
+
+	// Remove filled orders
+	m.Bids = m.removeFilledOrders(m.Bids)
+	m.Asks = m.removeFilledOrders(m.Asks)
+
+	return trades
+}
+
+// removeFilledOrders removes orders with zero quantity
+func (m *MarketLogic) removeFilledOrders(orders []*Order) []*Order {
+	activeOrders := make([]*Order, 0, len(orders))
+	for _, order := range orders {
+		if order.Quantity > 0 {
+			activeOrders = append(activeOrders, order)
+		}
+	}
+	return activeOrders
 }

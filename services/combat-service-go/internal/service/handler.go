@@ -678,7 +678,127 @@ func (h *Handler) CombatServiceCalculateDamage(ctx context.Context, req *api.Dam
 }
 
 func (h *Handler) CombatServiceGetWeaponAnalytics(ctx context.Context, params api.CombatServiceGetWeaponAnalyticsParams) (api.CombatServiceGetWeaponAnalyticsRes, error) {
-	return &api.CombatServiceGetWeaponAnalyticsOK{}, nil
+	ctx, cancel := h.withTimeout(ctx, "GetWeaponAnalytics", 5*time.Second)
+	defer cancel()
+
+	h.service.logger.Info("Retrieving weapon analytics",
+		zap.String("time_range", string(params.TimeRange)),
+		zap.String("weapon_type", string(params.WeaponType.Value)))
+
+	// Build time range filter
+	timeFilter := h.buildTimeRangeFilter(params.TimeRange)
+
+	// Build weapon type filter
+	weaponFilter := ""
+	args := []interface{}{}
+	argCount := 0
+
+	if params.WeaponType.IsSet() {
+		argCount++
+		weaponFilter = fmt.Sprintf("AND weapon_type = $%d", argCount)
+		args = append(args, params.WeaponType.Value)
+	}
+
+	// Query weapon usage statistics
+	query := fmt.Sprintf(`
+		SELECT
+			weapon_type,
+			COUNT(*) as total_uses,
+			AVG(damage_dealt) as avg_damage,
+			MAX(damage_dealt) as max_damage,
+			SUM(hits) as total_hits,
+			SUM(misses) as total_misses,
+			AVG(CASE WHEN hits > 0 THEN hits::float / (hits + misses) ELSE 0 END) as accuracy_rate,
+			COUNT(DISTINCT session_id) as unique_sessions
+		FROM combat.weapon_usage_stats
+		WHERE created_at >= $%d %s
+		GROUP BY weapon_type
+		ORDER BY total_uses DESC
+	`, argCount+1, weaponFilter)
+
+	args = append(args, timeFilter.StartTime)
+
+	rows, err := h.service.db.Query(ctx, query, args...)
+	if err != nil {
+		h.service.logger.Error("Failed to query weapon analytics",
+			zap.Error(err))
+		return nil, fmt.Errorf("failed to retrieve weapon analytics: %w", err)
+	}
+	defer rows.Close()
+
+	var analytics []api.WeaponAnalyticsItem
+	for rows.Next() {
+		var item api.WeaponAnalyticsItem
+		var weaponType string
+		var totalUses, totalHits, totalMisses, uniqueSessions int
+		var avgDamage, maxDamage, accuracyRate float64
+
+		err := rows.Scan(
+			&weaponType,
+			&totalUses,
+			&avgDamage,
+			&maxDamage,
+			&totalHits,
+			&totalMisses,
+			&accuracyRate,
+			&uniqueSessions,
+		)
+		if err != nil {
+			h.service.logger.Error("Failed to scan weapon analytics row",
+				zap.Error(err))
+			continue
+		}
+
+		item.WeaponType = weaponType
+		item.TotalUses = totalUses
+		item.AverageDamage = avgDamage
+		item.MaxDamage = maxDamage
+		item.TotalHits = totalHits
+		item.TotalMisses = totalMisses
+		item.AccuracyRate = accuracyRate
+		item.UniqueSessions = uniqueSessions
+		item.DamageEfficiency = h.calculateWeaponEfficiency(weaponType, avgDamage, accuracyRate)
+		item.PopularityRank = len(analytics) + 1 // Simple ranking by total uses
+
+		analytics = append(analytics, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		h.service.logger.Error("Error iterating weapon analytics rows",
+			zap.Error(err))
+		return nil, fmt.Errorf("error processing weapon analytics: %w", err)
+	}
+
+	// Calculate summary statistics
+	totalWeapons := len(analytics)
+	var totalUsage int
+	var avgAccuracy float64
+	if totalWeapons > 0 {
+		for _, item := range analytics {
+			totalUsage += item.TotalUses
+			avgAccuracy += item.AccuracyRate
+		}
+		avgAccuracy /= float64(totalWeapons)
+	}
+
+	h.service.logger.Info("Weapon analytics retrieved successfully",
+		zap.Int("weapons_analyzed", totalWeapons),
+		zap.Int("total_usage", totalUsage),
+		zap.Float64("average_accuracy", avgAccuracy))
+
+	return &api.CombatServiceGetWeaponAnalyticsOK{
+		Data: api.WeaponAnalyticsResponse{
+			Analytics:       analytics,
+			TotalWeapons:    totalWeapons,
+			TimeRange:       string(params.TimeRange),
+			SummaryStats: api.WeaponAnalyticsSummary{
+				TotalUsage:      totalUsage,
+				AverageAccuracy: avgAccuracy,
+				MostUsedWeapon:  h.getMostUsedWeapon(analytics),
+				HighestAccuracy: h.getHighestAccuracyWeapon(analytics),
+			},
+		},
+	}, nil
 }
 
 func (h *Handler) CombatServiceHealthCheck(ctx context.Context) (api.CombatServiceHealthCheckRes, error) {
@@ -687,6 +807,92 @@ func (h *Handler) CombatServiceHealthCheck(ctx context.Context) (api.CombatServi
 
 func (h *Handler) CombatServiceHealthWebSocket(ctx context.Context) (api.CombatServiceHealthWebSocketRes, error) {
 	return &api.CombatServiceHealthWebSocketOK{}, nil
+}
+
+// Helper methods for weapon analytics
+
+type TimeRangeFilter struct {
+	StartTime time.Time
+	EndTime   time.Time
+}
+
+func (h *Handler) buildTimeRangeFilter(timeRange api.CombatServiceGetWeaponAnalyticsParamsTimeRange) TimeRangeFilter {
+	now := time.Now().UTC()
+	var startTime time.Time
+
+	switch timeRange {
+	case api.CombatServiceGetWeaponAnalyticsParamsTimeRangeLastHour:
+		startTime = now.Add(-1 * time.Hour)
+	case api.CombatServiceGetWeaponAnalyticsParamsTimeRangeLastDay:
+		startTime = now.Add(-24 * time.Hour)
+	case api.CombatServiceGetWeaponAnalyticsParamsTimeRangeLastWeek:
+		startTime = now.Add(-7 * 24 * time.Hour)
+	case api.CombatServiceGetWeaponAnalyticsParamsTimeRangeLastMonth:
+		startTime = now.Add(-30 * 24 * time.Hour)
+	default:
+		startTime = now.Add(-24 * time.Hour) // Default to last day
+	}
+
+	return TimeRangeFilter{
+		StartTime: startTime,
+		EndTime:   now,
+	}
+}
+
+func (h *Handler) calculateWeaponEfficiency(weaponType string, avgDamage, accuracy float64) float64 {
+	// Calculate efficiency as damage per use, weighted by accuracy
+	baseEfficiency := avgDamage * accuracy
+
+	// Weapon-specific multipliers (could be configurable)
+	multipliers := map[string]float64{
+		"sword":      1.2,
+		"bow":        1.1,
+		"magic_staff": 1.3,
+		"axe":        1.0,
+		"dagger":     0.9,
+		"spear":      1.1,
+	}
+
+	multiplier, exists := multipliers[weaponType]
+	if !exists {
+		multiplier = 1.0
+	}
+
+	return baseEfficiency * multiplier
+}
+
+func (h *Handler) getMostUsedWeapon(analytics []api.WeaponAnalyticsItem) string {
+	if len(analytics) == 0 {
+		return ""
+	}
+
+	maxUses := 0
+	mostUsed := ""
+	for _, item := range analytics {
+		if item.TotalUses > maxUses {
+			maxUses = item.TotalUses
+			mostUsed = item.WeaponType
+		}
+	}
+
+	return mostUsed
+}
+
+func (h *Handler) getHighestAccuracyWeapon(analytics []api.WeaponAnalyticsItem) string {
+	if len(analytics) == 0 {
+		return ""
+	}
+
+	maxAccuracy := 0.0
+	highestAccuracy := ""
+	for _, item := range analytics {
+		if item.AccuracyRate > maxAccuracy {
+			maxAccuracy = item.AccuracyRate
+			highestAccuracy = item.WeaponType
+		}
+	}
+
+	return highestAccuracy
 }
 
 // validateCombatAction validates combat action based on type and parameters

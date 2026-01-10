@@ -53,17 +53,106 @@ func (h *EconomyHandlers) EconomyHealthCheck(ctx context.Context) (*api.HealthRe
 }
 
 // GetOrderBook implements getOrderBook operation.
-// TODO: Implement proper order book retrieval
-func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params interface{}) (interface{}, error) {
-	h.logger.Info("GetOrderBook called - placeholder implementation")
-	return nil, fmt.Errorf("not implemented")
+func (h *EconomyHandlers) GetOrderBook(ctx context.Context, params api.GetOrderBookParams) (*api.OrderBook, error) {
+	h.logger.Info("GetOrderBook called", zap.String("commodity", string(params.Commodity)))
+
+	// Get market for commodity
+	market, exists := h.markets[bazaar.Commodity(params.Commodity)]
+	if !exists {
+		return nil, fmt.Errorf("market not found for commodity: %s", params.Commodity)
+	}
+
+	// Get order book from market
+	orders := market.GetOrderBook()
+
+	// Convert to API format
+	apiOrders := make([]api.Order, len(orders))
+	for i, order := range orders {
+		apiOrders[i] = api.Order{
+			ID:       order.ID,
+			Type:     api.OrderType(order.Type),
+			Price:    order.Price,
+			Quantity: order.Quantity,
+			PlayerID: order.PlayerID,
+			CreatedAt: order.CreatedAt,
+		}
+	}
+
+	orderBook := &api.OrderBook{
+		Commodity: string(params.Commodity),
+		Orders:    apiOrders,
+		LastUpdated: time.Now(),
+	}
+
+	h.logger.Info("Order book retrieved",
+		zap.String("commodity", string(params.Commodity)),
+		zap.Int("order_count", len(apiOrders)))
+
+	return orderBook, nil
 }
 
 // PlaceOrder implements placeOrder operation.
-// TODO: Implement proper order placement
-func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req interface{}, params interface{}) (interface{}, error) {
-	h.logger.Info("PlaceOrder called - placeholder implementation")
-	return nil, fmt.Errorf("not implemented")
+func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderRequest, params api.PlaceOrderParams) (*api.OrderResponse, error) {
+	h.logger.Info("PlaceOrder called",
+		zap.String("commodity", string(params.Commodity)),
+		zap.String("order_type", string(req.Type)),
+		zap.Float64("price", req.Price),
+		zap.Int("quantity", req.Quantity),
+		zap.String("player_id", req.PlayerID))
+
+	// Get market for commodity
+	market, exists := h.markets[bazaar.Commodity(params.Commodity)]
+	if !exists {
+		return nil, fmt.Errorf("market not found for commodity: %s", params.Commodity)
+	}
+
+	// Create order
+	order := &bazaar.Order{
+		ID:       fmt.Sprintf("order-%d", time.Now().UnixNano()),
+		Type:     bazaar.OrderType(req.Type),
+		Price:    req.Price,
+		Quantity: req.Quantity,
+		PlayerID: req.PlayerID,
+		CreatedAt: time.Now(),
+	}
+
+	// Add order to market
+	err := market.AddOrder(order)
+	if err != nil {
+		h.logger.Error("Failed to add order to market", zap.Error(err))
+		return nil, fmt.Errorf("failed to place order: %v", err)
+	}
+
+	// Try to clear market (execute trades)
+	trades := market.ClearMarket()
+
+	response := &api.OrderResponse{
+		OrderID: order.ID,
+		Status:  "placed",
+		Trades:  convertTrades(trades),
+	}
+
+	h.logger.Info("Order placed successfully",
+		zap.String("order_id", order.ID),
+		zap.Int("trades_executed", len(trades)))
+
+	return response, nil
+}
+
+// convertTrades converts bazaar trades to API format
+func convertTrades(trades []*bazaar.Trade) []api.Trade {
+	apiTrades := make([]api.Trade, len(trades))
+	for i, trade := range trades {
+		apiTrades[i] = api.Trade{
+			ID:       trade.ID,
+			BuyerID:  trade.BuyerID,
+			SellerID: trade.SellerID,
+			Price:    trade.Price,
+			Quantity: trade.Quantity,
+			ExecutedAt: trade.ExecutedAt,
+		}
+	}
+	return apiTrades
 }
 
 // GetMarketPrice implements getMarketPrice operation.

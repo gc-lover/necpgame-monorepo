@@ -8,68 +8,40 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
+	"necpgame/services/economy-service-go/config"
 	"necpgame/services/economy-service-go/internal/repository"
+	"necpgame/services/economy-service-go/internal/service"
 	"necpgame/services/economy-service-go/internal/simulation/bazaar"
 )
 
 // Global database connection pool for enterprise-grade performance
 var dbPool *pgxpool.Pool
 
-func initDatabasePool() error {
-	// Database configuration from environment variables
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		dbHost = "localhost" // fallback for local development
-	}
-
-	dbPort := os.Getenv("DB_PORT")
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-
-	dbUser := os.Getenv("DB_USER")
-	if dbUser == "" {
-		dbUser = "necpgame_user"
-	}
-
-	dbPassword := os.Getenv("DB_PASSWORD")
-	if dbPassword == "" {
-		dbPassword = "necpgame_password"
-	}
-
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		dbName = "necpgame_db"
-	}
-
-	// Enterprise-grade DSN construction
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		dbUser, dbPassword, dbHost, dbPort, dbName)
-
+func initDatabasePool(ctx context.Context, cfg *config.Config, logger *zap.Logger) error {
 	// PERFORMANCE: Configure database connection pool for MMOFPS scale
-	config, err := pgxpool.ParseConfig(dsn)
+	poolConfig, err := pgxpool.ParseConfig(cfg.Database.GetDSN())
 	if err != nil {
 		return fmt.Errorf("failed to parse database config: %w", err)
 	}
 
 	// Apply enterprise-grade pool optimizations for MMOFPS
-	config.MaxConns = 25  // Optimized for 100k+ concurrent users
-	config.MinConns = 5   // Maintain minimum connections
-	config.MaxConnLifetime = 1 * time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-	config.HealthCheckPeriod = 1 * time.Minute // Health check frequency
+	poolConfig.MaxConns = int32(cfg.Database.MaxConns)
+	poolConfig.MinConns = int32(cfg.Database.MinConns)
+	poolConfig.MaxConnLifetime = cfg.Database.MaxConnLifetime
+	poolConfig.MaxConnIdleTime = cfg.Database.MaxConnIdleTime
+	poolConfig.HealthCheckPeriod = cfg.Database.HealthCheckPeriod
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create connection pool: %w", err)
 	}
@@ -79,7 +51,9 @@ func initDatabasePool() error {
 	}
 
 	dbPool = pool
-	log.Printf("Database connection pool initialized successfully")
+	logger.Info("Database connection pool initialized",
+		zap.Int32("max_conns", poolConfig.MaxConns),
+		zap.Int32("min_conns", poolConfig.MinConns))
 	return nil
 }
 
@@ -91,22 +65,61 @@ func main() {
 	}
 	defer logger.Sync()
 
-	logger.Info("Economy Service Starting")
+	// Load configuration
+	cfg := config.Load()
+
+	logger.Info("Economy Service Starting", zap.String("port", cfg.Server.Port))
 
 	// Initialize database connection pool
-	if err := initDatabasePool(); err != nil {
-		log.Fatalf("Failed to initialize database pool: %v", err)
+	ctx := context.Background()
+	repo, err := repository.NewRepository(ctx, logger, cfg.Database.GetDSN())
+	if err != nil {
+		logger.Fatal("Failed to initialize repository", zap.Error(err))
 	}
-	defer dbPool.Close()
+	defer repo.Close()
+
+	// Initialize service
+	svc := service.NewService(logger, repo, cfg)
+
+	// Create enterprise-grade HTTP server with MMOFPS optimizations
+	srv := &http.Server{
+		Addr:           cfg.Server.Port,
+		Handler:        svc,
+		ReadTimeout:    cfg.Server.ReadTimeout,
+		WriteTimeout:   cfg.Server.WriteTimeout,
+		IdleTimeout:    cfg.Server.IdleTimeout,
+		MaxHeaderBytes: cfg.Server.MaxHeaderBytes,
+	}
+
+	// Start HTTP server in goroutine
+	go func() {
+		logger.Info("Starting HTTP server", zap.String("port", cfg.Server.Port))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Failed to start HTTP server", zap.Error(err))
+		}
+	}()
 
 	// Simulation Test
-	simTest()
+	simTest(logger)
 
 	// Start Kafka consumer for hourly ticks (#2281)
 	go startHourlyTickConsumer()
 
-	// Keep service running
-	select {}
+	// Wait for interrupt signal to gracefully shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutting down server...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Fatal("Server forced to shutdown", zap.Error(err))
+	}
+
+	logger.Info("Server exited")
 }
 
 // startHourlyTickConsumer starts Kafka consumer for hourly simulation ticks
@@ -327,8 +340,10 @@ func processHourlyTick(ctx context.Context, tickEvent *TickEventMessage) error {
 
 // simTest demonstrates BazaarBot simulation with price convergence
 // Issue: #2278
-func simTest() {
-	fmt.Println("=== BazaarBot Simulation Test ===")
+func simTest(logger *zap.Logger) {
+	logger.Info("Starting BazaarBot Simulation Test",
+		zap.String("simulation", "bazaarbot"),
+		zap.String("commodity", string(bazaar.CommodityFood)))
 	rand.Seed(time.Now().UnixNano())
 
 	// Create a Market for Food
@@ -354,12 +369,17 @@ func simTest() {
 		agents = append(agents, seller)
 	}
 
-	fmt.Printf("Created %d agents (5 buyers, 5 sellers)\n\n", len(agents))
+	logger.Info("Created simulation agents",
+		zap.Int("total_agents", len(agents)),
+		zap.Int("buyers", 5),
+		zap.Int("sellers", 5))
 
 	// Run multiple trading rounds to observe price convergence
 	numRounds := 10
 	for round := 0; round < numRounds; round++ {
-		fmt.Printf("--- Round %d ---\n", round+1)
+		logger.Info("Starting trading round",
+			zap.Int("round", round+1),
+			zap.Int("total_rounds", numRounds))
 
 		// Create market state for agents to use in decisions
 		marketState := market.CreateMarketState()
@@ -372,41 +392,61 @@ func simTest() {
 			if order != nil {
 				market.AddOrder(order)
 				if order.Type == bazaar.OrderTypeBid {
-					fmt.Printf("  %s bids: %.2f (Qty: %d)\n", agent.State.ID, order.Price, order.Quantity)
+					logger.Debug("Agent placed bid order",
+						zap.String("agent_id", agent.State.ID),
+						zap.Float64("price", order.Price),
+						zap.Int("quantity", order.Quantity))
 				} else {
-					fmt.Printf("  %s asks: %.2f (Qty: %d)\n", agent.State.ID, order.Price, order.Quantity)
+					logger.Debug("Agent placed ask order",
+						zap.String("agent_id", agent.State.ID),
+						zap.Float64("price", order.Price),
+						zap.Int("quantity", order.Quantity))
 				}
 			}
 		}
 
 		// Clear market
 		result := market.Clear(agents)
-		fmt.Printf("  Market Cleared: Price %.2f, Volume %d, Efficiency %.2f%%\n",
-			result.NewPrices[bazaar.CommodityFood], result.TotalVolume, result.MarketEfficiency*100)
+		logger.Info("Market cleared in round",
+			zap.Int("round", round+1),
+			zap.Float64("price", result.NewPrices[bazaar.CommodityFood]),
+			zap.Int("volume", result.TotalVolume),
+			zap.Float64("efficiency_percent", result.MarketEfficiency*100))
 
 		// Show price convergence
 		if len(result.ClearedTrades) > 0 {
-			fmt.Printf("  Executed %d trades\n", len(result.ClearedTrades))
+			logger.Info("Trades executed in round",
+				zap.Int("round", round+1),
+				zap.Int("trade_count", len(result.ClearedTrades)))
+
 			for _, trade := range result.ClearedTrades {
-				fmt.Printf("    Trade: %s -> %s, Price %.2f, Qty %d\n",
-					trade.SellerID, trade.BuyerID, trade.Price, trade.Quantity)
+				logger.Debug("Trade executed",
+					zap.String("seller_id", trade.SellerID),
+					zap.String("buyer_id", trade.BuyerID),
+					zap.Float64("price", trade.Price),
+					zap.Int("quantity", trade.Quantity))
 			}
 		}
-
-		fmt.Println()
 	}
 
 	// Show final agent beliefs and wealth
-	fmt.Println("=== Final Agent States ===")
+	logger.Info("Simulation completed, showing final agent states")
 	for _, agent := range agents {
 		belief := agent.State.PriceBeliefs[bazaar.CommodityFood]
 		if belief != nil {
-			fmt.Printf("  %s: Belief [%.2f - %.2f], Wealth %.2f, Inventory %d\n",
-				agent.State.ID, belief.Min, belief.Max, agent.State.Wealth, agent.State.Inventory[bazaar.CommodityFood])
+			logger.Info("Final agent state",
+				zap.String("agent_id", agent.State.ID),
+				zap.Float64("belief_min", belief.Min),
+				zap.Float64("belief_max", belief.Max),
+				zap.Float64("wealth", agent.State.Wealth),
+				zap.Int("inventory", agent.State.Inventory[bazaar.CommodityFood]))
 		}
 	}
 
-	fmt.Println("\n=== Simulation Complete ===")
+	logger.Info("BazaarBot simulation completed successfully",
+		zap.String("simulation", "bazaarbot"),
+		zap.Int("total_rounds", numRounds),
+		zap.Int("total_agents", len(agents)))
 }
 
 // publishMarketResults publishes market clearing results to Kafka simulation.event topic

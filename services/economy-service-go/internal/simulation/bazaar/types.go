@@ -1,5 +1,7 @@
 package bazaar
 
+import "time"
+
 // Commodity represents a tradable good in the simulation
 type Commodity string
 
@@ -27,11 +29,14 @@ const (
 
 // Order represents a market order
 type Order struct {
-	AgentID   string
+	ID        string    // Order ID
+	AgentID   string    // Agent who placed the order
+	PlayerID  string    // Player who placed the order (for API)
 	Commodity Commodity
 	Type      OrderType
 	Price     float64
 	Quantity  int
+	CreatedAt time.Time // When order was placed
 }
 
 // AgentState represents the internal state of a trading agent
@@ -74,6 +79,16 @@ type MarketState struct {
 }
 
 // MarketResult represents the outcome of market clearing
+// Trade represents a completed trade between buyer and seller
+type Trade struct {
+	ID         string    // Unique trade ID
+	BuyerID    string    // ID of buyer
+	SellerID   string    // ID of seller
+	Price      float64   // Execution price
+	Quantity   int       // Quantity traded
+	ExecutedAt time.Time // When trade was executed
+}
+
 // Issue: #2278
 type MarketResult struct {
 	ClearedTrades    []TradeResult   // Individual trade executions
