@@ -93,6 +93,89 @@ func (h *SeasonHandler) GetSeason(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, season)
 }
 
+// CreateSeason handles POST /seasons
+func (h *SeasonHandler) CreateSeason(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var season models.Season
+	if err := json.NewDecoder(r.Body).Decode(&season); err != nil {
+		h.logger.Error("Failed to decode season", zap.Error(err))
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := h.seasonService.CreateSeason(&season)
+	if err != nil {
+		h.logger.Error("Failed to create season", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, season)
+}
+
+// UpdateSeason handles PUT /seasons/{id}
+func (h *SeasonHandler) UpdateSeason(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract season ID from URL path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 2 {
+		http.Error(w, "Invalid URL path", http.StatusBadRequest)
+		return
+	}
+
+	seasonID := pathParts[1] // seasons/{id}
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		h.logger.Error("Failed to decode updates", zap.Error(err))
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := h.seasonService.UpdateSeason(seasonID, updates)
+	if err != nil {
+		h.logger.Error("Failed to update season", zap.String("seasonID", seasonID), zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"message": "Season updated successfully"})
+}
+
+// ActivateSeason handles POST /seasons/{id}/activate
+func (h *SeasonHandler) ActivateSeason(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract season ID from URL path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 || pathParts[2] != "activate" {
+		http.Error(w, "Invalid URL path", http.StatusBadRequest)
+		return
+	}
+
+	seasonID := pathParts[1] // seasons/{id}/activate
+
+	err := h.seasonService.ActivateSeason(seasonID)
+	if err != nil {
+		h.logger.Error("Failed to activate season", zap.String("seasonID", seasonID), zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"message": "Season activated successfully"})
+}
+
 // respondJSON sends a JSON response
 func (h *SeasonHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

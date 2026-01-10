@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"necpgame/services/matchmaking-service-go/internal/service"
 	api "necpgame/services/matchmaking-service-go"
@@ -26,12 +25,8 @@ func NewMatchmakingHandlers(svc *service.MatchmakingService) *MatchmakingHandler
 func (h *MatchmakingHandlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
 	log.Println("Health check requested")
 
-	response := &HealthCheckOK{
-		Status: "healthy",
-		Service: "matchmaking-service",
-		Timestamp: time.Now().Format(time.RFC3339),
-		Version: "1.0.0",
-	}
+	response := &api.HealthCheckOK{}
+	response.Status.SetTo("healthy")
 
 	return response, nil
 }
@@ -46,7 +41,7 @@ func (h *MatchmakingHandlers) JoinQueue(ctx context.Context, req *api.JoinQueueR
 	result, err := h.matchmakingSvc.JoinQueue(ctx, playerID, gameMode)
 	if err != nil {
 		log.Printf("Failed to join queue for player %s: %v", req.PlayerID, err)
-		return &JoinQueueAccepted{}, nil // Still return accepted for async processing
+		return &api.JoinQueueAccepted{}, nil // Still return accepted for async processing
 	}
 
 	response := &api.JoinQueueAccepted{}
@@ -93,7 +88,7 @@ func (h *MatchmakingHandlers) FindMatch(ctx context.Context, req *api.FindMatchR
 
 	response := &api.FindMatchOK{}
 	response.MatchID.SetTo(match.MatchID)
-	response.Players.SetTo(players)
+	response.Players = players
 
 	return response, nil
 }

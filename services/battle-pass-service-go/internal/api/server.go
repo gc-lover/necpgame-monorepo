@@ -51,8 +51,32 @@ func NewServer(cfg *config.Config, db *sql.DB, rdb *redis.Client, logger *zap.Lo
 	apiRouter := http.NewServeMux()
 
 	// Season routes
-	apiRouter.HandleFunc("/seasons", seasonHandler.ListSeasons)
-	apiRouter.HandleFunc("/seasons/", seasonHandler.GetSeason)
+	apiRouter.HandleFunc("/seasons", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			seasonHandler.ListSeasons(w, r)
+		} else if r.Method == http.MethodPost {
+			seasonHandler.CreateSeason(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	apiRouter.HandleFunc("/seasons/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			seasonHandler.GetSeason(w, r)
+		} else if r.Method == http.MethodPut {
+			seasonHandler.UpdateSeason(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	apiRouter.HandleFunc("/seasons/", func(w http.ResponseWriter, r *http.Request) {
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) >= 3 && pathParts[2] == "activate" && r.Method == http.MethodPost {
+			seasonHandler.ActivateSeason(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
 
 	// Progress routes
 	apiRouter.HandleFunc("/progress/", progressHandler.GetProgress)
