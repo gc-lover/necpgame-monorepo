@@ -155,7 +155,213 @@ CREATE INDEX idx_ai_combat_statistics_damage ON ai.ai_combat_statistics (total_d
 COMMENT ON TABLE ai.ai_combat_statistics IS 'AI combat performance tracking and analytics';
 
 -- ===========================================
--- AI POSITION HISTORY TABLE
+-- AI POSITION UPDATES TABLE (ai-position-sync-service)
+-- ===========================================
+-- PERFORMANCE: High-throughput position sync with Redis caching
+-- Supports <25ms P99 update latency and <10ms P99 query latency
+-- Issue: #2303
+CREATE TABLE ai.ai_position_updates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_id UUID NOT NULL,
+    zone_id UUID NOT NULL,
+    enemy_id UUID REFERENCES ai.ai_enemies(id) ON DELETE CASCADE,
+
+    -- Position data (optimized order: large → small types)
+    position_x REAL NOT NULL,
+    position_y REAL NOT NULL,
+    position_z REAL NOT NULL,
+    velocity_x REAL DEFAULT 0.0,
+    velocity_y REAL DEFAULT 0.0,
+    velocity_z REAL DEFAULT 0.0,
+
+    -- Metadata (optimized order)
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Performance: Check constraints for data validation
+    CONSTRAINT ck_ai_position_updates_position_valid CHECK (
+        position_x >= -100000.0 AND position_x <= 100000.0 AND
+        position_y >= -100000.0 AND position_y <= 100000.0 AND
+        position_z >= -10000.0 AND position_z <= 10000.0
+    ),
+
+    -- Performance: Composite index for zone-based queries
+    CONSTRAINT fk_ai_position_updates_enemy FOREIGN KEY (enemy_id) REFERENCES ai.ai_enemies(id)
+);
+
+-- PERFORMANCE: Covering indexes for hot queries (<10ms target)
+CREATE INDEX idx_ai_position_updates_entity_time_covering
+ON ai.ai_position_updates (entity_id, timestamp DESC, position_x, position_y, position_z, zone_id);
+
+CREATE INDEX idx_ai_position_updates_zone_time_covering
+ON ai.ai_position_updates (zone_id, timestamp DESC, entity_id, position_x, position_y, position_z);
+
+-- PERFORMANCE: Partial index for recent data (TTL optimization)
+CREATE INDEX idx_ai_position_updates_recent
+ON ai.ai_position_updates (entity_id, timestamp DESC)
+WHERE timestamp > NOW() - INTERVAL '24 hours';
+
+COMMENT ON TABLE ai.ai_position_updates IS 'High-throughput AI position sync with Redis caching - <25ms P99 updates, <10ms P99 queries';
+
+-- ===========================================
+-- AI BEHAVIOR STATES TABLE (ai-behavior-engine-service)
+-- ===========================================
+-- PERFORMANCE: Real-time behavior state management
+-- Supports <5ms behavior transitions and priority evaluations
+-- Issue: #2303
+CREATE TABLE ai.ai_behavior_states (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_id UUID NOT NULL,
+    zone_id UUID NOT NULL,
+    enemy_id UUID REFERENCES ai.ai_enemies(id) ON DELETE CASCADE,
+
+    -- Behavior data (optimized order: large → small types)
+    current_behavior VARCHAR(50) NOT NULL CHECK (current_behavior IN (
+        'idle', 'patrol', 'combat', 'flee', 'hunt', 'guard', 'chase', 'retreat'
+    )),
+    priority INTEGER NOT NULL DEFAULT 1 CHECK (priority >= 1 AND priority <= 10),
+    behavior_metadata JSONB DEFAULT '{}',
+
+    -- Transition data
+    previous_behavior VARCHAR(50),
+    transition_reason VARCHAR(100),
+    transition_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Performance tracking
+    execution_time_ms REAL DEFAULT 0.0,
+    success_rate REAL DEFAULT 1.0 CHECK (success_rate >= 0.0 AND success_rate <= 1.0),
+
+    -- Metadata (optimized order)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT true,
+
+    -- Performance: Foreign key constraint
+    CONSTRAINT fk_ai_behavior_states_enemy FOREIGN KEY (enemy_id) REFERENCES ai.ai_enemies(id)
+);
+
+-- PERFORMANCE: Covering indexes for behavior queries (<5ms target)
+CREATE INDEX idx_ai_behavior_states_entity_active_covering
+ON ai.ai_behavior_states (entity_id, is_active, current_behavior, priority DESC, updated_at DESC)
+WHERE is_active = true;
+
+CREATE INDEX idx_ai_behavior_states_zone_priority_covering
+ON ai.ai_behavior_states (zone_id, priority DESC, current_behavior, entity_id)
+WHERE is_active = true;
+
+-- PERFORMANCE: GIN index for behavior metadata queries
+CREATE INDEX idx_ai_behavior_states_metadata_gin
+ON ai.ai_behavior_states USING GIN (behavior_metadata)
+WHERE is_active = true;
+
+COMMENT ON TABLE ai.ai_behavior_states IS 'Real-time AI behavior state management - <5ms transitions, priority-based execution';
+
+-- ===========================================
+-- AI COMBAT EVENTS TABLE (ai-combat-calculator-service)
+-- ===========================================
+-- PERFORMANCE: High-frequency combat calculations
+-- Supports <1ms damage calculations and real-time event processing
+-- Issue: #2303
+CREATE TABLE ai.ai_combat_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_type VARCHAR(30) NOT NULL CHECK (event_type IN (
+        'damage', 'heal', 'critical_hit', 'miss', 'ability_use', 'status_effect'
+    )),
+
+    -- Combat participants (optimized order: large → small types)
+    attacker_id UUID NOT NULL,
+    target_id UUID NOT NULL,
+    zone_id UUID NOT NULL,
+    enemy_attacker_id UUID REFERENCES ai.ai_enemies(id) ON DELETE CASCADE,
+    enemy_target_id UUID REFERENCES ai.ai_enemies(id) ON DELETE CASCADE,
+
+    -- Combat data
+    damage_amount INTEGER DEFAULT 0 CHECK (damage_amount >= 0),
+    heal_amount INTEGER DEFAULT 0 CHECK (heal_amount >= 0),
+    ability_id VARCHAR(100),
+    status_effect VARCHAR(50),
+
+    -- Calculation metadata
+    calculation_time_ms REAL DEFAULT 0.0,
+    is_critical BOOLEAN DEFAULT false,
+    damage_type VARCHAR(20) DEFAULT 'physical' CHECK (damage_type IN (
+        'physical', 'thermal', 'electrical', 'chemical', 'electromagnetic'
+    )),
+
+    -- Performance tracking
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Performance: Foreign key constraints
+    CONSTRAINT fk_ai_combat_events_attacker FOREIGN KEY (enemy_attacker_id) REFERENCES ai.ai_enemies(id),
+    CONSTRAINT fk_ai_combat_events_target FOREIGN KEY (enemy_target_id) REFERENCES ai.ai_enemies(id)
+);
+
+-- PERFORMANCE: Covering indexes for combat queries (<1ms target)
+CREATE INDEX idx_ai_combat_events_zone_timestamp_covering
+ON ai.ai_combat_events (zone_id, timestamp DESC, event_type, attacker_id, target_id, damage_amount)
+WHERE timestamp > NOW() - INTERVAL '1 hour';
+
+CREATE INDEX idx_ai_combat_events_participants_covering
+ON ai.ai_combat_events (attacker_id, target_id, timestamp DESC, event_type, damage_amount);
+
+-- PERFORMANCE: Partial index for recent high-damage events
+CREATE INDEX idx_ai_combat_events_high_damage_recent
+ON ai.ai_combat_events (zone_id, damage_amount DESC, timestamp DESC)
+WHERE damage_amount > 100 AND timestamp > NOW() - INTERVAL '1 hour';
+
+COMMENT ON TABLE ai.ai_combat_events IS 'High-frequency AI combat calculations - <1ms damage calc, real-time event processing';
+
+-- ===========================================
+-- AI ENEMY COORDINATION TABLE (ai-enemy-coordinator-service)
+-- ===========================================
+-- PERFORMANCE: Zone-based AI coordination and load balancing
+-- Supports 500+ AI entities per zone with <50ms P99 coordination
+-- Issue: #2303
+CREATE TABLE ai.ai_enemy_coordination (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    zone_id UUID NOT NULL,
+    coordinator_version INTEGER DEFAULT 1,
+
+    -- Coordination data
+    active_enemies INTEGER DEFAULT 0 CHECK (active_enemies >= 0),
+    max_enemies INTEGER DEFAULT 50 CHECK (max_enemies > 0),
+    enemy_density REAL DEFAULT 0.0 CHECK (enemy_density >= 0.0),
+
+    -- Load balancing
+    server_instance VARCHAR(100),
+    coordination_load REAL DEFAULT 0.0 CHECK (coordination_load >= 0.0 AND coordination_load <= 1.0),
+
+    -- Performance metrics
+    avg_response_time_ms REAL DEFAULT 0.0,
+    coordination_events_per_second REAL DEFAULT 0.0,
+    zone_health_score REAL DEFAULT 1.0 CHECK (zone_health_score >= 0.0 AND zone_health_score <= 1.0),
+
+    -- Metadata (optimized order)
+    last_coordination TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Performance: Unique constraint for zone coordination
+    CONSTRAINT uk_ai_enemy_coordination_zone UNIQUE (zone_id)
+);
+
+-- PERFORMANCE: Covering indexes for coordination queries (<50ms target)
+CREATE INDEX idx_ai_enemy_coordination_zone_load_covering
+ON ai.ai_enemy_coordination (zone_id, coordination_load, active_enemies, max_enemies, last_coordination DESC);
+
+CREATE INDEX idx_ai_enemy_coordination_health_covering
+ON ai.ai_enemy_coordination (zone_health_score DESC, active_enemies, last_coordination DESC);
+
+-- PERFORMANCE: Partial index for overloaded zones
+CREATE INDEX idx_ai_enemy_coordination_overloaded
+ON ai.ai_enemy_coordination (zone_id, coordination_load DESC)
+WHERE coordination_load > 0.8;
+
+COMMENT ON TABLE ai.ai_enemy_coordination IS 'Zone-based AI coordination and load balancing - 500+ AI per zone, <50ms P99';
+
+-- ===========================================
+-- AI POSITION HISTORY TABLE (Legacy - keeping for compatibility)
 -- ===========================================
 -- PERFORMANCE: Movement tracking with spatial-temporal indexing
 -- Supports trajectory analysis and predictive AI behavior
@@ -168,7 +374,9 @@ CREATE TABLE ai.ai_position_history (
     recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
     -- Movement context
-    velocity VECTOR(3), -- x, y, z velocity components
+    velocity_x REAL DEFAULT 0.0,
+    velocity_y REAL DEFAULT 0.0,
+    velocity_z REAL DEFAULT 0.0,
     behavior_state VARCHAR(30),
     target_position GEOMETRY(POINT, 4326),
 
@@ -189,7 +397,7 @@ CREATE INDEX idx_ai_position_history_enemy_time ON ai.ai_position_history (enemy
 CREATE INDEX idx_ai_position_history_position_time ON ai.ai_position_history USING GIST (position, recorded_at) WHERE recorded_at > NOW() - INTERVAL '24 hours';
 CREATE INDEX idx_ai_position_history_zone ON ai.ai_position_history (previous_zone, recorded_at DESC) WHERE zone_changed = true;
 
-COMMENT ON TABLE ai.ai_position_history IS 'AI movement tracking with spatial-temporal indexing';
+COMMENT ON TABLE ai.ai_position_history IS 'AI movement tracking with spatial-temporal indexing (legacy compatibility)';
 
 -- ===========================================
 -- AI ENEMY EVENTS TABLE (EVENT SOURCING)
@@ -307,4 +515,46 @@ CREATE TRIGGER trg_ai_enemy_events_version_increment
     FOR EACH ROW
     EXECUTE FUNCTION ai.increment_enemy_event_version();
 
-COMMENT ON SCHEMA ai IS 'Enterprise-grade AI enemy management system for Night City MMOFPS RPG - Issue: #2302';
+-- ===========================================
+-- BACKEND PERFORMANCE HINTS
+-- ===========================================
+
+-- Issue: #2303
+-- AI Enemy Services Database Schema - Performance Requirements
+
+-- AI-POSITION-SYNC-SERVICE:
+-- Connection pool: 50-100 connections (high-throughput position updates)
+-- Expected QPS: 10,000+ position updates/second across all zones
+-- Target latency: <25ms P99 for updates, <10ms P99 for queries
+-- Redis TTL: 5 minutes for position data
+-- Batch operations: Use Redis pipelines for zone-wide updates
+
+-- AI-BEHAVIOR-ENGINE-SERVICE:
+-- Connection pool: 25-50 connections (behavior state management)
+-- Expected QPS: 5,000+ behavior evaluations/second
+-- Target latency: <5ms for behavior transitions
+-- JSONB queries: Use GIN indexes for metadata filtering
+-- Priority queues: Implement in-memory for real-time scheduling
+
+-- AI-COMBAT-CALCULATOR-SERVICE:
+-- Connection pool: 25-50 connections (combat calculations)
+-- Expected QPS: 50,000+ damage calculations/second during combat
+-- Target latency: <1ms for damage calculations
+-- Event streaming: Use Redis pub/sub for real-time combat sync
+-- Aggregation: Materialized views for combat statistics
+
+-- AI-ENEMY-COORDINATOR-SERVICE:
+-- Connection pool: 10-25 connections (zone coordination)
+-- Expected QPS: 1,000+ coordination events/second
+-- Target latency: <50ms P99 for zone management
+-- Load balancing: Monitor coordination_load for scaling decisions
+-- Zone density: Max 500 active AI per zone
+
+-- GENERAL PERFORMANCE NOTES:
+-- Use prepared statements for all queries
+-- Implement connection pooling with pgBouncer in transaction mode
+-- Monitor slow queries (>100ms) and optimize with EXPLAIN ANALYZE
+-- Use Redis for session state and position caching
+-- Implement proper error handling and circuit breakers
+
+COMMENT ON SCHEMA ai IS 'Enterprise-grade AI enemy management system for Night City MMOFPS RPG - Issues: #2302, #2303';
