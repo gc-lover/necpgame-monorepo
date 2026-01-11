@@ -9,7 +9,7 @@
 БЕРИ КАЖДУЮ ЗАДАЧУ И ДОВОДИ ДО СОСТОЯНИЯ DONE!
 
 Для поиска задач используй MCP GITHUB: @.cursor/MCP_GITHUB_GUIDE.md
-Ищи задачи со статусом TODO в GitHub Projects.
+Ищи задачи со статусом TODO в GitHub Projects с обязательным фильтром Status:"Todo" в запросе.
 
 ОБЯЗАТЕЛЬНО ПРОВЕРЬ АКТУАЛЬНОСТЬ ЗАДАЧИ перед взятием - возможно она уже выполнена или устарела!
 
@@ -52,13 +52,27 @@ Performance enforcement: @.cursor/PERFORMANCE_ENFORCEMENT.md
 
 #### 1.1. Поиск задач
 ```javascript
-// Поиск задач через MCP GitHub
+// ОБЯЗАТЕЛЬНО использовать фильтр Status:"Todo" для поиска незавершенных задач
+// Поиск всех задач со статусом Todo
 await mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   query: 'Status:"Todo"'
 });
+
+// Поиск задач конкретного агента со статусом Todo
+// Пример для Backend агента
+await mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Backend" Status:"Todo"'
+});
+
+// Важно: используй кавычки для значений с пробелами (например, "In Progress")
+// Правильно: Status:"Todo", Status:"In Progress"
+// Неправильно: Status:Todo, Status:In Progress
 ```
 
 #### 1.2. ОБЯЗАТЕЛЬНАЯ проверка актуальности задачи
