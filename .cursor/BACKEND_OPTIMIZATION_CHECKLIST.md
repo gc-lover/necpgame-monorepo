@@ -120,7 +120,7 @@ mcp_github_list_issues({
 
 # Или вручную для отдельных сервисов:
 python scripts/migrations/validate-all-migrations.py  # проверяет enterprise-grade миграции
-python scripts/openapi/validate-domains-openapi.py    # проверяет OpenAPI домены
+python scripts/tools/openapi/validate-domains-openapi.py    # проверяет OpenAPI домены
 
 # Или для генерации всех enterprise-grade сервисов:
 python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml  # включает валидацию

@@ -100,7 +100,7 @@ Issue: #{number}
   - `python scripts/migrations/run_generator.py --type quests --output-dir infrastructure/liquibase/data/` - генерация миграций квестов
   - `python scripts/migrations/validate-quest-migrations.py` - валидация миграций квестов
   - `python scripts/migrations/validate-all-migrations.py` - валидация всех миграций
-  - `python scripts/openapi/validate-domains-openapi.py --domain specialized-domain` - валидация API домена
+  - `python scripts/tools/openapi/validate-domains-openapi.py --domain specialized-domain` - валидация API домена
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
 - **Миграции в enterprise-grade структуре:**
     - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)

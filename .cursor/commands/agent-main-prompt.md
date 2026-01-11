@@ -477,7 +477,7 @@ await mcp_github_add_issue_comment({
 
 # Общая валидация
 python scripts/validation/validate-emoji-ban.py .
-python scripts/openapi/validate-domains-openapi.py
+python scripts/tools/openapi/validate-domains-openapi.py
 ```
 
 ### Проверка архитектуры

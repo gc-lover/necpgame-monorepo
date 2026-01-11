@@ -1,6 +1,6 @@
 # NECPGAME Scripts Directory Structure
 
-This directory contains all automation scripts and tools for the NECPGAME MMOFPS project, organized in 4 logical areas.
+This directory contains all automation scripts and tools for the NECPGAME MMOFPS project, organized in logical areas for code generation, validation, and testing.
 
 ## Directory Structure
 
@@ -19,18 +19,12 @@ This directory contains all automation scripts and tools for the NECPGAME MMOFPS
 - `content/` - Game content generation (quests, NPCs, etc.)
 - `templates/` - Code generation templates
 
-### 📁 `infrastructure/`
-**Systems and services**
-- `backup/` - Backup and disaster recovery
-- `cdn-system/` - Content delivery network
-- `data-sync/` - Distributed data synchronization
-- `global-state/` - Global state management
-- `kafka-event-driven/` - Event streaming
-- `notification-system/` - Multi-channel notifications
-- `performance-monitoring/` - Metrics and alerting
-- `dynamic-quests/` - Dynamic quest engine
-- `player-metrics/` - Player analytics
-- `validation/` - Content validation
+### 📁 `validation/`
+**Content validation**
+- `validate-emoji-ban.py` - Emoji and special characters validation
+- `validate-all-quests.py` - Quest YAML validation
+- `base_validator.py` - Base validator classes
+- `openapi_validator.py` - OpenAPI specification validation
 
 ### 📁 `tools/`
 **Development and testing tools**
@@ -82,11 +76,6 @@ python tools/functional/test_quest_api.py
 python tools/security/test_authentication.py
 ```
 
-### Performance Monitoring
-```bash
-# Start monitoring services
-cd infrastructure/performance-monitoring && go run .
-```
 
 ### Development Tools
 ```bash

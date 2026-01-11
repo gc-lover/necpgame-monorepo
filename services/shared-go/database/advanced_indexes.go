@@ -302,3 +302,168 @@ func ReindexIndex(ctx context.Context, pool *pgxpool.Pool, indexName string, con
 	logger.Info("Index reindexed", zap.String("index", indexName))
 	return nil
 }
+
+// Partitioning Functions for MMO Workloads
+// Issue: #1949 - Time-based partitioning and composite keys optimization
+
+// PartitionDefinition represents a table partition
+type PartitionDefinition struct {
+	TableName    string
+	PartitionName string
+	PartitionType string // RANGE, LIST, HASH
+	PartitionKey  string
+	FromValue     string
+	ToValue       string
+}
+
+// CreateTimeBasedPartition creates a time-based partition for a table
+func CreateTimeBasedPartition(ctx context.Context, pool *pgxpool.Pool, partition PartitionDefinition, logger *zap.Logger) error {
+	var query string
+
+	switch partition.PartitionType {
+	case "RANGE":
+		query = fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s PARTITION OF %s
+			FOR VALUES FROM ('%s') TO ('%s')`,
+			partition.PartitionName, partition.TableName,
+			partition.FromValue, partition.ToValue)
+	case "LIST":
+		query = fmt.Sprintf(`
+			CREATE TABLE IF NOT EXISTS %s PARTITION OF %s
+			FOR VALUES IN (%s)`,
+			partition.PartitionName, partition.TableName, partition.PartitionKey)
+	default:
+		return fmt.Errorf("unsupported partition type: %s", partition.PartitionType)
+	}
+
+	if _, err := pool.Exec(ctx, query); err != nil {
+		return fmt.Errorf("failed to create partition %s: %w", partition.PartitionName, err)
+	}
+
+	logger.Info("Time-based partition created",
+		zap.String("table", partition.TableName),
+		zap.String("partition", partition.PartitionName),
+		zap.String("type", partition.PartitionType))
+
+	return nil
+}
+
+// DetachPartition detaches a partition from its parent table
+func DetachPartition(ctx context.Context, pool *pgxpool.Pool, tableName, partitionName string, logger *zap.Logger) error {
+	query := fmt.Sprintf("ALTER TABLE %s DETACH PARTITION %s", tableName, partitionName)
+
+	if _, err := pool.Exec(ctx, query); err != nil {
+		return fmt.Errorf("failed to detach partition %s: %w", partitionName, err)
+	}
+
+	logger.Info("Partition detached",
+		zap.String("table", tableName),
+		zap.String("partition", partitionName))
+
+	return nil
+}
+
+// AttachPartition attaches a partition to its parent table
+func AttachPartition(ctx context.Context, pool *pgxpool.Pool, partition PartitionDefinition, logger *zap.Logger) error {
+	var query string
+
+	switch partition.PartitionType {
+	case "RANGE":
+		query = fmt.Sprintf(`
+			ALTER TABLE %s ATTACH PARTITION %s
+			FOR VALUES FROM ('%s') TO ('%s')`,
+			partition.TableName, partition.PartitionName,
+			partition.FromValue, partition.ToValue)
+	case "LIST":
+		query = fmt.Sprintf(`
+			ALTER TABLE %s ATTACH PARTITION %s
+			FOR VALUES IN (%s)`,
+			partition.TableName, partition.PartitionName, partition.PartitionKey)
+	default:
+		return fmt.Errorf("unsupported partition type: %s", partition.PartitionType)
+	}
+
+	if _, err := pool.Exec(ctx, query); err != nil {
+		return fmt.Errorf("failed to attach partition %s: %w", partition.PartitionName, err)
+	}
+
+	logger.Info("Partition attached",
+		zap.String("table", partition.TableName),
+		zap.String("partition", partition.PartitionName))
+
+	return nil
+}
+
+// CreateCompositeIndexForMMO creates optimized composite indexes for MMO workloads
+func CreateCompositeIndexForMMO(ctx context.Context, pool *pgxpool.Pool, tableName string, logger *zap.Logger) error {
+	// Common MMO composite index patterns
+	compositeIndexes := []AdvancedIndexDefinition{
+		{
+			Name:       fmt.Sprintf("idx_%s_player_time", tableName),
+			Table:      tableName,
+			Columns:    []string{"player_id", "created_at"},
+			IndexType:  IndexTypeBTree,
+			Concurrent: true,
+			FillFactor: 90,
+		},
+		{
+			Name:       fmt.Sprintf("idx_%s_region_time", tableName),
+			Table:      tableName,
+			Columns:    []string{"region_id", "created_at"},
+			IndexType:  IndexTypeBTree,
+			Concurrent: true,
+			FillFactor: 90,
+		},
+		{
+			Name:       fmt.Sprintf("idx_%s_status_time", tableName),
+			Table:      tableName,
+			Columns:    []string{"status", "created_at"},
+			IndexType:  IndexTypeBTree,
+			Concurrent: true,
+			Where:      "status IN ('active', 'pending', 'completed')",
+		},
+	}
+
+	for _, index := range compositeIndexes {
+		if err := CreateAdvancedIndex(ctx, pool, index, logger); err != nil {
+			logger.Warn("Failed to create composite index",
+				zap.String("index", index.Name),
+				zap.Error(err))
+			// Continue with other indexes
+		}
+	}
+
+	logger.Info("MMO composite indexes created for table", zap.String("table", tableName))
+	return nil
+}
+
+// OptimizeTableForMMO applies MMO-specific optimizations to a table
+func OptimizeTableForMMO(ctx context.Context, pool *pgxpool.Pool, tableName string, logger *zap.Logger) error {
+	// Set table optimization parameters
+	optimizations := []string{
+		fmt.Sprintf("ALTER TABLE %s SET (autovacuum_vacuum_scale_factor = 0.02)", tableName),
+		fmt.Sprintf("ALTER TABLE %s SET (autovacuum_analyze_scale_factor = 0.01)", tableName),
+		fmt.Sprintf("ALTER TABLE %s SET (autovacuum_vacuum_threshold = 50)", tableName),
+		fmt.Sprintf("ALTER TABLE %s SET (autovacuum_analyze_threshold = 25)", tableName),
+		fmt.Sprintf("ALTER TABLE %s SET (fillfactor = 90)", tableName),
+	}
+
+	for _, query := range optimizations {
+		if _, err := pool.Exec(ctx, query); err != nil {
+			logger.Warn("Failed to apply table optimization",
+				zap.String("query", query),
+				zap.Error(err))
+			// Continue with other optimizations
+		}
+	}
+
+	// Create composite indexes for MMO patterns
+	if err := CreateCompositeIndexForMMO(ctx, pool, tableName, logger); err != nil {
+		logger.Warn("Failed to create MMO composite indexes",
+			zap.String("table", tableName),
+			zap.Error(err))
+	}
+
+	logger.Info("MMO optimizations applied to table", zap.String("table", tableName))
+	return nil
+}

@@ -38,7 +38,7 @@ python scripts/validation/validate-script-types.py
 
 **Implementation:**
 ```bash
-python scripts/openapi/validate-domains-openapi.py --domain {domain}
+python scripts/tools/openapi/validate-domains-openapi.py --domain {domain}
 ```
 
 ### GitHub Issue Management
