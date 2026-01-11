@@ -1,0 +1,149 @@
+# Damage Calculation Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Damage and health management schemas for combat balance
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Damage Request Schema
+    DamageRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - damage_type
+        - base_damage
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacking player/entity unique identifier
+        target_id:
+          type: string
+          format: uuid
+          description: Target player/entity unique identifier
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, thermal, cyberware, environmental]
+          description: Type of damage being applied
+          example: "physical"
+        base_damage:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Base damage amount before modifiers
+          example: 85
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon/item used to cause damage
+        hit_location:
+          type: string
+          enum: [head, torso, arms, legs, cyberware]
+          description: Body part/location hit
+          example: "torso"
+        critical_hit:
+          type: boolean
+          description: Whether this was a critical hit
+          default: false
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [armor_reduction, damage_boost, weakness_multiplier, resistance]
+                example: "armor_reduction"
+              value:
+                type: number
+                format: float
+                example: 0.8
+              source:
+                type: string
+                example: "kevlar_armor"
+          description: Damage modifiers (armor, buffs, debuffs)
+        timestamp:
+          type: integer
+          format: int64
+          description: Damage event timestamp
+
+    # Damage Response Schema
+    DamageResponse:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - final_damage
+        - target_health_remaining
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacking player/entity unique identifier
+        target_id:
+          type: string
+          format: uuid
+          description: Target player/entity unique identifier
+        final_damage:
+          type: integer
+          minimum: 0
+          description: Final damage applied after all calculations
+          example: 68
+        target_health_remaining:
+          type: integer
+          minimum: 0
+          description: Target's remaining health after damage
+          example: 132
+        target_armor_remaining:
+          type: integer
+          minimum: 0
+          description: Target's remaining armor after damage
+          example: 25
+        damage_breakdown:
+          type: object
+          description: Detailed damage calculation breakdown
+          properties:
+            base_damage:
+              type: integer
+              example: 85
+            armor_reduction:
+              type: integer
+              example: 17
+            critical_multiplier:
+              type: number
+              format: float
+              example: 1.5
+            final_damage:
+              type: integer
+              example: 68
+        status_effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+                enum: [bleeding, burning, poisoned, stunned, slowed]
+                example: "bleeding"
+              duration:
+                type: integer
+                minimum: 0
+                description: Effect duration in seconds
+                example: 30
+              intensity:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.7
+          description: Status effects applied by this damage
+        kill_confirmed:
+          type: boolean
+          description: Whether this damage resulted in target death
+          default: false
+        experience_gained:
+          type: integer
+          minimum: 0
+          description: Experience points awarded to attacker
+          example: 25

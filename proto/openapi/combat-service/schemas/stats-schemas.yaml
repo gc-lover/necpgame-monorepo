@@ -1,0 +1,210 @@
+# Combat Statistics Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Statistics and analytics schemas for performance monitoring
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Combat Statistics Response Schema
+    CombatStatsResponse:
+      type: object
+      required:
+        - session_id
+        - duration
+        - player_stats
+        - session_stats
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+        duration:
+          type: integer
+          minimum: 0
+          description: Session duration in seconds
+          example: 1200
+        player_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCombatStats'
+          description: Individual player statistics
+        session_stats:
+          $ref: '#/components/schemas/SessionCombatStats'
+          description: Overall session statistics
+        timestamp:
+          type: string
+          format: date-time
+          description: When statistics were generated
+
+    # Player Combat Statistics Schema
+    PlayerCombatStats:
+      type: object
+      required:
+        - player_id
+        - username
+        - kills
+        - deaths
+        - score
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          description: Player display name
+        team:
+          type: string
+          enum: [red, blue, spectator]
+          description: Player's team
+        kills:
+          type: integer
+          minimum: 0
+          example: 15
+        deaths:
+          type: integer
+          minimum: 0
+          example: 8
+        assists:
+          type: integer
+          minimum: 0
+          example: 5
+        score:
+          type: integer
+          minimum: 0
+          example: 1250
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.78
+        headshot_ratio:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.25
+        damage_dealt:
+          type: integer
+          minimum: 0
+          example: 8750
+        damage_received:
+          type: integer
+          minimum: 0
+          example: 6200
+        healing_done:
+          type: integer
+          minimum: 0
+          example: 1200
+        objectives_captured:
+          type: integer
+          minimum: 0
+          example: 3
+        playtime_seconds:
+          type: integer
+          minimum: 0
+          example: 1180
+        weapons_used:
+          type: array
+          items:
+            type: object
+            properties:
+              weapon_id:
+                type: string
+                format: uuid
+              weapon_name:
+                type: string
+                example: "M4A1 Assault Rifle"
+              kills:
+                type: integer
+                minimum: 0
+              accuracy:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+          description: Statistics per weapon used
+        abilities_used:
+          type: array
+          items:
+            type: object
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+              ability_name:
+                type: string
+                example: "Sandevistan Overdrive"
+              uses:
+                type: integer
+                minimum: 0
+              cooldown_wasted:
+                type: integer
+                minimum: 0
+                description: Time wasted due to early activation
+          description: Statistics per ability used
+
+    # Session Combat Statistics Schema
+    SessionCombatStats:
+      type: object
+      required:
+        - total_kills
+        - total_deaths
+        - average_player_score
+        - game_mode
+      properties:
+        total_kills:
+          type: integer
+          minimum: 0
+          example: 180
+        total_deaths:
+          type: integer
+          minimum: 0
+          example: 180
+        total_damage_dealt:
+          type: integer
+          minimum: 0
+          example: 125000
+        average_player_score:
+          type: number
+          format: float
+          example: 850.5
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_flag, king_of_hill]
+          example: "team_deathmatch"
+        winner:
+          type: string
+          description: Winning team or player
+          example: "red_team"
+        objectives_completed:
+          type: integer
+          minimum: 0
+          example: 8
+        rounds_played:
+          type: integer
+          minimum: 1
+          example: 3
+        average_round_duration:
+          type: number
+          format: float
+          example: 420.5
+        spectator_count:
+          type: integer
+          minimum: 0
+          example: 25
+        disconnection_count:
+          type: integer
+          minimum: 0
+          example: 2
+        lag_reports:
+          type: integer
+          minimum: 0
+          example: 3
+        cheat_reports:
+          type: integer
+          minimum: 0
+          example: 0

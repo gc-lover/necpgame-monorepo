@@ -1,0 +1,58 @@
+# Combat Session Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Session management schemas for real-time combat
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Spectate Request Schema
+    SpectateRequest:
+      type: object
+      properties:
+        camera_mode:
+          type: string
+          enum: [free, follow_player, overview, cinematic]
+          default: free
+          description: Initial spectator camera mode
+        follow_target:
+          type: string
+          format: uuid
+          description: Player ID to follow (required if camera_mode is follow_player)
+        preferred_position:
+          $ref: './position-schemas.yaml#/components/schemas/Vector3'
+          description: Preferred spectator position (for free mode)
+
+    # Spectate Response Schema
+    SpectateResponse:
+      type: object
+      required:
+        - session_id
+        - spectator_token
+        - websocket_url
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+        spectator_token:
+          type: string
+          description: Short-lived token for spectator WebSocket authentication
+        websocket_url:
+          type: string
+          description: Spectator WebSocket URL
+        camera_modes:
+          type: array
+          items:
+            type: string
+            enum: [free, follow_player, overview, cinematic]
+          description: Available camera modes for this session
+        max_spectators:
+          type: integer
+          minimum: 0
+          example: 50
+          description: Maximum number of spectators allowed
+        current_spectators:
+          type: integer
+          minimum: 0
+          example: 12
+          description: Current number of spectators

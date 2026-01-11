@@ -1,0 +1,114 @@
+# Position Synchronization Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Position and movement schemas for anti-cheat validation
+# Issue: #2232
+
+components:
+  schemas:
+
+    # 3D Vector Schema
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+          example: 125.5
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+          example: 45.2
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+          example: 10.0
+
+    # Position Update Request Schema
+    PositionUpdateRequest:
+      type: object
+      required:
+        - player_id
+        - position
+        - timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        position:
+          $ref: '#/components/schemas/Vector3'
+          description: Current player position
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+          description: Current player velocity (for anti-cheat validation)
+        rotation:
+          type: object
+          properties:
+            yaw:
+              type: number
+              format: float
+              minimum: -180
+              maximum: 180
+              description: Yaw rotation in degrees
+              example: 45.5
+            pitch:
+              type: number
+              format: float
+              minimum: -90
+              maximum: 90
+              description: Pitch rotation in degrees
+              example: -15.2
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp (milliseconds since epoch)
+        sequence_number:
+          type: integer
+          minimum: 0
+          description: Position update sequence number (for ordering)
+        checksum:
+          type: string
+          description: Position data checksum for anti-cheat validation
+
+    # Position Update Response Schema
+    PositionUpdateResponse:
+      type: object
+      required:
+        - player_id
+        - accepted
+        - server_timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        accepted:
+          type: boolean
+          description: Whether position update was accepted
+          example: true
+        server_timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp for this update
+        corrections:
+          type: object
+          description: Server corrections if position was rejected
+          properties:
+            corrected_position:
+              $ref: '#/components/schemas/Vector3'
+            reason:
+              type: string
+              enum: [speed_hack, wall_hack, teleport, lag_compensation]
+              example: "speed_hack"
+        lag_compensation:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Lag compensation factor applied (0-1)

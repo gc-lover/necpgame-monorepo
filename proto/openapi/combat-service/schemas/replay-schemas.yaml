@@ -1,0 +1,127 @@
+# Combat Replay Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Replay and analysis schemas for tournament and anti-cheat
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Combat Replay Response Schema
+    CombatReplayResponse:
+      type: object
+      required:
+        - replay_id
+        - session_id
+        - events
+        - duration
+        - metadata
+      properties:
+        replay_id:
+          type: string
+          format: uuid
+          description: Unique replay identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Original combat session identifier
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatEvent'
+          description: Chronological list of combat events
+        duration:
+          type: integer
+          minimum: 0
+          description: Total replay duration in seconds
+          example: 1800
+        metadata:
+          type: object
+          required:
+            - total_players
+            - game_mode
+            - winner
+          properties:
+            total_players:
+              type: integer
+              minimum: 2
+              example: 12
+            game_mode:
+              type: string
+              enum: [deathmatch, team_deathmatch, capture_flag, king_of_hill]
+              example: "team_deathmatch"
+            winner:
+              type: string
+              description: Winner identifier (team or player)
+              example: "red_team"
+            highlights:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: integer
+                    description: Event timestamp in seconds from replay start
+                    example: 845
+                  type:
+                    type: string
+                    enum: [kill, combo, clutch, comeback]
+                    example: "clutch"
+                  description:
+                    type: string
+                    example: "5v1 clutch victory"
+              description: Notable moments in the replay
+        created_at:
+          type: string
+          format: date-time
+          description: When replay was created
+        compression_ratio:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Data compression ratio (0-1, lower is better compression)
+          example: 0.3
+
+    # Combat Event Schema (for replay events)
+    CombatEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - session_id
+      properties:
+        event_type:
+          type: string
+          enum: [session_start, player_join, player_leave, position_update, damage_dealt, ability_used, player_death, round_start, round_end, session_end, item_pickup, objective_captured]
+          description: Type of combat event
+          example: "damage_dealt"
+        timestamp:
+          type: integer
+          format: int64
+          description: Event timestamp (milliseconds since session start)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Primary player involved in event
+        target_player_id:
+          type: string
+          format: uuid
+          description: Target player (for damage, abilities, etc.)
+        position:
+          $ref: './position-schemas.yaml#/components/schemas/Vector3'
+          description: Position where event occurred
+        data:
+          type: object
+          description: Event-specific data
+          additionalProperties: true
+          example:
+            damage: 85
+            weapon_type: "assault_rifle"
+            hit_location: "torso"
+        sequence_number:
+          type: integer
+          minimum: 0
+          description: Event sequence number for ordering

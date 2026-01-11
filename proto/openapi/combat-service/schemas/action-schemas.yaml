@@ -1,0 +1,132 @@
+# Combat Action Schemas - Enterprise-grade Real-time Combat API
+# Domain Separation: Combat actions and abilities schemas for game mechanics
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Combat Action Request Schema
+    CombatActionRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier performing the action
+        action_type:
+          type: string
+          enum: [attack, ability, special_move, reload, switch_weapon, use_item]
+          description: Type of combat action
+          example: "ability"
+        action_id:
+          type: string
+          format: uuid
+          description: Specific action/ability unique identifier
+        target_position:
+          $ref: './position-schemas.yaml#/components/schemas/Vector3'
+          description: Target position for area-of-effect actions
+        target_player_id:
+          type: string
+          format: uuid
+          description: Target player ID for directed actions
+        parameters:
+          type: object
+          description: Action-specific parameters
+          additionalProperties: true
+          example:
+            power_level: 3
+            charge_time: 2.5
+        timestamp:
+          type: integer
+          format: int64
+          description: Action request timestamp
+        sequence_number:
+          type: integer
+          minimum: 0
+          description: Action sequence number for ordering
+
+    # Combat Action Response Schema
+    CombatActionResponse:
+      type: object
+      required:
+        - player_id
+        - action_id
+        - success
+        - cooldown_remaining
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        action_id:
+          type: string
+          format: uuid
+          description: Action unique identifier
+        success:
+          type: boolean
+          description: Whether action was successfully executed
+          example: true
+        cooldown_remaining:
+          type: number
+          format: float
+          minimum: 0
+          description: Remaining cooldown time in seconds
+          example: 1.5
+        resource_costs:
+          type: object
+          description: Resources consumed by this action
+          properties:
+            health:
+              type: integer
+              minimum: 0
+              example: 0
+            armor:
+              type: integer
+              minimum: 0
+              example: 5
+            energy:
+              type: integer
+              minimum: 0
+              example: 25
+            ammo:
+              type: integer
+              minimum: 0
+              example: 1
+        effects_applied:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+                enum: [damage, healing, buff, debuff, knockback, stun]
+                example: "damage"
+              target_id:
+                type: string
+                format: uuid
+                description: Target entity ID
+              value:
+                type: number
+                format: float
+                example: 75.5
+              duration:
+                type: number
+                format: float
+                description: Effect duration in seconds (if applicable)
+                example: 10.0
+          description: Effects applied by this action
+        combo_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Combo damage multiplier applied
+          example: 1.25
+        experience_gained:
+          type: integer
+          minimum: 0
+          description: Experience points awarded
+          example: 15
