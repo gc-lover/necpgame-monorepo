@@ -1,0 +1,313 @@
+# Issue: #2170
+# Faction Diplomacy Missions Mechanics
+
+## Overview
+Дипломатические миссии как основной способ взаимодействия между фракциями. Игроки становятся посредниками в сложной паутине интриг, переговоров и сделок Night City.
+
+## Mission Categories
+
+### Negotiation Missions
+
+#### Trade Agreement Negotiation
+```
+Objectives:
+- Negotiate favorable trade terms
+- Reduce import/export tariffs
+- Establish resource exchange agreements
+
+Success Factors:
+- Charisma skill checks
+- Economic knowledge
+- Faction-specific cultural understanding
+
+Rewards:
+- Improved trade relations (+10-25 trust)
+- Economic bonuses for both factions
+- Personal reputation gains
+
+Failure Consequences:
+- Relationship deterioration (-5 trust)
+- Economic penalties
+- Future negotiation difficulty
+```
+
+#### Alliance Formation
+```
+Objectives:
+- Broker alliance between two factions
+- Negotiate alliance terms and conditions
+- Gain approval from faction leadership
+
+Success Factors:
+- High reputation with both factions
+- Diplomatic skill specialization
+- Strategic timing (post-conflict opportunities)
+
+Rewards:
+- Major trust increases (+20-40)
+- Alliance formation bonuses
+- Unique faction-specific rewards
+- Diplomat reputation boost
+
+Failure Consequences:
+- Trust penalties with both factions
+- Potential retaliation missions
+- Diplomatic blacklist
+```
+
+#### Ceasefire Mediation
+```
+Objectives:
+- Negotiate temporary or permanent ceasefire
+- Establish neutral zones
+- Create prisoner exchange protocols
+
+Success Factors:
+- Neutral reputation with conflicting parties
+- Mediation skill expertise
+- Intelligence on conflict causes
+
+Rewards:
+- Immediate violence reduction
+- Trust restoration opportunities
+- Peacekeeping contracts
+- Humanitarian reputation
+
+Failure Consequences:
+- Renewed hostilities
+- Personal bounty from aggressive faction
+- Mediation reputation damage
+```
+
+### Espionage Missions
+
+#### Intelligence Gathering
+```
+Objectives:
+- Infiltrate faction headquarters
+- Steal sensitive documents
+- Bug important meetings
+
+Success Factors:
+- Stealth and hacking skills
+- Insider contacts
+- Technological advantages
+
+Rewards:
+- Valuable intelligence data
+- Strategic advantages in negotiations
+- Blackmail material
+
+Failure Consequences:
+- Detection and pursuit
+- Relationship damage (-15 trust)
+- Personal security risks
+```
+
+#### Sabotage Operations
+```
+Objectives:
+- Disrupt faction operations
+- Damage infrastructure
+- Steal valuable assets
+
+Success Factors:
+- Combat and technical skills
+- Intelligence on target vulnerabilities
+- Quick execution timing
+
+Rewards:
+- Economic damage to rival faction
+- Trust increase with commissioning faction
+- Looted resources
+
+Failure Consequences:
+- Open hostilities declaration
+- International incident escalation
+- Personal wanted status
+```
+
+### Influence Missions
+
+#### Media Manipulation
+```
+Objectives:
+- Plant favorable stories in media
+- Suppress negative coverage
+- Create viral disinformation campaigns
+
+Success Factors:
+- Social engineering skills
+- Media network contacts
+- Viral content creation ability
+
+Rewards:
+- Public opinion shifts
+- Trust increases with target audience
+- Media influence currency
+
+Failure Consequences:
+- Backlash and scandal
+- Trust decreases with affected factions
+- Media blacklist
+```
+
+#### Political Lobbying
+```
+Objectives:
+- Influence government officials
+- Push favorable legislation
+- Block harmful policies
+
+Success Factors:
+- Political connections
+- Bribery and persuasion skills
+- Understanding of bureaucratic systems
+
+Rewards:
+- Policy changes in favor
+- Access to restricted areas
+- Political favor currency
+
+Failure Consequences:
+- Legal investigations
+- Political enemies creation
+- Reputation damage
+```
+
+## Mission Generation System
+
+### Dynamic Mission Creation
+```yaml
+mission_template:
+  type: negotiation
+  difficulty: medium
+  time_limit: 72_hours
+  faction_initiator: militech
+  faction_target: arasaka
+  objectives:
+    - negotiate_trade_deal
+    - reduce_tariffs_by_15
+    - establish_monthly_shipments
+  success_conditions:
+    - trust_increase: 15
+    - economic_bonus: 10_percent
+    - personal_reputation: +100
+  failure_conditions:
+    - trust_decrease: -10
+    - economic_penalty: 5_percent
+    - cooldown_period: 48_hours
+```
+
+### Context-Aware Mission Selection
+- **Current Events**: Missions triggered by world events
+- **Relationship State**: Available missions based on faction relations
+- **Player Reputation**: Mission difficulty and rewards scale with reputation
+- **Geopolitical Climate**: Global tension affects mission availability
+
+### Mission Chains and Quests
+```yaml
+diplomacy_quest_chain:
+  name: "Corporate Cold War"
+  description: "Navigate the escalating conflict between Arasaka and Militech"
+  missions:
+    - "Initial Contact" (negotiation, easy)
+    - "Information Gathering" (espionage, medium)
+    - "Alliance Brokering" (negotiation, hard)
+    - "Ceasefire Mediation" (negotiation, expert)
+  rewards:
+    - corporate_alliance_broker_title
+    - exclusive_trade_deals
+    - corporate_executive_contacts
+```
+
+## Player Specialization
+
+### Diplomat Class Features
+```
+Core Skills:
+- Negotiation: Improve success rates in talks
+- Cultural Knowledge: Better understanding of faction behaviors
+- Deception: Enhanced lying and manipulation abilities
+- Intelligence Network: Access to more missions
+
+Special Abilities:
+- Safe Passage: Travel through hostile territories
+- Diplomatic Immunity: Protection from faction aggression
+- Favor Trading: Exchange favors between factions
+- Crisis Management: Emergency negotiation capabilities
+```
+
+### Reputation System
+```yaml
+diplomat_reputation:
+  novice: "Unknown mediator"
+    - Basic negotiation missions
+    - Limited faction access
+
+  established: "Respected negotiator"
+    - Complex multi-party deals
+    - Emergency mediation calls
+
+  master: "Legendary diplomat"
+    - International crisis resolution
+    - Faction leader personal access
+    - Custom mission creation
+```
+
+## Risk/Reward Balance
+
+### Mission Difficulty Scaling
+```
+Easy Missions:
+- Trust requirement: > -20
+- Success chance: 80%
+- Time limit: 48 hours
+- Reward multiplier: 1.0x
+
+Hard Missions:
+- Trust requirement: > 30
+- Success chance: 45%
+- Time limit: 24 hours
+- Reward multiplier: 3.0x
+```
+
+### Failure Consequences
+- **Minor Failure**: Temporary trust decrease, retry available
+- **Major Failure**: Significant trust damage, faction blacklist
+- **Catastrophic Failure**: Open warfare declaration, personal bounty
+
+### Success Bonuses
+- **Perfect Success**: Additional rewards, relationship bonuses
+- **Speed Bonus**: Time-efficient completion rewards
+- **Style Points**: Creative solution bonuses
+
+## Technical Implementation
+
+### Mission State Management
+```yaml
+active_mission:
+  id: uuid
+  player_id: uuid
+  mission_type: enum
+  faction_initiator: uuid
+  faction_target: uuid
+  objectives: [objective_list]
+  current_progress: progress_data
+  time_remaining: timestamp
+  stake_amount: credits
+  success_chance: percentage
+  failure_risk: enum (low, medium, high, critical)
+```
+
+### Event-Driven Updates
+- Real-time mission timer management
+- Faction relationship change notifications
+- Dynamic difficulty adjustment based on world state
+- Mission completion validation and reward distribution
+
+### Performance Considerations
+- Mission generation: <100ms per player request
+- State updates: <50ms per mission action
+- Concurrent missions: Support for 10,000+ active missions
+- Memory usage: <200KB per active mission instance

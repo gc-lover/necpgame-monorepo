@@ -1,0 +1,314 @@
+# Issue: #2170
+# Faction Diplomacy Trade & Alliance System
+
+## Overview
+Экономическая основа дипломатии фракций, где торговые отношения формируют основу альянсов, а экономические интересы определяют политические решения.
+
+## Trade Network Architecture
+
+### Global Trade Routes
+```yaml
+trade_routes:
+  north_american_corridor:
+    factions: [militech, arasaka, nomad_caravans]
+    commodities: [weapons, vehicles, cyberware]
+    security_level: high
+    tariff_rate: 15_percent
+    volume_monthly: 500_million_credits
+
+  pacific_rim_network:
+    factions: [trauma_team, biotechnica, tyger_claws]
+    commodities: [medical_supplies, biotech, luxury_goods]
+    security_level: medium
+    tariff_rate: 8_percent
+    volume_monthly: 300_million_credits
+
+  black_market_pipeline:
+    factions: [maelstrom, valentinos, fixer_network]
+    commodities: [illegal_cyberware, combat_drugs, stolen_data]
+    security_level: critical
+    tariff_rate: variable
+    volume_monthly: 200_million_credits
+```
+
+### Commodity Categories
+
+#### Strategic Resources
+- **Chromium**: Rare cyberware components, military applications
+- **BDs**: Combat data, tactical intelligence
+- **Neurotoxins**: Chemical weapons, interrogation tools
+- **Quantum Chips**: Advanced computing, AI development
+
+#### Consumer Goods
+- **Luxury Items**: High-end vehicles, designer clothing
+- **Entertainment**: BDs, virtual reality experiences
+- **Food & Water**: Essential supplies, synthetic proteins
+- **Medical Supplies**: Trauma Team exclusive products
+
+#### Illegal Commodities
+- **Combat Drugs**: Performance enhancers, painkillers
+- **Stolen Tech**: Prototype weapons, experimental cyberware
+- **Slaves**: Human trafficking, indentured servants
+- **Narcotics**: Designer drugs, synthetic addictions
+
+## Alliance Formation Mechanics
+
+### Economic Alliance Tiers
+
+#### Trade Partnership (Tier 1)
+```
+Requirements:
+- Trust level: > 20
+- Trade volume: > 50,000 credits/month
+- No outstanding debts
+
+Benefits:
+- 15% tariff reduction
+- Priority market access
+- Shared logistics routes
+- Basic intelligence sharing
+
+Duration: 6 months (renewable)
+Termination Cost: Low
+```
+
+#### Strategic Alliance (Tier 2)
+```
+Requirements:
+- Trust level: > 50
+- Trade volume: > 200,000 credits/month
+- Joint venture completed
+- Military cooperation agreement
+
+Benefits:
+- 35% tariff reduction
+- Exclusive trade deals
+- Technology sharing agreements
+- Mutual defense commitments
+- Joint military operations
+
+Duration: 12 months (renewable)
+Termination Cost: Medium
+```
+
+#### Corporate Merger (Tier 3)
+```
+Requirements:
+- Trust level: > 80
+- Trade volume: > 1,000,000 credits/month
+- Shared board members
+- Integrated supply chains
+- Political unification
+
+Benefits:
+- Zero tariffs internally
+- Complete resource sharing
+- Unified military command
+- Political bloc formation
+- Market monopoly advantages
+
+Duration: Permanent (dissolution requires war)
+Termination Cost: Critical (causes war)
+```
+
+### Alliance Benefits Calculator
+```yaml
+alliance_benefits:
+  trade_partnership:
+    economic_modifier: +15%
+    security_modifier: +5%
+    political_modifier: +10%
+
+  strategic_alliance:
+    economic_modifier: +35%
+    security_modifier: +25%
+    political_modifier: +30%
+
+  corporate_merger:
+    economic_modifier: +100%
+    security_modifier: +50%
+    political_modifier: +75%
+```
+
+## Trade Mechanics
+
+### Dynamic Pricing System
+```yaml
+commodity_pricing:
+  base_price: 1000_credits
+  faction_modifier:
+    allied: -20%
+    neutral: 0%
+    hostile: +50%
+    war: +200% (black market only)
+
+  scarcity_modifier:
+    abundant: -30%
+    normal: 0%
+    scarce: +75%
+    extinct: +500% (if available)
+
+  event_modifier:
+    embargo: +150%
+    surplus: -40%
+    black_market: +300%
+```
+
+### Trade Contracts
+```yaml
+trade_contract:
+  id: uuid
+  seller_faction: uuid
+  buyer_faction: uuid
+  commodity: enum
+  quantity: number
+  unit_price: credits
+  total_value: credits
+  delivery_terms: enum (immediate, scheduled, conditional)
+  payment_terms: enum (prepaid, cod, installment)
+  penalties:
+    late_delivery: credits
+    non_payment: credits
+    breach_of_contract: credits
+  guarantees:
+    quality_assurance: boolean
+    insurance_coverage: boolean
+    dispute_resolution: enum
+```
+
+### Smuggling and Black Market
+```yaml
+smuggling_operation:
+  risk_level: enum (low, medium, high, suicide)
+  profit_margin: percentage
+  detection_chance: percentage
+  interception_penalty:
+    loss_of_goods: percentage
+    faction_reputation: points
+    personal_bounty: credits
+  success_bonuses:
+    relationship_boost: points
+    underworld_reputation: points
+    exclusive_contacts: boolean
+```
+
+## Alliance Maintenance
+
+### Relationship Erosion Prevention
+- **Regular Trade**: Sustained economic activity prevents trust decay
+- **Joint Ventures**: Shared projects strengthen alliance bonds
+- **Mutual Benefits**: Fair profit distribution maintains stability
+- **Crisis Support**: Economic aid during faction difficulties
+
+### Alliance Stressors
+```yaml
+alliance_stressors:
+  economic_downturn:
+    description: "Market crash affects trade volumes"
+    trust_impact: -10
+    mitigation: economic_aid_packages
+
+  competitive_pressure:
+    description: "Third party undercutting prices"
+    trust_impact: -15
+    mitigation: price_guarantees
+
+  internal_corruption:
+    description: "Bribery scandal within alliance"
+    trust_impact: -25
+    mitigation: joint_investigation
+
+  external_threat:
+    description: "Common enemy strengthens bonds"
+    trust_impact: +20
+    mitigation: coordinated_defense
+```
+
+### Termination Protocols
+```yaml
+alliance_dissolution:
+  graceful_separation:
+    conditions: mutual_agreement
+    process_duration: 30_days
+    asset_division: negotiated
+    relationship_impact: -20_trust
+
+  forced_termination:
+    conditions: breach_of_contract
+    process_duration: 7_days
+    asset_division: court_mandated
+    relationship_impact: -50_trust
+
+  hostile_divorce:
+    conditions: betrayal_discovered
+    process_duration: immediate
+    asset_division: seized_by_force
+    relationship_impact: war_declaration
+```
+
+## Economic Warfare
+
+### Tariff Manipulation
+- **Progressive Tariffs**: Increasing rates for uncooperative factions
+- **Selective Embargoes**: Targeted restrictions on specific commodities
+- **Trade Blockades**: Complete economic isolation
+
+### Market Manipulation
+- **Price Fixing**: Artificial inflation/deflation of commodity prices
+- **Supply Disruption**: Sabotage of production facilities
+- **Information Warfare**: Spreading false market data
+
+### Financial Instruments
+- **Corporate Bonds**: Debt-based influence over factions
+- **Hostile Takeovers**: Economic conquest through stock manipulation
+- **Insurance Frauds**: Undermining economic stability
+
+## Player Integration
+
+### Merchant Career Path
+```
+Early Game:
+- Small trade deals between local factions
+- Learning commodity values and market trends
+- Building initial reputation with merchant guilds
+
+Mid Game:
+- International trade route management
+- Alliance brokering through economic incentives
+- Black market operations and smuggling runs
+
+Late Game:
+- Corporate merger negotiations
+- Global economic manipulation
+- Economic warfare campaigns
+```
+
+### Economic Influence Metrics
+```yaml
+player_economic_power:
+  personal_wealth: credits
+  trade_network_size: number_of_contacts
+  market_influence: percentage_of_market_control
+  faction_investments: [faction_id, amount, return_rate]
+  monopoly_sectors: [commodity_types]
+```
+
+## Balance Considerations
+
+### Economic Scaling
+- **Small Scale**: Individual traders, local markets
+- **Medium Scale**: Faction-level trade, regional markets
+- **Large Scale**: Corporate mergers, global economic blocs
+- **Massive Scale**: Economic warfare, market crashes
+
+### Risk/Reward Balance
+- **Low Risk**: Stable trade partnerships, guaranteed profits
+- **Medium Risk**: Black market operations, moderate penalties
+- **High Risk**: Smuggling runs, alliance betrayals
+- **Extreme Risk**: Economic warfare, corporate takeovers
+
+### Performance Requirements
+- Trade calculation: <20ms per transaction
+- Alliance updates: <50ms per relationship change
+- Market simulation: <100ms per global economic tick
+- Memory usage: <300KB per active trade route

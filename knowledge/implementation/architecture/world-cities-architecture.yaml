@@ -1,0 +1,218 @@
+# Issue: #140875381
+metadata:
+  id: architecture-world-cities-system
+  title: "Архитектура Системы Мировых Городов (World Cities System)"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2026-01-11T16:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - world-domain
+    - locations
+    - timeline
+    - performance-critical
+  topics:
+    - world-cities-architecture
+    - timeline-based-content
+    - spatial-indexing
+    - content-streaming
+  related_systems:
+    - world-service
+    - location-service
+    - timeline-service
+    - content-delivery-service
+  related_documents:
+    - id: content-canon-location-night-city-los-angeles-2020-2093
+      relation: implements
+    - id: mechanics-world-events-system
+      relation: integrates
+  visibility: internal
+  audience:
+    - backend
+    - api-designer
+    - performance-engineer
+
+review:
+  chain:
+    - role: architect
+      reviewer: Architecture Review Board
+      status: draft
+  next_actions:
+    - api_designer: "Создать OpenAPI спецификации для location-service"
+    - backend: "Реализовать location-service с timeline поддержкой"
+    - performance_engineer: "Оптимизировать spatial queries для 50k одновременных игроков"
+
+summary:
+  problem: Спроектировать масштабируемую архитектуру для реализации 30 мировых городов с timeline развитием от 2020 до 2093 года
+  goal: Создать систему, способную обрабатывать 50k одновременных игроков с динамическим контентом, зависящим от timeline
+  essence: Гибридная архитектура, сочетающая статический контент с динамическим timeline, оптимизированная для MMOFPS нагрузки
+  key_points:
+    - 30 городов с timeline от 2020-2093
+    - Spatial indexing для 50k одновременных игроков
+    - Content streaming с LOD системой
+    - Timeline-based content mutation
+
+architecture:
+  domain: world-domain
+  purpose: "Управление мировыми городами с timeline-based контентом для MMOFPS игры"
+
+  performance_requirements:
+    load_targets: "5k req/sec, 50k concurrent users, P99 <50ms"
+    data_model: "Struct-aligned (Large->Small): UUID(16b) + Vector3(12b) + TimelineID(8b) + Flags(1b) = ~37b per entity"
+    hot_paths:
+      - GET /api/world/cities/{id}/zones (2k RPS) - получение зон города
+      - POST /api/world/players/{id}/location (3k RPS) - обновление позиции игрока
+      - GET /api/world/timeline/{year}/cities/{id} (1k RPS) - контент по timeline
+    cold_paths:
+      - Admin: городские метрики (<100 RPS)
+      - Content: timeline updates (<500 RPS)
+
+  microservices:
+    - name: location-service
+      domain: world-domain
+      responsibility: "Основной сервис управления городами и зонами"
+      technology: Go
+      optimization_level: 2
+      database: PostgreSQL + Redis (spatial indexes)
+      api_endpoints:
+        - GET /api/world/cities - список всех городов
+        - GET /api/world/cities/{id} - детали города
+        - GET /api/world/cities/{id}/zones - зоны города
+        - POST /api/world/cities/{id}/timeline/{year} - установка timeline
+        - GET /api/world/zones/{id}/objects - интерактивные объекты зоны
+
+    - name: timeline-service
+      domain: world-domain
+      responsibility: "Управление timeline контентом и мутациями"
+      technology: Go
+      optimization_level: 1
+      database: PostgreSQL (versioned content)
+      api_endpoints:
+        - GET /api/world/timeline/{year}/content - контент по году
+        - POST /api/world/timeline/advance - продвижение timeline
+        - GET /api/world/timeline/delta - изменения с последнего обновления
+
+    - name: spatial-service
+      domain: world-domain
+      responsibility: "Spatial indexing и геолокационные запросы"
+      technology: Go + PostGIS
+      optimization_level: 3
+      database: PostgreSQL PostGIS
+      api_endpoints:
+        - GET /api/world/spatial/nearby - объекты рядом с игроком
+        - POST /api/world/spatial/query - сложные spatial запросы
+        - GET /api/world/spatial/zones - зоны в области видимости
+
+  data_model:
+    city_entity:
+      alignment: "Large->Small"
+      fields:
+        - city_id: UUID (16b) - уникальный ID города
+        - name: string (var) - название города
+        - coordinates: Vector3 (12b) - глобальные координаты
+        - timeline_year: int64 (8b) - текущий год timeline
+        - population: int32 (4b) - население
+        - flags: uint8 (1b) - битовые флаги (активен, в войне и т.д.)
+
+    zone_entity:
+      alignment: "Large->Small"
+      fields:
+        - zone_id: UUID (16b)
+        - city_id: UUID (16b)
+        - bounds: Polygon (var) - границы зоны
+        - zone_type: int32 (4b) - тип зоны (residential, commercial, industrial)
+        - security_level: int32 (4b) - уровень безопасности
+        - timeline_flags: uint8 (1b) - timeline-специфичные флаги
+
+  content_streaming:
+    lod_system:
+      level_0: "Полный контент - для активных зон (радиус 500м от игрока)"
+      level_1: "Средний LOD - для ближних зон (радиус 2км)"
+      level_2: "Минимальный LOD - для дальних зон (радиус 10км)"
+      level_3: "Только метаданные - для очень дальних зон"
+
+    streaming_zones:
+      active_radius: 500  # метров
+      preload_radius: 2000 # метров
+      cache_radius: 10000  # метров
+
+  timeline_system:
+    content_mutation:
+      type: versioned_content
+      storage: PostgreSQL with temporal tables
+      caching: Redis with TTL based on timeline popularity
+
+    mutation_rules:
+      - year_advance: "Контент мутирует при изменении timeline года"
+      - event_triggered: "События войны могут менять зоны"
+      - player_actions: "Действия игроков влияют на локальный контент"
+
+  synchronization_patterns:
+    event_sourcing:
+      events:
+        - CityTimelineAdvanced
+        - ZoneCaptured
+        - BuildingDestroyed
+        - PlayerEnteredZone
+
+    cqrs:
+      commands:
+        - AdvanceCityTimeline
+        - UpdateZoneContent
+        - SpawnDynamicObjects
+      queries:
+        - GetCityById
+        - GetNearbyZones
+        - GetTimelineContent
+
+  backend_optimization_plan:
+    memory_pooling: true
+    batch_operations: true
+    connection_pooling: true
+    spatial_indexing: PostGIS GiST indexes
+    caching_strategy: Redis with LRU eviction
+
+  api_design_handoff:
+    domain: world-domain
+    hot_paths_priority: [player_location, city_zones, timeline_content]
+    struct_alignment: enforced
+    backend_optimizations: documented
+    load_testing_requirements: specified
+
+  sub_tasks:
+    - task: "API Designer - OpenAPI спецификации для location-service"
+      priority: high
+      assignee: api_designer
+      dependencies: []
+    - task: "Backend - Реализация location-service с spatial индексами"
+      priority: high
+      assignee: backend
+      dependencies: [api_designer]
+    - task: "Backend - Timeline система с content versioning"
+      priority: medium
+      assignee: backend
+      dependencies: [location-service]
+    - task: "Performance - Оптимизация spatial queries"
+      priority: medium
+      assignee: performance_engineer
+      dependencies: [backend]
+    - task: "Content - Интеграция timeline контента в игровые зоны"
+      priority: medium
+      assignee: content_writer
+      dependencies: [timeline-service]
+
+references:
+  - title: "World Cities Content Specification"
+    type: internal
+    url: "knowledge/canon/locations/"
+  - title: "PostGIS Spatial Indexing Best Practices"
+    type: external
+    url: "https://postgis.net/docs/"
+  - title: "Event Sourcing Patterns"
+    type: internal
+    url: "infrastructure/event-sourcing-patterns.md"

@@ -1,0 +1,493 @@
+# Issue: #447
+# Архитектура системы городских легенд и пасхальных маршрутов - 2025
+
+metadata:
+  version: "1.0.0"
+  created_at: "2026-01-11"
+  updated_at: "2026-01-11"
+  author: "Architect Agent"
+  status: "in_progress"
+  priority: "medium"
+
+---
+
+## Архитектурный обзор
+
+### Контекст
+**Домен:** world-domain (социальная интеграция)
+**Назначение:** Система городских легенд и пасхальных маршрутов для динамического исследования мира MMOFPS RPG.
+
+### Производительность
+**Нагрузка:** 50k активных исследователей, 10k одновременных маршрутов, P99 <300ms для генерации подсказок.
+**Модель данных:** Выровненная структура (UUID->Vector3->Int64->Int32->Bool). Размер ~96 байт на активный маршрут.
+**Горячий путь:** GET /api/v1/world/legends/nearby (200 RPS), POST /api/v1/world/routes/checkpoint (150 RPS).
+
+### Компоненты системы
+
+```mermaid
+graph TB
+subgraph "Client Layer"
+UE5[UE5 Client]
+Mobile[Mobile Client]
+Web[Web Client]
+end
+
+subgraph "Edge Layer"
+LocationRouter[Location Router]
+ContentCDN[Content CDN]
+RealtimeWS[WebSocket Gateway]
+end
+
+subgraph "Service Layer"
+LegendSvc[Legend Service]
+RouteSvc[Route Service]
+ClueGenerator[Clue Generator]
+ProgressSvc[Progress Service]
+RewardSvc[Reward Service]
+end
+
+subgraph "Content Layer"
+LegendDB[(Legend Templates)]
+RouteDB[(Route Templates)]
+ClueDB[(Clue Patterns)]
+RewardDB[(Reward Pool)]
+end
+
+subgraph "Data Layer"
+PostgreSQL[(PostgreSQL)]
+Redis[(Redis Cluster)]
+Kafka[(Kafka)]
+TimeSeries[(InfluxDB)]
+end
+
+subgraph "AI Layer"
+ContentAI[Content Generation AI]
+PersonalizationAI[Personalization AI]
+DifficultyAI[Adaptive Difficulty AI]
+end
+
+subgraph "External Integrations"
+WorldSvc[World Service]
+SocialSvc[Social Service]
+CharacterSvc[Character Service]
+EconomySvc[Economy Service]
+AnalyticsSvc[Analytics Service]
+end
+
+UE5 --> LocationRouter
+Mobile --> LocationRouter
+Web --> LocationRouter
+
+LocationRouter --> LegendSvc
+LocationRouter --> RouteSvc
+
+LegendSvc --> ClueGenerator
+RouteSvc --> ClueGenerator
+
+ClueGenerator --> ContentAI
+ContentAI --> PersonalizationAI
+
+LegendSvc --> ProgressSvc
+RouteSvc --> ProgressSvc
+ProgressSvc --> RewardSvc
+
+LegendSvc --> LegendDB
+RouteSvc --> RouteDB
+ClueGenerator --> ClueDB
+RewardSvc --> RewardDB
+
+AllSvc --> PostgreSQL
+AllSvc --> Redis
+AllSvc --> Kafka
+
+ProgressSvc --> TimeSeries
+AnalyticsSvc --> TimeSeries
+
+LegendSvc --> WorldSvc
+RouteSvc --> WorldSvc
+RewardSvc --> EconomySvc
+ProgressSvc --> CharacterSvc
+ProgressSvc --> SocialSvc
+LegendSvc --> AnalyticsSvc
+```
+
+---
+
+## Микросервисы
+
+### 1. Legend Service
+**Ответственность:** Управление городскими легендами, их генерацией и распределением по миру.
+**API Endpoints:**
+- `GET /api/v1/world/legends/nearby?lat={lat}&lng={lng}&radius={radius}` - Легенды поблизости
+- `POST /api/v1/world/legends/{id}/discover` - Открытие легенды
+- `GET /api/v1/world/legends/{id}/clues` - Получение подсказок легенды
+- `PUT /api/v1/world/legends/{id}/progress` - Обновление прогресса
+
+### 2. Route Service
+**Ответственность:** Управление пасхальными маршрутами и чекпоинтами.
+**API Endpoints:**
+- `GET /api/v1/world/routes/active` - Активные маршруты игрока
+- `POST /api/v1/world/routes/{id}/start` - Начало маршрута
+- `POST /api/v1/world/routes/{id}/checkpoint/{checkpointId}` - Посещение чекпоинта
+- `GET /api/v1/world/routes/{id}/next-clue` - Следующая подсказка
+
+### 3. Clue Generator Service
+**Ответственность:** Динамическая генерация подсказок и нарратива для легенд и маршрутов.
+**Функции:**
+- **Context-aware generation:** Подсказки на основе локации, времени, погоды
+- **Personalization:** Адаптация сложности под уровень игрока
+- **Multi-modal:** Текстовые, аудио, визуальные подсказки
+
+### 4. Progress Service
+**Ответственность:** Отслеживание прогресса игроков по легендам и маршрутам.
+**Хранение:**
+- **Player progress:** Завершенные легенды, открытые маршруты
+- **Achievement tracking:** Коллекционные достижения
+- **Social sharing:** Возможность делиться открытиями
+
+### 5. Reward Service
+**Ответственность:** Управление наградами за завершение легенд и маршрутов.
+**Типы наград:**
+- **Cosmetic:** Уникальная одежда, эффекты, значки
+- **Functional:** Навыки, импланты, предметы
+- **Collectible:** Цифровые артефакты, достижения
+
+---
+
+## Архитектура легенд
+
+### Типы легенд
+
+| Тип | Триггеры | Сложность | Награды |
+|-----|----------|-----------|---------|
+| **Городские мифы** | Слухи NPC, случайные события | Low | Cosmetic, achievements |
+| **Корпоративные секреты** | Взлом терминалов, инсайдерская информация | Medium | Functional items |
+| **Технологические ужасы** | Глюки сети, аномальные события | High | Rare implants |
+| **Глобальные катастрофы** | Мировые события, исторические артефакты | Epic | Unique collections |
+
+### Жизненный цикл легенды
+
+```mermaid
+stateDiagram-v2
+[*] --> Dormant: Неактивна
+Dormant --> Discovered: Открыта игроком
+Discovered --> Active: Начато исследование
+Active --> InProgress: Собираются подсказки
+InProgress --> PartiallyComplete: Найдены чекпоинты
+PartiallyComplete --> Complete: Все чекпоинты найдены
+Complete --> [*]
+
+Active --> Failed: Таймаут или ошибка
+Failed --> Dormant: Можно перезапустить
+```
+
+---
+
+## Архитектура маршрутов
+
+### Структура маршрута
+
+```mermaid
+graph TD
+A[Маршрут] --> B[Чекпоинт 1]
+A --> C[Чекпоинт 2]
+A --> D[Чекпоинт 3]
+A --> E[Финальный чекпоинт]
+
+B --> F[Подсказка 1]
+C --> G[Подсказка 2]
+D --> H[Подсказка 3]
+
+F --> I[Действие]
+G --> J[Действие]
+H --> K[Действие]
+
+I --> L[Награда]
+J --> M[Награда]
+K --> N[Финальная награда]
+```
+
+### Типы чекпоинтов
+
+| Тип | Описание | Примеры |
+|-----|----------|---------|
+| **Локационный** | Физическое место в мире | Заброшенный торговый центр |
+| **Интерактивный** | Действие с объектом | Взлом терминала |
+| **Временной** | Зависит от времени суток | Ночной маршрут |
+| **Социальный** | Требует взаимодействия с NPC | Разговор в баре |
+
+---
+
+## Система генерации подсказок
+
+### Динамическая генерация
+
+```mermaid
+graph LR
+Player[Игрок] --> Context[Контекст]
+Context --> Generator[Генератор]
+Generator --> Personalize[Персонализация]
+Personalize --> Validate[Валидация]
+Validate --> Output[Вывод]
+
+Context --> Location[Локация]
+Context --> Time[Время]
+Context --> Weather[Погода]
+Context --> PlayerLevel[Уровень игрока]
+
+Generator --> Templates[Шаблоны]
+Generator --> AI[ИИ генератор]
+
+Personalize --> Difficulty[Сложность]
+Personalize --> Style[Стиль]
+
+Validate --> Lore[Соответствие лору]
+Validate --> Balance[Баланс]
+```
+
+### Алгоритмы генерации
+
+#### Контекстно-зависимая генерация
+- **Location-based:** Подсказки адаптируются к текущей локации
+- **Time-based:** Разные подсказки днем и ночью
+- **Weather-dependent:** Эффекты погоды влияют на подсказки
+- **Player-aware:** Уровень сложности подстраивается под игрока
+
+#### Шаблоны подсказок
+
+```yaml
+# Пример шаблона подсказки
+clue_template:
+  type: "location_hint"
+  context: "urban_exploration"
+  difficulty: "medium"
+  variables:
+    - building_type: ["abandoned_mall", "underground_parking", "rooftop"]
+    - time_of_day: ["night", "dusk", "dawn"]
+    - weather: ["rain", "fog", "clear"]
+  template: "В {building_type} при {time_of_day}, когда {weather}, ищи {clue_element}"
+```
+
+---
+
+## Структура базы данных
+
+### Основные таблицы
+
+```sql
+-- Шаблоны легенд
+CREATE TABLE legend_templates (
+    id UUID PRIMARY KEY,
+    type VARCHAR(50) NOT NULL, -- urban_myth, corporate_secret, etc.
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    difficulty VARCHAR(20) NOT NULL,
+    min_level INTEGER DEFAULT 1,
+    max_level INTEGER DEFAULT 100,
+    estimated_time INTERVAL,
+    reward_pool JSONB,
+    metadata JSONB
+);
+
+-- Активные легенды игроков
+CREATE TABLE player_legends (
+    id UUID PRIMARY KEY,
+    player_id UUID NOT NULL,
+    legend_template_id UUID REFERENCES legend_templates(id),
+    status VARCHAR(20) NOT NULL, -- discovered, active, completed, failed
+    discovered_at TIMESTAMP NOT NULL,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    progress_data JSONB, -- чекпоинты, подсказки
+    current_clue JSONB,
+    attempts INTEGER DEFAULT 0
+);
+
+-- Шаблоны маршрутов
+CREATE TABLE route_templates (
+    id UUID PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    theme VARCHAR(50), -- neon_shadows, blackwall_echo, etc.
+    difficulty VARCHAR(20) NOT NULL,
+    checkpoint_count INTEGER NOT NULL,
+    estimated_duration INTERVAL,
+    reward_data JSONB,
+    location_requirements JSONB
+);
+
+-- Чекпоинты маршрутов
+CREATE TABLE route_checkpoints (
+    id UUID PRIMARY KEY,
+    route_template_id UUID REFERENCES route_templates(id),
+    sequence_number INTEGER NOT NULL,
+    location_data JSONB, -- координаты, тип локации
+    clue_template JSONB,
+    action_required VARCHAR(100),
+    reward_data JSONB,
+    time_limit INTERVAL
+);
+
+-- Прогресс игроков по маршрутам
+CREATE TABLE player_route_progress (
+    id UUID PRIMARY KEY,
+    player_id UUID NOT NULL,
+    route_template_id UUID REFERENCES route_templates(id),
+    started_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP NOT NULL,
+    completed_checkpoints INTEGER DEFAULT 0,
+    current_checkpoint_id UUID REFERENCES route_checkpoints(id),
+    collected_rewards JSONB,
+    status VARCHAR(20) NOT NULL -- active, paused, completed
+);
+```
+
+### Индексы производительности
+
+```sql
+-- Геопространственные индексы для локаций
+CREATE INDEX idx_player_legends_location ON player_legends USING GIST (location_data);
+CREATE INDEX idx_route_checkpoints_location ON route_checkpoints USING GIST (location_data);
+
+-- Запросы прогресса игроков
+CREATE INDEX idx_player_legends_player_status ON player_legends(player_id, status);
+CREATE INDEX idx_player_route_progress_player ON player_route_progress(player_id, status);
+
+-- Кеширование активных легенд
+CREATE INDEX idx_player_legends_active ON player_legends(status, updated_at DESC) WHERE status IN ('active', 'in_progress');
+```
+
+---
+
+## AI система персонализации
+
+### Content Generation AI
+**Функции:**
+- **Narrative generation:** Создание уникальных историй для легенд
+- **Clue adaptation:** Адаптация подсказок под контекст
+- **Difficulty scaling:** Динамическое изменение сложности
+
+### Personalization AI
+**Алгоритмы:**
+- **Player profiling:** Анализ стиля игры, предпочтений
+- **Adaptive difficulty:** Корректировка сложности в реальном времени
+- **Content variety:** Обеспечение разнообразия контента
+
+### Adaptive Difficulty AI
+**Метрики:**
+- **Completion rate:** Процент завершения маршрутов
+- **Time spent:** Время на выполнение
+- **Player feedback:** Неявные сигналы через поведение
+- **Success patterns:** Анализ успешных стратегий
+
+---
+
+## Оптимизация производительности
+
+### Backend Opt Plan
+- [ ] Spatial indexing для геолокационных запросов (R-tree индексы)
+- [ ] Content pre-generation для популярных маршрутов
+- [ ] Redis caching для активных легенд и маршрутов (90% hit rate)
+- [ ] Event-driven architecture для real-time обновлений
+- [ ] Zero allocations на горячих путях генерации подсказок
+
+### Масштабирование
+- **Horizontal:** Route services scale per region
+- **Content:** Global CDN для медиа-ресурсов легенд
+- **AI:** Distributed AI workers для генерации контента
+- **Data:** Read replicas для аналитики, sharding по регионам
+
+### Ключевые метрики
+- **Generation latency:** <200ms для создания подсказок
+- **Discovery rate:** >95% успешных открытий легенд
+- **Completion rate:** 60-80% завершаемость маршрутов
+- **Player engagement:** 15-30 мин среднего времени на маршрут
+
+---
+
+## Безопасность
+
+### Аутентификация
+- **JWT validation:** Проверка подлинности запросов
+- **Location verification:** Предотвращение спуфинга геолокации
+- **Rate limiting:** Защита от abuse генерации контента
+
+### Авторизация
+- **Permission-based:** Доступ к легендам по уровню/репутации
+- **Region locking:** Легенды ограничены географическими зонами
+- **Progress validation:** Проверка последовательности чекпоинтов
+
+### Анти-чит система
+- **Location validation:** Проверка реалистичности перемещений
+- **Time validation:** Предотвращение speed hacking
+- **Pattern detection:** Выявление неестественных паттернов поведения
+
+---
+
+## Интеграция с игровыми механиками
+
+### World Service интеграция
+- **Location data:** Реальные координаты для чекпоинтов
+- **Environmental effects:** Погода влияет на видимость подсказок
+- **Dynamic events:** Мировые события активируют новые легенды
+
+### Social Service интеграция
+- **Legend sharing:** Возможность делиться открытыми легендами
+- **Community clues:** Совместное решение сложных маршрутов
+- **Social rewards:** Бонусы за помощь другим игрокам
+
+### Character Service интеграция
+- **Skill requirements:** Некоторые легенды требуют специальных навыков
+- **Implant bonuses:** Импланты дают преимущества в исследовании
+- **Progress tracking:** Связь с общей системой прогресса персонажа
+
+### Economy Service интеграция
+- **Reward distribution:** Автоматическое начисление наград
+- **Trading system:** Возможность обмена коллекционными предметами
+- **Market integration:** Редкие награды появляются на черном рынке
+
+---
+
+## Техническое задание
+
+### Фаза 1: Core Infrastructure (3 недели)
+- Legend и Route services базовая реализация
+- PostgreSQL schema с геопространственными индексами
+- Redis caching layer для активного контента
+- Basic clue generation system
+
+### Фаза 2: Content Generation (4 недели)
+- AI-powered clue generator
+- Template system для легенд и маршрутов
+- Location-based content adaptation
+- Multi-modal clue support (text/audio/visual)
+
+### Фаза 3: Player Systems (4 недели)
+- Progress tracking и achievements
+- Reward distribution system
+- Social sharing features
+- Player personalization AI
+
+### Фаза 4: Advanced Features (3 недели)
+- Adaptive difficulty system
+- Real-time world integration
+- Cross-platform synchronization
+- Analytics и monitoring
+
+### Фаза 5: Production & Optimization (2 недели)
+- Performance optimization
+- Load testing (50k concurrent players)
+- Security hardening
+- Documentation completion
+
+---
+
+## Следующие шаги
+
+1. **API Designer:** Создать OpenAPI спецификацию для world-domain (legends/routes)
+2. **Database:** Реализовать Liquibase миграции для legend/route схемы
+3. **Backend:** Имплементировать Legend Service и Route Service
+4. **AI:** Разработать Content Generation AI для динамических подсказок
+5. **World:** Интегрировать с World Service для геолокаций
+6. **QA:** Создать тесты для clue generation и progress tracking
+7. **Analytics:** Настроить метрики вовлеченности игроков

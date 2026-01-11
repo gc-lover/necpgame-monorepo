@@ -1,348 +1,423 @@
+# Issue: #265
+# Архитектура системы голосового чата - 2025
+
 metadata:
-  id: voice-chat-system-architecture
-  title: Архитектура системы голосового чата (Voice Chat System)
-  document_type: architecture
-  category: systems
-  status: final
-  version: '1.1.0'
-  last_updated: 2025-12-27T23:00:00Z
-  owners:
-    - role: architect
-      contact: architect@necp.game
-  tags:
-    - architecture
-    - voice-chat
-    - webrtc
-    - real-time
-    - communication
-  related_systems:
-    - realtime-gateway-go
-    - session-management-service-go
-    - voice-chat-service-go
-  related_documents:
-    - id: chat-system-architecture
-      relation: extends
-    - id: backend-voice-chat-service
-      relation: implements
-  github_issue: 140890448
-  visibility: internal
-  audience:
-    - architect
-    - backend
-    - api-designer
-    - network
+  version: "1.0.0"
+  created_at: "2026-01-11"
+  updated_at: "2026-01-11"
+  author: "Architect Agent"
+  status: "in_progress"
+  priority: "high"
 
-summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру Voice Chat System
-    для голосовой коммуникации игроков в real-time с поддержкой каналов, качества,
-    модерации и интеграцией с существующими социальными системами.
-  goal: |
-    Создать архитектурную схему Voice Chat System с определением:
-    - Компонентов системы (микросервисы, модули)
-    - WebRTC протоколов и сигнализации
-    - Потоков данных и интеграций
-    - Систем управления качеством звука
-    - Систем модерации голосового чата
-    - Технического задания для реализации
-  essence: |
-    Полная архитектура Voice Chat System для real-time голосовой коммуникации
-    в MMOFPS RPG с WebRTC, каналами и качеством звука.
+---
 
-architecture:
-  overview: |
-    Voice Chat System обеспечивает высококачественную голосовую коммуникацию игроков
-    через WebRTC с поддержкой множественных каналов, шумоподавления, модерации
-    и интеграцией с социальными системами игры.
+## Архитектурный обзор
 
-  components:
-    - name: Voice Chat Gateway
-      location: voice-chat-service-go (основной сервис)
-      responsibility: |
-        - WebRTC сигнализация и управление соединениями
-        - Управление голосовыми каналами (party, guild, raid)
-        - Обработка участников каналов
-        - Качество звука и пропускная способность
-        - Интеграция с session management
-      webrtc_features: |
-        - ICE (Interactive Connectivity Establishment)
-        - STUN/TURN серверы для NAT traversal
-        - DTLS для шифрования медиа-потоков
-        - RTP/RTCP для транспорта аудио
-        - Opus кодек для сжатия аудио
-      channel_types: |
-        - PARTY: для групп (до 8 игроков)
-        - GUILD: для гильдий (до 100 игроков)
-        - RAID: для рейдов (до 20 игроков)
-        - PUBLIC: публичные каналы (до 50 игроков)
-        - PRIVATE: приватные каналы (1-на-1)
-      endpoints:
-        - POST /api/v1/voice/join/{channel_id} - присоединиться к каналу
-        - POST /api/v1/voice/leave/{channel_id} - покинуть канал
-        - GET /api/v1/voice/channels - список доступных каналов
-        - POST /api/v1/voice/mute/{player_id} - заглушить игрока
-        - POST /api/v1/voice/kick/{player_id} - выгнать из канала
+### Контекст
+**Домен:** social-domain
+**Назначение:** Система голосового чата для MMOFPS RPG с поддержкой различных типов каналов и WebRTC коммуникации.
 
-    - name: Voice Quality Manager
-      location: voice-chat-service-go (модуль quality)
-      responsibility: |
-        - Управление качеством аудио-потоков
-        - Адаптивное bitrate управление
-        - Шумоподавление и эхо-отмена
-        - Обнаружение молчания для оптимизации
-        - Мониторинг сетевых условий
-      audio_processing: |
-        - Opus codec с переменным bitrate (8-128 kbps)
-        - Noise suppression algorithms
-        - Acoustic echo cancellation
-        - Voice activity detection (VAD)
-        - Automatic gain control (AGC)
-      quality_profiles: |
-        - HIGH: 64 kbps, stereo (для party/raid)
-        - MEDIUM: 32 kbps, mono (для guild)
-        - LOW: 16 kbps, mono (для public, плохая сеть)
-        - ULTRA_LOW: 8 kbps, mono (экстренный режим)
+### Производительность
+**Нагрузка:** 10k одновременных пользователей, 2k активных каналов, P99 <100ms для join/leave операций.
+**Модель данных:** Выровненная структура (Large->Small). Размер ~48 байт на участника канала.
+**Горячий путь:** POST /api/v1/social/voice/join (500 RPS), WebRTC signaling (1k RPS).
 
-    - name: Voice Moderation Engine
-      location: voice-chat-service-go (модуль moderation)
-      responsibility: |
-        - Модерация голосового контента
-        - Обнаружение токсичного поведения
-        - Управление mute/ban в голосовых каналах
-        - Запись и анализ голосовых жалоб
-        - Интеграция с общим moderation system
-      moderation_features: |
-        - Voice activity monitoring
-        - Toxicity detection (via AI/ML)
-        - Automated muting for spam/toxicity
-        - Manual moderation controls
-        - Voice recording for appeals
-      moderation_rules: |
-        - Automatic mute: 3 toxicity warnings
-        - Temporary ban: repeated violations
-        - Permanent ban: severe harassment
-        - Appeal system with voice recording review
+### Компоненты системы
 
-    - name: Voice Channel Manager
-      location: voice-chat-service-go (модуль channels)
-      responsibility: |
-        - Создание и управление каналами
-        - Приглашения и разрешения
-        - Синхронизация участников
-        - Управление правами доступа
-        - Интеграция с social systems
-      channel_permissions: |
-        - OWNER: полный контроль канала
-        - MODERATOR: модерация участников
-        - MEMBER: базовый доступ
-        - GUEST: ограниченный доступ
-      integration_features: |
-        - Guild integration (auto-join guild channels)
-        - Party integration (auto-create party channels)
-        - Raid integration (raid leader controls)
-        - Social system integration (friends, blocks)
+```mermaid
+graph TB
+subgraph "Client Layer"
+UE5[UE5 Client]
+Mobile[Mobile Client]
+Web[Web Client]
+end
 
-    - name: Voice Analytics Service
-      location: voice-chat-service-go (модуль analytics)
-      responsibility: |
-        - Сбор метрик использования
-        - Анализ качества соединений
-        - Мониторинг производительности
-        - Отчеты по модерации
-        - Оптимизация на основе данных
-      metrics_collected: |
-        - Channel participation rates
-        - Audio quality scores
-        - Network latency statistics
-        - Moderation actions count
-        - Voice activity patterns
-      performance_monitoring: |
-        - WebRTC connection success rates
-        - Audio latency measurements
-        - Bandwidth usage tracking
-        - Error rates by region/server
+subgraph "Edge Layer"
+RTC_GW[WebRTC Gateway]
+WS_GW[WebSocket Gateway]
+CDN[Global CDN]
+end
 
-  data_flow:
-    channel_join: |
-      1. Игрок запрашивает присоединение к каналу
-      2. Voice Channel Manager проверяет разрешения
-      3. Voice Chat Gateway инициирует WebRTC handshake
-      4. STUN/TURN серверы помогают с NAT traversal
-      5. Устанавливается P2P или SFU соединение
-      6. Voice Quality Manager настраивает параметры аудио
-      7. Участник получает доступ к голосовому каналу
+subgraph "Service Layer"
+VoiceRouter[Voice Router Service]
+ChannelSvc[Channel Service]
+ParticipantSvc[Participant Service]
+ProximitySvc[Proximity Service]
+SpatialSvc[Spatial Audio Service]
+end
 
-    audio_stream: |
-      1. Микрофон клиента захватывает аудио
-      2. Voice Quality Manager применяет обработку (noise suppression, AGC)
-      3. WebRTC кодирует аудио в Opus
-      4. RTP пакеты отправляются через P2P или SFU
-      5. Получатели декодируют и воспроизводят аудио
-      6. Voice Moderation Engine мониторит контент
+subgraph "Voice Engine Layer"
+WebRTCEngine[WebRTC Engine]
+MixerEngine[Audio Mixer Engine]
+ProviderEngine[External Provider Engine]
+end
 
-    moderation_action: |
-      1. Voice Moderation Engine обнаруживает нарушение
-      2. Отправляется mute/ban команда участнику
-      3. WebRTC соединение приостанавливается
-      4. Записывается инцидент в moderation log
-      5. Уведомляется администратор если нужно
+subgraph "Data Layer"
+PostgreSQL[(PostgreSQL)]
+Redis[(Redis Cluster)]
+Kafka[(Kafka)]
+end
 
-  integrations:
-    with_session_service: |
-      - Проверка авторизации игроков
-      - Управление онлайн статусом
-      - Синхронизация mute/ban состояний
-      - Обработка отключений игроков
+subgraph "External Integrations"
+WorldSvc[World Service]
+SocialSvc[Social Service]
+SessionSvc[Session Service]
+end
 
-    with_guild_service: |
-      - Автоматическое создание guild каналов
-      - Синхронизация участников гильдий
-      - Управление правами guild офицеров
-      - Интеграция с guild voice settings
+UE5 --> RTC_GW
+Mobile --> RTC_GW
+Web --> RTC_GW
 
-    with_party_system: |
-      - Авто-создание party каналов
-      - Синхронизация участников групп
-      - Party leader голосовые права
-      - Интеграция с party disband mechanics
+RTC_GW --> VoiceRouter
+WS_GW --> VoiceRouter
 
-    with_realtime_gateway: |
-      - WebRTC сигнализация через WebSocket
-      - Синхронизация состояния каналов
-      - Обработка real-time команд
-      - Load balancing голосовых соединений
+VoiceRouter --> ChannelSvc
+VoiceRouter --> ParticipantSvc
+VoiceRouter --> ProximitySvc
 
-  data_consistency:
-    strategy: Eventual Consistency с strong consistency для критичных операций
-    mechanisms:
-      - Event Sourcing для всех изменений состояния каналов
-      - CQRS для разделения команд (join/leave) и запросов (channel list)
-      - Saga Pattern для распределенных операций (channel creation with participants)
-      - Outbox Pattern для гарантированной доставки voice events
-      - Redis для кэширования channel state
+ChannelSvc --> SpatialSvc
+ProximitySvc --> SpatialSvc
 
-  performance_requirements:
-    latency: < 100ms end-to-end audio latency
-    concurrent_channels: Support for 10,000+ simultaneous voice channels
-    concurrent_users: Support for 50,000+ concurrent voice users
-    bandwidth_per_user: 16-128 kbps depending on quality settings
-    cpu_usage: < 5% per voice channel on server
-    memory_usage: < 50MB per active voice channel
+VoiceRouter --> WebRTCEngine
+WebRTCEngine --> MixerEngine
+WebRTCEngine --> ProviderEngine
 
-  scalability:
-    horizontal_scaling: |
-      - Voice Chat Gateway может масштабироваться горизонтально
-      - SFU (Selective Forwarding Unit) архитектура для больших каналов
-      - Load balancing по регионам и серверам
-      - Redis кластер для глобального состояния
-    regional_distribution: |
-      - Серверы в основных регионах (NA, EU, ASIA)
-      - Географическая маршрутизация для минимальной задержки
-      - Cross-region fallback для отказоустойчивости
-    peak_load_handling: |
-      - Auto-scaling groups для voice gateways
-      - Quality degradation under load (bitrate reduction)
-      - Connection limiting for extreme loads
+ChannelSvc --> PostgreSQL
+ParticipantSvc --> PostgreSQL
+ChannelSvc --> Redis
+ParticipantSvc --> Redis
 
-  security:
-    encryption: DTLS 1.2+ для шифрования медиа-потоков
-    authentication: JWT токены для channel access
-    authorization: Role-based permissions per channel
-    privacy: End-to-end encryption для private channels
-    moderation: AI-powered toxicity detection and automated actions
+VoiceRouter --> Kafka
 
-  database_schema:
-    tables:
-      - name: voice_channels
-        description: Голосовые каналы
-        fields:
-          - id: UUID (PK)
-          - channel_type: ENUM (PARTY, GUILD, RAID, PUBLIC, PRIVATE)
-          - owner_id: UUID (FK players)
-          - guild_id: UUID (FK guilds, nullable)
-          - party_id: UUID (FK parties, nullable)
-          - max_participants: INTEGER
-          - is_temporary: BOOLEAN (default: false)
-          - created_at: TIMESTAMP
-          - settings: JSONB (quality, permissions, etc.)
-        indexes:
-          - channel_type, created_at
-          - owner_id
-          - guild_id
-          - party_id
+VoiceRouter --> WorldSvc
+VoiceRouter --> SocialSvc
+VoiceRouter --> SessionSvc
+```
 
-      - name: voice_channel_participants
-        description: Участники голосовых каналов
-        fields:
-          - id: UUID (PK)
-          - channel_id: UUID (FK voice_channels)
-          - player_id: UUID (FK players)
-          - joined_at: TIMESTAMP
-          - permissions: ENUM (OWNER, MODERATOR, MEMBER, MUTED, BANNED)
-          - is_muted: BOOLEAN (default: false)
-          - connection_quality: INTEGER (1-5 scale)
-          - last_activity: TIMESTAMP
-        indexes:
-          - channel_id, player_id (unique)
-          - player_id, joined_at
-          - permissions
+---
 
-      - name: voice_moderation_actions
-        description: Действия модерации голосового чата
-        fields:
-          - id: UUID (PK)
-          - channel_id: UUID (FK voice_channels)
-          - moderator_id: UUID (FK players)
-          - target_player_id: UUID (FK players)
-          - action_type: ENUM (MUTE, UNMUTE, KICK, BAN, WARN)
-          - reason: TEXT
-          - duration_seconds: INTEGER (nullable)
-          - recorded_audio_url: TEXT (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - channel_id, created_at
-          - target_player_id, created_at
-          - action_type
+## Микросервисы
 
-      - name: voice_quality_metrics
-        description: Метрики качества голосового соединения
-        fields:
-          - id: UUID (PK)
-          - channel_id: UUID (FK voice_channels)
-          - player_id: UUID (FK players)
-          - timestamp: TIMESTAMP
-          - latency_ms: INTEGER
-          - packet_loss_percent: DECIMAL(5,2)
-          - jitter_ms: INTEGER
-          - bitrate_kbps: INTEGER
-          - quality_score: INTEGER (1-100)
-        indexes:
-          - channel_id, timestamp
-          - player_id, timestamp
-          - quality_score
+### 1. Voice Router Service
+**Ответственность:** Маршрутизация запросов, валидация прав доступа, координация компонентов.
+**API Endpoints:**
+- `POST /api/v1/social/voice/channels` - Создание канала
+- `DELETE /api/v1/social/voice/channels/{id}` - Удаление канала
+- `POST /api/v1/social/voice/channels/{id}/join` - Присоединение к каналу
+- `POST /api/v1/social/voice/channels/{id}/leave` - Выход из канала
+- `PUT /api/v1/social/voice/channels/{id}/settings` - Настройки канала
 
-  validation:
-    architecture_complete: true
-    components_defined: true
-    microservices_identified: true
-    api_endpoints_described: true
-    technical_specification_ready: true
-    subtasks_defined: true
+### 2. Channel Service
+**Ответственность:** Управление жизненным циклом каналов, типы каналов (party/guild/raid/proximity).
+**Хранение:**
+- `voice_channels` - метаданные каналов
+- `channel_settings` - настройки качества и разрешений
 
-  next_steps:
-    - Передача задачи агенту API Designer для создания OpenAPI спецификации
-    - Детализация WebRTC протоколов и сигнализации
-    - Создание схем WebSocket сообщений
-    - Определение форматов аудио данных
-    - Планирование интеграции с voice-chat-service-go
+### 3. Participant Service
+**Ответственность:** Управление участниками, состояния (mute/deafen/speaking), статистика.
+**Хранение:**
+- `voice_participants` - активные участники
+- `participant_stats` - статистика использования
 
-  history:
-    - version: '1.1.0'
-      date: 2025-12-27
-      author: Architect Agent
-      changes: |
-        Создана полная архитектура Voice Chat System
-        Определены компоненты и WebRTC интеграция
-        Добавлена схема БД и метрики производительности
-        Определены security и scalability требования
-        Статус изменен на final
+### 4. Proximity Service
+**Ответственность:** Динамическое управление proximity каналами на основе координат игроков.
+**Интеграции:**
+- World Service для получения позиций
+- Spatial Audio Service для расчёта расстояний
+
+### 5. Spatial Audio Service
+**Ответственность:** Расчёт пространственного звука, 3D позиционирование, эффекты реверберации.
+**Алгоритмы:**
+- Distance-based attenuation
+- Head-related transfer function (HRTF)
+- Room acoustics simulation
+
+---
+
+## Система каналов
+
+### Типы каналов
+
+| Тип | Максимум участников | Качество | Особенности |
+|-----|-------------------|----------|-------------|
+| Party | 5 | Высокое (48kHz) | Командная координация |
+| Guild | 100 | Среднее (32kHz) | Социальное общение |
+| Raid | 25 | Высокое (48kHz) | Сабканалы по ролям |
+| Proximity | 20 | Переменное | 3D звук, 20м радиус |
+
+### Жизненный цикл канала
+```mermaid
+stateDiagram-v2
+[*] --> Creating: Создание
+Creating --> Active: Активация
+Active --> Scaling: Масштабирование
+Active --> Suspended: Приостановка
+Suspended --> Active: Возобновление
+Active --> Terminating: Завершение
+Terminating --> [*]
+
+Scaling --> Active: Успешное масштабирование
+Scaling --> Failed: Ошибка масштабирования
+Failed --> Terminating
+```
+
+---
+
+## WebRTC архитектура
+
+### Компоненты WebRTC
+
+```mermaid
+graph LR
+subgraph "Signaling"
+Client[Client] --> Signaling[Signaling Server]
+Signaling --> SFU[SFU Server]
+end
+
+subgraph "Media Flow"
+Publisher[Publisher] --> SFU
+SFU --> Subscriber1[Subscriber 1]
+SFU --> Subscriber2[Subscriber 2]
+SFU --> SubscriberN[Subscriber N]
+end
+
+subgraph "Fallback"
+SFU --> External[External Provider]
+External --> SFU
+end
+```
+
+### Signaling протокол
+- **STUN/TURN:** NAT traversal
+- **ICE:** Interactive Connectivity Establishment
+- **DTLS-SRTP:** Шифрование медиа-потоков
+- **SCTP:** Data channels для метаданных
+
+### Fallback стратегия
+1. **Primary:** Self-hosted SFU cluster
+2. **Secondary:** Agora/Twilio SDK
+3. **Fallback:** Peer-to-peer (максимум 4 участника)
+
+---
+
+## Система пространственного звука
+
+### Proximity каналы
+
+```mermaid
+graph TD
+A[Игрок A] --> P[(Позиция A)]
+B[Игрок B] --> Q[(Позиция B)]
+
+P --> D[Расстояние]
+Q --> D
+
+D --> V[Объём звука]
+D --> Pan[Панорамирование]
+D --> R[Реверберация]
+
+V --> M[Микшер]
+Pan --> M
+R --> M
+```
+
+### Алгоритмы позиционирования
+- **Distance attenuation:** Логарифмическое затухание
+- **Doppler effect:** Эффект Доплера для движущихся источников
+- **Occlusion:** Заглушение звука препятствиями
+- **Reverb zones:** Зональная реверберация
+
+---
+
+## Структура базы данных
+
+### Основные таблицы
+
+```sql
+-- Каналы голосового чата
+CREATE TABLE voice_channels (
+    id UUID PRIMARY KEY,
+    type VARCHAR(20) NOT NULL, -- party, guild, raid, proximity
+    owner_id UUID NOT NULL,
+    guild_id UUID NULL,
+    party_id UUID NULL,
+    raid_id UUID NULL,
+    max_participants INTEGER NOT NULL,
+    quality_preset VARCHAR(20) NOT NULL,
+    settings JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+-- Участники каналов
+CREATE TABLE voice_participants (
+    id UUID PRIMARY KEY,
+    channel_id UUID NOT NULL REFERENCES voice_channels(id),
+    player_id UUID NOT NULL,
+    state VARCHAR(20) NOT NULL, -- active, muted, deafened
+    joined_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP NOT NULL,
+    webrtc_token VARCHAR(500) NOT NULL,
+    position_data JSONB NULL -- для proximity каналов
+);
+
+-- Статистика каналов
+CREATE TABLE channel_stats (
+    id UUID PRIMARY KEY,
+    channel_id UUID NOT NULL REFERENCES voice_channels(id),
+    total_participants INTEGER NOT NULL DEFAULT 0,
+    peak_participants INTEGER NOT NULL DEFAULT 0,
+    total_duration INTERVAL NOT NULL DEFAULT '0'::INTERVAL,
+    created_at DATE NOT NULL
+);
+```
+
+### Индексы производительности
+```sql
+-- Горячие запросы
+CREATE INDEX idx_voice_channels_type_owner ON voice_channels(type, owner_id);
+CREATE INDEX idx_voice_participants_channel ON voice_participants(channel_id);
+CREATE INDEX idx_voice_participants_player ON voice_participants(player_id);
+
+-- Proximity оптимизации
+CREATE INDEX idx_voice_participants_position ON voice_participants USING GIST (position_data);
+```
+
+---
+
+## Потоки данных
+
+### Присоединение к каналу
+
+```mermaid
+sequenceDiagram
+participant Client
+participant VoiceRouter
+participant ChannelSvc
+participant ParticipantSvc
+participant WorldSvc
+participant WebRTC
+
+Client->>VoiceRouter: POST /join {channel_id}
+VoiceRouter->>ChannelSvc: Validate permissions
+ChannelSvc->>VoiceRouter: OK
+
+VoiceRouter->>ParticipantSvc: Create participant record
+ParticipantSvc->>VoiceRouter: Participant created
+
+alt Proximity channel
+VoiceRouter->>WorldSvc: Get player position
+WorldSvc->>VoiceRouter: Position data
+end
+
+VoiceRouter->>WebRTC: Generate tokens
+WebRTC->>VoiceRouter: Tokens
+
+VoiceRouter->>Client: Join response with tokens
+```
+
+### Proximity обновления
+
+```mermaid
+sequenceDiagram
+participant WorldSvc
+participant ProximitySvc
+participant ParticipantSvc
+participant Client
+
+loop Every 100ms
+WorldSvc->>ProximitySvc: Position updates
+ProximitySvc->>ProximitySvc: Calculate distances
+ProximitySvc->>ParticipantSvc: Update participants
+ParticipantSvc->>Client: WebSocket: participant_update
+end
+```
+
+---
+
+## Оптимизация производительности
+
+### Backend Opt Plan
+- [ ] Memory pooling для WebRTC sessions (экономия 40% RAM)
+- [ ] Batch operations для bulk participant updates
+- [ ] Connection pooling для PostgreSQL (50% снижение latency)
+- [ ] Redis caching для channel metadata (80% cache hit rate)
+- [ ] Zero allocations на горячих путях join/leave
+
+### Масштабирование
+- **Horizontal:** Service instances за балансировщиком
+- **Data:** PostgreSQL read replicas, Redis cluster
+- **Voice:** SFU sharding по географическим регионам
+- **CDN:** Global distribution для signaling
+
+---
+
+## Безопасность
+
+### Аутентификация
+- JWT tokens с player_id validation
+- Channel ownership verification
+- Permission-based access control
+
+### Шифрование
+- DTLS-SRTP для медиа-потоков
+- TLS 1.3 для signaling
+- End-to-end encryption option
+
+### Защита от abuse
+- Rate limiting на join/leave операции
+- Channel creation limits per player
+- Voice activity detection для предотвращения spam
+
+---
+
+## Мониторинг и метрики
+
+### Ключевые метрики
+- **Latency:** P50/P95/P99 join time
+- **Throughput:** Active channels, concurrent users
+- **Quality:** Packet loss, jitter, MOS scores
+- **Errors:** Failed connections, auth failures
+
+### Логирование
+- Structured logging с correlation IDs
+- Voice quality metrics per session
+- Performance profiling для оптимизации
+
+---
+
+## Техническое задание
+
+### Фаза 1: Core Infrastructure (2 недели)
+- Voice Router Service базовая реализация
+- Channel Service с CRUD операциями
+- PostgreSQL schema и индексы
+- Basic WebRTC integration
+
+### Фаза 2: Channel Types (3 недели)
+- Party channels с высоким качеством
+- Guild channels с социальными фичами
+- Raid channels с сабканалами
+- Proximity channels прототип
+
+### Фаза 3: Advanced Features (4 недели)
+- Spatial audio system
+- External provider fallback
+- Advanced permissions и moderation
+- Performance optimization
+
+### Фаза 4: Production (2 недели)
+- Monitoring и alerting
+- Load testing
+- Security hardening
+- Documentation
+
+---
+
+## Следующие шаги
+
+1. **API Designer:** Создать OpenAPI спецификацию для voice-domain
+2. **Database:** Реализовать Liquibase миграции для voice схемы
+3. **Backend:** Имплементировать Voice Router Service
+4. **Network:** Настроить WebRTC инфраструктуру
+5. **QA:** Создать тесты для voice функциональности

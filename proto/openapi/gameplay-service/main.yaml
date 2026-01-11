@@ -3,8 +3,9 @@ info:
   title: Gameplay Service API - Enterprise-Grade Domain Service
   description: "**Enterprise-Grade Gameplay API for NECPGAME**
 
-    This API manages gameplay systems including affixes and difficulty rating,
-    providing comprehensive game mechanics, player skill assessment, and dynamic content adaptation.
+    This API manages gameplay systems including affixes, difficulty rating, and combat abilities,
+    providing comprehensive game mechanics, player skill assessment, dynamic content adaptation,
+    and advanced combat systems.
 
     ## Key Features
 
@@ -12,6 +13,8 @@ info:
     - **Rotation System**: Automated weekly affix rotation with manual triggers
     - **Instance Application**: Dynamic affix application to dungeon/raid instances
     - **Difficulty Rating**: Player skill assessment, content difficulty rating, and automatic adjustments
+    - **Combat Abilities**: Complete ability system with catalog, loadouts, activation, cooldowns, synergies
+    - **Cyberpsychosis Tracking**: Real-time tracking of cybernetic implant effects
     - **Analytics**: Comprehensive telemetry and performance metrics
     - **Real-time Effects**: WebSocket integration for live game effects
 
@@ -86,8 +89,20 @@ tags:
     description: System health and performance monitoring
   - name: Difficulty Rating
     description: Player skill rating, content difficulty assessment, and automatic adjustments
-  - name: Difficulty Rating
-    description: Player skill rating, content difficulty assessment, and automatic adjustments
+  - name: Combat Abilities
+    description: Ability catalog, loadouts, activation, cooldowns, and synergies management
+  - name: Ability Catalog
+    description: Ability catalog browsing and management operations
+  - name: Ability Loadouts
+    description: Player ability loadout configuration and management
+  - name: Ability Activation
+    description: Real-time ability activation and execution
+  - name: Ability Cooldowns
+    description: Cooldown management and synchronization
+  - name: Ability Synergies
+    description: Synergy calculation and application
+  - name: Cyberpsychosis
+    description: Cyberpsychosis tracking and management
 paths:
   /health:
     get:
@@ -734,6 +749,456 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # Combat Abilities Endpoints
+  /api/v1/gameplay/combat/abilities/catalog:
+    get:
+      operationId: getAbilityCatalog
+      summary: Get ability catalog
+      description: Returns the complete catalog of available combat abilities with filtering and pagination
+      tags:
+        - Combat Abilities
+        - Ability Catalog
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, stealth, hacking, cyberware, weapon, support]
+          description: Filter by ability category
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [equipment, implants, progression, cyberdeck, purchased]
+          description: Filter by ability source
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Minimum player level requirement
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Maximum player level requirement
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        "200":
+          description: Ability catalog response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityCatalogResponse"
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/{abilityId}:
+    get:
+      operationId: getAbilityDetails
+      summary: Get ability details
+      description: Returns detailed information about a specific combat ability
+      tags:
+        - Combat Abilities
+        - Ability Catalog
+      parameters:
+        - name: abilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Ability UUID
+      responses:
+        "200":
+          description: Ability details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityDetailsResponse"
+        "404":
+          description: Ability not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/loadouts:
+    get:
+      operationId: getPlayerLoadouts
+      summary: Get player ability loadouts
+      description: Returns all ability loadouts for the authenticated player
+      tags:
+        - Combat Abilities
+        - Ability Loadouts
+      responses:
+        "200":
+          description: Player loadouts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerLoadoutsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      operationId: createOrUpdateLoadout
+      summary: Create or update ability loadout
+      description: Creates a new ability loadout or updates an existing one for the authenticated player
+      tags:
+        - Combat Abilities
+        - Ability Loadouts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLoadoutRequest"
+      responses:
+        "200":
+          description: Loadout created/updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoadoutResponse"
+        "400":
+          description: Invalid loadout configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Loadout conflicts with existing configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/activate:
+    post:
+      operationId: activateAbility
+      summary: Activate ability
+      description: Activates a combat ability with cooldown and resource validation
+      tags:
+        - Combat Abilities
+        - Ability Activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateAbilityRequest"
+      responses:
+        "200":
+          description: Ability activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationResponse"
+        "400":
+          description: Invalid activation request or insufficient resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Ability on cooldown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/cooldowns:
+    post:
+      operationId: checkCooldowns
+      summary: Check ability cooldowns
+      description: Returns current cooldown status for specified abilities
+      tags:
+        - Combat Abilities
+        - Ability Cooldowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckCooldownsRequest"
+      responses:
+        "200":
+          description: Cooldown status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CooldownsResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/synergies:
+    get:
+      operationId: getAvailableSynergies
+      summary: Get available synergies
+      description: Returns synergies available for the player's current loadout
+      tags:
+        - Combat Abilities
+        - Ability Synergies
+      responses:
+        "200":
+          description: Available synergies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynergiesResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/synergies/apply:
+    post:
+      operationId: applySynergy
+      summary: Apply synergy
+      description: Applies a synergy effect to the player's current session
+      tags:
+        - Combat Abilities
+        - Ability Synergies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplySynergyRequest"
+      responses:
+        "200":
+          description: Synergy applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynergyResponse"
+        "400":
+          description: Invalid synergy or requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/cyberpsychosis:
+    get:
+      operationId: getCyberpsychosisStatus
+      summary: Get cyberpsychosis status
+      description: Returns current cyberpsychosis level and effects
+      tags:
+        - Combat Abilities
+        - Cyberpsychosis
+      responses:
+        "200":
+          description: Cyberpsychosis status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberpsychosisResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      operationId: updateCyberpsychosis
+      summary: Update cyberpsychosis
+      description: Updates cyberpsychosis level based on ability usage
+      tags:
+        - Combat Abilities
+        - Cyberpsychosis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCyberpsychosisRequest"
+      responses:
+        "200":
+          description: Cyberpsychosis updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberpsychosisResponse"
+        "400":
+          description: Invalid update request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/combat/abilities/metrics:
+    get:
+      operationId: getAbilityMetrics
+      summary: Get ability metrics
+      description: Returns usage metrics and statistics for combat abilities
+      tags:
+        - Combat Abilities
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+          description: Time period for metrics
+        - name: ability_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: Specific ability IDs to get metrics for
+      responses:
+        "200":
+          description: Ability metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityMetricsResponse"
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1231,3 +1696,694 @@ components:
           format: date-time
           description: When the rating was last updated
 
+    # Combat Abilities Schemas
+    # Struct alignment: Large to Small (string -> int64 -> int32 -> bool)
+
+    Ability:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - source
+        - level_requirement
+        - cooldown_seconds
+        - energy_cost
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          maxLength: 100
+          example: "Quick Hack"
+        description:
+          type: string
+          maxLength: 500
+          example: "Instantly hack an enemy device"
+        category:
+          type: string
+          enum: [combat, stealth, hacking, cyberware, weapon, support]
+          example: "hacking"
+        source:
+          type: string
+          enum: [equipment, implants, progression, cyberdeck, purchased]
+          example: "cyberdeck"
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 15
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          example: 30
+        energy_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          example: 50
+        is_active:
+          type: boolean
+          example: true
+        icon_url:
+          type: string
+          format: uri
+          example: "https://cdn.necpgame.com/abilities/quick-hack.png"
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AbilityEffect"
+          maxItems: 10
+        synergies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Synergy"
+          maxItems: 5
+
+    AbilityEffect:
+      type: object
+      required:
+        - type
+        - target
+        - duration_seconds
+        - value
+      properties:
+        type:
+          type: string
+          enum: [damage, heal, buff, debuff, stun, slow, stealth, hack]
+          example: "damage"
+        target:
+          type: string
+          enum: [self, enemy, ally, area]
+          example: "enemy"
+        duration_seconds:
+          type: integer
+          minimum: 0
+          maximum: 300
+          example: 10
+        value:
+          type: number
+          format: float
+          example: 150.5
+        conditions:
+          type: object
+          additionalProperties: true
+
+    Synergy:
+      type: object
+      required:
+        - ability_ids
+        - effect_type
+        - multiplier
+        - is_active
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 5
+          example: ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
+        effect_type:
+          type: string
+          enum: [damage_boost, cooldown_reduction, energy_efficiency, critical_chance]
+          example: "damage_boost"
+        multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          example: 1.25
+        is_active:
+          type: boolean
+          example: true
+
+    Loadout:
+      type: object
+      required:
+        - id
+        - name
+        - player_id
+        - slots
+        - created_at
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        name:
+          type: string
+          maxLength: 50
+          example: "Stealth Assassin"
+        player_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            e_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            r_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            passive_1:
+              $ref: "#/components/schemas/AbilitySlot"
+            passive_2:
+              $ref: "#/components/schemas/AbilitySlot"
+            hacking_1:
+              $ref: "#/components/schemas/AbilitySlot"
+            hacking_2:
+              $ref: "#/components/schemas/AbilitySlot"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-05T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-05T12:00:00Z"
+        is_active:
+          type: boolean
+          example: true
+
+    AbilitySlot:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        equipped_at:
+          type: string
+          format: date-time
+          example: "2025-01-05T10:00:00Z"
+
+    CooldownState:
+      type: object
+      required:
+        - ability_id
+        - remaining_seconds
+        - total_cooldown
+        - is_ready
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          example: 15
+        total_cooldown:
+          type: integer
+          minimum: 0
+          example: 30
+        is_ready:
+          type: boolean
+          example: false
+        last_used_at:
+          type: string
+          format: date-time
+          example: "2025-01-05T10:00:00Z"
+
+    CyberpsychosisState:
+      type: object
+      required:
+        - player_id
+        - current_level
+        - max_level
+        - effects
+        - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        current_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 25.5
+        max_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 80.0
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberpsychosisEffect"
+          maxItems: 10
+        last_updated:
+          type: string
+          format: date-time
+          example: "2025-01-05T10:00:00Z"
+
+    CyberpsychosisEffect:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+        - is_active
+      properties:
+        type:
+          type: string
+          enum: [hallucinations, reduced_accuracy, increased_damage, random_effects, system_crash]
+          example: "hallucinations"
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.3
+        description:
+          type: string
+          maxLength: 200
+          example: "Visual hallucinations affecting target identification"
+        is_active:
+          type: boolean
+          example: true
+
+    # Request/Response Schemas
+
+    AbilityCatalogResponse:
+      type: object
+      required:
+        - abilities
+        - pagination
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ability"
+        pagination:
+          type: object
+          required:
+            - total
+            - limit
+            - offset
+            - page
+          properties:
+            total:
+              type: integer
+              minimum: 0
+              example: 150
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+            offset:
+              type: integer
+              minimum: 0
+              example: 0
+            page:
+              type: integer
+              minimum: 1
+              example: 1
+
+    AbilityDetailsResponse:
+      type: object
+      required:
+        - ability
+      properties:
+        ability:
+          $ref: "#/components/schemas/Ability"
+
+    PlayerLoadoutsResponse:
+      type: object
+      required:
+        - loadouts
+      properties:
+        loadouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Loadout"
+          maxItems: 10
+
+    LoadoutResponse:
+      type: object
+      required:
+        - loadout
+      properties:
+        loadout:
+          $ref: "#/components/schemas/Loadout"
+
+    CreateLoadoutRequest:
+      type: object
+      required:
+        - name
+        - slots
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: "Stealth Assassin"
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            e_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            r_slot:
+              $ref: "#/components/schemas/AbilitySlot"
+            passive_1:
+              $ref: "#/components/schemas/AbilitySlot"
+            passive_2:
+              $ref: "#/components/schemas/AbilitySlot"
+            hacking_1:
+              $ref: "#/components/schemas/AbilitySlot"
+            hacking_2:
+              $ref: "#/components/schemas/AbilitySlot"
+
+    ActivateAbilityRequest:
+      type: object
+      required:
+        - ability_id
+        - target_info
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        target_info:
+          type: object
+          properties:
+            target_type:
+              type: string
+              enum: [self, enemy, ally, position]
+              example: "enemy"
+            target_id:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440005"
+            position:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                  example: 100.5
+                y:
+                  type: number
+                  format: float
+                  example: 200.3
+                z:
+                  type: number
+                  format: float
+                  example: 50.0
+
+    ActivationResponse:
+      type: object
+      required:
+        - success
+        - ability_id
+        - activation_id
+        - effects_applied
+      properties:
+        success:
+          type: boolean
+          example: true
+        ability_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        activation_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440006"
+        effects_applied:
+          type: array
+          items:
+            $ref: "#/components/schemas/AbilityEffect"
+        cooldown_started:
+          type: integer
+          description: Cooldown in seconds
+          example: 30
+
+    CheckCooldownsRequest:
+      type: object
+      required:
+        - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 20
+          example: ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
+
+    CooldownsResponse:
+      type: object
+      required:
+        - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: "#/components/schemas/CooldownState"
+
+    SynergiesResponse:
+      type: object
+      required:
+        - synergies
+        - active_synergies
+      properties:
+        synergies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Synergy"
+        active_synergies:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example: ["550e8400-e29b-41d4-a716-446655440007"]
+
+    ApplySynergyRequest:
+      type: object
+      required:
+        - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440007"
+
+    SynergyResponse:
+      type: object
+      required:
+        - synergy
+        - applied_effects
+      properties:
+        synergy:
+          $ref: "#/components/schemas/Synergy"
+        applied_effects:
+          type: array
+          items:
+            type: string
+          example: ["damage_boost", "cooldown_reduction"]
+
+    CyberpsychosisResponse:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          $ref: "#/components/schemas/CyberpsychosisState"
+
+    UpdateCyberpsychosisRequest:
+      type: object
+      required:
+        - change_amount
+        - reason
+      properties:
+        change_amount:
+          type: number
+          format: float
+          minimum: -50
+          maximum: 50
+          example: 5.5
+        reason:
+          type: string
+          enum: [ability_activation, time_decay, medical_treatment, implant_removal]
+          example: "ability_activation"
+        ability_id:
+          type: string
+          format: uuid
+          description: Required when reason is ability_activation
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+    AbilityMetricsResponse:
+      type: object
+      required:
+        - period
+        - metrics
+      properties:
+        period:
+          type: string
+          enum: [hour, day, week, month]
+          example: "day"
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+              - ability_id
+              - name
+              - usage_count
+              - success_rate
+              - avg_cooldown_efficiency
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440001"
+              name:
+                type: string
+                example: "Quick Hack"
+              usage_count:
+                type: integer
+                minimum: 0
+                example: 1250
+              success_rate:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.87
+              avg_cooldown_efficiency:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.92
+              avg_damage_dealt:
+                type: number
+                format: float
+                example: 185.5
+
+    # Missing schemas for difficulty rating endpoints
+    ContentDifficultyRatingResponse:
+      type: object
+      required:
+        - content_id
+        - difficulty_score
+        - player_ratings
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        difficulty_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.5
+        player_ratings:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSkillRatingResponse"
+          maxItems: 100
+
+    DifficultyRecommendationsResponse:
+      type: object
+      required:
+        - player_id
+        - recommendations
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        recommendations:
+          type: array
+          items:
+            type: object
+            required:
+              - content_id
+              - recommended_difficulty
+              - reason
+            properties:
+              content_id:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440001"
+              recommended_difficulty:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                example: 85.0
+              reason:
+                type: string
+                example: "Based on player's skill rating and recent performance"
+          maxItems: 20
+
+    DifficultyAdjustmentRequest:
+      type: object
+      required:
+        - content_id
+        - adjustment_type
+        - adjustment_value
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        adjustment_type:
+          type: string
+          enum: [absolute, relative, percentage]
+          example: "relative"
+        adjustment_value:
+          type: number
+          format: float
+          example: 10.5
+        reason:
+          type: string
+          maxLength: 200
+          example: "Player requested difficulty increase"
+
+    DifficultyAdjustmentResponse:
+      type: object
+      required:
+        - content_id
+        - old_difficulty
+        - new_difficulty
+        - adjustment_applied
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        old_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.0
+        new_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        adjustment_applied:
+          type: boolean
+          example: true

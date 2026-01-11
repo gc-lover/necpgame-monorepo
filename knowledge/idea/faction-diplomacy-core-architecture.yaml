@@ -1,0 +1,114 @@
+# Issue: #2170
+# Faction Diplomacy Core Architecture
+
+## Overview
+Динамическая система дипломатии фракций в Cyberpunk 2077 стиле, где корпорации, банды и политические группировки формируют сложные альянсы, торгуют влиянием и ведут теневые войны за контроль над мегаполисами.
+
+## Core Components
+
+### Faction Types
+- **Corporations**: Arasaka, Militech, Trauma Team, Maelstrom
+- **Street Gangs**: Maelstrom, Valentinos, Mox, Tyger Claws
+- **Political Entities**: City Council, NUSA Government, Fixers Network
+- **Criminal Syndicates**: Cartels, Mafia, Black Markets
+- **Mercenary Groups**: Trauma Team, Solo Networks
+- **Tech Collectives**: Netrunners, Cybernetic Enhancement Clinics
+
+### Diplomacy States
+- **Allied**: Совместные операции, shared resources, mutual defense
+- **Neutral**: Business as usual, cautious trade relations
+- **Tense**: Increased security, restricted access, higher prices
+- **Hostile**: Active sabotage, bounty hunting, territory disputes
+- **War**: Open conflict, territory raids, assassination campaigns
+
+### Relationship Metrics
+- **Trust Level**: -100 to +100 (War to Full Alliance)
+- **Economic Ties**: Trade volume, shared investments, debt obligations
+- **Military Strength**: Relative power comparison, defensive capabilities
+- **Influence Score**: Political power, media control, public opinion
+- **Loyalty Rating**: Internal faction stability, leadership approval
+
+## Core Mechanics
+
+### Dynamic Relationship System
+```yaml
+relationship_matrix:
+  arasaka_militech: -85  # Bitter corporate rivals
+  maelstrom_valentinos: -60  # Gang territorial disputes
+  trauma_team_city_council: +40  # Licensed medical services
+  fixers_network_all: +20  # Neutral information brokers
+```
+
+### Event-Driven Diplomacy
+- **Random Events**: Corporate espionage, gang turf wars, political scandals
+- **Player Actions**: Missions, negotiations, betrayals
+- **Consequence Propagation**: One action affects multiple relationships
+- **Time Pressure**: Some opportunities are time-limited
+
+### Resource-Based Alliances
+- **Credits**: Financial incentives for cooperation
+- **Chromium**: Rare cyberware components
+- **Information**: Intel trading between factions
+- **Territory**: Control zones, safe houses, smuggling routes
+- **Personnel**: Mercenary exchanges, expert loans
+
+## Implementation Architecture
+
+### Backend Services
+- **Faction Service**: Core faction management
+- **Diplomacy Engine**: Relationship calculations
+- **Event System**: Random and triggered events
+- **Trade Network**: Resource exchange mechanics
+
+### Data Structures
+```yaml
+faction:
+  id: uuid
+  name: string
+  type: enum
+  leader: character_ref
+  territories: [zone_ids]
+  resources: {resource_type: amount}
+  relationships: {faction_id: relationship_score}
+
+diplomacy_action:
+  id: uuid
+  initiator_faction: uuid
+  target_faction: uuid
+  action_type: enum (alliance, trade, sabotage, war)
+  resources_offered: {resource_type: amount}
+  conditions: [requirement_list]
+  duration: time_period
+  consequences: [effect_list]
+```
+
+## Game Integration
+
+### Player Involvement
+- **Diplomat Role**: Specialized class for faction interactions
+- **Mission Types**: Negotiation, espionage, alliance brokering
+- **Reputation Impact**: Player actions affect faction opinions
+- **Personal Alliances**: Individual relationships with faction leaders
+
+### World State Effects
+- **Zone Control**: Faction territories change based on diplomacy
+- **Price Fluctuations**: War increases costs, alliances provide discounts
+- **Mission Availability**: Hostile factions offer sabotage missions
+- **NPC Behavior**: Friendly factions provide safe passage and quests
+
+## Balance Considerations
+
+### Risk/Reward Balance
+- High-risk alliances offer greater rewards
+- Betrayal penalties scale with relationship depth
+- Recovery time for damaged relationships
+
+### Scalability
+- Support for 20+ active factions
+- Efficient relationship matrix calculations
+- Event system handles 1000+ simultaneous players
+
+### Performance Requirements
+- Relationship updates: <50ms per player action
+- Event processing: <100ms for global faction events
+- Memory usage: <500KB per faction relationship set

@@ -114,16 +114,45 @@ gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:nextage
 
 ## ⚡ Быстрые команды
 
-### GitHub CLI
-```bash
-# Поиск задач
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
+### MCP GitHub Commands
+```javascript
+// Поиск задач
+const items = await mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Backend" Status:"Todo"'
+});
 
-# Взятие задачи
-gh issue comment 123 --body '[OK] Начинаю работу' && gh issue edit 123 --add-label 'status:in-progress'
+// Взятие задачи (In Progress)
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: itemId,
+  updated_field: {
+    id: '239690516', // Status field
+    value: '83d488e7' // In Progress
+  }
+});
 
-# Передача задачи
-gh issue comment 123 --body '[OK] Work complete. Handed off to Network. Issue: #123' && gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:network'
+// Передача задачи (Todo + следующий агент)
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: itemId,
+  updated_field: [
+    {
+      id: '239690516', // Status field
+      value: 'f75ad846' // Todo
+    },
+    {
+      id: '243899542', // Agent field
+      value: 'c60ebab1' // Network agent
+    }
+  ]
+});
 ```
 
 ### Валидация

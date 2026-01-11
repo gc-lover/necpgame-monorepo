@@ -1,0 +1,202 @@
+# Issue: #2170
+# Faction Diplomacy Relationship System
+
+## Overview
+Комплексная система отношений между фракциями, где каждая взаимодействие влияет на глобальный баланс сил в Night City. Отношения эволюционируют динамически через действия игроков и случайные события.
+
+## Relationship Framework
+
+### Trust Levels
+```yaml
+trust_scale:
+  -100: "Total War"        # Полная война, взаимное уничтожение
+   -80: "Open Hostilities" # Открытые боевые действия
+   -60: "Active Sabotage"  # Саботаж, диверсии, bounty hunting
+   -40: "Economic Warfare" # Экономическая война, эмбарго
+   -20: "Tense Relations"  # Натянутые отношения, ограниченный доступ
+     0: "Neutral Stance"   # Нейтралитет, осторожная торговля
+    20: "Business Partners" # Деловые партнеры, стандартная торговля
+    40: "Strategic Allies"  # Стратегические союзники, совместные операции
+    60: "Close Cooperation" # Тесное сотрудничество, shared resources
+    80: "Trusted Partners"  # Доверенные партнеры, mutual defense
+   100: "Blood Brothers"    # Кровные братья, полная лояльность
+```
+
+### Relationship Dimensions
+
+#### Economic Dimension
+- **Trade Volume**: Объем торговли между фракциями
+- **Investment Level**: Совместные инвестиции и проекты
+- **Debt Obligations**: Финансовые обязательства и долги
+- **Resource Sharing**: Обмен ресурсами и технологиями
+
+#### Military Dimension
+- **Defense Pacts**: Соглашения о взаимной обороне
+- **Intelligence Sharing**: Обмен разведданными
+- **Joint Operations**: Совместные военные операции
+- **Mercenary Exchanges**: Обмен наемниками и специалистами
+
+#### Political Dimension
+- **Influence Networks**: Политическое влияние и связи
+- **Media Control**: Контроль над информацией и пропагандой
+- **Territorial Claims**: Территориальные претензии и споры
+- **Diplomatic Immunity**: Дипломатическая неприкосновенность
+
+#### Social Dimension
+- **Cultural Exchange**: Культурный обмен и традиции
+- **Intermarriage**: Родственные связи между фракциями
+- **Shared History**: Общая история и традиции
+- **Public Perception**: Общественное мнение о отношениях
+
+## Alliance Mechanics
+
+### Alliance Types
+
+#### Trade Alliance
+```
+Benefits:
+- 25% discount on goods and services
+- Priority access to markets
+- Shared transportation routes
+- Joint economic ventures
+
+Requirements:
+- Trust level > 20
+- Ongoing trade volume > 100,000 credits/month
+- No outstanding debts
+```
+
+#### Defense Pact
+```
+Benefits:
+- Automatic military support in conflicts
+- Shared intelligence network
+- Coordinated defense strategies
+- Emergency resource allocation
+
+Requirements:
+- Trust level > 60
+- Military strength parity (within 20%)
+- Shared territorial interests
+- Proven reliability in past conflicts
+```
+
+#### Research Consortium
+```
+Benefits:
+- Technology sharing agreements
+- Joint research projects
+- Shared laboratory access
+- Breakthrough innovation bonuses
+
+Requirements:
+- Trust level > 40
+- Compatible technological focus
+- Intellectual property agreements
+- Non-compete clauses
+```
+
+#### Criminal Syndicate
+```
+Benefits:
+- Underworld resource access
+- Smuggling route networks
+- Black market connections
+- Illegal operation support
+
+Requirements:
+- Trust level > 30 (but can be lower for criminal factions)
+- Shared criminal interests
+- Proven discretion
+- Mutual blackmail material
+```
+
+### Alliance Lifecycle
+
+#### Formation Phase
+1. **Initial Contact**: Diplomatic overtures or business proposals
+2. **Negotiation**: Terms, conditions, and mutual benefits
+3. **Ratification**: Formal agreement signing
+4. **Implementation**: Resource and personnel exchange begins
+
+#### Maintenance Phase
+1. **Regular Reviews**: Quarterly alliance performance assessment
+2. **Benefit Distribution**: Fair sharing of alliance advantages
+3. **Conflict Resolution**: Dispute mediation mechanisms
+4. **Adaptation**: Alliance terms adjustment based on changing conditions
+
+#### Dissolution Phase
+1. **Warning Signs**: Trust erosion, broken agreements
+2. **Negotiation Period**: Attempt to salvage relationship
+3. **Graceful Separation**: Controlled alliance termination
+4. **Consequence Management**: Handling post-alliance fallout
+
+## Dynamic Relationship Changes
+
+### Event-Driven Changes
+```yaml
+relationship_events:
+  successful_joint_operation:
+    trust_modifier: +15
+    duration: permanent
+    description: "Successful collaboration strengthens bonds"
+
+  betrayal_discovered:
+    trust_modifier: -50
+    duration: 30_days
+    description: "Betrayal causes permanent damage to relationship"
+
+  economic_crisis_shared:
+    trust_modifier: +25
+    duration: 90_days
+    description: "Shared hardship builds unexpected alliances"
+
+  territorial_dispute:
+    trust_modifier: -30
+    duration: ongoing
+    description: "Territorial conflicts create lasting tension"
+```
+
+### Player-Influenced Changes
+- **Diplomatic Missions**: Successful negotiations improve relations
+- **Trade Deals**: Profitable commerce builds economic ties
+- **Military Support**: Aid in conflicts strengthens military bonds
+- **Information Leaks**: Intel sharing or betrayal affects political trust
+
+### Time-Based Decay
+- **Natural Decay**: Relationships slowly return to neutral over time
+- **Active Maintenance**: Regular interactions prevent decay
+- **Catastrophic Events**: Major incidents cause rapid trust erosion
+
+## Faction Personalities
+
+### Corporate Factions
+- **Arasaka**: Paranoid, ruthless, long-term strategic thinkers
+- **Militech**: Aggressive, militaristic, short-term opportunists
+- **Biotechnica**: Pragmatic, profit-driven, scientifically oriented
+
+### Gang Factions
+- **Maelstrom**: Chaotic, violent, technology-obsessed
+- **Valentinos**: Traditional, family-oriented, honor-bound
+- **Mox**: Anarchistic, subversive, media-manipulative
+
+### Political Factions
+- **City Council**: Bureaucratic, corrupt, power-hungry
+- **Fixer Networks**: Mercenary, neutral, information-focused
+
+## Balance Considerations
+
+### Relationship Stability
+- Stronger alliances harder to break but more valuable
+- Weak relationships easier to change but less beneficial
+- Random events prevent relationship stagnation
+
+### Player Agency
+- Players can become "diplomats" specializing in faction relations
+- Reputation with one faction affects relationships with others
+- Personal actions can override faction-wide diplomacy
+
+### Performance Impact
+- Relationship calculations: O(n²) where n = active factions
+- Event processing: <50ms per relationship update
+- Memory usage: <100KB per faction relationship matrix

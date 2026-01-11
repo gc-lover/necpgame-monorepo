@@ -1,0 +1,248 @@
+# Issue: #140879674
+metadata:
+  id: architecture-game-mechanics-integration
+  title: "Архитектура Интеграции Игровых Механик (175 систем)"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2026-01-11T16:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - mechanics
+    - gameplay-service
+    - economy-service
+    - social-service
+    - world-service
+    - performance-critical
+  topics:
+    - game-mechanics-architecture
+    - cross-service-integration
+    - event-driven-mechanics
+    - performance-optimization
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+    - world-service
+    - event-bus
+  related_documents:
+    - id: mechanics-overview-index
+      relation: implements
+    - id: mechanics-combat-system-analysis
+      relation: integrates
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - systems
+
+review:
+  chain:
+    - role: architect
+      reviewer: Architecture Review Board
+      status: draft
+  next_actions:
+    - backend: "Реализовать event-bus для межсервисного взаимодействия"
+    - gameplay: "Интегрировать combat механики в gameplay-service"
+    - performance_engineer: "Оптимизировать cross-service calls"
+
+summary:
+  problem: Спроектировать архитектуру интеграции 175 игровых механик, распределенных по 4 микросервисам с поддержкой 50k одновременных игроков
+  goal: Создать cohesive систему, где все механики взаимодействуют через event-driven архитектуру с гарантированной производительностью
+  essence: Модульная event-driven архитектура с четким разделением ответственности между сервисами и оптимизированными cross-service коммуникациями
+  key_points:
+    - 175 механик интегрированы в 4 микросервиса
+    - Event-driven коммуникация между сервисами
+    - Performance-first подход с P99 <50ms
+    - Модульная архитектура с четкими контрактами
+
+architecture:
+  domain: gameplay-domain
+  purpose: "Интеграция всех игровых механик в cohesive MMOFPS систему"
+
+  performance_requirements:
+    load_targets: "5k req/sec, 50k concurrent users, P99 <50ms"
+    cross_service_calls: "Максимум 2 hops для любой механики"
+    event_throughput: "100k events/sec через event-bus"
+    data_model: "Модульные структуры с четкими интерфейсами"
+
+  microservices_architecture:
+    gameplay_service:
+      port: 8083
+      responsibility: "Core gameplay loop: combat, progression, PvP, matchmaking"
+      mechanics_count: 135  # combat + progression + skills + movement + gear
+      key_mechanics:
+        - Combat system (110 файлов)
+        - Progression system (21 файл)
+        - Skills & abilities (3 файла)
+        - Movement mechanics (5 файлов)
+        - Gear & weapons (5 файлов)
+      hot_paths:
+        - POST /api/v1/gameplay/combat/action (3k RPS)
+        - GET /api/v1/gameplay/player/state (2k RPS)
+        - POST /api/v1/gameplay/matchmaking/join (1k RPS)
+
+    economy_service:
+      port: 8085
+      responsibility: "Resource management: inventory, trading, crafting, loot"
+      mechanics_count: 129  # economy + items
+      key_mechanics:
+        - Economy system (122 файла)
+        - Items & inventory (7 файлов)
+        - Trading mechanics
+        - Crafting systems
+        - Loot generation
+      hot_paths:
+        - POST /api/v1/economy/trade/execute (2k RPS)
+        - GET /api/v1/economy/inventory/{player} (1.5k RPS)
+        - POST /api/v1/economy/craft/item (800 RPS)
+
+    social_service:
+      port: 8084
+      responsibility: "Social interactions: guilds, relationships, communication"
+      mechanics_count: 135  # social + romance
+      key_mechanics:
+        - Social system (130 файлов)
+        - Romance mechanics (5 файлов)
+        - Guild systems
+        - NPC relationships
+        - Communication protocols
+      hot_paths:
+        - POST /api/v1/social/message/send (5k RPS)
+        - GET /api/v1/social/guild/members (500 RPS)
+        - POST /api/v1/social/relationship/update (300 RPS)
+
+    world_service:
+      port: 8086
+      responsibility: "World state: events, territories, synchronization"
+      mechanics_count: 95  # world mechanics
+      key_mechanics:
+        - World events system
+        - Territory control
+        - Raid mechanics
+        - Dynamic world content
+        - State synchronization
+      hot_paths:
+        - GET /api/v1/world/events/active (1k RPS)
+        - POST /api/v1/world/territory/claim (200 RPS)
+        - GET /api/v1/world/state/delta (800 RPS)
+
+  event_driven_integration:
+    event_bus:
+      technology: "Apache Kafka + gRPC streaming"
+      throughput: "100k events/sec"
+      partitions: 16
+      retention: "24 hours"
+
+    core_events:
+      - PlayerCombatAction (gameplay → world)
+      - ItemTransaction (economy → social)
+      - GuildAction (social → economy)
+      - WorldEventTrigger (world → all services)
+      - PlayerProgression (gameplay → economy, social)
+
+    event_flow_patterns:
+      combat_to_economy: "Player defeats enemy → Loot generated → Inventory updated"
+      social_to_gameplay: "Guild buff applied → Player stats modified → Combat effectiveness changed"
+      world_to_all: "Global event starts → All services adjust mechanics → Players notified"
+
+  cross_service_contracts:
+    mechanics_interfaces:
+      ICombatMechanics:
+        - ExecuteAction(playerId, action) → CombatResult
+        - CalculateDamage(attacker, defender) → DamageInfo
+        - ApplyBuffs(playerId, buffs) → UpdatedStats
+
+      IEconomyMechanics:
+        - ProcessTransaction(buyer, seller, items) → TransactionResult
+        - GenerateLoot(enemyType, playerLevel) → LootItems
+        - UpdateInventory(playerId, changes) → InventoryState
+
+      ISocialMechanics:
+        - SendMessage(sender, recipient, content) → MessageResult
+        - UpdateRelationship(playerA, playerB, action) → RelationshipState
+        - ApplyGuildBuff(guildId, buffType) → GuildMembersUpdate
+
+      IWorldMechanics:
+        - TriggerEvent(eventType, location) → EventInstance
+        - UpdateTerritory(ownerId, territoryId) → TerritoryState
+        - SyncWorldState(players) → WorldStateDelta
+
+  performance_optimization:
+    caching_strategy:
+      redis_clusters:
+        - player_state_cache: "50k concurrent players, 1ms latency"
+        - mechanics_cache: "Frequently used mechanics configs"
+        - cross_service_cache: "Results of expensive cross-service calls"
+
+    batching_patterns:
+      - Combat actions batched per tick (50ms)
+      - Economy transactions batched per second
+      - Social updates batched per 100ms
+
+    connection_pooling:
+      - gRPC connections: 100 per service
+      - Database connections: 50 per service
+      - Redis connections: 20 per cluster
+
+  backend_optimization_plan:
+    memory_pooling: true
+    zero_allocation_hot_paths: true
+    batch_operations: true
+    async_processing: "Non-blocking event processing"
+    load_balancing: "Kubernetes HPA based on RPS"
+
+  integration_testing_requirements:
+    unit_tests: "Each mechanic individually"
+    integration_tests: "Cross-service interactions"
+    load_tests: "50k concurrent users, 5k RPS"
+    chaos_tests: "Service failures, network partitions"
+
+  sub_tasks:
+    - task: "Event Bus - Реализовать Apache Kafka инфраструктуру"
+      priority: high
+      assignee: backend
+      dependencies: []
+    - task: "API Designer - Создать OpenAPI контракты для всех сервисов"
+      priority: high
+      assignee: api_designer
+      dependencies: []
+    - task: "Backend - Интегрировать combat механики в gameplay-service"
+      priority: high
+      assignee: backend
+      dependencies: [event_bus, api_designer]
+    - task: "Backend - Интегрировать economy механики в economy-service"
+      priority: medium
+      assignee: backend
+      dependencies: [event_bus, api_designer]
+    - task: "Backend - Интегрировать social механики в social-service"
+      priority: medium
+      assignee: backend
+      dependencies: [event_bus, api_designer]
+    - task: "Backend - Интегрировать world механики в world-service"
+      priority: medium
+      assignee: backend
+      dependencies: [event_bus, api_designer]
+    - task: "Performance - Оптимизация cross-service коммуникаций"
+      priority: high
+      assignee: performance_engineer
+      dependencies: [backend_integration]
+    - task: "QA - Интеграционное тестирование всех механик"
+      priority: medium
+      assignee: qa
+      dependencies: [performance_optimization]
+
+references:
+  - title: "Game Mechanics Overview"
+    type: internal
+    url: "knowledge/mechanics/mechanics-overview.yaml"
+  - title: "Event-Driven Architecture Patterns"
+    type: external
+    url: "https://microservices.io/patterns/data/event-driven-architecture.html"
+  - title: "Apache Kafka Performance Tuning"
+    type: external
+    url: "https://kafka.apache.org/documentation/#performance"

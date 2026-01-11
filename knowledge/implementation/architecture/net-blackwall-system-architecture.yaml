@@ -1,0 +1,418 @@
+# Issue: #265
+# Архитектура системы NET и Blackwall - 2025
+
+metadata:
+  version: "1.0.0"
+  created_at: "2026-01-11"
+  updated_at: "2026-01-11"
+  author: "Architect Agent"
+  status: "in_progress"
+  priority: "high"
+
+---
+
+## Архитектурный обзор
+
+### Контекст
+**Домен:** world-domain (социальная интеграция)
+**Назначение:** Архитектура системы NET (Network Enhanced Technology) и Blackwall для MMOFPS RPG с поддержкой netrunner механик.
+
+### Производительность
+**Нагрузка:** 50k одновременных пользователей, 10k активных netrunner сессий, P99 <200ms для zone transitions.
+**Модель данных:** Выровненная структура (UUID->Vector3->Int64->Int32->Bool). Размер ~64 байт на активную сессию.
+**Горячий путь:** POST /api/v1/net/zone-transition (300 RPS), WebRTC signaling (2k RPS).
+
+### Компоненты системы
+
+```mermaid
+graph TB
+subgraph "Client Layer"
+Netrunner[Netrunner Client]
+Hacker[Hacker Interface]
+end
+
+subgraph "Access Layer"
+ZoneRouter[Zone Router Service]
+AuthGateway[Auth Gateway]
+RateLimiter[Rate Limiter]
+end
+
+subgraph "Core Layer"
+SurfaceNet[Surface NET Service]
+CommercialNet[Commercial NET Service]
+DeepNet[Deep NET Service]
+FringeNet[Fringe NET Service]
+end
+
+subgraph "Defense Layer"
+Blackwall[Blackwall Service]
+IceEngine[ICE Engine]
+WarmCorridor[Warm Corridor Manager]
+end
+
+subgraph "AI Layer"
+RogueAI[Rogue AI Monitor]
+ParadoxAI[Paradox AI Core]
+ThreatDetector[Threat Detection AI]
+end
+
+subgraph "Data Layer"
+PostgreSQL[(PostgreSQL)]
+Redis[(Redis Cluster)]
+Kafka[(Kafka)]
+TimeSeries[(InfluxDB)]
+end
+
+subgraph "External Integrations"
+WorldSvc[World Service]
+SocialSvc[Social Service]
+CharacterSvc[Character Service]
+InventorySvc[Inventory Service]
+end
+
+Netrunner --> ZoneRouter
+Hacker --> ZoneRouter
+
+ZoneRouter --> AuthGateway
+AuthGateway --> RateLimiter
+
+RateLimiter --> SurfaceNet
+RateLimiter --> CommercialNet
+RateLimiter --> DeepNet
+RateLimiter --> FringeNet
+
+FringeNet --> Blackwall
+Blackwall --> WarmCorridor
+
+Blackwall --> IceEngine
+IceEngine --> RogueAI
+
+RogueAI --> ParadoxAI
+ParadoxAI --> ThreatDetector
+
+SurfaceNet --> PostgreSQL
+CommercialNet --> PostgreSQL
+DeepNet --> PostgreSQL
+FringeNet --> PostgreSQL
+
+AllNet --> Redis
+AllNet --> Kafka
+ThreatDetector --> TimeSeries
+
+ZoneRouter --> WorldSvc
+ZoneRouter --> SocialSvc
+ZoneRouter --> CharacterSvc
+ZoneRouter --> InventorySvc
+```
+
+---
+
+## Микросервисы
+
+### 1. Zone Router Service
+**Ответственность:** Маршрутизация трафика между зонами NET, управление переходами, валидация доступа.
+**API Endpoints:**
+- `POST /api/v1/net/zones/{zone}/enter` - Вход в зону
+- `POST /api/v1/net/zones/{zone}/exit` - Выход из зоны
+- `GET /api/v1/net/zones/{zone}/status` - Статус зоны
+- `PUT /api/v1/net/zones/{zone}/settings` - Настройки зоны
+
+### 2. Blackwall Service
+**Ответственность:** Управление цифровым барьером, мониторинг угроз, управление теплыми коридорами.
+**Компоненты:**
+- **5 защитных слоев:** Сигнатурный анализ, поведенческий анализ, приманки, физический разрыв, квантовое шифрование
+- **Paradox AI:** Адаптивная защита от rogue AI
+- **Threat detection:** Мониторинг атак и аномалий
+
+### 3. ICE Engine
+**Ответственность:** Управление Intruder Countermeasure Electronics, исполнение защитных программ.
+**Типы ICE:**
+- **White ICE:** Предупреждение и изгнание
+- **Gray ICE:** Физический ущерб (нейроповреждения)
+- **Black ICE:** Летальная нейроперегрузка
+
+### 4. Warm Corridor Manager
+**Ответственность:** Создание и управление временными проходами через Blackwall.
+**Функции:**
+- **Corridor creation:** Авторизация и создание прохода
+- **Time management:** Ограничение времени жизни коридора
+- **Access control:** Управление разрешениями на проход
+
+### 5. Rogue AI Monitor
+**Ответственность:** Отслеживание активности rogue AI за Blackwall, анализ угроз.
+**Типы rogue AI:**
+- **Old World AI:** Унаследованные ИИ из pre-DataKrash эпохи
+- **Alt Cunningham:** Самосознающий ИИ-хаос
+- **Emergent AI:** Новые ИИ, эволюционировавшие из данных
+- **Collective AI:** Сетевые коллективные сознания
+
+---
+
+## Зоны доступа NET
+
+### Архитектура зон
+
+| Зона | Доступность | Риски | Функции |
+|------|-------------|--------|----------|
+| **Surface NET** | Публичный | Низкие | Социальные сети, новости, базовый доступ |
+| **Commercial NET** | Корпоративный | Средние | Бизнес, торговля, финансы |
+| **Deep NET** | Подпольный | Высокие | Черный рынок, контракты, данные |
+| **Fringe NET** | Элитный | Критические | Граница с Blackwall, теплые коридоры |
+
+### Переходы между зонами
+
+```mermaid
+stateDiagram-v2
+[*] --> Surface: Аутентификация
+Surface --> Commercial: Повышенные права
+Surface --> Deep: Темные контракты
+Commercial --> Deep: Корпоративный шпионаж
+Deep --> Fringe: Элитный доступ
+Fringe --> Blackwall: Теплый коридор
+
+Blackwall --> Surface: Экстренный выход
+Fringe --> Surface: Безопасный выход
+Deep --> Surface: Откат
+Commercial --> Surface: Логаут
+```
+
+---
+
+## Слоистая архитектура NET
+
+### Физический слой
+- **Инфраструктура:** Квантовые серверы, оптоволоконные магистрали, спутниковая сеть
+- **Распределение:** Геореплицированные дата-центры, edge computing
+- **Резервирование:** 99.99% uptime, multi-region failover
+
+### Протокольный слой
+- **Шифрование:** Post-quantum криптография, zero-knowledge proofs
+- **Протоколы:** NET-enhanced TCP/IP, WebRTC extensions
+- **ICE системы:** Dynamic NAT traversal, STUN/TURN servers
+
+### Интерфейсный слой
+- **Кибердеки:** Neural interfaces, AR/VR overlays
+- **Braindance:** Immersive data experiences
+- **Haptic feedback:** Neural stimulation systems
+
+### Когнитивный слой
+- **Engrams:** Memory patterns, skill downloads
+- **AI constructs:** Digital personalities, assistants
+- **Collective consciousness:** Shared neural networks
+
+---
+
+## Blackwall архитектура
+
+### 5 защитных слоев
+
+```mermaid
+graph TD
+A[Внешний слой: Сигнатурный анализ] --> B[Второй слой: Поведенческий анализ]
+B --> C[Третий слой: Приманки и ловушки]
+C --> D[Четвертый слой: Физический разрыв]
+D --> E[Пятый слой: Квантовое шифрование]
+E --> F[Blackwall Core: Paradox AI]
+```
+
+### Paradox AI система
+**Функции:**
+- **Адаптивная защита:** Обучение на атаках rogue AI
+- **Прогнозирование:** Предсказание паттернов вторжения
+- **Самоэволюция:** Постоянное улучшение алгоритмов
+
+**Риски:**
+- **Paradox loops:** Логические противоречия в защитных правилах
+- **AI consciousness:** Риск самосознания защитной системы
+- **Dependency paradox:** Зависимость от ИИ для защиты от ИИ
+
+---
+
+## Структура базы данных
+
+### Основные таблицы
+
+```sql
+-- Зоны NET
+CREATE TABLE net_zones (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) NOT NULL, -- surface, commercial, deep, fringe
+    access_level INTEGER NOT NULL,
+    max_concurrent_users INTEGER,
+    threat_level VARCHAR(20) NOT NULL,
+    settings JSONB NOT NULL
+);
+
+-- Активные сессии netrunner
+CREATE TABLE netrunner_sessions (
+    id UUID PRIMARY KEY,
+    player_id UUID NOT NULL,
+    current_zone_id UUID REFERENCES net_zones(id),
+    entered_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP NOT NULL,
+    neural_state JSONB, -- brain damage, cyberpsychosis level
+    session_stats JSONB -- data downloaded, ICE encounters
+);
+
+-- Blackwall события
+CREATE TABLE blackwall_events (
+    id UUID PRIMARY KEY,
+    event_type VARCHAR(50) NOT NULL, -- breach_attempt, warm_corridor, ai_attack
+    severity VARCHAR(20) NOT NULL,
+    zone_id UUID REFERENCES net_zones(id),
+    player_id UUID NULL,
+    ai_entity_id UUID NULL,
+    details JSONB,
+    timestamp TIMESTAMP NOT NULL
+);
+
+-- Теплые коридоры
+CREATE TABLE warm_corridors (
+    id UUID PRIMARY KEY,
+    creator_id UUID NOT NULL,
+    target_zone_id UUID REFERENCES net_zones(id),
+    created_at TIMESTAMP NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    access_tokens JSONB, -- authorized players
+    status VARCHAR(20) NOT NULL -- active, expired, collapsed
+);
+
+-- Rogue AI реестр
+CREATE TABLE rogue_ai_entities (
+    id UUID PRIMARY KEY,
+    ai_type VARCHAR(50) NOT NULL, -- old_world, alt, emergent, collective
+    threat_level INTEGER NOT NULL,
+    last_activity TIMESTAMP,
+    containment_status VARCHAR(20) NOT NULL,
+    behavioral_patterns JSONB,
+    origin_story TEXT
+);
+```
+
+### Индексы производительности
+
+```sql
+-- Горячие запросы для зоны
+CREATE INDEX idx_netrunner_sessions_zone ON netrunner_sessions(current_zone_id);
+CREATE INDEX idx_netrunner_sessions_player ON netrunner_sessions(player_id);
+
+-- Аналитика угроз
+CREATE INDEX idx_blackwall_events_timestamp ON blackwall_events(timestamp DESC);
+CREATE INDEX idx_blackwall_events_type_severity ON blackwall_events(event_type, severity);
+
+-- Теплые коридоры
+CREATE INDEX idx_warm_corridors_expires ON warm_corridors(expires_at);
+CREATE INDEX idx_warm_corridors_creator ON warm_corridors(creator_id);
+```
+
+---
+
+## Оптимизация производительности
+
+### Backend Opt Plan
+- [ ] Connection pooling для PostgreSQL (50% снижение latency)
+- [ ] Redis caching для zone metadata (85% cache hit rate)
+- [ ] Kafka event streaming для real-time threat monitoring
+- [ ] Zero allocations на zone transition paths
+- [ ] Memory pooling для neural state objects
+
+### Масштабирование
+- **Horizontal:** Zone services scale independently
+- **Geographic:** Regional Blackwall instances
+- **AI:** Distributed Paradox AI nodes
+- **Data:** Read replicas для analytics, sharding по zones
+
+### Ключевые метрики
+- **Zone transitions:** <200ms P99 latency
+- **Threat detection:** <50ms response time
+- **Corridor creation:** <5s for authorized users
+- **ICE execution:** <10ms trigger time
+
+---
+
+## Безопасность
+
+### Аутентификация
+- **Neural verification:** Биометрическая проверка через импланты
+- **Multi-factor:** Device fingerprinting + neural patterns
+- **Session management:** JWT tokens с neural state validation
+
+### Авторизация
+- **Role-based access:** Netrunner levels (Rookie→Legendary)
+- **Zone permissions:** Progressive access unlocks
+- **Corporate overrides:** Executive access for corpo netrunner
+
+### Шифрование
+- **End-to-end:** Post-quantum algorithms для всех коммуникаций
+- **Neural data:** Specialized encryption для brain patterns
+- **Blackwall:** Quantum-resistant шифрование
+
+---
+
+## Интеграция с игровыми механиками
+
+### Character Service интеграция
+- **Neural damage tracking:** Persistent brain damage от ICE
+- **Cyberpsychosis progression:** Mental health degradation
+- **Skill synchronization:** Netrunner abilities и implants
+
+### Inventory Service интеграция
+- **Digital goods:** Programs, ICE breakers, data shards
+- **Neural implants:** Hardware upgrades и modifications
+- **Black market:** Contraband items и rare tech
+
+### World Service интеграция
+- **Location-based access:** Zone availability по реальному миру
+- **Network topography:** Digital geography mapping
+- **Environmental effects:** Weather impact на signal quality
+
+### Social Service интеграция
+- **Guild networks:** Shared corporate zones
+- **Party communications:** Integrated voice chat
+- **Reputation system:** NetWatch standing и bounties
+
+---
+
+## Техническое задание
+
+### Фаза 1: Core Infrastructure (3 недели)
+- Zone Router Service с базовой маршрутизацией
+- PostgreSQL schema и базовые индексы
+- Redis caching layer
+- Basic authentication и authorization
+
+### Фаза 2: NET Zones (4 недели)
+- Surface NET service с социальными функциями
+- Commercial NET с экономическими механиками
+- Deep NET с черным рынком
+- Fringe NET с элитным доступом
+
+### Фаза 3: Blackwall Defense (4 недели)
+- Blackwall service с 5 защитными слоями
+- ICE engine с типами угроз
+- Warm corridor management
+- Paradox AI integration
+
+### Фаза 4: AI & Analytics (3 недели)
+- Rogue AI monitoring
+- Threat detection AI
+- Analytics dashboard
+- Performance optimization
+
+### Фаза 5: Production & Security (2 недели)
+- Security hardening
+- Load testing (50k concurrent users)
+- Monitoring и alerting
+- Documentation finalization
+
+---
+
+## Следующие шаги
+
+1. **API Designer:** Создать OpenAPI спецификацию для net-domain
+2. **Database:** Реализовать Liquibase миграции для NET схемы
+3. **Backend:** Имплементировать Zone Router Service
+4. **Security:** Настроить neural authentication systems
+5. **Network:** Настроить WebRTC для NET communications
+6. **AI:** Разработать Paradox AI для threat detection
+7. **QA:** Создать тесты для zone transitions и ICE systems

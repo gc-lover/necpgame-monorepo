@@ -1,0 +1,230 @@
+# Issue: #140880271
+metadata:
+  id: architecture-narrative-coherence-integration
+  title: "Архитектура Интеграции Narrative Coherence System"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2026-01-11T16:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - narrative-domain
+    - narrative-coherence
+    - content-integration
+    - performance-critical
+  topics:
+    - narrative-coherence-architecture
+    - content-delivery-system
+    - quest-dependency-management
+    - timeline-based-narrative
+  related_systems:
+    - narrative-service
+    - world-service
+    - gameplay-service
+    - content-delivery-service
+  related_documents:
+    - id: canon-narrative-coherence-final-summary
+      relation: implements
+    - id: canon-narrative-coherence-tech-ready
+      relation: integrates
+  visibility: internal
+  audience:
+    - backend
+    - narrative
+    - content
+
+review:
+  chain:
+    - role: architect
+      reviewer: Architecture Review Board
+      status: draft
+  next_actions:
+    - backend: "Реализовать narrative-service с coherence engine"
+    - content: "Интегрировать quest dependencies в content pipeline"
+
+summary:
+  problem: Спроектировать архитектуру интеграции готовой Narrative Coherence System (56 файлов, 99.6% качество) для 50k одновременных игроков
+  goal: Создать высокопроизводительную систему управления нарративными зависимостями с timeline-based контентом и quest coherence
+  essence: Event-driven narrative engine с графовой моделью зависимостей, оптимизированный для MMOFPS с поддержкой динамических quest chains
+  key_points:
+    - Интеграция 56 файлов Narrative Coherence в narrative-service
+    - Графовая модель зависимостей для 550+ квестов
+    - Timeline-based narrative progression
+    - Performance-first для 50k concurrent players
+
+architecture:
+  domain: narrative-domain
+  purpose: "Интеграция Narrative Coherence System в игровую архитектуру"
+
+  performance_requirements:
+    load_targets: "5k narrative req/sec, 50k concurrent players, P99 <100ms"
+    data_model: "Graph structures: QuestNode (48b), DependencyEdge (32b), TimelineState (64b)"
+    hot_paths:
+      - GET /api/narrative/player/{id}/available-quests (2k RPS)
+      - POST /api/narrative/quest/{id}/complete (1.5k RPS)
+      - GET /api/narrative/timeline/{year}/content (800 RPS)
+    cold_paths:
+      - Admin: narrative coherence validation (<100 RPS)
+      - Content: quest graph updates (<200 RPS)
+
+  narrative_service_architecture:
+    responsibility: "Управление нарративной целостностью, quest dependencies и timeline progression"
+    technology: Go + PostgreSQL + Redis
+    optimization_level: 2
+    database: PostgreSQL (graph extensions) + Redis (cache)
+
+    core_components:
+      - coherence_engine: "Графовый движок зависимостей квестов"
+      - timeline_manager: "Управление timeline-based контентом"
+      - dependency_resolver: "Разрешение quest prerequisites"
+      - state_persistence: "Сохранение narrative state игроков"
+
+    api_endpoints:
+      - GET /api/narrative/coherence/validate - валидация coherence
+      - GET /api/narrative/quest/{id}/dependencies - зависимости квеста
+      - POST /api/narrative/player/{id}/progress - обновление прогресса
+      - GET /api/narrative/timeline/{year}/quests - квесты по timeline
+
+  coherence_system_integration:
+    existing_artifacts:
+      total_files: 56
+      yaml_documents: 45
+      sql_migrations: 7
+      python_scripts: 1
+      quality_score: "99.6/100"
+
+    integration_layers:
+      - data_layer: "SQL migrations → PostgreSQL tables"
+      - graph_layer: "Quest dependencies → Graph database extensions"
+      - cache_layer: "Frequently accessed coherence data → Redis"
+      - api_layer: "REST/gRPC endpoints for game clients"
+
+    quest_graph_model:
+      nodes:
+        - quest_node: "Основной квест с metadata"
+        - branch_node: "Ветвление сюжета"
+        - event_node: "World event trigger"
+      edges:
+        - prerequisite: "Требуется для разблокировки"
+        - blocker: "Блокирует выполнение"
+        - trigger: "Автоматически запускает"
+        - consequence: "Результат выполнения"
+
+  timeline_narrative_system:
+    timeline_support:
+      periods: "2020-2093 (74 года)"
+      granularity: "По годам с возможностью месячной детализации"
+      content_types:
+        - quest_unlocks: "Новые квесты по timeline"
+        - event_triggers: "Автоматические события"
+        - content_mutation: "Изменение существующего контента"
+
+    player_timeline_state:
+      current_year: "Текущий год игрока"
+      completed_quests: "Массив завершенных квестов"
+      active_branches: "Активные сюжетные ветви"
+      coherence_score: "Уровень narrative coherence (0-100)"
+
+  performance_optimizations:
+    caching_strategy:
+      redis_clusters:
+        - quest_graph_cache: "Граф зависимостей квестов"
+        - player_narrative_cache: "Narrative state игроков"
+        - timeline_content_cache: "Timeline-specific контент"
+
+    database_optimizations:
+      - graph_extensions: "PostgreSQL Graph extensions для quest dependencies"
+      - spatial_indexes: "Для географически зависимых квестов"
+      - partitioned_tables: "По timeline периодам"
+
+    query_optimization:
+      - precomputed_paths: "Предварительно рассчитанные пути в графе"
+      - batch_loading: "Групповая загрузка зависимостей"
+      - lazy_evaluation: "Отложенное вычисление complex coherence rules"
+
+  event_driven_narrative:
+    narrative_events:
+      - QuestCompleted: "Квест завершен → проверить зависимости"
+      - TimelineAdvanced: "Timeline продвинулся → разблокировать контент"
+      - PlayerAction: "Действие игрока → проверить narrative triggers"
+      - WorldEvent: "Глобальное событие → обновить quest availability"
+
+    integration_with_gameplay:
+      - quest_service: "Quest availability based on coherence"
+      - world_service: "Timeline events trigger narrative changes"
+      - social_service: "Player relationships affect quest branches"
+
+  content_delivery_integration:
+    streaming_content:
+      lod_levels:
+        - level_0: "Full narrative context (active quests)"
+        - level_1: "Quest summaries (nearby locations)"
+        - level_2: "Quest stubs (distant locations)"
+        - level_3: "Metadata only (inactive timeline)"
+
+    content_preloading:
+      radius_based: "Preload narrative content within player radius"
+      timeline_based: "Preload upcoming timeline content"
+      dependency_based: "Preload quest prerequisites"
+
+  backend_optimization_plan:
+    memory_pooling: true
+    zero_allocation_hot_paths: true
+    connection_pooling: "PostgreSQL + Redis pools"
+    async_processing: "Event-driven narrative updates"
+    load_balancing: "Kubernetes HPA based on narrative load"
+
+  validation_requirements:
+    coherence_checks:
+      - quest_dependencies: "Все prerequisites правильно resolved"
+      - timeline_consistency: "Content matches timeline periods"
+      - player_state_integrity: "Narrative state не имеет конфликтов"
+
+    performance_tests:
+      - concurrent_users: "50k simultaneous narrative queries"
+      - quest_resolution: "P99 <100ms for dependency resolution"
+      - timeline_advancement: "Bulk updates within 500ms"
+
+  sub_tasks:
+    - task: "Database - Применить SQL миграции из phase4-database"
+      priority: high
+      assignee: database
+      dependencies: []
+    - task: "Backend - Реализовать narrative-service с coherence engine"
+      priority: high
+      assignee: backend
+      dependencies: [database]
+    - task: "API Designer - Создать OpenAPI для narrative-service"
+      priority: high
+      assignee: api_designer
+      dependencies: []
+    - task: "Content - Интегрировать quest graph в content delivery"
+      priority: medium
+      assignee: content
+      dependencies: [backend, api_designer]
+    - task: "Performance - Оптимизировать graph queries для 50k players"
+      priority: high
+      assignee: performance_engineer
+      dependencies: [backend]
+    - task: "QA - Тестирование narrative coherence в production"
+      priority: medium
+      assignee: qa
+      dependencies: [performance_engineer]
+
+references:
+  - title: "Narrative Coherence System Overview"
+    type: internal
+    url: "knowledge/canon/narrative/narrative-coherence/README.yaml"
+  - title: "Final Summary - Narrative Coherence"
+    type: internal
+    url: "knowledge/canon/narrative/narrative-coherence/ФИНАЛЬНАЯ-СВОДКА.yaml"
+  - title: "Graph Database Patterns"
+    type: external
+    url: "https://neo4j.com/developer/graph-database/"
+  - title: "Event-Driven Architecture"
+    type: internal
+    url: "infrastructure/event-sourcing-patterns.md"

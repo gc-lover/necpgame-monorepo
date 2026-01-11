@@ -5,6 +5,7 @@
 ## 📂 Структура
 
 ### Общие команды
+- `agent-main-prompt.md` - **ОСНОВНОЙ ПРОМПТ** для работы всех агентов
 - `github-integration.md` - **ОБЯЗАТЕЛЬНО** для работы с GitHub Issues через CLI
 - `common-validation.md` - валидация кода и спецификаций
 
@@ -13,19 +14,45 @@
 
 ## 🔧 Основные команды
 
-### Работа с GitHub Issues (GitHub CLI)
-```bash
-# Поиск задач
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
+### Работа с GitHub Projects (MCP)
+```javascript
+// Поиск задач
+await mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Backend" Status:"Todo"'
+});
 
-# Взятие задачи
-gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+// Взятие задачи (In Progress)
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: itemId,
+  updated_field: {
+    id: '239690516', // Status field
+    value: '83d488e7' // In Progress
+  }
+});
 
-# Передача следующему агенту
-gh issue comment 123 --body '[OK] Work completed. Handed off to Network. Issue: #123'
-
-# Закрытие задачи
-gh issue close 123 --comment 'Task completed successfully'
+// Передача задачи
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: itemId,
+  updated_field: [
+    {
+      id: '239690516', // Status field
+      value: 'f75ad846' // Todo
+    },
+    {
+      id: '243899542', // Agent field
+      value: 'c60ebab1' // Network agent
+    }
+  ]
+});
 ```
 
 **Детали:** `github-integration.md`
@@ -48,15 +75,16 @@ python scripts/migrations/validate-all-migrations.py
 
 | Категория | Статус | Комментарий |
 |-----------|--------|-------------|
-| **GitHub CLI** | ✅ Активно | Основной способ работы с задачами |
+| **MCP GitHub** | ✅ Активно | Основной способ работы с задачами через Projects API |
 | **Валидация** | ✅ Активно | Обязательно для всех агентов |
-| **MCP** | ❌ Устарело | Переход на GitHub CLI |
-| **Специфические** | ⚠️ Устарело | Использовать GitHub CLI вместо скриптов |
+| **GitHub CLI** | ❌ Устарело | НЕ использовать для изменения статусов (только лейблы) |
+| **Специфические** | ⚠️ Устарело | Использовать MCP вместо скриптов |
 
 ## 🚀 Быстрый старт
 
-1. **AGENT_QUICK_START.md** - главный гайд для агентов
-2. **github-integration.md** - все команды GitHub CLI для GitHub
-3. **common-validation.md** - валидация кода
+1. **agent-main-prompt.md** - **ОСНОВНОЙ ПРОМПТ** для автономной работы агентов
+2. **AGENT_QUICK_START.md** - главный гайд для агентов
+3. **github-integration.md** - команды MCP для работы с GitHub Projects
+4. **common-validation.md** - валидация кода
 
-Все операции через GitHub CLI - никаких MCP команд.
+Все операции через MCP GitHub - никаких GitHub CLI команд для статусов.

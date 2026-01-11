@@ -1,0 +1,362 @@
+# Issue: #2170
+# Faction Diplomacy Reputation & Influence System
+
+## Overview
+Репутация - валюта дипломатии. Ваша репутация с фракциями определяет доступ к миссиям, торговым сделкам и политическому влиянию в Night City.
+
+## Reputation Framework
+
+### Multi-Dimensional Reputation
+```yaml
+reputation_matrix:
+  economic_reputation:
+    description: "Business reliability and trade history"
+    range: -100 to +100
+    impact: trade_deals, contract_offers, credit_limits
+
+  military_reputation:
+    description: "Combat effectiveness and mercenary value"
+    range: -100 to +100
+    impact: mission_offers, alliance_proposals, bounty_status
+
+  social_reputation:
+    description: "Personal honor and social standing"
+    range: -100 to +100
+    impact: social_events, personal_relationships, public_opinion
+
+  underworld_reputation:
+    description: "Criminal credibility and fixer network access"
+    range: -100 to +100
+    impact: black_market_access, smuggling_routes, fixer_contacts
+```
+
+### Reputation Tiers
+```yaml
+reputation_tiers:
+  legendary_hero: 90-100
+    benefits: exclusive_missions, leader_access, faction_champions
+    requirements: major_achievements, consistent_loyalty
+
+  trusted_ally: 70-89
+    benefits: priority_missions, discounted_services, alliance_voting
+    requirements: proven_reliability, significant_contributions
+
+  valued_partner: 50-69
+    benefits: standard_missions, market_access, basic_alliances
+    requirements: consistent_performance, moderate_contributions
+
+  neutral_party: -49 to +49
+    benefits: basic_services, standard_rates, limited_access
+    requirements: no_major_incidents, minimal_engagement
+
+  persona_non_grata: -70 to -50
+    benefits: restricted_access, increased_costs, bounty_risks
+    requirements: minor_betrayals, unreliable_behavior
+
+  wanted_criminal: -100 to -71
+    benefits: black_market_only, hostile_territory, constant_pursuit
+    requirements: major_betrayals, criminal_activities
+```
+
+## Influence Mechanics
+
+### Influence Currency
+```yaml
+influence_points:
+  generation_sources:
+    - mission_completion: +10-50_points
+    - trade_deals: +5-25_points_per_100k_credits
+    - social_events: +15-30_points
+    - faction_achievements: +100-500_points
+
+  spending_mechanisms:
+    - mission_priority: 50_points
+    - trade_negotiations: 25_points
+    - information_access: 75_points
+    - emergency_services: 100_points
+
+  decay_mechanisms:
+    - inactivity_penalty: -5_points_per_week
+    - failed_missions: -25_points
+    - reputation_damage: -10_points_per_incident
+```
+
+### Influence Effects
+```yaml
+influence_applications:
+  diplomatic_immunity:
+    cost: 200_points
+    duration: 24_hours
+    effect: ignore_faction_restrictions
+
+  emergency_extraction:
+    cost: 150_points
+    effect: faction_provided_escape_vehicle
+
+  information_network:
+    cost: 300_points_monthly
+    effect: real_time_intelligence_updates
+
+  favor_redemption:
+    cost: variable
+    effect: one_time_faction_service
+```
+
+## Reputation Events
+
+### Positive Reputation Builders
+```yaml
+reputation_events_positive:
+  successful_negotiation:
+    trigger: completed_trade_deal
+    reputation_gain: +15_economic
+    influence_bonus: +25_points
+
+  heroic_rescue:
+    trigger: saved_faction_members
+    reputation_gain: +20_social
+    influence_bonus: +50_points
+
+  battlefield_victory:
+    trigger: won_major_engagement
+    reputation_gain: +25_military
+    influence_bonus: +75_points
+
+  information_leak_prevention:
+    trigger: stopped_corporate_espionage
+    reputation_gain: +30_combined
+    influence_bonus: +100_points
+```
+
+### Negative Reputation Events
+```yaml
+reputation_events_negative:
+  failed_delivery:
+    trigger: missed_trade_deadline
+    reputation_loss: -10_economic
+    influence_penalty: -15_points
+
+  betrayal_discovered:
+    trigger: sold_out_faction
+    reputation_loss: -50_combined
+    influence_penalty: -200_points
+
+  civilian_casualties:
+    trigger: caused_unintended_harm
+    reputation_loss: -25_social
+    influence_penalty: -50_points
+
+  corporate_espionage:
+    trigger: stolen_trade_secrets
+    reputation_loss: -40_economic
+    influence_penalty: -75_points
+```
+
+## Social Dynamics
+
+### Personal Relationships
+```yaml
+personal_connections:
+  faction_leader:
+    requirements: reputation_80+, major_achievements
+    benefits: direct_communication, special_missions
+    maintenance: regular_interaction
+
+  mid_level_manager:
+    requirements: reputation_50+, consistent_service
+    benefits: insider_information, priority_requests
+    maintenance: quarterly_checkins
+
+  street_level_contacts:
+    requirements: reputation_20+, local_activities
+    benefits: ground_intelligence, safe_houses
+    maintenance: monthly_interaction
+```
+
+### Social Network Effects
+```yaml
+network_influence:
+  connection_bonuses:
+    - friend_of_friend: +5%_reputation_gain
+    - mutual_contacts: +10%_mission_success
+    - social_events: +15%_influence_generation
+
+  network_penalties:
+    - burned_bridge: -10%_access_to_network
+    - social_scandal: -20%_relationship_recovery
+    - network_blacklist: complete_social_isolation
+```
+
+## Public Perception
+
+### Media Influence
+```yaml
+media_reputation:
+  news_coverage:
+    positive_story: +10_public_opinion
+    negative_exposure: -15_public_opinion
+    neutral_reporting: 0_change
+
+  viral_events:
+    heroic_video: +25_public_opinion
+    scandal_footage: -30_public_opinion
+    neutral_viral: +5_public_opinion
+
+  media_manipulation:
+    bribe_journalist: 5000_credits, +15_opinion
+    plant_story: 10000_credits, +20_opinion
+    suppress_scandal: 15000_credits, -10_opinion_penalty
+```
+
+### Public Opinion Impact
+```yaml
+public_opinion_effects:
+  high_approval: 70-100
+    - discounted_services: -20%
+    - mission_offers: +50%_availability
+    - social_events: automatic_invites
+
+  neutral_approval: -29 to +69
+    - standard_rates: 0%_modifier
+    - normal_access: baseline_availability
+    - social_events: application_required
+
+  low_approval: -100 to -30
+    - increased_costs: +30%
+    - restricted_access: limited_services
+    - social_events: invitation_only
+```
+
+## Reputation Recovery
+
+### Redemption Arcs
+```yaml
+redemption_mechanisms:
+  community_service:
+    type: public_works_missions
+    reputation_gain: +5_per_mission
+    influence_cost: 25_points
+
+  atonement_quests:
+    type: faction_redemption_missions
+    reputation_gain: +20-50_per_completion
+    requirements: personal_sacrifice
+
+  public_relations:
+    type: media_campaigns
+    reputation_gain: +10-30_per_campaign
+    cost: 5000-25000_credits
+```
+
+### Time-Based Recovery
+```yaml
+reputation_decay:
+  natural_recovery:
+    rate: +1_point_per_day
+    cap: 50%_of_max_penalty
+    conditions: no_new_incidents
+
+  accelerated_recovery:
+    rate: +5_points_per_day
+    cost: influence_points
+    requirements: active_redemption
+
+  permanent_scars:
+    threshold: -80_reputation
+    effect: permanent_modifiers
+    recovery_cap: 75%_maximum_reputation
+```
+
+## Influence Networks
+
+### Faction Web
+```yaml
+influence_network:
+  node_types:
+    - faction_leaders: high_influence_nodes
+    - key_figures: medium_influence_nodes
+    - street_contacts: low_influence_nodes
+
+  connection_types:
+    - direct_alliance: strong_bidirectional
+    - trade_partnership: economic_bidirectional
+    - personal_loyalty: character_specific
+    - blackmail_material: coercive_connection
+
+  network_analysis:
+    centrality_score: influence_measurement
+    bridge_nodes: critical_connections
+    cluster_coefficient: faction_grouping_strength
+```
+
+### Power Brokering
+```yaml
+power_brokering:
+  influence_trading:
+    buy_favor: 100_influence_points
+    sell_information: 50_influence_points
+    arrange_meeting: 75_influence_points
+
+  network_manipulation:
+    create_connection: 200_influence_points
+    sever_relationship: 150_influence_points
+    amplify_message: 300_influence_points
+```
+
+## Advanced Features
+
+### Reputation Inheritance
+```yaml
+legacy_system:
+  family_reputation:
+    inherited_value: 25%_of_parent_reputation
+    transfer_conditions: blood_relation_proven
+    decay_rate: 50%_per_generation
+
+  corporate_legacy:
+    inherited_value: 50%_of_predecessor_reputation
+    transfer_conditions: official_succession
+    decay_rate: 25%_per_succession
+```
+
+### Dynamic Reputation Events
+```yaml
+random_events:
+  reputation_crisis:
+    trigger: random_chance
+    effect: sudden_reputation_drop
+    resolution: emergency_pr_response
+
+  reputation_boom:
+    trigger: viral_success
+    effect: rapid_reputation_gain
+    duration: temporary_bonus
+
+  reputation_shift:
+    trigger: world_events
+    effect: global_reputation_modifier
+    scope: faction_wide
+```
+
+## Balance Considerations
+
+### Reputation Velocity
+- **Gain Rate**: Balanced to require meaningful actions
+- **Loss Rate**: Severe enough to encourage careful decisions
+- **Recovery Rate**: Possible but requires effort
+
+### Influence Economy
+- **Inflation Control**: Point generation tied to meaningful actions
+- **Sink Mechanisms**: Enough spending opportunities to prevent hoarding
+- **Value Scaling**: Point costs increase with player power level
+
+### Social Complexity
+- **Network Depth**: Layered relationships prevent overwhelming complexity
+- **Information Clarity**: Clear feedback on reputation and influence states
+- **Meaningful Choices**: Decisions have visible long-term consequences
+
+### Performance Requirements
+- **Reputation Calculations**: <10ms per player action
+- **Influence Updates**: <5ms per transaction
+- **Network Analysis**: <50ms per global update
+- **Memory Usage**: <100KB per player reputation profile

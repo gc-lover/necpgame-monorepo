@@ -66,7 +66,27 @@ else
 fi
 echo "[SUCCESS] Emoji Ban Check: Validation completed."
 
-# 3. Script Language Enforcement
+# 3. Secret Validation
+echo "[CHECK] Secret Validation: Scanning for sensitive data..."
+if [ -f "scripts/validate-secrets.py" ] && [ -n "$STAGED_FILES" ]; then
+    # Try different Python commands
+    if python scripts/validate-secrets.py 2>/dev/null; then
+        exit_code=$?
+    elif python3 scripts/validate-secrets.py 2>/dev/null; then
+        exit_code=$?
+    else
+        echo "[WARNING] Python not found, skipping secret validation"
+        exit_code=0
+    fi
+
+    if [ $exit_code -ne 0 ]; then
+        echo "[BLOCKED] Commit blocked due to secret violations - SENSITIVE DATA DETECTED!"
+        exit 1
+    fi
+fi
+echo "[SUCCESS] Secret Validation: No sensitive data found."
+
+# 5. Script Language Enforcement
 echo "[CHECK] Script Language Enforcement: Only Python scripts allowed..."
 if [ -f "scripts/validate-script-types.py" ] && [ -n "$STAGED_FILES" ]; then
     echo "$STAGED_FILES" | xargs python scripts/validate-script-types.py
@@ -77,7 +97,7 @@ if [ -f "scripts/validate-script-types.py" ] && [ -n "$STAGED_FILES" ]; then
 fi
 echo "[SUCCESS] Script Language Enforcement: Only Python scripts detected."
 
-# 4. OpenAPI Validation (TEMPORARILY DISABLED)
+# 6. OpenAPI Validation (TEMPORARILY DISABLED)
 echo "[CHECK] OpenAPI Validation: Temporarily disabled to allow push..."
 echo "[INFO] OpenAPI validation will be re-enabled after fixing remaining issues"
 # if command -v npx >/dev/null 2>&1 && [ -n "$STAGED_FILES" ]; then

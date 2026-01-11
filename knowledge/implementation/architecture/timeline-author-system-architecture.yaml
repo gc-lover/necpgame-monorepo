@@ -1,0 +1,267 @@
+# Issue: #140880405
+metadata:
+  id: architecture-timeline-author-system
+  title: "Архитектура Timeline Author System (1500+ документов)"
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: "1.0.0"
+  last_updated: 2026-01-11T16:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - timeline-domain
+    - quest-system
+    - regional-content
+    - content-streaming
+    - performance-critical
+  topics:
+    - timeline-author-architecture
+    - quest-management-system
+    - regional-content-delivery
+    - timeline-based-progression
+    - content-preloading
+  related_systems:
+    - timeline-service
+    - quest-service
+    - region-service
+    - content-delivery-service
+  related_documents:
+    - id: canon-lore-timeline-author
+      relation: implements
+    - id: mechanics-quest-system
+      relation: integrates
+  visibility: internal
+  audience:
+    - backend
+    - content
+    - narrative
+
+review:
+  chain:
+    - role: architect
+      reviewer: Architecture Review Board
+      status: draft
+  next_actions:
+    - backend: "Реализовать timeline-service с quest management"
+    - content: "Интегрировать regional content delivery"
+
+summary:
+  problem: Спроектировать масштабируемую архитектуру для управления 1500+ timeline-based документов квестов и регионов для 50k игроков
+  goal: Создать высокопроизводительную систему timeline-based контента с региональными квестами, оптимизированную для MMOFPS
+  essence: Распределенная архитектура с timeline indexing, regional sharding и content streaming, обеспечивающая P99 <50ms для quest operations
+  key_points:
+    - 1500+ документов квестов и регионов по timeline
+    - Regional sharding для географического распределения
+    - Timeline indexing для быстрого поиска контента
+    - Content streaming с LOD для 50k concurrent players
+
+architecture:
+  domain: timeline-domain
+  purpose: "Управление timeline-based контентом квестов и регионов"
+
+  performance_requirements:
+    load_targets: "5k timeline req/sec, 50k concurrent players, P99 <50ms"
+    data_model: "QuestNode (96b), RegionState (128b), TimelineIndex (64b), PlayerProgress (80b)"
+    hot_paths:
+      - GET /api/timeline/quests/available (2k RPS) - доступные квесты
+      - POST /api/timeline/quest/{id}/start (1.5k RPS) - старт квеста
+      - GET /api/timeline/region/{id}/content (800 RPS) - региональный контент
+    cold_paths:
+      - Admin: timeline analytics (<100 RPS)
+      - Content: quest updates (<200 RPS)
+
+  timeline_service_architecture:
+    responsibility: "Основной сервис управления timeline и квестами"
+    technology: Go + PostgreSQL + Redis + Elasticsearch
+    optimization_level: 3
+
+    core_components:
+      - timeline_engine: "Управление timeline progression (2020-2093)"
+      - quest_manager: "Управление квестами и их зависимостями"
+      - region_manager: "Управление региональным контентом"
+      - progress_tracker: "Отслеживание прогресса игроков"
+
+    timeline_structure:
+      periods: "10-летние периоды (2020-2029, 2030-2039, etc.)"
+      total_periods: 8
+      total_years: 74
+      progression_rate: "6 месяцев реального = 70 лет игрового времени"
+
+  regional_content_system:
+    responsibility: "Управление контентом по регионам и городам"
+    technology: Go + PostgreSQL PostGIS + CDN
+    optimization_level: 2
+
+    regional_hierarchy:
+      continents: 8
+      regions: 50+
+      cities: 200+
+      districts: 1000+
+
+    content_distribution:
+      - geographic_sharding: "Контент по географическим регионам"
+      - timeline_sharding: "Контент по timeline периодам"
+      - player_sharding: "Контент по локации игрока"
+
+  quest_management_system:
+    responsibility: "Управление системой квестов с зависимостями"
+    technology: Go + Neo4j/GraphDB + Redis
+    optimization_level: 3
+
+    quest_types:
+      - main_quests: "Основные сюжетные линии"
+      - side_quests: "Побочные задания"
+      - faction_quests: "Квесты фракций"
+      - dynamic_quests: "Генерируемые квесты"
+
+    dependency_system:
+      - prerequisite_quests: "Требуемые квесты"
+      - timeline_requirements: "Timeline период"
+      - region_requirements: "Региональная доступность"
+      - faction_requirements: "Фракционная лояльность"
+
+  content_streaming_engine:
+    responsibility: "Потоковая доставка контента с LOD"
+    technology: Go + CDN + Redis
+    optimization_level: 2
+
+    lod_system:
+      level_0: "Полный контент - активная зона игрока"
+      level_1: "Краткий контент - соседние регионы"
+      level_2: "Метаданные - отдаленные регионы"
+      level_3: "Индексы - неактивные timeline периоды"
+
+    streaming_zones:
+      player_radius: 5000  # метров
+      preload_radius: 20000 # метров
+      cache_radius: 100000 # метров
+
+  timeline_indexing_system:
+    responsibility: "Индексация и поиск timeline контента"
+    technology: Elasticsearch + PostgreSQL
+    optimization_level: 2
+
+    index_types:
+      - quest_index: "Поиск квестов по критериям"
+      - region_index: "Поиск регионов и городов"
+      - timeline_index: "Поиск по timeline периодам"
+      - content_index: "Полнотекстовый поиск контента"
+
+    search_capabilities:
+      - geographic_search: "Поиск по координатам"
+      - timeline_search: "Поиск по периодам"
+      - content_search: "Поиск по содержимому"
+      - player_search: "Персонализированный поиск"
+
+  player_progression_system:
+    responsibility: "Управление прогрессом игроков в timeline"
+    technology: Go + PostgreSQL + Redis
+    optimization_level: 3
+
+    progression_tracking:
+      - quest_completion: "Завершенные квесты"
+      - region_exploration: "Исследованные регионы"
+      - timeline_progression: "Пройденные периоды"
+      - achievement_tracking: "Достижения и награды"
+
+    personalization:
+      - player_history: "История действий игрока"
+      - preference_learning: "Изучение предпочтений"
+      - dynamic_quest_generation: "Генерация персональных квестов"
+
+  database_architecture:
+    data_stores:
+      - postgresql_main: "Основные данные квестов и регионов"
+      - postgresql_gis: "Географические данные с PostGIS"
+      - neo4j_graph: "Граф зависимостей квестов"
+      - elasticsearch_search: "Поисковый индекс"
+      - redis_cache: "Кеширование горячих данных"
+
+    data_partitioning:
+      - timeline_partitioning: "По 10-летним периодам"
+      - geographic_partitioning: "По континентам/регионам"
+      - player_partitioning: "По регионам игроков"
+
+  caching_strategy:
+    multi_level_cache:
+      - l1_player_cache: "Индивидуальные данные игрока (Redis)"
+      - l2_region_cache: "Региональный контент (Redis Cluster)"
+      - l3_timeline_cache: "Timeline данные (Redis Cluster)"
+      - cdn_content_cache: "Статический контент (CDN)"
+
+  event_driven_timeline:
+    timeline_events:
+      - TimelineAdvanced: "Прогресс timeline периода"
+      - QuestCompleted: "Завершение квеста"
+      - RegionEntered: "Вход в регион"
+      - PlayerProgression: "Прогресс игрока"
+
+    event_processing:
+      - real_time_events: "Мгновенные обновления (< 100ms)"
+      - batch_events: "Групповые обновления (1-5 сек)"
+      - scheduled_events: "Timeline прогресс (по расписанию)"
+
+  backend_optimization_plan:
+    memory_pooling: true
+    zero_allocation_hot_paths: true
+    connection_pooling: "PostgreSQL + Redis + Elasticsearch pools"
+    async_processing: "Event-driven timeline updates"
+    load_balancing: "Geographic load balancing"
+
+  validation_requirements:
+    timeline_accuracy:
+      - quest_dependencies: "Все зависимости правильно resolved"
+      - regional_content: "Контент соответствует регионам"
+      - timeline_progression: "Прогресс соответствует расписанию"
+
+    performance_validation:
+      - concurrent_quests: "50k одновременных quest operations"
+      - content_streaming: "P99 <50ms для content delivery"
+      - search_queries: "P99 <100ms для поисковых запросов"
+
+  sub_tasks:
+    - task: "Database - Создать timeline partitioning schema"
+      priority: high
+      assignee: database
+      dependencies: []
+    - task: "Backend - Реализовать timeline-service с quest management"
+      priority: high
+      assignee: backend
+      dependencies: [database]
+    - task: "Backend - Интегрировать regional content system"
+      priority: medium
+      assignee: backend
+      dependencies: [timeline-service]
+    - task: "API Designer - Спроектировать Timeline API endpoints"
+      priority: high
+      assignee: api_designer
+      dependencies: []
+    - task: "Content - Интегрировать quest dependencies в content pipeline"
+      priority: medium
+      assignee: content
+      dependencies: [backend]
+    - task: "Performance - Оптимизировать timeline indexing и search"
+      priority: high
+      assignee: performance_engineer
+      dependencies: [backend]
+    - task: "QA - Тестирование timeline-based quest system"
+      priority: medium
+      assignee: qa
+      dependencies: [performance_engineer]
+
+references:
+  - title: "Timeline Author Content Overview"
+    type: internal
+    url: "knowledge/canon/lore/timeline-author/"
+  - title: "Quest System Mechanics"
+    type: internal
+    url: "knowledge/mechanics/quests/"
+  - title: "Graph Database for Quest Dependencies"
+    type: external
+    url: "https://neo4j.com/use-cases/quest-management/"
+  - title: "Content Streaming Patterns"
+    type: internal
+    url: "infrastructure/content-delivery-patterns.md"

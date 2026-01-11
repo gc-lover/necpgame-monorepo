@@ -1,0 +1,315 @@
+# Player Choice Mechanics & Consequence System
+<!-- Issue: #2222 -->
+
+## Система Выбора Игрока
+
+В NECCGAME каждый выбор игрока имеет вес и последствия, формируя уникальную историю через механику "Взвешенных Решений".
+
+### Типы Выборов
+
+#### 1. Моральные Дилеммы (Moral Dilemmas)
+**Цель:** Формирование этического профиля персонажа через сложные решения
+
+**Механики:**
+- **Влияние на репутацию:** Каждый выбор изменяет моральные показатели
+- **Долгосрочные последствия:** Этические решения влияют на доступ к фракциям
+- **Эмоциональный отклик:** NPC реагируют по-разному на выборы игрока
+- **Пример:** Спасение заложника vs выполнение контракта
+
+**Техническая реализация:**
+```yaml
+moral_dilemma_system:
+  choice_weighting:
+    compassion: 0.4    # Вес сострадания в решении
+    pragmatism: 0.3   # Вес практичности
+    loyalty: 0.3      # Вес лояльности
+
+  reputation_impacts:
+    street_cred:      # Уличная репутация
+      merciful: +15
+      ruthless: +10
+    corporate_rep:    # Корпоративная репутация
+      merciful: -10
+      ruthless: +20
+
+  faction_reactions:
+    - nomads: "respect_mercy"
+    - corporations: "value_ruthlessness"
+    - gangs: "admire_brutality"
+```
+
+#### 2. Стратегические Решения (Strategic Choices)
+**Цель:** Тактическое планирование влияющее на исход ситуаций
+
+**Механики:**
+- **Риск vs Награда:** Высокорискованные действия дают больше выгоды
+- **Временные ограничения:** Некоторые выборы требуют быстрого принятия решения
+- **Ресурсный менеджмент:** Выборы влияют на доступные ресурсы
+- **Пример:** Тихое проникновение vs силовой захват
+
+**Техническая реализация:**
+```yaml
+strategic_choice_engine:
+  risk_assessment:
+    stealth_approach:
+      success_chance: 0.7
+      reward_multiplier: 1.2
+      detection_risk: 0.2
+    assault_approach:
+      success_chance: 0.5
+      reward_multiplier: 1.8
+      detection_risk: 0.8
+
+  time_pressure_mechanics:
+    decision_timer: "30_seconds"
+    auto_choice: "conservative_option"
+    bonus_rewards: "time_sensitive"
+
+  resource_consequences:
+    ammo_consumption: "stealth:20%, assault:80%"
+    reputation_impact: "stealth:+5, assault:-10"
+    future_opportunities: "stealth:information_networks, assault:enemy_weakening"
+```
+
+#### 3. Социальные Взаимодействия (Social Interactions)
+**Цель:** Построение отношений через диалоги и действия
+
+**Механики:**
+- **Диалоговые деревья:** Динамические разговоры на основе предыдущих взаимодействий
+- **Отношения с NPC:** От дружбы до вражды
+- **Социальные сети:** Информация распространяется между персонажами
+- **Пример:** Помощь NPC в личных делах vs использование их в своих целях
+
+**Техническая реализация:**
+```yaml
+social_interaction_system:
+  relationship_dynamics:
+    friendship_levels:
+      - stranger: 0
+      - acquaintance: 25
+      - friend: 50
+      - ally: 75
+      - confidant: 100
+
+  dialogue_adaptation:
+    memory_system:
+      remembered_events: "last_10_interactions"
+      emotional_state: "current_mood"
+      trust_level: "relationship_score"
+
+  information_flow:
+    gossip_mechanics:
+      spread_chance: 0.4
+      time_delay: "4-12_hours"
+      distortion_factor: 0.1  # Вероятность искажения информации
+```
+
+### Система Последствий
+
+#### Немедленные Эффекты (Immediate Effects)
+**Цель:** Мгновенная обратная связь на действия игрока
+
+```yaml
+immediate_consequence_types:
+  combat_outcomes:
+    - success: "enemy_defeated"
+    - failure: "player_wounded"
+    - critical: "bonus_loot"
+
+  social_reactions:
+    - positive: "npc_assistance"
+    - negative: "hostile_response"
+    - neutral: "information_shared"
+
+  environmental_changes:
+    - alarm_triggered: "security_response"
+    - evidence_destroyed: "investigation_blocked"
+    - witness_present: "rumor_spread"
+```
+
+#### Отложенные Последствия (Delayed Effects)
+**Цель:** Создание ощущения живого мира с долгосрочными эффектами
+
+```yaml
+delayed_consequence_system:
+  time_triggers:
+    short_term: "1-4_hours"
+    medium_term: "1-3_days"
+    long_term: "1-2_weeks"
+
+  condition_based:
+    location_return: "return_to_crime_scene"
+    faction_meeting: "next_corporate_encounter"
+    reputation_threshold: "street_cred > 80"
+
+  consequence_examples:
+    - stolen_data: "corporate_investigation"
+    - spared_enemy: "unexpected_ally_appears"
+    - leaked_secret: "media_scandal_erupts"
+```
+
+#### Каскадные Эффекты (Cascading Effects)
+**Цель:** Создание сложных взаимосвязей между событиями
+
+```yaml
+cascading_effect_engine:
+  trigger_chains:
+    initial_action: "hack_corporate_database"
+    chain_sequence:
+      - step_1: "security_alert_triggered"
+      - step_2: "investigation_team_deployed"
+      - step_3: "related_companies_notified"
+      - step_4: "black_market_price_increase"
+      - step_5: "underground_contact_paranoia"
+
+  butterfly_effect_mechanics:
+    propagation_probability: 0.3
+    affected_entities: ["corporations", "criminals", "civilians"]
+    narrative_impact: "regional_tension_increase"
+
+  mitigation_strategies:
+    - cover_tracks: "reduce_detection_chance"
+    - misdirection: "redirect_investigation"
+    - alliance_building: "create_support_network"
+```
+
+### Механика "Взвешенных Решений"
+
+#### Система Оценки Выборов
+**Цель:** Каждый выбор имеет многомерную оценку последствий
+
+```yaml
+weighted_decision_framework:
+  evaluation_dimensions:
+    personal_risk: 0.25      # Опасность для игрока
+    financial_gain: 0.20     # Экономическая выгода
+    reputation_impact: 0.20  # Влияние на репутацию
+    relationship_effect: 0.15 # Влияние на отношения
+    long_term_consequences: 0.10 # Долгосрочные эффекты
+    narrative_value: 0.10    # Вклад в историю
+
+  choice_scoring_example:
+    steal_valuable_artifact:
+      personal_risk: 8/10     # Высокий риск обнаружения
+      financial_gain: 9/10    # Очень ценный предмет
+      reputation_impact: -7/10 # Плохая репутация у владельца
+      relationship_effect: -5/10 # Разрыв отношений
+      long_term_consequences: 6/10 # Преследование
+      narrative_value: 8/10   # Интересный сюжет
+
+  total_score_calculation:
+    formula: "weighted_sum / max_possible"
+    threshold_good: 0.6      # Хороший выбор
+    threshold_great: 0.8     # Отличный выбор
+```
+
+#### Адаптивная Сложность
+**Цель:** Система подстраивается под стиль игры игрока
+
+```yaml
+adaptive_difficulty_system:
+  player_profile_tracking:
+    risk_tolerance: "calculated_from_choice_history"
+    preferred_style: "stealth/aggressive/neutral"
+    success_rate: "mission_completion_percentage"
+
+  dynamic_adjustment:
+    consequence_severity:
+      cautious_players: "reduce_negative_impacts"
+      aggressive_players: "increase_rewards_and_risks"
+      balanced_players: "maintain_current_balance"
+
+  narrative_adaptation:
+    story_branching:
+      preferred_themes: "player_choice_analysis"
+      avoided_elements: "negative_feedback_tracking"
+      encouraged_paths: "success_pattern_recognition"
+```
+
+### Техническая Архитектура
+
+#### Choice Processing Engine
+```yaml
+choice_processing_architecture:
+  input_processing:
+    player_context: "current_state_and_history"
+    world_state: "relevant_environmental_factors"
+    narrative_context: "active_storylines"
+
+  decision_engine:
+    evaluation_pipeline:
+      - risk_assessment: "calculate_probabilities"
+      - consequence_prediction: "forecast_outcomes"
+      - narrative_impact: "story_relevance_analysis"
+
+  output_generation:
+    immediate_feedback: "ui_notifications"
+    consequence_queueing: "delayed_effect_scheduling"
+    narrative_updates: "storyline_modifications"
+```
+
+#### Consequence Propagation System
+```yaml
+consequence_propagation_system:
+  event_driven_architecture:
+    event_types:
+      - player_choice: "immediate_processing"
+      - time_triggered: "scheduled_execution"
+      - condition_met: "conditional_activation"
+
+  propagation_mechanisms:
+    direct_effects: "immediate_application"
+    cascading_effects: "chain_reaction_processing"
+    environmental_changes: "world_state_modification"
+
+  rollback_protection:
+    event_versioning: "prevent_conflicts"
+    state_snapshots: "recovery_points"
+    conflict_resolution: "merge_strategies"
+```
+
+### Игровые Примеры
+
+#### Пример 1: Корпоративный Шантаж
+```
+Игрок обнаруживает компромат на корпоративного executive.
+
+Выборы:
+1. Шантажировать для денег (высокий риск, большой доход, плохая репутация)
+2. Передать конкурентам (средний риск, средний доход, нейтральная репутация)
+3. Уничтожить доказательства (низкий риск, нет дохода, хорошая репутация)
+
+Последствия:
+- Шантаж → executive нанимает киллера
+- Конкуренты → корпоративная война в районе
+- Уничтожение → executive становится союзником
+```
+
+#### Пример 2: Уличная Вендетта
+```
+Игрок вмешивается в разборку между бандами.
+
+Выборы:
+1. Помочь сильнейшей банде (гарантированная победа, долг банды)
+2. Защитить слабую сторону (героический поступок, две враждующие банды)
+3. Украсть во время драки (рискованно, большой доход, все против игрока)
+
+Последствия:
+- Помощь сильным → долг банды, доступ к их территории
+- Защита слабых → две банды становятся союзниками игрока
+- Кража → вендетта от всех банд города
+```
+
+### Заключение
+
+Механика взвешенных решений создает глубокую систему выбора, где каждый поступок имеет реальные последствия. Игрок становится архитектором собственной судьбы в живом, реагирующем мире.
+
+**Ключевые особенности:**
+- Многомерная оценка каждого выбора
+- Каскадные эффекты формируют уникальные истории
+- Адаптивная сложность подстраивается под стиль игрока
+- Социальные последствия влияют на весь игровой мир
+
+---
+*Designed by Idea Writer Agent for Player Choice Innovation*
+*Issue: #2222*
