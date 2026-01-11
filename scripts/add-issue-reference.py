@@ -45,10 +45,21 @@ def add_issue_reference(file_path, issue_number):
 def main():
     if len(sys.argv) < 3:
         print("Usage: python add-issue-reference.py <issue_number> <file1> <file2> ...")
+        print("   or: python add-issue-reference.py <issue_number> --file-list <list_file>")
         sys.exit(1)
 
     issue_number = sys.argv[1]
-    files = sys.argv[2:]
+    
+    # Check if using file list
+    if len(sys.argv) == 4 and sys.argv[2] == '--file-list':
+        list_file = sys.argv[3]
+        if not os.path.exists(list_file):
+            print(f"ERROR: List file not found: {list_file}")
+            sys.exit(1)
+        with open(list_file, 'r', encoding='utf-8') as f:
+            files = [line.strip() for line in f if line.strip()]
+    else:
+        files = sys.argv[2:]
 
     processed = 0
     for file_path in files:
