@@ -50,10 +50,17 @@ func main() {
 	middleware := server.NewMiddleware()
 
 	// Create API server
-	apiServer := server.NewAiEnemyCoordinatorServer(service)
+	apiHandler := server.NewAiEnemyCoordinatorServer(service)
+
+	// Create HTTP server with API handler
+	srv, err := api.NewServer(apiHandler)
+	if err != nil {
+		slog.Error("Failed to create API server", "error", err)
+		os.Exit(1)
+	}
 
 	// Setup HTTP server
-	httpServer := server.NewHTTPServer(*addr, setupRouter(apiServer, middleware))
+	httpServer := server.NewHTTPServer(*addr, srv)
 
 	// Start server in goroutine
 	go func() {
@@ -127,49 +134,4 @@ func initDatabase(dbURL string) (*sql.DB, error) {
 
 	slog.Info("Database connection established")
 	return db, nil
-}
-
-func setupRouter(apiServer *api.Server, middleware *server.Middleware) http.Handler {
-	mux := http.NewServeMux()
-
-	// Health check endpoint (no auth required)
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		apiServer.AiEnemyCoordinatorHealthCheck(w, r)
-	})
-
-	// API endpoints with middleware
-	apiHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Route to appropriate handler based on path
-		switch r.URL.Path {
-		case "/api/v1/ai-enemies":
-			if r.Method == "POST" {
-				apiServer.SpawnAiEnemy(w, r)
-			} else {
-				http.NotFound(w, r)
-			}
-		default:
-			http.NotFound(w, r)
-		}
-	})
-
-	// Apply middleware stack
-	handler := middleware.CORS(
-		middleware.RequestID(
-			middleware.RealIP(
-				middleware.Logger(
-					middleware.Recoverer(
-						middleware.Timeout(30 * time.Second)(
-							middleware.Auth(
-								middleware.Metrics(
-									apiHandler,
-								),
-							),
-						),
-					),
-				),
-			),
-		),
-	)
-
-	return handler
 }

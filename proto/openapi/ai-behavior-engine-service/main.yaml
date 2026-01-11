@@ -191,47 +191,345 @@ components:
       $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
 
   schemas:
-    # Domain entities - ОБЯЗАТЕЛЬНО используйте allOf для наследования (SOLID/DRY)
-    # ПРИМЕР 1: Game Domain Entity
-    # {Resource}:
-    #   description: Service-specific entity inheriting from domain base
-    #   allOf:
-    #     - $ref: '../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity'
-    #     - type: object
-    #       required: [unique_field]
-    #       properties:
-    #         # PERFORMANCE: Struct Alignment - порядок полей large → small (30-50% memory savings)
-    #         # OGEN сохраняет порядок полей из OpenAPI спецификации
-    #         # Проверка ПОСЛЕ генерации: fieldalignment ./pkg/api/...
-    #         unique_field: {type: string, minLength: 1, maxLength: 100}
-    #         # ТОЛЬКО уникальные поля сервиса - базовые поля (id, timestamps, version) наследуются!
-    #
-    # ПРИМЕР 2: Economy Domain Entity
-    # {Resource}:
-    #   description: Economic entity with transaction capabilities
-    #   allOf:
-    #     - $ref: '../common/schemas/economy-entities.yaml#/components/schemas/WalletEntity'
-    #     - type: object
-    #       properties:
-    #         service_specific_field: {type: integer, minimum: 0}
-    #
-    # ПРИМЕР 3: Social Domain Entity
-    # {Resource}:
-    #   description: Social entity with communication features
-    #   allOf:
-    #     - $ref: '../common/schemas/social-entities.yaml#/components/schemas/UserProfileEntity'
-    #     - type: object
-    #       properties:
-    #         custom_social_field: {type: string}
-    #
-    # ПРИМЕР 4: Infrastructure Domain Entity
-    # {Resource}:
-    #   description: Infrastructure entity with audit capabilities
-    #   allOf:
-    #     - $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/AuditLogEntity'
-    #     - type: object
-    #       properties:
-    #         infrastructure_specific_field: {type: boolean}
+
+    # AI Behavior Pattern Schemas
+    AiBehaviorPattern:
+      description: Defines a specific AI behavior pattern
+      allOf:
+        - $ref: '../../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required: [pattern_name, behavior_tree_definition, priority]
+          properties:
+            pattern_name:
+              type: string
+              maxLength: 100
+              description: Unique name of the behavior pattern
+              example: "aggressive_patrol"
+            behavior_tree_definition:
+              type: object
+              description: JSON representation of the behavior tree
+              example: { "root": { "type": "sequence", "children": [...] } }
+            priority:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Priority of this behavior pattern
+              example: 5
+            target_selection_logic:
+              type: string
+              description: Logic for selecting targets (e.g., "closest_player", "weakest_ally")
+              example: "closest_player"
+            movement_strategy:
+              type: string
+              description: Strategy for movement (e.g., "pathfinding", "random_walk")
+              example: "pathfinding"
+            activation_conditions:
+              type: array
+              items:
+                type: string
+              description: Conditions that must be met for pattern activation
+              example: ["enemy_in_range", "health_above_50"]
+
+    UpdateEnemyBehaviorRequest:
+      type: object
+      required: [behavior_pattern_id]
+      properties:
+        behavior_pattern_id:
+          type: string
+          format: uuid
+          description: ID of the behavior pattern to apply
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Behavior-specific parameters
+          example: {"aggression_level": 0.8, "patrol_radius": 100}
+        transition_duration_ms:
+          type: integer
+          minimum: 0
+          maximum: 5000
+          description: Time to transition to new behavior
+          example: 1000
+
+    BehaviorDecision:
+      type: object
+      required: [action, confidence_score]
+      properties:
+        action:
+          type: string
+          enum: [attack, flee, patrol, pursue, defend, idle, communicate]
+          description: Decided action
+          example: attack
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Target entity for the action (if applicable)
+          example: "b2c3d4e5-f6a7-8901-2345-67890abcdef0"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in the decision
+          example: 0.85
+        reasoning:
+          type: string
+          maxLength: 500
+          description: AI reasoning for the decision
+          example: "Player is within attack range and has low health"
+        requirements:
+          type: object
+          additionalProperties: true
+          description: Requirements to execute the action
+          example: {"mana_cost": 25, "cooldown_ms": 2000}
+
+    SimulateBehaviorDecisionRequest:
+      type: object
+      required: [enemy_state, environmental_context]
+      properties:
+        enemy_state:
+          $ref: '#/components/schemas/EnemyState'
+        environmental_context:
+          $ref: '#/components/schemas/EnvironmentalContext'
+        available_actions:
+          type: array
+          items:
+            type: string
+            enum: [attack, flee, patrol, pursue, defend, idle, communicate]
+          description: Actions available for consideration
+          example: ["attack", "flee", "pursue"]
+        time_horizon_seconds:
+          type: integer
+          minimum: 1
+          maximum: 60
+          description: How far ahead to simulate decisions
+          example: 10
+
+    BehaviorDecisionResponse:
+      type: object
+      required: [decisions, simulation_metadata]
+      properties:
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorDecision'
+          description: Sequence of decisions over time
+        simulation_metadata:
+          $ref: '#/components/schemas/SimulationMetadata'
+
+    EnemyState:
+      type: object
+      required: [entity_id, current_health, current_mana, position, active_effects]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: Enemy entity identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        current_health:
+          type: integer
+          minimum: 0
+          description: Current health points
+          example: 850
+        current_mana:
+          type: integer
+          minimum: 0
+          description: Current mana points
+          example: 120
+        position:
+          $ref: '../../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        active_effects:
+          type: array
+          items:
+            type: object
+            required: [effect_type, duration_remaining]
+            properties:
+              effect_type:
+                type: string
+                description: Type of active effect
+                example: "poison"
+              duration_remaining:
+                type: integer
+                minimum: 0
+                description: Remaining duration in seconds
+                example: 30
+        threat_assessment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+          description: Threat levels for nearby entities
+          example: {"player_123": 0.9, "ally_456": 0.1}
+
+    EnvironmentalContext:
+      type: object
+      properties:
+        nearby_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPresence'
+          description: Entities within detection range
+        terrain_type:
+          type: string
+          enum: [urban, forest, desert, mountain, water, air]
+          description: Current terrain type
+          example: urban
+        time_of_day:
+          type: string
+          enum: [dawn, day, dusk, night]
+          description: Current time of day
+          example: night
+        weather_conditions:
+          type: array
+          items:
+            type: string
+          description: Current weather conditions
+          example: ["rain", "fog"]
+        zone_danger_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Overall danger level of the zone
+          example: 0.7
+
+    EntityPresence:
+      type: object
+      required: [entity_id, entity_type, distance, threat_level]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: Entity identifier
+        entity_type:
+          type: string
+          enum: [player, ai_enemy, npc, ally, neutral]
+          description: Type of entity
+        distance:
+          type: number
+          format: float
+          minimum: 0
+          description: Distance from enemy
+          example: 25.5
+        threat_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Perceived threat level
+          example: 0.8
+        visibility:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: How visible the entity is
+          example: 0.6
+
+    SimulationMetadata:
+      type: object
+      required: [simulation_duration_ms, decisions_evaluated, memory_used_kb]
+      properties:
+        simulation_duration_ms:
+          type: integer
+          minimum: 0
+          description: Time taken for simulation
+          example: 45
+        decisions_evaluated:
+          type: integer
+          minimum: 0
+          description: Number of decision branches evaluated
+          example: 127
+        memory_used_kb:
+          type: integer
+          minimum: 0
+          description: Memory used for simulation
+          example: 256
+        cache_hit_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Decision cache hit rate
+          example: 0.72
+
+    BehaviorEngineMetrics:
+      type: object
+      required: [time_range, performance_metrics, accuracy_metrics]
+      properties:
+        time_range:
+          type: object
+          required: [start_time, end_time]
+          properties:
+            start_time:
+              type: string
+              format: date-time
+            end_time:
+              type: string
+              format: date-time
+        performance_metrics:
+          $ref: '#/components/schemas/BehaviorPerformanceMetrics'
+        accuracy_metrics:
+          $ref: '#/components/schemas/BehaviorAccuracyMetrics'
+
+    BehaviorPerformanceMetrics:
+      type: object
+      required: [average_decision_time_ms, decisions_per_second, memory_usage_mb]
+      properties:
+        average_decision_time_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average time to make a decision
+          example: 12.5
+        decisions_per_second:
+          type: integer
+          minimum: 0
+          description: Decisions made per second
+          example: 80
+        memory_usage_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Memory usage in MB
+          example: 45.2
+        cache_efficiency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Decision cache efficiency
+          example: 0.85
+
+    BehaviorAccuracyMetrics:
+      type: object
+      required: [decision_accuracy, threat_assessment_accuracy]
+      properties:
+        decision_accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Accuracy of behavior decisions
+          example: 0.92
+        threat_assessment_accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Accuracy of threat assessments
+          example: 0.88
+        pattern_effectiveness:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+          description: Effectiveness of behavior patterns
+          example: {"aggressive_patrol": 0.95, "defensive_retreat": 0.78}
 
   securitySchemes:
     BearerAuth:
