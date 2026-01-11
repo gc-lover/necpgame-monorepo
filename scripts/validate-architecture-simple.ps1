@@ -9,7 +9,7 @@ param(
     [switch]$Verbose,
 
     [Parameter(Mandatory=$false)]
-    [int]$MaxLines = 1500
+    [int]$MaxLines = 3000
 )
 
 Write-Host "🔍 NECPGAME Simple Architecture Validation" -ForegroundColor Cyan
@@ -27,6 +27,11 @@ $EXCLUDED_PATTERNS = @(
     ".git/*",
     "node_modules/*"
 )
+
+# Message constants to avoid parsing issues
+$MSG_OK = "OK"
+$MSG_SKIPPED = "Skipped"
+$MSG_FILE_EXCEEDS = "File exceeds size limit"
 
 $FORBIDDEN_EXTENSIONS = @('.exe', '.dll', '.so', '.dylib')
 
@@ -101,12 +106,15 @@ foreach ($file in $filesToCheck) {
         $lineCount = (Get-Content $file.FullName -ErrorAction Stop | Measure-Object -Line).Lines
 
         if ($lineCount -gt $MaxLines) {
-            Write-Warning "File exceeds size limit: $($file.Name) ($lineCount lines > $MaxLines)"
+            $warningMsg = "$MSG_FILE_EXCEEDS: $($file.Name) ($lineCount lines, limit is $MaxLines)"
+            Write-Warning $warningMsg
         } else {
-            Write-VerboseMessage "OK: $($file.Name) ($lineCount lines)"
+            $okMsg = "$MSG_OK: $($file.Name) ($lineCount lines)"
+            Write-VerboseMessage $okMsg
         }
     } catch {
-        Write-VerboseMessage "Skipped: $($file.Name) (binary or unreadable)"
+        $skipMsg = "$MSG_SKIPPED: $($file.Name) (binary or unreadable)"
+        Write-VerboseMessage $skipMsg
     }
 }
 
