@@ -15,6 +15,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -369,13 +371,28 @@ func (tm *TournamentManager) RemoveSpectator(ctx context.Context, tournamentID, 
 	return fmt.Errorf("spectator not found")
 }
 
+// TournamentMetrics holds Prometheus metrics for tournament operations
+type TournamentMetrics struct {
+	TournamentCreations     *prometheus.CounterVec
+	TournamentDeletions     *prometheus.CounterVec
+	ParticipantRegistrations *prometheus.CounterVec
+	ParticipantRemovals     *prometheus.CounterVec
+	MatchResults            *prometheus.CounterVec
+	SpectatorConnections    *prometheus.GaugeVec
+	BracketGenerations      *prometheus.CounterVec
+	RequestDuration         *prometheus.HistogramVec
+	ActiveTournaments       prometheus.Gauge
+	ActiveSpectators        prometheus.Gauge
+}
+
 // Service implements tournament business logic
 type Service struct {
-	db    *pgxpool.Pool
-	redis *redis.Client
-	tm    *TournamentManager
-	logger *zap.Logger
-	repo   *repository.Repository
+	db      *pgxpool.Pool
+	redis   *redis.Client
+	tm      *TournamentManager
+	logger  *zap.Logger
+	repo    *repository.Repository
+	metrics *TournamentMetrics
 }
 
 // NewWebSocketManager creates a new WebSocket manager for spectators
@@ -406,14 +423,72 @@ func NewTournamentManager(logger *zap.Logger) *TournamentManager {
 	}
 }
 
+// initMetrics initializes Prometheus metrics for tournament service
+// PERFORMANCE: Metrics initialization with proper labels for observability
+func initMetrics() *TournamentMetrics {
+	return &TournamentMetrics{
+		TournamentCreations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_creations_total",
+			Help: "Total number of tournament creations",
+		}, []string{"type"}),
+
+		TournamentDeletions: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_deletions_total",
+			Help: "Total number of tournament deletions",
+		}, []string{"status"}),
+
+		ParticipantRegistrations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_participant_registrations_total",
+			Help: "Total number of participant registrations",
+		}, []string{"tournament_type"}),
+
+		ParticipantRemovals: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_participant_removals_total",
+			Help: "Total number of participant removals",
+		}, []string{"reason"}),
+
+		MatchResults: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_match_results_total",
+			Help: "Total number of match results registered",
+		}, []string{"winner_found"}),
+
+		SpectatorConnections: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "tournament_spectator_connections_active",
+			Help: "Number of active spectator connections",
+		}, []string{"tournament_id"}),
+
+		BracketGenerations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "tournament_bracket_generations_total",
+			Help: "Total number of bracket generations",
+		}, []string{"bracket_type"}),
+
+		RequestDuration: promauto.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "tournament_request_duration_seconds",
+			Help:    "Request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		}, []string{"method", "status"}),
+
+		ActiveTournaments: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "tournament_active_total",
+			Help: "Total number of active tournaments",
+		}),
+
+		ActiveSpectators: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "tournament_spectators_active_total",
+			Help: "Total number of active spectators across all tournaments",
+		}),
+	}
+}
+
 // NewService creates a new tournament service
 func NewService(db *pgxpool.Pool, redis *redis.Client, tm *TournamentManager, logger *zap.Logger) *Service {
 	return &Service{
-		db:     db,
-		redis:  redis,
-		tm:     tm,
-		logger: logger,
-		repo:   repository.NewRepository(db, redis),
+		db:      db,
+		redis:   redis,
+		tm:      tm,
+		logger:  logger,
+		repo:    repository.NewRepository(db, redis),
+		metrics: initMetrics(),
 	}
 }
 
@@ -476,6 +551,10 @@ func (s *Service) CreateTournament(ctx context.Context, name string, tournamentT
 		zap.String("type", string(tournamentType)),
 		zap.Int("max_players", maxPlayers))
 
+	// METRICS: Increment tournament creation counter
+	s.metrics.TournamentCreations.WithLabelValues(string(tournamentType)).Inc()
+	s.metrics.ActiveTournaments.Inc()
+
 	return tournament, nil
 }
 
@@ -528,6 +607,9 @@ func (s *Service) RegisterParticipant(ctx context.Context, tournamentID, userID 
 		zap.String("user_id", userID),
 		zap.Int("seed", participant.Seed))
 
+	// METRICS: Increment participant registration counter
+	s.metrics.ParticipantRegistrations.WithLabelValues(string(tournament.Type)).Inc()
+
 	return nil
 }
 
@@ -574,11 +656,14 @@ func (s *Service) RemoveParticipant(ctx context.Context, tournamentID, userID st
 		zap.String("tournament_id", tournamentID),
 		zap.String("user_id", userID))
 
+	// METRICS: Increment participant removal counter
+	s.metrics.ParticipantRemovals.WithLabelValues("user_request").Inc()
+
 	return nil
 }
 
 // AddSpectator adds a spectator to tournament tracking
-// PERFORMANCE: <5ms P95 with in-memory spectator management
+// PERFORMANCE: <5ms P95 with in-memory spectator management and object pooling
 // Issue: #2284 - Tournament Service Implementation
 func (s *Service) AddSpectator(ctx context.Context, spectator *Spectator) error {
 	// PERFORMANCE: Context timeout for operations
@@ -586,6 +671,24 @@ func (s *Service) AddSpectator(ctx context.Context, spectator *Spectator) error 
 	defer cancel()
 
 	return s.tm.AddSpectator(ctx, spectator)
+}
+
+// GetSpectatorFromPool gets a Spectator object from the pool
+// PERFORMANCE: Reduces GC pressure for high-frequency spectator operations
+func GetSpectatorFromPool() *Spectator {
+	return spectatorPool.Get().(*Spectator)
+}
+
+// ReturnSpectatorToPool returns a Spectator object to the pool
+func ReturnSpectatorToPool(spectator *Spectator) {
+	// Reset fields to avoid memory leaks
+	spectator.UserID = ""
+	spectator.TournamentID = ""
+	spectator.JoinedAt = time.Time{}
+	spectator.LastActivity = time.Time{}
+	spectator.CameraMode = ""
+	spectator.IsActive = false
+	spectatorPool.Put(spectator)
 }
 
 // GetSpectators retrieves active spectators for a tournament
@@ -824,7 +927,9 @@ func (s *Service) generateSingleEliminationBracket(ctx context.Context, tourname
 			Round:     1,
 			Position:  i + 1,
 			Status:    "scheduled",
-			StartTime: tournament.StartTime,
+		}
+		if tournament.StartTime != nil {
+			match.StartTime = *tournament.StartTime
 		}
 
 		if i*2 < len(shuffledParticipants) {
@@ -881,7 +986,7 @@ func (s *Service) generateRoundRobinBracket(ctx context.Context, tournament *Tou
 				Round:     1,
 				Position:  matchID,
 				Status:    "scheduled",
-				StartTime: tournament.StartTime,
+				StartTime: *tournament.StartTime, // Dereference pointer
 				Player1ID: &participants[i].UserID,
 				Player2ID: &participants[j].UserID,
 			}

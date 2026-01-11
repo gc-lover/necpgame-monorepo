@@ -21,6 +21,7 @@ import (
 
 	"necpgame/services/tournament-service-go/internal/handlers"
 	"necpgame/services/tournament-service-go/internal/service"
+	api "necpgame/services/tournament-service-go/pkg/api"
 )
 
 // PERFORMANCE: Memory pooling for hot path tournament objects (Level 2 optimization)
@@ -95,12 +96,18 @@ func main() {
 
 	// PERFORMANCE: Optimized service initialization
 	svc := service.NewService(db, rdb, tm, logger)
-	h := handlers.NewHandler(svc)
+	handler := handlers.NewHandler(svc, logger)
+
+	// Create ogen server
+	srv, err := api.NewServer(handler, nil) // nil for security handler
+	if err != nil {
+		logger.Fatal("Failed to create server", zap.Error(err))
+	}
 
 	// PERFORMANCE: HTTP server optimized for tournament API calls
 	server := &http.Server{
 		Addr:         ":8087",
-		Handler:      h.Router(),
+		Handler:      srv,
 		ReadTimeout:  15 * time.Second,  // Allow time for tournament operations
 		WriteTimeout: 15 * time.Second,  // Allow time for tournament responses
 		IdleTimeout:  120 * time.Second, // Keep connections for tournament sessions
