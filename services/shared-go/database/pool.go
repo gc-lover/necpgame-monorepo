@@ -1,6 +1,6 @@
 // Database Connection Pooling Library
-// Issue: #2145
-// PERFORMANCE: Query optimization, indexes, partitioning, read replicas, connection pooling
+// Issue: #2145, #1979
+// PERFORMANCE: Query optimization, indexes, partitioning, read replicas, connection pooling, query batching
 // Enterprise-grade database connection pooling for all Go services
 
 package database
@@ -8,8 +8,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -149,4 +152,114 @@ func GetPoolStats(pool *pgxpool.Pool) PoolStats {
 		ConstructingConns: stats.ConstructingConns(),
 		TotalConns:      stats.TotalConns(),
 	}
+}
+
+// BatchQuery executes multiple queries in a single batch for improved performance
+// PERFORMANCE: Reduces round-trips to database by batching multiple operations
+// Issue: #1979
+func BatchQuery(ctx context.Context, pool *pgxpool.Pool, queries []BatchQueryItem) error {
+	if len(queries) == 0 {
+		return nil
+	}
+
+	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	batch := &pgx.Batch{}
+	for _, q := range queries {
+		batch.Queue(q.Query, q.Args...)
+	}
+
+	results := conn.SendBatch(ctx, batch)
+	defer results.Close()
+
+	// Process all results to ensure batch completes
+	for i := 0; i < len(queries); i++ {
+		_, err := results.Exec()
+		if err != nil {
+			return fmt.Errorf("batch query %d failed: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+// BatchQueryItem represents a single query in a batch
+type BatchQueryItem struct {
+	Query string
+	Args  []interface{}
+}
+
+// BatchInsert performs batch insert operation for multiple rows
+// PERFORMANCE: 10-100x faster than individual inserts for large datasets
+// Issue: #1979
+func BatchInsert(ctx context.Context, pool *pgxpool.Pool, table string, columns []string, rows [][]interface{}) error {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	// Build batch insert query
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES ", table, strings.Join(columns, ", "))
+	placeholders := make([]string, len(rows))
+	args := make([]interface{}, 0, len(rows)*len(columns))
+
+	argIndex := 1
+	for i, row := range rows {
+		if len(row) != len(columns) {
+			return fmt.Errorf("row %d has %d values, expected %d", i, len(row), len(columns))
+		}
+
+		rowPlaceholders := make([]string, len(row))
+		for j := range row {
+			rowPlaceholders[j] = fmt.Sprintf("$%d", argIndex)
+			args = append(args, row[j])
+			argIndex++
+		}
+		placeholders[i] = "(" + strings.Join(rowPlaceholders, ", ") + ")"
+	}
+
+	query += strings.Join(placeholders, ", ")
+
+	_, err := pool.Exec(ctx, query, args...)
+	return err
+}
+
+// ReadWriteSplit automatically routes queries to appropriate pool (read replica for SELECT, primary for writes)
+// PERFORMANCE: Reduces load on primary database by routing reads to replicas
+// Issue: #1979
+type ReadWriteSplit struct {
+	writePool *pgxpool.Pool
+	readPool  *pgxpool.Pool
+}
+
+// NewReadWriteSplit creates a read/write splitter
+func NewReadWriteSplit(writePool, readPool *pgxpool.Pool) *ReadWriteSplit {
+	return &ReadWriteSplit{
+		writePool: writePool,
+		readPool:  readPool,
+	}
+}
+
+// Query executes a SELECT query on read replica
+func (rws *ReadWriteSplit) Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
+	if rws.readPool != nil {
+		return rws.readPool.Query(ctx, query, args...)
+	}
+	return rws.writePool.Query(ctx, query, args...)
+}
+
+// Exec executes a write query on primary database
+func (rws *ReadWriteSplit) Exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
+	return rws.writePool.Exec(ctx, query, args...)
+}
+
+// QueryRow executes a SELECT query on read replica
+func (rws *ReadWriteSplit) QueryRow(ctx context.Context, query string, args ...interface{}) pgx.Row {
+	if rws.readPool != nil {
+		return rws.readPool.QueryRow(ctx, query, args...)
+	}
+	return rws.writePool.QueryRow(ctx, query, args...)
 }
