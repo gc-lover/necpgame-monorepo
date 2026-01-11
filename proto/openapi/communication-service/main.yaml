@@ -102,19 +102,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /health/batch:
     get:
       summary: Batch health check for communication dependencies
@@ -134,19 +134,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '207':
           description: Partial subsystem failure
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /health/ws:
     get:
       summary: WebSocket health check for real-time communication
@@ -166,13 +166,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /chat/channels:
     get:
       summary: List chat channels
@@ -204,7 +204,7 @@ paths:
       - name: guild_id
         in: query
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         description: Filter by guild ID
       - name: limit
         in: query
@@ -228,7 +228,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -236,15 +236,15 @@ paths:
                       items:
                         $ref: '#/components/schemas/ChatChannelResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create chat channel
       description: '**Create a new chat channel**
@@ -273,15 +273,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatChannelResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /chat/channels/{channelId}:
     get:
       summary: Get chat channel details
@@ -302,7 +302,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Chat channel details retrieved
@@ -311,13 +311,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatChannelResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update chat channel
       description: '**Update chat channel settings and permissions**
@@ -337,7 +337,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -352,13 +352,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatChannelResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Delete chat channel
       description: '**Delete a chat channel**
@@ -378,18 +378,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Chat channel deleted successfully
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /chat/channels/{channelId}/messages:
     get:
       summary: Get chat messages
@@ -410,16 +410,16 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: before
         in: query
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         description: Get messages before this message ID
       - name: after
         in: query
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         description: Get messages after this message ID
       - name: limit
         in: query
@@ -442,7 +442,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -450,13 +450,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/ChatMessageResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Send chat message
       description: '**Send a message to a chat channel**
@@ -476,7 +476,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -491,15 +491,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatMessageResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /chat/messages/{messageId}:
     put:
       summary: Edit chat message
@@ -520,7 +520,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -535,13 +535,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChatMessageResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Delete chat message
       description: '**Delete a chat message**
@@ -561,18 +561,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Chat message deleted successfully
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /chat/messages/{messageId}/reactions:
     post:
       summary: Add reaction to message
@@ -593,7 +593,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -608,13 +608,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageReactionResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Remove reaction from message
       description: '**Remove user''s reaction from a chat message**
@@ -634,7 +634,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: emoji
         in: query
         required: true
@@ -646,13 +646,13 @@ paths:
         '204':
           description: Reaction removed successfully
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /notifications:
     get:
       summary: Get user notifications
@@ -709,7 +709,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -717,13 +717,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/NotificationResponse'
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Send notification
       description: '**Send notification to user or group**
@@ -752,13 +752,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationQueuedResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /notifications/{notificationId}:
     get:
       summary: Get notification details
@@ -779,7 +779,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Notification details retrieved
@@ -788,13 +788,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Mark notification as read
       description: '**Mark a notification as read**
@@ -814,7 +814,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Notification marked as read
@@ -823,13 +823,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Delete notification
       description: '**Delete a notification**
@@ -849,18 +849,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Notification deleted successfully
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /notifications/bulk/mark-read:
     post:
       summary: Mark multiple notifications as read
@@ -890,13 +890,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /notifications/settings:
     get:
       summary: Get notification settings
@@ -920,13 +920,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationSettingsResponse'
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update notification settings
       description: '**Update user''s notification preferences**
@@ -955,13 +955,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationSettingsResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /voice/channels:
     get:
       summary: List voice channels
@@ -991,7 +991,7 @@ paths:
       - name: guild_id
         in: query
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         description: Filter by guild ID
       responses:
         '200':
@@ -1006,13 +1006,13 @@ paths:
                     items:
                       $ref: '#/components/schemas/VoiceChannelResponse'
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create voice channel
       description: '**Create a new voice channel**
@@ -1041,13 +1041,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/VoiceChannelResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /voice/channels/{channelId}:
     get:
       summary: Get voice channel details
@@ -1068,7 +1068,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Voice channel details retrieved
@@ -1077,13 +1077,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/VoiceChannelResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update voice channel
       description: '**Update voice channel settings**
@@ -1103,7 +1103,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1118,13 +1118,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/VoiceChannelResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Delete voice channel
       description: '**Delete a voice channel**
@@ -1144,18 +1144,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Voice channel deleted successfully
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /voice/channels/{channelId}/join:
     post:
       summary: Join voice channel
@@ -1176,7 +1176,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         content:
           application/json:
@@ -1190,15 +1190,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/VoiceChannelConnectionResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         '429':
-          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+          $ref: ../common/responses/error.yaml#/TooManyRequests
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /voice/channels/{channelId}/leave:
     post:
       summary: Leave voice channel
@@ -1219,18 +1219,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Successfully left voice channel
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /voice/channels/{channelId}/participants:
     get:
       summary: Get voice channel participants
@@ -1251,7 +1251,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Voice channel participants retrieved
@@ -1265,13 +1265,13 @@ paths:
                     items:
                       $ref: '#/components/schemas/VoiceParticipantResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /moderation/reports:
     get:
       summary: Get moderation reports
@@ -1330,7 +1330,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -1338,13 +1338,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/ModerationReportResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create moderation report
       description: '**Submit a new moderation report**
@@ -1373,13 +1373,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ModerationReportResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /moderation/reports/{reportId}:
     get:
       summary: Get moderation report details
@@ -1400,7 +1400,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Moderation report details retrieved
@@ -1409,13 +1409,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ModerationReportResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update moderation report
       description: '**Update report status and add moderator notes**
@@ -1435,7 +1435,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1450,13 +1450,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ModerationReportResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /moderation/actions:
     post:
       summary: Execute moderation action
@@ -1486,35 +1486,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/ModerationActionResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
 components:
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: ../common/responses/success.yaml#/OK
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: ../common/responses/success.yaml#/Created
     Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
+      $ref: ../common/responses/success.yaml#/Updated
     Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
+      $ref: ../common/responses/success.yaml#/Deleted
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
+      $ref: ../common/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
+      $ref: ../common/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
+      $ref: ../common/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
+      $ref: ../common/responses/error.yaml#/NotFound
     TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+      $ref: ../common/responses/error.yaml#/TooManyRequests
   schemas:
     BaseEntity:
       type: object
@@ -1543,7 +1543,7 @@ components:
           maxLength: 30
     ChatChannelResponse:
       allOf:
-      - $ref: ../common-service/schemas/social-entities.yaml#/ChatChannelEntity
+      - $ref: ../common/schemas/social-entities.yaml#/ChatChannelEntity
       - type: object
         properties:
           current_members:
@@ -1579,7 +1579,7 @@ components:
           maxLength: 200
           description: Channel description
         guild_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         max_members:
           type: integer
           minimum: 2
@@ -1608,11 +1608,11 @@ components:
           description: Maximum members allowed
     ChatMessageResponse:
       allOf:
-      - $ref: ../common-service/schemas/social-entities.yaml#/ChatMessageEntity
+      - $ref: ../common/schemas/social-entities.yaml#/ChatMessageEntity
       - type: object
         properties:
           author:
-            $ref: ../common-service/schemas/social-entities.yaml#/UserProfileEntity
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           channel_name:
             type: string
             description: Channel display name
@@ -1629,7 +1629,7 @@ components:
           description: Message content
           example: Anyone up for a gig tonight?
         reply_to:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         attachments:
           type: array
           items:
@@ -1674,18 +1674,18 @@ components:
       type: object
       properties:
         message_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         emoji:
           type: string
           example: 👍
         user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         reacted_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
     NotificationResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - user_id
@@ -1695,7 +1695,7 @@ components:
         - read
         properties:
           user_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           type:
             type: string
             enum:
@@ -1722,7 +1722,7 @@ components:
             description: Whether notification has been read
             example: false
           read_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           priority:
             type: string
             enum:
@@ -1744,7 +1744,7 @@ components:
                   type: string
                   maxLength: 200
           expires_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
     SendNotificationRequest:
       type: object
       required:
@@ -1757,7 +1757,7 @@ components:
           oneOf:
           - type: array
             items:
-              $ref: ../common-service/schemas/common.yaml#/UUID
+              $ref: ../common/schemas/common.yaml#/UUID
           - type: string
             enum:
             - all
@@ -1809,18 +1809,18 @@ components:
                 minLength: 1
                 maxLength: 200
         expires_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         scheduled_for:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
     NotificationQueuedResponse:
       type: object
       properties:
         notification_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         queued_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         estimated_delivery:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         recipient_count:
           type: integer
           description: Number of recipients
@@ -1833,7 +1833,7 @@ components:
         notification_ids:
           type: array
           items:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           minItems: 1
           maxItems: 100
           description: IDs of notifications to mark as read
@@ -1854,7 +1854,7 @@ components:
             type: object
             properties:
               id:
-                $ref: ../common-service/schemas/common.yaml#/UUID
+                $ref: ../common/schemas/common.yaml#/UUID
               error:
                 type: string
                 description: Error message
@@ -1862,7 +1862,7 @@ components:
       type: object
       properties:
         user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         settings:
           type: object
           properties:
@@ -1919,7 +1919,7 @@ components:
     VoiceChannelResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - name
@@ -1945,9 +1945,9 @@ components:
             maxLength: 200
             description: Channel description
           guild_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           owner_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           max_participants:
             type: integer
             minimum: 2
@@ -1999,7 +1999,7 @@ components:
           maxLength: 200
           description: Channel description
         guild_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         max_participants:
           type: integer
           minimum: 2
@@ -2046,7 +2046,7 @@ components:
       type: object
       properties:
         channel_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         token:
           type: string
           description: Connection token for WebRTC
@@ -2076,13 +2076,13 @@ components:
       type: object
       properties:
         user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         username:
           type: string
           description: Display name
           example: Night Runner
         joined_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         is_muted:
           type: boolean
           description: Whether participant is muted
@@ -2104,7 +2104,7 @@ components:
     ModerationReportResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - reporter_id
@@ -2114,9 +2114,9 @@ components:
         - status
         properties:
           reporter_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           reported_user_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           reported_content_type:
             type: string
             enum:
@@ -2127,7 +2127,7 @@ components:
             description: Type of reported content
             example: message
           reported_content_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           reason:
             type: string
             enum:
@@ -2162,13 +2162,13 @@ components:
             description: Report priority
             example: medium
           assigned_moderator_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           resolution:
             type: string
             maxLength: 500
             description: Resolution notes
           resolved_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           evidence_urls:
             type: array
             items:
@@ -2183,7 +2183,7 @@ components:
       - reason
       properties:
         reported_user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         reported_content_type:
           type: string
           enum:
@@ -2193,7 +2193,7 @@ components:
           - guild
           description: Type of reported content
         reported_content_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         reason:
           type: string
           enum:
@@ -2233,7 +2233,7 @@ components:
           - high
           - critical
         assigned_moderator_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         resolution:
           type: string
           maxLength: 500
@@ -2245,7 +2245,7 @@ components:
       - action_type
       properties:
         report_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         action_type:
           type: string
           enum:
@@ -2269,9 +2269,9 @@ components:
       type: object
       properties:
         action_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         report_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         action_type:
           type: string
           enum:
@@ -2281,20 +2281,21 @@ components:
           - delete_content
           - suspend_account
         target_user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         executed_by:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         executed_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         duration:
           type: integer
           description: Duration in minutes
         expires_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: ../common/security/security.yaml#/ServiceAuth
+

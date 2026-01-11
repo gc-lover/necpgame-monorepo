@@ -1412,6 +1412,10 @@ func (s *Server) handleCombatServiceGetWeaponAnalyticsRequest(args [1]string, ar
 					Name: "include_player_breakdown",
 					In:   "query",
 				}: params.IncludePlayerBreakdown,
+				{
+					Name: "time_range",
+					In:   "query",
+				}: params.TimeRange,
 			},
 			Raw: r,
 		}

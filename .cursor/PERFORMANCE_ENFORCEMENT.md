@@ -79,6 +79,28 @@
 
 ## 🟡 РЕФАКТОРИНГ существующих сервисов
 
+### Поиск задач Performance Agent:
+
+**Performance агенты ищут задачи через:**
+
+```javascript
+// МЕТОД 1: GitHub Projects
+mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Performance" Status:"Todo"'
+});
+
+// МЕТОД 2: GitHub Issues
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open'
+});
+// Фильтровать по: title содержит '[Performance]' или '[Optimization]'
+```
+
 ### Обязанность Backend Agent:
 
 **При работе с СУЩЕСТВУЮЩИМ сервисом:**

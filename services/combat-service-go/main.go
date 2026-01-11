@@ -97,6 +97,19 @@ func main() {
 		}
 	}()
 
+	// PERFORMANCE: Additional profiling endpoints for combat analysis
+	http.HandleFunc("/debug/pprof/heap", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename=heap.prof")
+		http.DefaultServeMux.ServeHTTP(w, r)
+	})
+
+	http.HandleFunc("/debug/pprof/goroutine", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename=goroutine.prof")
+		http.DefaultServeMux.ServeHTTP(w, r)
+	})
+
 	// Start main server with combat logging
 	go func() {
 		logger.Info("Starting combat service",

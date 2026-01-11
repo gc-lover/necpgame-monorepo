@@ -9,13 +9,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"necpgame/services/trading-contracts-service-go/internal/service"

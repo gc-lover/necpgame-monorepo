@@ -58,6 +58,7 @@ Backend
 
 **Content Writer:**
 
+- **НАХОДИТ задачу:** `mcp_github_list_issues` с фильтром по title '[Content]' или '[Quest]'
 - Создаёт YAML файлы в `knowledge/canon/`
 - Валидирует YAML: `/content-writer-validate-quest-yaml #123`
 - **ВСЕГДА передаёт в Backend** (не в Database или QA напрямую!)

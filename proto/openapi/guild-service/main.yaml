@@ -109,19 +109,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /health/batch:
     get:
       summary: Batch health check for guild dependencies
@@ -141,19 +141,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '207':
           description: Partial subsystem failure
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds:
     get:
       summary: List guilds
@@ -208,7 +208,7 @@ paths:
       - name: faction
         in: query
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         description: Filter by faction affiliation
       - name: sort_by
         in: query
@@ -253,7 +253,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -261,13 +261,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/GuildSummaryResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create guild
       description: '**Create a new guild organization**
@@ -296,21 +296,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '402':
           description: Insufficient funds for guild creation
           content:
             application/json:
               schema:
-                $ref: ../common-service/responses/error.yaml#/PaymentRequired
+                $ref: ../common/responses/error.yaml#/PaymentRequired
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/search:
     get:
       summary: Search guilds
@@ -357,7 +357,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -376,7 +376,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}:
     get:
       summary: Get guild details
@@ -397,7 +397,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Guild details retrieved
@@ -406,13 +406,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update guild
       description: '**Update guild settings and information**
@@ -432,7 +432,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -447,13 +447,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Disband guild
       description: '**Disband/dissolve a guild**
@@ -473,18 +473,18 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '204':
           description: Guild disbanded successfully
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/members:
     get:
       summary: Get guild members
@@ -505,7 +505,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: role
         in: query
         schema:
@@ -569,7 +569,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -577,13 +577,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/GuildMemberResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Invite member to guild
       description: '**Send guild membership invitation**
@@ -603,7 +603,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -618,13 +618,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/InvitationResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/members/{userId}:
     get:
       summary: Get member details
@@ -645,12 +645,12 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: userId
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Member details retrieved
@@ -659,13 +659,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildMemberDetailResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update member role/permissions
       description: '**Update guild member''s role and permissions**
@@ -685,12 +685,12 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: userId
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -705,13 +705,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildMemberResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
       summary: Remove member from guild
       description: '**Remove or expel a member from the guild**
@@ -731,12 +731,12 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: userId
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: reason
         in: query
         schema:
@@ -747,13 +747,13 @@ paths:
         '204':
           description: Member removed successfully
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/applications:
     get:
       summary: Get membership applications
@@ -774,7 +774,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: status
         in: query
         schema:
@@ -807,7 +807,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -815,13 +815,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/GuildApplicationResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Apply for guild membership
       description: '**Submit application for guild membership**
@@ -841,7 +841,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -856,15 +856,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildApplicationResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/applications/{applicationId}:
     put:
       summary: Review membership application
@@ -885,12 +885,12 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: applicationId
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -905,13 +905,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildApplicationResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/bank:
     get:
       summary: Get guild bank overview
@@ -932,7 +932,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Guild bank information retrieved
@@ -941,13 +941,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildBankResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/bank/transactions:
     get:
       summary: Get guild bank transactions
@@ -968,7 +968,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: type
         in: query
         schema:
@@ -1028,7 +1028,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -1036,13 +1036,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/BankTransactionResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create bank transaction
       description: '**Execute a guild bank transaction**
@@ -1062,7 +1062,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1077,15 +1077,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/BankTransactionResponse'
         '402':
-          $ref: ../common-service/responses/error.yaml#/PaymentRequired
+          $ref: ../common/responses/error.yaml#/PaymentRequired
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/territory:
     get:
       summary: Get guild territory
@@ -1106,7 +1106,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Guild territory information retrieved
@@ -1115,13 +1115,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildTerritoryResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/announcements:
     get:
       summary: Get guild announcements
@@ -1142,7 +1142,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: pinned_only
         in: query
         schema:
@@ -1171,7 +1171,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -1179,13 +1179,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/GuildAnnouncementResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create guild announcement
       description: '**Create a new guild announcement**
@@ -1205,7 +1205,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1220,13 +1220,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildAnnouncementResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/events:
     get:
       summary: Get guild events
@@ -1247,7 +1247,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       - name: status
         in: query
         schema:
@@ -1292,7 +1292,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: ../common-service/schemas/common.yaml#/PaginatedResponse
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     items:
@@ -1300,13 +1300,13 @@ paths:
                       items:
                         $ref: '#/components/schemas/GuildEventResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create guild event
       description: '**Create a new guild event**
@@ -1326,7 +1326,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1341,13 +1341,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildEventResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /guilds/{guildId}/settings:
     get:
       summary: Get guild settings
@@ -1368,7 +1368,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       responses:
         '200':
           description: Guild settings retrieved
@@ -1377,13 +1377,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildSettingsResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
       summary: Update guild settings
       description: '**Update guild configuration settings**
@@ -1403,7 +1403,7 @@ paths:
         in: path
         required: true
         schema:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
       requestBody:
         required: true
         content:
@@ -1418,35 +1418,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuildSettingsResponse'
         '403':
-          $ref: ../common-service/responses/error.yaml#/Forbidden
+          $ref: ../common/responses/error.yaml#/Forbidden
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
 components:
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: ../common/responses/success.yaml#/OK
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: ../common/responses/success.yaml#/Created
     Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
+      $ref: ../common/responses/success.yaml#/Updated
     Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
+      $ref: ../common/responses/success.yaml#/Deleted
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
+      $ref: ../common/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
+      $ref: ../common/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
+      $ref: ../common/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
+      $ref: ../common/responses/error.yaml#/NotFound
     TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+      $ref: ../common/responses/error.yaml#/TooManyRequests
     PaymentRequired:
-      $ref: ../common-service/responses/error.yaml#/PaymentRequired
+      $ref: ../common/responses/error.yaml#/PaymentRequired
   schemas:
     BaseEntity:
       type: object
@@ -1477,7 +1477,7 @@ components:
       type: object
       properties:
         id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         name:
           type: string
           example: Cyberpunk Legends
@@ -1500,20 +1500,20 @@ components:
           type: boolean
           example: true
         faction_affiliation:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         emblem_url:
           type: string
           format: uri
           example: https://cdn.necpgame.com/guilds/cpl/emblem.png
     GuildResponse:
       allOf:
-      - $ref: ../common-service/schemas/social-entities.yaml#/GuildEntity
+      - $ref: ../common/schemas/social-entities.yaml#/GuildEntity
       - type: object
         properties:
           founded_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           last_activity_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           settings:
             $ref: '#/components/schemas/GuildSettingsResponse'
           statistics:
@@ -1556,7 +1556,7 @@ components:
           description: Guild description
           example: Elite cyberpunk mercenaries united against corporate oppression
         faction_affiliation:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         initial_funds:
           type: integer
           minimum: 1000
@@ -1576,19 +1576,19 @@ components:
           type: string
           pattern: ^[A-Z0-9]{2,5}$
         faction_affiliation:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
     GuildMemberResponse:
       allOf:
-      - $ref: ../common-service/schemas/social-entities.yaml#/GuildMemberEntity
+      - $ref: ../common/schemas/social-entities.yaml#/GuildMemberEntity
       - type: object
         properties:
           user_profile:
-            $ref: ../common-service/schemas/social-entities.yaml#/UserProfileEntity
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           is_online:
             type: boolean
             example: true
           last_active_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
     GuildMemberDetailResponse:
       allOf:
       - $ref: '#/components/schemas/GuildMemberResponse'
@@ -1612,18 +1612,18 @@ components:
               type: object
               properties:
                 id:
-                  $ref: ../common-service/schemas/common.yaml#/UUID
+                  $ref: ../common/schemas/common.yaml#/UUID
                 name:
                   type: string
                 earned_at:
-                  $ref: ../common-service/schemas/common.yaml#/Timestamp
+                  $ref: ../common/schemas/common.yaml#/Timestamp
     InviteMemberRequest:
       type: object
       required:
       - user_id
       properties:
         user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         message:
           type: string
           maxLength: 200
@@ -1638,13 +1638,13 @@ components:
       type: object
       properties:
         invitation_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         guild_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         user_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         invited_by:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         status:
           type: string
           enum:
@@ -1654,7 +1654,7 @@ components:
           - expired
           example: pending
         expires_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         message:
           type: string
     UpdateMemberRequest:
@@ -1688,7 +1688,7 @@ components:
     GuildApplicationResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - guild_id
@@ -1696,11 +1696,11 @@ components:
         - status
         properties:
           guild_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           user_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           user_profile:
-            $ref: ../common-service/schemas/social-entities.yaml#/UserProfileEntity
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           status:
             type: string
             enum:
@@ -1714,11 +1714,11 @@ components:
             maxLength: 1000
             example: I'm a skilled netrunner looking to join a serious crew
           applied_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           reviewed_by:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           reviewed_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           review_notes:
             type: string
             maxLength: 500
@@ -1735,7 +1735,7 @@ components:
         character_references:
           type: array
           items:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           maxItems: 3
           description: IDs of other players who can vouch for the applicant
     ReviewApplicationRequest:
@@ -1756,7 +1756,7 @@ components:
       type: object
       properties:
         guild_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         total_balance:
           type: integer
           description: Total guild funds across all currencies
@@ -1788,7 +1788,7 @@ components:
     BankTransactionResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - guild_id
@@ -1798,7 +1798,7 @@ components:
         - executed_by
         properties:
           guild_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           type:
             type: string
             enum:
@@ -1821,9 +1821,9 @@ components:
             maxLength: 200
             example: Purchased guild hall upgrade
           executed_by:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           approved_by:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           balance_after:
             type: integer
             description: Guild balance after transaction
@@ -1864,14 +1864,14 @@ components:
       type: object
       properties:
         guild_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
+          $ref: ../common/schemas/common.yaml#/UUID
         controlled_zones:
           type: array
           items:
             type: object
             properties:
               zone_id:
-                $ref: ../common-service/schemas/common.yaml#/UUID
+                $ref: ../common/schemas/common.yaml#/UUID
               zone_name:
                 type: string
                 example: Watson District
@@ -1898,11 +1898,11 @@ components:
           description: Overall territory control score
           example: 1250
         last_updated:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
     GuildAnnouncementResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - guild_id
@@ -1911,7 +1911,7 @@ components:
         - author_id
         properties:
           guild_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           title:
             type: string
             maxLength: 100
@@ -1921,12 +1921,12 @@ components:
             maxLength: 2000
             example: We've added two new high-level raids this week...
           author_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           is_pinned:
             type: boolean
             example: true
           pinned_until:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           views_count:
             type: integer
             example: 156
@@ -1955,7 +1955,7 @@ components:
     GuildEventResponse:
       type: object
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
       - type: object
         required:
         - guild_id
@@ -1964,7 +1964,7 @@ components:
         - scheduled_at
         properties:
           guild_id:
-            $ref: ../common-service/schemas/common.yaml#/UUID
+            $ref: ../common/schemas/common.yaml#/UUID
           title:
             type: string
             maxLength: 100
@@ -1983,7 +1983,7 @@ components:
             - training
             example: raid
           scheduled_at:
-            $ref: ../common-service/schemas/common.yaml#/Timestamp
+            $ref: ../common/schemas/common.yaml#/Timestamp
           duration_minutes:
             type: integer
             minimum: 30
@@ -2030,7 +2030,7 @@ components:
           - tournament
           - training
         scheduled_at:
-          $ref: ../common-service/schemas/common.yaml#/Timestamp
+          $ref: ../common/schemas/common.yaml#/Timestamp
         duration_minutes:
           type: integer
           minimum: 30
@@ -2109,8 +2109,9 @@ components:
           $ref: '#/components/schemas/GuildSettingsResponse/properties/gameplay'
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: ../common/security/security.yaml#/ServiceAuth
+

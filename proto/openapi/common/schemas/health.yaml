@@ -1,0 +1,130 @@
+# Health Check Schema - SOLID/DRY Foundation
+# Common health check schema used across all services
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Health Check Response
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, critical]
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: "Service is healthy"
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+          description: Time when health check was performed
+        version:
+          type: string
+          example: "1.0.0"
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [ok, degraded, critical]
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+
+    # Detailed Health Response
+    DetailedHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/HealthResponse'
+        - type: object
+          properties:
+            dependencies:
+              type: object
+              description: Health status of service dependencies
+              properties:
+                database:
+                  $ref: '#/components/schemas/HealthResponse'
+                redis:
+                  $ref: '#/components/schemas/HealthResponse'
+                external_services:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "payment-service"
+                      status:
+                        type: string
+                        enum: [ok, degraded, critical]
+                      response_time:
+                        type: integer
+            metrics:
+              type: object
+              description: Service performance metrics
+              properties:
+                active_connections:
+                  type: integer
+                  example: 150
+                requests_per_second:
+                  type: number
+                  example: 45.2
+                average_response_time:
+                  type: integer
+                  example: 25
+                error_rate:
+                  type: number
+                  example: 0.001
+
+    # Health Batch Request
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: "database"
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+
+    # Health Batch Response
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum: [ok, degraded, critical]
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service

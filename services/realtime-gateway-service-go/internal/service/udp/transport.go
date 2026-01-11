@@ -454,7 +454,7 @@ func (t *Transport) getOrCreateClient(addrStr string, clientID uint16) *Client {
 			Position:   Vec3{X: 0, Y: 0, Z: 0}, // Default position
 		}
 		t.clients[addrStr] = client
-		t.activeClients.Set(int64(len(t.clients)))
+		// TODO: Implement proper gauge recording for active clients
 	}
 
 	client.LastSeen = time.Now()
@@ -570,7 +570,7 @@ func (t *Transport) CleanupInactiveClients(maxAge time.Duration) {
 	}
 
 	if len(toRemove) > 0 {
-		t.activeClients.Set(int64(len(t.clients)))
+		// TODO: Implement proper gauge recording for active clients
 		t.logger.Info("cleaned up inactive clients", zap.Int("removed", len(toRemove)))
 	}
 }

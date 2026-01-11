@@ -993,6 +993,23 @@ func (c *Client) sendCombatServiceGetWeaponAnalytics(ctx context.Context, params
 			return res, errors.Wrap(err, "encode query")
 		}
 	}
+	{
+		// Encode "time_range" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "time_range",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.TimeRange.Get(); ok {
+				return val.EncodeURI(e)
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
 	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"

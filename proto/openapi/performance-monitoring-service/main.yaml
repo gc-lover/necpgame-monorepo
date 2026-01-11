@@ -102,13 +102,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: ../common/schemas/health.yaml#/HealthResponse
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -119,13 +119,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /services/health:
     get:
       summary: Get health status of all services
@@ -154,15 +154,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServicesHealthResponse'
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         '500':
-          $ref: ../common-service/responses/error.yaml#/InternalServerError
+          $ref: ../common/responses/error.yaml#/InternalServerError
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /metrics/{service_name}:
     get:
       summary: Get performance metrics for a specific service
@@ -212,15 +212,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServiceMetricsResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /alerts:
     get:
       summary: Get active alerts and incidents
@@ -269,13 +269,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertsResponse'
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
       summary: Create a new alert
       operationId: createAlert
@@ -297,15 +297,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /alerts/{alert_id}/acknowledge:
     post:
       summary: Acknowledge an alert
@@ -330,15 +330,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /traces/{trace_id}:
     get:
       summary: Get distributed trace information
@@ -369,15 +369,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/TraceResponse'
         '404':
-          $ref: ../common-service/responses/error.yaml#/NotFound
+          $ref: ../common/responses/error.yaml#/NotFound
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /analytics/performance:
     get:
       summary: Get performance analytics and trends
@@ -423,21 +423,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/PerformanceAnalyticsResponse'
         '400':
-          $ref: ../common-service/responses/error.yaml#/BadRequest
+          $ref: ../common/responses/error.yaml#/BadRequest
         '401':
-          $ref: ../common-service/responses/error.yaml#/Unauthorized
+          $ref: ../common/responses/error.yaml#/Unauthorized
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
 components:
   schemas:
     HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      $ref: ../common/schemas/health.yaml#/HealthResponse
     Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     ServicesHealthResponse:
       type: object
       required:
@@ -824,11 +824,12 @@ components:
           maxLength: 500
   responses:
     HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: ../common/security/security.yaml#/ServiceAuth
+

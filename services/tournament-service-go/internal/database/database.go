@@ -2,11 +2,11 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
 	"necpgame/services/tournament-service-go/internal/config"
@@ -14,7 +14,7 @@ import (
 
 // Manager manages database connections and operations
 type Manager struct {
-	db     *sql.DB
+	db     *pgxpool.Pool
 	logger *zap.Logger
 	config *config.DatabaseConfig
 }
@@ -23,21 +23,27 @@ type Manager struct {
 func NewManager(cfg *config.DatabaseConfig, logger *zap.Logger) (*Manager, error) {
 	dsn := cfg.GetDatabaseDSN()
 
-	db, err := sql.Open("postgres", dsn)
+	// Parse connection config for pgxpool
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %w", err)
+		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
 
-	// Configure connection pooling
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-	db.SetConnMaxLifetime(cfg.MaxLifetime)
+	// Configure connection pool for high-performance tournament operations
+	config.MaxConns = int32(cfg.MaxOpenConns)
+	config.MinConns = int32(cfg.MaxIdleConns)
+	config.MaxConnLifetime = cfg.MaxLifetime
+
+	db, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database connection pool: %w", err)
+	}
 
 	// Test connection with context timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := db.PingContext(ctx); err != nil {
+	if err := db.Ping(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
@@ -46,9 +52,9 @@ func NewManager(cfg *config.DatabaseConfig, logger *zap.Logger) (*Manager, error
 		zap.String("host", cfg.Host),
 		zap.Int("port", cfg.Port),
 		zap.String("database", cfg.Database),
-		zap.Int("maxOpenConns", cfg.MaxOpenConns),
-		zap.Int("maxIdleConns", cfg.MaxIdleConns),
-		zap.Duration("maxLifetime", cfg.MaxLifetime))
+		zap.Int32("maxConns", config.MaxConns),
+		zap.Int32("minConns", config.MinConns),
+		zap.Duration("maxLifetime", config.MaxConnLifetime))
 
 	return &Manager{
 		db:     db,
@@ -60,13 +66,13 @@ func NewManager(cfg *config.DatabaseConfig, logger *zap.Logger) (*Manager, error
 // Close closes the database connection
 func (m *Manager) Close() error {
 	if m.db != nil {
-		return m.db.Close()
+		m.db.Close()
 	}
 	return nil
 }
 
 // GetDB returns the underlying database connection
-func (m *Manager) GetDB() *sql.DB {
+func (m *Manager) GetDB() *pgxpool.Pool {
 	return m.db
 }
 
@@ -75,30 +81,38 @@ func (m *Manager) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	return m.db.PingContext(ctx)
+	return m.db.Ping(ctx)
 }
 
-// Stats returns database connection pool statistics
-func (m *Manager) Stats() sql.DBStats {
-	return m.db.Stats()
+// Stats returns database connection pool statistics (simplified for pgxpool)
+func (m *Manager) Stats() map[string]interface{} {
+	// pgxpool doesn't expose detailed stats like sql.DB
+	return map[string]interface{}{
+		"pool_size": "unknown", // pgxpool doesn't expose this
+		"open_connections": "unknown",
+		"in_use": "unknown",
+		"idle": "unknown",
+		"wait_count": 0,
+		"wait_duration": "0s",
+	}
 }
 
 // ExecuteInTransaction executes a function within a database transaction
-func (m *Manager) ExecuteInTransaction(ctx context.Context, fn func(*sql.Tx) error) error {
-	tx, err := m.db.BeginTx(ctx, nil)
+func (m *Manager) ExecuteInTransaction(ctx context.Context, fn func(pgx.Tx) error) error {
+	tx, err := m.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 			panic(p)
 		}
 	}()
 
 	if err := fn(tx); err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			m.logger.Error("Failed to rollback transaction",
 				zap.Error(rbErr), zap.Error(err))
 			return fmt.Errorf("transaction failed and rollback failed: %w (rollback: %v)", err, rbErr)
@@ -106,7 +120,7 @@ func (m *Manager) ExecuteInTransaction(ctx context.Context, fn func(*sql.Tx) err
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -122,7 +136,7 @@ func (m *Manager) HealthCheck(ctx context.Context) error {
 
 	// Test simple query
 	var result int
-	err := m.db.QueryRowContext(ctx, "SELECT 1").Scan(&result)
+	err := m.db.QueryRow(ctx, "SELECT 1").Scan(&result)
 	if err != nil {
 		return fmt.Errorf("database query test failed: %w", err)
 	}
@@ -133,11 +147,7 @@ func (m *Manager) HealthCheck(ctx context.Context) error {
 
 	stats := m.Stats()
 	m.logger.Debug("Database health check passed",
-		zap.Int("openConnections", stats.OpenConnections),
-		zap.Int("inUse", stats.InUse),
-		zap.Int("idle", stats.Idle),
-		zap.Int64("waitCount", stats.WaitCount),
-		zap.Duration("waitDuration", stats.WaitDuration))
+		zap.Any("connectionStats", stats))
 
 	return nil
 }

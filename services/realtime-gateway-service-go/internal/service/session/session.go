@@ -12,15 +12,13 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-
-	"github.com/gc-lover/necp-game/services/realtime-gateway-service-go/internal/service/protobuf"
 )
 
 // SessionConfig holds session configuration
 type SessionConfig struct {
 	ID              string
 	Connection      *websocket.Conn
-	ProtobufHandler *protobuf.Handler
+	ProtobufHandler interface{} // Will be *protobuf.Handler
 	Logger          *zap.Logger
 	Manager         *Manager
 	OnClose         func(string)
@@ -30,7 +28,7 @@ type SessionConfig struct {
 type Session struct {
 	id              string
 	conn            *websocket.Conn
-	protobufHandler *protobuf.Handler
+	protobufHandler interface{} // Will be *protobuf.Handler
 	logger          *zap.Logger
 	manager         *Manager
 	onClose         func(string)

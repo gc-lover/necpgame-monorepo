@@ -10,15 +10,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
-
-	"github.com/gc-lover/necp-game/services/realtime-gateway-service-go/internal/service/protobuf"
 )
 
 // Config holds session manager configuration
 type Config struct {
 	DB              *pgxpool.Pool
 	Redis           *redis.Client
-	ProtobufHandler *protobuf.Handler
+	ProtobufHandler interface{} // Will be *protobuf.Handler
 	Logger          *zap.Logger
 	Meter           metric.Meter
 }
@@ -29,7 +27,7 @@ type Manager struct {
 	logger      *zap.Logger
 	db          *pgxpool.Pool
 	redis       *redis.Client
-	protobufHandler *protobuf.Handler
+	protobufHandler interface{} // Will be *protobuf.Handler
 	meter       metric.Meter
 
 	// Session storage

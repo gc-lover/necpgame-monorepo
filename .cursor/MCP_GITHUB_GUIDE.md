@@ -84,11 +84,21 @@ const CHECK_OPTIONS = {
 ```javascript
 // В Cursor IDE: MCP сервер cursor-github
 // В Antigravity: аналогичный MCP сервер
+
+// МЕТОД 1: GitHub Projects API (рекомендуемый)
 mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   query: 'Agent:"Backend" Status:"Todo"'
+});
+
+// МЕТОД 2: GitHub Issues API (альтернативный, если Projects не работает)
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open',
+  labels: 'Agent:Backend,Status:Todo'  // или поиск по title префиксам
 });
 ```
 

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"necpgame/services/economy-service-go/config"
-	api "necpgame/services/economy-service-go/pkg/services/economy-service-go/pkg/api"
+	api "necpgame/services/economy-service-go/pkg/api"
 )
 
 // SecurityHandler implements the generated SecurityHandler interface for economy service
@@ -25,12 +25,12 @@ func NewSecurityHandler(cfg *config.Config, logger *zap.Logger) *SecurityHandler
 }
 
 // HandleBearerAuth implements JWT Bearer token authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
-	if t.Token == "" {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t string) (context.Context, error) {
+	if t == "" {
 		return ctx, fmt.Errorf("missing bearer token")
 	}
 
-	claims, err := s.jwtService.ValidateAccessToken(t.Token)
+	claims, err := s.jwtService.ValidateAccessToken(t)
 	if err != nil {
 		s.logger.Warn("Invalid JWT token", zap.Error(err))
 		return ctx, fmt.Errorf("invalid token: %w", err)

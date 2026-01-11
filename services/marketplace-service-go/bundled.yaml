@@ -1,0 +1,3292 @@
+openapi: 3.0.3
+info:
+  title: Marketplace Service API
+  description: 'Enterprise-grade Item Marketplace System  NECPGAME .
+
+
+    ## 🎯 **Marketplace Service Overview**
+
+
+    Marketplace Service NECPGAME  enterprise-grade   .
+
+
+    ### ** **
+
+    - **Listing Management**:
+
+    - **Price Discovery**:
+
+    - **Inventory Management**:
+
+    - **Transaction Processing**:
+
+
+    ### ** **
+
+    - **Fixed Price**:
+
+    - **Negotiable Price**:
+
+    - **Bulk Listings**:
+
+    - **Premium Listings**:
+
+
+    ### ** **
+
+    - **Search & Filtering**:
+
+    - **Price Analytics**:
+
+    - **Seller Ratings**:
+
+    - **Market Trends**:
+
+
+    ## 📊 **Performance Targets**
+
+    - **P99 Latency**: <35ms
+
+    - **Throughput**: 30,000+ marketplace operations/second
+
+    - **Concurrent Users**: 300,000+
+
+    - **Listings Volume**: 2M+
+
+
+    ## 🔐 **Security**
+
+    - JWT RS256
+
+    - Rate limiting
+
+    - Input validation  sanitization
+
+    - Audit logging
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Platform Team
+    email: platform@necpgame.com
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+servers:
+- url: https://marketplace.necpgame.com/api/v1
+  description: Production Environment
+- url: https://marketplace-staging.necpgame.com/api/v1
+  description: Staging Environment
+- url: http://localhost:8080/api/v1
+  description: Local Development
+security:
+- BearerAuth: []
+tags:
+- name: Listing Management
+  description: null
+- name: Search & Discovery
+  description: null
+- name: Transaction Processing
+  description: null
+- name: Seller Management
+  description: null
+- name: Market Analytics
+  description: null
+- name: Inventory
+  description: null
+- name: Health
+  description: null
+paths:
+  /health:
+    get:
+      summary: null
+      operationId: healthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: null
+      operationId: healthBatchCheck
+      tags:
+      - Health
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthBatchRequest'
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthBatchResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: WebSocket
+      operationId: healthWebSocketCheck
+      tags:
+      - Health
+      responses:
+        '101':
+          description: WebSocket
+        '503':
+          description: WebSocket
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings:
+    post:
+      summary: null
+      operationId: createListing
+      tags:
+      - Listing Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListingRequest'
+      responses:
+        '201':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: null
+      operationId: getListings
+      tags:
+      - Listing Management
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - sold
+          - expired
+          - cancelled
+          default: active
+      - name: sellerId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      - name: minPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: maxPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          enum:
+          - price_asc
+          - price_desc
+          - newest
+          - oldest
+          - popularity
+          default: newest
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings/{listingId}:
+    get:
+      summary: ID
+      operationId: getListing
+      tags:
+      - Listing Management
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '404':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: null
+      operationId: updateListing
+      tags:
+      - Listing Management
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateListingRequest'
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '403':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: null
+      operationId: deleteListing
+      tags:
+      - Listing Management
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '403':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings/search:
+    get:
+      summary: null
+      operationId: searchListings
+      tags:
+      - Search & Discovery
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+          description: null
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      - name: minPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: maxPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      - name: sellerRating
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          enum:
+          - relevance
+          - price_asc
+          - price_desc
+          - newest
+          - rating
+          default: relevance
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResultsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings/{listingId}/purchase:
+    post:
+      summary: null
+      operationId: purchaseListing
+      tags:
+      - Transaction Processing
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings/{listingId}/negotiate:
+    post:
+      summary: null
+      operationId: negotiatePrice
+      tags:
+      - Transaction Processing
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NegotiateRequest'
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NegotiateResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /sellers/{sellerId}/listings:
+    get:
+      summary: null
+      operationId: getSellerListings
+      tags:
+      - Seller Management
+      parameters:
+      - name: sellerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - sold
+          - expired
+          - all
+          default: all
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerListingsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /sellers/{sellerId}/rating:
+    get:
+      summary: null
+      operationId: getSellerRating
+      tags:
+      - Seller Management
+      parameters:
+      - name: sellerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerRatingResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /listings/{listingId}/watch:
+    post:
+      summary: null
+      operationId: watchListing
+      tags:
+      - Listing Management
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchListingRequest'
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchResponse'
+        '409':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: null
+      operationId: unwatchListing
+      tags:
+      - Listing Management
+      parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /market/analytics:
+    get:
+      summary: null
+      operationId: getMarketAnalytics
+      tags:
+      - Market Analytics
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          default: daily
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketAnalyticsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /market/trends:
+    get:
+      summary: null
+      operationId: getMarketTrends
+      tags:
+      - Market Analytics
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          default: weekly
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketTrendsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /inventory/{playerId}:
+    get:
+      summary: null
+      operationId: getPlayerInventory
+      tags:
+      - Inventory
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerInventoryResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /market/price-guide:
+    get:
+      summary: null
+      operationId: getPriceGuide
+      tags:
+      - Market Analytics
+      parameters:
+      - name: itemType
+        in: query
+        schema:
+          type: string
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceGuideResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CharacterEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - level
+        - experience
+        - stats
+        properties:
+          level:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: Character level
+            example: 25
+          experience:
+            type: integer
+            minimum: 0
+            description: Current experience points
+            example: 15420
+          stats:
+            $ref: '#/components/schemas/CharacterStats'
+          cyberware_level:
+            type: integer
+            minimum: 0
+            maximum: 20
+            description: Cyberware enhancement level
+            example: 8
+          reputation:
+            type: integer
+            minimum: -1000
+            maximum: 1000
+            description: Faction reputation score
+            example: 450
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+        message:
+          type: string
+          example: Service is healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        version:
+          type: string
+          example: 1.0.0
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+          description: List of services to check
+    HealthBatchResponse:
+      type: object
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+    ListingEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - sellerId
+        - item
+        - price
+        - status
+        properties:
+          sellerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          item:
+            $ref: '#/components/schemas/ListedItemEntity'
+          price:
+            type: object
+            description: null
+            required:
+            - amount
+            - currency
+            properties:
+              amount:
+                type: integer
+                description: null
+                minimum: 1
+                example: 5000
+              currency:
+                type: string
+                description: null
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+          status:
+            type: string
+            description: null
+            enum:
+            - active
+            - sold
+            - expired
+            - cancelled
+            - pending
+            example: active
+          listingType:
+            type: string
+            description: null
+            enum:
+            - fixed_price
+            - negotiable
+            - bulk
+            - premium
+            example: fixed_price
+          views:
+            type: integer
+            description: null
+            minimum: 0
+            example: 150
+          favorites:
+            type: integer
+            description: null
+            minimum: 0
+            example: 25
+          negotiable:
+            type: boolean
+            description: null
+            default: false
+          expiresAt:
+            type: string
+            description: null
+            format: date-time
+          buyerId:
+            type: string
+            description: ID  ( )
+            format: uuid
+          soldAt:
+            type: string
+            description: null
+            format: date-time
+          transactionId:
+            type: string
+            description: ID
+            format: uuid
+          isPremium:
+            type: boolean
+            description: Premium listing
+            default: false
+          $ref: '#/components/schemas/OptimisticLock'
+    ListedItemEntity:
+      type: object
+      description: null
+      required:
+      - itemId
+      - quantity
+      properties:
+        itemId:
+          type: string
+          description: ID
+          format: uuid
+          example: 456e7890-e89b-12d3-a456-426614174001
+        quantity:
+          type: integer
+          description: null
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: null
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        itemType:
+          type: string
+          description: null
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - misc
+          example: weapon
+        rarity:
+          type: string
+          description: null
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        level:
+          type: integer
+          description: null
+          minimum: 1
+          example: 15
+        description:
+          type: string
+          description: null
+          maxLength: 500
+        attributes:
+          type: object
+          description: null
+          additionalProperties: true
+        images:
+          type: array
+          description: null
+          items:
+            type: string
+            format: uri
+        estimatedValue:
+          type: integer
+          description: null
+          minimum: 0
+    SellerRatingEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - sellerId
+        properties:
+          sellerId:
+            type: string
+            description: ID
+            format: uuid
+          overallRating:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 5
+            example: 4.7
+          totalRatings:
+            type: integer
+            description: null
+            minimum: 0
+            example: 150
+          totalSales:
+            type: integer
+            description: null
+            minimum: 0
+            example: 120
+          successfulTransactions:
+            type: integer
+            description: null
+            minimum: 0
+            example: 118
+          disputeRate:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.02
+          averageResponseTime:
+            type: integer
+            description: null
+            minimum: 0
+            example: 30
+          badges:
+            type: array
+            description: null
+            items:
+              type: string
+              enum:
+              - trusted_seller
+              - fast_shipper
+              - top_rated
+              - veteran
+          $ref: '#/components/schemas/OptimisticLock'
+    ListingWatchEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - listingId
+        - watcherId
+        properties:
+          listingId:
+            type: string
+            description: ID
+            format: uuid
+          watcherId:
+            type: string
+            description: ID
+            format: uuid
+          watchStarted:
+            type: string
+            description: null
+            format: date-time
+          notificationsEnabled:
+            type: boolean
+            description: null
+            default: true
+          priceThreshold:
+            type: integer
+            description: null
+            minimum: 0
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateListingRequest:
+      type: object
+      required:
+      - item
+      - price
+      properties:
+        item:
+          $ref: '#/components/schemas/ListedItemEntity'
+        price:
+          type: object
+          required:
+          - amount
+          - currency
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        listingType:
+          type: string
+          enum:
+          - fixed_price
+          - negotiable
+          - bulk
+          - premium
+          default: fixed_price
+        negotiable:
+          type: boolean
+          default: false
+        duration:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 720
+          default: 24
+        isPremium:
+          type: boolean
+          default: false
+    UpdateListingRequest:
+      type: object
+      properties:
+        price:
+          type: object
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        negotiable:
+          type: boolean
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 720
+    ListingResponse:
+      type: object
+      properties:
+        listing:
+          $ref: '#/components/schemas/ListingEntity'
+        sellerRating:
+          $ref: '#/components/schemas/SellerRatingEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: null
+    ListingListResponse:
+      type: object
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+        filters:
+          type: object
+          properties:
+            appliedFilters:
+              type: object
+              additionalProperties: true
+            totalMatching:
+              type: integer
+              minimum: 0
+    SearchResultsResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        totalResults:
+          type: integer
+          minimum: 0
+        searchTime:
+          type: integer
+          description: null
+        suggestions:
+          type: array
+          items:
+            type: string
+        pagination:
+          type: object
+          properties:
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    PurchaseRequest:
+      type: object
+      required:
+      - buyerId
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+        negotiatedPrice:
+          type: object
+          description: ( negotiable )
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+    PurchaseResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        item:
+          $ref: '#/components/schemas/ListedItemEntity'
+        price:
+          type: object
+          properties:
+            amount:
+              type: integer
+            currency:
+              type: string
+        transactionId:
+          type: string
+          format: uuid
+        purchasedAt:
+          type: string
+          format: date-time
+    NegotiateRequest:
+      type: object
+      required:
+      - buyerId
+      - offeredPrice
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+        offeredPrice:
+          type: object
+          required:
+          - amount
+          - currency
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        message:
+          type: string
+          description: null
+          maxLength: 500
+    NegotiateResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        offeredPrice:
+          type: object
+          properties:
+            amount:
+              type: integer
+            currency:
+              type: string
+        message:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+    SellerListingsResponse:
+      type: object
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        statistics:
+          type: object
+          properties:
+            totalListings:
+              type: integer
+              minimum: 0
+            activeListings:
+              type: integer
+              minimum: 0
+            soldListings:
+              type: integer
+              minimum: 0
+            totalRevenue:
+              type: integer
+              minimum: 0
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    SellerRatingResponse:
+      type: object
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        rating:
+          $ref: '#/components/schemas/SellerRatingEntity'
+        recentReviews:
+          type: array
+          items:
+            type: object
+            properties:
+              buyerId:
+                type: string
+                format: uuid
+              rating:
+                type: integer
+                minimum: 1
+                maximum: 5
+              comment:
+                type: string
+                maxLength: 500
+              createdAt:
+                type: string
+                format: date-time
+        ratingBreakdown:
+          type: object
+          properties:
+            5_stars:
+              type: integer
+              minimum: 0
+            4_stars:
+              type: integer
+              minimum: 0
+            3_stars:
+              type: integer
+              minimum: 0
+            2_stars:
+              type: integer
+              minimum: 0
+            1_star:
+              type: integer
+              minimum: 0
+    WatchListingRequest:
+      type: object
+      required:
+      - watcherId
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+        priceThreshold:
+          type: integer
+          minimum: 0
+        notificationsEnabled:
+          type: boolean
+          default: true
+    WatchResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        watcherId:
+          type: string
+          format: uuid
+        isWatching:
+          type: boolean
+        watchersCount:
+          type: integer
+    MarketAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        category:
+          type: string
+        totalListings:
+          type: integer
+          minimum: 0
+        activeListings:
+          type: integer
+          minimum: 0
+        totalValue:
+          type: integer
+          minimum: 0
+        averagePrice:
+          type: number
+        medianPrice:
+          type: number
+        priceRange:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+        salesVolume:
+          type: integer
+          minimum: 0
+        topSellingItems:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName:
+                type: string
+              salesCount:
+                type: integer
+                minimum: 0
+              averagePrice:
+                type: number
+        categoryBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+    MarketTrendsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              trend:
+                type: string
+                enum:
+                - rising
+                - falling
+                - stable
+              changePercent:
+                type: number
+              averagePrice:
+                type: number
+              volume:
+                type: integer
+                minimum: 0
+    PlayerInventoryResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              itemName:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+              rarity:
+                type: string
+                enum:
+                - common
+                - uncommon
+                - rare
+                - epic
+                - legendary
+              estimatedValue:
+                type: integer
+                minimum: 0
+              canBeListed:
+                type: boolean
+              listingFee:
+                type: integer
+                minimum: 0
+        totalItems:
+          type: integer
+          minimum: 0
+    PriceGuideResponse:
+      type: object
+      properties:
+        itemType:
+          type: string
+        rarity:
+          type: string
+        priceGuide:
+          type: object
+          properties:
+            marketAverage:
+              type: number
+            suggestedPrice:
+              type: object
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+                recommended:
+                  type: number
+            recentSales:
+              type: array
+              items:
+                type: object
+                properties:
+                  price:
+                    type: number
+                  soldAt:
+                    type: string
+                    format: date-time
+            priceHistory:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  averagePrice:
+                    type: number
+                  volume:
+                    type: integer
+                    minimum: 0
+    GameEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for game entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    CharacterStats:
+      type: object
+      required:
+      - health
+      - stamina
+      - strength
+      - agility
+      - intelligence
+      - charisma
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current health points
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum health points
+          example: 900
+        stamina:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Current stamina points
+          example: 320
+        max_stamina:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Maximum stamina points
+          example: 350
+        strength:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Physical strength attribute
+          example: 75
+        agility:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Speed and reflexes attribute
+          example: 68
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Mental acuity attribute
+          example: 82
+        charisma:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Social influence attribute
+          example: 45
+        perception:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Awareness and detection attribute
+          example: 71
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Fortune and probability modifier
+          example: 33
+    CombatActionEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - action_type
+        - source_character_id
+        - target_character_id
+        - damage_dealt
+        properties:
+          action_type:
+            type: string
+            enum:
+            - attack
+            - defend
+            - ability
+            - item
+            - flee
+            description: Type of combat action
+            example: attack
+          source_character_id:
+            type: string
+            format: uuid
+            description: Character performing the action
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          target_character_id:
+            type: string
+            format: uuid
+            description: Character receiving the action
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Damage points inflicted
+            example: 145
+          accuracy_roll:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Accuracy percentage for the action
+            example: 87
+          critical_hit:
+            type: boolean
+            description: Whether this was a critical hit
+            example: false
+          status_effects:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatusEffect'
+            description: Status effects applied by this action
+    StatusEffect:
+      type: object
+      required:
+      - effect_type
+      - duration
+      - potency
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - poison
+          - bleed
+          - stun
+          - buff_strength
+          - buff_agility
+          - heal_over_time
+          - damage_over_time
+          description: Type of status effect
+          example: buff_strength
+        duration:
+          type: integer
+          minimum: 0
+          description: Effect duration in combat rounds
+          example: 3
+        potency:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effect strength percentage
+          example: 25
+        source:
+          type: string
+          enum:
+          - ability
+          - item
+          - environment
+          - cyberware
+          description: Source of the effect
+          example: ability
+    AbilityEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - name
+        - ability_type
+        - cooldown
+        - mana_cost
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Ability name
+            example: Neural Overload
+          ability_type:
+            type: string
+            enum:
+            - offensive
+            - defensive
+            - healing
+            - utility
+            - passive
+            description: Category of ability
+            example: offensive
+          cooldown:
+            type: integer
+            minimum: 0
+            description: Cooldown in combat rounds
+            example: 3
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana/stamina cost to use
+            example: 45
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - cyber
+            - elemental
+            description: Type of damage dealt
+            example: cyber
+          range:
+            type: integer
+            minimum: 0
+            description: Ability range in game units
+            example: 25
+          area_effect:
+            type: boolean
+            description: Whether ability affects multiple targets
+            example: false
+    InventoryItemEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - item_id
+        - quantity
+        - durability
+        properties:
+          item_id:
+            type: string
+            format: uuid
+            description: Reference to item definition
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          quantity:
+            type: integer
+            minimum: 1
+            description: Number of items in stack
+            example: 5
+          durability:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Item condition percentage
+            example: 87
+          equipped:
+            type: boolean
+            description: Whether item is currently equipped
+            example: true
+          enhancement_level:
+            type: integer
+            minimum: 0
+            maximum: 10
+            description: Item enhancement/modification level
+            example: 2
+    QuestEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+      - type: object
+        required:
+        - title
+        - description
+        - quest_type
+        - status
+        - objectives
+        properties:
+          title:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Quest title
+            example: Corporate Espionage
+          description:
+            type: string
+            minLength: 1
+            maxLength: 1000
+            description: Detailed quest description
+            example: Infiltrate Arasaka corporation headquarters and extract sensitive
+              data...
+          quest_type:
+            type: string
+            enum:
+            - main_story
+            - side_quest
+            - daily
+            - event
+            - faction
+            description: Category of quest
+            example: faction
+          status:
+            type: string
+            enum:
+            - available
+            - active
+            - completed
+            - failed
+            - expired
+            description: Current quest status
+            example: active
+          objectives:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuestObjective'
+            minItems: 1
+            description: Quest completion objectives
+          rewards:
+            $ref: '#/components/schemas/QuestRewards'
+          time_limit:
+            type: integer
+            minimum: 0
+            description: Time limit in hours (0 = no limit)
+            example: 168
+          faction_id:
+            type: string
+            format: uuid
+            description: Associated faction
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      - current_progress
+      - target_progress
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Objective description
+          example: Hack 3 corporate terminals
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - deliver
+          - explore
+          - interact
+          - hack
+          - craft
+          description: Type of objective
+          example: hack
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current completion progress
+          example: 2
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Required completion target
+          example: 3
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 2500
+        currency:
+          type: integer
+          minimum: 0
+          description: Currency reward
+          example: 15000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemEntity'
+          description: Item rewards
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Faction reputation change
+          example: 150
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false

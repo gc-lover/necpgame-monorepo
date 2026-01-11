@@ -1258,9 +1258,9 @@ func (s *DifficultyModeStats) Decode(d *jx.Decoder) error {
 			}
 		case "topPlayers":
 			if err := func() error {
-				s.TopPlayers = make([]DifficultyModeStatsTopPlayersItem, 0)
+				s.TopPlayers = make([]PlayerStats, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem DifficultyModeStatsTopPlayersItem
+					var elem PlayerStats
 					if err := elem.Decode(d); err != nil {
 						return err
 					}
@@ -1326,120 +1326,6 @@ func (s *DifficultyModeStats) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DifficultyModeStats) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DifficultyModeStatsTopPlayersItem) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DifficultyModeStatsTopPlayersItem) encodeFields(e *jx.Encoder) {
-	{
-		if s.PlayerId.Set {
-			e.FieldStart("playerId")
-			s.PlayerId.Encode(e)
-		}
-	}
-	{
-		if s.PlayerName.Set {
-			e.FieldStart("playerName")
-			s.PlayerName.Encode(e)
-		}
-	}
-	{
-		if s.Score.Set {
-			e.FieldStart("score")
-			s.Score.Encode(e)
-		}
-	}
-	{
-		if s.CompletionTime.Set {
-			e.FieldStart("completionTime")
-			s.CompletionTime.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDifficultyModeStatsTopPlayersItem = [4]string{
-	0: "playerId",
-	1: "playerName",
-	2: "score",
-	3: "completionTime",
-}
-
-// Decode decodes DifficultyModeStatsTopPlayersItem from json.
-func (s *DifficultyModeStatsTopPlayersItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DifficultyModeStatsTopPlayersItem to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "playerId":
-			if err := func() error {
-				s.PlayerId.Reset()
-				if err := s.PlayerId.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"playerId\"")
-			}
-		case "playerName":
-			if err := func() error {
-				s.PlayerName.Reset()
-				if err := s.PlayerName.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"playerName\"")
-			}
-		case "score":
-			if err := func() error {
-				s.Score.Reset()
-				if err := s.Score.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"score\"")
-			}
-		case "completionTime":
-			if err := func() error {
-				s.CompletionTime.Reset()
-				if err := s.CompletionTime.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"completionTime\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DifficultyModeStatsTopPlayersItem")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DifficultyModeStatsTopPlayersItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DifficultyModeStatsTopPlayersItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -2201,9 +2087,9 @@ func (s *DifficultyStats) Decode(d *jx.Decoder) error {
 			}
 		case "popularModes":
 			if err := func() error {
-				s.PopularModes = make([]DifficultyStatsPopularModesItem, 0)
+				s.PopularModes = make([]ModeStats, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem DifficultyStatsPopularModesItem
+					var elem ModeStats
 					if err := elem.Decode(d); err != nil {
 						return err
 					}
@@ -2285,103 +2171,6 @@ func (s *DifficultyStats) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DifficultyStats) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *DifficultyStatsPopularModesItem) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *DifficultyStatsPopularModesItem) encodeFields(e *jx.Encoder) {
-	{
-		if s.ModeId.Set {
-			e.FieldStart("modeId")
-			s.ModeId.Encode(e)
-		}
-	}
-	{
-		if s.ModeName.Set {
-			e.FieldStart("modeName")
-			s.ModeName.Encode(e)
-		}
-	}
-	{
-		if s.SessionCount.Set {
-			e.FieldStart("sessionCount")
-			s.SessionCount.Encode(e)
-		}
-	}
-}
-
-var jsonFieldsNameOfDifficultyStatsPopularModesItem = [3]string{
-	0: "modeId",
-	1: "modeName",
-	2: "sessionCount",
-}
-
-// Decode decodes DifficultyStatsPopularModesItem from json.
-func (s *DifficultyStatsPopularModesItem) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode DifficultyStatsPopularModesItem to nil")
-	}
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "modeId":
-			if err := func() error {
-				s.ModeId.Reset()
-				if err := s.ModeId.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"modeId\"")
-			}
-		case "modeName":
-			if err := func() error {
-				s.ModeName.Reset()
-				if err := s.ModeName.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"modeName\"")
-			}
-		case "sessionCount":
-			if err := func() error {
-				s.SessionCount.Reset()
-				if err := s.SessionCount.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"sessionCount\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode DifficultyStatsPopularModesItem")
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *DifficultyStatsPopularModesItem) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DifficultyStatsPopularModesItem) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3158,6 +2947,187 @@ func (s *GetInstanceDifficultyNotFound) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode implements json.Marshaler.
+func (s *ModeStats) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ModeStats) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("mode_id")
+		json.EncodeUUID(e, s.ModeID)
+	}
+	{
+		e.FieldStart("mode_name")
+		e.Str(s.ModeName)
+	}
+	{
+		e.FieldStart("popularity")
+		e.Float32(s.Popularity)
+	}
+	{
+		if s.TotalPlayers.Set {
+			e.FieldStart("total_players")
+			s.TotalPlayers.Encode(e)
+		}
+	}
+	{
+		if s.AverageCompletionRate.Set {
+			e.FieldStart("average_completion_rate")
+			s.AverageCompletionRate.Encode(e)
+		}
+	}
+	{
+		if s.DifficultyRating.Set {
+			e.FieldStart("difficulty_rating")
+			s.DifficultyRating.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfModeStats = [6]string{
+	0: "mode_id",
+	1: "mode_name",
+	2: "popularity",
+	3: "total_players",
+	4: "average_completion_rate",
+	5: "difficulty_rating",
+}
+
+// Decode decodes ModeStats from json.
+func (s *ModeStats) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ModeStats to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "mode_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ModeID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"mode_id\"")
+			}
+		case "mode_name":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.ModeName = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"mode_name\"")
+			}
+		case "popularity":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Float32()
+				s.Popularity = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"popularity\"")
+			}
+		case "total_players":
+			if err := func() error {
+				s.TotalPlayers.Reset()
+				if err := s.TotalPlayers.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_players\"")
+			}
+		case "average_completion_rate":
+			if err := func() error {
+				s.AverageCompletionRate.Reset()
+				if err := s.AverageCompletionRate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"average_completion_rate\"")
+			}
+		case "difficulty_rating":
+			if err := func() error {
+				s.DifficultyRating.Reset()
+				if err := s.DifficultyRating.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"difficulty_rating\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ModeStats")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfModeStats) {
+					name = jsonFieldsNameOfModeStats[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ModeStats) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ModeStats) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes bool as json.
 func (o OptBool) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -3430,6 +3400,200 @@ func (s OptUUID) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptUUID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PlayerStats) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PlayerStats) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("player_id")
+		json.EncodeUUID(e, s.PlayerID)
+	}
+	{
+		e.FieldStart("player_name")
+		e.Str(s.PlayerName)
+	}
+	{
+		e.FieldStart("score")
+		e.Int(s.Score)
+	}
+	{
+		if s.CompletionTime.Set {
+			e.FieldStart("completion_time")
+			s.CompletionTime.Encode(e)
+		}
+	}
+	{
+		if s.Rank.Set {
+			e.FieldStart("rank")
+			s.Rank.Encode(e)
+		}
+	}
+	{
+		if s.Achievements != nil {
+			e.FieldStart("achievements")
+			e.ArrStart()
+			for _, elem := range s.Achievements {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfPlayerStats = [6]string{
+	0: "player_id",
+	1: "player_name",
+	2: "score",
+	3: "completion_time",
+	4: "rank",
+	5: "achievements",
+}
+
+// Decode decodes PlayerStats from json.
+func (s *PlayerStats) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PlayerStats to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "player_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.PlayerID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_id\"")
+			}
+		case "player_name":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.PlayerName = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"player_name\"")
+			}
+		case "score":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int()
+				s.Score = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"score\"")
+			}
+		case "completion_time":
+			if err := func() error {
+				s.CompletionTime.Reset()
+				if err := s.CompletionTime.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completion_time\"")
+			}
+		case "rank":
+			if err := func() error {
+				s.Rank.Reset()
+				if err := s.Rank.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rank\"")
+			}
+		case "achievements":
+			if err := func() error {
+				s.Achievements = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Achievements = append(s.Achievements, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievements\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PlayerStats")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPlayerStats) {
+					name = jsonFieldsNameOfPlayerStats[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PlayerStats) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PlayerStats) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

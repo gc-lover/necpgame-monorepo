@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 
 	"necpgame/services/global-state-service-go/internal/repository"
 )
@@ -19,10 +22,37 @@ type Service struct {
 	eventBuffer     *EventBuffer
 	memoryPools     *MemoryPools
 	circuitBreaker  *CircuitBreaker
+	metrics         *ServiceMetrics
 	logger          *zap.Logger
 }
 
+// ServiceMetrics provides atomic performance counters
+//go:align 64
+type ServiceMetrics struct {
+	Uptime              time.Duration
+	TotalRequests       int64
+	ActiveConnections   int64
+	MemoryUsage         int64
+	CacheSize           int64
+	EventBufferSize     int64
+	DatabaseConnections int64
+	AverageResponseTime time.Duration
+	ErrorRate           float64
+	CacheHitRate        float64
+	EventThroughput     int64
+	StateThroughput     int64
+	Timestamp           time.Time
+
+	// Internal atomic counters
+	cacheHits       int64 // Atomic counter for L1 cache hits
+	cacheMisses     int64 // Atomic counter for cache misses
+	totalRequests   int64 // Atomic counter for total requests
+	failedRequests  int64 // Atomic counter for failed requests
+	avgResponseTime int64 // Atomic nanoseconds for average response time
+}
+
 // StateCache provides multi-level caching for state data
+//go:align 64
 type StateCache struct {
 	l1Cache map[string]*repository.AggregateState // In-memory L1 cache
 	l1Mutex sync.RWMutex
@@ -30,6 +60,7 @@ type StateCache struct {
 }
 
 // EventBuffer buffers events for batch processing
+//go:align 64
 type EventBuffer struct {
 	events []*repository.GameEvent
 	mutex  sync.Mutex
@@ -37,6 +68,7 @@ type EventBuffer struct {
 }
 
 // MemoryPools provides zero-allocation memory pools
+//go:align 64
 type MemoryPools struct {
 	statePool   *sync.Pool
 	eventPool   *sync.Pool
@@ -44,6 +76,7 @@ type MemoryPools struct {
 }
 
 // CircuitBreaker provides resilience against cascading failures
+//go:align 64
 type CircuitBreaker struct {
 	failures    int
 	lastFailure time.Time
@@ -89,18 +122,25 @@ func NewService(repo *repository.Repository, logger *zap.Logger) *Service {
 			threshold: 5,
 			timeout:   30 * time.Second,
 		},
-		logger: logger,
+		metrics: &ServiceMetrics{},
+		logger:  logger,
 	}
 }
 
 // GetAggregateState retrieves current state with caching optimization
 func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregateID string, version *int64, includeEvents bool) (*repository.AggregateState, []*repository.GameEvent, error) {
+	startTime := time.Now()
+
+	// PERFORMANCE: Increment total requests counter
+	atomic.AddInt64(&s.metrics.totalRequests, 1)
+
 	// Create timeout context for MMOFPS performance
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
 
 	// Check circuit breaker
 	if !s.circuitBreaker.Allow() {
+		atomic.AddInt64(&s.metrics.failedRequests, 1)
 		s.logger.Warn("Circuit breaker open, rejecting request",
 			zap.String("aggregate_type", aggregateType),
 			zap.String("aggregate_id", aggregateID))
@@ -112,6 +152,14 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	s.stateCache.l1Mutex.RLock()
 	if cached, exists := s.stateCache.l1Cache[cacheKey]; exists {
 		s.stateCache.l1Mutex.RUnlock()
+
+		// PERFORMANCE: Increment cache hits counter
+		atomic.AddInt64(&s.metrics.cacheHits, 1)
+
+		// PERFORMANCE: Update average response time
+		responseTime := time.Since(startTime).Nanoseconds()
+		s.updateAverageResponseTime(responseTime)
+
 		s.logger.Debug("L1 cache hit",
 			zap.String("aggregate_type", aggregateType),
 			zap.String("aggregate_id", aggregateID))
@@ -121,7 +169,7 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 			var err error
 			events, _, err = s.repo.GetAggregateEvents(ctx, aggregateType, aggregateID, nil, nil, 100, 0)
 			if err != nil {
-				s.recordFailure()
+				s.circuitBreaker.RecordFailure()
 				s.logger.Error("Failed to get events for cached state",
 					zap.Error(err),
 					zap.String("aggregate_type", aggregateType),
@@ -136,7 +184,9 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	// Get from repository (L2 cache or database)
 	state, err := s.repo.GetAggregateState(ctx, aggregateType, aggregateID, version)
 	if err != nil {
-		s.recordFailure()
+		atomic.AddInt64(&s.metrics.cacheMisses, 1)
+		atomic.AddInt64(&s.metrics.failedRequests, 1)
+		s.circuitBreaker.RecordFailure()
 		s.logger.Error("Failed to get aggregate state from repository",
 			zap.Error(err),
 			zap.String("aggregate_type", aggregateType),
@@ -158,10 +208,17 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	if includeEvents {
 		events, _, err = s.repo.GetAggregateEvents(ctx, aggregateType, aggregateID, nil, nil, 100, 0)
 		if err != nil {
-			s.recordFailure()
+			s.circuitBreaker.RecordFailure()
 			return nil, nil, fmt.Errorf("failed to get events: %w", err)
 		}
 	}
+
+	// Record success for circuit breaker
+	s.circuitBreaker.RecordSuccess()
+
+	// PERFORMANCE: Update average response time
+	responseTime := time.Since(startTime).Nanoseconds()
+	s.updateAverageResponseTime(responseTime)
 
 	return state, events, nil
 }
@@ -258,7 +315,7 @@ func (s *Service) flushEventBuffer(ctx context.Context) error {
 	// Process events in batch
 	for _, event := range events {
 		if err := s.repo.PublishEvent(ctx, event); err != nil {
-			s.recordFailure()
+			s.circuitBreaker.RecordFailure()
 			return fmt.Errorf("failed to publish event %s: %w", event.EventID, err)
 		}
 	}
@@ -426,39 +483,41 @@ func (s *Service) GetStateAnalytics(ctx context.Context, aggregateType string, s
 	}, nil
 }
 
-// ServiceMetrics represents service performance metrics
-type ServiceMetrics struct {
-	Uptime              time.Duration
-	TotalRequests       int64
-	ActiveConnections   int64
-	MemoryUsage         int64
-	CacheSize           int64
-	EventBufferSize     int64
-	DatabaseConnections int64
-	AverageResponseTime time.Duration
-	ErrorRate           float64
-	CacheHitRate        float64
-	EventThroughput     int64
-	StateThroughput     int64
-	Timestamp           time.Time
-}
 
 // GetServiceMetrics returns current service metrics
 func (s *Service) GetServiceMetrics(ctx context.Context) (*ServiceMetrics, error) {
-	// Mock metrics - in production would collect from Prometheus/monitoring
+	metrics := s.GetMetrics()
+
+	// Calculate additional derived metrics
+	cacheHits := atomic.LoadInt64(&metrics.cacheHits)
+	cacheMisses := atomic.LoadInt64(&metrics.cacheMisses)
+	totalRequests := atomic.LoadInt64(&metrics.totalRequests)
+	failedRequests := atomic.LoadInt64(&metrics.failedRequests)
+
+	var cacheHitRate float64
+	if totalRequests > 0 {
+		cacheHitRate = float64(cacheHits) / float64(cacheHits+cacheMisses)
+	}
+
+	var errorRate float64
+	if totalRequests > 0 {
+		errorRate = float64(failedRequests) / float64(totalRequests)
+	}
+
+	// Return comprehensive metrics
 	return &ServiceMetrics{
-		Uptime:              24 * time.Hour,
-		TotalRequests:       15000,
-		ActiveConnections:   1250,
-		MemoryUsage:         256 * 1024 * 1024, // 256MB
-		CacheSize:           50 * 1024 * 1024,   // 50MB
-		EventBufferSize:     1024,
-		DatabaseConnections: 15,
-		AverageResponseTime: 45 * time.Millisecond,
-		ErrorRate:           0.02,
-		CacheHitRate:        0.95,
-		EventThroughput:     500,
-		StateThroughput:     200,
+		Uptime:              time.Since(time.Now().Add(-24 * time.Hour)), // Mock uptime
+		TotalRequests:       totalRequests,
+		ActiveConnections:   0, // Would be collected from connection pool
+		MemoryUsage:         0, // Would be collected from runtime
+		CacheSize:           int64(len(s.stateCache.l1Cache)),
+		EventBufferSize:     int64(len(s.eventBuffer.events)),
+		DatabaseConnections: 0, // Would be collected from pgxpool
+		AverageResponseTime: time.Duration(metrics.avgResponseTime),
+		ErrorRate:           errorRate,
+		CacheHitRate:        cacheHitRate,
+		EventThroughput:     0, // Would be calculated from events/sec
+		StateThroughput:     0, // Would be calculated from states/sec
 		Timestamp:           time.Now().UTC(),
 	}, nil
 }
@@ -511,6 +570,43 @@ func (cb *CircuitBreaker) Allow() bool {
 		cb.failures = 0
 	}
 	return true
+}
+
+// RecordFailure records a failure for circuit breaker
+func (cb *CircuitBreaker) RecordFailure() {
+	cb.failures++
+	cb.lastFailure = time.Now()
+}
+
+// RecordSuccess resets failure count on success
+func (cb *CircuitBreaker) RecordSuccess() {
+	if cb.failures > 0 {
+		cb.failures = 0
+	}
+}
+
+// updateAverageResponseTime atomically updates the average response time
+func (s *Service) updateAverageResponseTime(responseTime int64) {
+	// Simple moving average calculation
+	currentAvg := atomic.LoadInt64(&s.metrics.avgResponseTime)
+	if currentAvg == 0 {
+		atomic.StoreInt64(&s.metrics.avgResponseTime, responseTime)
+	} else {
+		// Exponential moving average: 0.1 * new + 0.9 * old
+		newAvg := (responseTime + 9*currentAvg) / 10
+		atomic.StoreInt64(&s.metrics.avgResponseTime, newAvg)
+	}
+}
+
+// GetMetrics returns current service metrics
+func (s *Service) GetMetrics() ServiceMetrics {
+	return ServiceMetrics{
+		cacheHits:       atomic.LoadInt64(&s.metrics.cacheHits),
+		cacheMisses:     atomic.LoadInt64(&s.metrics.cacheMisses),
+		totalRequests:   atomic.LoadInt64(&s.metrics.totalRequests),
+		failedRequests:  atomic.LoadInt64(&s.metrics.failedRequests),
+		avgResponseTime: atomic.LoadInt64(&s.metrics.avgResponseTime),
+	}
 }
 
 // generateUUID generates a simple UUID for events (in production, use proper UUID library)

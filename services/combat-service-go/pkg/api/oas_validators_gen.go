@@ -121,6 +121,123 @@ func (s *CharacterEntity) Validate() error {
 	return nil
 }
 
+func (s *CombatAbility) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     0,
+			MinLengthSet:  false,
+			MaxLength:     100,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Name)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "name",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Damage.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "damage",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Cooldown.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "cooldown",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s CombatAbilityType) Validate() error {
+	switch s {
+	case "attack":
+		return nil
+	case "defense":
+		return nil
+	case "heal":
+		return nil
+	case "buff":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *CombatActionRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -231,6 +348,61 @@ func (s *CombatActionResponse) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		if value, ok := s.ActionResult.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "action_result",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *CombatActionResult) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Effects {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "effects",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -299,6 +471,151 @@ func (s CombatEffectType) Validate() error {
 	case "debuff":
 		return nil
 	case "status":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *CombatItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     0,
+			MinLengthSet:  false,
+			MaxLength:     100,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.Name)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "name",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Damage.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "damage",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Ammo.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "ammo",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Durability.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "durability",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s CombatItemType) Validate() error {
+	switch s {
+	case "weapon":
+		return nil
+	case "armor":
+		return nil
+	case "consumable":
+		return nil
+	case "implant":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -455,6 +772,56 @@ func (s *CombatParticipant) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "team",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Inventory {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "inventory",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Abilities {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "abilities",
 			Error: err,
 		})
 	}
@@ -3500,6 +3867,31 @@ func (s *DamageCalculationResult) Validate() error {
 			Error: err,
 		})
 	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.ElementalEffects {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "elemental_effects",
+			Error: err,
+		})
+	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -3655,6 +4047,44 @@ func (s DamageCalculationResultModifiersAppliedItemType) Validate() error {
 	case "additive":
 		return nil
 	case "reduction":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ElementalEffect) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ElementalEffectType) Validate() error {
+	switch s {
+	case "fire":
+		return nil
+	case "ice":
+		return nil
+	case "electric":
+		return nil
+	case "poison":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -4178,6 +4608,39 @@ func (s StatusEffectType) Validate() error {
 	}
 }
 
+func (s *WeaponAnalyticsItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.Float{
+			MinSet:        true,
+			Min:           0,
+			MaxSet:        true,
+			Max:           1,
+			MinExclusive:  false,
+			MaxExclusive:  false,
+			MultipleOfSet: false,
+			MultipleOf:    nil,
+			Pattern:       nil,
+		}).Validate(float64(s.Accuracy)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "accuracy",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *WeaponAnalyticsResponse) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -4607,6 +5070,31 @@ func (s *WeaponAnalyticsResponseUsageStats) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "average_uses_per_user",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		var failures []validate.FieldError
+		for i, elem := range s.Items {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "items",
 			Error: err,
 		})
 	}

@@ -1,0 +1,408 @@
+# Reputation Response Schemas - Enterprise-grade Reputation Decay & Recovery API
+# Domain Separation: Response schemas for reputation operations
+# Issue: #2174
+
+components:
+  schemas:
+
+    # Reputation Response Schema
+    ReputationResponse:
+      type: object
+      required:
+        - reputation
+        - metadata
+      properties:
+        reputation:
+          $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+          description: Reputation entity data
+        metadata:
+          type: object
+          required:
+            - decay_info
+            - recovery_options
+          properties:
+            decay_info:
+              type: object
+              properties:
+                next_decay_time:
+                  type: string
+                  format: date-time
+                  description: When next decay will occur
+                decay_rate:
+                  type: number
+                  format: float
+                  description: Current decay rate per day
+                days_since_last_interaction:
+                  type: integer
+                  minimum: 0
+                  description: Days since last interaction with target
+              description: Information about reputation decay
+            recovery_options:
+              type: array
+              items:
+                type: object
+                properties:
+                  action_type:
+                    type: string
+                    enum: [quest_completion, gift_giving, event_participation, loyalty_display, crisis_intervention, personal_sacrifice, public_service, relationship_building, favor_returned, apology_offered]
+                    description: Type of recovery action
+                  estimated_recovery:
+                    type: object
+                    properties:
+                      min_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                      max_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                      average_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                    description: Estimated recovery value range
+                  cooldown_remaining:
+                    type: integer
+                    minimum: 0
+                    description: Seconds remaining before action can be used again
+                  requirements_met:
+                    type: boolean
+                    description: Whether all requirements for this action are met
+                description: Available recovery action
+              description: Available recovery options for this reputation
+            relationship_health:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [critical, weak, stable, strong, excellent]
+                  description: Overall relationship health status
+                risk_level:
+                  type: string
+                  enum: [low, medium, high, critical]
+                  description: Risk of reputation decay
+                recommended_actions:
+                  type: array
+                  items:
+                    type: string
+                    example: "Complete faction quest"
+                  description: Recommended actions to maintain/improve reputation
+              description: Overall relationship health assessment
+
+    # Reputation List Response Schema
+    ReputationListResponse:
+      type: object
+      required:
+        - reputations
+        - pagination
+      properties:
+        reputations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationResponse'
+          description: List of reputation entities
+        pagination:
+          type: object
+          required:
+            - page
+            - limit
+            - total
+            - total_pages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: Current page number
+            limit:
+              type: integer
+              minimum: 1
+              description: Items per page
+            total:
+              type: integer
+              minimum: 0
+              description: Total number of items
+            total_pages:
+              type: integer
+              minimum: 1
+              description: Total number of pages
+            has_next:
+              type: boolean
+              description: Whether there is a next page
+            has_prev:
+              type: boolean
+              description: Whether there is a previous page
+
+    # Reputation Update Response Schema
+    ReputationUpdateResponse:
+      type: object
+      required:
+        - success
+        - reputation_before
+        - reputation_after
+        - change_applied
+      properties:
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+        reputation_before:
+          $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+          description: Reputation state before the update
+        reputation_after:
+          $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+          description: Reputation state after the update
+        change_applied:
+          type: object
+          required:
+            - change_value
+            - final_value
+            - tier_changed
+          properties:
+            change_value:
+              type: number
+              format: float
+              description: Actual change value applied (may differ from requested due to caps/limits)
+              example: 12.5
+            final_value:
+              type: number
+              format: float
+              description: Final reputation value after change
+              example: 78.2
+            tier_changed:
+              type: boolean
+              description: Whether reputation tier changed as result
+              example: false
+            new_tier:
+              type: string
+              enum: [hated, hostile, unfriendly, neutral, friendly, liked, respected, revered, legendary]
+              description: New reputation tier (if changed)
+            notifications_sent:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: IDs of players notified about this change
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Server processing time in milliseconds
+          example: 45
+
+    # Bulk Reputation Update Response Schema
+    BulkReputationUpdateResponse:
+      type: object
+      required:
+        - success
+        - total_updates
+        - successful_updates
+        - failed_updates
+      properties:
+        success:
+          type: boolean
+          description: Whether the bulk operation was successful (all updates succeeded if atomic=true)
+        total_updates:
+          type: integer
+          minimum: 0
+          description: Total number of updates requested
+        successful_updates:
+          type: integer
+          minimum: 0
+          description: Number of updates that succeeded
+        failed_updates:
+          type: integer
+          minimum: 0
+          description: Number of updates that failed
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - update_index
+              - success
+            properties:
+              update_index:
+                type: integer
+                minimum: 0
+                description: Index of the update in the original request array
+              success:
+                type: boolean
+                description: Whether this specific update succeeded
+              result:
+                $ref: '#/components/schemas/ReputationUpdateResponse'
+                description: Update result (present if success=true)
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "VALIDATION_ERROR"
+                  message:
+                    type: string
+                    example: "Invalid reputation value"
+                description: Error details (present if success=false)
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Total server processing time in milliseconds
+
+    # Reputation Recovery Response Schema
+    ReputationRecoveryResponse:
+      type: object
+      required:
+        - success
+        - action_performed
+        - recovery_applied
+      properties:
+        success:
+          type: boolean
+          description: Whether the recovery action was successful
+        action_performed:
+          type: object
+          required:
+            - action_type
+            - timestamp
+          properties:
+            action_type:
+              type: string
+              enum: [quest_completion, gift_giving, event_participation, loyalty_display, crisis_intervention, personal_sacrifice, public_service, relationship_building, favor_returned, apology_offered]
+              description: Type of recovery action performed
+            timestamp:
+              type: string
+              format: date-time
+              description: When the action was performed
+            action_id:
+              type: string
+              format: uuid
+              description: Unique ID for this action instance
+        recovery_applied:
+          type: object
+          required:
+            - reputation_before
+            - reputation_after
+            - recovery_value
+          properties:
+            reputation_before:
+              $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+              description: Reputation state before recovery
+            reputation_after:
+              $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+              description: Reputation state after recovery
+            recovery_value:
+              type: number
+              format: float
+              description: Actual recovery value applied
+              example: 15.5
+        cooldown_applied:
+          type: object
+          properties:
+            action_type:
+              type: string
+              description: Action type that entered cooldown
+            cooldown_duration_seconds:
+              type: integer
+              minimum: 0
+              description: Cooldown duration in seconds
+            cooldown_expires_at:
+              type: string
+              format: date-time
+              description: When cooldown expires
+          description: Cooldown information (present if action has cooldown)
+        notifications_triggered:
+          type: array
+          items:
+            type: string
+            example: "recovery_success_notification"
+          description: Types of notifications sent to the player
+
+    # Reputation Decay Simulation Response Schema
+    ReputationDecaySimulationResponse:
+      type: object
+      required:
+        - simulation_period_days
+        - reputation_changes
+        - final_state
+      properties:
+        simulation_period_days:
+          type: integer
+          minimum: 1
+          description: Number of days simulated
+        reputation_changes:
+          type: array
+          items:
+            type: object
+            required:
+              - day
+              - reputation_value
+              - change_reason
+            properties:
+              day:
+                type: integer
+                minimum: 0
+                description: Day number in simulation (0 = starting day)
+              reputation_value:
+                type: number
+                format: float
+                description: Reputation value at end of this day
+              change_reason:
+                type: string
+                enum: [natural_decay, recovery_action, relationship_decay]
+                description: Reason for the reputation change
+              change_value:
+                type: number
+                format: float
+                description: Change value for this day
+              tier_at_end_of_day:
+                type: string
+                enum: [hated, hostile, unfriendly, neutral, friendly, liked, respected, revered, legendary]
+                description: Reputation tier at end of this day
+          description: Daily reputation changes during simulation
+        final_state:
+          $ref: './reputation-schemas.yaml#/components/schemas/Reputation'
+          description: Final reputation state after simulation
+        recovery_opportunities:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: integer
+                minimum: 0
+                description: Day when recovery opportunity occurs
+              action_type:
+                type: string
+                enum: [quest_completion, gift_giving, event_participation, loyalty_display, crisis_intervention, personal_sacrifice, public_service, relationship_building, favor_returned, apology_offered]
+                description: Type of recovery action available
+              estimated_recovery:
+                type: number
+                format: float
+                minimum: 0.0
+                description: Estimated recovery value
+          description: Potential recovery opportunities identified during simulation (if requested)
+        summary:
+          type: object
+          properties:
+            total_decay:
+              type: number
+              format: float
+              description: Total reputation lost to decay
+            tier_changes:
+              type: integer
+              minimum: 0
+              description: Number of tier changes during simulation
+            critical_thresholds_reached:
+              type: array
+              items:
+                type: object
+                properties:
+                  day:
+                    type: integer
+                    minimum: 0
+                  threshold:
+                    type: string
+                    example: "neutral"
+                  crossed_direction:
+                    type: string
+                    enum: [up, down]
+                description: Critical reputation thresholds reached
+          description: Simulation summary statistics

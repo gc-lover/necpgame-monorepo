@@ -3,24 +3,21 @@ package database
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
 
-	"github.com/gc-lover/necpgame/services/battle-pass-service-go/internal/config"
+	"battle-pass-service-go/internal/config"
 )
 
 // DB представляет подключение к базе данных
 type DB struct {
-	pool   *pgxpool.Pool
-	logger *zap.Logger
-	cfg    *config.DatabaseConfig
+	pool *pgxpool.Pool
+	cfg  *config.DatabaseConfig
 }
 
 // NewConnection создает новое подключение к PostgreSQL
-func NewConnection(ctx context.Context, cfg *config.DatabaseConfig, logger *zap.Logger) (*DB, error) {
+func NewConnection(ctx context.Context, cfg *config.DatabaseConfig) (*DB, error) {
 	dbConfig, err := pgxpool.ParseConfig(fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		cfg.User,
@@ -34,27 +31,10 @@ func NewConnection(ctx context.Context, cfg *config.DatabaseConfig, logger *zap.
 		return nil, errors.Wrap(err, "failed to parse database config")
 	}
 
-	// Оптимизации для MMOFPS
-	dbConfig.MaxConns = int32(cfg.MaxConns)
-	dbConfig.MinConns = int32(cfg.MinConns)
-
-	if cfg.MaxConnLifetime != "" {
-		if duration, err := time.ParseDuration(cfg.MaxConnLifetime); err == nil {
-			dbConfig.MaxConnLifetime = duration
-		}
-	}
-
-	if cfg.MaxConnIdleTime != "" {
-		if duration, err := time.ParseDuration(cfg.MaxConnIdleTime); err == nil {
-			dbConfig.MaxConnIdleTime = duration
-		}
-	}
-
-	if cfg.HealthCheckPeriod != "" {
-		if duration, err := time.ParseDuration(cfg.HealthCheckPeriod); err == nil {
-			dbConfig.HealthCheckPeriod = duration
-		}
-	}
+	// MMOFPS Optimization: Connection pool sizing for seasonal loads
+	dbConfig.MaxConns = int32(cfg.MaxOpenConns)
+	dbConfig.MinConns = int32(cfg.MaxIdleConns)
+	dbConfig.MaxConnLifetime = cfg.MaxLifetime
 
 	pool, err := pgxpool.NewWithConfig(ctx, dbConfig)
 	if err != nil {
@@ -62,9 +42,8 @@ func NewConnection(ctx context.Context, cfg *config.DatabaseConfig, logger *zap.
 	}
 
 	db := &DB{
-		pool:   pool,
-		logger: logger,
-		cfg:    cfg,
+		pool: pool,
+		cfg:  cfg,
 	}
 
 	// Проверка подключения
@@ -73,12 +52,7 @@ func NewConnection(ctx context.Context, cfg *config.DatabaseConfig, logger *zap.
 		return nil, errors.Wrap(err, "failed to ping database")
 	}
 
-	logger.Info("Database connection established",
-		zap.String("host", cfg.Host),
-		zap.Int("port", cfg.Port),
-		zap.String("database", cfg.Database),
-		zap.Int("max_conns", cfg.MaxConns),
-		zap.Int("min_conns", cfg.MinConns))
+	// MMOFPS: Connection pool configured for seasonal battle pass loads
 
 	return db, nil
 }
@@ -92,7 +66,6 @@ func (db *DB) Ping(ctx context.Context) error {
 func (db *DB) Close() {
 	if db.pool != nil {
 		db.pool.Close()
-		db.logger.Info("Database connection closed")
 	}
 }
 

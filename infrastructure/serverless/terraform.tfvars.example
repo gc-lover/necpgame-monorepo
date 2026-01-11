@@ -1,0 +1,116 @@
+# NECPGAME Serverless Infrastructure Configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "dev"
+
+# Database Configuration (PostgreSQL)
+database_url = "postgres://username:password@host:5432/database?sslmode=require"
+
+# Redis Configuration
+redis_url = "redis://username:password@host:6379/0"
+
+# Authentication
+jwt_secret = "your-super-secure-jwt-secret-key-here"
+
+# Event Streaming (Kafka)
+kafka_brokers = "broker1:9092,broker2:9092,broker3:9092"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+
+# Lambda Function Configuration
+lambda_memory_size = {
+  "achievement-service" = 512
+  "quest-service"       = 1024
+  "inventory-service"   = 512
+  "economy-service"     = 1024
+  "combat-stats-service" = 512
+  "analytics-service"   = 2048
+  "guild-service"       = 1024
+  "webrtc-signaling-service" = 512
+  "voice-chat-service"  = 512
+  "tournament-service"  = 1024
+  "cyberware-service"   = 512
+}
+
+lambda_timeout = {
+  "achievement-service" = 30
+  "quest-service"       = 60
+  "inventory-service"   = 30
+  "economy-service"     = 60
+  "combat-stats-service" = 30
+  "analytics-service"   = 300
+  "guild-service"       = 60
+  "webrtc-signaling-service" = 30
+  "voice-chat-service"  = 30
+  "tournament-service"  = 60
+  "cyberware-service"   = 30
+}
+
+# API Gateway Configuration
+api_gateway_config = {
+  stage_name = "prod"
+  throttling_settings = {
+    burst_limit = 100
+    rate_limit  = 50
+  }
+}
+
+# DynamoDB Configuration
+dynamodb_config = {
+  billing_mode = "PAY_PER_REQUEST"
+  enable_point_in_time_recovery = true
+  enable_encryption = true
+}
+
+# S3 Configuration
+s3_config = {
+  versioning_enabled = true
+  encryption_enabled = true
+  lifecycle_rules = [
+    {
+      enabled = true
+      prefix  = "logs/"
+      expiration = {
+        days = 30
+      }
+    }
+  ]
+}
+
+# CloudFront Configuration
+cloudfront_config = {
+  enabled             = true
+  ipv6_enabled        = true
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+  cache_ttl = {
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 31536000
+  }
+}
+
+# WAF Configuration
+waf_config = {
+  enabled = true
+  rate_limit = 1000
+  block_countries = ["CN", "RU"]  # Add countries to block if needed
+}
+
+# Custom Domain (optional)
+create_custom_domain = false
+api_domain_name = "api.necpgame.com"  # Only used if create_custom_domain = true
+
+# Tags
+tags = {
+  Project     = "NECPGAME"
+  Environment = "serverless"
+  ManagedBy   = "Terraform"
+  Owner       = "NECPGAME Team"
+  CostCenter  = "engineering"
+  Compliance  = "gdpr-hipaa"
+}

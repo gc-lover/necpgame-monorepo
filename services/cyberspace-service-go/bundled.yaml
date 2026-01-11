@@ -1,0 +1,2469 @@
+openapi: 3.0.3
+info:
+  title: Cyberspace Service API
+  description: 'Enterprise-grade Cyberspace Navigation System для NECPGAME платформы.
+
+
+    ## 🎯 **Cyberspace Service Overview**
+
+
+    Cyberspace Service предоставляет комплексную систему навигации в киберпространстве
+    для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
+
+
+    ### **Ключевые Возможности**
+
+    - **Node Management**: Управление узлами киберпространства
+
+    - **Navigation System**: Система навигации и маршрутизации
+
+    - **ICE Breaking**: Взлом систем защиты (Intrusion Countermeasures Electronics)
+
+    - **Data Extraction**: Извлечение данных из систем
+
+
+    ### **Типы Узлов**
+
+    - **Data Nodes**: Узлы данных и информации
+
+    - **Security Nodes**: Узлы безопасности и защиты
+
+    - **Corporate Nodes**: Корпоративные системы
+
+    - **Black Market Nodes**: Черный рынок данных
+
+
+    ### **Расширенные Возможности**
+
+    - **Neural Interface**: Нейронные интерфейсы подключения
+
+    - **ICE Combat**: Боевые взаимодействия с ICE
+
+    - **Trace Detection**: Обнаружение отслеживания
+
+    - **Data Mining**: Добыча и анализ данных
+
+
+    ## 📊 **Performance Targets**
+
+    - **P99 Latency**: <20ms для навигационных операций
+
+    - **Throughput**: 40,000+ cyberspace operations/second
+
+    - **Concurrent Players**: 500,000+ активных игроков
+
+    - **Memory per Player**: <3KB для состояния в киберпространстве
+
+
+    ## 🔐 **Security**
+
+    - JWT RS256 аутентификация
+
+    - Rate limiting для предотвращения спама
+
+    - Input validation и sanitization
+
+    - Audit logging всех операций
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Platform Team
+    email: platform@necpgame.com
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+servers:
+- url: https://cyberspace.necpgame.com/api/v1
+  description: Production Environment
+- url: https://cyberspace-staging.necpgame.com/api/v1
+  description: Staging Environment
+- url: http://localhost:8080/api/v1
+  description: Local Development
+security:
+- BearerAuth: []
+tags:
+- name: Cyberspace Navigation
+  description: Навигация в киберпространстве
+- name: Node Management
+  description: Управление узлами
+- name: ICE Systems
+  description: Системы ICE защиты
+- name: Data Operations
+  description: Операции с данными
+- name: Neural Interface
+  description: Нейронные интерфейсы
+- name: Health
+  description: Мониторинг здоровья сервиса
+paths:
+  /health:
+    get:
+      summary: Проверка здоровья сервиса
+      operationId: healthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Сервис работает корректно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Сервис недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Пакетная проверка здоровья
+      operationId: healthBatchCheck
+      tags:
+      - Health
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthBatchRequest'
+      responses:
+        '200':
+          description: Результаты проверки здоровья
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthBatchResponse'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: WebSocket проверка здоровья
+      operationId: healthWebSocketCheck
+      tags:
+      - Health
+      responses:
+        '101':
+          description: WebSocket соединение установлено
+        '503':
+          description: WebSocket недоступен
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cyberspace/connect:
+    post:
+      summary: Подключение к киберпространству
+      operationId: connectToCyberspace
+      tags:
+      - Cyberspace Navigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectRequest'
+      responses:
+        '200':
+          description: Подключение установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectResponse'
+        '400':
+          description: Невозможно подключиться
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Превышен лимит подключений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cyberspace/disconnect:
+    post:
+      summary: Отключение от киберпространства
+      operationId: disconnectFromCyberspace
+      tags:
+      - Cyberspace Navigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisconnectRequest'
+      responses:
+        '200':
+          description: Отключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cyberspace/navigate:
+    post:
+      summary: Навигация между узлами
+      operationId: navigateNodes
+      tags:
+      - Cyberspace Navigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NavigateRequest'
+      responses:
+        '200':
+          description: Навигация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigateResponse'
+        '400':
+          description: Невозможно выполнить навигацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cyberspace/map:
+    get:
+      summary: Получение карты киберпространства
+      operationId: getCyberspaceMap
+      tags:
+      - Cyberspace Navigation
+      parameters:
+      - name: playerId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: centerNodeId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: radius
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+      - name: includeHidden
+        in: query
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: Карта киберпространства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberspaceMapResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /nodes:
+    post:
+      summary: Создание узла киберпространства
+      operationId: createNode
+      tags:
+      - Node Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNodeRequest'
+      responses:
+        '201':
+          description: Узел создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeResponse'
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: Получение списка узлов
+      operationId: getNodes
+      tags:
+      - Node Management
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+          - public
+      - name: corporationId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Список узлов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /nodes/{nodeId}:
+    get:
+      summary: Получение узла по ID
+      operationId: getNode
+      tags:
+      - Node Management
+      parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Узел найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeResponse'
+        '404':
+          description: Узел не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Обновление узла
+      operationId: updateNode
+      tags:
+      - Node Management
+      parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNodeRequest'
+      responses:
+        '200':
+          description: Узел обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Узел не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /nodes/{nodeId}/data:
+    get:
+      summary: Получение данных узла
+      operationId: getNodeData
+      tags:
+      - Data Operations
+      parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: playerId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: dataType
+        in: query
+        schema:
+          type: string
+          enum:
+          - files
+          - logs
+          - credentials
+          - financial
+          - intel
+      responses:
+        '200':
+          description: Данные узла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeDataResponse'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Узел не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /nodes/{nodeId}/data/extract:
+    post:
+      summary: Извлечение данных из узла
+      operationId: extractNodeData
+      tags:
+      - Data Operations
+      parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractDataRequest'
+      responses:
+        '200':
+          description: Данные извлечены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractDataResponse'
+        '400':
+          description: Невозможно извлечь данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Лимит извлечений превышен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /ice/break:
+    post:
+      summary: Взлом ICE защиты
+      operationId: breakICE
+      tags:
+      - ICE Systems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BreakICERequest'
+      responses:
+        '200':
+          description: ICE взломан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreakICEResponse'
+        '400':
+          description: Взлом не удался
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Система перегружена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /ice/combat:
+    post:
+      summary: Бой с ICE
+      operationId: combatICE
+      tags:
+      - ICE Systems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatICERequest'
+      responses:
+        '200':
+          description: Результат боя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatICEResponse'
+        '400':
+          description: Некорректные действия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /trace/detect:
+    get:
+      summary: Проверка на отслеживание
+      operationId: detectTrace
+      tags:
+      - Cyberspace Navigation
+      parameters:
+      - name: playerId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Статус отслеживания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceDetectionResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /neural-link/status:
+    get:
+      summary: Статус нейронной связи
+      operationId: getNeuralLinkStatus
+      tags:
+      - Neural Interface
+      parameters:
+      - name: playerId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Статус нейронной связи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NeuralLinkStatusResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /neural-link/calibrate:
+    post:
+      summary: Калибровка нейронной связи
+      operationId: calibrateNeuralLink
+      tags:
+      - Neural Interface
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalibrateNeuralLinkRequest'
+      responses:
+        '200':
+          description: Калибровка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalibrateNeuralLinkResponse'
+        '400':
+          description: Ошибка калибровки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /players/{playerId}/cyberspace-session:
+    get:
+      summary: Сессия игрока в киберпространстве
+      operationId: getPlayerCyberspaceSession
+      tags:
+      - Cyberspace Navigation
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Сессия игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCyberspaceSessionResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/cyberspace-activity:
+    get:
+      summary: Аналитика активности в киберпространстве
+      operationId: getCyberspaceAnalytics
+      tags:
+      - Data Operations
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          default: daily
+      - name: nodeType
+        in: query
+        schema:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+      responses:
+        '200':
+          description: Аналитика активности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberspaceAnalyticsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CharacterEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - level
+        - experience
+        - stats
+        properties:
+          level:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: Character level
+            example: 25
+          experience:
+            type: integer
+            minimum: 0
+            description: Current experience points
+            example: 15420
+          stats:
+            $ref: '#/components/schemas/CharacterStats'
+          cyberware_level:
+            type: integer
+            minimum: 0
+            maximum: 20
+            description: Cyberware enhancement level
+            example: 8
+          reputation:
+            type: integer
+            minimum: -1000
+            maximum: 1000
+            description: Faction reputation score
+            example: 450
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    CyberspaceNodeEntity:
+      type: object
+      description: Сущность узла киберпространства
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - type
+        - coordinates
+        properties:
+          name:
+            type: string
+            description: Название узла
+            maxLength: 100
+            example: Arasaka Mainframe
+          description:
+            type: string
+            description: Описание узла
+            maxLength: 500
+            example: Главный сервер корпорации Arasaka
+          type:
+            type: string
+            description: Тип узла
+            enum:
+            - data
+            - security
+            - corporate
+            - black_market
+            - public
+            example: corporate
+          coordinates:
+            type: object
+            description: Координаты в киберпространстве
+            required:
+            - x
+            - y
+            - z
+            properties:
+              x:
+                type: number
+                description: X координата
+                example: 150.5
+              y:
+                type: number
+                description: Y координата
+                example: -25.3
+              z:
+                type: number
+                description: Z координата
+                example: 75.0
+          corporationId:
+            type: string
+            description: ID корпорации-владельца
+            format: uuid
+          securityLevel:
+            type: integer
+            description: Уровень безопасности
+            minimum: 1
+            maximum: 10
+            example: 8
+          iceSystems:
+            type: array
+            description: Системы ICE защиты
+            items:
+              $ref: '#/components/schemas/ICESystemEntity'
+          dataVaults:
+            type: array
+            description: Хранилища данных
+            items:
+              $ref: '#/components/schemas/DataVaultEntity'
+          connectedNodes:
+            type: array
+            description: Подключенные узлы
+            items:
+              type: string
+              format: uuid
+          isActive:
+            type: boolean
+            description: Узел активен
+            default: true
+          lastScanned:
+            type: string
+            description: Последнее сканирование
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    ICESystemEntity:
+      type: object
+      description: Сущность ICE системы
+      required:
+      - type
+      - strength
+      - integrity
+      properties:
+        type:
+          type: string
+          description: Тип ICE
+          enum:
+          - black_ice
+          - white_ice
+          - killer_ice
+          - spider_ice
+          example: black_ice
+        strength:
+          type: integer
+          description: Сила ICE
+          minimum: 1
+          maximum: 100
+          example: 75
+        integrity:
+          type: integer
+          description: Целостность ICE
+          minimum: 0
+          maximum: 100
+          example: 100
+        behavior:
+          type: string
+          description: Поведение ICE
+          enum:
+          - aggressive
+          - defensive
+          - stealth
+          - adaptive
+          example: adaptive
+        effects:
+          type: array
+          description: Эффекты при активации
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - damage
+                - trace
+                - shutdown
+                - alert
+              severity:
+                type: integer
+                minimum: 1
+                maximum: 10
+    DataVaultEntity:
+      type: object
+      description: Сущность хранилища данных
+      required:
+      - type
+      - size
+      - securityLevel
+      properties:
+        type:
+          type: string
+          description: Тип данных
+          enum:
+          - financial
+          - intel
+          - personal
+          - corporate
+          - black_market
+          example: intel
+        size:
+          type: integer
+          description: Размер данных в байтах
+          minimum: 1
+          example: 1048576
+        securityLevel:
+          type: integer
+          description: Уровень защиты данных
+          minimum: 1
+          maximum: 10
+          example: 7
+        value:
+          type: integer
+          description: Ценность данных
+          minimum: 0
+          example: 50000
+        encryptionLevel:
+          type: integer
+          description: Уровень шифрования
+          minimum: 1
+          maximum: 10
+          example: 8
+        accessLogs:
+          type: array
+          description: Логи доступа
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              accessTime:
+                type: string
+                format: date-time
+              action:
+                type: string
+                enum:
+                - read
+                - extract
+                - modify
+    PlayerCyberspaceSessionEntity:
+      type: object
+      description: Сессия игрока в киберпространстве
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - currentNodeId
+        - connectionTime
+        properties:
+          playerId:
+            type: string
+            description: ID игрока
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          currentNodeId:
+            type: string
+            description: Текущий узел
+            format: uuid
+            example: 456e7890-e89b-12d3-a456-426614174001
+          connectionTime:
+            type: string
+            description: Время подключения
+            format: date-time
+          neuralLinkQuality:
+            type: number
+            description: Качество нейронной связи
+            minimum: 0
+            maximum: 1
+            example: 0.95
+          traceLevel:
+            type: number
+            description: Уровень отслеживания
+            minimum: 0
+            maximum: 1
+            example: 0.15
+          bandwidthUsed:
+            type: integer
+            description: Использованная пропускная способность
+            minimum: 0
+            example: 500
+          dataExtracted:
+            type: integer
+            description: Извлеченные данные
+            minimum: 0
+            example: 1024
+          iceEncounters:
+            type: integer
+            description: Встречи с ICE
+            minimum: 0
+            example: 3
+          isActive:
+            type: boolean
+            description: Сессия активна
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    ConnectRequest:
+      type: object
+      required:
+      - playerId
+      - neuralLinkId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLinkId:
+          type: string
+          format: uuid
+        entryNodeId:
+          type: string
+          format: uuid
+          description: Узел входа (опционально)
+    ConnectResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        currentNode:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        neuralLinkQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+        connectionTime:
+          type: string
+          format: date-time
+    DisconnectRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+    DisconnectResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        sessionDuration:
+          type: integer
+          description: Длительность сессии в секундах
+        dataExtracted:
+          type: integer
+        experienceGained:
+          type: integer
+        disconnectTime:
+          type: string
+          format: date-time
+    NavigateRequest:
+      type: object
+      required:
+      - playerId
+      - targetNodeId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        targetNodeId:
+          type: string
+          format: uuid
+        useQuickhack:
+          type: boolean
+          description: Использовать быстрый хак
+          default: false
+    NavigateResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        fromNodeId:
+          type: string
+          format: uuid
+        toNodeId:
+          type: string
+          format: uuid
+        navigationTime:
+          type: integer
+          description: Время навигации в миллисекундах
+        bandwidthCost:
+          type: integer
+        success:
+          type: boolean
+        detected:
+          type: boolean
+          description: Был ли обнаружен
+    CyberspaceMapResponse:
+      type: object
+      properties:
+        centerNode:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        visibleNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberspaceNodeEntity'
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              fromNodeId:
+                type: string
+                format: uuid
+              toNodeId:
+                type: string
+                format: uuid
+              connectionType:
+                type: string
+                enum:
+                - public
+                - private
+                - secure
+                - hidden
+              securityLevel:
+                type: integer
+                minimum: 1
+                maximum: 10
+        playerPosition:
+          type: object
+          properties:
+            nodeId:
+              type: string
+              format: uuid
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+    CreateNodeRequest:
+      type: object
+      required:
+      - name
+      - type
+      - coordinates
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+          - public
+        coordinates:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        corporationId:
+          type: string
+          format: uuid
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICESystemEntity'
+        dataVaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataVaultEntity'
+    UpdateNodeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+          - public
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICESystemEntity'
+        dataVaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataVaultEntity'
+        isActive:
+          type: boolean
+    NodeResponse:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    NodeListResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberspaceNodeEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    NodeDataResponse:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          format: uuid
+        data:
+          type: object
+          additionalProperties: true
+          description: Данные узла
+        accessLevel:
+          type: string
+          enum:
+          - public
+          - restricted
+          - classified
+          - black_ice
+        lastAccessed:
+          type: string
+          format: date-time
+    ExtractDataRequest:
+      type: object
+      required:
+      - playerId
+      - dataType
+      - extractionMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        dataType:
+          type: string
+          enum:
+          - files
+          - logs
+          - credentials
+          - financial
+          - intel
+        extractionMethod:
+          type: string
+          enum:
+          - quick
+          - stealth
+          - brute_force
+          - social_engineering
+        targetSize:
+          type: integer
+          description: Целевой размер извлечения
+          minimum: 1
+          maximum: 10485760
+    ExtractDataResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        extractedData:
+          type: object
+          additionalProperties: true
+        dataSize:
+          type: integer
+          minimum: 0
+        extractionTime:
+          type: integer
+          description: Время извлечения в миллисекундах
+        detectionRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+        success:
+          type: boolean
+    BreakICERequest:
+      type: object
+      required:
+      - playerId
+      - nodeId
+      - iceType
+      - hackingMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        iceType:
+          type: string
+          enum:
+          - black_ice
+          - white_ice
+          - killer_ice
+          - spider_ice
+        hackingMethod:
+          type: string
+          enum:
+          - bypass
+          - overload
+          - exploit
+          - brute_force
+        tools:
+          type: array
+          description: Используемые инструменты
+          items:
+            type: string
+    BreakICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        damageDealt:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        timeElapsed:
+          type: integer
+          description: Время в миллисекундах
+    CombatICERequest:
+      type: object
+      required:
+      - playerId
+      - iceId
+      - action
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum:
+          - attack
+          - defend
+          - evade
+          - counter
+        power:
+          type: integer
+          description: Сила действия
+          minimum: 1
+          maximum: 100
+    CombatICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        playerHealth:
+          type: integer
+          minimum: 0
+          maximum: 100
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        actionResult:
+          type: string
+          enum:
+          - hit
+          - miss
+          - critical
+          - evaded
+        damage:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        combatEnded:
+          type: boolean
+    TraceDetectionResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        traceLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        detectionRisk:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        estimatedTime:
+          type: integer
+          description: Оценочное время до обнаружения в секундах
+        countermeasures:
+          type: array
+          items:
+            type: string
+            enum:
+            - disconnect
+            - use_proxy
+            - clean_logs
+            - deploy_decoys
+    NeuralLinkStatusResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        quality:
+          type: number
+          minimum: 0
+          maximum: 1
+        stability:
+          type: number
+          minimum: 0
+          maximum: 1
+        bandwidth:
+          type: integer
+          minimum: 0
+        latency:
+          type: integer
+          description: Задержка в миллисекундах
+        lastCalibration:
+          type: string
+          format: date-time
+        warnings:
+          type: array
+          items:
+            type: string
+            enum:
+            - low_quality
+            - instability
+            - overheating
+            - interference
+    CalibrateNeuralLinkRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        calibrationType:
+          type: string
+          enum:
+          - quick
+          - full
+          - emergency
+          default: quick
+    CalibrateNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        qualityBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        qualityAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrationTime:
+          type: integer
+          description: Время калибровки в миллисекундах
+        recommendations:
+          type: array
+          items:
+            type: string
+    PlayerCyberspaceSessionResponse:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/PlayerCyberspaceSessionEntity'
+        statistics:
+          type: object
+          properties:
+            totalSessions:
+              type: integer
+              minimum: 0
+            averageSessionTime:
+              type: integer
+              description: Среднее время сессии в секундах
+            totalDataExtracted:
+              type: integer
+              minimum: 0
+            successRate:
+              type: number
+              minimum: 0
+              maximum: 1
+            favoriteNodeType:
+              type: string
+              enum:
+              - data
+              - security
+              - corporate
+              - black_market
+              - public
+    CyberspaceAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        totalSessions:
+          type: integer
+          minimum: 0
+        activePlayers:
+          type: integer
+          minimum: 0
+        dataExtracted:
+          type: integer
+          minimum: 0
+        iceEncounters:
+          type: integer
+          minimum: 0
+        nodeTypeDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        peakHours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+                minimum: 0
+                maximum: 23
+              sessionCount:
+                type: integer
+                minimum: 0
+        securityIncidents:
+          type: integer
+          minimum: 0
+    GameEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for game entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    CharacterStats:
+      type: object
+      required:
+      - health
+      - stamina
+      - strength
+      - agility
+      - intelligence
+      - charisma
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current health points
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum health points
+          example: 900
+        stamina:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Current stamina points
+          example: 320
+        max_stamina:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Maximum stamina points
+          example: 350
+        strength:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Physical strength attribute
+          example: 75
+        agility:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Speed and reflexes attribute
+          example: 68
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Mental acuity attribute
+          example: 82
+        charisma:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Social influence attribute
+          example: 45
+        perception:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Awareness and detection attribute
+          example: 71
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Fortune and probability modifier
+          example: 33
+    CombatActionEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - action_type
+        - source_character_id
+        - target_character_id
+        - damage_dealt
+        properties:
+          action_type:
+            type: string
+            enum:
+            - attack
+            - defend
+            - ability
+            - item
+            - flee
+            description: Type of combat action
+            example: attack
+          source_character_id:
+            type: string
+            format: uuid
+            description: Character performing the action
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          target_character_id:
+            type: string
+            format: uuid
+            description: Character receiving the action
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Damage points inflicted
+            example: 145
+          accuracy_roll:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Accuracy percentage for the action
+            example: 87
+          critical_hit:
+            type: boolean
+            description: Whether this was a critical hit
+            example: false
+          status_effects:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatusEffect'
+            description: Status effects applied by this action
+    StatusEffect:
+      type: object
+      required:
+      - effect_type
+      - duration
+      - potency
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - poison
+          - bleed
+          - stun
+          - buff_strength
+          - buff_agility
+          - heal_over_time
+          - damage_over_time
+          description: Type of status effect
+          example: buff_strength
+        duration:
+          type: integer
+          minimum: 0
+          description: Effect duration in combat rounds
+          example: 3
+        potency:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effect strength percentage
+          example: 25
+        source:
+          type: string
+          enum:
+          - ability
+          - item
+          - environment
+          - cyberware
+          description: Source of the effect
+          example: ability
+    AbilityEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - name
+        - ability_type
+        - cooldown
+        - mana_cost
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Ability name
+            example: Neural Overload
+          ability_type:
+            type: string
+            enum:
+            - offensive
+            - defensive
+            - healing
+            - utility
+            - passive
+            description: Category of ability
+            example: offensive
+          cooldown:
+            type: integer
+            minimum: 0
+            description: Cooldown in combat rounds
+            example: 3
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana/stamina cost to use
+            example: 45
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - cyber
+            - elemental
+            description: Type of damage dealt
+            example: cyber
+          range:
+            type: integer
+            minimum: 0
+            description: Ability range in game units
+            example: 25
+          area_effect:
+            type: boolean
+            description: Whether ability affects multiple targets
+            example: false
+    InventoryItemEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - item_id
+        - quantity
+        - durability
+        properties:
+          item_id:
+            type: string
+            format: uuid
+            description: Reference to item definition
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          quantity:
+            type: integer
+            minimum: 1
+            description: Number of items in stack
+            example: 5
+          durability:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Item condition percentage
+            example: 87
+          equipped:
+            type: boolean
+            description: Whether item is currently equipped
+            example: true
+          enhancement_level:
+            type: integer
+            minimum: 0
+            maximum: 10
+            description: Item enhancement/modification level
+            example: 2
+    QuestEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+      - type: object
+        required:
+        - title
+        - description
+        - quest_type
+        - status
+        - objectives
+        properties:
+          title:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Quest title
+            example: Corporate Espionage
+          description:
+            type: string
+            minLength: 1
+            maxLength: 1000
+            description: Detailed quest description
+            example: Infiltrate Arasaka corporation headquarters and extract sensitive
+              data...
+          quest_type:
+            type: string
+            enum:
+            - main_story
+            - side_quest
+            - daily
+            - event
+            - faction
+            description: Category of quest
+            example: faction
+          status:
+            type: string
+            enum:
+            - available
+            - active
+            - completed
+            - failed
+            - expired
+            description: Current quest status
+            example: active
+          objectives:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuestObjective'
+            minItems: 1
+            description: Quest completion objectives
+          rewards:
+            $ref: '#/components/schemas/QuestRewards'
+          time_limit:
+            type: integer
+            minimum: 0
+            description: Time limit in hours (0 = no limit)
+            example: 168
+          faction_id:
+            type: string
+            format: uuid
+            description: Associated faction
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      - current_progress
+      - target_progress
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Objective description
+          example: Hack 3 corporate terminals
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - deliver
+          - explore
+          - interact
+          - hack
+          - craft
+          description: Type of objective
+          example: hack
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current completion progress
+          example: 2
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Required completion target
+          example: 3
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 2500
+        currency:
+          type: integer
+          minimum: 0
+          description: Currency reward
+          example: 15000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemEntity'
+          description: Item rewards
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Faction reputation change
+          example: 150

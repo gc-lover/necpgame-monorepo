@@ -110,13 +110,6 @@ type DifficultyStats struct {
 	ModeStats         []DifficultyModeStats `json:"modeStats"`
 }
 
-// ModeStats содержит статистику по конкретному режиму
-type ModeStats struct {
-	ModeID       uuid.UUID `json:"modeId"`
-	ModeName     string    `json:"modeName"`
-	SessionCount int64     `json:"sessionCount"`
-}
-
 // DifficultyModeStats содержит детальную статистику по режиму сложности
 type DifficultyModeStats struct {
 	ModeID                  uuid.UUID `json:"modeId"`
@@ -129,14 +122,6 @@ type DifficultyModeStats struct {
 	BestScore               int       `json:"bestScore"`
 	AverageScore            float64   `json:"averageScore"`
 	TopPlayers              []PlayerStats `json:"topPlayers"`
-}
-
-// PlayerStats содержит статистику игрока
-type PlayerStats struct {
-	PlayerID         uuid.UUID `json:"playerId"`
-	PlayerName       string    `json:"playerName"`
-	Score            int       `json:"score"`
-	CompletionTime   int       `json:"completionTime"`
 }
 
 // AchievementRecord представляет запись о достижении

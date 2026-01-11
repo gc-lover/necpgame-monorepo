@@ -1,0 +1,871 @@
+openapi: 3.0.3
+info:
+  title: Game Mechanics Master Index Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Game Mechanics Registry API for NECPGAME**
+
+    This API provides centralized management of all game mechanics in the NECPGAME ecosystem,
+    offering comprehensive mechanic discovery, dependency management, and health monitoring.
+
+    ## Key Features
+
+    - **Mechanic Registry**: Centralized registration and discovery of game mechanics
+    - **Dependency Management**: Automatic resolution of mechanic interdependencies
+    - **Health Monitoring**: Real-time status tracking and health checks
+    - **Configuration Management**: Dynamic configuration for all mechanics
+    - **Performance Optimized**: MMOFPS-grade performance with <10ms P99 latency
+
+    ## Domain Purpose
+
+    The Game Mechanics Master Index serves as the central nervous system for NECPGAME,
+    ensuring all game mechanics work together seamlessly while maintaining high performance
+    and reliability in an MMOFPS environment.
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for registry operations
+    - Memory: <50KB per active mechanic registry
+    - Concurrent users: 100,000+ simultaneous connections
+    - Registry operations: <1ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/mechanics
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/mechanics
+  description: Staging server
+- url: http://localhost:8080/api/v1/mechanics
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Mechanics Registry
+  description: Core mechanics registration and discovery
+- name: Health Monitoring
+  description: System health and performance monitoring
+- name: Configuration
+  description: Mechanic configuration management
+paths:
+  /health:
+    get:
+      summary: Service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the Game Mechanics Master Index service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+        '
+      operationId: mechanicsServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/schemas/health.yaml#/HealthResponse
+
+  /mechanics:
+    get:
+      summary: Get all mechanics
+      description: '**Retrieve comprehensive list of all registered game mechanics**
+
+        Returns all mechanics with their current status, dependencies, and health information.
+        Supports filtering by type, status, and category for efficient querying.
+
+        **Performance:** <5ms for cached queries, <50ms for full registry refresh
+        '
+      operationId: getAllMechanics
+      tags:
+      - Mechanics Registry
+      parameters:
+      - name: type
+        in: query
+        description: Filter by mechanic type (combat, economy, social, etc.)
+        schema:
+          type: string
+          enum: [combat, economy, social, world, progression, ui]
+      - name: status
+        in: query
+        description: Filter by mechanic status
+        schema:
+          type: string
+          enum: [active, inactive, deprecated]
+          default: active
+      - name: category
+        in: query
+        description: Filter by mechanic category
+        schema:
+          type: string
+          enum: [core, optional, experimental]
+      - name: include_dependencies
+        in: query
+        description: Include dependency information
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: Successful response with mechanics list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mechanics, total_count, health_score]
+                properties:
+                  mechanics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameMechanic'
+                  total_count:
+                    type: integer
+                    minimum: 0
+                    example: 150
+                  active_count:
+                    type: integer
+                    minimum: 0
+                    example: 142
+                  health_score:
+                    type: number
+                    minimum: 0
+                    maximum: 100
+                    example: 94.7
+                  last_updated:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+    post:
+      summary: Register new mechanic
+      description: '**Register a new game mechanic in the system**
+
+        Creates a new mechanic entry with validation of dependencies and health checks.
+        The mechanic will be immediately available in the registry after successful registration.
+
+        **Performance:** <20ms for validation and registration
+        '
+      operationId: registerMechanic
+      tags:
+      - Mechanics Registry
+      security:
+      - BearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameMechanicRegistration'
+      responses:
+        '201':
+          description: Mechanic successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameMechanic'
+        '400':
+          description: Invalid mechanic data or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+        '409':
+          description: Mechanic with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /mechanics/{mechanic_id}:
+    get:
+      summary: Get mechanic by ID
+      description: '**Retrieve detailed information about a specific game mechanic**
+
+        Returns complete mechanic information including dependencies, configuration, and health status.
+
+        **Performance:** <2ms for cached queries, <10ms for database queries
+        '
+      operationId: getMechanicById
+      tags:
+      - Mechanics Registry
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Mechanic found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameMechanicDetail'
+        '404':
+          description: Mechanic not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+    put:
+      summary: Update mechanic
+      description: '**Update an existing game mechanic**
+
+        Modifies mechanic properties, status, or configuration. Requires admin privileges.
+
+        **Performance:** <15ms for validation and update
+        '
+      operationId: updateMechanic
+      tags:
+      - Mechanics Registry
+      security:
+      - BearerAuth: [admin]
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameMechanicUpdate'
+      responses:
+        '200':
+          description: Mechanic successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameMechanic'
+        '400':
+          description: Invalid update data
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+        '404':
+          description: Mechanic not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+    delete:
+      summary: Delete mechanic
+      description: '**Remove a game mechanic from the system**
+
+        Permanently deletes a mechanic and all its dependencies. Requires admin privileges.
+        Use with caution - this operation cannot be undone.
+
+        **Performance:** <10ms for deletion
+        '
+      operationId: deleteMechanic
+      tags:
+      - Mechanics Registry
+      security:
+      - BearerAuth: [admin]
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Mechanic successfully deleted
+        '404':
+          description: Mechanic not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+        '409':
+          description: Cannot delete mechanic with active dependencies
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /mechanics/{mechanic_id}/dependencies:
+    get:
+      summary: Get mechanic dependencies
+      description: '**Retrieve all dependencies for a specific mechanic**
+
+        Returns both required and optional dependencies with their current status.
+
+        **Performance:** <3ms for cached queries
+        '
+      operationId: getMechanicDependencies
+      tags:
+      - Mechanics Registry
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Dependencies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mechanic_id, dependencies]
+                properties:
+                  mechanic_id:
+                    type: string
+                    format: uuid
+                  dependencies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MechanicDependency'
+        '404':
+          description: Mechanic not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+    post:
+      summary: Add dependency
+      description: '**Add a new dependency for a mechanic**
+
+        Creates a dependency relationship between mechanics. Validates for circular dependencies.
+
+        **Performance:** <12ms for validation and creation
+        '
+      operationId: addMechanicDependency
+      tags:
+      - Mechanics Registry
+      security:
+      - BearerAuth: [admin]
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MechanicDependencyCreate'
+      responses:
+        '201':
+          description: Dependency successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MechanicDependency'
+        '400':
+          description: Invalid dependency data or circular dependency detected
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /mechanics/{mechanic_id}/config:
+    get:
+      summary: Get mechanic configuration
+      description: '**Retrieve current configuration for a mechanic**
+
+        Returns the active configuration version and settings.
+
+        **Performance:** <2ms for cached queries
+        '
+      operationId: getMechanicConfig
+      tags:
+      - Configuration
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MechanicConfig'
+        '404':
+          description: Mechanic or configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+    put:
+      summary: Update mechanic configuration
+      description: '**Update configuration for a mechanic**
+
+        Modifies mechanic settings and creates a new configuration version.
+
+        **Performance:** <8ms for validation and update
+        '
+      operationId: updateMechanicConfig
+      tags:
+      - Configuration
+      security:
+      - BearerAuth: [admin]
+      parameters:
+      - name: mechanic_id
+        in: path
+        required: true
+        description: Unique mechanic identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MechanicConfigUpdate'
+      responses:
+        '200':
+          description: Configuration successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MechanicConfig'
+        '400':
+          description: Invalid configuration data
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /system/health:
+    get:
+      summary: Get system health
+      description: '**Retrieve comprehensive system health information**
+
+        Provides detailed health metrics for all mechanics, services, and dependencies.
+
+        **Performance:** <5ms for health aggregation
+        '
+      operationId: getSystemHealth
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+        '503':
+          description: System health check failed
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /system/status:
+    get:
+      summary: Get system status overview
+      description: '**Retrieve high-level system status**
+
+        Quick status check for load balancers and monitoring systems.
+
+        **Performance:** <1ms cached response
+        '
+      operationId: getSystemStatus
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: System status overview
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, timestamp]
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  mechanics_count:
+                    type: integer
+                    minimum: 0
+                    example: 150
+                  active_mechanics:
+                    type: integer
+                    minimum: 0
+                    example: 142
+
+components:
+  schemas:
+    GameMechanic:
+      type: object
+      required: [id, name, type, category, status, service_name, is_required]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique mechanic identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable mechanic name
+          example: "Combat System"
+        type:
+          type: string
+          enum: [combat, economy, social, world, progression, ui]
+          description: Mechanic type category
+          example: combat
+        category:
+          type: string
+          enum: [core, optional, experimental]
+          description: Mechanic importance category
+          example: core
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+          description: Current mechanic status
+          example: active
+        version:
+          type: string
+          pattern: '^\\d+\\.\\d+\\.\\d+$'
+          description: Mechanic version (semantic versioning)
+          example: "1.2.3"
+        service_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the service hosting this mechanic
+          example: "combat-service"
+        endpoint:
+          type: string
+          format: uri
+          description: API endpoint for this mechanic
+          example: "/api/v1/combat"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Loading priority (higher = loaded first)
+          example: 9
+        is_required:
+          type: boolean
+          description: Whether this mechanic is required for the game
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Mechanic creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    GameMechanicDetail:
+      allOf:
+      - $ref: '#/components/schemas/GameMechanic'
+      - type: object
+        properties:
+          dependencies:
+            type: array
+            items:
+              $ref: '#/components/schemas/MechanicDependency'
+          config:
+            $ref: '#/components/schemas/MechanicConfig'
+          health_status:
+            $ref: '#/components/schemas/MechanicStatus'
+
+    GameMechanicRegistration:
+      type: object
+      required: [id, name, type, service_name, is_required]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique mechanic identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        type:
+          type: string
+          enum: [combat, economy, social, world, progression, ui]
+        category:
+          type: string
+          enum: [core, optional, experimental]
+          default: core
+        service_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        endpoint:
+          type: string
+          format: uri
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        is_required:
+          type: boolean
+          default: false
+
+    GameMechanicUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+        version:
+          type: string
+          pattern: '^\\d+\\.\\d+\\.\\d+$'
+        endpoint:
+          type: string
+          format: uri
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+    MechanicDependency:
+      type: object
+      required: [id, mechanic_id, depends_on_id, dependency_type, is_hard_dependency]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique dependency identifier
+        mechanic_id:
+          type: string
+          format: uuid
+          description: ID of the mechanic that depends on another
+        depends_on_id:
+          type: string
+          format: uuid
+          description: ID of the mechanic being depended upon
+        dependency_type:
+          type: string
+          enum: [required, optional, conflicts]
+          description: Type of dependency relationship
+          example: required
+        is_hard_dependency:
+          type: boolean
+          description: Whether this dependency must be satisfied
+          example: true
+
+    MechanicDependencyCreate:
+      type: object
+      required: [depends_on_id, dependency_type]
+      properties:
+        depends_on_id:
+          type: string
+          format: uuid
+        dependency_type:
+          type: string
+          enum: [required, optional, conflicts]
+          default: required
+        is_hard_dependency:
+          type: boolean
+          default: true
+
+    MechanicConfig:
+      type: object
+      required: [mechanic_id, config_version, settings, is_active, updated_at]
+      properties:
+        mechanic_id:
+          type: string
+          format: uuid
+        config_version:
+          type: string
+          description: Configuration version identifier
+          example: "v1.2.0"
+        settings:
+          type: object
+          description: Configuration settings as key-value pairs
+          additionalProperties: true
+          example:
+            max_players: 100
+            difficulty: "hard"
+            enabled_features: ["combat", "economy"]
+        is_active:
+          type: boolean
+          description: Whether this configuration is currently active
+        updated_at:
+          type: string
+          format: date-time
+
+    MechanicConfigUpdate:
+      type: object
+      required: [settings]
+      properties:
+        config_version:
+          type: string
+          description: New configuration version
+        settings:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+
+    MechanicStatus:
+      type: object
+      required: [mechanic_id, service_status, last_checked, is_healthy]
+      properties:
+        mechanic_id:
+          type: string
+          format: uuid
+        service_status:
+          type: string
+          enum: [up, down, degraded]
+          description: Current service status
+          example: up
+        response_time:
+          type: integer
+          minimum: 0
+          description: Average response time in milliseconds
+          example: 15
+        error_count:
+          type: integer
+          minimum: 0
+          description: Number of recent errors
+          example: 0
+        last_checked:
+          type: string
+          format: date-time
+        is_healthy:
+          type: boolean
+          description: Overall health status
+          example: true
+
+    SystemHealth:
+      type: object
+      required: [total_mechanics, active_mechanics, inactive_mechanics, health_score, last_health_check]
+      properties:
+        total_mechanics:
+          type: integer
+          minimum: 0
+          description: Total number of registered mechanics
+          example: 150
+        active_mechanics:
+          type: integer
+          minimum: 0
+          description: Number of currently active mechanics
+          example: 142
+        inactive_mechanics:
+          type: integer
+          minimum: 0
+          description: Number of inactive mechanics
+          example: 8
+        health_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Overall system health score (percentage)
+          example: 94.7
+        last_health_check:
+          type: string
+          format: date-time
+          description: Timestamp of last health check
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer token authentication**
+
+        Use `Authorization: Bearer {token}` header for API access.
+
+        Admin operations require `admin` role in token claims.
+        '
+
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, message]
+            properties:
+              error:
+                type: string
+                description: Error type identifier
+                example: "VALIDATION_ERROR"
+              message:
+                type: string
+                description: Human-readable error message
+                example: "Mechanic ID is required"
+              details:
+                type: object
+                description: Additional error details
+                additionalProperties: true

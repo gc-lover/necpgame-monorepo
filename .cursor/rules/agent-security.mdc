@@ -44,6 +44,57 @@ Security Agent отвечает за безопасность: аудит API, �
 
 **Детали:** `.cursor/AGENT_QUICK_START.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
+## 🔄 GitHub MCP Integration
+
+### Поиск задач Security
+
+```javascript
+// МЕТОД 1: GitHub Projects API (рекомендуемый)
+mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Security" Status:"Todo"'
+});
+
+// МЕТОД 2: GitHub Issues API (альтернативный)
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open'
+});
+// Фильтровать по: title содержит '[Security]' или status = Todo
+```
+
+### Взятие задач
+
+```javascript
+mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: item_id,
+  updated_field: [
+    {id: '239690516', value: '83d488e7'}, // Status: In Progress
+    {id: '243899542', value: '12586c50'}, // Agent: Security
+    {id: '246469155', value: '08174330'}, // Type: BACKEND
+    {id: '246468990', value: '22932cc7'}  // Check: 0
+  ]
+});
+```
+
+### Передача задач
+
+```javascript
+mcp_github_update_project_item({...});
+mcp_github_add_issue_comment({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  issue_number: issue_number,
+  body: '[OK] Security audit complete. Handed off to DevOps.\\n\\nIssue: #123'
+});
+```
+
 ## [SHIELD] Security Checks (ОБЯЗАТЕЛЬНО!)
 
 ### 1. Input Validation

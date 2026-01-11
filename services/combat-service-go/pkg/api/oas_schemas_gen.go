@@ -129,6 +129,132 @@ func (s *CharacterEntity) SetExperienceToNext(val OptInt) {
 	s.ExperienceToNext = val
 }
 
+// Combat ability with cooldown tracking.
+// Ref: #/components/schemas/CombatAbility
+type CombatAbility struct {
+	ID       uuid.UUID         `json:"id"`
+	Name     string            `json:"name"`
+	Type     CombatAbilityType `json:"type"`
+	Damage   OptInt            `json:"damage"`
+	Cooldown OptInt            `json:"cooldown"`
+	LastUsed OptDateTime       `json:"last_used"`
+}
+
+// GetID returns the value of ID.
+func (s *CombatAbility) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *CombatAbility) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *CombatAbility) GetType() CombatAbilityType {
+	return s.Type
+}
+
+// GetDamage returns the value of Damage.
+func (s *CombatAbility) GetDamage() OptInt {
+	return s.Damage
+}
+
+// GetCooldown returns the value of Cooldown.
+func (s *CombatAbility) GetCooldown() OptInt {
+	return s.Cooldown
+}
+
+// GetLastUsed returns the value of LastUsed.
+func (s *CombatAbility) GetLastUsed() OptDateTime {
+	return s.LastUsed
+}
+
+// SetID sets the value of ID.
+func (s *CombatAbility) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *CombatAbility) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *CombatAbility) SetType(val CombatAbilityType) {
+	s.Type = val
+}
+
+// SetDamage sets the value of Damage.
+func (s *CombatAbility) SetDamage(val OptInt) {
+	s.Damage = val
+}
+
+// SetCooldown sets the value of Cooldown.
+func (s *CombatAbility) SetCooldown(val OptInt) {
+	s.Cooldown = val
+}
+
+// SetLastUsed sets the value of LastUsed.
+func (s *CombatAbility) SetLastUsed(val OptDateTime) {
+	s.LastUsed = val
+}
+
+type CombatAbilityType string
+
+const (
+	CombatAbilityTypeAttack  CombatAbilityType = "attack"
+	CombatAbilityTypeDefense CombatAbilityType = "defense"
+	CombatAbilityTypeHeal    CombatAbilityType = "heal"
+	CombatAbilityTypeBuff    CombatAbilityType = "buff"
+)
+
+// AllValues returns all CombatAbilityType values.
+func (CombatAbilityType) AllValues() []CombatAbilityType {
+	return []CombatAbilityType{
+		CombatAbilityTypeAttack,
+		CombatAbilityTypeDefense,
+		CombatAbilityTypeHeal,
+		CombatAbilityTypeBuff,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CombatAbilityType) MarshalText() ([]byte, error) {
+	switch s {
+	case CombatAbilityTypeAttack:
+		return []byte(s), nil
+	case CombatAbilityTypeDefense:
+		return []byte(s), nil
+	case CombatAbilityTypeHeal:
+		return []byte(s), nil
+	case CombatAbilityTypeBuff:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CombatAbilityType) UnmarshalText(data []byte) error {
+	switch CombatAbilityType(data) {
+	case CombatAbilityTypeAttack:
+		*s = CombatAbilityTypeAttack
+		return nil
+	case CombatAbilityTypeDefense:
+		*s = CombatAbilityTypeDefense
+		return nil
+	case CombatAbilityTypeHeal:
+		*s = CombatAbilityTypeHeal
+		return nil
+	case CombatAbilityTypeBuff:
+		*s = CombatAbilityTypeBuff
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/CombatActionRequest
@@ -268,7 +394,8 @@ type CombatActionResponse struct {
 	Effects  []CombatEffect        `json:"effects"`
 	NewState OptCombatSessionState `json:"new_state"`
 	// Next turn number.
-	NextTurn OptInt `json:"next_turn"`
+	NextTurn     OptInt                `json:"next_turn"`
+	ActionResult OptCombatActionResult `json:"action_result"`
 }
 
 // GetSuccess returns the value of Success.
@@ -296,6 +423,11 @@ func (s *CombatActionResponse) GetNextTurn() OptInt {
 	return s.NextTurn
 }
 
+// GetActionResult returns the value of ActionResult.
+func (s *CombatActionResponse) GetActionResult() OptCombatActionResult {
+	return s.ActionResult
+}
+
 // SetSuccess sets the value of Success.
 func (s *CombatActionResponse) SetSuccess(val bool) {
 	s.Success = val
@@ -321,7 +453,83 @@ func (s *CombatActionResponse) SetNextTurn(val OptInt) {
 	s.NextTurn = val
 }
 
+// SetActionResult sets the value of ActionResult.
+func (s *CombatActionResponse) SetActionResult(val OptCombatActionResult) {
+	s.ActionResult = val
+}
+
 func (*CombatActionResponse) combatServiceExecuteActionRes() {}
+
+// Result of a combat action.
+// Ref: #/components/schemas/CombatActionResult
+type CombatActionResult struct {
+	ActionID    string         `json:"action_id"`
+	Participant string         `json:"participant"`
+	ActionType  string         `json:"action_type"`
+	Timestamp   time.Time      `json:"timestamp"`
+	Effects     []CombatEffect `json:"effects"`
+	Success     bool           `json:"success"`
+}
+
+// GetActionID returns the value of ActionID.
+func (s *CombatActionResult) GetActionID() string {
+	return s.ActionID
+}
+
+// GetParticipant returns the value of Participant.
+func (s *CombatActionResult) GetParticipant() string {
+	return s.Participant
+}
+
+// GetActionType returns the value of ActionType.
+func (s *CombatActionResult) GetActionType() string {
+	return s.ActionType
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *CombatActionResult) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetEffects returns the value of Effects.
+func (s *CombatActionResult) GetEffects() []CombatEffect {
+	return s.Effects
+}
+
+// GetSuccess returns the value of Success.
+func (s *CombatActionResult) GetSuccess() bool {
+	return s.Success
+}
+
+// SetActionID sets the value of ActionID.
+func (s *CombatActionResult) SetActionID(val string) {
+	s.ActionID = val
+}
+
+// SetParticipant sets the value of Participant.
+func (s *CombatActionResult) SetParticipant(val string) {
+	s.Participant = val
+}
+
+// SetActionType sets the value of ActionType.
+func (s *CombatActionResult) SetActionType(val string) {
+	s.ActionType = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *CombatActionResult) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetEffects sets the value of Effects.
+func (s *CombatActionResult) SetEffects(val []CombatEffect) {
+	s.Effects = val
+}
+
+// SetSuccess sets the value of Success.
+func (s *CombatActionResult) SetSuccess(val bool) {
+	s.Success = val
+}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
@@ -446,6 +654,132 @@ func (s *CombatEffectType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Combat item with performance optimizations.
+// Ref: #/components/schemas/CombatItem
+type CombatItem struct {
+	ID         uuid.UUID      `json:"id"`
+	Name       string         `json:"name"`
+	Type       CombatItemType `json:"type"`
+	Damage     OptInt         `json:"damage"`
+	Ammo       OptInt         `json:"ammo"`
+	Durability OptInt         `json:"durability"`
+}
+
+// GetID returns the value of ID.
+func (s *CombatItem) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *CombatItem) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *CombatItem) GetType() CombatItemType {
+	return s.Type
+}
+
+// GetDamage returns the value of Damage.
+func (s *CombatItem) GetDamage() OptInt {
+	return s.Damage
+}
+
+// GetAmmo returns the value of Ammo.
+func (s *CombatItem) GetAmmo() OptInt {
+	return s.Ammo
+}
+
+// GetDurability returns the value of Durability.
+func (s *CombatItem) GetDurability() OptInt {
+	return s.Durability
+}
+
+// SetID sets the value of ID.
+func (s *CombatItem) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *CombatItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *CombatItem) SetType(val CombatItemType) {
+	s.Type = val
+}
+
+// SetDamage sets the value of Damage.
+func (s *CombatItem) SetDamage(val OptInt) {
+	s.Damage = val
+}
+
+// SetAmmo sets the value of Ammo.
+func (s *CombatItem) SetAmmo(val OptInt) {
+	s.Ammo = val
+}
+
+// SetDurability sets the value of Durability.
+func (s *CombatItem) SetDurability(val OptInt) {
+	s.Durability = val
+}
+
+type CombatItemType string
+
+const (
+	CombatItemTypeWeapon     CombatItemType = "weapon"
+	CombatItemTypeArmor      CombatItemType = "armor"
+	CombatItemTypeConsumable CombatItemType = "consumable"
+	CombatItemTypeImplant    CombatItemType = "implant"
+)
+
+// AllValues returns all CombatItemType values.
+func (CombatItemType) AllValues() []CombatItemType {
+	return []CombatItemType{
+		CombatItemTypeWeapon,
+		CombatItemTypeArmor,
+		CombatItemTypeConsumable,
+		CombatItemTypeImplant,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CombatItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case CombatItemTypeWeapon:
+		return []byte(s), nil
+	case CombatItemTypeArmor:
+		return []byte(s), nil
+	case CombatItemTypeConsumable:
+		return []byte(s), nil
+	case CombatItemTypeImplant:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CombatItemType) UnmarshalText(data []byte) error {
+	switch CombatItemType(data) {
+	case CombatItemTypeWeapon:
+		*s = CombatItemTypeWeapon
+		return nil
+	case CombatItemTypeArmor:
+		*s = CombatItemTypeArmor
+		return nil
+	case CombatItemTypeConsumable:
+		*s = CombatItemTypeConsumable
+		return nil
+	case CombatItemTypeImplant:
+		*s = CombatItemTypeImplant
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Merged schema.
 // Ref: #/components/schemas/CombatParticipant
 type CombatParticipant struct {
@@ -468,6 +802,10 @@ type CombatParticipant struct {
 	CombatStats     OptCombatStats                   `json:"combat_stats"`
 	// Combat team assignment.
 	Team OptCombatParticipantTeam `json:"team"`
+	// Combat inventory items.
+	Inventory []CombatItem `json:"inventory"`
+	// Combat abilities.
+	Abilities []CombatAbility `json:"abilities"`
 }
 
 // GetID returns the value of ID.
@@ -520,6 +858,16 @@ func (s *CombatParticipant) GetTeam() OptCombatParticipantTeam {
 	return s.Team
 }
 
+// GetInventory returns the value of Inventory.
+func (s *CombatParticipant) GetInventory() []CombatItem {
+	return s.Inventory
+}
+
+// GetAbilities returns the value of Abilities.
+func (s *CombatParticipant) GetAbilities() []CombatAbility {
+	return s.Abilities
+}
+
 // SetID sets the value of ID.
 func (s *CombatParticipant) SetID(val uuid.UUID) {
 	s.ID = val
@@ -568,6 +916,16 @@ func (s *CombatParticipant) SetCombatStats(val OptCombatStats) {
 // SetTeam sets the value of Team.
 func (s *CombatParticipant) SetTeam(val OptCombatParticipantTeam) {
 	s.Team = val
+}
+
+// SetInventory sets the value of Inventory.
+func (s *CombatParticipant) SetInventory(val []CombatItem) {
+	s.Inventory = val
+}
+
+// SetAbilities sets the value of Abilities.
+func (s *CombatParticipant) SetAbilities(val []CombatAbility) {
+	s.Abilities = val
 }
 
 // Type of combat participant.
@@ -3360,6 +3718,8 @@ type DamageCalculationResult struct {
 	Penetration OptFloat32 `json:"penetration"`
 	// Detailed breakdown of damage calculation.
 	CalculationDetails DamageCalculationResultCalculationDetails `json:"calculation_details"`
+	// Elemental damage effects applied.
+	ElementalEffects []ElementalEffect `json:"elemental_effects"`
 	// Calculation timestamp.
 	Timestamp OptDateTime `json:"timestamp"`
 }
@@ -3417,6 +3777,11 @@ func (s *DamageCalculationResult) GetPenetration() OptFloat32 {
 // GetCalculationDetails returns the value of CalculationDetails.
 func (s *DamageCalculationResult) GetCalculationDetails() DamageCalculationResultCalculationDetails {
 	return s.CalculationDetails
+}
+
+// GetElementalEffects returns the value of ElementalEffects.
+func (s *DamageCalculationResult) GetElementalEffects() []ElementalEffect {
+	return s.ElementalEffects
 }
 
 // GetTimestamp returns the value of Timestamp.
@@ -3477,6 +3842,11 @@ func (s *DamageCalculationResult) SetPenetration(val OptFloat32) {
 // SetCalculationDetails sets the value of CalculationDetails.
 func (s *DamageCalculationResult) SetCalculationDetails(val DamageCalculationResultCalculationDetails) {
 	s.CalculationDetails = val
+}
+
+// SetElementalEffects sets the value of ElementalEffects.
+func (s *DamageCalculationResult) SetElementalEffects(val []ElementalEffect) {
+	s.ElementalEffects = val
 }
 
 // SetTimestamp sets the value of Timestamp.
@@ -3675,6 +4045,88 @@ func (s *DamageCalculationResultModifiersAppliedItemType) UnmarshalText(data []b
 		return nil
 	case DamageCalculationResultModifiersAppliedItemTypeReduction:
 		*s = DamageCalculationResultModifiersAppliedItemTypeReduction
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Elemental damage effect.
+// Ref: #/components/schemas/ElementalEffect
+type ElementalEffect struct {
+	Type  ElementalEffectType `json:"type"`
+	Value int                 `json:"value"`
+}
+
+// GetType returns the value of Type.
+func (s *ElementalEffect) GetType() ElementalEffectType {
+	return s.Type
+}
+
+// GetValue returns the value of Value.
+func (s *ElementalEffect) GetValue() int {
+	return s.Value
+}
+
+// SetType sets the value of Type.
+func (s *ElementalEffect) SetType(val ElementalEffectType) {
+	s.Type = val
+}
+
+// SetValue sets the value of Value.
+func (s *ElementalEffect) SetValue(val int) {
+	s.Value = val
+}
+
+type ElementalEffectType string
+
+const (
+	ElementalEffectTypeFire     ElementalEffectType = "fire"
+	ElementalEffectTypeIce      ElementalEffectType = "ice"
+	ElementalEffectTypeElectric ElementalEffectType = "electric"
+	ElementalEffectTypePoison   ElementalEffectType = "poison"
+)
+
+// AllValues returns all ElementalEffectType values.
+func (ElementalEffectType) AllValues() []ElementalEffectType {
+	return []ElementalEffectType{
+		ElementalEffectTypeFire,
+		ElementalEffectTypeIce,
+		ElementalEffectTypeElectric,
+		ElementalEffectTypePoison,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ElementalEffectType) MarshalText() ([]byte, error) {
+	switch s {
+	case ElementalEffectTypeFire:
+		return []byte(s), nil
+	case ElementalEffectTypeIce:
+		return []byte(s), nil
+	case ElementalEffectTypeElectric:
+		return []byte(s), nil
+	case ElementalEffectTypePoison:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ElementalEffectType) UnmarshalText(data []byte) error {
+	switch ElementalEffectType(data) {
+	case ElementalEffectTypeFire:
+		*s = ElementalEffectTypeFire
+		return nil
+	case ElementalEffectTypeIce:
+		*s = ElementalEffectTypeIce
+		return nil
+	case ElementalEffectTypeElectric:
+		*s = ElementalEffectTypeElectric
+		return nil
+	case ElementalEffectTypePoison:
+		*s = ElementalEffectTypePoison
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -4012,6 +4464,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCombatActionResult returns new OptCombatActionResult with value set to v.
+func NewOptCombatActionResult(v CombatActionResult) OptCombatActionResult {
+	return OptCombatActionResult{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCombatActionResult is optional CombatActionResult.
+type OptCombatActionResult struct {
+	Value CombatActionResult
+	Set   bool
+}
+
+// IsSet returns true if OptCombatActionResult was set.
+func (o OptCombatActionResult) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCombatActionResult) Reset() {
+	var v CombatActionResult
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCombatActionResult) SetTo(v CombatActionResult) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCombatActionResult) Get() (v CombatActionResult, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCombatActionResult) Or(d CombatActionResult) CombatActionResult {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4892,6 +5390,52 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// NewOptTimeRange returns new OptTimeRange with value set to v.
+func NewOptTimeRange(v TimeRange) OptTimeRange {
+	return OptTimeRange{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptTimeRange is optional TimeRange.
+type OptTimeRange struct {
+	Value TimeRange
+	Set   bool
+}
+
+// IsSet returns true if OptTimeRange was set.
+func (o OptTimeRange) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptTimeRange) Reset() {
+	var v TimeRange
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptTimeRange) SetTo(v TimeRange) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptTimeRange) Get() (v TimeRange, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptTimeRange) Or(d TimeRange) TimeRange {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptUUID returns new OptUUID with value set to v.
 func NewOptUUID(v uuid.UUID) OptUUID {
 	return OptUUID{
@@ -5260,6 +5804,82 @@ func (s *StatusEffectType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Time range filter for analytics.
+// Ref: #/components/schemas/TimeRange
+type TimeRange struct {
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
+}
+
+// GetStartTime returns the value of StartTime.
+func (s *TimeRange) GetStartTime() time.Time {
+	return s.StartTime
+}
+
+// GetEndTime returns the value of EndTime.
+func (s *TimeRange) GetEndTime() time.Time {
+	return s.EndTime
+}
+
+// SetStartTime sets the value of StartTime.
+func (s *TimeRange) SetStartTime(val time.Time) {
+	s.StartTime = val
+}
+
+// SetEndTime sets the value of EndTime.
+func (s *TimeRange) SetEndTime(val time.Time) {
+	s.EndTime = val
+}
+
+// Weapon performance analytics.
+// Ref: #/components/schemas/WeaponAnalyticsItem
+type WeaponAnalyticsItem struct {
+	WeaponType  string  `json:"weapon_type"`
+	TotalDamage int     `json:"total_damage"`
+	Accuracy    float64 `json:"accuracy"`
+	UsageCount  int     `json:"usage_count"`
+}
+
+// GetWeaponType returns the value of WeaponType.
+func (s *WeaponAnalyticsItem) GetWeaponType() string {
+	return s.WeaponType
+}
+
+// GetTotalDamage returns the value of TotalDamage.
+func (s *WeaponAnalyticsItem) GetTotalDamage() int {
+	return s.TotalDamage
+}
+
+// GetAccuracy returns the value of Accuracy.
+func (s *WeaponAnalyticsItem) GetAccuracy() float64 {
+	return s.Accuracy
+}
+
+// GetUsageCount returns the value of UsageCount.
+func (s *WeaponAnalyticsItem) GetUsageCount() int {
+	return s.UsageCount
+}
+
+// SetWeaponType sets the value of WeaponType.
+func (s *WeaponAnalyticsItem) SetWeaponType(val string) {
+	s.WeaponType = val
+}
+
+// SetTotalDamage sets the value of TotalDamage.
+func (s *WeaponAnalyticsItem) SetTotalDamage(val int) {
+	s.TotalDamage = val
+}
+
+// SetAccuracy sets the value of Accuracy.
+func (s *WeaponAnalyticsItem) SetAccuracy(val float64) {
+	s.Accuracy = val
+}
+
+// SetUsageCount sets the value of UsageCount.
+func (s *WeaponAnalyticsItem) SetUsageCount(val int) {
+	s.UsageCount = val
 }
 
 // "BACKEND NOTE: Analytics data aggregated from combat logs.
@@ -5799,6 +6419,8 @@ type WeaponAnalyticsResponseUsageStats struct {
 	UsageByLevel OptWeaponAnalyticsResponseUsageStatsUsageByLevel `json:"usage_by_level"`
 	// Usage by game region.
 	UsageByRegion OptWeaponAnalyticsResponseUsageStatsUsageByRegion `json:"usage_by_region"`
+	// Detailed weapon analytics items.
+	Items []WeaponAnalyticsItem `json:"items"`
 }
 
 // GetTotalUses returns the value of TotalUses.
@@ -5826,6 +6448,11 @@ func (s *WeaponAnalyticsResponseUsageStats) GetUsageByRegion() OptWeaponAnalytic
 	return s.UsageByRegion
 }
 
+// GetItems returns the value of Items.
+func (s *WeaponAnalyticsResponseUsageStats) GetItems() []WeaponAnalyticsItem {
+	return s.Items
+}
+
 // SetTotalUses sets the value of TotalUses.
 func (s *WeaponAnalyticsResponseUsageStats) SetTotalUses(val int) {
 	s.TotalUses = val
@@ -5849,6 +6476,11 @@ func (s *WeaponAnalyticsResponseUsageStats) SetUsageByLevel(val OptWeaponAnalyti
 // SetUsageByRegion sets the value of UsageByRegion.
 func (s *WeaponAnalyticsResponseUsageStats) SetUsageByRegion(val OptWeaponAnalyticsResponseUsageStatsUsageByRegion) {
 	s.UsageByRegion = val
+}
+
+// SetItems sets the value of Items.
+func (s *WeaponAnalyticsResponseUsageStats) SetItems(val []WeaponAnalyticsItem) {
+	s.Items = val
 }
 
 // Usage breakdown by player level.

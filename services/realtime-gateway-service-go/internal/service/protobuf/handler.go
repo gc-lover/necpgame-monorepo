@@ -342,7 +342,8 @@ func (h *Handler) HandleMessage(sessionID string, data []byte) error {
 	ctx := context.Background()
 
 	// Start timing
-	start := h.meter.NewFloat64Histogram("protobuf_processing_time", metric.WithDescription("Time to process protobuf messages"))
+	// TODO: Implement histogram metric for processing time using OpenTelemetry v1.x API
+	start := time.Now() // Fallback to simple timing
 	timer := start.NewTimer(metric.WithAttributes())
 
 	defer func() {
@@ -408,6 +409,7 @@ type ParsedMessage struct {
 	Shoot          *bool
 	ZoneID         *string
 	Protocol       *string
+	NetworkConfig  *NetworkConfig // For network configuration messages
 }
 
 // parseProtobufMessage determines message type and extracts basic fields

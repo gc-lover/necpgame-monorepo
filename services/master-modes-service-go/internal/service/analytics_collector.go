@@ -41,6 +41,26 @@ type DifficultySessionStats struct {
 	ModifiersApplied map[string]interface{} `json:"modifiers_applied"`
 }
 
+// PlayerStats представляет статистику игрока для рейтингов
+type PlayerStats struct {
+	PlayerID       uuid.UUID `json:"player_id"`
+	PlayerName     string    `json:"player_name"`
+	Score          int       `json:"score"`
+	CompletionTime int       `json:"completion_time"`
+	Rank           int       `json:"rank"`
+	Achievements   []string  `json:"achievements"`
+}
+
+// ModeStats представляет статистику режима сложности
+type ModeStats struct {
+	ModeID                uuid.UUID `json:"mode_id"`
+	ModeName              string    `json:"mode_name"`
+	Popularity            float64   `json:"popularity"`
+	TotalPlayers          int       `json:"total_players"`
+	AverageCompletionRate float64   `json:"average_completion_rate"`
+	DifficultyRating      float64   `json:"difficulty_rating"`
+}
+
 // NewAnalyticsCollector создает новый сборщик аналитики
 func NewAnalyticsCollector(svc *Service, logger *zap.Logger) *AnalyticsCollector {
 	ac := &AnalyticsCollector{
@@ -390,4 +410,128 @@ func (ac *AnalyticsCollector) CleanupOldData(ctx context.Context) error {
 	ac.logger.Info("Cleaned up old analytics data")
 
 	return nil
+}
+
+// GetTopPlayersForMode возвращает топ игроков для конкретного режима сложности
+func (ac *AnalyticsCollector) GetTopPlayersForMode(ctx context.Context, modeID uuid.UUID, limit int) ([]PlayerStats, error) {
+	ctx, span := ac.service.GetTracer().Start(ctx, "AnalyticsCollector.GetTopPlayersForMode")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("mode.id", modeID.String()),
+		attribute.Int("limit", limit),
+	)
+
+	// В реальной реализации здесь будет запрос к Redis/BigQuery
+	// Для демонстрации возвращаем mock данные топ игроков
+
+	topPlayers := []PlayerStats{
+		{
+			PlayerID:       uuid.New(),
+			PlayerName:     "CyberNinja_Pro",
+			Score:          98500,
+			CompletionTime: 1247, // секунды
+			Achievements:   []string{"speed_demon", "no_damage", "perfect_run"},
+		},
+		{
+			PlayerID:       uuid.New(),
+			PlayerName:     "NeonPhantom",
+			Score:          94200,
+			CompletionTime: 1356,
+			Achievements:   []string{"master_player", "quick_completion"},
+		},
+		{
+			PlayerID:       uuid.New(),
+			PlayerName:     "VoidWalker_X",
+			Score:          89750,
+			CompletionTime: 1423,
+			Achievements:   []string{"persistent", "strategic_master"},
+		},
+		{
+			PlayerID:       uuid.New(),
+			PlayerName:     "QuantumGamer",
+			Score:          86300,
+			CompletionTime: 1589,
+			Achievements:   []string{"completionist"},
+		},
+		{
+			PlayerID:       uuid.New(),
+			PlayerName:     "ShadowStrike",
+			Score:          82100,
+			CompletionTime: 1698,
+			Achievements:   []string{"survivor"},
+		},
+	}
+
+	// Ограничиваем количество результатов
+	if len(topPlayers) > limit {
+		topPlayers = topPlayers[:limit]
+	}
+
+	// Добавляем ранки
+	for i := range topPlayers {
+		topPlayers[i].Rank = i + 1
+	}
+
+	ac.logger.Debug("Retrieved top players for mode",
+		zap.String("mode_id", modeID.String()),
+		zap.Int("count", len(topPlayers)))
+
+	return topPlayers, nil
+}
+
+// GetPopularModes возвращает статистику популярности режимов
+func (ac *AnalyticsCollector) GetPopularModes(ctx context.Context, limit int) ([]ModeStats, error) {
+	ctx, span := ac.service.GetTracer().Start(ctx, "AnalyticsCollector.GetPopularModes")
+	defer span.End()
+
+	span.SetAttributes(attribute.Int("limit", limit))
+
+	// В реальной реализации здесь будет агрегация данных из Redis/BigQuery
+	// Для демонстрации возвращаем mock данные популярных режимов
+
+	popularModes := []ModeStats{
+		{
+			ModeID:                uuid.New(),
+			ModeName:              "Master Mode",
+			Popularity:            0.45,
+			TotalPlayers:          8750,
+			AverageCompletionRate: 0.27,
+			DifficultyRating:      3.8,
+		},
+		{
+			ModeID:                uuid.New(),
+			ModeName:              "Grandmaster Mode",
+			Popularity:            0.32,
+			TotalPlayers:          6200,
+			AverageCompletionRate: 0.18,
+			DifficultyRating:      4.2,
+		},
+		{
+			ModeID:                uuid.New(),
+			ModeName:              "Legendary Mode",
+			Popularity:            0.15,
+			TotalPlayers:          2900,
+			AverageCompletionRate: 0.09,
+			DifficultyRating:      4.8,
+		},
+		{
+			ModeID:                uuid.New(),
+			ModeName:              "Nightmare Mode",
+			Popularity:            0.08,
+			TotalPlayers:          1540,
+			AverageCompletionRate: 0.04,
+			DifficultyRating:      4.9,
+		},
+	}
+
+	// Ограничиваем количество результатов
+	if len(popularModes) > limit {
+		popularModes = popularModes[:limit]
+	}
+
+	ac.logger.Debug("Retrieved popular modes stats",
+		zap.Int("count", len(popularModes)))
+
+	return popularModes, nil
 }

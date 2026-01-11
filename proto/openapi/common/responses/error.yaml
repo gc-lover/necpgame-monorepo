@@ -1,0 +1,165 @@
+# Common Error Responses - SOLID/DRY Foundation
+# These responses are inherited by all services for consistent error handling
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Base Error Response
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: "Bad request"
+        details:
+          type: object
+          description: Additional error details
+
+    # Bad Request Error (400)
+    BadRequest:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 400
+            message:
+              example: "Invalid request parameters"
+            validation_errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "email"
+                  message:
+                    type: string
+                    example: "Invalid email format"
+
+    # Unauthorized Error (401)
+    Unauthorized:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 401
+            message:
+              example: "Authentication required"
+
+    # Forbidden Error (403)
+    Forbidden:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 403
+            message:
+              example: "Access denied"
+
+    # Not Found Error (404)
+    NotFound:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 404
+            message:
+              example: "Resource not found"
+            resource_type:
+              type: string
+              example: "user"
+            resource_id:
+              type: string
+              example: "123e4567-e89b-12d3-a456-426614174000"
+
+    # Conflict Error (409)
+    Conflict:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 409
+            message:
+              example: "Resource conflict"
+            conflict_type:
+              type: string
+              enum: [duplicate, version_conflict, state_conflict]
+              example: "duplicate"
+            existing_resource:
+              type: object
+              description: Information about existing conflicting resource
+
+    # Too Many Requests Error (429)
+    TooManyRequests:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 429
+            message:
+              example: "Rate limit exceeded"
+            retry_after:
+              type: integer
+              description: Seconds to wait before retrying
+              example: 60
+            limit:
+              type: integer
+              description: Request limit per time window
+              example: 100
+            window_seconds:
+              type: integer
+              description: Time window in seconds
+              example: 60
+
+    # Internal Server Error (500)
+    InternalServerError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 500
+            message:
+              example: "Internal server error"
+            request_id:
+              type: string
+              description: Request ID for tracing
+              example: "req-123456789"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2024-01-15T10:30:00Z"
+
+    # Service Unavailable Error (503)
+    ServiceUnavailable:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            code:
+              example: 503
+            message:
+              example: "Service temporarily unavailable"
+            estimated_recovery_time:
+              type: integer
+              description: Estimated recovery time in seconds
+              example: 300
+            maintenance_mode:
+              type: boolean
+              description: Whether service is in maintenance mode
+              example: false

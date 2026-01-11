@@ -216,6 +216,8 @@ type CombatServiceGetWeaponAnalyticsParams struct {
 	WeaponId               uuid.UUID
 	Period                 OptCombatServiceGetWeaponAnalyticsPeriod `json:",omitempty,omitzero"`
 	IncludePlayerBreakdown OptBool                                  `json:",omitempty,omitzero"`
+	// Custom time range for analysis.
+	TimeRange OptTimeRange `json:",omitempty,omitzero"`
 }
 
 func unpackCombatServiceGetWeaponAnalyticsParams(packed middleware.Parameters) (params CombatServiceGetWeaponAnalyticsParams) {
@@ -242,6 +244,15 @@ func unpackCombatServiceGetWeaponAnalyticsParams(packed middleware.Parameters) (
 		}
 		if v, ok := packed[key]; ok {
 			params.IncludePlayerBreakdown = v.(OptBool)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "time_range",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.TimeRange = v.(OptTimeRange)
 		}
 	}
 	return params
@@ -397,6 +408,37 @@ func decodeCombatServiceGetWeaponAnalyticsParams(args [1]string, argsEscaped boo
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "include_player_breakdown",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: time_range.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "time_range",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+			Fields:  []uri.QueryParameterObjectField{{Name: "start_time", Required: true}, {Name: "end_time", Required: true}},
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTimeRangeVal TimeRange
+				if err := func() error {
+					return paramsDotTimeRangeVal.DecodeURI(d)
+				}(); err != nil {
+					return err
+				}
+				params.TimeRange.SetTo(paramsDotTimeRangeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "time_range",
 			In:   "query",
 			Err:  err,
 		}

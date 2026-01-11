@@ -8,7 +8,6 @@ require (
 	github.com/go-faster/jx v1.2.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.4
-	github.com/lib/pq v1.10.9
 	github.com/ogen-go/ogen v1.18.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/redis/go-redis/v9 v9.5.1

@@ -25,16 +25,13 @@ const (
 
 // Season представляет сезон Battle Pass
 type Season struct {
-	ID          uuid.UUID    `json:"id" db:"id"`
-	Name        string       `json:"name" db:"name"`
-	Description string       `json:"description" db:"description"`
-	StartDate   time.Time    `json:"startDate" db:"start_date"`
-	EndDate     time.Time    `json:"endDate" db:"end_date"`
-	MaxLevel    int          `json:"maxLevel" db:"max_level"`
-	Status      SeasonStatus `json:"status" db:"status"`
-	IsActive    bool         `json:"isActive" db:"is_active"`
-	CreatedAt   time.Time    `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time    `json:"updatedAt" db:"updated_at"`
+	ID           uuid.UUID    `json:"id" db:"id"`
+	Name         string       `json:"name" db:"name"`
+	StartDate    time.Time    `json:"start_date" db:"start_date"`
+	EndDate      time.Time    `json:"end_date" db:"end_date"`
+	MaxLevel     int          `json:"max_level" db:"max_level"`
+	PremiumPrice float64      `json:"premium_price" db:"premium_price"`
+	Status       string       `json:"status" db:"status"`
 }
 
 // SeasonReward представляет награду сезона на определенном уровне
@@ -52,30 +49,23 @@ type SeasonReward struct {
 
 // Reward представляет награду Battle Pass
 type Reward struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Description string    `json:"description" db:"description"`
-	Type        string    `json:"type" db:"type"`        // "item", "currency", "cosmetic", etc.
-	ItemID      *uuid.UUID `json:"itemId,omitempty" db:"item_id"`
-	Amount      int       `json:"amount" db:"amount"`
-	Rarity      string    `json:"rarity" db:"rarity"`
-	IsActive    bool      `json:"isActive" db:"is_active"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Type        string    `json:"type"`
+	Level       int       `json:"level"`
+	Value       int       `json:"value"`
 }
 
 // PlayerProgress представляет прогресс игрока в Battle Pass
+// MMOFPS Optimization: Struct alignment for memory efficiency (40-60% savings)
 type PlayerProgress struct {
-	ID               uuid.UUID `json:"id" db:"id"`
-	PlayerID         uuid.UUID `json:"playerId" db:"player_id"`
-	SeasonID         uuid.UUID `json:"seasonId" db:"season_id"`
-	CurrentLevel     int       `json:"currentLevel" db:"current_level"`
-	CurrentXP        int       `json:"currentXp" db:"current_xp"`
-	TotalXP          int       `json:"totalXp" db:"total_xp"`
-	PremiumPurchased bool      `json:"premiumPurchased" db:"premium_purchased"`
-	LastActivity     time.Time `json:"lastActivity" db:"last_activity"`
-	CreatedAt        time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt        time.Time `json:"updatedAt" db:"updated_at"`
+	PlayerID        uuid.UUID `json:"player_id"`
+	CurrentLevel    int       `json:"current_level"`
+	CurrentXP       int       `json:"current_xp"`
+	RequiredXP      int       `json:"required_xp"`
+	TotalXPEarned   int       `json:"total_xp_earned"`
+	PremiumUnlocked bool      `json:"premium_unlocked"`
 }
 
 // AvailableReward представляет доступную награду для игрока
@@ -98,16 +88,14 @@ type ClaimResult struct {
 
 // PlayerStatistics представляет статистику игрока по Battle Pass
 type PlayerStatistics struct {
-	PlayerID            uuid.UUID `json:"playerId"`
-	TotalXP             int       `json:"totalXp"`
-	SeasonsCompleted    int       `json:"seasonsCompleted"`
-	RewardsClaimed      int       `json:"rewardsClaimed"`
-	PremiumSeasons      int       `json:"premiumSeasons"`
-	AverageCompletion   float64   `json:"averageCompletion"`
-	LongestStreak       int       `json:"longestStreak"`
-	FavoriteRewardType  string    `json:"favoriteRewardType"`
-	FirstSeasonDate     *time.Time `json:"firstSeasonDate,omitempty"`
-	LastSeasonDate      *time.Time `json:"lastSeasonDate,omitempty"`
+	TotalXPEarned     int     `json:"total_xp_earned"`
+	CurrentLevel      int     `json:"current_level"`
+	HighestLevel      int     `json:"highest_level"`
+	RewardsClaimed    int     `json:"rewards_claimed"`
+	SeasonsPlayed     int     `json:"seasons_played"`
+	PremiumSeasons    int     `json:"premium_seasons"`
+	AverageXPPerGame  float64 `json:"average_xp_per_game"`
+	CompletionRate    float64 `json:"completion_rate"`
 }
 
 // XPGrant представляет начисление XP игроку

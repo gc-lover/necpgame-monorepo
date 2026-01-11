@@ -5,6 +5,7 @@
 package udp
 
 import (
+	"math"
 	"net"
 	"time"
 )
@@ -60,19 +61,12 @@ func (v Vec3) Distance(other Vec3) float32 {
 	return sqrt(dx*dx + dy*dy + dz*dz)
 }
 
-// sqrt implements fast inverse square root approximation for distance calculations
-// PERFORMANCE: Fast approximation for real-time distance checks
+// sqrt implements square root for distance calculations
 func sqrt(x float32) float32 {
 	if x <= 0 {
 		return 0
 	}
-
-	// Fast inverse square root (Quake III algorithm adapted for float32)
-	i := int32(x)
-	i = 0x5f3759df - (i >> 1)
-	y := *(*float32)(&i)
-	y = y * (1.5 - 0.5*x*y*y) // Newton iteration
-	return 1.0 / y            // Return actual sqrt
+	return float32(math.Sqrt(float64(x)))
 }
 
 // PositionUpdate represents a quantized position update packet

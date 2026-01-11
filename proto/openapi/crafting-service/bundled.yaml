@@ -1,0 +1,3335 @@
+openapi: 3.0.3
+info:
+  title: Crafting Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Crafting System API for NECPGAME**
+
+    This API manages item crafting mechanics, recipe management, and material processing
+    in the Night City universe, providing comprehensive crafting workflows, quality
+    control, and resource optimization.
+
+    ## Key Features
+
+    - **Recipe Management**: Dynamic recipe loading and validation - **Material Processing**:
+    Resource consumption and quality calculations - **Crafting Workflows**: Multi-step
+    crafting processes with progress tracking - **Quality Control**: Item quality
+    assessment and enhancement mechanics - **Resource Optimization**: Material efficiency
+    and waste reduction - **Performance Optimized**: MMOFPS-grade performance with
+    <50ms P99 latency
+
+    ## Domain Purpose
+
+    The Crafting domain handles all aspects of item creation and material processing
+    in Night City. Players combine resources, follow recipes, and create equipment
+    through sophisticated crafting mechanics that affect item quality and characteristics.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for crafting operations - Memory: <20KB per active crafting
+    session - Concurrent users: 25,000+ simultaneous crafting - Recipe calculations:
+    <5ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/crafting
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/crafting
+  description: Staging server
+- url: http://localhost:8080/api/v1/crafting
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Crafting
+  description: Core crafting operations
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Example domain health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the example domain microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: craftingServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: craftingServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: craftingServiceHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/crafting/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /recipes:
+    get:
+      summary: List examples with filtering and pagination
+      description: '**Enterprise-grade listing endpoint**
+
+
+        Supports complex filtering, sorting, and pagination patterns.
+
+        Optimized for high-throughput scenarios with proper indexing.
+
+
+        **Performance:** <10ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listRecipes
+      tags:
+      - Example Domain
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - priority
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: filter_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+        description: Filter by status
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '422':
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    post:
+      summary: Create new example
+      description: '**Enterprise-grade creation endpoint**
+
+
+        Validates business rules, applies security checks, and ensures data consistency.
+
+        Supports optimistic locking for concurrent operations.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        '
+      operationId: startCrafting
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExampleRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ExampleCreated'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '409':
+          description: Conflict - example with this identifier already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /crafting/{crafting_id}:
+    get:
+      summary: Get specific example by ID
+      description: '**Enterprise-grade retrieval endpoint**
+
+
+        Optimized with proper caching strategies and database indexing.
+
+        Supports conditional requests.
+
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getCraftingStatus
+      tags:
+      - Example Domain
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleRetrieved'
+        '304':
+          description: Not modified - resource has not changed
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    put:
+      summary: Update existing example
+      description: '**Enterprise-grade update endpoint**
+
+
+        Supports partial updates, optimistic locking, and audit trails.
+
+        Ensures data consistency with event sourcing patterns.
+
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateCraftingProgress
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: Optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this
+          time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExampleRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleUpdated'
+        '400':
+          description: Invalid request - malformed data or example ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '409':
+          description: Conflict - version conflict (optimistic locking) or precondition
+            failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '412':
+          description: Precondition failed - If-Match or If-Unmodified-Since condition
+            not met
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    delete:
+      summary: Delete example
+      description: '**Enterprise-grade deletion endpoint**
+
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+
+        Ensures referential integrity and cascading deletes.
+
+
+        **Performance:** <15ms P95, includes cleanup operations
+
+        '
+      operationId: cancelCrafting
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/ExampleDeleted'
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '409':
+          description: Conflict - example cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /crafting/recipes:
+    get:
+      summary: Get crafting recipes by category
+      description: '**Enterprise-grade recipe retrieval endpoint**
+
+        Retrieves crafting recipes filtered by category, tier, quality, and other
+        criteria. Supports pagination and advanced filtering for crafting system optimization.
+
+        Essential for player crafting interface and recipe discovery.
+
+        **Performance:** <30ms P95 with database indexing
+
+        **Caching:** Recipes cached for 5 minutes, invalidated on updates
+
+        '
+      operationId: craftingServiceGetRecipes
+      tags:
+      - Recipe Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
+          - cyberware
+          - equipment
+          description: Recipe category filter
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier filter (1-5)
+      - name: quality
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality requirement
+      - name: required_skill_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          description: Required crafting skill level
+      - name: available_to_player
+        in: query
+        schema:
+          type: boolean
+          default: true
+          description: Filter recipes available to current player
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+          description: Number of recipes per page
+      responses:
+        '200':
+          description: Recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeListResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of recipes matching criteria
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          allOf:
+          - $ref: '#/components/schemas/Error'
+          - type: object
+            properties:
+              code:
+                example: 401
+              message:
+                example: Authentication required
+        '403':
+          description: Forbidden - insufficient permissions to view recipes
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+components:
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleListResponse'
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/crafting/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      allOf:
+      - $ref: '#/components/schemas/Success'
+      - type: object
+        properties:
+          message:
+            example: Operation completed successfully
+          data:
+            type: object
+            description: Response data
+          meta:
+            type: object
+            description: Metadata about response
+            properties:
+              count:
+                type: integer
+                description: Number of items (for lists)
+                example: 25
+              total:
+                type: integer
+                description: Total number of items available
+                example: 100
+              page:
+                type: integer
+                description: Current page number
+                example: 1
+              per_page:
+                type: integer
+                description: Items per page
+                example: 25
+    Created:
+      allOf:
+      - $ref: '#/components/schemas/Success'
+      - type: object
+        required:
+        - data
+        properties:
+          message:
+            example: Resource created successfully
+          data:
+            type: object
+            description: Created resource data
+          location:
+            type: string
+            description: URL to access created resource
+            example: /api/v1/resources/123
+    BadRequest:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 400
+          message:
+            example: Invalid request parameters
+          validation_errors:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  example: email
+                message:
+                  type: string
+                  example: Invalid email format
+    Unauthorized:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 401
+          message:
+            example: Authentication required
+    Forbidden:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 403
+          message:
+            example: Access denied
+    NotFound:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 404
+          message:
+            example: Resource not found
+          resource_type:
+            type: string
+            example: user
+          resource_id:
+            type: string
+            example: 123e4567-e89b-12d3-a456-426614174000
+    Conflict:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 409
+          message:
+            example: Resource conflict
+          conflict_type:
+            type: string
+            enum:
+            - duplicate
+            - version_conflict
+            - state_conflict
+            example: duplicate
+          existing_resource:
+            type: object
+            description: Information about existing conflicting resource
+    InternalServerError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 500
+          message:
+            example: Internal server error
+          request_id:
+            type: string
+            description: Request ID for tracing
+            example: req-123456789
+          timestamp:
+            type: string
+            format: date-time
+            example: '2024-01-15T10:30:00Z'
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
+  schemas:
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          type: object
+          required:
+          - status
+          - timestamp
+          properties:
+            status:
+              type: string
+              enum:
+              - ok
+              - degraded
+              - critical
+              example: ok
+              description: Current health status
+            message:
+              type: string
+              example: Service is healthy
+              description: Human-readable status message
+            timestamp:
+              type: string
+              format: date-time
+              example: '2024-01-15T10:30:00Z'
+              description: Time when health check was performed
+            version:
+              type: string
+              example: 1.0.0
+              description: Service version
+            uptime:
+              type: integer
+              example: 3600
+              description: Service uptime in seconds
+            checks:
+              type: object
+              description: Detailed health checks
+              additionalProperties:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                  message:
+                    type: string
+                  response_time:
+                    type: integer
+                    description: Response time in milliseconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    Example:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-21T10:00:00Z'
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          default: active
+          description: Current status
+          example: active
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example:
+          - demo
+          - template
+          - best-practice
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Hot path optimization required.'
+    CreateExampleRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Desired example name
+          example: My New Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleResponse:
+      type: object
+      required:
+      - example
+      properties:
+        example:
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleListResponse:
+      type: object
+      required:
+      - examples
+      - total_count
+      - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/Example'
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency.'
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+    RecipeListResponse:
+      type: object
+      required:
+      - recipes
+      - pagination
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+          description: List of crafting recipes
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: Current page number
+            limit:
+              type: integer
+              minimum: 1
+              description: Items per page
+            total_count:
+              type: integer
+              minimum: 0
+              description: Total number of recipes matching criteria
+            total_pages:
+              type: integer
+              minimum: 0
+              description: Total number of pages
+          description: Pagination metadata
+        filters_applied:
+          type: object
+          description: Applied filters summary
+          additionalProperties: true
+      description: '"BACKEND NOTE: Response optimized for frontend recipe browser.
+
+        Includes pagination for large recipe catalogs."
+
+        '
+    Recipe:
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/AuditableEntity
+      - type: object
+        required:
+        - name
+        - category
+        - tier
+        - ingredients
+        - result_item
+        - crafting_time
+        - required_skill_level
+        properties:
+          name:
+            type: string
+            maxLength: 100
+            description: Human-readable recipe name
+            example: Legendary Katana Crafting Recipe
+          lore_description:
+            type: string
+            maxLength: 500
+            description: Recipe description and lore
+            example: Ancient crafting technique passed down through generations
+          category:
+            type: string
+            enum:
+            - weapons
+            - armor
+            - implants
+            - vehicles
+            - consumables
+            - tools
+            - cyberware
+            - equipment
+            description: Recipe category
+          tier:
+            type: integer
+            minimum: 1
+            maximum: 5
+            description: Recipe difficulty tier (1-5)
+          ingredients:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecipeIngredient'
+            minItems: 1
+            description: Required crafting materials
+          result_item:
+            type: object
+            required:
+            - item_id
+            - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+                description: Result item identifier
+              item_name:
+                type: string
+                description: Result item name
+              quantity:
+                type: integer
+                minimum: 1
+                description: Quantity produced
+            description: Item produced by recipe
+          quality_range:
+            type: object
+            required:
+            - min
+            - max
+            properties:
+              min:
+                type: integer
+                minimum: 1
+                maximum: 100
+              max:
+                type: integer
+                minimum: 1
+                maximum: 100
+            description: Quality range of crafted item
+          crafting_time:
+            type: integer
+            minimum: 1
+            description: Base crafting time in seconds
+          required_skill_level:
+            type: integer
+            minimum: 1
+            description: Minimum crafting skill level required
+          required_facility:
+            type: string
+            enum:
+            - basic_workbench
+            - advanced_workbench
+            - cyberware_station
+            - vehicle_bay
+            - laboratory
+            description: Required crafting facility
+          success_chance:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            default: 1.0
+            description: Base success probability
+          experience_gained:
+            type: integer
+            minimum: 0
+            description: Experience points awarded on success
+          is_discovered:
+            type: boolean
+            description: Whether recipe is discovered by player
+          tags:
+            type: array
+            items:
+              type: string
+            description: Recipe tags for filtering
+        description: Last recipe modification
+      description: '"BACKEND NOTE: Recipe data optimized for crafting calculations.
+
+        Ingredients pre-validated for availability checks."
+
+        '
+    RecipeIngredient:
+      type: object
+      required:
+      - item_id
+      - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Required item identifier
+        item_name:
+          type: string
+          description: Required item name
+        quantity:
+          type: integer
+          minimum: 1
+          description: Required quantity
+        quality_required:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality required
+        is_consumed:
+          type: boolean
+          default: true
+          description: Whether ingredient is consumed in crafting
+        alternative_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Alternative items that can substitute this ingredient
+      description: '"BACKEND NOTE: Ingredient validation prevents impossible crafts.
+
+        Alternative items support flexible crafting requirements."
+
+        '
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+    BadRequest:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 400
+          message:
+            example: Invalid request parameters
+          validation_errors:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  example: email
+                message:
+                  type: string
+                  example: Invalid email format
+    Unauthorized:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 401
+          message:
+            example: Authentication required
+    Forbidden:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 403
+          message:
+            example: Access denied
+    NotFound:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 404
+          message:
+            example: Resource not found
+          resource_type:
+            type: string
+            example: user
+          resource_id:
+            type: string
+            example: 123e4567-e89b-12d3-a456-426614174000
+    Conflict:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 409
+          message:
+            example: Resource conflict
+          conflict_type:
+            type: string
+            enum:
+            - duplicate
+            - version_conflict
+            - state_conflict
+            example: duplicate
+          existing_resource:
+            type: object
+            description: Information about existing conflicting resource
+    TooManyRequests:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 429
+          message:
+            example: Rate limit exceeded
+          retry_after:
+            type: integer
+            description: Seconds to wait before retrying
+            example: 60
+          limit:
+            type: integer
+            description: Request limit per time window
+            example: 100
+          window_seconds:
+            type: integer
+            description: Time window in seconds
+            example: 60
+    InternalServerError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 500
+          message:
+            example: Internal server error
+          request_id:
+            type: string
+            description: Request ID for tracing
+            example: req-123456789
+          timestamp:
+            type: string
+            format: date-time
+            example: '2024-01-15T10:30:00Z'
+    ServiceUnavailable:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        properties:
+          code:
+            example: 503
+          message:
+            example: Service temporarily unavailable
+          estimated_recovery_time:
+            type: integer
+            description: Estimated recovery time in seconds
+            example: 300
+          maintenance_mode:
+            type: boolean
+            description: Whether service is in maintenance mode
+            example: false
+    Success:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        request_id:
+          type: string
+          description: Request ID for tracing
+          example: req-123456789
+    Created:
+      allOf:
+      - $ref: '#/components/schemas/Success'
+      - type: object
+        required:
+        - data
+        properties:
+          message:
+            example: Resource created successfully
+          data:
+            type: object
+            description: Created resource data
+          location:
+            type: string
+            description: URL to access created resource
+            example: /api/v1/resources/123
+    OK:
+      allOf:
+      - $ref: '#/components/schemas/Success'
+      - type: object
+        properties:
+          message:
+            example: Operation completed successfully
+          data:
+            type: object
+            description: Response data
+          meta:
+            type: object
+            description: Metadata about response
+            properties:
+              count:
+                type: integer
+                description: Number of items (for lists)
+                example: 25
+              total:
+                type: integer
+                description: Total number of items available
+                example: 100
+              page:
+                type: integer
+                description: Current page number
+                example: 1
+              per_page:
+                type: integer
+                description: Items per page
+                example: 25
+    NoContent:
+      type: object
+      description: Empty response for successful operations that return no content
+    SuccessResponse:
+      $ref: '#/components/schemas/OK'
+    Accepted:
+      allOf:
+      - $ref: '#/components/schemas/Success'
+      - type: object
+        properties:
+          message:
+            example: Request accepted for processing
+          job_id:
+            type: string
+            description: Job ID for tracking async operation
+            example: job-123456789
+          estimated_completion_time:
+            type: integer
+            description: Estimated completion time in seconds
+            example: 30
+          status_url:
+            type: string
+            description: URL to check job status
+            example: /api/v1/jobs/job-123456789
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

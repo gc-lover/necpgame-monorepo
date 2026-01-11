@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
 	"necpgame/services/crafting-service-go/internal/service"
+	api "necpgame/services/crafting-service-go/pkg/api"
 )
 
 func main() {
@@ -58,16 +58,20 @@ func main() {
 		logger.Fatal("Failed to create crafting service", zap.Error(err))
 	}
 
-	// Create HTTP router and handler
-	router := mux.NewRouter()
-	handler := service.NewHandler(svc, nil, nil)
-	handler.RegisterRoutes(router)
+	// Create ogen handler
+	handler := service.NewHandler(svc, logger)
+
+	// Create ogen server
+	server, err := api.NewServer(handler, nil)
+	if err != nil {
+		logger.Fatal("Failed to create ogen server", zap.Error(err))
+	}
 
 	// Create HTTP server with crafting-specific performance optimizations
 	// PERFORMANCE: Tuned for material processing and recipe calculations
 	srv := &http.Server{
 		Addr: addr,
-		Handler: router,
+		Handler: server,
 		ReadTimeout:       30 * time.Second,  // PERFORMANCE: Allow time for complex crafting calculations
 		WriteTimeout:      30 * time.Second,  // PERFORMANCE: Allow time for recipe responses
 		IdleTimeout:       120 * time.Second, // PERFORMANCE: Keep connections for crafting sessions

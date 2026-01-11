@@ -34,6 +34,145 @@ components:
           description: Optimistic locking version for concurrent operations
           example: 1
 
+    # Health Check Response - standard health check format
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, critical]
+          example: ok
+        message:
+          type: string
+          example: "Service is healthy"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+
+    # Error Response - standard error format
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: "Bad request"
+        details:
+          type: object
+          description: Additional error details
+
+    # Health Batch Request - for checking multiple services
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+          description: List of services to check
+
+    # Health Batch Response - batch health check results
+    HealthBatchResponse:
+      type: object
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+
+    # Base Entity - common fields for all entities
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-01-15T14:20:00Z"
+
+    # Optimistic Lock - for concurrent operations
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+
+    # Configuration Entity - for service configurations
+    ConfigurationEntity:
+      allOf:
+        - $ref: '#/components/schemas/InfrastructureEntity'
+        - type: object
+          properties:
+            config_key:
+              type: string
+              description: Configuration key
+            config_value:
+              type: object
+              description: Configuration value
+
+    # Audit Log Entity - for audit trails
+    AuditLogEntity:
+      allOf:
+        - $ref: '#/components/schemas/InfrastructureEntity'
+        - type: object
+          required:
+            - user_id
+            - action
+            - resource_type
+          properties:
+            user_id:
+              type: string
+              format: uuid
+              description: User who performed the action
+            action:
+              type: string
+              enum: [create, update, delete, read]
+              description: Action performed
+            resource_type:
+              type: string
+              description: Type of resource affected
+            resource_id:
+              type: string
+              format: uuid
+              description: ID of affected resource
+            old_values:
+              type: object
+              description: Previous values (for updates)
+            new_values:
+              type: object
+              description: New values (for updates/creates)
+
     # User Account Entity - core user authentication data
     UserAccountEntity:
       allOf:

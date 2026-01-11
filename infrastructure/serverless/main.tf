@@ -280,6 +280,144 @@ resource "aws_cloudfront_distribution" "game_assets" {
   }
 }
 
+# WAF Web ACL for API Gateway Protection
+resource "aws_wafv2_web_acl" "api_gateway_waf" {
+  count = var.waf_config.enabled ? 1 : 0
+
+  name        = "necpgame-api-gateway-waf"
+  description = "WAF Web ACL for NECPGAME API Gateway protection"
+  scope       = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  # Rate limiting rule
+  rule {
+    name     = "rate-limit"
+    priority = 1
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = var.waf_config.rate_limit
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "necpgame-api-rate-limit"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Geo-blocking rule
+  dynamic "rule" {
+    for_each = length(var.waf_config.block_countries) > 0 ? [1] : []
+
+    content {
+      name     = "geo-block"
+      priority = 2
+
+      action {
+        block {}
+      }
+
+      statement {
+        geo_match_statement {
+          country_codes = var.waf_config.block_countries
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "necpgame-api-geo-block"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  # SQL injection protection
+  rule {
+    name     = "sql-injection-protection"
+    priority = 3
+
+    action {
+      block {}
+    }
+
+    statement {
+      or_statement {
+        statements = [
+          {
+            sqli_match_statement = {
+              field_to_match = {
+                body = {}
+              }
+              text_transformation = [
+                {
+                  priority = 1
+                  type     = "URL_DECODE"
+                },
+                {
+                  priority = 2
+                  type     = "LOWERCASE"
+                }
+              ]
+            }
+          },
+          {
+            sqli_match_statement = {
+              field_to_match = {
+                query_string = {}
+              }
+              text_transformation = [
+                {
+                  priority = 1
+                  type     = "URL_DECODE"
+                },
+                {
+                  priority = 2
+                  type     = "LOWERCASE"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "necpgame-api-sql-injection"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "necpgame-api-waf"
+    sampled_requests_enabled   = true
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = "NECPGAME"
+  }
+}
+
+# Associate WAF with API Gateway
+resource "aws_wafv2_web_acl_association" "api_gateway_waf" {
+  count = var.waf_config.enabled ? 1 : 0
+
+  resource_arn = aws_api_gateway_stage.prod.arn
+  web_acl_arn  = aws_wafv2_web_acl.api_gateway_waf[0].arn
+}
+
 # Security Group for Lambda Functions
 resource "aws_security_group" "lambda_sg" {
   name_prefix = "necpgame-lambda-"

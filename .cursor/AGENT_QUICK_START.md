@@ -13,16 +13,61 @@
 
 ---
 
+## 🔍 Как найти свою задачу (КРИТИЧНО!)
+
+### Правильные команды поиска задач:
+
+```javascript
+// МЕТОД 1: GitHub Projects API (ПЕРВЫЙ ВЫБОР)
+mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"YourAgent" Status:"Todo"'  // Замени YourAgent на свой
+});
+
+// МЕТОД 2: GitHub Issues API (если Projects не работает)
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open'
+});
+// Затем ищи по title: '[YourAgent]' или '[OK]' для завершенных
+```
+
+### Какие статусы искать:
+- `Status:"Todo"` - новые задачи
+- `Status:"Returned"` - возвращенные на доработку
+- `Status:"Blocked"` - заблокированные (нужно разблокировать)
+- `Status:"In Progress"` - уже взятые (не брать!)
+
+### Агенты и их префиксы в title:
+- `[Backend]` - Backend агент
+- `[API]` - API Designer
+- `[Content]` - Content Writer
+- `[QA]` - QA агент
+- `[Performance]` - Performance агент
+- `[Security]` - Security агент
+
 ## 📋 4 шага работы
 
 ### 1️⃣ НАЙТИ задачу
 ```javascript
+// МЕТОД 1: Через GitHub Projects (рекомендуемый)
 mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   query: 'Agent:"MyAgent" Status:"Todo"'
 });
+
+// МЕТОД 2: Через GitHub Issues (если Projects не доступен)
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open'
+});
+// Затем фильтровать по title: '[MyAgent]' или '[OK]' для завершенных
 ```
 
 ### 2️⃣ ВЗЯТЬ задачу

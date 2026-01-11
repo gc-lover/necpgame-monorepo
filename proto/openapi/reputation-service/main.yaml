@@ -1,0 +1,476 @@
+# Reputation Service API - Enterprise-grade Reputation Decay & Recovery
+# Domain Separation: Complete reputation management system with decay and recovery mechanics
+# Issue: #2174
+
+openapi: 3.0.3
+info:
+  title: Reputation Service API
+  description: |
+    **Enterprise-grade Reputation Decay & Recovery API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Advanced reputation system with natural decay mechanics, multiple recovery paths, and contextual modifiers for realistic social interactions.
+
+    **Architecture:** Event-driven microservice with Kafka integration, Redis caching, and PostgreSQL persistence.
+
+    **Core Features:**
+    - Real-time reputation decay calculations
+    - Multiple recovery action types
+    - Context-aware modifiers (time, location, relationships)
+    - Bulk reputation operations for performance
+    - Comprehensive analytics and simulation tools
+    - Anti-cheat validation and fraud detection
+    - Cross-service integration with quests, events, and social systems
+
+    **Performance Targets:**
+    - Real-time updates: P99 <50ms for single reputation changes
+    - Bulk operations: 1000+ updates/sec with <200ms latency
+    - Decay calculations: Daily batch processing <10 minutes for 1M+ entities
+    - Recovery actions: <100ms response time for validation and application
+    - Cache hit rate: >95% for active reputation queries
+    - Storage efficiency: <50 bytes per reputation relationship
+
+    **BACKEND NOTE:** Implements complex decay algorithms with relationship strength modifiers. Uses event sourcing for reputation history and audit trails.
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Reputation API Support
+    url: https://necpgame.com/support
+    email: api@reputation.necpgame.com
+
+servers:
+  - url: http://localhost:8086/api/v1/reputation
+    description: Reputation Service Development Server
+  - url: https://reputation.necpgame.com/api/v1
+    description: Reputation Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Reputation Management
+    description: Core reputation CRUD operations
+  - name: Reputation Decay
+    description: Decay mechanics and simulation
+  - name: Reputation Recovery
+    description: Recovery actions and validation
+  - name: Bulk Operations
+    description: High-performance bulk reputation operations
+  - name: Analytics
+    description: Reputation analytics and reporting
+  - name: System
+    description: Health checks and system operations
+
+paths:
+
+  # Health check endpoint
+  /health:
+    get:
+      summary: Reputation service health check
+      operationId: reputationHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Get reputation for entity
+  /entities/{entity_id}/reputation:
+    get:
+      summary: Get reputation relationships for an entity
+      description: |
+        Retrieves all reputation relationships for a specific entity (player, NPC, faction).
+
+        **BACKEND NOTE:** Supports filtering, pagination, and sorting for large reputation networks.
+        Uses Redis cache for frequently accessed relationships.
+      operationId: getEntityReputation
+      tags:
+        - Reputation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Entity ID to get reputation for
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [faction, person, corporation, location, event]
+          description: Filter by target type
+        - name: min_value
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: -100.0
+            maximum: 100.0
+          description: Minimum reputation value filter
+        - name: max_value
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: -100.0
+            maximum: 100.0
+          description: Maximum reputation value filter
+        - name: tier
+          in: query
+          schema:
+            type: string
+            enum: [hated, hostile, unfriendly, neutral, friendly, liked, respected, revered, legendary]
+          description: Filter by reputation tier
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [value, tier, last_updated, relationship_strength]
+            default: value
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: Reputation data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/ReputationListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Get specific reputation relationship
+  /entities/{entity_id}/reputation/{target_id}:
+    get:
+      summary: Get specific reputation relationship
+      description: Retrieves detailed reputation information for a specific entity-target relationship.
+      operationId: getSpecificReputation
+      tags:
+        - Reputation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Entity ID
+        - name: target_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target entity ID
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        - name: target_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [faction, person, corporation, location, event]
+          description: Type of the target entity
+      responses:
+        '200':
+          description: Reputation relationship retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/ReputationResponse'
+        '404':
+          description: Reputation relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Update reputation
+  /reputation:
+    post:
+      summary: Update reputation relationship
+      description: |
+        Updates or creates a reputation relationship with validation and decay calculations.
+
+        **BACKEND NOTE:** Handles both creation and updates. Applies decay calculations if relationship already exists.
+        Triggers notifications and analytics events.
+      operationId: updateReputation
+      tags:
+        - Reputation Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/reputation-schemas.yaml#/components/schemas/ReputationUpdateRequest'
+      responses:
+        '200':
+          description: Reputation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/ReputationUpdateResponse'
+        '400':
+          description: Invalid update request
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to update reputation
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Bulk reputation updates
+  /reputation/bulk:
+    post:
+      summary: Bulk reputation updates
+      description: |
+        Performs multiple reputation updates in a single operation for performance.
+
+        **BACKEND NOTE:** Supports atomic operations. Critical for mass reputation changes from events/quests.
+        Uses optimized batch processing with Redis pipeline operations.
+      operationId: bulkUpdateReputation
+      tags:
+        - Bulk Operations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/request-schemas.yaml#/components/schemas/BulkReputationUpdateRequest'
+      responses:
+        '200':
+          description: Bulk updates completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/BulkReputationUpdateResponse'
+        '207':
+          description: Partial success - some updates failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/BulkReputationUpdateResponse'
+        '400':
+          description: Invalid bulk request
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Reputation recovery action
+  /reputation/recovery:
+    post:
+      summary: Perform reputation recovery action
+      description: |
+        Executes a reputation recovery action with validation and effectiveness calculations.
+
+        **BACKEND NOTE:** Validates action requirements, calculates recovery value based on context,
+        applies cooldowns, and triggers reputation updates.
+      operationId: performReputationRecovery
+      tags:
+        - Reputation Recovery
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/request-schemas.yaml#/components/schemas/ReputationRecoveryRequest'
+      responses:
+        '200':
+          description: Recovery action performed successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/ReputationRecoveryResponse'
+        '400':
+          description: Invalid recovery request or requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+        '429':
+          description: Action on cooldown
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Simulate reputation decay
+  /reputation/simulate-decay:
+    post:
+      summary: Simulate reputation decay over time
+      description: |
+        Simulates how reputation will decay over a specified period without actually applying changes.
+
+        **BACKEND NOTE:** Useful for UI previews, player planning, and balance testing.
+        Considers activity levels and relationship strengths in calculations.
+      operationId: simulateReputationDecay
+      tags:
+        - Reputation Decay
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/request-schemas.yaml#/components/schemas/ReputationDecaySimulationRequest'
+      responses:
+        '200':
+          description: Decay simulation completed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/response-schemas.yaml#/components/schemas/ReputationDecaySimulationResponse'
+        '400':
+          description: Invalid simulation request
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Get available recovery actions
+  /entities/{entity_id}/recovery-options:
+    get:
+      summary: Get available reputation recovery options
+      description: Retrieves available recovery actions for improving reputation with specific targets.
+      operationId: getRecoveryOptions
+      tags:
+        - Reputation Recovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Entity ID to get recovery options for
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        - name: target_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Specific target to get recovery options for (optional)
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum: [faction, person, corporation, location, event]
+          description: Type of target
+      responses:
+        '200':
+          description: Recovery options retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entity_id:
+                    type: string
+                    format: uuid
+                  recovery_options:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          format: uuid
+                        target_type:
+                          type: string
+                          enum: [faction, person, corporation, location, event]
+                        available_actions:
+                          type: array
+                          items:
+                            $ref: './schemas/reputation-schemas.yaml#/components/schemas/ReputationRecoveryAction'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

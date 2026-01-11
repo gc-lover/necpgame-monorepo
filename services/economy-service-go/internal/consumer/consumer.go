@@ -265,7 +265,7 @@ func (tc *TickConsumer) HealthCheck() error {
 
 	// Check if reader is still connected by attempting a stats call
 	stats := tc.reader.Stats()
-	if stats.DialTime <= 0 {
+	if stats.Dials == 0 {
 		return fmt.Errorf("Kafka reader not connected")
 	}
 

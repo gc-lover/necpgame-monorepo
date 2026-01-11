@@ -20,6 +20,7 @@ import (
 	"github.com/gc-lover/necp-game/services/realtime-gateway-service-go/internal/service/protobuf"
 	"github.com/gc-lover/necp-game/services/realtime-gateway-service-go/internal/service/session"
 	"github.com/gc-lover/necp-game/services/realtime-gateway-service-go/internal/service/udp"
+	"github.com/gc-lover/necp-game/services/realtime-proto-go/pkg/proto/realtime"
 )
 
 // Config holds service configuration

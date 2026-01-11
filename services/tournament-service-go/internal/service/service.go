@@ -47,6 +47,7 @@ type TournamentStatus = repository.TournamentStatus
 type Match = repository.Match
 type Participant = repository.Participant
 type ParticipantStats = repository.ParticipantStats
+type TournamentStats = repository.TournamentStats
 
 // Tournament extends repository.Tournament with runtime state
 type Tournament struct {
@@ -132,7 +133,9 @@ func (s *Service) CreateTournament(ctx context.Context, name string, tournamentT
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	if err := s.repo.CreateTournament(ctx, tournament); err != nil {
+	// Convert service type to repository type using DTO
+	repoTournament := TournamentToRepository(tournament)
+	if err := s.repo.CreateTournament(ctx, repoTournament); err != nil {
 		s.logger.Error("Failed to persist tournament", zap.Error(err))
 		return nil, err
 	}
@@ -169,7 +172,7 @@ func (s *Service) CreateTournament(ctx context.Context, name string, tournamentT
 
 // PERFORMANCE: Optimized participant registration
 func (s *Service) RegisterParticipant(ctx context.Context, tournamentID, userID string) error {
-	tournament, err := s.getTournament(ctx, tournamentID)
+	tournament, err := s.GetTournament(ctx, tournamentID)
 	if err != nil {
 		return err
 	}
@@ -178,7 +181,7 @@ func (s *Service) RegisterParticipant(ctx context.Context, tournamentID, userID 
 	defer tournament.mu.Unlock()
 
 	// Check tournament status
-	if tournament.Status != repository.TournamentStatus("registration") {
+	if tournament.Status != TournamentStatusRegistration {
 		return fmt.Errorf("tournament is not accepting registrations")
 	}
 
@@ -199,13 +202,14 @@ func (s *Service) RegisterParticipant(ctx context.Context, tournamentID, userID 
 	participant.UserID = userID
 	participant.TournamentID = tournamentID
 	participant.Seed = len(tournament.participants) + 1
-	participant.Status = ParticipantStatusRegistered
+	participant.Status = "registered"
 	participant.JoinedAt = time.Now()
 
 	tournament.participants = append(tournament.participants, participant)
 
 	// PERFORMANCE: Database persistence
-	if err := s.repo.RegisterParticipant(ctx, participant); err != nil {
+	repoParticipant := ParticipantToRepository(participant)
+	if err := s.repo.RegisterParticipant(ctx, repoParticipant); err != nil {
 		s.logger.Error("Failed to persist participant", zap.Error(err))
 		return err
 	}
@@ -220,7 +224,7 @@ func (s *Service) RegisterParticipant(ctx context.Context, tournamentID, userID 
 
 // PERFORMANCE: Optimized tournament start with bracket generation
 func (s *Service) StartTournament(ctx context.Context, tournamentID string) error {
-	tournament, err := s.getTournament(ctx, tournamentID)
+	tournament, err := s.GetTournament(ctx, tournamentID)
 	if err != nil {
 		return err
 	}
@@ -229,7 +233,7 @@ func (s *Service) StartTournament(ctx context.Context, tournamentID string) erro
 	defer tournament.mu.Unlock()
 
 	// Validate tournament can start
-	if tournament.Status != repository.TournamentStatus("registration") {
+	if tournament.Status != TournamentStatusRegistration {
 		return fmt.Errorf("tournament cannot be started")
 	}
 
@@ -248,12 +252,14 @@ func (s *Service) StartTournament(ctx context.Context, tournamentID string) erro
 	}
 
 	// Update tournament status
-	tournament.Status = TournamentStatusInProgress
-	tournament.StartTime = time.Now()
+	tournament.Status = repository.TournamentStatusActive
+	now := time.Now()
+	tournament.StartTime = &now
 	tournament.CurrentRound = 1
 
 	// PERFORMANCE: Batch database updates
-	if err := s.repo.StartTournament(ctx, tournament); err != nil {
+	repoTournament := TournamentToRepository(tournament)
+	if err := s.repo.StartTournament(ctx, repoTournament); err != nil {
 		s.logger.Error("Failed to start tournament", zap.Error(err))
 		return err
 	}
@@ -294,7 +300,7 @@ func (s *Service) generateBracket(tournament *Tournament) error {
 			currentRoundMatches = append(currentRoundMatches, match)
 		}
 		// Last participant gets bye
-		participants[numParticipants-1].Status = ParticipantStatusActive
+		participants[numParticipants-1].Status = "active"
 	}
 
 	tournament.brackets[1] = currentRoundMatches
@@ -309,10 +315,12 @@ func (s *Service) generateBracket(tournament *Tournament) error {
 			match := s.createMatch(tournament.ID, round, i+1, nil, nil)
 			// Link to previous round matches
 			if i*2 < len(currentRoundMatches) {
-				currentRoundMatches[i*2].NextMatchID = match.ID
+				id := match.ID
+				currentRoundMatches[i*2].NextMatchID = &id
 			}
 			if i*2+1 < len(currentRoundMatches) {
-				currentRoundMatches[i*2+1].NextMatchID = match.ID
+				id := match.ID
+				currentRoundMatches[i*2+1].NextMatchID = &id
 			}
 			roundMatches = append(roundMatches, match)
 		}
@@ -333,16 +341,16 @@ func (s *Service) createMatch(tournamentID string, round, position int, p1, p2 *
 	match.TournamentID = tournamentID
 	match.Round = round
 	match.Position = position
-	match.Status = MatchStatusPending
+	match.Status = "pending"
 	match.StartTime = time.Now()
 
 	if p1 != nil {
-		match.Player1ID = p1.UserID
-		p1.Status = ParticipantStatusActive
+		match.Player1ID = &p1.UserID
+		p1.Status = "active"
 	}
 	if p2 != nil {
-		match.Player2ID = p2.UserID
-		p2.Status = ParticipantStatusActive
+		match.Player2ID = &p2.UserID
+		p2.Status = "active"
 	}
 
 	return match
@@ -355,7 +363,7 @@ func (s *Service) ReportMatchResult(ctx context.Context, matchID, winnerID strin
 		return err
 	}
 
-	tournament, err := s.getTournament(ctx, tournamentID)
+	tournament, err := s.GetTournament(ctx, tournamentID)
 	if err != nil {
 		return err
 	}
@@ -381,25 +389,26 @@ func (s *Service) ReportMatchResult(ctx context.Context, matchID, winnerID strin
 	}
 
 	// Update match result
-	match.WinnerID = winnerID
+	match.WinnerID = &winnerID
 	match.Score1 = score1
 	match.Score2 = score2
 	match.Status = MatchStatusCompleted
-	match.EndTime = time.Now()
+	now := time.Now()
+	match.EndTime = &now
 
 	// Update participant stats
 	for _, p := range tournament.participants {
-		if p.UserID == match.Player1ID {
+		if match.Player1ID != nil && p.UserID == *match.Player1ID {
 			p.Stats.TotalScore += score1
-			if winnerID == match.Player1ID {
+			if match.Player1ID != nil && winnerID == *match.Player1ID {
 				p.Stats.Wins++
 			} else {
 				p.Stats.Losses++
 			}
 		}
-		if p.UserID == match.Player2ID {
+		if match.Player2ID != nil && p.UserID == *match.Player2ID {
 			p.Stats.TotalScore += score2
-			if winnerID == match.Player2ID {
+			if match.Player2ID != nil && winnerID == *match.Player2ID {
 				p.Stats.Wins++
 			} else {
 				p.Stats.Losses++
@@ -410,7 +419,8 @@ func (s *Service) ReportMatchResult(ctx context.Context, matchID, winnerID strin
 	// Check if tournament is complete
 	if s.isTournamentComplete(tournament) {
 		tournament.Status = TournamentStatusCompleted
-		tournament.EndTime = time.Now()
+		now := time.Now()
+		tournament.EndTime = &now
 	}
 
 	// PERFORMANCE: Database persistence
@@ -448,7 +458,7 @@ func (s *Service) isTournamentComplete(tournament *Tournament) bool {
 }
 
 // PERFORMANCE: Optimized tournament retrieval with caching
-func (s *Service) getTournament(ctx context.Context, tournamentID string) (*Tournament, error) {
+func (s *Service) GetTournament(ctx context.Context, tournamentID string) (*Tournament, error) {
 	// Check tournament manager first
 	s.tm.mu.RLock()
 	tournament, exists := s.tm.tournaments[tournamentID]
@@ -459,10 +469,13 @@ func (s *Service) getTournament(ctx context.Context, tournamentID string) (*Tour
 	}
 
 	// Load from repository
-	tournament, err := s.repo.GetTournament(ctx, tournamentID)
+	repoTournament, err := s.repo.GetTournament(ctx, tournamentID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Convert repository type to service type using DTO
+	tournament = RepositoryToTournamentDTO(repoTournament)
 
 	// Register with tournament manager
 	s.tm.mu.Lock()
@@ -542,7 +555,7 @@ func (s *Service) GetMatch(ctx context.Context, matchID string) (*Match, error) 
 	}
 
 	if endTime != nil {
-		match.EndTime = *endTime
+		match.EndTime = endTime
 	}
 
 	return &match, nil
@@ -584,10 +597,10 @@ func (s *Service) ListTournaments(ctx context.Context, status string, limit, off
 		}
 
 		if startTime != nil {
-			tournament.StartTime = *startTime
+			tournament.StartTime = startTime
 		}
 		if endTime != nil {
-			tournament.EndTime = *endTime
+			tournament.EndTime = endTime
 		}
 
 		tournaments = append(tournaments, &tournament)
@@ -599,12 +612,4 @@ func (s *Service) ListTournaments(ctx context.Context, status string, limit, off
 // Logger getter for handlers
 func (s *Service) Logger() *zap.Logger {
 	return s.logger
-}
-
-// TournamentStats represents tournament statistics
-type TournamentStats struct {
-	TotalParticipants int `json:"total_participants"`
-	CompletedMatches  int `json:"completed_matches"`
-	TotalMatches      int `json:"total_matches"`
-	TotalScore        int `json:"total_score"`
 }

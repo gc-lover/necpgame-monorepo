@@ -762,74 +762,6 @@ func (s *DifficultyModeStats) Validate() error {
 	return nil
 }
 
-func (s *DifficultyModeStatsTopPlayersItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.Score.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           0,
-					MaxSet:        false,
-					Max:           0,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "score",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.CompletionTime.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           0,
-					MaxSet:        false,
-					Max:           0,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "completionTime",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s *DifficultyRequirements) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1308,46 +1240,6 @@ func (s *DifficultyStats) Validate() error {
 	return nil
 }
 
-func (s *DifficultyStatsPopularModesItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.SessionCount.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           0,
-					MaxSet:        false,
-					Max:           0,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "sessionCount",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s *GetContentDifficultyModesOK) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -1478,6 +1370,258 @@ func (s GetDifficultyModesStatsPeriod) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
+}
+
+func (s *ModeStats) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     0,
+			MinLengthSet:  false,
+			MaxLength:     100,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.ModeName)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "mode_name",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.Float{
+			MinSet:        true,
+			Min:           0,
+			MaxSet:        true,
+			Max:           1,
+			MinExclusive:  false,
+			MaxExclusive:  false,
+			MultipleOfSet: false,
+			MultipleOf:    nil,
+			Pattern:       nil,
+		}).Validate(float64(s.Popularity)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "popularity",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.TotalPlayers.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "total_players",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.AverageCompletionRate.Get(); ok {
+			if err := func() error {
+				if err := (validate.Float{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        true,
+					Max:           1,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    nil,
+					Pattern:       nil,
+				}).Validate(float64(value)); err != nil {
+					return errors.Wrap(err, "float")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "average_completion_rate",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.DifficultyRating.Get(); ok {
+			if err := func() error {
+				if err := (validate.Float{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        true,
+					Max:           5,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    nil,
+					Pattern:       nil,
+				}).Validate(float64(value)); err != nil {
+					return errors.Wrap(err, "float")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "difficulty_rating",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *PlayerStats) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := (validate.String{
+			MinLength:     0,
+			MinLengthSet:  false,
+			MaxLength:     50,
+			MaxLengthSet:  true,
+			Email:         false,
+			Hostname:      false,
+			Regex:         nil,
+			MinNumeric:    0,
+			MinNumericSet: false,
+			MaxNumeric:    0,
+			MaxNumericSet: false,
+		}).Validate(string(s.PlayerName)); err != nil {
+			return errors.Wrap(err, "string")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "player_name",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.Int{
+			MinSet:        true,
+			Min:           0,
+			MaxSet:        false,
+			Max:           0,
+			MinExclusive:  false,
+			MaxExclusive:  false,
+			MultipleOfSet: false,
+			MultipleOf:    0,
+			Pattern:       nil,
+		}).Validate(int64(s.Score)); err != nil {
+			return errors.Wrap(err, "int")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "score",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.CompletionTime.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           0,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "completion_time",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Rank.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           1,
+					MaxSet:        false,
+					Max:           0,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "rank",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
 }
 
 func (s *UpdateDifficultyModeRequest) Validate() error {

@@ -47,6 +47,12 @@ phases:
       # Build voice-chat-service
       - cd ../voice-chat-service-go && go build -ldflags="-s -w" -o bootstrap main.go
       - zip -r ../../build/voice-chat-service.zip bootstrap
+      # Build tournament-service
+      - cd ../tournament-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/tournament-service.zip bootstrap
+      # Build cyberware-service
+      - cd ../cyberware-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/cyberware-service.zip bootstrap
 
   post_build:
     commands:
@@ -172,6 +178,76 @@ phases:
                     Method: POST
                     RestApiId: !Ref ApiGateway
 
+          GuildServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-guild-service
+              CodeUri: ../build/guild-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /guild
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          WebrtcSignalingServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-webrtc-signaling-service
+              CodeUri: ../build/webrtc-signaling-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /webrtc
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          VoiceChatServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-voice-chat-service
+              CodeUri: ../build/voice-chat-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /voice
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          TournamentServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-tournament-service
+              CodeUri: ../build/tournament-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /tournament
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          CyberwareServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-cyberware-service
+              CodeUri: ../build/cyberware-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /cyberware
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
           ApiGateway:
             Type: AWS::Serverless::Api
             Properties:
@@ -205,4 +281,9 @@ artifacts:
     - build/economy-service.zip
     - build/combat-stats-service.zip
     - build/analytics-service.zip
+    - build/guild-service.zip
+    - build/webrtc-signaling-service.zip
+    - build/voice-chat-service.zip
+    - build/tournament-service.zip
+    - build/cyberware-service.zip
   discard-paths: no

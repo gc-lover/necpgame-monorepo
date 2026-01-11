@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 
 	"necpgame/services/economy-service-go/config"

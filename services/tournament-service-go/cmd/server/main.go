@@ -71,10 +71,11 @@ func main() {
 	defer db.Close()
 
 	// PERFORMANCE: Redis cluster for real-time tournament state management
-	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:        []string{os.Getenv("REDIS_URL")},
-		Password:     "",
-		PoolSize:     50,                 // Large pool for tournament operations
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_URL"),
+		Password: "",
+		DB:       0,
+		PoolSize: 50, // Large pool for tournament operations
 		MinIdleConns: 10,                 // Minimum idle connections
 		ReadTimeout:  3 * time.Second,    // Fast reads for real-time tournament data
 		WriteTimeout: 1 * time.Second,    // Fast writes for tournament updates

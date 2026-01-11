@@ -1,45 +1,54 @@
 openapi: 3.0.0
 info:
   title: Battle Pass Service API
-  description: |
-    Enterprise-grade Battle Pass system for seasonal progression and rewards.
+  description: 'Enterprise-grade Battle Pass system for seasonal progression and rewards.
+
 
     ## BACKEND NOTE
+
     - Struct alignment hints: 30-50% memory savings for player progress operations
+
     - Optimized for MMOFPS RPG with low latency reward distribution
+
     - Context timeouts: 5s for progress updates, 10s for bulk operations
+
     - DB pool config: connection pooling for seasonal data loads
+
     - Performance target: <50ms P95 for reward claims, <200ms for season queries
 
+
     ## BUSINESS CONTEXT
+
     Battle Pass provides seasonal progression with free and premium tiers.
+
     Players earn XP through gameplay to unlock rewards and cosmetic items.
+
     Premium pass unlocks additional rewards and accelerated progression.
+
+    '
   version: 1.0.0
   contact:
     name: Battle Pass Team
     email: battlepass@necpgame.com
-
 servers:
-  - url: https://api.necpgame.com/battle-pass
-    description: Production server
-  - url: https://staging-api.necpgame.com/battle-pass
-    description: Staging server
-
+- url: https://api.necpgame.com/battle-pass
+  description: Production server
+- url: https://staging-api.necpgame.com/battle-pass
+  description: Staging server
 tags:
-  - name: Seasons
-    description: Battle Pass season management
-  - name: Progress
-    description: Player progression tracking
-  - name: Rewards
-    description: Reward claiming and management
-  - name: Statistics
-    description: Analytics and reporting
-
+- name: Seasons
+  description: Battle Pass season management
+- name: Progress
+  description: Player progression tracking
+- name: Rewards
+  description: Reward claiming and management
+- name: Statistics
+  description: Analytics and reporting
 paths:
   /health:
     get:
-      tags: ["Health"]
+      tags:
+      - Health
       summary: Health check endpoint
       description: Returns service health status
       responses:
@@ -52,18 +61,24 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
+                    example: healthy
                   timestamp:
                     type: string
                     format: date-time
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /seasons/current:
     get:
-      tags: ["Seasons"]
+      tags:
+      - Seasons
       summary: Get current active season
       description: Retrieves information about the currently active Battle Pass season
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Current season information
@@ -73,21 +88,27 @@ paths:
                 $ref: '#/components/schemas/Season'
         '404':
           description: No active season found
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /seasons/{seasonId}:
     get:
-      tags: ["Seasons"]
+      tags:
+      - Seasons
       summary: Get season by ID
       description: Retrieves detailed information about a specific season
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: seasonId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique season identifier
+      - name: seasonId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique season identifier
       responses:
         '200':
           description: Season information
@@ -97,26 +118,32 @@ paths:
                 $ref: '#/components/schemas/Season'
         '404':
           description: Season not found
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /progress/{playerId}:
     get:
-      tags: ["Progress"]
+      tags:
+      - Progress
       summary: Get player progress
       description: Retrieves current Battle Pass progress for a player
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Player unique identifier
-        - name: seasonId
-          in: query
-          schema:
-            type: string
-          description: Season ID (defaults to current)
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
+      - name: seasonId
+        in: query
+        schema:
+          type: string
+        description: Season ID (defaults to current)
       responses:
         '200':
           description: Player progress information
@@ -126,21 +153,27 @@ paths:
                 $ref: '#/components/schemas/PlayerProgress'
         '404':
           description: Player or season not found
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /progress/{playerId}/xp:
     post:
-      tags: ["Progress"]
+      tags:
+      - Progress
       summary: Grant XP to player
       description: Awards experience points to a player for gameplay activities
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Player unique identifier
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
       requestBody:
         required: true
         content:
@@ -148,8 +181,8 @@ paths:
             schema:
               type: object
               required:
-                - amount
-                - reason
+              - amount
+              - reason
               properties:
                 amount:
                   type: integer
@@ -158,7 +191,12 @@ paths:
                   description: XP amount to grant
                 reason:
                   type: string
-                  enum: ["mission_complete", "match_win", "daily_login", "achievement", "purchase"]
+                  enum:
+                  - mission_complete
+                  - match_win
+                  - daily_login
+                  - achievement
+                  - purchase
                   description: Reason for XP grant
                 metadata:
                   type: object
@@ -184,21 +222,27 @@ paths:
                     description: Any rewards unlocked by this XP grant
         '400':
           description: Invalid request parameters
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /rewards/{playerId}/claim:
     post:
-      tags: ["Rewards"]
+      tags:
+      - Rewards
       summary: Claim reward
       description: Claims a reward for the player at specified level
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Player unique identifier
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
       requestBody:
         required: true
         content:
@@ -206,8 +250,8 @@ paths:
             schema:
               type: object
               required:
-                - level
-                - tier
+              - level
+              - tier
               properties:
                 level:
                   type: integer
@@ -215,7 +259,9 @@ paths:
                   description: Battle Pass level
                 tier:
                   type: string
-                  enum: ["free", "premium"]
+                  enum:
+                  - free
+                  - premium
                   description: Reward tier
       responses:
         '200':
@@ -228,26 +274,32 @@ paths:
           description: Reward not available or already claimed
         '403':
           description: Insufficient level or premium pass required
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /rewards/{playerId}/available:
     get:
-      tags: ["Rewards"]
+      tags:
+      - Rewards
       summary: Get available rewards
       description: Retrieves all rewards available for claiming by the player
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Player unique identifier
-        - name: seasonId
-          in: query
-          schema:
-            type: string
-          description: Season ID (defaults to current)
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
+      - name: seasonId
+        in: query
+        schema:
+          type: string
+        description: Season ID (defaults to current)
       responses:
         '200':
           description: Available rewards list
@@ -262,21 +314,27 @@ paths:
                       $ref: '#/components/schemas/AvailableReward'
                   totalCount:
                     type: integer
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /statistics/player/{playerId}:
     get:
-      tags: ["Statistics"]
+      tags:
+      - Statistics
       summary: Get player Battle Pass statistics
       description: Retrieves comprehensive statistics for a player's Battle Pass history
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Player unique identifier
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
       responses:
         '200':
           description: Player statistics
@@ -284,18 +342,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlayerStatistics'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
 components:
   schemas:
     Season:
       type: object
       required:
-        - id
-        - name
-        - startDate
-        - endDate
-        - maxLevel
-        - status
+      - id
+      - name
+      - startDate
+      - endDate
+      - maxLevel
+      - status
       properties:
         id:
           type: string
@@ -325,19 +388,21 @@ components:
           description: XP required per level
         status:
           type: string
-          enum: ["upcoming", "active", "ended"]
+          enum:
+          - upcoming
+          - active
+          - ended
           description: Current season status
         rewards:
           type: array
           items:
             $ref: '#/components/schemas/SeasonReward'
           description: All rewards for this season
-
     SeasonReward:
       type: object
       required:
-        - level
-        - freeReward
+      - level
+      - freeReward
       properties:
         level:
           type: integer
@@ -347,20 +412,25 @@ components:
         premiumReward:
           $ref: '#/components/schemas/Reward'
           description: Premium tier reward (null if not available)
-
     Reward:
       type: object
       required:
-        - id
-        - type
-        - name
+      - id
+      - type
+      - name
       properties:
         id:
           type: string
           description: Unique reward identifier
         type:
           type: string
-          enum: ["cosmetic", "weapon", "currency", "boost", "title", "emote"]
+          enum:
+          - cosmetic
+          - weapon
+          - currency
+          - boost
+          - title
+          - emote
           description: Reward category
         name:
           type: string
@@ -370,21 +440,24 @@ components:
           description: Reward description
         rarity:
           type: string
-          enum: ["common", "rare", "epic", "legendary"]
+          enum:
+          - common
+          - rare
+          - epic
+          - legendary
           description: Reward rarity tier
         metadata:
           type: object
           description: Type-specific reward data
-
     PlayerProgress:
       type: object
       required:
-        - playerId
-        - seasonId
-        - currentLevel
-        - currentXp
-        - totalXp
-        - hasPremium
+      - playerId
+      - seasonId
+      - currentLevel
+      - currentXp
+      - totalXp
+      - hasPremium
       properties:
         playerId:
           type: string
@@ -420,25 +493,28 @@ components:
                 type: integer
               tier:
                 type: string
-                enum: ["free", "premium"]
+                enum:
+                - free
+                - premium
               claimedAt:
                 type: string
                 format: date-time
           description: List of claimed rewards
-
     AvailableReward:
       type: object
       required:
-        - level
-        - tier
-        - reward
+      - level
+      - tier
+      - reward
       properties:
         level:
           type: integer
           description: Battle Pass level
         tier:
           type: string
-          enum: ["free", "premium"]
+          enum:
+          - free
+          - premium
           description: Reward tier
         reward:
           $ref: '#/components/schemas/Reward'
@@ -448,12 +524,11 @@ components:
         reason:
           type: string
           description: Reason why reward cannot be claimed (if applicable)
-
     ClaimResult:
       type: object
       required:
-        - success
-        - reward
+      - success
+      - reward
       properties:
         success:
           type: boolean
@@ -468,15 +543,14 @@ components:
         inventoryId:
           type: string
           description: Player inventory item ID for the reward
-
     PlayerStatistics:
       type: object
       required:
-        - playerId
-        - seasonsPlayed
-        - totalXpEarned
-        - highestLevelReached
-        - rewardsClaimed
+      - playerId
+      - seasonsPlayed
+      - totalXpEarned
+      - highestLevelReached
+      - rewardsClaimed
       properties:
         playerId:
           type: string
@@ -503,7 +577,13 @@ components:
           description: Number of premium passes bought
         favoriteRewardType:
           type: string
-          enum: ["cosmetic", "weapon", "currency", "boost", "title", "emote"]
+          enum:
+          - cosmetic
+          - weapon
+          - currency
+          - boost
+          - title
+          - emote
           description: Most claimed reward category
         seasonsData:
           type: array
@@ -523,14 +603,9 @@ components:
               hadPremium:
                 type: boolean
           description: Per-season breakdown
-
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       description: JWT token for authentication
-
-
-
-
 

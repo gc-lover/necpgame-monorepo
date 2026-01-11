@@ -60,6 +60,10 @@ func (m *Manager) GetClient() *redis.Client {
 	return m.client
 }
 
+func (m *Manager) Client() *redis.Client {
+	return m.client
+}
+
 // Ping tests the Redis connection with timeout
 func (m *Manager) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

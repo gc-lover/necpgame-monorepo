@@ -1,0 +1,142 @@
+# Common Success Responses - SOLID/DRY Foundation
+# These responses are inherited by all services for consistent success handling
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Base Success Response
+    Success:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        request_id:
+          type: string
+          description: Request ID for tracing
+          example: "req-123456789"
+
+    # Created Response (201)
+    Created:
+      allOf:
+        - $ref: '#/components/schemas/Success'
+        - type: object
+          required:
+            - data
+          properties:
+            message:
+              example: "Resource created successfully"
+            data:
+              type: object
+              description: Created resource data
+            location:
+              type: string
+              description: URL to access created resource
+              example: "/api/v1/resources/123"
+
+    # OK Response (200)
+    OK:
+      allOf:
+        - $ref: '#/components/schemas/Success'
+        - type: object
+          properties:
+            message:
+              example: "Operation completed successfully"
+            data:
+              type: object
+              description: Response data
+            meta:
+              type: object
+              description: Metadata about response
+              properties:
+                count:
+                  type: integer
+                  description: Number of items (for lists)
+                  example: 25
+                total:
+                  type: integer
+                  description: Total number of items available
+                  example: 100
+                page:
+                  type: integer
+                  description: Current page number
+                  example: 1
+                per_page:
+                  type: integer
+                  description: Items per page
+                  example: 25
+
+    # No Content Response (204)
+    NoContent:
+      type: object
+      description: Empty response for successful operations that return no content
+
+    # Paginated Response
+    PaginatedResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        data:
+          type: array
+          description: Array of items
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            per_page:
+              type: integer
+              example: 25
+            total:
+              type: integer
+              example: 100
+            total_pages:
+              type: integer
+              example: 4
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    # Success Response (alias for OK)
+    SuccessResponse:
+      $ref: '#/components/schemas/OK'
+
+    # Accepted Response (202)
+    Accepted:
+      allOf:
+        - $ref: '#/components/schemas/Success'
+        - type: object
+          properties:
+            message:
+              example: "Request accepted for processing"
+            job_id:
+              type: string
+              description: Job ID for tracking async operation
+              example: "job-123456789"
+            estimated_completion_time:
+              type: integer
+              description: Estimated completion time in seconds
+              example: 30
+            status_url:
+              type: string
+              description: URL to check job status
+              example: "/api/v1/jobs/job-123456789"

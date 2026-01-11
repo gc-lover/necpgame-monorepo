@@ -1,0 +1,273 @@
+# Reputation Core Schemas - Enterprise-grade Reputation Decay & Recovery API
+# Domain Separation: Core reputation entities and relationships
+# Issue: #2174
+
+components:
+  schemas:
+
+    # Reputation Entity Schema
+    Reputation:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+        - target_id
+        - target_type
+        - reputation_value
+        - reputation_tier
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity (player, NPC, faction) having the reputation
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        entity_type:
+          type: string
+          enum: [player, npc, faction, corporation]
+          description: Type of the entity having the reputation
+          example: "player"
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity (faction, person, organization)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        target_type:
+          type: string
+          enum: [faction, person, corporation, location, event]
+          description: Type of the target entity
+          example: "faction"
+        reputation_value:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 100.0
+          description: Current reputation value (-100 to +100)
+          example: 75.5
+        reputation_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, liked, respected, revered, legendary]
+          description: Reputation tier based on value ranges
+          example: "respected"
+        last_updated:
+          type: string
+          format: date-time
+          description: When reputation was last updated
+          example: "2025-01-11T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: When reputation relationship was established
+          example: "2025-01-01T00:00:00Z"
+        relationship_strength:
+          type: string
+          enum: [weak, moderate, strong, unbreakable]
+          description: Strength of the relationship affecting decay rates
+          example: "strong"
+        decay_rate_modifier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 2.0
+          description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster decay)
+          example: 0.8
+        recovery_multiplier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 3.0
+          description: Multiplier for recovery effectiveness
+          example: 1.2
+        metadata:
+          type: object
+          description: Additional reputation-specific metadata
+          additionalProperties: true
+          example:
+            last_interaction: "2025-01-10T15:45:00Z"
+            interaction_count: 15
+            favors_owed: 2
+
+    # Reputation Update Request Schema
+    ReputationUpdateRequest:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+        - target_id
+        - target_type
+        - change_type
+        - change_value
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity whose reputation is being updated
+        entity_type:
+          type: string
+          enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity
+        target_type:
+          type: string
+          enum: [faction, person, corporation, location, event]
+          description: Type of the target entity
+        change_type:
+          type: string
+          enum: [direct_action, quest_completion, event_participation, time_decay, relationship_decay, gift_received, betrayal, loyalty_display, crisis_intervention, sacrifice_made]
+          description: Type of reputation change
+          example: "quest_completion"
+        change_value:
+          type: number
+          format: float
+          minimum: -50.0
+          maximum: 50.0
+          description: Reputation change value (positive for increase, negative for decrease)
+          example: 15.5
+        reason:
+          type: string
+          maxLength: 500
+          description: Human-readable reason for the reputation change
+          example: "Completed faction quest 'Data Recovery'"
+        context:
+          type: object
+          description: Additional context for the reputation change
+          additionalProperties: true
+          example:
+            quest_id: "quest-123"
+            location: "Night City - Watson"
+            time_of_day: "night"
+        source_event_id:
+          type: string
+          format: uuid
+          description: ID of the event that triggered this reputation change
+          example: "550e8400-e29b-41d4-a716-446655440002"
+
+    # Reputation Decay Configuration Schema
+    ReputationDecayConfig:
+      type: object
+      required:
+        - relationship_type
+        - base_decay_rate
+        - decay_interval_hours
+      properties:
+        relationship_type:
+          type: string
+          enum: [faction, personal, npc, business]
+          description: Type of relationship this config applies to
+          example: "faction"
+        base_decay_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 10.0
+          description: Base decay rate as percentage per interval
+          example: 1.5
+        decay_interval_hours:
+          type: integer
+          minimum: 1
+          maximum: 720
+          description: Hours between decay calculations
+          example: 24
+        modifiers:
+          type: object
+          properties:
+            relationship_strength_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by relationship strength
+              example:
+                weak: 1.2
+                moderate: 1.0
+                strong: 0.8
+                unbreakable: 0.5
+            activity_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by player activity
+              example:
+                inactive: 1.5
+                casual: 1.2
+                active: 1.0
+                hardcore: 0.8
+            time_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by time factors
+              example:
+                morning: 0.9
+                night: 1.1
+                holiday: 0.5
+        minimum_reputation:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 0.0
+          description: Minimum reputation value before decay stops
+          example: -50.0
+        grace_period_days:
+          type: integer
+          minimum: 0
+          maximum: 365
+          description: Days without interaction before decay starts
+          example: 7
+
+    # Reputation Recovery Action Schema
+    ReputationRecoveryAction:
+      type: object
+      required:
+        - action_type
+        - base_recovery_value
+        - cooldown_hours
+      properties:
+        action_type:
+          type: string
+          enum: [quest_completion, gift_giving, event_participation, loyalty_display, crisis_intervention, personal_sacrifice, public_service, relationship_building, favor_returned, apology_offered]
+          description: Type of recovery action
+          example: "quest_completion"
+        base_recovery_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 50.0
+          description: Base reputation recovery value
+          example: 8.5
+        cooldown_hours:
+          type: integer
+          minimum: 0
+          maximum: 168
+          description: Hours before this action can be used again for the same target
+          example: 24
+        requirements:
+          type: object
+          description: Requirements to perform this action
+          additionalProperties: true
+          example:
+            minimum_level: 10
+            required_items: ["gift_item_id"]
+            location_restriction: "target_territory"
+        modifiers:
+          type: object
+          description: Contextual modifiers for recovery effectiveness
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            home_territory: 1.5
+            enemy_territory: 0.7
+            group_activity: 2.0
+            personal_sacrifice: 1.8
+        success_probability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Probability of successful recovery (affects UI display)
+          example: 0.85

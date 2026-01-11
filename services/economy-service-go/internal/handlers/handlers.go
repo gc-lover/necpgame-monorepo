@@ -9,15 +9,43 @@ import (
 	"go.uber.org/zap"
 
 	"necpgame/services/economy-service-go/internal/simulation/bazaar"
-	api "necpgame/services/economy-service-go/pkg/services/economy-service-go/pkg/api"
+	api "necpgame/services/economy-service-go/pkg/api"
 )
+
+// CircuitBreaker provides resilience against cascading failures
+type CircuitBreaker struct {
+	failures    int
+	lastFailure time.Time
+	threshold   int
+	timeout     time.Duration
+}
+
+// Allow checks if the circuit breaker allows the request
+func (cb *CircuitBreaker) Allow() bool {
+	if cb.failures >= cb.threshold {
+		if time.Since(cb.lastFailure) < cb.timeout {
+			return false // Circuit is open
+		}
+		// Reset after timeout
+		cb.failures = 0
+	}
+	return true
+}
+
+// RecordFailure records a failure in the circuit breaker
+func (cb *CircuitBreaker) RecordFailure() {
+	cb.failures++
+	cb.lastFailure = time.Now()
+}
 
 // EconomyHandlers implements the generated Handler interface
 type EconomyHandlers struct {
-	logger       *zap.Logger
-	bazaarAgents []*bazaar.AgentLogic
-	markets      map[bazaar.Commodity]*bazaar.MarketLogic
+	logger         *zap.Logger
+	circuitBreaker *CircuitBreaker
+	bazaarAgents   []*bazaar.AgentLogic
+	markets        map[bazaar.Commodity]*bazaar.MarketLogic
 }
+
 
 // getBasePrice returns base price for commodity (simplified implementation)
 func (h *EconomyHandlers) getBasePrice(commodity bazaar.Commodity) float64 {
@@ -60,7 +88,11 @@ func NewEconomyHandlers(logger *zap.Logger) *EconomyHandlers {
 	}
 
 	return &EconomyHandlers{
-		logger:       logger,
+		logger: logger,
+		circuitBreaker: &CircuitBreaker{
+			threshold: 5,
+			timeout:   30 * time.Second,
+		},
 		bazaarAgents: agents,
 		markets:      markets,
 	}
@@ -398,8 +430,52 @@ func (h *EconomyHandlers) GetBazaarBotAgents(ctx context.Context) (*api.BazaarBo
 }
 
 // GetMarketHistory implements getMarketHistory operation.
+func (h *EconomyHandlers) GetMarketTrades(ctx context.Context, params api.GetMarketTradesParams) (*api.MarketPrice, error) {
+	// PERFORMANCE: Circuit breaker check
+	if !h.circuitBreaker.Allow() {
+		h.logger.Warn("Circuit breaker open, rejecting GetMarketTrades request")
+		return nil, fmt.Errorf("service temporarily unavailable")
+	}
+
+	// PERFORMANCE: Timeout context for market trades operation
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	// Get recent trades for the commodity (mock implementation)
+	trades := h.getMockTrades(string(params.Commodity), 10)
+
+	// Convert to API response format
+	avgPrice := calculateAveragePrice(trades)
+	totalVolume := calculateTotalVolume(trades)
+
+	marketPrice := &api.MarketPrice{
+		Commodity:  api.NewOptCommodity(params.Commodity),
+		Price:      api.NewOptFloat32(float32(avgPrice)),
+		Volume24h:  api.NewOptInt(int(totalVolume)),
+		LastUpdate: api.NewOptDateTime(time.Now()),
+	}
+
+	h.logger.Debug("Retrieved market trades",
+		zap.String("commodity", string(params.Commodity)),
+		zap.Float64("avg_price", avgPrice),
+		zap.Int64("volume", totalVolume))
+
+	return marketPrice, nil
+}
+
 func (h *EconomyHandlers) GetMarketHistory(ctx context.Context, params api.GetMarketHistoryParams) (*api.MarketHistory, error) {
 	return &api.MarketHistory{}, nil
+}
+
+// NewError creates a new error response
+func (h *EconomyHandlers) NewError(ctx context.Context, err error) *api.ErrRespStatusCode {
+	return &api.ErrRespStatusCode{
+		StatusCode: 500,
+		Response: api.ErrResp{
+			Code:    500,
+			Message: err.Error(),
+		},
+	}
 }
 
 // Helper methods for order book implementation
@@ -481,6 +557,45 @@ func (h *EconomyHandlers) calculate24hVolume(commodity bazaar.Commodity) int {
 	}
 
 	return 100 // Default volume
+}
+
+// calculateAveragePrice calculates average price from trades
+func calculateAveragePrice(trades []*bazaar.TradeRecord) float64 {
+	if len(trades) == 0 {
+		return 0.0
+	}
+
+	total := 0.0
+	for _, trade := range trades {
+		total += trade.Price
+	}
+	return total / float64(len(trades))
+}
+
+// calculateTotalVolume calculates total volume from trades
+func calculateTotalVolume(trades []*bazaar.TradeRecord) int64 {
+	total := int64(0)
+	for _, trade := range trades {
+		total += int64(trade.Quantity)
+	}
+	return total
+}
+
+// getMockTrades returns mock trade data for testing
+func (h *EconomyHandlers) getMockTrades(commodity string, count int) []*bazaar.TradeRecord {
+	trades := make([]*bazaar.TradeRecord, count)
+	for i := 0; i < count; i++ {
+		trades[i] = &bazaar.TradeRecord{
+			Timestamp:   time.Now().Add(-time.Duration(i) * time.Minute).Unix(),
+			Commodity:   bazaar.Commodity(commodity),
+			Type:        bazaar.OrderTypeBid, // Mock buy orders
+			Price:       100.0 + float64(i)*2.5,
+			Quantity:    10 + i*5,
+			ProfitLoss:  0.0,
+			WasExpected: true,
+		}
+	}
+	return trades
 }
 
 // getRandomInt returns a random integer between min and max (inclusive)

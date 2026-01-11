@@ -1,81 +1,112 @@
 openapi: 3.0.0
 info:
   title: Blackwall ICE Protection Service API
-  description: |
-    Enterprise-grade Blackwall ICE Protection system for cyberpunk MMOFPS RPG.
+  description: 'Enterprise-grade Blackwall ICE Protection system for cyberpunk MMOFPS
+    RPG.
+
 
     ## BACKEND NOTE
+
     - Struct alignment hints: 30-50% memory savings for ICE protection operations
+
     - Optimized for MMOFPS RPG with low latency intrusion detection (<50ms P95)
-    - Context timeouts: 3s for ICE activation, 5s for adaptive responses, 10s for bulk operations
+
+    - Context timeouts: 3s for ICE activation, 5s for adaptive responses, 10s for
+    bulk operations
+
     - DB pool config: connection pooling for intrusion logs and threat intelligence
+
     - Performance target: <100ms P95 for threat evaluation, <200ms for ICE deployment
+
     - Memory optimized: ICE state management with efficient caching
 
+
     ## BUSINESS CONTEXT
-    Blackwall ICE Protection System provides multi-layered cyber defense for corporate and government networks.
-    Features adaptive AI-driven countermeasures, psychological warfare effects, and real-time threat response.
-    Supports multiple ICE types: Black ICE (lethal), White ICE (non-lethal), and specialized variants.
+
+    Blackwall ICE Protection System provides multi-layered cyber defense for corporate
+    and government networks.
+
+    Features adaptive AI-driven countermeasures, psychological warfare effects, and
+    real-time threat response.
+
+    Supports multiple ICE types: Black ICE (lethal), White ICE (non-lethal), and specialized
+    variants.
+
 
     ## KEY FEATURES
-    - **Adaptive AI Learning**: ICE systems learn from intrusion patterns and adapt defenses
-    - **Psychological Warfare**: Neural interface effects create fear and confusion in attackers
+
+    - **Adaptive AI Learning**: ICE systems learn from intrusion patterns and adapt
+    defenses
+
+    - **Psychological Warfare**: Neural interface effects create fear and confusion
+    in attackers
+
     - **Multi-Layer Protection**: Perimeter defense, intrusion detection, active countermeasures
+
     - **Real-time Monitoring**: Live threat assessment and automated response systems
+
     - **Forensic Analysis**: Detailed intrusion logs and attack pattern recognition
+
+    '
   version: 1.0.0
   contact:
     name: Blackwall Security Team
     email: blackwall-security@necpgame.com
-
 servers:
-  - url: https://blackwall.necpgame.com/api/v1
-    description: Production Blackwall ICE Protection Service
-  - url: https://staging-blackwall.necpgame.com/api/v1
-    description: Staging environment
-
+- url: https://blackwall.necpgame.com/api/v1
+  description: Production Blackwall ICE Protection Service
+- url: https://staging-blackwall.necpgame.com/api/v1
+  description: Staging environment
 tags:
-  - name: ice-management
-    description: Core ICE system management and configuration
-  - name: intrusion-detection
-    description: Real-time intrusion detection and monitoring
-  - name: adaptive-defense
-    description: Adaptive AI learning and threat response systems
-  - name: psychological-warfare
-    description: Neural interface effects and psychological countermeasures
-  - name: threat-intelligence
-    description: Threat analysis and intelligence gathering
-  - name: system-health
-    description: Health monitoring and diagnostic endpoints
-
+- name: ice-management
+  description: Core ICE system management and configuration
+- name: intrusion-detection
+  description: Real-time intrusion detection and monitoring
+- name: adaptive-defense
+  description: Adaptive AI learning and threat response systems
+- name: psychological-warfare
+  description: Neural interface effects and psychological countermeasures
+- name: threat-intelligence
+  description: Threat analysis and intelligence gathering
+- name: system-health
+  description: Health monitoring and diagnostic endpoints
 paths:
-  # ICE Management
   /ice/deployments:
     get:
-      tags: [ice-management]
+      tags:
+      - ice-management
       summary: Get active ICE deployments
-      description: Retrieve list of currently active ICE deployments across all network segments
+      description: Retrieve list of currently active ICE deployments across all network
+        segments
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: segment_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by network segment ID
-        - name: ice_type
-          in: query
-          schema:
-            type: string
-            enum: [black, white, adaptive, psychological]
-          description: Filter by ICE type
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [active, standby, breached, adapting]
-          description: Filter by deployment status
+      - name: segment_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by network segment ID
+      - name: ice_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        description: Filter by ICE type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - standby
+          - breached
+          - adapting
+        description: Filter by deployment status
       responses:
         '200':
           description: Successful retrieval of ICE deployments
@@ -89,13 +120,20 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
-      tags: [ice-management]
+      tags:
+      - ice-management
       summary: Deploy new ICE system
-      description: Deploy a new ICE system to specified network segment with given configuration
+      description: Deploy a new ICE system to specified network segment with given
+        configuration
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -119,21 +157,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /ice/deployments/{deployment_id}:
     get:
-      tags: [ice-management]
+      tags:
+      - ice-management
       summary: Get ICE deployment details
       description: Retrieve detailed information about specific ICE deployment
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: deployment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: ICE deployment details retrieved successfully
@@ -147,20 +191,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     put:
-      tags: [ice-management]
+      tags:
+      - ice-management
       summary: Update ICE deployment configuration
       description: Modify configuration of existing ICE deployment
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: deployment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -174,47 +224,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ICEDeploymentResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     delete:
-      tags: [ice-management]
+      tags:
+      - ice-management
       summary: Decommission ICE deployment
       description: Safely decommission and remove ICE deployment
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: deployment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: ICE deployment successfully decommissioned
         '404':
           description: ICE deployment not found
-
-  # Intrusion Detection
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /intrusions/active:
     get:
-      tags: [intrusion-detection]
+      tags:
+      - intrusion-detection
       summary: Get active intrusions
-      description: Retrieve list of currently active intrusion attempts being countered by ICE systems
+      description: Retrieve list of currently active intrusion attempts being countered
+        by ICE systems
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: severity
-          in: query
-          schema:
-            type: string
-            enum: [low, medium, high, critical]
-          description: Filter by intrusion severity
-        - name: ice_type
-          in: query
-          schema:
-            type: string
-            enum: [black, white, adaptive, psychological]
-          description: Filter by responding ICE type
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Filter by intrusion severity
+      - name: ice_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        description: Filter by responding ICE type
       responses:
         '200':
           description: Active intrusions retrieved successfully
@@ -222,21 +292,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActiveIntrusionsResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /intrusions/{intrusion_id}/response:
     post:
-      tags: [intrusion-detection]
+      tags:
+      - intrusion-detection
       summary: Initiate ICE response to intrusion
-      description: Trigger automated or manual ICE response to specific intrusion attempt
+      description: Trigger automated or manual ICE response to specific intrusion
+        attempt
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: intrusion_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: intrusion_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -250,22 +327,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IntrusionResponseResponse'
-
-  # Adaptive Defense
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /adaptive/learning/{segment_id}:
     get:
-      tags: [adaptive-defense]
+      tags:
+      - adaptive-defense
       summary: Get adaptive learning data
-      description: Retrieve adaptive learning patterns and threat intelligence for network segment
+      description: Retrieve adaptive learning patterns and threat intelligence for
+        network segment
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: segment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: segment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Adaptive learning data retrieved
@@ -273,20 +356,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdaptiveLearningResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     post:
-      tags: [adaptive-defense]
+      tags:
+      - adaptive-defense
       summary: Update adaptive learning patterns
-      description: Manually update or reinforce adaptive learning patterns based on new threat intelligence
+      description: Manually update or reinforce adaptive learning patterns based on
+        new threat intelligence
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: segment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: segment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -296,23 +386,28 @@ paths:
       responses:
         '200':
           description: Adaptive learning patterns updated successfully
-
-  # Psychological Warfare
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /psychological/effects/{target_id}:
     post:
-      tags: [psychological-warfare]
+      tags:
+      - psychological-warfare
       summary: Apply psychological effect
       description: Apply psychological warfare effect through target's neural interface
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: target_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Target intruder ID
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Target intruder ID
       requestBody:
         required: true
         content:
@@ -326,14 +421,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PsychologicalEffectResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /psychological/effects/active:
     get:
-      tags: [psychological-warfare]
+      tags:
+      - psychological-warfare
       summary: Get active psychological effects
       description: Retrieve list of currently active psychological warfare effects
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
           description: Active psychological effects retrieved
@@ -341,27 +442,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActivePsychologicalEffectsResponse'
-
-  # Threat Intelligence
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /threats/intelligence:
     get:
-      tags: [threat-intelligence]
+      tags:
+      - threat-intelligence
       summary: Get threat intelligence
       description: Retrieve aggregated threat intelligence and attack patterns
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [1h, 24h, 7d, 30d]
-          description: Timeframe for threat analysis
-        - name: threat_type
-          in: query
-          schema:
-            type: string
-            enum: [hacking, social_engineering, insider_threat, ddos]
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+        description: Timeframe for threat analysis
+      - name: threat_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - hacking
+          - social_engineering
+          - insider_threat
+          - ddos
       responses:
         '200':
           description: Threat intelligence retrieved successfully
@@ -369,11 +483,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ThreatIntelligenceResponse'
-
-  # System Health
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /health:
     get:
-      tags: [system-health]
+      tags:
+      - system-health
       summary: Get system health status
       description: Retrieve overall health status of Blackwall ICE Protection System
       responses:
@@ -383,14 +502,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
   /health/detailed:
     get:
-      tags: [system-health]
+      tags:
+      - system-health
       summary: Get detailed health metrics
-      description: Retrieve detailed health metrics for all ICE systems and network segments
+      description: Retrieve detailed health metrics for all ICE systems and network
+        segments
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
           description: Detailed health metrics retrieved
@@ -398,16 +524,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetailedHealthResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Common schemas
     ErrorResponse:
       type: object
       properties:
@@ -425,8 +554,6 @@ components:
           format: date-time
         request_id:
           type: string
-
-    # ICE Management schemas
     ICEDploymentListResponse:
       type: object
       properties:
@@ -436,7 +563,6 @@ components:
             $ref: '#/components/schemas/ICEDploymentSummary'
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-
     ICEDploymentSummary:
       type: object
       properties:
@@ -448,30 +574,45 @@ components:
           format: uuid
         ice_type:
           type: string
-          enum: [black, white, adaptive, psychological]
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
         status:
           type: string
-          enum: [active, standby, breached, adapting]
+          enum:
+          - active
+          - standby
+          - breached
+          - adapting
         threat_level:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
         last_adaptation:
           type: string
           format: date-time
-
     ICEDeployRequest:
       type: object
       required:
-        - segment_id
-        - ice_type
-        - configuration
+      - segment_id
+      - ice_type
+      - configuration
       properties:
         segment_id:
           type: string
           format: uuid
         ice_type:
           type: string
-          enum: [black, white, adaptive, psychological]
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
         configuration:
           $ref: '#/components/schemas/ICEConfiguration'
         priority:
@@ -479,7 +620,6 @@ components:
           minimum: 1
           maximum: 10
           default: 5
-
     ICEConfiguration:
       type: object
       properties:
@@ -502,7 +642,6 @@ components:
           type: boolean
           default: false
           description: Whether to enable lethal countermeasures
-
     ICEDeploymentResponse:
       type: object
       properties:
@@ -514,21 +653,19 @@ components:
         estimated_activation:
           type: string
           format: date-time
-
     ICEDploymentDetails:
       allOf:
-        - $ref: '#/components/schemas/ICEDploymentSummary'
-        - type: object
-          properties:
-            configuration:
-              $ref: '#/components/schemas/ICEConfiguration'
-            statistics:
-              $ref: '#/components/schemas/ICEDploymentStatistics'
-            active_intrusions:
-              type: array
-              items:
-                $ref: '#/components/schemas/IntrusionSummary'
-
+      - $ref: '#/components/schemas/ICEDploymentSummary'
+      - type: object
+        properties:
+          configuration:
+            $ref: '#/components/schemas/ICEConfiguration'
+          statistics:
+            $ref: '#/components/schemas/ICEDploymentStatistics'
+          active_intrusions:
+            type: array
+            items:
+              $ref: '#/components/schemas/IntrusionSummary'
     ICEDploymentStatistics:
       type: object
       properties:
@@ -541,7 +678,6 @@ components:
           description: Average response time in milliseconds
         adaptation_cycles:
           type: integer
-
     ICEUpdateRequest:
       type: object
       properties:
@@ -549,9 +685,10 @@ components:
           $ref: '#/components/schemas/ICEConfiguration'
         status:
           type: string
-          enum: [active, standby, maintenance]
-
-    # Intrusion Detection schemas
+          enum:
+          - active
+          - standby
+          - maintenance
     ActiveIntrusionsResponse:
       type: object
       properties:
@@ -561,7 +698,6 @@ components:
             $ref: '#/components/schemas/IntrusionDetails'
         total_count:
           type: integer
-
     IntrusionSummary:
       type: object
       properties:
@@ -576,43 +712,56 @@ components:
           format: uuid
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
         status:
           type: string
-          enum: [detected, responding, contained, breached]
+          enum:
+          - detected
+          - responding
+          - contained
+          - breached
         detected_at:
           type: string
           format: date-time
-
     IntrusionDetails:
       allOf:
-        - $ref: '#/components/schemas/IntrusionSummary'
-        - type: object
-          properties:
-            attack_vector:
+      - $ref: '#/components/schemas/IntrusionSummary'
+      - type: object
+        properties:
+          attack_vector:
+            type: string
+            enum:
+            - direct_hack
+            - social_engineering
+            - insider_access
+            - ddos
+          methods_used:
+            type: array
+            items:
               type: string
-              enum: [direct_hack, social_engineering, insider_access, ddos]
-            methods_used:
-              type: array
-              items:
-                type: string
-            responding_ice:
-              type: array
-              items:
-                $ref: '#/components/schemas/ICEDploymentSummary'
-            psychological_effects_applied:
-              type: array
-              items:
-                type: string
-
+          responding_ice:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICEDploymentSummary'
+          psychological_effects_applied:
+            type: array
+            items:
+              type: string
     IntrusionResponseRequest:
       type: object
       required:
-        - response_type
+      - response_type
       properties:
         response_type:
           type: string
-          enum: [automated, manual_override, escalate]
+          enum:
+          - automated
+          - manual_override
+          - escalate
         manual_instructions:
           type: string
           description: Manual response instructions (required for manual_override)
@@ -622,7 +771,6 @@ components:
             type: string
             format: uuid
           description: Additional ICE deployments to activate
-
     IntrusionResponseResponse:
       type: object
       properties:
@@ -631,12 +779,14 @@ components:
           format: uuid
         status:
           type: string
-          enum: [initiated, executing, completed, failed]
+          enum:
+          - initiated
+          - executing
+          - completed
+          - failed
         estimated_completion:
           type: string
           format: date-time
-
-    # Adaptive Defense schemas
     AdaptiveLearningResponse:
       type: object
       properties:
@@ -653,7 +803,6 @@ components:
           type: number
           minimum: 0
           maximum: 1
-
     LearningPattern:
       type: object
       properties:
@@ -670,11 +819,10 @@ components:
           format: date-time
         adaptation_applied:
           type: string
-
     AdaptiveLearningUpdateRequest:
       type: object
       required:
-        - pattern_updates
+      - pattern_updates
       properties:
         pattern_updates:
           type: array
@@ -684,32 +832,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ThreatUpdate'
-
     PatternUpdate:
       type: object
       required:
-        - pattern_id
-        - update_type
+      - pattern_id
+      - update_type
       properties:
         pattern_id:
           type: string
         update_type:
           type: string
-          enum: [reinforce, weaken, remove]
+          enum:
+          - reinforce
+          - weaken
+          - remove
         new_success_rate:
           type: number
           minimum: 0
           maximum: 1
-
-    # Psychological Warfare schemas
     PsychologicalEffectRequest:
       type: object
       required:
-        - effect_type
+      - effect_type
       properties:
         effect_type:
           type: string
-          enum: [fear_induction, hallucination, neural_disruption, memory_manipulation]
+          enum:
+          - fear_induction
+          - hallucination
+          - neural_disruption
+          - memory_manipulation
         intensity:
           type: integer
           minimum: 1
@@ -721,7 +873,6 @@ components:
         custom_parameters:
           type: object
           description: Effect-specific parameters
-
     PsychologicalEffectResponse:
       type: object
       properties:
@@ -730,13 +881,15 @@ components:
           format: uuid
         status:
           type: string
-          enum: [applied, resisted, failed]
+          enum:
+          - applied
+          - resisted
+          - failed
         applied_intensity:
           type: integer
         estimated_duration:
           type: integer
           description: Duration in seconds
-
     ActivePsychologicalEffectsResponse:
       type: object
       properties:
@@ -744,7 +897,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PsychologicalEffectStatus'
-
     PsychologicalEffectStatus:
       type: object
       properties:
@@ -763,8 +915,6 @@ components:
         applied_at:
           type: string
           format: date-time
-
-    # Threat Intelligence schemas
     ThreatIntelligenceResponse:
       type: object
       properties:
@@ -782,7 +932,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmergingThreat'
-
     AttackPattern:
       type: object
       properties:
@@ -796,7 +945,6 @@ components:
           type: number
         typical_ice_response:
           type: string
-
     EmergingThreat:
       type: object
       properties:
@@ -811,20 +959,20 @@ components:
         first_observed:
           type: string
           format: date-time
-
     ThreatUpdate:
       type: object
       required:
-        - threat_id
+      - threat_id
       properties:
         threat_id:
           type: string
         severity_update:
           type: string
-          enum: [increase, decrease]
+          enum:
+          - increase
+          - decrease
         new_intelligence:
           type: string
-
     ThreatIntelligence:
       type: object
       properties:
@@ -840,14 +988,15 @@ components:
           type: array
           items:
             type: string
-
-    # System Health schemas
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          enum: [healthy, degraded, critical]
+          enum:
+          - healthy
+          - degraded
+          - critical
         uptime_seconds:
           type: integer
         active_ice_deployments:
@@ -857,20 +1006,21 @@ components:
         system_load:
           type: number
           description: System load percentage (0-1)
-
     DetailedHealthResponse:
       type: object
       properties:
         overall_status:
           type: string
-          enum: [healthy, degraded, critical]
+          enum:
+          - healthy
+          - degraded
+          - critical
         segments:
           type: array
           items:
             $ref: '#/components/schemas/SegmentHealth'
         system_metrics:
           $ref: '#/components/schemas/SystemMetrics'
-
     SegmentHealth:
       type: object
       properties:
@@ -879,7 +1029,10 @@ components:
           format: uuid
         status:
           type: string
-          enum: [healthy, warning, critical]
+          enum:
+          - healthy
+          - warning
+          - critical
         active_ice_count:
           type: integer
         recent_intrusions:
@@ -887,7 +1040,6 @@ components:
         adaptation_health:
           type: number
           description: Adaptation system health (0-1)
-
     SystemMetrics:
       type: object
       properties:
@@ -901,8 +1053,6 @@ components:
           type: number
         active_connections:
           type: integer
-
-    # Common utility schemas
     PaginationInfo:
       type: object
       properties:
@@ -921,7 +1071,6 @@ components:
           type: boolean
         has_prev:
           type: boolean
-
   responses:
     BadRequest:
       description: Bad request - invalid parameters
@@ -929,22 +1078,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     InternalError:
       description: Internal server error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
-
-
-
 

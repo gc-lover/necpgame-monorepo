@@ -28,6 +28,28 @@
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`
 
+## [SYMBOL] Поиск задач Backend агента
+
+**Backend агенты ищут задачи через:**
+
+```javascript
+// МЕТОД 1: GitHub Projects
+mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"Backend" Status:"Todo"'
+});
+
+// МЕТОД 2: GitHub Issues
+mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  state: 'open'
+});
+// Фильтровать по: title содержит '[Backend]' или '[API]'
+```
+
 ## [SYMBOL] Обязательные проверки
 
 ### [OK] Уровень 1: Базовые (ВСЕГДА)

@@ -1,0 +1,753 @@
+openapi: 3.0.3
+info:
+  title: Dynamic Pricing Auction Service API - Enterprise-Grade Auction System
+  description: '**Enterprise-Grade Dynamic Pricing Auction API for NECPGAME**
+
+    This API provides advanced auction mechanics with dynamic pricing algorithms,
+    market analysis, and real-time bidding for the Night City economy system.
+
+    ## Key Features
+
+    - **Dynamic Pricing**: AI-powered price adjustments based on market conditions
+    - **Real-time Auctions**: Live bidding with instant price updates
+    - **Market Analysis**: Comprehensive market trend analysis and forecasting
+    - **Multiple Algorithms**: Linear, exponential, and adaptive pricing models
+    - **Performance Optimized**: MMOFPS-grade performance with <20ms P99 latency
+
+    ## Domain Purpose
+
+    The Dynamic Pricing Auction service powers Night City''s black market and legitimate
+    trading systems, providing fair and dynamic pricing that responds to player economy
+    and market saturation in real-time.
+
+    ## Performance Targets
+
+    - P99 Latency: <20ms for bidding operations
+    - Throughput: 10,000+ auctions per second
+    - Memory: <100KB per active auction
+    - Real-time Updates: <5ms price calculations
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/auction
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/auction
+  description: Staging server
+- url: http://localhost:8080/api/v1/auction
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Auctions
+  description: Core auction operations and bidding
+- name: Market Analysis
+  description: Market trend analysis and forecasting
+- name: Pricing Algorithms
+  description: Dynamic pricing algorithm management
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the Dynamic Pricing Auction service.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+        '
+      operationId: auctionServiceHealthCheck
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, timestamp, service, version, health]
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: dynamic-pricing-auction
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  health:
+                    $ref: '#/components/schemas/SystemHealth'
+
+  /auctions:
+    post:
+      summary: Create new auction
+      description: '**Create a new auction with dynamic pricing**
+
+        Initializes an auction with specified item, starting price, and duration.
+        The system automatically applies dynamic pricing algorithms based on market conditions.
+
+        **Performance:** <50ms for auction creation
+        '
+      operationId: createAuction
+      tags:
+      - Auctions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auction'
+        '400':
+          description: Invalid auction data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auctions/{item_id}:
+    get:
+      summary: Get auction details
+      description: '**Retrieve complete auction information**
+
+        Returns auction status, current price, bid history, and market data.
+
+        **Performance:** <10ms for cached data, <50ms for database queries
+        '
+      operationId: getAuction
+      tags:
+      - Auctions
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        description: Unique item identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Auction details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auction'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auctions/{item_id}/bid:
+    post:
+      summary: Place a bid
+      description: '**Place a bid on an active auction**
+
+        Validates bid amount against current price and updates auction state.
+        Triggers dynamic price recalculation if applicable.
+
+        **Performance:** <20ms for bid validation and placement
+        '
+      operationId: placeBid
+      tags:
+      - Auctions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        description: Unique item identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '201':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+        '400':
+          description: Invalid bid amount or auction ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /market/analysis:
+    get:
+      summary: Get market analysis overview
+      description: '**Retrieve market analysis for all categories**
+
+        Provides comprehensive market trends, volatility, and predictions across all item categories.
+
+        **Performance:** <100ms for full market analysis
+        '
+      operationId: getMarketAnalysis
+      tags:
+      - Market Analysis
+      responses:
+        '200':
+          description: Market analysis retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [analyses, timestamp, categories]
+                properties:
+                  analyses:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/MarketAnalysis'
+                  timestamp:
+                    type: string
+                    format: date-time
+                  categories:
+                    type: array
+                    items:
+                      type: string
+
+  /market/analysis/{category}:
+    get:
+      summary: Get market analysis for category
+      description: '**Retrieve detailed market analysis for specific category**
+
+        Provides in-depth analysis of market trends, seasonal patterns, and price predictions
+        for the specified item category.
+
+        **Performance:** <50ms for category-specific analysis
+        '
+      operationId: getMarketAnalysisByCategory
+      tags:
+      - Market Analysis
+      parameters:
+      - name: category
+        in: path
+        required: true
+        description: Item category (weapons, armor, consumables, etc.)
+        schema:
+          type: string
+          enum: [weapons, armor, consumables, materials, vehicles, cyberware]
+      responses:
+        '200':
+          description: Category market analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketAnalysis'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /algorithms:
+    get:
+      summary: Get available pricing algorithms
+      description: '**List all available dynamic pricing algorithms**
+
+        Returns information about supported pricing algorithms including their types and capabilities.
+
+        **Performance:** <5ms cached response
+        '
+      operationId: getPricingAlgorithms
+      tags:
+      - Pricing Algorithms
+      responses:
+        '200':
+          description: Algorithms list retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [algorithms, timestamp, count]
+                properties:
+                  algorithms:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    example:
+                      linear: "linear"
+                      exponential: "exponential"
+                      adaptive: "adaptive"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  count:
+                    type: integer
+                    minimum: 0
+
+  /system/health:
+    get:
+      summary: Get system health
+      description: '**Retrieve detailed system health information**
+
+        Provides comprehensive health metrics including active auctions,
+        algorithm performance, and system status.
+
+        **Performance:** <10ms for health aggregation
+        '
+      operationId: getSystemHealth
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+
+components:
+  schemas:
+    CreateAuctionRequest:
+      type: object
+      required: [name, category, base_price, seller_id, duration_hours]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Item name
+          example: "Power Street Cred"
+        category:
+          type: string
+          enum: [weapons, armor, consumables, materials, vehicles, cyberware]
+          description: Item category
+          example: weapons
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Item rarity
+          default: common
+          example: rare
+        base_price:
+          type: number
+          minimum: 0
+          description: Starting price in game currency
+          example: 1000.50
+        buyout_price:
+          type: number
+          minimum: 0
+          description: Optional buyout price
+          example: 5000.00
+        seller_id:
+          type: string
+          format: uuid
+          description: Seller's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          description: Auction duration in hours
+          default: 24
+          example: 48
+
+    PlaceBidRequest:
+      type: object
+      required: [bidder_id, amount]
+      properties:
+        bidder_id:
+          type: string
+          format: uuid
+          description: Bidder's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        amount:
+          type: number
+          minimum: 0
+          description: Bid amount in game currency
+          example: 1200.75
+
+    Auction:
+      type: object
+      required: [item_id, current_price, start_price, item, dynamic_pricing]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Unique auction identifier
+        start_price:
+          type: number
+          minimum: 0
+          description: Original starting price
+          example: 1000.00
+        current_price:
+          type: number
+          minimum: 0
+          description: Current highest bid
+          example: 1500.00
+        reserve_price:
+          type: number
+          minimum: 0
+          description: Hidden reserve price
+        bid_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bid'
+        price_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+        dynamic_pricing:
+          $ref: '#/components/schemas/DynamicPricing'
+        market_data:
+          $ref: '#/components/schemas/MarketData'
+        predicted_end_price:
+          type: number
+          minimum: 0
+          description: AI-predicted final price
+        price_volatility:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Price volatility index
+        last_price_update:
+          type: string
+          format: date-time
+
+    Bid:
+      type: object
+      required: [id, item_id, bidder_id, amount, timestamp]
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        bidder_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+        is_winning:
+          type: boolean
+          description: Whether this is the current winning bid
+
+    PricePoint:
+      type: object
+      required: [timestamp, price, volume, type]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        price:
+          type: number
+          minimum: 0
+        volume:
+          type: integer
+          minimum: 0
+          description: Trading volume at this price point
+        type:
+          type: string
+          enum: [bid, market, algorithm]
+          description: Type of price change
+
+    DynamicPricing:
+      type: object
+      required: [algorithm_type, base_multiplier, time_multiplier, demand_multiplier]
+      properties:
+        algorithm_type:
+          type: string
+          enum: [linear, exponential, adaptive]
+          description: Pricing algorithm type
+          example: adaptive
+        base_multiplier:
+          type: number
+          minimum: 0
+          description: Base price multiplier
+          example: 1.0
+        time_multiplier:
+          type: number
+          minimum: 0
+          description: Time-based price adjustment
+          example: 0.02
+        demand_multiplier:
+          type: number
+          minimum: 0
+          description: Demand-based price adjustment
+          example: 0.05
+        rarity_multiplier:
+          type: number
+          minimum: 0
+          description: Rarity-based price adjustment
+          example: 0.1
+        volatility_factor:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Price volatility factor
+          example: 0.8
+        min_price_change:
+          type: number
+          minimum: 0
+          description: Minimum allowed price change
+          example: 0.01
+        max_price_change:
+          type: number
+          minimum: 0
+          description: Maximum allowed price change
+          example: 0.20
+        update_interval:
+          type: string
+          description: Price update interval
+          example: "5m"
+        adaptive_learning:
+          $ref: '#/components/schemas/AdaptiveLearning'
+
+    AdaptiveLearning:
+      type: object
+      required: [learning_rate, memory_size, prediction_horizon]
+      properties:
+        learning_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Machine learning learning rate
+          example: 0.01
+        memory_size:
+          type: integer
+          minimum: 1
+          description: Size of training data memory
+          example: 1000
+        prediction_horizon:
+          type: string
+          description: Prediction time horizon
+          example: "1h"
+        feature_weights:
+          type: object
+          additionalProperties:
+            type: number
+          description: Learned feature weights
+        accuracy_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current prediction accuracy
+        last_retrained:
+          type: string
+          format: date-time
+
+    MarketData:
+      type: object
+      required: [category, total_volume, average_price, last_update]
+      properties:
+        category:
+          type: string
+          description: Item category
+          example: weapons
+        total_volume:
+          type: integer
+          minimum: 0
+          description: Total trading volume
+          example: 10000
+        average_price:
+          type: number
+          minimum: 0
+          description: Average price in category
+          example: 2500.50
+        median_price:
+          type: number
+          minimum: 0
+          description: Median price in category
+          example: 2200.00
+        price_std_dev:
+          type: number
+          minimum: 0
+          description: Price standard deviation
+          example: 500.25
+        supply_velocity:
+          type: number
+          minimum: 0
+          description: Rate of new item supply
+          example: 2.5
+        demand_velocity:
+          type: number
+          minimum: 0
+          description: Rate of item demand
+          example: 3.2
+        price_elasticity:
+          type: number
+          description: Price elasticity of demand
+          example: -0.8
+        market_saturation:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Market saturation level (0-1)
+          example: 0.65
+        last_update:
+          type: string
+          format: date-time
+
+    MarketAnalysis:
+      type: object
+      required: [category, trend_direction, trend_strength, volatility_index, confidence_level, analysis_timestamp]
+      properties:
+        category:
+          type: string
+          description: Analyzed category
+          example: weapons
+        time_frame:
+          type: string
+          description: Analysis time frame
+          example: "24h"
+        trend_direction:
+          type: string
+          enum: [up, down, stable]
+          description: Market trend direction
+          example: up
+        trend_strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trend strength (0-1)
+          example: 0.75
+        volatility_index:
+          type: number
+          minimum: 0
+          description: Price volatility index
+          example: 0.15
+        seasonal_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonalPattern'
+        anomaly_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Market anomaly detection score
+          example: 0.05
+        confidence_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Analysis confidence level
+          example: 0.92
+        analysis_timestamp:
+          type: string
+          format: date-time
+
+    SeasonalPattern:
+      type: object
+      required: [period_type, period_value, average_multiplier]
+      properties:
+        period_type:
+          type: string
+          enum: [hourly, daily, weekly, monthly]
+          description: Type of seasonal period
+          example: daily
+        period_value:
+          type: integer
+          minimum: 0
+          description: Period value (0-23 for hours, 0-6 for days, etc.)
+          example: 18
+        average_multiplier:
+          type: number
+          description: Average price multiplier for this period
+          example: 1.15
+        confidence_interval:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Statistical confidence interval
+          example: 0.95
+
+    SystemHealth:
+      type: object
+      required: [total_mechanics, active_mechanics, inactive_mechanics, health_score, last_health_check]
+      properties:
+        total_mechanics:
+          type: integer
+          minimum: 0
+          description: Total number of tracked mechanics
+          example: 150
+        active_mechanics:
+          type: integer
+          minimum: 0
+          description: Number of active auctions/mechanics
+          example: 142
+        inactive_mechanics:
+          type: integer
+          minimum: 0
+          description: Number of inactive mechanics
+          example: 8
+        health_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Overall system health score
+          example: 94.7
+        last_health_check:
+          type: string
+          format: date-time
+          description: Timestamp of last health check
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Bid amount must be higher than current price"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer token authentication**
+
+        Use `Authorization: Bearer {token}` header for API access.
+
+        Admin operations require `admin` role in token claims.'

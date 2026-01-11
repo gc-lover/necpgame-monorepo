@@ -17,7 +17,7 @@ import (
 	"necpgame/services/tournament-service-go/internal/handlers"
 	tournamentredis "necpgame/services/tournament-service-go/internal/redis"
 	"necpgame/services/tournament-service-go/internal/service"
-	api "necpgame/services/tournament-service-go"
+	api "necpgame/services/tournament-service-go/pkg/api"
 )
 
 func main() {
@@ -53,14 +53,17 @@ func main() {
 	}
 	defer redisManager.Close()
 
+	// Initialize tournament manager
+	tm := service.NewTournamentManager(logger)
+
 	// Initialize service with enterprise-grade components
-	tournamentSvc := service.NewTournamentService(dbManager, redisManager, &cfg.Tournament, logger)
+	tournamentSvc := service.NewService(dbManager.GetDB(), redisManager.Client(), tm, logger)
 
 	// Create HTTP handlers with ogen-generated interfaces
-	httpHandlers := handlers.NewTournamentHandlers(tournamentSvc)
+	httpHandlers := handlers.NewHandler(tournamentSvc, logger)
 
 	// Create ogen server
-	server, err := api.NewServer(httpHandlers)
+	server, err := api.NewServer(httpHandlers, nil)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}

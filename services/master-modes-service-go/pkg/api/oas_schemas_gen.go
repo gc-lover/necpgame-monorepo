@@ -655,8 +655,8 @@ type DifficultyModeStats struct {
 	// Лучший счет.
 	BestScore OptInt `json:"bestScore"`
 	// Средний счет.
-	AverageScore OptFloat32                          `json:"averageScore"`
-	TopPlayers   []DifficultyModeStatsTopPlayersItem `json:"topPlayers"`
+	AverageScore OptFloat32    `json:"averageScore"`
+	TopPlayers   []PlayerStats `json:"topPlayers"`
 }
 
 // GetModeId returns the value of ModeId.
@@ -705,7 +705,7 @@ func (s *DifficultyModeStats) GetAverageScore() OptFloat32 {
 }
 
 // GetTopPlayers returns the value of TopPlayers.
-func (s *DifficultyModeStats) GetTopPlayers() []DifficultyModeStatsTopPlayersItem {
+func (s *DifficultyModeStats) GetTopPlayers() []PlayerStats {
 	return s.TopPlayers
 }
 
@@ -755,58 +755,11 @@ func (s *DifficultyModeStats) SetAverageScore(val OptFloat32) {
 }
 
 // SetTopPlayers sets the value of TopPlayers.
-func (s *DifficultyModeStats) SetTopPlayers(val []DifficultyModeStatsTopPlayersItem) {
+func (s *DifficultyModeStats) SetTopPlayers(val []PlayerStats) {
 	s.TopPlayers = val
 }
 
 func (*DifficultyModeStats) getDifficultyModeStatsRes() {}
-
-type DifficultyModeStatsTopPlayersItem struct {
-	PlayerId       OptUUID   `json:"playerId"`
-	PlayerName     OptString `json:"playerName"`
-	Score          OptInt    `json:"score"`
-	CompletionTime OptInt    `json:"completionTime"`
-}
-
-// GetPlayerId returns the value of PlayerId.
-func (s *DifficultyModeStatsTopPlayersItem) GetPlayerId() OptUUID {
-	return s.PlayerId
-}
-
-// GetPlayerName returns the value of PlayerName.
-func (s *DifficultyModeStatsTopPlayersItem) GetPlayerName() OptString {
-	return s.PlayerName
-}
-
-// GetScore returns the value of Score.
-func (s *DifficultyModeStatsTopPlayersItem) GetScore() OptInt {
-	return s.Score
-}
-
-// GetCompletionTime returns the value of CompletionTime.
-func (s *DifficultyModeStatsTopPlayersItem) GetCompletionTime() OptInt {
-	return s.CompletionTime
-}
-
-// SetPlayerId sets the value of PlayerId.
-func (s *DifficultyModeStatsTopPlayersItem) SetPlayerId(val OptUUID) {
-	s.PlayerId = val
-}
-
-// SetPlayerName sets the value of PlayerName.
-func (s *DifficultyModeStatsTopPlayersItem) SetPlayerName(val OptString) {
-	s.PlayerName = val
-}
-
-// SetScore sets the value of Score.
-func (s *DifficultyModeStatsTopPlayersItem) SetScore(val OptInt) {
-	s.Score = val
-}
-
-// SetCompletionTime sets the value of CompletionTime.
-func (s *DifficultyModeStatsTopPlayersItem) SetCompletionTime(val OptInt) {
-	s.CompletionTime = val
-}
 
 // Требования для доступа к режиму сложности.
 // Ref: #/components/schemas/DifficultyRequirements
@@ -1192,9 +1145,9 @@ type DifficultyStats struct {
 	// Процент завершенных сессий.
 	CompletionRate float32 `json:"completionRate"`
 	// Средний счет.
-	AverageScore float32                           `json:"averageScore"`
-	PopularModes []DifficultyStatsPopularModesItem `json:"popularModes"`
-	ModeStats    []DifficultyModeStats             `json:"modeStats"`
+	AverageScore float32               `json:"averageScore"`
+	PopularModes []ModeStats           `json:"popularModes"`
+	ModeStats    []DifficultyModeStats `json:"modeStats"`
 }
 
 // GetTotalSessions returns the value of TotalSessions.
@@ -1213,7 +1166,7 @@ func (s *DifficultyStats) GetAverageScore() float32 {
 }
 
 // GetPopularModes returns the value of PopularModes.
-func (s *DifficultyStats) GetPopularModes() []DifficultyStatsPopularModesItem {
+func (s *DifficultyStats) GetPopularModes() []ModeStats {
 	return s.PopularModes
 }
 
@@ -1238,7 +1191,7 @@ func (s *DifficultyStats) SetAverageScore(val float32) {
 }
 
 // SetPopularModes sets the value of PopularModes.
-func (s *DifficultyStats) SetPopularModes(val []DifficultyStatsPopularModesItem) {
+func (s *DifficultyStats) SetPopularModes(val []ModeStats) {
 	s.PopularModes = val
 }
 
@@ -1248,42 +1201,6 @@ func (s *DifficultyStats) SetModeStats(val []DifficultyModeStats) {
 }
 
 func (*DifficultyStats) getDifficultyModesStatsRes() {}
-
-type DifficultyStatsPopularModesItem struct {
-	ModeId       OptUUID   `json:"modeId"`
-	ModeName     OptString `json:"modeName"`
-	SessionCount OptInt    `json:"sessionCount"`
-}
-
-// GetModeId returns the value of ModeId.
-func (s *DifficultyStatsPopularModesItem) GetModeId() OptUUID {
-	return s.ModeId
-}
-
-// GetModeName returns the value of ModeName.
-func (s *DifficultyStatsPopularModesItem) GetModeName() OptString {
-	return s.ModeName
-}
-
-// GetSessionCount returns the value of SessionCount.
-func (s *DifficultyStatsPopularModesItem) GetSessionCount() OptInt {
-	return s.SessionCount
-}
-
-// SetModeId sets the value of ModeId.
-func (s *DifficultyStatsPopularModesItem) SetModeId(val OptUUID) {
-	s.ModeId = val
-}
-
-// SetModeName sets the value of ModeName.
-func (s *DifficultyStatsPopularModesItem) SetModeName(val OptString) {
-	s.ModeName = val
-}
-
-// SetSessionCount sets the value of SessionCount.
-func (s *DifficultyStatsPopularModesItem) SetSessionCount(val OptInt) {
-	s.SessionCount = val
-}
 
 // Стандартная ошибка API.
 // Ref: #/components/schemas/Error
@@ -1559,6 +1476,83 @@ func (*GetInstanceDifficultyInternalServerError) getInstanceDifficultyRes() {}
 type GetInstanceDifficultyNotFound Error
 
 func (*GetInstanceDifficultyNotFound) getInstanceDifficultyRes() {}
+
+// Статистика режима сложности.
+// Ref: #/components/schemas/ModeStats
+type ModeStats struct {
+	// Идентификатор режима.
+	ModeID uuid.UUID `json:"mode_id"`
+	// Название режима.
+	ModeName string `json:"mode_name"`
+	// Популярность режима (0-1).
+	Popularity float32 `json:"popularity"`
+	// Общее количество игроков.
+	TotalPlayers OptInt `json:"total_players"`
+	// Средний процент завершения.
+	AverageCompletionRate OptFloat32 `json:"average_completion_rate"`
+	// Рейтинг сложности (0-5).
+	DifficultyRating OptFloat32 `json:"difficulty_rating"`
+}
+
+// GetModeID returns the value of ModeID.
+func (s *ModeStats) GetModeID() uuid.UUID {
+	return s.ModeID
+}
+
+// GetModeName returns the value of ModeName.
+func (s *ModeStats) GetModeName() string {
+	return s.ModeName
+}
+
+// GetPopularity returns the value of Popularity.
+func (s *ModeStats) GetPopularity() float32 {
+	return s.Popularity
+}
+
+// GetTotalPlayers returns the value of TotalPlayers.
+func (s *ModeStats) GetTotalPlayers() OptInt {
+	return s.TotalPlayers
+}
+
+// GetAverageCompletionRate returns the value of AverageCompletionRate.
+func (s *ModeStats) GetAverageCompletionRate() OptFloat32 {
+	return s.AverageCompletionRate
+}
+
+// GetDifficultyRating returns the value of DifficultyRating.
+func (s *ModeStats) GetDifficultyRating() OptFloat32 {
+	return s.DifficultyRating
+}
+
+// SetModeID sets the value of ModeID.
+func (s *ModeStats) SetModeID(val uuid.UUID) {
+	s.ModeID = val
+}
+
+// SetModeName sets the value of ModeName.
+func (s *ModeStats) SetModeName(val string) {
+	s.ModeName = val
+}
+
+// SetPopularity sets the value of Popularity.
+func (s *ModeStats) SetPopularity(val float32) {
+	s.Popularity = val
+}
+
+// SetTotalPlayers sets the value of TotalPlayers.
+func (s *ModeStats) SetTotalPlayers(val OptInt) {
+	s.TotalPlayers = val
+}
+
+// SetAverageCompletionRate sets the value of AverageCompletionRate.
+func (s *ModeStats) SetAverageCompletionRate(val OptFloat32) {
+	s.AverageCompletionRate = val
+}
+
+// SetDifficultyRating sets the value of DifficultyRating.
+func (s *ModeStats) SetDifficultyRating(val OptFloat32) {
+	s.DifficultyRating = val
+}
 
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
@@ -2018,6 +2012,83 @@ func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 		return v
 	}
 	return d
+}
+
+// Статистика игрока для рейтингов и лидербордов.
+// Ref: #/components/schemas/PlayerStats
+type PlayerStats struct {
+	// Уникальный идентификатор игрока.
+	PlayerID uuid.UUID `json:"player_id"`
+	// Отображаемое имя игрока.
+	PlayerName string `json:"player_name"`
+	// Лучший счет игрока.
+	Score int `json:"score"`
+	// Время завершения в секундах.
+	CompletionTime OptInt `json:"completion_time"`
+	// Позиция в рейтинге.
+	Rank OptInt `json:"rank"`
+	// Список достижений.
+	Achievements []string `json:"achievements"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *PlayerStats) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetPlayerName returns the value of PlayerName.
+func (s *PlayerStats) GetPlayerName() string {
+	return s.PlayerName
+}
+
+// GetScore returns the value of Score.
+func (s *PlayerStats) GetScore() int {
+	return s.Score
+}
+
+// GetCompletionTime returns the value of CompletionTime.
+func (s *PlayerStats) GetCompletionTime() OptInt {
+	return s.CompletionTime
+}
+
+// GetRank returns the value of Rank.
+func (s *PlayerStats) GetRank() OptInt {
+	return s.Rank
+}
+
+// GetAchievements returns the value of Achievements.
+func (s *PlayerStats) GetAchievements() []string {
+	return s.Achievements
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *PlayerStats) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetPlayerName sets the value of PlayerName.
+func (s *PlayerStats) SetPlayerName(val string) {
+	s.PlayerName = val
+}
+
+// SetScore sets the value of Score.
+func (s *PlayerStats) SetScore(val int) {
+	s.Score = val
+}
+
+// SetCompletionTime sets the value of CompletionTime.
+func (s *PlayerStats) SetCompletionTime(val OptInt) {
+	s.CompletionTime = val
+}
+
+// SetRank sets the value of Rank.
+func (s *PlayerStats) SetRank(val OptInt) {
+	s.Rank = val
+}
+
+// SetAchievements sets the value of Achievements.
+func (s *PlayerStats) SetAchievements(val []string) {
+	s.Achievements = val
 }
 
 type SelectInstanceDifficultyBadRequest Error

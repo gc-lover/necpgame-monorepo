@@ -1,0 +1,202 @@
+# Reputation Request Schemas - Enterprise-grade Reputation Decay & Recovery API
+# Domain Separation: Request/response schemas for reputation operations
+# Issue: #2174
+
+components:
+  schemas:
+
+    # Get Reputation Request Schema
+    GetReputationRequest:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity to get reputation for
+        entity_type:
+          type: string
+          enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        target_filters:
+          type: object
+          properties:
+            target_type:
+              type: string
+              enum: [faction, person, corporation, location, event]
+              description: Filter by target type
+            min_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Minimum reputation value filter
+            max_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Maximum reputation value filter
+            tier:
+              type: string
+              enum: [hated, hostile, unfriendly, neutral, friendly, liked, respected, revered, legendary]
+              description: Filter by reputation tier
+            relationship_strength:
+              type: string
+              enum: [weak, moderate, strong, unbreakable]
+              description: Filter by relationship strength
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              default: 1
+              description: Page number
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 20
+              description: Items per page
+        sort_by:
+          type: string
+          enum: [value, tier, last_updated, relationship_strength]
+          default: value
+          description: Sort field
+        sort_order:
+          type: string
+          enum: [asc, desc]
+          default: desc
+          description: Sort order
+
+    # Bulk Reputation Update Request Schema
+    BulkReputationUpdateRequest:
+      type: object
+      required:
+        - updates
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: './reputation-schemas.yaml#/components/schemas/ReputationUpdateRequest'
+          minItems: 1
+          maxItems: 100
+          description: Array of reputation updates to process
+        options:
+          type: object
+          properties:
+            atomic:
+              type: boolean
+              default: true
+              description: Whether all updates should succeed or fail together
+            skip_validation:
+              type: boolean
+              default: false
+              description: Skip validation for performance (use with caution)
+            notify_players:
+              type: boolean
+              default: true
+              description: Send notifications to affected players
+
+    # Reputation Recovery Request Schema
+    ReputationRecoveryRequest:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+        - target_id
+        - target_type
+        - action_type
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity performing recovery action
+        entity_type:
+          type: string
+          enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity to recover reputation with
+        target_type:
+          type: string
+          enum: [faction, person, corporation, location, event]
+          description: Type of the target entity
+        action_type:
+          type: string
+          enum: [quest_completion, gift_giving, event_participation, loyalty_display, crisis_intervention, personal_sacrifice, public_service, relationship_building, favor_returned, apology_offered]
+          description: Type of recovery action
+        action_parameters:
+          type: object
+          description: Action-specific parameters
+          additionalProperties: true
+          example:
+            gift_id: "item-123"
+            quest_id: "quest-456"
+            sacrifice_value: 1000
+        location_context:
+          type: object
+          properties:
+            location_id:
+              type: string
+              format: uuid
+              description: Current location ID
+            location_type:
+              type: string
+              enum: [home_territory, enemy_territory, neutral_zone]
+              description: Location context affecting recovery effectiveness
+            time_of_day:
+              type: string
+              enum: [morning, afternoon, evening, night]
+              description: Time of day context
+          description: Location and time context for the action
+        expected_recovery_range:
+          type: object
+          properties:
+            min_value:
+              type: number
+              format: float
+              minimum: 0.0
+              description: Minimum expected recovery value
+            max_value:
+              type: number
+              format: float
+              minimum: 0.0
+              description: Maximum expected recovery value
+          description: Expected recovery value range for validation
+
+    # Reputation Decay Simulation Request Schema
+    ReputationDecaySimulationRequest:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+        - simulation_days
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity to simulate decay for
+        entity_type:
+          type: string
+          enum: [player, npc, faction, corporation]
+          description: Type of the entity
+        simulation_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Number of days to simulate decay
+        include_recovery_actions:
+          type: boolean
+          default: false
+          description: Whether to include potential recovery actions in simulation
+        activity_level:
+          type: string
+          enum: [inactive, casual, active, hardcore]
+          default: active
+          description: Assumed player activity level for simulation

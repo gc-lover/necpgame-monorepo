@@ -96,14 +96,10 @@ func (h *Handler) GetContentDifficultyModes(ctx context.Context, params api.GetC
 
 	span.SetAttributes(
 		attribute.String("endpoint", "get_content_difficulty_modes"),
-		attribute.String("content_id", params.ContentID),
+		attribute.String("content_id", params.ContentId.String()),
 	)
 
-	contentID, err := uuid.Parse(string(params.ContentId))
-	if err != nil {
-		h.logger.Warn("Invalid content ID format", zap.String("content_id", string(params.ContentId)), zap.Error(err))
-		return &api.GetContentDifficultyModesBadRequest{}, nil
-	}
+	contentID := params.ContentId
 
 	modes, err := h.service.GetDifficultyManager().GetContentDifficultyModes(ctx, contentID)
 	if err != nil {
@@ -131,7 +127,10 @@ func (h *Handler) GetContentDifficultyModes(ctx context.Context, params api.GetC
 		zap.String("content_id", contentID.String()),
 		zap.Int("count", len(apiModes)))
 
-	return api.GetContentDifficultyModesOK(apiModes), nil
+	return &api.GetContentDifficultyModesOK{
+		ContentId:      api.OptUUID{Value: contentID, Set: true},
+		AvailableModes: apiModes,
+	}, nil
 }
 
 // GetDifficultyMode возвращает подробную информацию о конкретном режиме сложности
@@ -141,14 +140,10 @@ func (h *Handler) GetDifficultyMode(ctx context.Context, params api.GetDifficult
 
 	span.SetAttributes(
 		attribute.String("endpoint", "get_difficulty_mode"),
-		attribute.String("mode_id", params.ModeID),
+		attribute.String("mode_id", params.ModeId.String()),
 	)
 
-	modeID, err := uuid.Parse(string(params.ModeId))
-	if err != nil {
-		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", string(params.ModeId)), zap.Error(err))
-		return &api.GetDifficultyModeBadRequest{}, nil
-	}
+	modeID := params.ModeId
 
 	mode, err := h.service.GetDifficultyManager().GetDifficultyMode(ctx, modeID)
 	if err != nil {
@@ -186,14 +181,10 @@ func (h *Handler) GetDifficultyModeRequirements(ctx context.Context, params api.
 
 	span.SetAttributes(
 		attribute.String("endpoint", "get_difficulty_mode_requirements"),
-		attribute.String("mode_id", params.ModeID),
+		attribute.String("mode_id", params.ModeId.String()),
 	)
 
-	modeID, err := uuid.Parse(params.ModeID)
-	if err != nil {
-		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", params.ModeID), zap.Error(err))
-		return &api.GetDifficultyModeRequirementsBadRequest{}, nil
-	}
+	modeID := params.ModeId
 
 	requirements, err := h.service.GetDifficultyManager().GetModeRequirements(ctx, modeID)
 	if err != nil {
@@ -203,18 +194,11 @@ func (h *Handler) GetDifficultyModeRequirements(ctx context.Context, params api.
 
 	// Конвертируем в API формат
 	apiRequirements := api.DifficultyRequirements{
-		MinLevel:    requirements.MinLevel,
-		MinSkillRating: requirements.MinSkillRating,
-		CompletedMissions: make([]string, len(requirements.CompletedMissions)),
-		ReputationLevel: requirements.ReputationLevel,
-		PrerequisiteModes: make([]string, len(requirements.PrerequisiteModes)),
-	}
-
-	for i, missionID := range requirements.CompletedMissions {
-		apiRequirements.CompletedMissions[i] = missionID.String()
-	}
-	for i, modeID := range requirements.PrerequisiteModes {
-		apiRequirements.PrerequisiteModes[i] = modeID.String()
+		MinLevel:          requirements.MinLevel,
+		MinSkillRating:    requirements.MinSkillRating,
+		CompletedMissions: requirements.CompletedMissions,
+		ReputationLevel:   api.OptDifficultyRequirementsReputationLevel{Value: api.DifficultyRequirementsReputationLevel(requirements.ReputationLevel), Set: true},
+		PrerequisiteModes: requirements.PrerequisiteModes,
 	}
 
 	h.logger.Debug("Retrieved difficulty mode requirements", zap.String("mode_id", modeID.String()))
@@ -229,14 +213,10 @@ func (h *Handler) GetDifficultyModeStats(ctx context.Context, params api.GetDiff
 
 	span.SetAttributes(
 		attribute.String("endpoint", "get_difficulty_mode_stats"),
-		attribute.String("mode_id", params.ModeID),
+		attribute.String("mode_id", params.ModeId.String()),
 	)
 
-	modeID, err := uuid.Parse(params.ModeID)
-	if err != nil {
-		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", params.ModeID), zap.Error(err))
-		return &api.GetDifficultyModeStatsBadRequest{}, nil
-	}
+	modeID := params.ModeId
 
 	stats, err := h.service.GetAnalyticsCollector().GetModeStats(ctx, modeID)
 	if err != nil {
@@ -244,17 +224,37 @@ func (h *Handler) GetDifficultyModeStats(ctx context.Context, params api.GetDiff
 		return &api.GetDifficultyModeStatsInternalServerError{}, nil
 	}
 
+	// Получаем топ игроков для этого режима
+	topPlayersData, err := h.service.GetAnalyticsCollector().GetTopPlayersForMode(ctx, modeID, 5)
+	if err != nil {
+		h.logger.Warn("Failed to get top players for mode", zap.Error(err))
+		topPlayersData = []PlayerStats{} // Fallback to empty array
+	}
+
+	// Конвертируем топ игроков в API формат
+	topPlayers := make([]api.PlayerStats, len(topPlayersData))
+	for i, player := range topPlayersData {
+		topPlayers[i] = api.PlayerStats{
+			PlayerID:      player.PlayerID,
+			PlayerName:    player.PlayerName,
+			Score:         player.Score,
+			CompletionTime: api.OptInt{Value: player.CompletionTime, Set: true},
+			Rank:          api.OptInt{Value: player.Rank, Set: true},
+			Achievements:  player.Achievements,
+		}
+	}
+
 	// Конвертируем в API формат
 	modeStats := api.DifficultyModeStats{
-		ModeId: modeID.String(),
+		ModeId: modeID,
 		TotalSessions: int(stats["total_sessions"].(int)),
 		CompletedSessions: int(stats["completed_sessions"].(int)),
 		FailedSessions: int(stats["failed_sessions"].(int)),
-		CompletionRate: stats["completion_rate"].(float64),
-		AverageCompletionTime: stats["average_completion_time"].(float64),
-		BestScore: int(stats["best_score"].(int)),
-		AverageScore: stats["average_score"].(float64),
-		TopPlayers: []api.PlayerStats{}, // TODO: implement
+		CompletionRate:        float32(stats["completion_rate"].(float64)),
+		AverageCompletionTime: api.OptInt{Value: int(stats["average_completion_time"].(float64)), Set: true},
+		BestScore:             api.OptInt{Value: stats["best_score"].(int), Set: true},
+		AverageScore:          api.OptFloat32{Value: float32(stats["average_score"].(float64)), Set: true},
+		TopPlayers: topPlayers,
 	}
 
 	h.logger.Debug("Retrieved difficulty mode stats", zap.String("mode_id", modeID.String()))
@@ -270,10 +270,10 @@ func (h *Handler) GetDifficultyModes(ctx context.Context) (api.GetDifficultyMode
 	span.SetAttributes(attribute.String("endpoint", "get_difficulty_modes"))
 
 	// Получаем все режимы сложности
-	modes, err := h.service.GetDifficultyManager().GetAllDifficultyModes(ctx)
+	modes, err := h.service.GetDifficultyManager().GetAllDifficultyModes(ctx, 100, 0)
 	if err != nil {
 		h.logger.Error("Failed to get difficulty modes", zap.Error(err))
-		return &api.GetDifficultyModesInternalServerError{}, nil
+		return &api.Error{}, nil
 	}
 
 	// Конвертируем в API формат
@@ -295,7 +295,7 @@ func (h *Handler) GetDifficultyModes(ctx context.Context) (api.GetDifficultyMode
 
 	h.logger.Debug("Retrieved difficulty modes", zap.Int("count", len(apiModes)))
 
-	return &apiModes, nil
+	return &api.GetDifficultyModesOK{Modes: apiModes}, nil
 }
 
 // GetDifficultyModesStats возвращает глобальную статистику по всем режимам сложности
@@ -308,16 +308,87 @@ func (h *Handler) GetDifficultyModesStats(ctx context.Context, params api.GetDif
 	stats, err := h.service.GetAnalyticsCollector().GetGlobalStats(ctx)
 	if err != nil {
 		h.logger.Error("Failed to get global stats", zap.Error(err))
-		return &api.GetDifficultyModesStatsInternalServerError{}, nil
+		return &api.Error{}, nil
+	}
+
+	// Получаем популярные режимы
+	popularModesData, err := h.service.GetAnalyticsCollector().GetPopularModes(ctx, 5)
+	if err != nil {
+		h.logger.Warn("Failed to get popular modes", zap.Error(err))
+		popularModesData = []ModeStats{} // Fallback to empty array
+	}
+
+	// Конвертируем популярные режимы в API формат
+	popularModes := make([]api.ModeStats, len(popularModesData))
+	for i, mode := range popularModesData {
+		popularModes[i] = api.ModeStats{
+			ModeID:                mode.ModeID,
+			ModeName:              mode.ModeName,
+			Popularity:            float32(mode.Popularity),
+			TotalPlayers:          api.OptInt{Value: mode.TotalPlayers, Set: true},
+			AverageCompletionRate: api.OptFloat32{Value: float32(mode.AverageCompletionRate), Set: true},
+			DifficultyRating:      api.OptFloat32{Value: float32(mode.DifficultyRating), Set: true},
+		}
+	}
+
+	// Получаем статистику по всем режимам
+	allModes, err := h.service.GetDifficultyManager().GetAllDifficultyModes(ctx, 100, 0)
+	if err != nil {
+		h.logger.Warn("Failed to get all difficulty modes for stats", zap.Error(err))
+		allModes = []*DifficultyMode{} // Fallback to empty array
+	}
+
+	// Конвертируем статистику режимов в API формат
+	modeStats := make([]api.DifficultyModeStats, len(allModes))
+	for i, mode := range allModes {
+		// Получаем статистику для каждого режима
+		modeStatsData, err := h.service.GetAnalyticsCollector().GetModeStats(ctx, mode.ID)
+		if err != nil {
+			h.logger.Warn("Failed to get stats for mode", zap.String("mode_id", mode.ID.String()), zap.Error(err))
+			continue
+		}
+
+		// Получаем топ игроков для этого режима
+		topPlayersData, err := h.service.GetAnalyticsCollector().GetTopPlayersForMode(ctx, mode.ID, 3)
+		if err != nil {
+			h.logger.Warn("Failed to get top players for mode", zap.String("mode_id", mode.ID.String()), zap.Error(err))
+			topPlayersData = []PlayerStats{}
+		}
+
+		// Конвертируем топ игроков
+		topPlayers := make([]api.PlayerStats, len(topPlayersData))
+		for j, player := range topPlayersData {
+			topPlayers[j] = api.PlayerStats{
+				PlayerID:       player.PlayerID,
+				PlayerName:     player.PlayerName,
+				Score:          player.Score,
+				CompletionTime: api.OptInt{Value: player.CompletionTime, Set: true},
+				Rank:           api.OptInt{Value: player.Rank, Set: true},
+				Achievements:   player.Achievements,
+			}
+		}
+
+		modeStats[i] = api.DifficultyModeStats{
+			ModeId:                mode.ID,
+			ModeName:              mode.Name,
+			TotalSessions:         modeStatsData["total_sessions"].(int),
+			CompletedSessions:     modeStatsData["completed_sessions"].(int),
+			FailedSessions:        modeStatsData["failed_sessions"].(int),
+			CompletionRate:        float32(modeStatsData["completion_rate"].(float64)),
+			AverageCompletionTime: api.OptInt{Value: int(modeStatsData["average_completion_time"].(float64)), Set: true},
+			BestScore:             api.OptInt{Value: modeStatsData["best_score"].(int), Set: true},
+			AverageScore:          api.OptFloat32{Value: float32(modeStatsData["average_score"].(float64)), Set: true},
+			TopPlayers:            topPlayers,
+		}
 	}
 
 	// Конвертируем в API формат
-	globalStats := api.GlobalDifficultyStats{
-		TotalSessions: int(stats["total_sessions"].(int)),
-		CompletionRate: stats["completion_rate"].(float64),
-		AverageScore: stats["average_score"].(float64),
-		PopularModes: []api.ModeStats{}, // TODO: implement
-		ModeStats: []api.DifficultyModeStats{}, // TODO: implement
+	globalStats := api.DifficultyStats{
+		TotalSessions:  int(stats["total_sessions"].(int)),
+		CompletionRate: float32(stats["completion_rate"].(float64)),
+		AverageScore:   float32(stats["average_score"].(float64)),
+		PopularModes:   popularModes,
+		ModeStats:      modeStats,
 	}
 
 	h.logger.Debug("Retrieved global difficulty stats")
@@ -332,14 +403,10 @@ func (h *Handler) GetInstanceDifficulty(ctx context.Context, params api.GetInsta
 
 	span.SetAttributes(
 		attribute.String("endpoint", "get_instance_difficulty"),
-		attribute.String("instance_id", params.InstanceID),
+		attribute.String("instance_id", params.InstanceId.String()),
 	)
 
-	instanceID, err := uuid.Parse(params.InstanceID)
-	if err != nil {
-		h.logger.Warn("Invalid instance ID format", zap.String("instance_id", params.InstanceID), zap.Error(err))
-		return &api.GetInstanceDifficultyBadRequest{}, nil
-	}
+	instanceID := params.InstanceId
 
 	difficulty, err := h.service.GetRestrictionController().GetInstanceDifficulty(ctx, instanceID)
 	if err != nil {
@@ -352,23 +419,10 @@ func (h *Handler) GetInstanceDifficulty(ctx context.Context, params api.GetInsta
 	}
 
 	// Конвертируем в API формат
-	apiDifficulty := api.InstanceDifficulty{
-		InstanceId: instanceID.String(),
-		ModeId:     difficulty.ModeID.String(),
-		AppliedModifiers: api.DifficultyModifiers{
-			EnemyHealthMultiplier:  difficulty.HpModifier,
-			EnemyDamageMultiplier:  difficulty.DamageModifier,
-			PlayerResourceMultiplier: 1.0 / difficulty.RewardModifier, // inverse for player resources
-			TimeLimitSeconds:       int(difficulty.TimeLimitMultiplier * 3600), // example conversion
-			PermadeathEnabled:      difficulty.Permadeath,
-			CheckpointDisabled:     difficulty.CheckpointLimit == 0,
-		},
-		ActiveRestrictions: api.SessionRestrictions{
-			TimeLimit:    difficulty.RespawnLimit * 60, // example conversion
-			RespawnLimit: difficulty.RespawnLimit,
-			CheckpointLimit: difficulty.CheckpointLimit,
-		},
-		StartedAt: difficulty.CreatedAt,
+	apiDifficulty := api.DifficultySession{
+		ID:         uuid.New(), // Generate session ID
+		InstanceId: instanceID,
+		ModeId:     difficulty.ID,
 	}
 
 	h.logger.Debug("Retrieved instance difficulty", zap.String("instance_id", instanceID.String()))
@@ -383,26 +437,12 @@ func (h *Handler) SelectInstanceDifficulty(ctx context.Context, req *api.SelectI
 
 	span.SetAttributes(
 		attribute.String("endpoint", "select_instance_difficulty"),
-		attribute.String("instance_id", params.InstanceID),
+		attribute.String("instance_id", params.InstanceId.String()),
 	)
 
-	instanceID, err := uuid.Parse(params.InstanceID)
-	if err != nil {
-		h.logger.Warn("Invalid instance ID format", zap.String("instance_id", params.InstanceID), zap.Error(err))
-		return &api.SelectInstanceDifficultyBadRequest{}, nil
-	}
-
-	modeID, err := uuid.Parse(req.ModeID)
-	if err != nil {
-		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", req.ModeID), zap.Error(err))
-		return &api.SelectInstanceDifficultyBadRequest{}, nil
-	}
-
-	playerID, err := uuid.Parse(req.PlayerID)
-	if err != nil {
-		h.logger.Warn("Invalid player ID format", zap.String("player_id", req.PlayerID), zap.Error(err))
-		return &api.SelectInstanceDifficultyBadRequest{}, nil
-	}
+	instanceID := params.InstanceId
+	modeID := req.ModeId
+	playerID := uuid.New() // TODO: Get from auth context
 
 	// Проверяем доступ к режиму
 	if err := h.service.ValidateDifficultyModeAccess(ctx, playerID, modeID); err != nil {
@@ -426,13 +466,11 @@ func (h *Handler) SelectInstanceDifficulty(ctx context.Context, req *api.SelectI
 		// Не возвращаем ошибку, сессия уже создана
 	}
 
-	response := api.SelectInstanceDifficultyOK{
-		SessionId:  sessionID.String(),
-		InstanceId: instanceID.String(),
-		ModeId:     modeID.String(),
-		PlayerId:   playerID.String(),
-		Status:     "active",
-		SelectedAt: time.Now(),
+	response := api.DifficultySession{
+		ID:         sessionID,
+		InstanceId: instanceID,
+		ModeId:     modeID,
+		PlayerId:   playerID,
 	}
 
 	h.logger.Info("Selected difficulty mode for instance",

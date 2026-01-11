@@ -1,0 +1,822 @@
+openapi: 3.0.3
+info:
+  title: Auction House Service API - Dynamic Pricing Engine
+  description: '**Enterprise-Grade Dynamic Pricing Auction House API for NECPGAME**
+
+    This API provides advanced auction house mechanics with dynamic pricing algorithms,
+    real-time market clearing, and BazaarBot-inspired adaptive price discovery.
+
+    ## Key Features
+
+    - **Dynamic Pricing**: BazaarBot-like adaptive price algorithms
+    - **Double Auction Market**: Bid/ask matching with real-time clearing
+    - **Real-time Trading**: WebSocket-powered live market updates
+    - **Market Analytics**: Advanced price prediction and trend analysis
+    - **Anti-cheat Protection**: Comprehensive fraud detection
+    - **Performance Optimized**: MMOFPS-grade performance with <10ms P99 latency
+
+    ## Domain Purpose
+
+    The Auction House serves as the economic heart of NECPGAME, enabling dynamic
+    player-driven economies with sophisticated pricing mechanics that adapt to
+    supply/demand fluctuations in real-time.
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for price queries, <50ms for trade execution
+    - Memory: <100KB per active auction lot
+    - Concurrent traders: 50,000+ simultaneous connections
+    - Price updates: Real-time (<100ms propagation)
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Trading API Support
+    url: https://necpgame.com/support
+    email: trading@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/auction
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/auction
+  description: Staging server
+- url: http://localhost:8080/api/v1/auction
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Auction House
+  description: Core auction house operations and trading
+- name: Market Data
+  description: Price discovery and market analytics
+- name: Trading
+  description: Bid/ask placement and trade execution
+- name: Analytics
+  description: Market statistics and player trading history
+paths:
+  /health:
+    get:
+      summary: Service health check
+      description: '**Enterprise-grade health check for auction house service**
+
+        Provides real-time health status including market data feeds, database connectivity,
+        and pricing engine performance.
+
+        Critical for trading system reliability and market stability.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+        '
+      operationId: auctionHouseHealthCheck
+      tags:
+      - Analytics
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/schemas/health.yaml#/HealthResponse
+
+  /lots:
+    get:
+      summary: Get active auction lots
+      description: '**Retrieve all active auction lots with current pricing**
+
+        Returns comprehensive auction data including dynamic prices, bid history,
+        and market analytics. Supports filtering by item type, price range, and region.
+
+        **Performance:** <5ms for cached queries, <25ms for market analysis
+        '
+      operationId: getActiveLots
+      tags:
+      - Auction House
+      parameters:
+      - name: item_type
+        in: query
+        description: Filter by item type (weapons, armor, resources, etc.)
+        schema:
+          type: string
+          enum: [weapons, armor, resources, consumables, crafting_materials]
+      - name: region
+        in: query
+        description: Filter by game region
+        schema:
+          type: string
+          enum: [north_america, europe, asia, south_america, australia]
+      - name: min_price
+        in: query
+        description: Minimum current price filter
+        schema:
+          type: number
+          minimum: 0
+      - name: max_price
+        in: query
+        description: Maximum current price filter
+        schema:
+          type: number
+          minimum: 0
+      - name: sort_by
+        in: query
+        description: Sort results by field
+        schema:
+          type: string
+          enum: [price_asc, price_desc, volume_desc, time_remaining]
+          default: time_remaining
+      - name: limit
+        in: query
+        description: Maximum number of results
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Successful response with auction lots
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lots, total_count, market_summary]
+                properties:
+                  lots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionLot'
+                  total_count:
+                    type: integer
+                    minimum: 0
+                    example: 1250
+                  market_summary:
+                    $ref: '#/components/schemas/MarketSummary'
+                  last_updated:
+                    type: string
+                    format: date-time
+
+    post:
+      summary: Create auction lot
+      description: '**Create a new auction lot for trading**
+
+        Places an item on the auction house with initial pricing. The system will
+        immediately begin dynamic price discovery based on market conditions.
+
+        **Performance:** <15ms for lot creation and initial pricing
+        '
+      operationId: createAuctionLot
+      tags:
+      - Auction House
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionLot'
+      responses:
+        '201':
+          description: Lot successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionLot'
+        '400':
+          description: Invalid lot data or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /lots/{lot_id}:
+    get:
+      summary: Get auction lot details
+      description: '**Retrieve detailed information about a specific auction lot**
+
+        Returns complete lot information including bid history, price evolution,
+        and market analysis.
+
+        **Performance:** <3ms for cached queries
+        '
+      operationId: getAuctionLot
+      tags:
+      - Auction House
+      parameters:
+      - name: lot_id
+        in: path
+        required: true
+        description: Unique auction lot identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Lot details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionLotDetail'
+        '404':
+          description: Lot not found
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /lots/{lot_id}/bids:
+    get:
+      summary: Get bid history for lot
+      description: '**Retrieve complete bidding history for an auction lot**
+
+        Returns all bids placed on the lot with timestamps and trader information.
+
+        **Performance:** <5ms for history retrieval
+        '
+      operationId: getLotBidHistory
+      tags:
+      - Trading
+      parameters:
+      - name: lot_id
+        in: path
+        required: true
+        description: Unique auction lot identifier
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        description: Maximum number of bids to return
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      responses:
+        '200':
+          description: Bid history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lot_id, bids]
+                properties:
+                  lot_id:
+                    type: string
+                    format: uuid
+                  bids:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bid'
+
+    post:
+      summary: Place bid on auction lot
+      description: '**Place a bid on an active auction lot**
+
+        Executes bid placement with immediate price validation and market clearing.
+        May result in immediate trade execution if bid matches existing ask.
+
+        **Performance:** <20ms for bid validation and execution
+        '
+      operationId: placeBid
+      tags:
+      - Trading
+      parameters:
+      - name: lot_id
+        in: path
+        required: true
+        description: Unique auction lot identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBid'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bid_id, status, current_price]
+                properties:
+                  bid_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [placed, executed, rejected]
+                  current_price:
+                    type: number
+                    minimum: 0
+                  execution_details:
+                    $ref: '#/components/schemas/TradeExecution'
+        '400':
+          description: Invalid bid or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: ../../../proto/openapi/common/responses/errors.yaml#/ErrorResponse
+
+  /market/prices:
+    get:
+      summary: Get current market prices
+      description: '**Retrieve real-time market prices for all traded items**
+
+        Returns current dynamic prices based on active supply/demand analysis.
+        Prices update continuously based on BazaarBot algorithms.
+
+        **Performance:** <2ms cached response with real-time updates
+        '
+      operationId: getMarketPrices
+      tags:
+      - Market Data
+      parameters:
+      - name: item_ids
+        in: query
+        description: Comma-separated list of item IDs to query
+        schema:
+          type: string
+      - name: region
+        in: query
+        description: Filter by game region
+        schema:
+          type: string
+          enum: [north_america, europe, asia, south_america, australia]
+      responses:
+        '200':
+          description: Current market prices
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [prices, last_updated]
+                properties:
+                  prices:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/MarketPrice'
+                  last_updated:
+                    type: string
+                    format: date-time
+
+  /market/analytics:
+    get:
+      summary: Get market analytics
+      description: '**Retrieve comprehensive market analytics and trends**
+
+        Provides price predictions, volume analysis, and market health indicators.
+
+        **Performance:** <10ms for analytics computation
+        '
+      operationId: getMarketAnalytics
+      tags:
+      - Analytics
+      parameters:
+      - name: timeframe
+        in: query
+        description: Analysis timeframe
+        schema:
+          type: string
+          enum: [1h, 6h, 24h, 7d, 30d]
+          default: 24h
+      - name: item_type
+        in: query
+        description: Filter by item type
+        schema:
+          type: string
+          enum: [weapons, armor, resources, consumables, crafting_materials]
+      responses:
+        '200':
+          description: Market analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketAnalytics'
+
+  /trader/{player_id}/history:
+    get:
+      summary: Get trader's trading history
+      description: '**Retrieve complete trading history for a player**
+
+        Returns all trades, bids, and market activity for analysis and reputation calculation.
+
+        **Performance:** <15ms for history retrieval with pagination
+        '
+      operationId: getTraderHistory
+      tags:
+      - Analytics
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        description: Player identifier
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        description: Maximum number of records
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        description: Pagination offset
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Trading history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [player_id, trades, total_count]
+                properties:
+                  player_id:
+                    type: string
+                    format: uuid
+                  trades:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeRecord'
+                  total_count:
+                    type: integer
+                    minimum: 0
+
+components:
+  schemas:
+    AuctionLot:
+      type: object
+      required: [id, item_id, seller_id, quantity, current_price, buyout_price, time_remaining, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique auction lot identifier
+        item_id:
+          type: string
+          description: Item template identifier
+          example: "weapon_sword_001"
+        seller_id:
+          type: string
+          format: uuid
+          description: Seller player identifier
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of items in lot
+        current_price:
+          type: number
+          minimum: 0
+          description: Current dynamic price
+        buyout_price:
+          type: number
+          minimum: 0
+          description: Buyout price (optional)
+        time_remaining:
+          type: integer
+          minimum: 0
+          description: Seconds remaining in auction
+        status:
+          type: string
+          enum: [active, sold, expired, cancelled]
+          description: Lot status
+        bid_count:
+          type: integer
+          minimum: 0
+          description: Number of bids placed
+        created_at:
+          type: string
+          format: date-time
+
+    AuctionLotDetail:
+      allOf:
+      - $ref: '#/components/schemas/AuctionLot'
+      - type: object
+        properties:
+          item_details:
+            $ref: '#/components/schemas/ItemDetails'
+          bid_history:
+            type: array
+            items:
+              $ref: '#/components/schemas/Bid'
+          price_history:
+            type: array
+            items:
+              $ref: '#/components/schemas/PricePoint'
+          market_analysis:
+            $ref: '#/components/schemas/LotMarketAnalysis'
+
+    CreateAuctionLot:
+      type: object
+      required: [item_id, quantity, starting_price, duration]
+      properties:
+        item_id:
+          type: string
+          description: Item template identifier
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        starting_price:
+          type: number
+          minimum: 0.01
+          description: Initial price suggestion
+        buyout_price:
+          type: number
+          minimum: 0
+          description: Optional buyout price
+        duration:
+          type: integer
+          minimum: 3600
+          maximum: 604800
+          description: Auction duration in seconds (1 hour to 1 week)
+
+    Bid:
+      type: object
+      required: [id, bidder_id, amount, timestamp]
+      properties:
+        id:
+          type: string
+          format: uuid
+        bidder_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+        timestamp:
+          type: string
+          format: date-time
+        bid_type:
+          type: string
+          enum: [normal, buyout]
+
+    PlaceBid:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+          description: Bid amount
+        max_amount:
+          type: number
+          minimum: 0.01
+          description: Maximum bid amount for auto-bidding
+
+    TradeExecution:
+      type: object
+      required: [executed_at, execution_price, quantity]
+      properties:
+        executed_at:
+          type: string
+          format: date-time
+        execution_price:
+          type: number
+          minimum: 0
+        quantity:
+          type: integer
+          minimum: 1
+        counterparty_id:
+          type: string
+          format: uuid
+          description: ID of the trading counterparty
+
+    MarketPrice:
+      type: object
+      required: [item_id, current_price, volume_24h, price_change_24h]
+      properties:
+        item_id:
+          type: string
+          description: Item identifier
+        current_price:
+          type: number
+          minimum: 0
+          description: Current market price
+        volume_24h:
+          type: integer
+          minimum: 0
+          description: Trading volume in last 24 hours
+        price_change_24h:
+          type: number
+          description: Price change percentage in last 24 hours
+        predicted_price:
+          type: number
+          minimum: 0
+          description: AI-predicted price for next hour
+
+    MarketSummary:
+      type: object
+      required: [total_lots, active_traders, total_volume_24h, market_health]
+      properties:
+        total_lots:
+          type: integer
+          minimum: 0
+        active_traders:
+          type: integer
+          minimum: 0
+        total_volume_24h:
+          type: number
+          minimum: 0
+        market_health:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Market health score (0-100)
+
+    MarketAnalytics:
+      type: object
+      required: [timeframe, price_trends, volume_analysis, market_predictions]
+      properties:
+        timeframe:
+          type: string
+          enum: [1h, 6h, 24h, 7d, 30d]
+        price_trends:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PriceTrend'
+        volume_analysis:
+          $ref: '#/components/schemas/VolumeAnalysis'
+        market_predictions:
+          $ref: '#/components/schemas/MarketPredictions'
+
+    PriceTrend:
+      type: object
+      required: [item_id, trend_direction, confidence]
+      properties:
+        item_id:
+          type: string
+        trend_direction:
+          type: string
+          enum: [rising, falling, stable]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        predicted_change_percent:
+          type: number
+
+    VolumeAnalysis:
+      type: object
+      required: [total_volume, peak_hours, item_type_distribution]
+      properties:
+        total_volume:
+          type: number
+          minimum: 0
+        peak_hours:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 23
+        item_type_distribution:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+
+    MarketPredictions:
+      type: object
+      required: [next_hour, next_day, confidence_score]
+      properties:
+        next_hour:
+          type: object
+          description: Predicted market state in 1 hour
+          additionalProperties:
+            type: number
+        next_day:
+          type: object
+          description: Predicted market state in 24 hours
+          additionalProperties:
+            type: number
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    TradeRecord:
+      type: object
+      required: [id, timestamp, item_id, quantity, price, trade_type, counterparty_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        item_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        price:
+          type: number
+          minimum: 0
+        trade_type:
+          type: string
+          enum: [buy, sell]
+        counterparty_id:
+          type: string
+          format: uuid
+
+    ItemDetails:
+      type: object
+      required: [id, name, type, rarity, description]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [weapons, armor, resources, consumables, crafting_materials]
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        description:
+          type: string
+        stats:
+          type: object
+          additionalProperties: true
+
+    PricePoint:
+      type: object
+      required: [timestamp, price, volume]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        price:
+          type: number
+          minimum: 0
+        volume:
+          type: integer
+          minimum: 0
+
+    LotMarketAnalysis:
+      type: object
+      required: [demand_score, supply_score, price_stability, recommended_action]
+      properties:
+        demand_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        supply_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        price_stability:
+          type: number
+          minimum: 0
+          maximum: 100
+        recommended_action:
+          type: string
+          enum: [buy_now, wait, cancel_lot]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer token authentication for trading operations**
+
+        Use `Authorization: Bearer {token}` header for API access.
+
+        Trading operations require valid player authentication.
+        '

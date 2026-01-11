@@ -1178,6 +1178,11 @@ paths:
           type: boolean
           default: false
           description: Include per-player usage statistics
+      - name: time_range
+        in: query
+        schema:
+          $ref: '#/components/schemas/TimeRange'
+        description: Custom time range for analysis
       responses:
         '200':
           description: Weapon analytics retrieved successfully
@@ -1670,6 +1675,8 @@ components:
         next_turn:
           type: integer
           description: Next turn number
+        action_result:
+          $ref: '#/components/schemas/CombatActionResult'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%.'
     CombatSessionState:
@@ -1785,6 +1792,16 @@ components:
             - neutral
             description: Combat team assignment
             example: red
+          inventory:
+            type: array
+            items:
+              $ref: '#/components/schemas/CombatItem'
+            description: Combat inventory items
+          abilities:
+            type: array
+            items:
+              $ref: '#/components/schemas/CombatAbility'
+            description: Combat abilities
       description: 'BACKEND NOTE: SOLID inheritance from CharacterEntity. Fields ordered
         for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatParticipantState:
@@ -2180,6 +2197,11 @@ components:
               type: number
               format: float
           description: Detailed breakdown of damage calculation
+        elemental_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ElementalEffect'
+          description: Elemental damage effects applied
         timestamp:
           type: string
           format: date-time
@@ -2259,6 +2281,11 @@ components:
               additionalProperties:
                 type: integer
               description: Usage by game region
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/WeaponAnalyticsItem'
+              description: Detailed weapon analytics items
         performance_metrics:
           type: object
           required:
@@ -2349,6 +2376,139 @@ components:
         Cached for performance with configurable TTL based on period."
 
         '
+    CombatItem:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        type:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - consumable
+          - implant
+        damage:
+          type: integer
+          minimum: 0
+        ammo:
+          type: integer
+          minimum: 0
+        durability:
+          type: integer
+          minimum: 0
+      description: Combat item with performance optimizations
+    CombatAbility:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        type:
+          type: string
+          enum:
+          - attack
+          - defense
+          - heal
+          - buff
+        damage:
+          type: integer
+          minimum: 0
+        cooldown:
+          type: integer
+          minimum: 0
+        last_used:
+          type: string
+          format: date-time
+      description: Combat ability with cooldown tracking
+    CombatActionResult:
+      type: object
+      required:
+      - action_id
+      - participant
+      - action_type
+      - timestamp
+      - success
+      properties:
+        action_id:
+          type: string
+        participant:
+          type: string
+        action_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatEffect'
+        success:
+          type: boolean
+      description: Result of a combat action
+    ElementalEffect:
+      type: object
+      required:
+      - type
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+        value:
+          type: integer
+      description: Elemental damage effect
+    TimeRange:
+      type: object
+      required:
+      - start_time
+      - end_time
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+      description: Time range filter for analytics
+    WeaponAnalyticsItem:
+      type: object
+      required:
+      - weapon_type
+      - total_damage
+      - accuracy
+      - usage_count
+      properties:
+        weapon_type:
+          type: string
+        total_damage:
+          type: integer
+        accuracy:
+          type: number
+          minimum: 0
+          maximum: 1
+        usage_count:
+          type: integer
+      description: Weapon performance analytics
     CharacterEntity:
       allOf:
       - type: object

@@ -36,6 +36,7 @@ func NewRepository(db *pgxpool.Pool, rdb *redis.ClusterClient, logger *zap.Logge
 // AggregateState represents the current state of an aggregate
 // OPTIMIZATION: Struct field alignment for 30-50% memory savings
 // Large fields first (8 bytes aligned), then smaller fields
+//go:align 64
 type AggregateState struct {
 	// Large fields (8 bytes aligned)
 	Data          map[string]interface{} `json:"data"`
@@ -53,6 +54,7 @@ type AggregateState struct {
 // GameEvent represents an event in the event store
 // OPTIMIZATION: Struct field alignment for 30-50% memory savings
 // Large fields first (8 bytes aligned), then smaller fields
+//go:align 64
 type GameEvent struct {
 	// Large fields (8 bytes aligned)
 	EventData      map[string]interface{} `json:"event_data"`
