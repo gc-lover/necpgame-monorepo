@@ -1,167 +1,127 @@
-# Memory Optimization and Caching Library
+# Memory Pool Library
 
 ## Overview
 
-Enterprise-grade memory optimization library for Redis cluster configuration, memory pooling, and object reuse. Designed for MMOFPS games requiring high-performance memory management.
+Enterprise-grade memory pooling library for reducing GC pressure in hot paths. Designed for MMOFPS game servers requiring zero allocations in critical paths.
 
-## Issue: #2153
+## Issue: #1954
 
 ## Features
 
-### 1. Memory Pooling
-- Generic object pools (type-safe)
-- Buffer pools for byte slices
-- Slice pools for typed slices
-- Map pools for maps
-- Automatic size management
-
-### 2. Redis Cluster Configuration
-- Cluster client setup
-- Connection pooling optimization
-- High availability configuration
-- Automatic failover support
-
-### 3. Redis Client Configuration
-- Single instance client setup
-- Optimized connection pooling
-- Timeout configuration
-- Connection lifecycle management
+- **Response Pool**: Pooled HTTP response objects
+- **Buffer Pool**: Pooled byte buffers for temporary operations
+- **BytesBuffer Pool**: Pooled bytes.Buffer for JSON/text operations
+- **StringBuilder Pool**: Pooled strings.Builder for string concatenation
+- **Map Pool**: Pooled maps for temporary key-value operations
 
 ## Usage
 
-### Memory Pooling
+### Response Pool
 
 ```go
 import "necpgame/services/shared-go/memory"
 
-// Generic object pool
-type MyStruct struct {
-    Field1 string
-    Field2 int
+func HandleRequest() {
+    resp := memory.ResponsePool.Get().(*memory.Response)
+    defer memory.ResponsePool.Put(resp)
+    
+    resp.Reset() // Reset for reuse
+    resp.Status = 200
+    resp.Data = append(resp.Data, "response"...)
+    
+    return resp
 }
-
-pool := memory.NewPool(
-    func() *MyStruct {
-        return &MyStruct{}
-    },
-    func(obj *MyStruct) {
-        // Reset object state
-        obj.Field1 = ""
-        obj.Field2 = 0
-    },
-)
-
-// Get object from pool
-obj := pool.Get()
-defer pool.Put(obj)
-
-// Use object
-obj.Field1 = "value"
 ```
 
 ### Buffer Pool
 
 ```go
-bufferPool := memory.NewBufferPool(4096) // 4KB buffers
+import "necpgame/services/shared-go/memory"
 
-buffer := bufferPool.Get()
-defer bufferPool.Put(buffer)
-
-// Use buffer
-buffer = append(buffer, []byte("data")...)
+func ProcessData(data []byte) []byte {
+    buf := memory.GetBuffer()
+    defer memory.PutBuffer(buf)
+    
+    // Use buffer
+    buf = append(buf, data...)
+    
+    // Copy result (buffer will be reused)
+    result := make([]byte, len(buf))
+    copy(result, buf)
+    return result
+}
 ```
 
-### Slice Pool
+### BytesBuffer Pool
 
 ```go
-slicePool := memory.NewSlicePool[string](100) // Capacity 100
+import "necpgame/services/shared-go/memory"
 
-slice := slicePool.Get()
-defer slicePool.Put(slice)
-
-// Use slice
-slice = append(slice, "item1", "item2")
+func MarshalJSON(v interface{}) ([]byte, error) {
+    buf := memory.GetBytesBuffer()
+    defer memory.PutBytesBuffer(buf)
+    
+    encoder := json.NewEncoder(buf)
+    if err := encoder.Encode(v); err != nil {
+        return nil, err
+    }
+    
+    result := make([]byte, buf.Len())
+    copy(result, buf.Bytes())
+    return result, nil
+}
 ```
 
-### Redis Cluster
+### StringBuilder Pool
 
 ```go
-config := memory.DefaultRedisClusterConfig()
-config.Addrs = []string{
-    "redis1:6379",
-    "redis2:6379",
-    "redis3:6379",
-}
-config.PoolSize = 50
-config.MinIdleConns = 10
+import "necpgame/services/shared-go/memory"
 
-client, err := memory.NewRedisClusterClient(config, logger)
-if err != nil {
-    return err
+func BuildMessage(parts []string) string {
+    sb := memory.GetStringBuilder()
+    defer memory.PutStringBuilder(sb)
+    
+    for _, part := range parts {
+        sb.WriteString(part)
+    }
+    
+    return sb.String()
 }
-defer client.Close()
 ```
 
-### Redis Client
+### Map Pool
 
 ```go
-config := memory.DefaultRedisClientConfig()
-config.Addr = "localhost:6379"
-config.PoolSize = 25
-config.MinIdleConns = 8
+import "necpgame/services/shared-go/memory"
 
-client, err := memory.NewRedisClient(config, logger)
-if err != nil {
-    return err
+func ProcessMetadata(metadata map[string]interface{}) {
+    temp := memory.GetMap()
+    defer memory.PutMap(temp)
+    
+    // Use temporary map
+    temp["key"] = "value"
+    
+    // Process
+    process(temp)
 }
-defer client.Close()
 ```
-
-## Performance Benefits
-
-- **Memory Pooling**: 30-50% reduction in GC pressure
-- **Object Reuse**: Zero allocations in hot paths
-- **Redis Pooling**: Reduced connection overhead
-- **Cluster Support**: High availability and load distribution
 
 ## Best Practices
 
-1. **Use pools for hot paths**: Objects created frequently
-2. **Reset objects before returning**: Clear state in reset function
-3. **Size pools appropriately**: Balance memory vs. performance
-4. **Monitor pool usage**: Track Get/Put ratios
-5. **Configure Redis pools**: Adjust based on load
+1. **Always Reset**: Reset pooled objects before use
+2. **Always Put**: Use defer to ensure objects are returned to pool
+3. **Copy Results**: Copy data from pooled buffers before returning
+4. **Profile First**: Use benchmarks to identify hot paths
+5. **Pool Hot Objects**: Only pool objects allocated >1000 times/sec
 
-## Integration
+## Performance Targets
 
-This library can be used in all Go services:
+- **Allocations**: 0 allocs/op in hot paths
+- **Latency**: <100μs per operation
+- **Memory**: Minimal overhead from pooling
 
-```go
-// In service.go
-type Service struct {
-    redis    *redis.ClusterClient
-    objPool  *memory.Pool[MyObject]
-    bufPool  *memory.BufferPool
-    // ...
-}
+## References
 
-func NewService() *Service {
-    // Redis cluster
-    redisConfig := memory.DefaultRedisClusterConfig()
-    redisConfig.Addrs = []string{"redis1:6379", "redis2:6379"}
-    redisClient, _ := memory.NewRedisClusterClient(redisConfig, logger)
-
-    // Memory pools
-    objPool := memory.NewPool(
-        func() *MyObject { return &MyObject{} },
-        func(obj *MyObject) { *obj = MyObject{} },
-    )
-    bufPool := memory.NewBufferPool(4096)
-
-    return &Service{
-        redis:   redisClient,
-        objPool: objPool,
-        bufPool: bufPool,
-    }
-}
-```
+- Memory Allocation Optimization Guide: `.cursor/guides/MEMORY_ALLOCATION_OPTIMIZATION.md`
+- Performance Agent Rules: `.cursor/rules/agent-performance.mdc`
+- Performance Enforcement: `.cursor/PERFORMANCE_ENFORCEMENT.md`
