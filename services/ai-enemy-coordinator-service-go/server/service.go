@@ -13,7 +13,7 @@ import (
 
 // Service defines the business logic interface
 type Service interface {
-	SpawnAiEnemy(ctx context.Context, req api.SpawnAiEnemyRequest) (*api.AiCoordinationResponse, error)
+	SpawnAiEnemy(ctx context.Context, req api.AiSpawnRequest) (*api.AiCoordinationResponse, error)
 	// TODO: Add other business methods
 }
 
