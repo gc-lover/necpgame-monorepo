@@ -27,6 +27,12 @@
 КРИТИЧНО: После завершения работы над задачей ОБЯЗАТЕЛЬНО делать коммит! Одна задача = один коммит!
 Формат коммита: [agent] {type}: {desc}\n\nRelated Issue: #{number}
 
+ВАЖНО: ТЫ МОЖЕШЬ ВЫПОЛНЯТЬ ЛЮБУЮ РОЛЬ АГЕНТА!
+- Определи тип задачи (API, Backend, Content, Database и т.д.)
+- Изучи правила целевого агента из `.cursor/rules/agent-{role}.mdc`
+- Работай согласно правилам выбранной роли
+- Агент не ограничен одной ролью - можешь работать как API Designer, Backend, Content Writer, Database и т.д.
+
 Все роли агентов: @.cursor/rules/agent-api-designer.mdc @.cursor/rules/agent-architect.mdc @.cursor/rules/agent-autonomy.mdc @.cursor/rules/agent-backend.mdc @.cursor/rules/agent-content-writer.mdc @.cursor/rules/agent-database.mdc @.cursor/rules/agent-devops.mdc @.cursor/rules/agent-game-balance.mdc @.cursor/rules/agent-idea-writer.mdc @.cursor/rules/agent-network.mdc @.cursor/rules/agent-performance.mdc @.cursor/rules/agent-qa.mdc @.cursor/rules/agent-release.mdc @.cursor/rules/agent-security.mdc @.cursor/rules/agent-ue5.mdc @.cursor/rules/agent-ui-ux-designer.mdc @.cursor/rules/always.mdc @.cursor/rules/linter-emoji-ban.mdc
 
 Базовый сценарий: @.cursor/AGENT_QUICK_START.md
@@ -312,7 +318,16 @@ await mcp_github_update_project_item({
 ```
 
 ### 2. Определение роли агента
-На основе содержимого задачи выбрать подходящую роль:
+
+**КРИТИЧНО: ТЫ МОЖЕШЬ ВЫПОЛНЯТЬ ЛЮБУЮ РОЛЬ АГЕНТА!**
+
+Агент не ограничен одной ролью. На основе содержимого задачи:
+1. Определи тип задачи и подходящую роль агента
+2. Изучи правила целевого агента из `.cursor/rules/agent-{role}.mdc`
+3. Работай согласно правилам выбранной роли
+4. Используй знания из правил целевого агента для качественного выполнения задачи
+
+**Таблица соответствия типов задач и ролей:**
 
 | Тип задачи | Агент | Правило |
 |------------|-------|---------|
@@ -331,6 +346,14 @@ await mcp_github_update_project_item({
 | Безопасность, anti-cheat | Security | `agent-security.mdc` |
 | UE5 клиент, C++ | UE5 | `agent-ue5.mdc` |
 | UI/UX дизайн, wireframes | UI/UX Designer | `agent-ui-ux-designer.mdc` |
+
+**Пример работы:**
+- Задача по API → изучи `agent-api-designer.mdc` → работай как API Designer
+- Задача по Backend → изучи `agent-backend.mdc` → работай как Backend
+- Задача по Content → изучи `agent-content-writer.mdc` → работай как Content Writer
+- И так далее для любой роли
+
+**Правило:** Изучи правила целевого агента перед выполнением задачи и следуй им!
 
 ### 3. Выполнение задачи
 - Следовать правилам выбранного агента

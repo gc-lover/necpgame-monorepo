@@ -59,6 +59,9 @@ mcp_github_list_issues({
 - [ ] **Struct Field Alignment** - поля упорядочены по размеру (большие → маленькие)
 - [ ] **Context Deadlines** - все внешние вызовы имеют timeout
 - [ ] **DB Connection Pool** - настроен правильно (MaxOpenConns: 25-50)
+- [ ] **HTTP Server Timeouts** - ReadTimeout, WriteTimeout, IdleTimeout, ReadHeaderTimeout настроены
+- [ ] **HTTP Server Headers** - MaxHeaderBytes ограничен (1MB), Keep-Alive настроен
+- [ ] **JSON Encoding** - SetEscapeHTML(false) для hot path (30-50% быстрее)
 - [ ] **Health/Metrics endpoints** - `/health` и `/metrics` работают
 - [ ] **Structured Logging** - JSON формат, нет `fmt.Println`
 - [ ] **Error Handling** - все ошибки обработаны, не игнорируются
@@ -73,6 +76,9 @@ mcp_github_list_issues({
 - [ ] **Lock-Free** - используется `atomic` вместо `mutex` для простых операций
 - [ ] **String vs []byte** - в hot path используется `[]byte`
 - [ ] **Zero Allocations** - бенчмарки показывают 0 allocs/op для critical path
+- [ ] **JSON Optimization** - SetEscapeHTML(false), pre-allocated encoders для hot path
+- [ ] **HTTP Compression** - gzip middleware для больших ответов (>1KB)
+- [ ] **Rate Limiting** - защита от перегрузки для public endpoints
 
 ### [OK] Уровень 3: Game Servers (для real-time сервисов)
 
@@ -85,6 +91,7 @@ mcp_github_list_issues({
 - [ ] **Adaptive Tick Rate** - тикрейт адаптируется под нагрузку
 - [ ] **GC Tuning** - `GOGC` настроен (обычно 50 для game servers)
 - [ ] **Profiling Enabled** - `pprof` endpoints доступны (на отдельном порту)
+- [ ] **PGO Compilation** - Profile-Guided Optimization (3-15% прирост производительности)
 
 ### [OK] Уровень 4: MMO Patterns (для MMO/FPS игр)
 
@@ -109,6 +116,9 @@ mcp_github_list_issues({
 - [ ] **Feature Flags** - graceful degradation
 - [ ] **Load Shedding** - backpressure handling
 - [ ] **FlatBuffers** - ultra-low latency (если Protobuf bottleneck)
+- [ ] **HTTP/2 Support** - multiplexing для параллельных запросов
+- [ ] **HTTP Caching** - ETag, Cache-Control headers для статических данных
+- [ ] **JSON Alternatives** - jsoniter/easyjson для критичных endpoints (>10K RPS)
 
 ## [SEARCH] Как проверять
 
@@ -123,7 +133,11 @@ python scripts/migrations/validate-all-migrations.py  # проверяет enter
 python scripts/tools/openapi/validate-domains-openapi.py    # проверяет OpenAPI домены
 
 # Или для генерации всех enterprise-grade сервисов:
-python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml  # включает валидацию
+python scripts/generators/services/generate-all-services.py services --parallel 3
+
+# После генерации проверьте struct alignment:
+cd services/{service}-go
+fieldalignment ./pkg/api/...
 ```
 
 **Output:**
@@ -175,6 +189,15 @@ grep -r "zap\." server/
 
 # 8. Profiling
 grep -r "pprof" main.go
+
+# 9. HTTP Server timeouts
+grep -r "ReadHeaderTimeout\|MaxHeaderBytes" main.go
+
+# 10. JSON optimization
+grep -r "SetEscapeHTML" internal/handlers/
+
+# 11. PGO (optional but recommended)
+ls default.pgo 2>/dev/null || echo "PGO profile not found (optional)"
 ```
 
 ### Ручная проверка (опционально):
@@ -235,6 +258,8 @@ golangci-lint run
 - [x] Memory pooling for response objects
 - [x] Batch DB queries (1 query instead of N)
 - [x] Context timeouts (100ms for external calls)
+- [x] HTTP Server timeouts (ReadTimeout, WriteTimeout, ReadHeaderTimeout)
+- [x] JSON encoding optimized (SetEscapeHTML(false) for hot path)
 - [x] Struct alignment (checked with fieldalignment)
 - [x] Zero allocations in hot path (benchmarks)
 
@@ -255,14 +280,13 @@ Issue: #123
 - name: Validate Domain OpenAPI Specs
   run: python scripts/openapi/validate-domains-openapi.py
 
-- name: Optimize Struct Alignment (30-50% memory savings)
-  run: python scripts/batch-optimize-openapi-struct-alignment.py --dry-run
-
 - name: Generate Enterprise-Grade Services
-  run: python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
+  run: python scripts/generators/services/generate-all-services.py services --parallel 3
 
-- name: Check struct alignment
-  run: fieldalignment ./...
+- name: Check struct alignment (30-50% memory savings)
+  run: |
+    cd services/{service}-go
+    fieldalignment ./pkg/api/...
 
 - name: Check benchmarks
   run: |
@@ -297,7 +321,7 @@ Issue: #123
 # 4. Применяй оптимизации:
 # - Используй enterprise-grade domain архитектуру (SOLID/DRY inheritance)
 # - Обнови OpenAPI specs для domain inheritance (НЕ дублируй общие поля!)
-# - Перегенерируй сервис: python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
+# - Перегенерируй сервис: python scripts/generators/services/generate-all-services.py services
 # - Используй шаблоны из .cursor/templates/go-service-main-template.go
 # - Следуй Performance Bible
 # - Валидируй после каждого изменения

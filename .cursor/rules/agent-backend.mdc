@@ -21,16 +21,21 @@ Implement Go services using **Enterprise-grade Domain Architecture**, OpenAPI co
 # 1. Validation
 python scripts/tools/openapi/validate-domains-openapi.py --domain {domain}
 
-# 2. Struct Alignment (30-50% memory savings)
-python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{service}-service/main.yaml
+# 2. Generate Service (OGEN generation)
+python scripts/generators/services/generate-all-services.py services --parallel 3
 
-# 3. Generate Service (Domain Inheritance)
-python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
+# 3. Struct Alignment Check (30-50% memory savings)
+# Проверка ПОСЛЕ генерации - fieldalignment анализирует сгенерированный код
+cd services/{service}-go
+fieldalignment ./pkg/api/...
+# Если проблемы - исправьте порядок полей в OpenAPI спецификации (large → small)
 
-# 4. Batch Generation (All Domains)
-python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
+# 4. Validation (после генерации)
+/backend-validate-optimizations #{issue}
 ```
 **Benefits:** Domain inheritance, strict typing, optimistic locking, memory pooling, zero allocs.
+
+**Struct Alignment:** Применяется в OpenAPI спецификациях (порядок полей large → small) и проверяется через `fieldalignment` ПОСЛЕ генерации.
 
 ### Generators
 1.  **ogen (Recommended):** JSON REST. 90% faster than reflection. Use for System/Meta services (<1000 RPS).
@@ -99,7 +104,8 @@ mcp_github_add_issue_comment({
 ## ✅ Validation (MANDATORY)
 **BEFORE Coding:**
 *   Validate OpenAPI: `python scripts/tools/openapi/validate-domains-openapi.py`
-*   Optimize Structs: `python scripts/batch-optimize-openapi-struct-alignment.py --dry-run`
+*   Generate Services: `python scripts/generators/services/generate-all-services.py services`
+*   Check Struct Alignment: `fieldalignment ./pkg/api/...` (после генерации)
 
 **AFTER Generation:**
 *   Validate Migrations: `python scripts/validate-all-migrations.py`
@@ -119,9 +125,9 @@ mcp_github_add_issue_comment({
 *   **DB:** < 5ms query, Pool 25-50 conns
 
 **Techniques:**
-1.  **Level 1 (All):** Context timeouts, Struct alignment, Object pooling.
-2.  **Level 2 (>100 RPS):** Batch DB, Lock-free, Zero allocs.
-3.  **Level 3 (Game):** Spatial partition, UDP, Delta compression.
+1.  **Level 1 (All):** Context timeouts, Struct alignment, HTTP Server timeouts, JSON optimization, Object pooling.
+2.  **Level 2 (>100 RPS):** Batch DB, Lock-free, Zero allocs, HTTP compression, Rate limiting.
+3.  **Level 3 (Game):** Spatial partition, UDP, Delta compression, PGO compilation.
 *   *Guide:* `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md`
 
 ## 📦 Service Structure (SOLID)
@@ -139,7 +145,9 @@ mcp_github_add_issue_comment({
 **STRICT RULES - violations cause compilation failures:**
 
 1. **Domain Separation:** Use `.cursor/templates/openapi-service-template.yaml` template
-2. **Struct Alignment:** Order fields Large→Small (30-50% memory savings)
+2. **Struct Alignment:** Order fields Large→Small in OpenAPI schemas (30-50% memory savings)
+   - OGEN сохраняет порядок полей из OpenAPI спецификации
+   - Проверка ПОСЛЕ генерации: `fieldalignment ./pkg/api/...`
 3. **SOLID/DRY Inheritance:** Use `allOf` and `$ref` to `common/schemas/{domain}-entities.yaml`, NO field duplication
    - Наследуем базовые поля (id, timestamps, version) через `allOf` и `$ref`
    - Добавляем только уникальные поля сервиса
@@ -148,14 +156,17 @@ mcp_github_add_issue_comment({
 
 ### ogen Generation (REQUIRED)
 ```bash
-# 1. Generate from bundled spec
-python scripts/openapi/bundle-openapi-spec.py proto/openapi/{domain}/main.yaml > services/{service}-go/openapi-bundled.yaml
+# Автоматическая генерация (рекомендуется)
+python scripts/generators/services/generate-all-services.py services --parallel 3
 
-# 2. Generate API code (ALWAYS use this)
-ogen --package api --target pkg/api --config ogen.yml openapi-bundled.yaml
+# Ручная генерация (если нужно)
+# 1. Generate API code
+ogen --package api --target services/{service}-go/pkg/api --clean proto/openapi/{service}/main.yaml
 
-# 3. Fix imports (CRITICAL!)
-sed -i 's|services/.*-go/|necpgame/services/\{service\}-go/|g' pkg/api/*.go
+# 2. Struct Alignment Check (после генерации)
+cd services/{service}-go
+fieldalignment ./pkg/api/...
+# Если проблемы - исправьте порядок полей в OpenAPI спецификации (large → small)
 ```
 
 ### Import Path Standards (КРИТИЧНО!)

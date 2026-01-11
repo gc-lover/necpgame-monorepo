@@ -308,6 +308,8 @@ Backend берет задачу →
 - [OK] Benchmarks show 0 allocs/op (hot path)
 - [OK] No goroutine leaks
 - [OK] Profiling endpoints enabled
+- [OK] HTTP Server timeouts configured (ReadTimeout, WriteTimeout, ReadHeaderTimeout)
+- [OK] JSON encoding optimized (SetEscapeHTML(false) for hot path)
 - [OK] Performance targets met (<50ms P99)
 
 **Database schema готова когда:**
