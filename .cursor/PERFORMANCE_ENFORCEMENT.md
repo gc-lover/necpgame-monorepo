@@ -325,7 +325,8 @@ Backend берет задачу →
 
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 120+ оптимизаций
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист
-- `.cursor/templates/backend-*.md` - шаблоны
+- `.cursor/templates/go-service-main-template.go` - шаблон main.go
+- `.cursor/templates/README.md` - документация по шаблонам
 - `/backend-validate-optimizations` - команда
 - `/backend-refactor-service` - рефакторинг
 

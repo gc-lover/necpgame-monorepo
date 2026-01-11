@@ -38,6 +38,21 @@ static_resources:
                   prefix: "/economy"
                 route:
                   cluster: economy-service
+              # Crafting Network Service Routes
+              - match:
+                  prefix: "/crafting"
+                route:
+                  cluster: crafting-network-service
+              # Crafting Network Service WebSocket Routes
+              - match:
+                  prefix: "/ws/crafting"
+                route:
+                  cluster: crafting-network-service
+              # Crafting Network Service gRPC Routes
+              - match:
+                  prefix: "/grpc/crafting"
+                route:
+                  cluster: crafting-network-service-grpc
               # Health check
               - match:
                   path: "/health"
@@ -136,6 +151,67 @@ static_resources:
         healthy_threshold: 2
         http_health_check:
           path: "/health"
+
+  - name: crafting-network-service
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: crafting-network-service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: crafting-network-service
+                port_value: 8080
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        http_health_check:
+          path: "/health"
+    # PERFORMANCE: Circuit breaker for high-frequency crafting operations
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 10000
+          max_pending_requests: 5000
+          max_requests: 10000
+          max_retries: 3
+
+  - name: crafting-network-service-grpc
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: round_robin
+    http2_protocol_options: {}
+    load_assignment:
+      cluster_name: crafting-network-service-grpc
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: crafting-network-service
+                port_value: 9090
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        grpc_health_check:
+          service_name: "necp.crafting.v1.CraftingStreamingService"
+    # PERFORMANCE: Circuit breaker for gRPC streaming
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 5000
+          max_pending_requests: 2500
+          max_requests: 5000
+          max_retries: 3
 
 admin:
   access_log_path: /tmp/admin_access.log

@@ -56,7 +56,8 @@ type Service struct {
 
 	// Network optimizations (NEW)
 	udpTransport     *udp.Transport        // UDP transport for real-time game state
-	deltaCompressor  *udp.DeltaCompressor  // Delta compression for bandwidth optimization
+	deltaCompressor   *udp.DeltaCompressor   // Delta compression for bandwidth optimization
+	adaptiveCompressor *udp.AdaptiveCompressor // Adaptive compression algorithm selection
 	batchProcessor   *BatchProcessor       // Batch updates for syscall optimization
 	adaptiveTickRate *AdaptiveTickRate     // Adaptive tick rate based on player count
 
@@ -165,6 +166,15 @@ func (s *Service) initComponents() error {
 
 	// Delta compressor for bandwidth optimization (70-85% reduction)
 	s.deltaCompressor = udp.NewDeltaCompressor()
+
+	// Adaptive compressor for algorithm selection (LZ4/Zstd based on network conditions)
+	// Issue: #2117
+	adaptiveConfig := udp.DefaultAdaptiveCompressionConfig()
+	adaptiveConfig.Logger = s.logger
+	s.adaptiveCompressor, err = udp.NewAdaptiveCompressor(adaptiveConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create adaptive compressor")
+	}
 
 	// Batch processor for syscall optimization (95% reduction)
 	s.batchProcessor = NewBatchProcessor(BatchConfig{

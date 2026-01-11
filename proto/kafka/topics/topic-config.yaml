@@ -138,7 +138,29 @@ topics:
     cleanup_policy: delete
     compression_type: snappy
     max_message_bytes: 1048576  # 1MB
-    description: Output events from world simulations (Mesa agents, crowd simulation, aggregated signals). Consumed by economy-service and social-service.
+    description: Output events from world simulations (Mesa agents, crowd simulation, aggregated signals). Consumed by economy-service and social-service
+
+  # Crafting Domain - Real-time crafting operations
+  # Issue: #2204 - Network components for crafting system
+  - name: game.crafting.events
+    partitions: 16
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    segment_ms: 3600000      # 1 hour
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 524288  # 512KB
+    description: Crafting session and operation events (start/complete/fail/cancel)
+
+  - name: game.crafting.progress
+    partitions: 24
+    replication_factor: 3
+    retention_ms: 3600000    # 1 hour (real-time progress updates)
+    segment_ms: 600000       # 10 minutes
+    cleanup_policy: delete
+    compression_type: lz4
+    max_message_bytes: 131072  # 128KB
+    description: Real-time crafting progress updates for WebSocket clients
 
 # Consumer Groups Configuration
 consumer_groups:
@@ -199,6 +221,20 @@ consumer_groups:
     heartbeat_interval_ms: 3000
     description: Multiple services consuming simulation output events (economy, social, analytics)
 
+  crafting_processor:
+    topics: [ game.crafting.events ]
+    partitions_per_consumer: 4
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+    description: Crafting service consumers for crafting session events
+
+  crafting_progress_consumer:
+    topics: [ game.crafting.progress ]
+    partitions_per_consumer: 6
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+    description: Real-time progress consumers for WebSocket broadcasting
+
 # Performance Benchmarks
 performance_targets:
   combat_events:
@@ -230,6 +266,16 @@ performance_targets:
     throughput: 100    # events/sec (aggregated from Mesa agents)
     latency_p99: 1000  # ms (1 second acceptable for background simulation)
     durability: 0.9999    # 4 9's
+
+  crafting_events:
+    throughput: 5000   # events/sec (25k concurrent crafting sessions)
+    latency_p99: 50    # ms
+    durability: 0.99999   # 5 9's
+
+  crafting_progress:
+    throughput: 10000  # events/sec (real-time progress updates)
+    latency_p99: 10    # ms (critical for real-time updates)
+    durability: 0.9999    # 4 9's (progress can be regenerated)
 
 # Scaling Rules
 scaling_rules:

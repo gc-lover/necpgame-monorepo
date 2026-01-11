@@ -1,3 +1,4 @@
+---
 description: "Architect rules for system architecture, microservices design, component structure, data synchronization patterns. Auto-applies to architecture docs."
 globs: ["**/knowledge/implementation/architecture/**", "**/architecture/**/*.yaml", "**/architecture/**/*.md"]
 priority: 1
@@ -19,43 +20,43 @@ Structure ideas, design system architecture, define microservices, and ensure da
 *   **Performance:** Define Data Models & Tick Rates.
 
 ## 🔄 Workflow
-1.  **FIND:** `gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:architect'`
-2.  **TAKE:** `gh issue comment {number} --body '[OK] Начинаю архитектурное проектирование'` + `gh issue edit {number} --add-label 'status:in-progress'`
+1.  **FIND:** GH CLI для поиска открытых задач (см. `@.cursor/AGENT_TASK_SEARCH_WORKFLOW.md`)
+2.  **TAKE:** MCP GitHub для изменения статуса на In Progress (см. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md`)
 3.  **WORK:** Design architecture, components.
 4.  **VALIDATE:** Check against perf standards.
-5.  **HANDOFF:** `gh issue comment {number} --body '[OK] Architecture designed. Handed off to implementation teams. Issue: #{number}'` + `gh issue edit {number} --remove-label 'status:in-progress' --add-label 'agent:{next}'`
+5.  **HANDOFF:** MCP GitHub для изменения статуса на Todo и назначения следующего агента (см. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md`)
 
-## 🔄 GitHub CLI Integration
+## 🔄 GitHub MCP Integration
+
+**ВАЖНО:** Используй комбинированный подход: GH CLI для поиска, MCP GitHub для обновления статусов.
+
+**Детальный workflow:** `@.cursor/AGENT_TASK_SEARCH_WORKFLOW.md`
 
 ### Поиск задач Architect
 
+**ШАГ 1: GH CLI для поиска**
 ```bash
-# МЕТОД 1: GitHub CLI (рекомендуемый)
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:architect'
+# Поиск открытых задач
+gh issue list --repo gc-lover/necpgame-monorepo --state open --limit 30 --json number,title,state
 
-# МЕТОД 2: Поиск по названию (альтернативный)
+# Поиск по префиксу
 gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[Architect\]"
 ```
 
+**ШАГ 2: MCP GitHub для деталей и обновления**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` для полных примеров.
+
 ### Взятие задач
 
-```bash
-# Взятие задачи в работу
-gh issue comment 123 --body '[OK] Начинаю архитектурное проектирование'
-
-# Добавление лейбла статуса
-gh issue edit 123 --add-label 'status:in-progress'
-```
+**ТОЛЬКО через MCP GitHub!**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` - взятие задачи (In Progress).
 
 ### Передача задач
 
-```bash
-# Передача командам реализации
-gh issue comment 123 --body '[OK] Architecture designed. Handed off to implementation teams. Issue: #123'
+**ТОЛЬКО через MCP GitHub!**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` - передача задачи (Todo + следующий агент).
 
-# Обновление лейбла агента (зависит от типа задачи)
-gh issue edit 123 --remove-label 'agent:architect' --add-label 'agent:database'  # или другой агент
-```
+**Field IDs:** `@.cursor/GITHUB_PROJECT_FIELD_IDS.md`
 
 ## ⚡ Performance Architecture (MANDATORY)
 ### 1. Data Model
@@ -82,13 +83,35 @@ gh issue edit 123 --remove-label 'agent:architect' --add-label 'agent:database' 
 *   **Strategies:** Player ID/Region, Zone Sharding.
 *   **Leaderboards:** Redis Sorted Sets.
 
-## 🏰 Enterprise-Grade Domains
-**Context:** New architecture MUST use Domain structure.
-*   `system-domain`: Infra (Auth, Config).
-*   `specialized-domain`: Game Mechanics (Combat, Skills).
-*   `social-domain`: Chat, Guilds.
-*   `economy-domain`: Trade, Market.
-*   `world-domain`: Maps, Zones.
+## 🏰 Enterprise-Grade Domains (SOLID/DRY)
+**Context:** New architecture MUST use Domain structure with inheritance from `common/schemas/{domain}-entities.yaml`.
+
+**Домены и их entities:**
+
+*   **Infrastructure Domain:** `infrastructure-entities.yaml`
+    - Сервисы: `auth-service`, `session-service`, `user-profile-service`, `notification-service`
+    - Entities: `UserAccountEntity`, `SessionEntity`, `AuditLogEntity`, `ConfigurationEntity`
+
+*   **Game Domain:** `game-entities.yaml`
+    - Сервисы: `combat-service`, `ability-service`, `movement-service`, `item-service`, `weapon-service`
+    - Entities: `CharacterEntity`, `ItemEntity`, `WeaponEntity`, `CombatSessionEntity`, `LocationEntity`
+
+*   **Economy Domain:** `economy-entities.yaml`
+    - Сервисы: `trading-service`, `auction-service`, `currency-service`, `wallet-service`, `marketplace-service`
+    - Entities: `WalletEntity`, `TransactionEntity`, `MarketplaceListingEntity`, `AuctionEntity`
+
+*   **Social Domain:** `social-entities.yaml`
+    - Сервисы: `guild-service`, `friend-service`, `communication-service`, `relationship-service`
+    - Entities: `UserProfileEntity`, `FriendshipEntity`, `GuildEntity`, `ChatMessageEntity`
+
+*   **Seasonal Challenges Domain:** `seasonal-challenges-entities.yaml`
+    - Сервисы: `seasonal-challenges-service`, `time-trials-service`, `tournament-service`
+    - Entities: `SeasonEntity`, `ChallengeEntity`, `PlayerProgressEntity`, `RewardEntity`
+
+**SOLID/DRY Principle:**
+- Сервисы наследуют базовые поля через `allOf` и `$ref` из `common/schemas/{domain}-entities.yaml`
+- Добавляют только уникальные поля сервиса
+- НЕ дублируют общие поля (id, created_at, updated_at, version)
 
 **Handoff Info:**
 *   **API Designer:** Domain choice, Fields order, Hot paths.
@@ -141,6 +164,7 @@ gh issue edit 123 --remove-label 'agent:architect' --add-label 'agent:database' 
 *   **NO** Content writing.
 
 ## 📚 References
-*   **OpenAPI Template:** `proto/openapi/example-domain/main.yaml`
+*   **OpenAPI Template:** `.cursor/templates/openapi-service-template.yaml`
 *   **Domains:** `.cursor/DOMAIN_REFERENCE.md`
 *   **Performance:** `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md`
+*   **Templates:** `.cursor/templates/README.md`

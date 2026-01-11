@@ -1,0 +1,238 @@
+// WebRTC Peer-to-Peer Communication Protocol
+// Issue: #2077
+// PERFORMANCE: P2P for local events and small groups, reduces server load
+// Use cases: Local proximity events, temporary groups, direct player interactions
+
+syntax = "proto3";
+package necp.realtime.p2p.v1;
+
+option go_package = "github.com/gc-lover/necpgame-monorepo/proto/realtime/p2p";
+
+// ================================================================
+// P2P Signaling Messages
+// ================================================================
+
+// P2PSignalingRequest - Client → Server (request P2P connection)
+message P2PSignalingRequest {
+  // Initiator player ID
+  fixed64 initiator_id = 1;
+  
+  // Target player ID (for direct P2P)
+  fixed64 target_id = 2;
+  
+  // Group ID (for group P2P)
+  string group_id = 3;
+  
+  // P2P connection type
+  P2PConnectionType connection_type = 4;
+  
+  // Client's public IP (for NAT traversal)
+  string client_ip = 5;
+  
+  // Client's WebRTC offer (SDP)
+  string offer_sdp = 6;
+  
+  // ICE candidates from client
+  repeated ICECandidate ice_candidates = 7;
+  
+  // Request timestamp
+  int64 timestamp_ms = 8;
+}
+
+// P2PSignalingResponse - Server → Client (P2P connection info)
+message P2PSignalingResponse {
+  // Request ID for correlation
+  fixed64 request_id = 1;
+  
+  // Connection status
+  P2PConnectionStatus status = 2;
+  
+  // Target's answer (SDP) or offer (if target initiated)
+  string answer_sdp = 3;
+  
+  // Target's ICE candidates
+  repeated ICECandidate ice_candidates = 4;
+  
+  // STUN/TURN server configuration
+  repeated STUNServer stun_servers = 5;
+  repeated TURNServer turn_servers = 6;
+  
+  // Connection metadata
+  P2PConnectionMetadata metadata = 7;
+  
+  // Error message (if failed)
+  string error_message = 8;
+}
+
+// P2PConnectionType - Type of P2P connection
+enum P2PConnectionType {
+  P2P_CONNECTION_TYPE_UNKNOWN = 0;
+  P2P_CONNECTION_TYPE_DIRECT = 1;      // Direct player-to-player
+  P2P_CONNECTION_TYPE_GROUP = 2;       // Small group (2-5 players)
+  P2P_CONNECTION_TYPE_PROXIMITY = 3;   // Proximity-based (nearby players)
+  P2P_CONNECTION_TYPE_EVENT = 4;        // Event-based (temporary)
+}
+
+// P2PConnectionStatus - Status of P2P connection
+enum P2PConnectionStatus {
+  P2P_CONNECTION_STATUS_UNKNOWN = 0;
+  P2P_CONNECTION_STATUS_PENDING = 1;    // Waiting for target response
+  P2P_CONNECTION_STATUS_ESTABLISHED = 2; // Connection established
+  P2P_CONNECTION_STATUS_FAILED = 3;     // Connection failed
+  P2P_CONNECTION_STATUS_REJECTED = 4;   // Target rejected connection
+}
+
+// ICECandidate - ICE candidate for NAT traversal
+message ICECandidate {
+  string candidate = 1;
+  string sdp_mid = 2;
+  uint32 sdp_m_line_index = 3;
+  string username_fragment = 4;
+}
+
+// STUNServer - STUN server configuration
+message STUNServer {
+  string url = 1;  // e.g., "stun:stun.l.google.com:19302"
+}
+
+// TURNServer - TURN server configuration
+message TURNServer {
+  string url = 1;  // e.g., "turn:turn.example.com:3478"
+  string username = 2;
+  string credential = 3;
+}
+
+// P2PConnectionMetadata - Metadata about P2P connection
+message P2PConnectionMetadata {
+  // Connection ID
+  string connection_id = 1;
+  
+  // Target player info
+  fixed64 target_id = 2;
+  string target_name = 3;
+  
+  // Connection quality estimate
+  ConnectionQuality quality = 4;
+  
+  // Estimated latency (ms)
+  uint32 estimated_latency_ms = 5;
+  
+  // NAT type (for traversal strategy)
+  NATType nat_type = 6;
+  
+  // Connection established timestamp
+  int64 established_at_ms = 7;
+}
+
+// ConnectionQuality - Estimated connection quality
+enum ConnectionQuality {
+  CONNECTION_QUALITY_UNKNOWN = 0;
+  CONNECTION_QUALITY_EXCELLENT = 1;  // <50ms latency, low packet loss
+  CONNECTION_QUALITY_GOOD = 2;       // 50-100ms latency, low packet loss
+  CONNECTION_QUALITY_FAIR = 3;       // 100-200ms latency, moderate packet loss
+  CONNECTION_QUALITY_POOR = 4;       // >200ms latency, high packet loss
+}
+
+// NATType - NAT traversal type
+enum NATType {
+  NAT_TYPE_UNKNOWN = 0;
+  NAT_TYPE_NONE = 1;           // No NAT, direct connection possible
+  NAT_TYPE_FULL_CONE = 2;      // Full cone NAT
+  NAT_TYPE_RESTRICTED = 3;     // Restricted cone NAT
+  NAT_TYPE_PORT_RESTRICTED = 4; // Port restricted cone NAT
+  NAT_TYPE_SYMMETRIC = 5;      // Symmetric NAT (requires TURN)
+}
+
+// ================================================================
+// P2P Data Channel Messages
+// ================================================================
+
+// P2PDataMessage - Data sent over P2P data channel
+message P2PDataMessage {
+  // Message ID
+  fixed64 message_id = 1;
+  
+  // Sender player ID
+  fixed64 sender_id = 2;
+  
+  // Message type
+  P2PDataType data_type = 3;
+  
+  // Message payload (protobuf-encoded)
+  bytes payload = 4;
+  
+  // Sequence number (for ordering)
+  uint32 sequence = 5;
+  
+  // Timestamp
+  int64 timestamp_ms = 6;
+  
+  // Reliability flag
+  bool reliable = 7;
+}
+
+// P2PDataType - Type of P2P data
+enum P2PDataType {
+  P2P_DATA_TYPE_UNKNOWN = 0;
+  P2P_DATA_TYPE_GAME_STATE = 1;      // Game state update (position, etc.)
+  P2P_DATA_TYPE_EVENT = 2;            // Local event (proximity trigger)
+  P2P_DATA_TYPE_CHAT = 3;             // Direct chat message
+  P2P_DATA_TYPE_TRADE = 4;            // Trade negotiation
+  P2P_DATA_TYPE_SYNC = 5;             // State synchronization
+}
+
+// ================================================================
+// P2P Connection Management
+// ================================================================
+
+// P2PConnectionRequest - Request to establish P2P connection
+message P2PConnectionRequest {
+  fixed64 initiator_id = 1;
+  fixed64 target_id = 2;
+  P2PConnectionType type = 3;
+  string context = 4;  // Context for connection (e.g., "trade", "proximity")
+}
+
+// P2PConnectionResponse - Response to connection request
+message P2PConnectionResponse {
+  fixed64 request_id = 1;
+  bool accepted = 2;
+  string connection_id = 3;
+  string error_message = 4;
+}
+
+// P2PDisconnectRequest - Request to disconnect P2P
+message P2PDisconnectRequest {
+  string connection_id = 1;
+  fixed64 player_id = 2;
+  DisconnectReason reason = 3;
+}
+
+// DisconnectReason - Reason for disconnection
+enum DisconnectReason {
+  DISCONNECT_REASON_UNKNOWN = 0;
+  DISCONNECT_REASON_PLAYER_LEFT = 1;
+  DISCONNECT_REASON_TIMEOUT = 2;
+  DISCONNECT_REASON_ERROR = 3;
+  DISCONNECT_REASON_MANUAL = 4;
+}
+
+// ================================================================
+// P2P Service
+// ================================================================
+
+service P2PCommunicationService {
+  // RequestP2PConnection - Request P2P connection with another player
+  rpc RequestP2PConnection(P2PConnectionRequest) returns (P2PConnectionResponse);
+  
+  // ExchangeSignaling - Exchange WebRTC signaling messages
+  rpc ExchangeSignaling(P2PSignalingRequest) returns (P2PSignalingResponse);
+  
+  // StreamP2PMessages - Stream P2P messages (bidirectional)
+  rpc StreamP2PMessages(stream P2PDataMessage) returns (stream P2PDataMessage);
+  
+  // DisconnectP2P - Disconnect P2P connection
+  rpc DisconnectP2P(P2PDisconnectRequest) returns (google.protobuf.Empty);
+}
+
+import "google/protobuf/empty.proto";

@@ -1,0 +1,292 @@
+# Global Load Balancer Configuration for Distributed Player Distribution
+# Issue: #2091
+# PERFORMANCE: Geographic routing for optimal latency, regional sharding support
+
+static_resources:
+  listeners:
+  - name: global_listener
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          codec_type: auto
+          stat_prefix: global_ingress
+          route_config:
+            name: global_route
+            virtual_hosts:
+            - name: global_service
+              domains: ["*"]
+              routes:
+              # Geographic routing based on player location
+              - match:
+                  prefix: "/"
+                route:
+                  cluster_header: "x-region-cluster"
+                  timeout: 30s
+              # Health check
+              - match:
+                  path: "/health"
+                route:
+                  cluster: americas-realtime-gateway
+          http_filters:
+          # Geographic routing filter
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          # Custom filter for region detection (requires Lua or C++ filter)
+          - name: envoy.filters.http.lua
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+              inline_code: |
+                function envoy_on_request(request_handle)
+                  -- Get client IP from headers or connection
+                  local client_ip = request_handle:headers():get("x-forwarded-for")
+                  if not client_ip then
+                    client_ip = request_handle:headers():get("x-real-ip")
+                  end
+                  
+                  -- Determine region based on IP (simplified - in production use GeoIP database)
+                  local region = determine_region(client_ip)
+                  
+                  -- Set cluster header for routing
+                  request_handle:headers():add("x-region-cluster", region .. "-realtime-gateway")
+                  request_handle:headers():add("x-player-region", region)
+                end
+                
+                function determine_region(ip)
+                  -- Simplified region detection (in production use MaxMind GeoIP2 or similar)
+                  -- This is a placeholder - actual implementation would use GeoIP database
+                  if ip then
+                    -- Example: US IPs -> americas, EU IPs -> europe, etc.
+                    -- For now, default to americas
+                    return "americas"
+                  end
+                  return "americas"
+                end
+
+  # Regional clusters for distributed load balancing
+  clusters:
+  # Americas region (US, Canada, Latin America)
+  - name: americas-realtime-gateway
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: least_request
+    least_request_lb_config:
+      choice_count: 2
+    load_assignment:
+      cluster_name: americas-realtime-gateway
+      policy:
+        drop_overloads:
+        - category: drop_overload
+          drop_percentage:
+            numerator: 10
+            denominator: HUNDRED
+      endpoints:
+      # Primary data center
+      - locality:
+          region: us-east-1
+          zone: us-east-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-americas-primary
+                port_value: 8080
+            health_check_config:
+              port_value: 8080
+          load_balancing_weight: 100
+      # Secondary data center (failover)
+      - locality:
+          region: us-west-2
+          zone: us-west-2a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-americas-secondary
+                port_value: 8080
+            health_check_config:
+              port_value: 8080
+          load_balancing_weight: 50
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        http_health_check:
+          path: "/health"
+    # Circuit breaker for high load
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 50000
+          max_pending_requests: 10000
+          max_requests: 50000
+          max_retries: 3
+    # Outlier detection for unhealthy instances
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 30s
+      base_ejection_time: 30s
+      max_ejection_percent: 50
+      enforcing_consecutive_5xx: 100
+
+  # Europe region (EU, UK, Middle East, Africa)
+  - name: europe-realtime-gateway
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: least_request
+    least_request_lb_config:
+      choice_count: 2
+    load_assignment:
+      cluster_name: europe-realtime-gateway
+      endpoints:
+      - locality:
+          region: eu-west-1
+          zone: eu-west-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-europe-primary
+                port_value: 8080
+          load_balancing_weight: 100
+      - locality:
+          region: eu-central-1
+          zone: eu-central-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-europe-secondary
+                port_value: 8080
+          load_balancing_weight: 50
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        http_health_check:
+          path: "/health"
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 50000
+          max_pending_requests: 10000
+          max_requests: 50000
+          max_retries: 3
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 30s
+      base_ejection_time: 30s
+      max_ejection_percent: 50
+      enforcing_consecutive_5xx: 100
+
+  # Asia Pacific region (Asia, Oceania)
+  - name: asia-pacific-realtime-gateway
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: least_request
+    least_request_lb_config:
+      choice_count: 2
+    load_assignment:
+      cluster_name: asia-pacific-realtime-gateway
+      endpoints:
+      - locality:
+          region: ap-southeast-1
+          zone: ap-southeast-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-asia-primary
+                port_value: 8080
+          load_balancing_weight: 100
+      - locality:
+          region: ap-northeast-1
+          zone: ap-northeast-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-asia-secondary
+                port_value: 8080
+          load_balancing_weight: 50
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        http_health_check:
+          path: "/health"
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 50000
+          max_pending_requests: 10000
+          max_requests: 50000
+          max_retries: 3
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 30s
+      base_ejection_time: 30s
+      max_ejection_percent: 50
+      enforcing_consecutive_5xx: 100
+
+  # China region (isolated for compliance)
+  - name: china-realtime-gateway
+    connect_timeout: 0.25s
+    type: logical_dns
+    dns_lookup_family: V4_ONLY
+    lb_policy: least_request
+    least_request_lb_config:
+      choice_count: 2
+    load_assignment:
+      cluster_name: china-realtime-gateway
+      endpoints:
+      - locality:
+          region: cn-north-1
+          zone: cn-north-1a
+        lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: realtime-gateway-china-primary
+                port_value: 8080
+          load_balancing_weight: 100
+    health_checks:
+      - timeout: 1s
+        interval: 10s
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+        http_health_check:
+          path: "/health"
+    circuit_breakers:
+      thresholds:
+        - priority: default
+          max_connections: 50000
+          max_pending_requests: 10000
+          max_requests: 50000
+          max_retries: 3
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 30s
+      base_ejection_time: 30s
+      max_ejection_percent: 50
+      enforcing_consecutive_5xx: 100
+
+# Admin interface
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901

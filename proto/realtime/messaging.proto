@@ -1,0 +1,326 @@
+// Real-time Messaging System Protocol
+// Issue: #1978
+// PERFORMANCE: WebSocket clusters, message routing, presence system
+// Target: <50ms message delivery, 100k+ concurrent connections
+
+syntax = "proto3";
+package necp.realtime.messaging.v1;
+
+option go_package = "github.com/gc-lover/necpgame-monorepo/proto/realtime/messaging";
+
+// ================================================================
+// Messaging Messages
+// ================================================================
+
+// ChatMessage - Chat message sent between players
+message ChatMessage {
+  // Message ID
+  fixed64 message_id = 1;
+  
+  // Sender player ID
+  fixed64 sender_id = 2;
+  
+  // Message type
+  MessageType type = 3;
+  
+  // Channel/recipient
+  string channel_id = 4;  // For channel messages
+  fixed64 recipient_id = 5;  // For direct messages
+  
+  // Message content
+  string content = 6;
+  
+  // Timestamp
+  int64 timestamp_ms = 7;
+  
+  // Message metadata
+  map<string, string> metadata = 8;
+  
+  // Sequence number (for ordering)
+  uint32 sequence = 9;
+}
+
+// MessageType - Type of message
+enum MessageType {
+  MESSAGE_TYPE_UNKNOWN = 0;
+  MESSAGE_TYPE_CHANNEL = 1;      // Channel message
+  MESSAGE_TYPE_DIRECT = 2;       // Direct message
+  MESSAGE_TYPE_SYSTEM = 3;       // System message
+  MESSAGE_TYPE_ANNOUNCEMENT = 4; // Announcement
+}
+
+// ================================================================
+// Presence System
+// ================================================================
+
+// PresenceUpdate - Player presence update
+message PresenceUpdate {
+  // Player ID
+  fixed64 player_id = 1;
+  
+  // Presence status
+  PresenceStatus status = 2;
+  
+  // Current location/zone
+  string zone_id = 3;
+  
+  // Position (for proximity-based presence)
+  Vec3 position = 4;
+  
+  // Custom status message
+  string status_message = 5;
+  
+  // Timestamp
+  int64 timestamp_ms = 6;
+  
+  // Activity metadata
+  map<string, string> activity = 7;
+}
+
+// PresenceStatus - Player presence status
+enum PresenceStatus {
+  PRESENCE_STATUS_UNKNOWN = 0;
+  PRESENCE_STATUS_ONLINE = 1;
+  PRESENCE_STATUS_AWAY = 2;
+  PRESENCE_STATUS_BUSY = 3;
+  PRESENCE_STATUS_OFFLINE = 4;
+  PRESENCE_STATUS_IN_GAME = 5;
+  PRESENCE_STATUS_IN_MENU = 6;
+}
+
+// Vec3 - 3D position vector
+message Vec3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// PresenceQuery - Query for player presence
+message PresenceQuery {
+  // Querying player ID
+  fixed64 requester_id = 1;
+  
+  // Target player IDs (empty = all friends/contacts)
+  repeated fixed64 target_ids = 2;
+  
+  // Query filters
+  PresenceFilter filter = 3;
+}
+
+// PresenceFilter - Filter for presence queries
+message PresenceFilter {
+  // Filter by status
+  repeated PresenceStatus statuses = 1;
+  
+  // Filter by zone
+  repeated string zone_ids = 2;
+  
+  // Filter by proximity (within radius)
+  Vec3 center = 3;
+  float radius = 4;
+}
+
+// PresenceResponse - Response to presence query
+message PresenceResponse {
+  // Presence updates
+  repeated PresenceUpdate presences = 1;
+  
+  // Query timestamp
+  int64 timestamp_ms = 2;
+}
+
+// ================================================================
+// Message Routing
+// ================================================================
+
+// RouteMessage - Route message to appropriate cluster/node
+message RouteMessage {
+  // Message to route
+  ChatMessage message = 1;
+  
+  // Target cluster/node
+  string target_cluster = 2;
+  string target_node = 3;
+  
+  // Routing strategy
+  RoutingStrategy strategy = 4;
+  
+  // Priority
+  MessagePriority priority = 5;
+}
+
+// RoutingStrategy - Message routing strategy
+enum RoutingStrategy {
+  ROUTING_STRATEGY_UNKNOWN = 0;
+  ROUTING_STRATEGY_DIRECT = 1;      // Direct routing to target
+  ROUTING_STRATEGY_BROADCAST = 2;   // Broadcast to all nodes
+  ROUTING_STRATEGY_CLUSTER = 3;      // Route to cluster
+  ROUTING_STRATEGY_PROXIMITY = 4;    // Route based on proximity
+}
+
+// MessagePriority - Message priority
+enum MessagePriority {
+  MESSAGE_PRIORITY_UNKNOWN = 0;
+  MESSAGE_PRIORITY_LOW = 1;
+  MESSAGE_PRIORITY_NORMAL = 2;
+  MESSAGE_PRIORITY_HIGH = 3;
+  MESSAGE_PRIORITY_URGENT = 4;
+}
+
+// ================================================================
+// WebSocket Cluster Management
+// ================================================================
+
+// ClusterNodeInfo - Information about cluster node
+message ClusterNodeInfo {
+  // Node ID
+  string node_id = 1;
+  
+  // Cluster ID
+  string cluster_id = 2;
+  
+  // Node address
+  string address = 3;
+  
+  // Node status
+  NodeStatus status = 4;
+  
+  // Current load
+  float load_percent = 5;
+  
+  // Active connections
+  uint32 active_connections = 6;
+  
+  // Capacity
+  uint32 max_connections = 7;
+  
+  // Last heartbeat
+  int64 last_heartbeat_ms = 8;
+}
+
+// NodeStatus - Cluster node status
+enum NodeStatus {
+  NODE_STATUS_UNKNOWN = 0;
+  NODE_STATUS_HEALTHY = 1;
+  NODE_STATUS_DEGRADED = 2;
+  NODE_STATUS_UNHEALTHY = 3;
+  NODE_STATUS_OFFLINE = 4;
+}
+
+// ClusterJoinRequest - Request to join cluster
+message ClusterJoinRequest {
+  // Node information
+  ClusterNodeInfo node_info = 1;
+  
+  // Join timestamp
+  int64 timestamp_ms = 2;
+}
+
+// ClusterJoinResponse - Response to cluster join
+message ClusterJoinResponse {
+  // Join result
+  bool accepted = 1;
+  
+  // Cluster configuration
+  ClusterConfig config = 2;
+  
+  // Error message (if rejected)
+  string error_message = 3;
+}
+
+// ClusterConfig - Cluster configuration
+message ClusterConfig {
+  // Cluster ID
+  string cluster_id = 1;
+  
+  // All cluster nodes
+  repeated ClusterNodeInfo nodes = 2;
+  
+  // Routing configuration
+  RoutingConfig routing = 3;
+  
+  // Replication configuration
+  ReplicationConfig replication = 4;
+}
+
+// RoutingConfig - Message routing configuration
+message RoutingConfig {
+  // Default routing strategy
+  RoutingStrategy default_strategy = 1;
+  
+  // Load balancing algorithm
+  LoadBalancingAlgorithm load_balancing = 2;
+  
+  // Failover configuration
+  FailoverConfig failover = 3;
+}
+
+// LoadBalancingAlgorithm - Load balancing algorithm
+enum LoadBalancingAlgorithm {
+  LOAD_BALANCING_ALGORITHM_UNKNOWN = 0;
+  LOAD_BALANCING_ALGORITHM_ROUND_ROBIN = 1;
+  LOAD_BALANCING_ALGORITHM_LEAST_CONNECTIONS = 2;
+  LOAD_BALANCING_ALGORITHM_LEAST_LOAD = 3;
+  LOAD_BALANCING_ALGORITHM_HASH = 4;
+}
+
+// FailoverConfig - Failover configuration
+message FailoverConfig {
+  // Enable failover
+  bool enabled = 1;
+  
+  // Failover timeout (ms)
+  uint32 timeout_ms = 2;
+  
+  // Retry attempts
+  uint32 retry_attempts = 3;
+}
+
+// ReplicationConfig - Message replication configuration
+message ReplicationConfig {
+  // Enable replication
+  bool enabled = 1;
+  
+  // Replication factor
+  uint32 replication_factor = 2;
+  
+  // Replication strategy
+  ReplicationStrategy strategy = 3;
+}
+
+// ReplicationStrategy - Replication strategy
+enum ReplicationStrategy {
+  REPLICATION_STRATEGY_UNKNOWN = 0;
+  REPLICATION_STRATEGY_SYNC = 1;    // Synchronous replication
+  REPLICATION_STRATEGY_ASYNC = 2;   // Asynchronous replication
+  REPLICATION_STRATEGY_QUORUM = 3;  // Quorum-based replication
+}
+
+// ================================================================
+// Messaging Service
+// ================================================================
+
+service MessagingService {
+  // SendMessage - Send chat message
+  rpc SendMessage(ChatMessage) returns (google.protobuf.Empty);
+  
+  // StreamMessages - Stream messages (bidirectional)
+  rpc StreamMessages(stream ChatMessage) returns (stream ChatMessage);
+  
+  // UpdatePresence - Update player presence
+  rpc UpdatePresence(PresenceUpdate) returns (google.protobuf.Empty);
+  
+  // QueryPresence - Query player presence
+  rpc QueryPresence(PresenceQuery) returns (PresenceResponse);
+  
+  // StreamPresence - Stream presence updates
+  rpc StreamPresence(stream PresenceQuery) returns (stream PresenceUpdate);
+  
+  // JoinCluster - Join WebSocket cluster
+  rpc JoinCluster(ClusterJoinRequest) returns (ClusterJoinResponse);
+  
+  // RouteMessage - Route message through cluster
+  rpc RouteMessage(RouteMessage) returns (google.protobuf.Empty);
+}
+
+import "google/protobuf/empty.proto";

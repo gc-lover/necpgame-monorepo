@@ -1,6 +1,17 @@
-# GitHub Issue Integration (GitHub CLI)
+# GitHub Integration (УСТАРЕЛО)
 
-## Overview
+**⚠️ ВНИМАНИЕ: Этот документ УСТАРЕЛ!**
+
+Используй комбинированный подход:
+- **GH CLI** для поиска задач
+- **MCP GitHub** для обновления статусов в Projects
+
+**Актуальная документация:**
+- `@.cursor/MCP_GITHUB_GUIDE.md` - работа с MCP GitHub (поиск, статусы, workflow)
+
+---
+
+## Overview (УСТАРЕЛО)
 Commands for managing GitHub Issues and task lifecycle using GitHub CLI.
 
 ## Core Commands

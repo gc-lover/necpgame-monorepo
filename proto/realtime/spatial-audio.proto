@@ -1,0 +1,319 @@
+// Real-time Spatial Audio System Protocol
+// Issue: #2003
+// PERFORMANCE: Immersive 3D sound with <50ms latency, HRTF, Doppler effect
+// Target: Real-time spatial audio for game events, not voice chat
+
+syntax = "proto3";
+package necp.realtime.spatialaudio.v1;
+
+option go_package = "github.com/gc-lover/necpgame-monorepo/proto/realtime/spatialaudio";
+
+// ================================================================
+// Spatial Audio Messages
+// ================================================================
+
+// AudioSource - 3D audio source in game world
+message AudioSource {
+  // Source ID
+  string source_id = 1;
+  
+  // Source type
+  AudioSourceType type = 2;
+  
+  // 3D position
+  Vec3 position = 3;
+  
+  // Velocity (for Doppler effect)
+  Vec3 velocity = 4;
+  
+  // Audio properties
+  AudioProperties properties = 5;
+  
+  // Audio data (encoded)
+  bytes audio_data = 6;
+  
+  // Timestamp
+  int64 timestamp_ms = 7;
+  
+  // Source metadata
+  map<string, string> metadata = 8;
+}
+
+// AudioSourceType - Type of audio source
+enum AudioSourceType {
+  AUDIO_SOURCE_TYPE_UNKNOWN = 0;
+  AUDIO_SOURCE_TYPE_WEAPON = 1;      // Weapon fire, reload
+  AUDIO_SOURCE_TYPE_EXPLOSION = 2;   // Explosions, impacts
+  AUDIO_SOURCE_TYPE_VEHICLE = 3;     // Vehicle engines, movement
+  AUDIO_SOURCE_TYPE_ENVIRONMENT = 4; // Environmental sounds
+  AUDIO_SOURCE_TYPE_NPC = 5;         // NPC voices, footsteps
+  AUDIO_SOURCE_TYPE_PLAYER = 6;      // Player actions
+  AUDIO_SOURCE_TYPE_AMBIENT = 7;     // Ambient sounds
+}
+
+// Vec3 - 3D position vector
+message Vec3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// AudioProperties - Audio source properties
+message AudioProperties {
+  // Volume (0.0 - 1.0)
+  float volume = 1;
+  
+  // Pitch (0.5 - 2.0)
+  float pitch = 2;
+  
+  // Attenuation distance (max audible range)
+  float max_distance = 3;
+  
+  // Rolloff factor (attenuation curve)
+  float rolloff_factor = 4;
+  
+  // Min distance (full volume within this range)
+  float min_distance = 5;
+  
+  // Loop flag
+  bool loop = 6;
+  
+  // 3D positioning enabled
+  bool spatial_enabled = 7;
+  
+  // Doppler effect enabled
+  bool doppler_enabled = 8;
+  
+  // Occlusion enabled (sound blocked by walls)
+  bool occlusion_enabled = 9;
+}
+
+// ================================================================
+// Spatial Audio Processing
+// ================================================================
+
+// AudioListener - Player's audio listener (ear position)
+message AudioListener {
+  // Player ID
+  fixed64 player_id = 1;
+  
+  // Listener position
+  Vec3 position = 2;
+  
+  // Listener orientation (forward, up vectors)
+  Vec3 forward = 3;
+  Vec3 up = 4;
+  
+  // Listener velocity (for Doppler)
+  Vec3 velocity = 5;
+  
+  // Audio settings
+  AudioSettings settings = 6;
+}
+
+// AudioSettings - Player audio settings
+message AudioSettings {
+  // Master volume (0.0 - 1.0)
+  float master_volume = 1;
+  
+  // SFX volume
+  float sfx_volume = 2;
+  
+  // Music volume
+  float music_volume = 3;
+  
+  // Voice volume (for voice chat)
+  float voice_volume = 4;
+  
+  // HRTF enabled (Head-Related Transfer Function)
+  bool hrtf_enabled = 5;
+  
+  // 3D audio enabled
+  bool spatial_audio_enabled = 6;
+  
+  // Audio quality
+  AudioQuality quality = 7;
+}
+
+// AudioQuality - Audio quality level
+enum AudioQuality {
+  AUDIO_QUALITY_UNKNOWN = 0;
+  AUDIO_QUALITY_LOW = 1;      // 22kHz, mono
+  AUDIO_QUALITY_MEDIUM = 2;   // 44kHz, stereo
+  AUDIO_QUALITY_HIGH = 3;      // 48kHz, stereo
+  AUDIO_QUALITY_ULTRA = 4;     // 96kHz, surround
+}
+
+// ================================================================
+// HRTF (Head-Related Transfer Function)
+// ================================================================
+
+// HRTFConfig - HRTF configuration for 3D audio
+message HRTFConfig {
+  // HRTF enabled
+  bool enabled = 1;
+  
+  // HRTF profile (left/right ear)
+  string profile = 2;
+  
+  // Interaural time difference (ITD)
+  float itd = 3;
+  
+  // Interaural level difference (ILD)
+  float ild = 4;
+  
+  // Head radius (for ITD calculation)
+  float head_radius = 5;
+}
+
+// ================================================================
+// Doppler Effect
+// ================================================================
+
+// DopplerEffect - Doppler effect calculation
+message DopplerEffect {
+  // Source velocity
+  Vec3 source_velocity = 1;
+  
+  // Listener velocity
+  Vec3 listener_velocity = 2;
+  
+  // Speed of sound (m/s)
+  float speed_of_sound = 3;
+  
+  // Doppler factor (calculated)
+  float doppler_factor = 4;
+  
+  // Pitch shift (calculated)
+  float pitch_shift = 5;
+}
+
+// ================================================================
+// Audio Occlusion
+// ================================================================
+
+// AudioOcclusion - Sound occlusion by obstacles
+message AudioOcclusion {
+  // Occlusion enabled
+  bool enabled = 1;
+  
+  // Occlusion factor (0.0 = fully blocked, 1.0 = no occlusion)
+  float occlusion_factor = 2;
+  
+  // Obstacle positions (for raycasting)
+  repeated Vec3 obstacles = 3;
+  
+  // Direct path blocked
+  bool direct_path_blocked = 4;
+  
+  // Reverb enabled (for occluded sounds)
+  bool reverb_enabled = 5;
+}
+
+// ================================================================
+// Audio Streaming
+// ================================================================
+
+// AudioStreamRequest - Request audio stream
+message AudioStreamRequest {
+  // Player ID (listener)
+  fixed64 player_id = 1;
+  
+  // Zone/region ID
+  string zone_id = 2;
+  
+  // Requested audio sources (empty = all in range)
+  repeated string source_ids = 3;
+  
+  // Max distance filter
+  float max_distance = 4;
+  
+  // Audio quality preference
+  AudioQuality quality = 5;
+}
+
+// AudioStreamResponse - Audio stream data
+message AudioStreamResponse {
+  // Audio sources in range
+  repeated AudioSource sources = 1;
+  
+  // Spatial audio data (processed)
+  bytes spatial_audio_data = 2;
+  
+  // HRTF data (if enabled)
+  HRTFConfig hrtf_config = 3;
+  
+  // Doppler effects
+  repeated DopplerEffect doppler_effects = 4;
+  
+  // Occlusion data
+  repeated AudioOcclusion occlusions = 5;
+  
+  // Timestamp
+  int64 timestamp_ms = 6;
+}
+
+// ================================================================
+// Audio Events
+// ================================================================
+
+// AudioEvent - Audio event notification
+message AudioEvent {
+  // Event type
+  AudioEventType type = 1;
+  
+  // Source ID
+  string source_id = 2;
+  
+  // Event position
+  Vec3 position = 3;
+  
+  // Event data
+  map<string, string> event_data = 4;
+  
+  // Timestamp
+  int64 timestamp_ms = 5;
+}
+
+// AudioEventType - Type of audio event
+enum AudioEventType {
+  AUDIO_EVENT_TYPE_UNKNOWN = 0;
+  AUDIO_EVENT_TYPE_PLAY = 1;      // Start playing audio
+  AUDIO_EVENT_TYPE_STOP = 2;      // Stop playing audio
+  AUDIO_EVENT_TYPE_PAUSE = 3;     // Pause audio
+  AUDIO_EVENT_TYPE_RESUME = 4;    // Resume audio
+  AUDIO_EVENT_TYPE_UPDATE = 5;    // Update audio properties
+  AUDIO_EVENT_TYPE_MOVE = 6;      // Source moved
+}
+
+// ================================================================
+// Spatial Audio Service
+// ================================================================
+
+service SpatialAudioService {
+  // StreamAudio - Stream spatial audio (bidirectional)
+  rpc StreamAudio(stream AudioStreamRequest) returns (stream AudioStreamResponse);
+  
+  // UpdateListener - Update player's audio listener position
+  rpc UpdateListener(AudioListener) returns (google.protobuf.Empty);
+  
+  // CreateAudioSource - Create new audio source
+  rpc CreateAudioSource(AudioSource) returns (google.protobuf.Empty);
+  
+  // UpdateAudioSource - Update audio source
+  rpc UpdateAudioSource(AudioSource) returns (google.protobuf.Empty);
+  
+  // DeleteAudioSource - Delete audio source
+  rpc DeleteAudioSource(DeleteAudioSourceRequest) returns (google.protobuf.Empty);
+  
+  // SendAudioEvent - Send audio event
+  rpc SendAudioEvent(AudioEvent) returns (google.protobuf.Empty);
+}
+
+// DeleteAudioSourceRequest - Request to delete audio source
+message DeleteAudioSourceRequest {
+  string source_id = 1;
+  fixed64 player_id = 2;
+}
+
+import "google/protobuf/empty.proto";

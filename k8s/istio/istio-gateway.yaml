@@ -1,0 +1,116 @@
+# Istio Gateway Configuration
+# Issue: #2166
+# Service mesh implementation - Istio integration, traffic management, observability
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: game-gateway
+  namespace: necpgame
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: game-tls
+      hosts:
+        - "api.necpgame.com"
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "api.necpgame.com"
+      tls:
+        httpsRedirect: true
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: game-gateway-vs
+  namespace: necpgame
+spec:
+  hosts:
+    - "api.necpgame.com"
+  gateways:
+    - game-gateway
+  http:
+    # Auth Service
+    - match:
+        - uri:
+            prefix: "/auth"
+      route:
+        - destination:
+            host: auth-service
+            port:
+              number: 8080
+          weight: 100
+      timeout: 5s
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+      fault:
+        delay:
+          percentage:
+            value: 0.1
+          fixedDelay: 5ms
+    # Matchmaking Service
+    - match:
+        - uri:
+            prefix: "/matchmaking"
+      route:
+        - destination:
+            host: matchmaking-service
+            port:
+              number: 8080
+          weight: 100
+      timeout: 10s
+      retries:
+        attempts: 2
+        perTryTimeout: 5s
+    # Economy Service
+    - match:
+        - uri:
+            prefix: "/economy"
+      route:
+        - destination:
+            host: economy-service
+            port:
+              number: 8080
+          weight: 100
+      timeout: 5s
+    # Crafting Service
+    - match:
+        - uri:
+            prefix: "/crafting"
+      route:
+        - destination:
+            host: crafting-network-service
+            port:
+              number: 8080
+          weight: 100
+      timeout: 5s
+    # Realtime Gateway (WebSocket)
+    - match:
+        - uri:
+            prefix: "/ws"
+      route:
+        - destination:
+            host: realtime-gateway-service
+            port:
+              number: 8080
+          weight: 100
+      timeout: 3600s
+    # Default route
+    - route:
+        - destination:
+            host: auth-service
+            port:
+              number: 8080
+          weight: 100

@@ -41,67 +41,19 @@ python scripts/validation/validate-script-types.py
 python scripts/openapi/validate-domains-openapi.py --domain {domain}
 ```
 
-### GitHub Issue Management (GitHub CLI)
-```bash
-# Поиск задач агента (Todo статус)
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend' -L 10
+### GitHub Issue Management
 
-# Взятие задачи в работу
-gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+**ВАЖНО:** Используй комбинированный подход!
+- **GH CLI** для поиска задач
+- **MCP GitHub** для обновления статусов в Projects
 
-# Передача следующему агенту
-gh issue comment 123 --body '[OK] Work completed. Handed off to Network. Issue: #123'
-
-# Закрытие завершенной задачи
-gh issue close 123 --comment 'Task completed successfully'
-```
-
-**Purpose:** Управление задачами через GitHub CLI вместо Projects
-
-**Labels для агентов:**
-- `agent:backend`, `agent:api`, `agent:database`, `agent:network`, etc.
-
-**Статусы в комментариях:**
-- `[OK] Начинаю работу` - взятие задачи
-- `[OK] Ready. Handed off to {NextAgent}` - передача
-- `Task completed successfully` - закрытие
+**Детали:**
+- `@.cursor/MCP_GITHUB_GUIDE.md` - работа с MCP GitHub (поиск, статусы, workflow)
 
 ## Usage Examples
 
-### Backend Agent Workflow (GitHub CLI)
-```bash
-# 1. Find tasks
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
-
-# 2. Take task
-gh issue comment 123 --body '[OK] Начинаю работу над задачей'
-
-# 3. Work on implementation...
-
-# 4. Validate before handoff
-/backend-validate-optimizations #123
-/backend-validate-result #123
-
-# 5. Handoff to next agent
-gh issue comment 123 --body '[OK] Backend implementation complete. Handed off to Network. Issue: #123'
-```
-
-### Database Agent Workflow (GitHub CLI)
-```bash
-# 1. Find tasks
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:database'
-
-# 2. Take task
-gh issue comment 456 --body '[OK] Начинаю работу над задачей'
-
-# 3. Create migrations...
-
-# 4. Validate
-/database-validate-result #456
-
-# 5. Apply migrations and handoff
-gh issue comment 456 --body '[OK] Database schema created. Handed off to API Designer. Issue: #456'
-```
+**ВАЖНО:** Все операции с задачами через комбинированный подход!
+См. `@.cursor/MCP_GITHUB_GUIDE.md` для полного workflow.
 
 ## Error Handling
 
@@ -115,11 +67,7 @@ gh issue comment 456 --body '[OK] Database schema created. Handed off to API Des
 - Re-run validation
 - Update GitHub status if needed
 
-## Integration with GitHub CLI
+## Integration with GitHub
 
-All validation commands now work with GitHub CLI for issue management:
-
-- Commands executed via terminal/GitHub CLI
-- Results displayed in structured format
-- Integration with GitHub Issues and labels
-- Real-time feedback via comments
+Валидация выполняется через терминал.
+Обновление статусов задач через MCP GitHub (см. `@.cursor/MCP_GITHUB_GUIDE.md`).

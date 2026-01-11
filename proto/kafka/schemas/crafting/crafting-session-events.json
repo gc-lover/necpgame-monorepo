@@ -1,0 +1,351 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/crafting-session-events.json",
+  "title": "Crafting Session Events",
+  "description": "Crafting session management events for real-time crafting operations. Memory-optimized field ordering. Expected struct size: 256 bytes.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../core/base-event.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "enum": [
+            "crafting.session.start",
+            "crafting.session.complete",
+            "crafting.session.fail",
+            "crafting.session.cancel",
+            "crafting.session.pause",
+            "crafting.session.resume"
+          ]
+        },
+        "data": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/CraftingSessionStartData"
+            },
+            {
+              "$ref": "#/definitions/CraftingSessionCompleteData"
+            },
+            {
+              "$ref": "#/definitions/CraftingSessionFailData"
+            },
+            {
+              "$ref": "#/definitions/CraftingSessionCancelData"
+            },
+            {
+              "$ref": "#/definitions/CraftingSessionPauseData"
+            },
+            {
+              "$ref": "#/definitions/CraftingSessionResumeData"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "CraftingSessionStartData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "recipe_id",
+        "player_id"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique crafting session identifier",
+          "examples": [
+            "550e8400-e29b-41d4-a716-446655440000"
+          ]
+        },
+        "recipe_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Recipe identifier being crafted",
+          "examples": [
+            "550e8400-e29b-41d4-a716-446655440001"
+          ]
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Player performing the crafting"
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CraftingMaterial"
+          },
+          "minItems": 1,
+          "maxItems": 50,
+          "description": "Materials used in crafting"
+        },
+        "estimated_duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600,
+          "description": "Estimated crafting duration in seconds",
+          "examples": [
+            300
+          ]
+        },
+        "workstation_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Workstation identifier where crafting occurs"
+        },
+        "location": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Crafting location coordinates"
+        },
+        "zone_id": {
+          "type": "string",
+          "description": "Game zone identifier",
+          "examples": [
+            "night_city_crafting_zone_01"
+          ]
+        }
+      }
+    },
+    "CraftingSessionCompleteData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "result_item_id",
+        "duration_seconds"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafting session identifier"
+        },
+        "result_item_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafted item identifier"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Actual crafting duration in seconds",
+          "examples": [
+            285
+          ]
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "poor",
+            "common",
+            "uncommon",
+            "rare",
+            "epic",
+            "legendary"
+          ],
+          "description": "Quality of crafted item"
+        },
+        "experience_gained": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Crafting experience gained"
+        },
+        "materials_used": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CraftingMaterial"
+          },
+          "description": "Materials consumed during crafting"
+        }
+      }
+    },
+    "CraftingSessionFailData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "failure_reason"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafting session identifier"
+        },
+        "failure_reason": {
+          "type": "string",
+          "enum": [
+            "insufficient_materials",
+            "recipe_error",
+            "workstation_unavailable",
+            "player_disconnect",
+            "timeout",
+            "system_error"
+          ],
+          "description": "Reason for crafting failure"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time spent before failure"
+        },
+        "materials_lost": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether materials were lost on failure"
+        }
+      }
+    },
+    "CraftingSessionCancelData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "cancel_reason"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafting session identifier"
+        },
+        "cancel_reason": {
+          "type": "string",
+          "enum": [
+            "player_request",
+            "workstation_unavailable",
+            "zone_change",
+            "combat_start"
+          ],
+          "description": "Reason for cancellation"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time spent before cancellation"
+        },
+        "materials_returned": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether materials were returned"
+        }
+      }
+    },
+    "CraftingSessionPauseData": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "pause_reason"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafting session identifier"
+        },
+        "pause_reason": {
+          "type": "string",
+          "enum": [
+            "player_afk",
+            "combat_start",
+            "system_maintenance",
+            "technical_issue"
+          ],
+          "description": "Reason for pausing crafting"
+        },
+        "pause_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when crafting was paused"
+        }
+      }
+    },
+    "CraftingSessionResumeData": {
+      "type": "object",
+      "required": [
+        "session_id"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Crafting session identifier"
+        },
+        "resume_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when crafting resumed"
+        },
+        "remaining_duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Remaining crafting duration after resume"
+        }
+      }
+    },
+    "CraftingMaterial": {
+      "type": "object",
+      "required": [
+        "material_id",
+        "quantity"
+      ],
+      "properties": {
+        "material_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Material identifier"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Material quantity used"
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "poor",
+            "common",
+            "uncommon",
+            "rare",
+            "epic"
+          ],
+          "description": "Material quality"
+        }
+      }
+    },
+    "Vector3": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate",
+          "examples": [
+            123.45
+          ]
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate",
+          "examples": [
+            67.89
+          ]
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate",
+          "examples": [
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}

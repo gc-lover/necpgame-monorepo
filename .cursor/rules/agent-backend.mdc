@@ -1,3 +1,4 @@
+---
 description: "Backend Developer rules for Go services, OpenAPI code generation, database setup, business logic. Auto-applies to Go files and OpenAPI specs."
 globs: ["**/*.go", "**/Makefile", "**/go.mod", "**/go.sum", "**/openapi*.yaml", "services/**/pkg/**", "services/**/server/**"]
 priority: 1
@@ -137,9 +138,12 @@ mcp_github_add_issue_comment({
 ### OpenAPI Spec Generation
 **STRICT RULES - violations cause compilation failures:**
 
-1. **Domain Separation:** Use `proto/openapi/example-domain/main.yaml` template
+1. **Domain Separation:** Use `.cursor/templates/openapi-service-template.yaml` template
 2. **Struct Alignment:** Order fields Large→Small (30-50% memory savings)
-3. **Inheritance:** Use `$ref` to common schemas, NO field duplication
+3. **SOLID/DRY Inheritance:** Use `allOf` and `$ref` to `common/schemas/{domain}-entities.yaml`, NO field duplication
+   - Наследуем базовые поля (id, timestamps, version) через `allOf` и `$ref`
+   - Добавляем только уникальные поля сервиса
+   - НЕ дублируем общие поля из domain entities
 4. **Performance Hints:** Add backend optimization notes in comments
 
 ### ogen Generation (REQUIRED)
@@ -270,4 +274,6 @@ Ensure tables exist (e.g., `gameplay.quest_definitions`, `narrative.npc_definiti
 ## 📚 Ссылки
 - `MCP_GITHUB_GUIDE.md` - работа с GitHub Projects
 - `PERFORMANCE_ENFORCEMENT.md` - требования к оптимизациям
-- `proto/openapi/example-domain/main.yaml` - OpenAPI шаблон
+- `.cursor/templates/openapi-service-template.yaml` - OpenAPI шаблон
+- `.cursor/templates/go-service-main-template.go` - Go service main.go шаблон
+- `.cursor/templates/README.md` - документация по шаблонам

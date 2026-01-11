@@ -1,0 +1,143 @@
+# Istio Destination Rules
+# Issue: #2166
+# Traffic management, load balancing, circuit breakers
+
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: auth-service-dr
+  namespace: necpgame
+spec:
+  host: auth-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    circuitBreaker:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: matchmaking-service-dr
+  namespace: necpgame
+spec:
+  host: matchmaking-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 200
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 200
+        maxRequestsPerConnection: 10
+        maxRetries: 2
+    circuitBreaker:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: economy-service-dr
+  namespace: necpgame
+spec:
+  host: economy-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 150
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 75
+        http2MaxRequests: 150
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+    circuitBreaker:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: crafting-network-service-dr
+  namespace: necpgame
+spec:
+  host: crafting-network-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 200
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 200
+        maxRequestsPerConnection: 10
+        maxRetries: 2
+    circuitBreaker:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: realtime-gateway-service-dr
+  namespace: necpgame
+spec:
+  host: realtime-gateway-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 500
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 1
+    circuitBreaker:
+      consecutiveErrors: 10
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50

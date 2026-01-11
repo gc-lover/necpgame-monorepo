@@ -5,8 +5,8 @@
 ## 🎯 КРИТИЧНЫЕ ТРЕБОВАНИЯ
 
 **Агенты ОБЯЗАНЫ:**
-- ✅ Использовать **GitHub CLI** для всех операций с задачами
-- ✅ Менять статусы **ПОСЛЕ** исполнения задач через лейблы и комментарии
+- ✅ Использовать **КОМБИНИРОВАННЫЙ подход**: GH CLI для поиска, MCP GitHub для обновления статусов
+- ✅ Менять статусы через **MCP GitHub** (ПОЛЯ Projects, НЕ лейблы!)
 - ✅ Назначать задачи **следующему агенту** по workflow
 - ❌ **НЕ создавать** мусорные файлы в корне проекта
 - ❌ **НЕ создавать** лишние отчеты
@@ -15,29 +15,26 @@
 
 ## 🔍 Как найти свою задачу (КРИТИЧНО!)
 
+**ВАЖНО:** Используй комбинированный подход:
+1. **GH CLI** для быстрого поиска открытых задач
+2. **MCP GitHub** для получения деталей и обновления статусов в Projects
+
 ### Правильные команды поиска задач:
 
 ```bash
-# МЕТОД 1: GitHub CLI (ПЕРВЫЙ ВЫБОР)
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:youragent'
+# ШАГ 1: GH CLI для поиска (быстрый просмотр)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --limit 30 --json number,title,state
 
-# МЕТОД 2: Поиск по названию (альтернативный)
-gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[YourAgent\]"
+# Поиск по префиксу в названии
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[Backend\]"
+
+# Поиск по лейблу (если используются)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
 ```
 
-**Статусы задач через лейблы:**
-- `status:todo` - новые задачи (опционально)
-- `status:in-progress` - в работе
-- `status:review` - на ревью
-- `status:blocked` - заблокированы
-- `status:returned` - возвращены
-- `status:done` - завершены (issue закрыта)
+**ШАГ 2:** После нахождения задачи через GH CLI → использовать MCP GitHub для получения деталей и обновления статусов.
 
-### Какие статусы искать:
-- `Status:"Todo"` - новые задачи
-- `Status:"Returned"` - возвращенные на доработку
-- `Status:"Blocked"` - заблокированные (нужно разблокировать)
-- `Status:"In Progress"` - уже взятые (не брать!)
+**Детальный workflow:** См. `@.cursor/MCP_GITHUB_GUIDE.md`
 
 ### Агенты и их префиксы в title:
 - `[Backend]` - Backend агент
@@ -50,22 +47,54 @@ gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[YourAgent
 ## 📋 4 шага работы
 
 ### 1️⃣ НАЙТИ задачу
-```bash
-# МЕТОД 1: Через GitHub CLI (рекомендуемый)
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:myagent'
 
-# МЕТОД 2: Поиск по названию (альтернативный)
-gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[MyAgent\]"
+**ШАГ 1: GH CLI для поиска**
+```bash
+# Поиск открытых задач
+gh issue list --repo gc-lover/necpgame-monorepo --state open --limit 30 --json number,title,state
+
+# Поиск по префиксу
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[Backend\]"
 ```
+
+**ШАГ 2: MCP GitHub для деталей и обновления статусов**
+См. `@.cursor/MCP_GITHUB_GUIDE.md` для детального workflow.
 
 ### 2️⃣ ВЗЯТЬ задачу
-```bash
-# Взять задачу в работу
-gh issue comment 123 --body '[OK] Начинаю работу над задачей'
 
-# Добавить лейбл статуса
-gh issue edit 123 --add-label 'status:in-progress'
+**ТОЛЬКО через MCP GitHub!**
+
+```javascript
+// 1. Найти item_id через MCP
+const items = await mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: `number:${issueNumber}`
+});
+
+// 2. Изменить статус на In Progress
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: item.id,
+  updated_field: {
+    id: '239690516', // Status field
+    value: '83d488e7' // In Progress
+  }
+});
+
+// 3. Добавить комментарий
+await mcp_github_add_issue_comment({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  issue_number: issueNumber,
+  body: '[OK] Начинаю работу над задачей'
+});
 ```
+
+**Детали:** `@.cursor/MCP_GITHUB_GUIDE.md`
 
 ### 3️⃣ РАБОТАТЬ
 - Выполнить задачу согласно требованиям
@@ -73,13 +102,38 @@ gh issue edit 123 --add-label 'status:in-progress'
 - Запустить валидацию
 
 ### 4️⃣ ПЕРЕДАТЬ
-```bash
-# Добавить комментарий о передаче
-gh issue comment 123 --body '[OK] Work complete. Handed off to NextAgent. Issue: #123'
 
-# Обновить лейблы
-gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:nextagent'
+**ТОЛЬКО через MCP GitHub!**
+
+```javascript
+// 1. Изменить статус на Todo и назначить следующего агента
+await mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: item.id,
+  updated_field: [
+    {
+      id: '239690516', // Status field
+      value: 'f75ad846' // Todo
+    },
+    {
+      id: '243899542', // Agent field
+      value: nextAgentId // ID следующего агента
+    }
+  ]
+});
+
+// 2. Добавить комментарий
+await mcp_github_add_issue_comment({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  issue_number: issueNumber,
+  body: '[OK] Work completed. Handed off to NextAgent. Issue: #123'
+});
 ```
+
+**Field IDs:** `@.cursor/GITHUB_PROJECT_FIELD_IDS.md`
 
 ---
 
@@ -114,46 +168,17 @@ gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:nextage
 
 ## ⚡ Быстрые команды
 
-### MCP GitHub Commands
-```javascript
-// Поиск задач
-const items = await mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"Backend" Status:"Todo"'
-});
+### Комбинированный подход
 
-// Взятие задачи (In Progress)
-await mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: itemId,
-  updated_field: {
-    id: '239690516', // Status field
-    value: '83d488e7' // In Progress
-  }
-});
-
-// Передача задачи (Todo + следующий агент)
-await mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: itemId,
-  updated_field: [
-    {
-      id: '239690516', // Status field
-      value: 'f75ad846' // Todo
-    },
-    {
-      id: '243899542', // Agent field
-      value: 'c60ebab1' // Network agent
-    }
-  ]
-});
+**1. Поиск через GH CLI:**
+```bash
+gh issue list --repo gc-lover/necpgame-monorepo --state open --limit 30 --json number,title,state
 ```
+
+**2. Обновление через MCP GitHub:**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` для полных примеров.
+
+**Field IDs:** `@.cursor/GITHUB_PROJECT_FIELD_IDS.md`
 
 ### Валидация
 ```bash
@@ -178,9 +203,11 @@ python scripts/openapi/validate-domains-openapi.py
 
 ## 🆘 Если проблема
 
-1. **Проверить MCP_GITHUB_GUIDE.md** - все команды MCP
-2. **Проверить GITHUB_PROJECT_CONFIG.md** - Field IDs
-3. **Проверить agent-{name}.mdc** - специфические правила
-4. **Использовать AGENT_SIMPLE_GUIDE.md** - базовый workflow
+1. **MCP_GITHUB_GUIDE.md** - все команды MCP GitHub (поиск, статусы, workflow)
+2. **GITHUB_PROJECT_FIELD_IDS.md** - Field IDs для Projects
+5. **agent-{name}.mdc** - специфические правила агента
 
-**Все агенты работают через MCP. Никаких прямых скриптов для GitHub операций!**
+**ВАЖНО:** 
+- GH CLI для поиска задач
+- MCP GitHub для обновления статусов в Projects
+- Никаких лейблов для изменения статусов!

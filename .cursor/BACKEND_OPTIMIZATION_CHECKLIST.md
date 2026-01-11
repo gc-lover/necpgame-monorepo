@@ -298,7 +298,7 @@ Issue: #123
 # - Используй enterprise-grade domain архитектуру (SOLID/DRY inheritance)
 # - Обнови OpenAPI specs для domain inheritance (НЕ дублируй общие поля!)
 # - Перегенерируй сервис: python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
-# - Используй шаблоны из .cursor/templates/backend-*.md
+# - Используй шаблоны из .cursor/templates/go-service-main-template.go
 # - Следуй Performance Bible
 # - Валидируй после каждого изменения
 ```

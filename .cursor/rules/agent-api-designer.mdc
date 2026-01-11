@@ -21,32 +21,76 @@ version: "1.0"
 
 **CRITICAL:** Все спецификации СТРОГО используют наследование (Inheritance) от Common Core. Дублирование полей ЗАПРЕЩЕНО.
 
-### Структура Директорий
+### Структура Директорий (SOLID/DRY)
+
 ```text
 proto/openapi/
-├── common/                     # SOLID/DRY Foundation
-│   ├── schemas/                # Shared Entities (Base, Game, Economy, Social)
-│   ├── responses/              # Standard Responses (Success, Error)
-│   ├── operations/crud.yaml    # Standard CRUD & Optimistic Locking
-│   └── security/               # SecuritySchemes (BearerAuth)
-├── {domain}-service/           # Service Specifications (<1000 lines)
-│   ├── main.yaml               # Service Endpoint Definition
-│   └── README.md
+├── common/                     # SOLID/DRY Foundation (ОБЯЗАТЕЛЬНО использовать!)
+│   ├── schemas/                # Domain Entities (Game, Economy, Social, Infrastructure)
+│   │   ├── game-entities.yaml           # CharacterEntity, ItemEntity, WeaponEntity
+│   │   ├── economy-entities.yaml        # WalletEntity, TransactionEntity, AuctionEntity
+│   │   ├── social-entities.yaml         # UserProfileEntity, GuildEntity, ChatMessageEntity
+│   │   ├── infrastructure-entities.yaml # UserAccountEntity, SessionEntity, AuditLogEntity
+│   │   ├── seasonal-challenges-entities.yaml # SeasonEntity, ChallengeEntity, PlayerProgressEntity
+│   │   ├── health.yaml                  # HealthResponse, DetailedHealthResponse
+│   │   └── pagination.yaml              # Pagination schemas
+│   ├── responses/              # Standard Responses
+│   │   ├── success.yaml        # OK, Created, Updated responses
+│   │   └── error.yaml          # BadRequest, NotFound, Conflict, etc.
+│   └── security/               # SecuritySchemes
+│       └── security.yaml       # BearerAuth, ApiKeyAuth
+├── {service-name}-service/     # Service Specifications (<1000 lines)
+│   ├── main.yaml               # Service Endpoint Definition (НАСЛЕДУЕТ от common!)
+│   └── README.md               # Service documentation
+└── example/                    # Enterprise-grade template example
+    ├── main.yaml               # Полный пример с domain inheritance
+    └── README.md               # Документация по шаблону
 ```
 
-### Принципы Наследования (Inheritance Pattern)
-Все сущности должны наследовать базовые поля из `common/schemas/`.
+**КРИТИЧНО:** Все сервисы ДОЛЖНЫ наследовать от `common/schemas/{domain}-entities.yaml`. Дублирование общих полей ЗАПРЕЩЕНО!
+
+### Принципы Наследования (SOLID/DRY Inheritance Pattern)
+
+**КРИТИЧНО:** Все сущности ДОЛЖНЫ наследовать базовые поля из `common/schemas/` через `allOf` и `$ref`. Дублирование общих полей ЗАПРЕЩЕНО!
+
+**Правило:** Используйте `allOf` для наследования, добавляйте только уникальные поля сервиса.
 
 ```yaml
-# Пример сервисного объекта
+# ✅ ПРАВИЛЬНО: Domain Inheritance через allOf
 CombatUnit:
+  description: Combat unit entity inheriting base structure
   allOf:
-    - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity' # Inherit common (ID, Stats)
+    - $ref: '../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity'
     - type: object
       required: [unit_type]
       properties:
-        unit_type: {type: string, enum: ['infantry', 'mech']}       # Service-specific
+        unit_type: {type: string, enum: ['infantry', 'mech']}  # Только уникальные поля
+        # Базовые поля (id, timestamps, version) наследуются автоматически!
+
+# ❌ НЕПРАВИЛЬНО: Дублирование базовых полей
+CombatUnit:
+  type: object
+  properties:
+    id: {type: string, format: uuid}              # ❌ ДУБЛИРОВАНИЕ!
+    created_at: {type: string, format: date-time} # ❌ ДУБЛИРОВАНИЕ!
+    version: {type: integer}                      # ❌ ДУБЛИРОВАНИЕ!
+    unit_type: {type: string}                    # Только это уникально
 ```
+
+**Общие компоненты для переиспользования:**
+
+1. **Health endpoints:** `../common/schemas/health.yaml#/components/schemas/HealthResponse`
+2. **Responses:** `../common/responses/success.yaml`, `../common/responses/error.yaml`
+3. **Security:** `../common/security/security.yaml#/components/securitySchemes/BearerAuth`
+4. **Domain entities:** `../common/schemas/{domain}-entities.yaml#/components/schemas/{Entity}Entity`
+
+**Домены и их entities:**
+
+- **Game Domain:** `game-entities.yaml` → `CharacterEntity`, `ItemEntity`, `WeaponEntity`, `CombatSessionEntity`
+- **Economy Domain:** `economy-entities.yaml` → `WalletEntity`, `TransactionEntity`, `MarketplaceListingEntity`, `AuctionEntity`
+- **Social Domain:** `social-entities.yaml` → `UserProfileEntity`, `FriendshipEntity`, `GuildEntity`, `ChatMessageEntity`
+- **Infrastructure Domain:** `infrastructure-entities.yaml` → `UserAccountEntity`, `SessionEntity`, `AuditLogEntity`, `ConfigurationEntity`
+- **Seasonal Challenges:** `seasonal-challenges-entities.yaml` → `SeasonEntity`, `ChallengeEntity`, `PlayerProgressEntity`
 
 ### Основные Домены
 1. **System:** `auth`, `session`, `profile` (Inherits: `infrastructure-entities.yaml`)
@@ -80,43 +124,43 @@ CombatUnit:
 - Используйте `common/operations/crud.yaml#/UpdateRequest`.
 - Поле `version` (int) инкрементируется при каждом изменении.
 
-## 4. 🔄 GitHub CLI Integration
+## 4. 🔄 GitHub MCP Integration
+
+**ВАЖНО:** Используй комбинированный подход: GH CLI для поиска, MCP GitHub для обновления статусов.
+
+**Детальный workflow:** `@.cursor/AGENT_TASK_SEARCH_WORKFLOW.md`
 
 ### Поиск задач API Designer
 
+**ШАГ 1: GH CLI для поиска**
 ```bash
-# МЕТОД 1: GitHub CLI (рекомендуемый)
-gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:api'
+# Поиск открытых задач
+gh issue list --repo gc-lover/necpgame-monorepo --state open --limit 30 --json number,title,state
 
-# МЕТОД 2: Поиск по названию (альтернативный)
+# Поиск по префиксу
 gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[API\]"
 ```
 
+**ШАГ 2: MCP GitHub для деталей и обновления**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` для полных примеров.
+
 ### Взятие задач
 
-```bash
-# Взятие задачи в работу
-gh issue comment 123 --body '[OK] Начинаю работу над API спецификациями'
-
-# Добавление лейбла статуса
-gh issue edit 123 --add-label 'status:in-progress'
-```
+**ТОЛЬКО через MCP GitHub!**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` - взятие задачи (In Progress).
 
 ### Передача задач
 
-```bash
-# Передача Backend агенту
-gh issue comment 123 --body '[OK] OpenAPI specs created. Handed off to Backend. Issue: #123'
+**ТОЛЬКО через MCP GitHub!**
+См. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md` - передача задачи (Todo + следующий агент).
 
-# Обновление лейбла агента
-gh issue edit 123 --remove-label 'agent:api' --add-label 'agent:backend'
-```
+**Field IDs:** `@.cursor/GITHUB_PROJECT_FIELD_IDS.md`
 
 ## 5. 🚀 Workflow
 
 ### Алгоритм работы
-1. **НАЙТИ:** `gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:api'`
-2. **ВЗЯТЬ:** `gh issue comment {number} --body '[OK] Начинаю работу'` + `gh issue edit {number} --add-label 'status:in-progress'`
+1. **НАЙТИ:** GH CLI для поиска открытых задач (см. `@.cursor/AGENT_TASK_SEARCH_WORKFLOW.md`)
+2. **ВЗЯТЬ:** MCP GitHub для изменения статуса на In Progress (см. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md`)
 3. **АНАЛИЗ:**
    - Если Protocol == `OpenAPI 3.0` → Work.
    - Если Protocol == `Protobuf` (Real-time) → Pass to `Network` Agent.
@@ -124,7 +168,7 @@ gh issue edit 123 --remove-label 'agent:api' --add-label 'agent:backend'
    - Создать/Обновить YAML в `proto/openapi/{domain}/{service}/`.
    - Применить Domain Separation.
    - Валидировать (Validation).
-5. **ПЕРЕДАТЬ:** `gh issue comment {number} --body '[OK] OpenAPI specs created. Handed off to Backend. Issue: #{number}'` + `gh issue edit {number} --remove-label 'status:in-progress' --add-label 'agent:backend'`
+5. **ПЕРЕДАТЬ:** MCP GitHub для изменения статуса на Todo и назначения следующего агента (см. `@.cursor/AGENT_STATUS_CHANGE_GUIDE.md`)
 
 ### Инструменты Валидации (ОБЯЗАТЕЛЬНО)
 ```bash
@@ -136,7 +180,33 @@ python scripts/validate-domains-openapi.py --domain {domain}
 python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
 ```
 
-## 5. File Constraints & Logic
+## 6. Шаблоны (ОБЯЗАТЕЛЬНО использовать!)
+
+**Все новые сервисы создавайте из шаблона для единообразия:**
+
+- **OpenAPI Service:** `.cursor/templates/openapi-service-template.yaml`
+- **Enterprise Template:** `proto/openapi/example/main.yaml` (детальный пример)
+
+**Использование:**
+```bash
+# Создание нового сервиса
+mkdir -p proto/openapi/{service-name}-service
+cp .cursor/templates/openapi-service-template.yaml proto/openapi/{service-name}-service/main.yaml
+
+# Заменить placeholders:
+# {ServiceName} → ServiceName
+# {ServiceDomain} → Domain
+# {service-name} → service-name
+# {domain} → appropriate-domain (game | economy | social | infrastructure)
+
+# Затем добавить специфичные endpoints и схемы
+```
+
+**Документация:**
+- `.cursor/templates/README.md` - краткое руководство по шаблонам
+- `proto/openapi/example/README.md` - детальное руководство по enterprise-grade шаблону
+
+## 7. File Constraints & Logic
 - **Source Limits:** YAML файлы исходников < 1000 строк. Если больше — разбивать на `$ref`.
 - **Generated Files:** `openapi-bundled.yaml` и `oas_*_gen.go` МОГУТ быть большими (исключены из лимитов через `.githooks`).
 - **Tools:** Используй `scripts/` для массовой генерации/валидации.

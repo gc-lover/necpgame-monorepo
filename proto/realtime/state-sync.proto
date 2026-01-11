@@ -1,0 +1,243 @@
+// Real-time State Synchronization Protocol
+// Issue: #2146
+// PERFORMANCE: Optimized for MMOFPS with conflict resolution and latency compensation
+// Target: <20ms state sync, automatic conflict resolution, client-side prediction
+
+syntax = "proto3";
+package necp.realtime.statesync.v1;
+
+option go_package = "github.com/gc-lover/necpgame-monorepo/proto/realtime/statesync";
+
+// ================================================================
+// State Synchronization Messages
+// ================================================================
+
+// StateSyncRequest - Client → Server (state update request)
+message StateSyncRequest {
+  // Client identification
+  fixed64 player_id = 1;
+  
+  // Client tick for latency compensation
+  uint32 client_tick = 2;
+  
+  // Client timestamp (ms since epoch)
+  int64 client_timestamp_ms = 3;
+  
+  // State category (e.g., "position", "inventory", "stats")
+  string category = 4;
+  
+  // State key (e.g., "player_position", "item_123")
+  string key = 5;
+  
+  // New state value (JSON-encoded or protobuf)
+  bytes state_data = 6;
+  
+  // Expected version for optimistic locking
+  uint32 expected_version = 7;
+  
+  // Vector clock for conflict detection
+  map<string, uint32> vector_clock = 8;
+  
+  // Network latency estimate (ms)
+  uint32 estimated_latency_ms = 9;
+}
+
+// StateSyncResponse - Server → Client (state sync result)
+message StateSyncResponse {
+  // Request ID for correlation
+  fixed64 request_id = 1;
+  
+  // Sync result
+  SyncResult result = 2;
+  
+  // Current state version
+  uint32 current_version = 3;
+  
+  // Server timestamp (ms since epoch)
+  int64 server_timestamp_ms = 4;
+  
+  // Server tick
+  uint32 server_tick = 5;
+  
+  // Conflict information (if conflict detected)
+  ConflictInfo conflict = 6;
+  
+  // Latency compensation applied
+  LatencyCompensation compensation = 7;
+  
+  // Updated state (if successful)
+  bytes state_data = 8;
+  
+  // Updated vector clock
+  map<string, uint32> vector_clock = 9;
+}
+
+// SyncResult - Result of state synchronization
+enum SyncResult {
+  SYNC_RESULT_UNKNOWN = 0;
+  SYNC_RESULT_SUCCESS = 1;           // State updated successfully
+  SYNC_RESULT_CONFLICT = 2;          // Conflict detected, resolution required
+  SYNC_RESULT_STALE = 3;             // Client state is stale, full sync required
+  SYNC_RESULT_ERROR = 4;             // Error during sync
+  SYNC_RESULT_RATE_LIMITED = 5;      // Rate limit exceeded
+}
+
+// ConflictInfo - Information about detected conflict
+message ConflictInfo {
+  // Conflict ID
+  string conflict_id = 1;
+  
+  // Conflict type
+  ConflictType type = 2;
+  
+  // Old state (server's current state)
+  bytes old_state = 3;
+  
+  // New state (client's proposed state)
+  bytes new_state = 4;
+  
+  // Resolution strategy
+  ResolutionStrategy strategy = 5;
+  
+  // Resolved state (if auto-resolved)
+  bytes resolved_state = 6;
+  
+  // Requires manual resolution
+  bool requires_manual_resolution = 7;
+}
+
+// ConflictType - Type of conflict detected
+enum ConflictType {
+  CONFLICT_TYPE_UNKNOWN = 0;
+  CONFLICT_TYPE_VERSION_MISMATCH = 1;  // Version mismatch (optimistic locking)
+  CONFLICT_TYPE_VECTOR_CLOCK = 2;     // Vector clock divergence
+  CONFLICT_TYPE_CONCURRENT_UPDATE = 3; // Concurrent updates to same state
+  CONFLICT_TYPE_DATA_INCONSISTENCY = 4; // Data inconsistency detected
+}
+
+// ResolutionStrategy - Strategy for conflict resolution
+enum ResolutionStrategy {
+  RESOLUTION_STRATEGY_UNKNOWN = 0;
+  RESOLUTION_STRATEGY_LAST_WRITE_WINS = 1;  // Last write wins (default)
+  RESOLUTION_STRATEGY_MERGE = 2;            // Merge states
+  RESOLUTION_STRATEGY_KEEP_OLD = 3;         // Keep old state
+  RESOLUTION_STRATEGY_MANUAL = 4;           // Manual resolution required
+}
+
+// LatencyCompensation - Latency compensation information
+message LatencyCompensation {
+  // Measured latency (ms)
+  uint32 measured_latency_ms = 1;
+  
+  // Compensation factor (0.0-1.0)
+  float compensation_factor = 2;
+  
+  // Rewind time (ms) for server-side reconciliation
+  uint32 rewind_time_ms = 3;
+  
+  // Client prediction correction
+  bool prediction_corrected = 4;
+  
+  // Correction delta (if prediction was incorrect)
+  bytes correction_delta = 5;
+}
+
+// ================================================================
+// State Snapshot Messages (for full state sync)
+// ================================================================
+
+// StateSnapshotRequest - Client → Server (request full state)
+message StateSnapshotRequest {
+  fixed64 player_id = 1;
+  
+  // Categories to sync (empty = all)
+  repeated string categories = 2;
+  
+  // Last known version (for delta sync)
+  map<string, uint32> last_versions = 3;
+  
+  // Client timestamp
+  int64 client_timestamp_ms = 4;
+}
+
+// StateSnapshotResponse - Server → Client (full state)
+message StateSnapshotResponse {
+  // Snapshot timestamp
+  int64 snapshot_timestamp_ms = 1;
+  
+  // State entries
+  repeated StateEntry entries = 2;
+  
+  // Vector clock
+  map<string, uint32> vector_clock = 3;
+  
+  // Compression used
+  CompressionType compression = 4;
+}
+
+// StateEntry - Single state entry in snapshot
+message StateEntry {
+  string category = 1;
+  string key = 2;
+  bytes state_data = 3;
+  uint32 version = 4;
+  int64 last_updated_ms = 5;
+}
+
+// CompressionType - Compression algorithm used
+enum CompressionType {
+  COMPRESSION_TYPE_NONE = 0;
+  COMPRESSION_TYPE_GZIP = 1;
+  COMPRESSION_TYPE_LZ4 = 2;
+  COMPRESSION_TYPE_ZSTD = 3;
+}
+
+// ================================================================
+// Conflict Resolution Messages
+// ================================================================
+
+// ConflictResolutionRequest - Client → Server (resolve conflict)
+message ConflictResolutionRequest {
+  string conflict_id = 1;
+  
+  // Resolution choice
+  ResolutionStrategy strategy = 2;
+  
+  // Custom resolved state (if strategy is MANUAL)
+  bytes custom_resolved_state = 3;
+  
+  // Client timestamp
+  int64 client_timestamp_ms = 4;
+}
+
+// ConflictResolutionResponse - Server → Client (resolution result)
+message ConflictResolutionResponse {
+  string conflict_id = 1;
+  
+  // Resolution result
+  bool success = 2;
+  
+  // Final resolved state
+  bytes resolved_state = 3;
+  
+  // Error message (if failed)
+  string error_message = 4;
+}
+
+// ================================================================
+// State Sync Service
+// ================================================================
+
+service StateSyncService {
+  // SyncState - Synchronize state update
+  rpc SyncState(StateSyncRequest) returns (StateSyncResponse);
+  
+  // GetStateSnapshot - Get full state snapshot
+  rpc GetStateSnapshot(StateSnapshotRequest) returns (StateSnapshotResponse);
+  
+  // ResolveConflict - Resolve detected conflict
+  rpc ResolveConflict(ConflictResolutionRequest) returns (ConflictResolutionResponse);
+  
+  // StreamStateUpdates - Stream real-time state updates (bidirectional)
+  rpc StreamStateUpdates(stream StateSyncRequest) returns (stream StateSyncResponse);
+}
