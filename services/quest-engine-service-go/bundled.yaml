@@ -141,7 +141,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/ServiceUnavailable
   /health/detailed:
     get:
       operationId: questEngineDetailedHealthCheck
@@ -205,7 +205,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/ServiceUnavailable
   /quests:
     get:
       operationId: listQuests
@@ -275,7 +275,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/PaginatedResponse'
+                - $ref: ../common/responses/success.yaml#/PaginatedResponse
                 - type: object
                   properties:
                     data:
@@ -321,7 +321,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -335,7 +335,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/Conflict
   /quests/{quest_id}:
     get:
       operationId: getQuest
@@ -358,7 +358,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -394,7 +394,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -408,7 +408,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/Conflict
     delete:
       operationId: deleteQuest
       summary: Delete quest instance
@@ -452,7 +452,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -488,7 +488,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -534,7 +534,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -544,7 +544,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/BadRequest
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -552,7 +552,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/Conflict
   /sync/progress:
     post:
       operationId: syncQuestProgress
@@ -584,7 +584,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -596,7 +596,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ../common/responses/error.yaml#/Conflict
   /events/quests:
     get:
       operationId: getQuestEvents
@@ -649,7 +649,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/SuccessResponse'
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
                 - type: object
                   properties:
                     data:
@@ -1716,205 +1716,31 @@ components:
             format: uuid
             description: Associated faction
             example: c3d4e5f6-g7h8-9012-cdef-345678901234
-
-    # Error Response Schema
-    ErrorResponse:
-      type: object
-      required:
-        - error
-        - message
-      properties:
-        error:
-          type: string
-          description: Error code
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          description: Human-readable error message
-          example: "Invalid request parameters"
-        details:
-          type: object
-          description: Additional error details
-        timestamp:
-          type: string
-          format: date-time
-          description: Error timestamp
-          example: "2024-01-15T10:30:00Z"
-
-    # Success Response Schema
-    SuccessResponse:
-      type: object
-      required:
-        - success
-        - message
-      properties:
-        success:
-          type: boolean
-          description: Success flag
-          example: true
-        message:
-          type: string
-          description: Success message
-          example: "Operation completed successfully"
-        data:
-          type: object
-          description: Response data
-        timestamp:
-          type: string
-          format: date-time
-          description: Response timestamp
-          example: "2024-01-15T10:30:00Z"
-
-    # Paginated Response Schema
-    PaginatedResponse:
-      type: object
-      required:
-        - items
-        - total
-        - page
-        - page_size
-      properties:
-        items:
-          type: array
-          description: Array of items
-          items:
-            type: object
-        total:
-          type: integer
-          description: Total number of items
-          minimum: 0
-          example: 100
-        page:
-          type: integer
-          description: Current page number
-          minimum: 1
-          example: 1
-        page_size:
-          type: integer
-          description: Number of items per page
-          minimum: 1
-          example: 20
-        has_next:
-          type: boolean
-          description: Whether there are more pages
-          example: true
-        has_prev:
-          type: boolean
-          description: Whether there are previous pages
-          example: false
-
   responses:
     BadRequest:
       description: Bad request - invalid parameters
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: ../common/responses/error.yaml#/BadRequest
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: ../common/responses/error.yaml#/Unauthorized
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: ../common/responses/error.yaml#/NotFound
     TooManyRequests:
       description: Rate limit exceeded
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    # Error Response Schema
-    ErrorResponse:
-      type: object
-      required:
-        - error
-        - message
-      properties:
-        error:
-          type: string
-          description: Error code
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          description: Human-readable error message
-          example: "Invalid request parameters"
-        details:
-          type: object
-          description: Additional error details
-        timestamp:
-          type: string
-          format: date-time
-          description: Error timestamp
-          example: "2024-01-15T10:30:00Z"
-
-    # Success Response Schema
-    SuccessResponse:
-      type: object
-      required:
-        - success
-        - message
-      properties:
-        success:
-          type: boolean
-          description: Success flag
-          example: true
-        message:
-          type: string
-          description: Success message
-          example: "Operation completed successfully"
-        data:
-          type: object
-          description: Response data
-        timestamp:
-          type: string
-          format: date-time
-          description: Response timestamp
-          example: "2024-01-15T10:30:00Z"
-
-    # Paginated Response Schema
-    PaginatedResponse:
-      type: object
-      required:
-        - items
-        - total
-        - page
-        - page_size
-      properties:
-        items:
-          type: array
-          description: Array of items
-          items:
-            type: object
-        total:
-          type: integer
-          description: Total number of items
-          minimum: 0
-          example: 100
-        page:
-          type: integer
-          description: Current page number
-          minimum: 1
-          example: 1
-        page_size:
-          type: integer
-          description: Number of items per page
-          minimum: 1
-          example: 20
-        has_next:
-          type: boolean
-          description: Whether there are more pages
-          example: true
-        has_prev:
-          type: boolean
-          description: Whether there are previous pages
-          example: false
-
+            $ref: ../common/responses/error.yaml#/TooManyRequests
   securitySchemes:
     BearerAuth:
       type: http

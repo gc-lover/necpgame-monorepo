@@ -19,10 +19,13 @@ type Service interface {
 
 // AiEnemyCoordinatorService implements the business logic
 type AiEnemyCoordinatorService struct {
-	repo     Repository
-	metrics  *ServiceMetrics
-	mu       sync.RWMutex
-	zoneData map[string]*ZoneData // Performance: Memory pooling for zone data
+	repo         Repository
+	metrics      *ServiceMetrics
+	mu           sync.RWMutex
+	zoneData     map[string]*ZoneData // Performance: Memory pooling for zone data
+
+	// Performance: Memory pooling for response objects
+	responsePool sync.Pool
 }
 
 // ZoneData holds zone-specific information
@@ -53,6 +56,11 @@ func NewAiEnemyCoordinatorService(repo Repository) *AiEnemyCoordinatorService {
 		repo:     repo,
 		metrics:  &ServiceMetrics{},
 		zoneData: make(map[string]*ZoneData),
+		responsePool: sync.Pool{
+			New: func() interface{} {
+				return &api.AiCoordinationResponse{}
+			},
+		},
 	}
 }
 
@@ -63,6 +71,10 @@ func (s *AiEnemyCoordinatorService) SpawnAiEnemy(ctx context.Context, req api.Ai
 		duration := time.Since(start)
 		slog.Info("SpawnAiEnemy completed", "duration_ms", duration.Milliseconds())
 	}()
+
+	// Performance: Context timeout for external operations
+	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
 
 	// Validate request
 	if err := s.validateSpawnRequest(req); err != nil {
