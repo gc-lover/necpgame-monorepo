@@ -6,7 +6,7 @@ param(
     [string]$Path = ".",
 
     [Parameter(Mandatory=$false)]
-    [switch]$Verbose,
+    [switch]$ShowVerbose,
 
     [Parameter(Mandatory=$false)]
     [int]$MaxLines = 3000
@@ -40,7 +40,7 @@ $warnings = 0
 
 function Write-VerboseMessage {
     param([string]$Message)
-    if ($Verbose) {
+    if ($ShowVerbose) {
         Write-Host "  $Message" -ForegroundColor Gray
     }
 }
@@ -106,15 +106,12 @@ foreach ($file in $filesToCheck) {
         $lineCount = (Get-Content $file.FullName -ErrorAction Stop | Measure-Object -Line).Lines
 
         if ($lineCount -gt $MaxLines) {
-            $warningMsg = "$MSG_FILE_EXCEEDS: $($file.Name) ($lineCount lines, limit is $MaxLines)"
-            Write-Warning $warningMsg
+            Write-Warning ('File exceeds size limit: {0} ({1} lines, limit is {2})' -f $file.Name, $lineCount, $MaxLines)
         } else {
-            $okMsg = "$MSG_OK: $($file.Name) ($lineCount lines)"
-            Write-VerboseMessage $okMsg
+            Write-VerboseMessage ('OK: {0} ({1} lines)' -f $file.Name, $lineCount)
         }
     } catch {
-        $skipMsg = "$MSG_SKIPPED: $($file.Name) (binary or unreadable)"
-        Write-VerboseMessage $skipMsg
+        Write-VerboseMessage ('Skipped: {0} (binary or unreadable)' -f $file.Name)
     }
 }
 
