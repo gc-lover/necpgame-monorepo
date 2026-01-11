@@ -1,0 +1,542 @@
+openapi: 3.0.3
+info:
+  title: Combat System Service API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1/combat-system
+paths:
+  /health:
+    get:
+      operationId: combatSystemServiceHealthCheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /combat-system/rules:
+    get:
+      operationId: combatSystemServiceGetRules
+      responses:
+        '200':
+          description: Combat system rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+    put:
+      operationId: combatSystemServiceUpdateRules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatSystemRulesRequest'
+      responses:
+        '200':
+          description: Combat system rules updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+  /combat-system/damage/calculator:
+    post:
+      operationId: combatSystemServiceCalculateDamage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResponse'
+  /combat-system/balance:
+    get:
+      operationId: combatSystemServiceGetBalance
+      responses:
+        '200':
+          description: Balance configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+    put:
+      operationId: combatSystemServiceUpdateBalance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatBalanceConfigRequest'
+      responses:
+        '200':
+          description: Balance configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+  /combat-system/abilities:
+    get:
+      operationId: combatSystemServiceListAbilities
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: ability_type
+          in: query
+          schema:
+            type: string
+            enum: [offensive, defensive, utility, ultimate]
+      responses:
+        '200':
+          description: Ability configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityConfigurationsResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          $ref: '#/components/schemas/HealthDetails'
+    HealthDetails:
+      type: object
+      properties:
+        totalCombatCalculations:
+          type: integer
+        activeCombatSessions:
+          type: integer
+        totalAbilities:
+          type: integer
+        activeBalanceConfigs:
+          type: integer
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    CombatSystemRules:
+      type: object
+      required: [version, damage_rules, combat_mechanics, balance_parameters]
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
+        combat_mechanics:
+          $ref: '#/components/schemas/CombatMechanics'
+        balance_parameters:
+          $ref: '#/components/schemas/BalanceParameters'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+    DamageRules:
+      type: object
+      required: [base_damage_multiplier, critical_hit_multiplier, armor_reduction_factor]
+      properties:
+        base_damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+        critical_hit_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 3.0
+          default: 1.5
+        armor_reduction_factor:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+    CombatMechanics:
+      type: object
+      required: [turn_based_enabled, action_points_system, interruption_rules]
+      properties:
+        turn_based_enabled:
+          type: boolean
+          default: false
+        action_points_system:
+          $ref: '#/components/schemas/ActionPointsSystem'
+        interruption_rules:
+          $ref: '#/components/schemas/InterruptionRules'
+    ActionPointsSystem:
+      type: object
+      properties:
+        max_action_points:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+        points_per_turn:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+    InterruptionRules:
+      type: object
+      properties:
+        interruption_enabled:
+          type: boolean
+        interruption_chance:
+          type: number
+          format: float
+    BalanceParameters:
+      type: object
+      required: [difficulty_scaling, class_balance, level_scaling]
+      properties:
+        difficulty_scaling:
+          $ref: '#/components/schemas/DifficultyScaling'
+        class_balance:
+          $ref: '#/components/schemas/ClassBalance'
+        level_scaling:
+          $ref: '#/components/schemas/LevelScaling'
+    DifficultyScaling:
+      type: object
+      properties:
+        easy_multiplier:
+          type: number
+          format: float
+        normal_multiplier:
+          type: number
+          format: float
+        hard_multiplier:
+          type: number
+          format: float
+    ClassBalance:
+      type: object
+      properties:
+        dps_balance:
+          type: number
+          format: float
+        tank_balance:
+          type: number
+          format: float
+        healer_balance:
+          type: number
+          format: float
+        support_balance:
+          type: number
+          format: float
+    LevelScaling:
+      type: object
+      properties:
+        min_level:
+          type: integer
+        max_level:
+          type: integer
+        scaling_factor:
+          type: number
+          format: float
+    UpdateCombatSystemRulesRequest:
+      type: object
+      properties:
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
+        combat_mechanics:
+          $ref: '#/components/schemas/CombatMechanics'
+        balance_parameters:
+          $ref: '#/components/schemas/BalanceParameters'
+    DamageCalculationRequest:
+      type: object
+      required: [attacker_id, defender_id, ability_id, base_damage, damage_type, attacker_stats, defender_stats]
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        defender_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+          format: uuid
+        base_damage:
+          type: integer
+          minimum: 0
+        damage_type:
+          type: string
+        attacker_stats:
+          $ref: '#/components/schemas/CharacterStats'
+        defender_stats:
+          $ref: '#/components/schemas/CharacterStats'
+        environmental_factors:
+          $ref: '#/components/schemas/EnvironmentalFactors'
+    CharacterStats:
+      type: object
+      required: [level, strength, agility, intelligence, armor]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+        strength:
+          type: integer
+          minimum: 0
+        agility:
+          type: integer
+          minimum: 0
+        intelligence:
+          type: integer
+          minimum: 0
+        armor:
+          type: integer
+          minimum: 0
+        critical_chance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+    EnvironmentalFactors:
+      type: object
+      properties:
+        weather:
+          type: string
+        time_of_day:
+          type: string
+        terrain_type:
+          type: string
+        modifier:
+          type: number
+          format: float
+    DamageCalculationResponse:
+      type: object
+      required: [final_damage, critical_hit, damage_type]
+      properties:
+        final_damage:
+          type: integer
+          minimum: 1
+        critical_hit:
+          type: boolean
+        damage_type:
+          type: string
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+        calculation_log:
+          type: array
+          items:
+            type: string
+    DamageModifier:
+      type: object
+      required: [type, value]
+      properties:
+        type:
+          type: string
+        value:
+          type: number
+          format: float
+        description:
+          type: string
+    CombatBalanceConfig:
+      type: object
+      required: [version, global_multipliers, character_balance, environmental_balance]
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        global_multipliers:
+          $ref: '#/components/schemas/GlobalMultipliers'
+        character_balance:
+          $ref: '#/components/schemas/CharacterBalance'
+        environmental_balance:
+          $ref: '#/components/schemas/EnvironmentalBalance'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    GlobalMultipliers:
+      type: object
+      properties:
+        damage_multiplier:
+          type: number
+          format: float
+          default: 1.0
+        healing_multiplier:
+          type: number
+          format: float
+          default: 1.0
+        cooldown_multiplier:
+          type: number
+          format: float
+          default: 1.0
+    CharacterBalance:
+      type: object
+      properties:
+        level_scaling_enabled:
+          type: boolean
+        class_multipliers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        stat_weights:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+    EnvironmentalBalance:
+      type: object
+      properties:
+        weather_effects:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        terrain_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        time_of_day_effects:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+    UpdateCombatBalanceConfigRequest:
+      type: object
+      properties:
+        global_multipliers:
+          $ref: '#/components/schemas/GlobalMultipliers'
+        character_balance:
+          $ref: '#/components/schemas/CharacterBalance'
+        environmental_balance:
+          $ref: '#/components/schemas/EnvironmentalBalance'
+    AbilityConfigurationsResponse:
+      type: object
+      required: [abilities, pagination]
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityConfiguration'
+        pagination:
+          type: object
+          required: [page, limit, total_count, total_pages]
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+    AbilityConfiguration:
+      type: object
+      required: [id, name, type, cooldown_ms]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        type:
+          type: string
+          enum: [offensive, defensive, utility, ultimate]
+        description:
+          type: string
+        damage:
+          type: integer
+          minimum: 0
+        cooldown_ms:
+          type: integer
+          minimum: 0
+        mana_cost:
+          type: integer
+          minimum: 0
+        range:
+          type: integer
+          minimum: 0
+        cast_time_ms:
+          type: integer
+          minimum: 0
+        balance_notes:
+          type: string
+        stat_requirements:
+          type: object
+          additionalProperties:
+            type: integer
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AbilityEffect:
+      type: object
+      required: [type, value, target]
+      properties:
+        type:
+          type: string
+        duration_ms:
+          type: integer
+          minimum: 0
+        value:
+          type: object
+          additionalProperties: true
+        target:
+          type: string
