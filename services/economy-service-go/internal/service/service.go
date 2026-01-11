@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 
 	"necpgame/services/economy-service-go/config"
@@ -50,18 +52,146 @@ type ServiceMetrics struct {
 	activeMarkets       int64 // Current active market operations
 }
 
+// EconomyMetrics holds Prometheus metrics for economy service operations
+// PERFORMANCE: Enterprise-grade monitoring for MMOFPS economy operations
+type EconomyMetrics struct {
+	// HTTP request metrics
+	RequestDuration    *prometheus.HistogramVec
+	RequestTotal       *prometheus.CounterVec
+	RequestErrors      *prometheus.CounterVec
+
+	// Market operation metrics
+	MarketClearings    *prometheus.CounterVec
+	OrderCreations     *prometheus.CounterVec
+	OrderCancellations *prometheus.CounterVec
+
+	// Auction metrics
+	AuctionCreations   *prometheus.CounterVec
+	AuctionBids        *prometheus.CounterVec
+
+	// Trading metrics
+	TradesExecuted     *prometheus.CounterVec
+	VolumeTraded       *prometheus.CounterVec
+
+	// BazaarBot metrics
+	BazaarBotAgents    prometheus.Gauge
+	BazaarBotMarkets   prometheus.Gauge
+	BazaarBotEfficiency prometheus.Gauge
+
+	// Currency exchange metrics
+	CurrencyExchanges  *prometheus.CounterVec
+	ExchangeVolume     *prometheus.CounterVec
+
+	// Active connections/users
+	ActiveUsers        prometheus.Gauge
+	ActiveSessions     prometheus.Gauge
+}
+
+// initEconomyMetrics initializes Prometheus metrics for economy service
+// PERFORMANCE: Metrics initialization with proper labels for enterprise monitoring
+func initEconomyMetrics() *EconomyMetrics {
+	return &EconomyMetrics{
+		RequestDuration: promauto.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "economy_request_duration_seconds",
+			Help:    "Request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		}, []string{"method", "endpoint", "status"}),
+
+		RequestTotal: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_requests_total",
+			Help: "Total number of requests",
+		}, []string{"method", "endpoint"}),
+
+		RequestErrors: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_request_errors_total",
+			Help: "Total number of request errors",
+		}, []string{"method", "endpoint", "error_type"}),
+
+		MarketClearings: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_market_clearings_total",
+			Help: "Total number of market clearings",
+		}, []string{"commodity", "status"}),
+
+		OrderCreations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_order_creations_total",
+			Help: "Total number of order creations",
+		}, []string{"type", "commodity"}),
+
+		OrderCancellations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_order_cancellations_total",
+			Help: "Total number of order cancellations",
+		}, []string{"reason"}),
+
+		AuctionCreations: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_auction_creations_total",
+			Help: "Total number of auction creations",
+		}, []string{"item_category"}),
+
+		AuctionBids: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_auction_bids_total",
+			Help: "Total number of auction bids",
+		}, []string{"auction_id", "result"}),
+
+		TradesExecuted: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_trades_executed_total",
+			Help: "Total number of trades executed",
+		}, []string{"commodity", "order_type"}),
+
+		VolumeTraded: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_volume_traded_total",
+			Help: "Total trading volume",
+		}, []string{"commodity", "currency"}),
+
+		BazaarBotAgents: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "economy_bazaarbot_agents_active",
+			Help: "Number of active BazaarBot agents",
+		}),
+
+		BazaarBotMarkets: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "economy_bazaarbot_markets_active",
+			Help: "Number of active BazaarBot markets",
+		}),
+
+		BazaarBotEfficiency: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "economy_bazaarbot_efficiency_percent",
+			Help: "BazaarBot simulation efficiency percentage",
+		}),
+
+		CurrencyExchanges: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_currency_exchanges_total",
+			Help: "Total number of currency exchanges",
+		}, []string{"from_currency", "to_currency"}),
+
+		ExchangeVolume: promauto.NewCounterVec(prometheus.CounterOpts{
+			Name: "economy_exchange_volume_total",
+			Help: "Total currency exchange volume",
+		}, []string{"from_currency", "to_currency"}),
+
+		ActiveUsers: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "economy_active_users",
+			Help: "Number of active users in economy service",
+		}),
+
+		ActiveSessions: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "economy_active_sessions",
+			Help: "Number of active trading sessions",
+		}),
+	}
+}
+
 // Service represents the economy service
 // PERFORMANCE: Enterprise-grade service with multi-level caching and MMOFPS optimizations
 // Implements consumer.Service interface for event-driven operations
 // Issue: #2237
 type Service struct {
-	logger   *zap.Logger
-	repo     *repository.Repository
-	config   *config.Config
-	server   *api.Server
-	handlers *handlers.EconomyHandlers
-	consumer *consumer.TickConsumer // Kafka consumer for tick events
-	metrics  *ServiceMetrics        // Performance monitoring
+	logger         *zap.Logger
+	repo           *repository.Repository
+	config         *config.Config
+	server         *api.Server
+	handlers       *handlers.EconomyHandlers
+	consumer       *consumer.TickConsumer // Kafka consumer for tick events
+	metrics        *ServiceMetrics        // Performance monitoring
+	economyMetrics *EconomyMetrics        // Prometheus metrics
 }
 
 // NewService creates a new economy service
@@ -70,10 +200,11 @@ type Service struct {
 // Issue: #2237
 func NewService(logger *zap.Logger, repo *repository.Repository, cfg *config.Config) *Service {
 	service := &Service{
-		logger:  logger,
-		repo:    repo,
-		config:  cfg,
-		metrics: &ServiceMetrics{}, // Initialize performance monitoring
+		logger:         logger,
+		repo:           repo,
+		config:         cfg,
+		metrics:        &ServiceMetrics{},        // Initialize performance monitoring
+		economyMetrics: initEconomyMetrics(),     // Initialize Prometheus metrics
 	}
 
 	// Create handlers (after service is created to avoid circular dependency)

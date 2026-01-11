@@ -1,188 +1,210 @@
-# Faction Service - OpenAPI Specification
+# Faction Service API
 
-## 📋 **Назначение**
+## Overview
 
-Faction Service предоставляет enterprise-grade API для управления фракциями в NECPGAME. Фракции представляют собой
-организованные группы игроков, которые контролируют территории, формируют политические альянсы и влияют на игровой мир.
+The Faction Service provides comprehensive faction management capabilities for the NECPGAME. This enterprise-grade microservice handles political organization, diplomatic relations, and competitive faction dynamics in the Night City universe.
 
-### **Ключевые возможности:**
+## Key Features
 
-- Создание и управление фракциями
-- Иерархическая структура и роли участников
-- Отношения между фракциями (альянсы, вражда)
-- Контроль территорий и ниш влияния
+- **Faction Management**: Creation, administration, and hierarchical organization
+- **Diplomacy Systems**: Alliances, wars, treaties, and negotiation mechanics
+- **Territory Control**: Influence zones, borders, and territorial disputes
+- **Reputation System**: Standing, influence, and relationship tracking
+- **Competitive Elements**: Rankings, diplomatic power, and inter-faction conflicts
+- **Performance Optimized**: MMOFPS-grade performance with <15ms P99 latency
 
-## 🎯 **Функциональность**
+## Architecture
 
-### **Faction Management**
+### Domain Separation
+This API follows strict domain separation principles:
+- Core faction logic handled by `faction-service`
+- Diplomacy features integration with relationship services
+- Territory features integration with geographic systems
+- Reputation features integration with social ranking systems
 
-- `POST /api/v1/factions` - Создание новой фракции
-- `GET /api/v1/factions` - Список фракций с фильтрами
-- `GET /api/v1/factions/{factionId}` - Детальная информация о фракции
-- `PUT /api/v1/factions/{factionId}` - Обновление фракции
-- `DELETE /api/v1/factions/{factionId}` - Расформирование фракции
+### Performance Targets
+- **P99 Latency**: <15ms for faction operations
+- **Memory per Member**: <10KB active faction member
+- **Concurrent Factions**: 100,000+ active factions
+- **Diplomacy Updates**: <25ms propagation time
+- **Territory Queries**: 5000+ concurrent geographic operations
 
-### **Hierarchy & Membership**
+## API Endpoints
 
-- `GET /api/v1/factions/{factionId}/hierarchy` - Структура иерархии
-- `POST /api/v1/factions/{factionId}/hierarchy` - Обновление ролей
-- `GET /api/v1/factions/{factionId}/members` - Список участников с ролями
+### Health Monitoring
+- `GET /health` - Service health check
+- `POST /health/batch` - Batch health check for multiple services
 
-### **Relations & Conflicts**
+### Faction Management
+- `GET /factions` - List factions with filtering
+- `POST /factions` - Create new faction
+- `GET /factions/{faction_id}` - Get faction details
+- `PUT /factions/{faction_id}` - Update faction configuration
+- `DELETE /factions/{faction_id}` - Disband faction
 
-- `GET /api/v1/factions/{factionId}/relations` - Отношения с другими фракциями
+### Diplomacy Management
+- `GET /factions/{faction_id}/diplomacy` - Get diplomatic relations
+- `POST /factions/{faction_id}/diplomacy` - Initiate diplomatic action
 
-## 📁 **Структура**
+### Territory Control
+- `GET /factions/{faction_id}/territory` - Get territory and influence zones
+- `POST /factions/{faction_id}/territory` - Claim territory
 
-```
-faction-service/
-├── main.yaml           # Основная спецификация
-├── README.md          # Эта документация
-├── hierarchy.yaml     # Детали иерархии (будущие расширения)
-├── relations.yaml     # Детали отношений (будущие расширения)
-├── docs/
-│   └── index.html     # Сгенерированная документация
-└── examples/          # Примеры запросов/ответов
-```
+### Reputation System
+- `GET /factions/{faction_id}/reputation` - Get reputation and standing
+- `POST /factions/{faction_id}/reputation` - Adjust faction reputation
 
-## 🔗 **Зависимости**
+### Faction Competition
+- `GET /factions/rankings` - Get faction rankings and statistics
 
-### **Domain Dependencies**
+## Data Structures
 
-- **social-entities.yaml** - Наследование базовых сущностей фракций
-- **common.yaml** - Общие схемы (UUID, timestamps, pagination)
+### Core Faction Data
+- `Faction` - Complete faction information and configuration
+- `FactionSummary` - Condensed faction data for listings
+- `FactionRequirements` - Membership requirements and restrictions
 
-### **Service Dependencies**
+### Diplomacy Systems
+- `DiplomaticRelation` - Relationships between factions
+- `Treaty` - Formal agreements and pacts
+- `DiplomaticActionRequest` - Diplomatic action parameters
 
-- **clan-service** - Управление кланами-лидерами фракций
-- **territory-service** - Контроль территорий фракциями
-- **diplomacy-service** - Дипломатические отношения
+### Territory Control
+- `Territory` - Controlled geographic areas
+- `InfluenceZone` - Areas of faction influence
+- `BorderDispute` - Territorial conflicts
 
-## 📊 **Performance**
+### Reputation System
+- `FactionReputationResponse` - Reputation scores and standings
+- `InfluenceMetrics` - Various influence measurements
+- `ReputationEvent` - Historical reputation changes
 
-### **Цели производительности:**
+### Competitive Features
+- `FactionRanking` - Ranking positions and statistics
+- `FactionRankingsResponse` - Paginated ranking results
 
-- **P99 Latency**: <50ms для всех операций
-- **Memory per Instance**: <50KB
-- **Concurrent Users**: 10,000+
+## Faction Mechanics
 
-### **Оптимизации:**
+### Faction Hierarchy
+- **Leader**: Supreme authority over faction decisions
+- **Council Members**: High-level decision making
+- **Officers**: Tactical and operational command
+- **Members**: Standard faction participants
+- **Recruits**: New members with limited access
 
-- **Struct alignment**: Поля отсортированы для экономии памяти (30-50% savings)
-- **Optimistic locking**: Version-based concurrency control
-- **Domain inheritance**: DRY principle, zero duplication
+### Diplomatic System
+- **Neutral**: No special relationship
+- **Allied**: Cooperative relationship with shared benefits
+- **Hostile**: Antagonistic relationship with penalties
+- **At War**: Active conflict with combat implications
 
-## 🚀 **Использование**
+### Territory Control
+- **Influence Zones**: Areas where faction presence is felt
+- **Territorial Claims**: Formal ownership of geographic areas
+- **Border Disputes**: Conflicts over territorial boundaries
+- **Control Levels**: Degree of dominance in claimed areas
 
-### **Валидация**
+### Reputation Mechanics
+- **Global Reputation**: Overall faction standing in the world
+- **Faction Standing**: Relationships with specific factions
+- **Influence Metrics**: Various measures of faction power
+- **Reputation Events**: Historical actions affecting reputation
 
-```bash
-# Линтинг спецификации
-npx @redocly/cli lint main.yaml
+### Competitive Features
+- **Faction Rankings**: Multiple categories (reputation, influence, territory)
+- **Diplomatic Power**: Ability to form alliances and influence politics
+- **Territorial Dominance**: Control over geographic areas
+- **War Records**: Historical combat performance
 
-# Проверка на дубликаты и ошибки
-npx @redocly/cli bundle main.yaml -o bundled.yaml
-```
+## Security Considerations
 
-### **Генерация Go кода**
+### Authentication
+- Bearer token authentication for all faction operations
+- User authorization for faction-specific actions
+- Hierarchical permission validation
 
-```bash
-# Генерация typed handlers
-ogen --target ../../services/faction-service-go/pkg/api \
-     --package api --clean main.yaml
+### Anti-Abuse Measures
+- Faction creation rate limiting
+- Diplomatic action spam prevention
+- Territory claim manipulation detection
+- Reputation adjustment restrictions
 
-# Компиляция и проверка
-cd ../../services/faction-service-go && go build .
-```
+### Data Protection
+- Encrypted diplomatic communications
+- Secure faction data handling
+- Audit trails for administrative actions
+- Privacy controls for diplomatic information
 
-### **Документация**
+## Performance Optimizations
 
-```bash
-# Генерация интерактивной документации
-npx @redocly/cli build-docs main.yaml -o docs/index.html
-```
+### Memory Optimization
+- Struct alignment hints for 30-50% memory savings
+- Object pooling for diplomatic operations
+- Compressed faction data structures
 
-## 🔧 **Типы фракций**
+### Database Optimization
+- Indexed queries for diplomatic relationship lookups
+- Partitioned tables for large faction hierarchies
+- Cached reputation and influence calculations
 
-| Тип                  | Описание                 |
-|----------------------|--------------------------|
-| `criminal_gang`      | Криминальные группировки |
-| `professional_guild` | Профессиональные гильдии |
-| `political_movement` | Политические движения    |
-| `corporate_alliance` | Корпоративные альянсы    |
-| `religious_sect`     | Религиозные секты        |
-| `scientific_org`     | Научные организации      |
-| `mercenary_company`  | Наемные компании         |
-| `nomad_tribe`        | Кочевые племена          |
+### Network Optimization
+- Paginated responses for large diplomatic lists
+- Compressed JSON payloads for territory data
+- Efficient real-time diplomatic event broadcasting
 
-## 🏗️ **Иерархия ролей**
+## Integration Points
 
-| Роль             | Права                                    |
-|------------------|------------------------------------------|
-| `leader`         | Полный контроль фракции                  |
-| `co_leader`      | Управление вместе с лидером              |
-| `officer`        | Управление участниками и ресурсами       |
-| `council_member` | Участие в принятии решений               |
-| `veteran`        | Расширенные права участника              |
-| `member`         | Стандартные права                        |
-| `recruit`        | Ограниченные права новичка               |
-| `probationary`   | Минимальные права на испытательном сроке |
+### Dependencies
+- `common/schemas` - Shared data structures and validation
+- `territory-service` - Geographic and boundary calculations
+- `diplomacy-service` - Advanced diplomatic negotiations
+- `ranking-service` - Competitive ranking calculations
 
-## 🌐 **Отношения между фракциями**
+### Clients
+- **Game Client** - Faction UI, diplomacy interface, territory map
+- **Web Dashboard** - Administrative faction controls
+- **Mobile App** - Diplomatic notifications and basic management
 
-| Тип отношения     | Описание               |
-|-------------------|------------------------|
-| `alliance`        | Союзнические отношения |
-| `rivalry`         | Соперничество          |
-| `neutrality`      | Нейтралитет            |
-| `war`             | Вооруженный конфликт   |
-| `trade_agreement` | Торговое соглашение    |
-| `protection_pact` | Договор о защите       |
-| `vassalage`       | Вассальная зависимость |
+## Development Guidelines
 
-## 📝 **Примеры использования**
+### Code Generation
+- Compatible with ogen for Go code generation
+- Struct alignment hints for performance optimization
+- Domain separation maintained in generated code
 
-### **Создание фракции**
+### Testing Strategy
+- Unit tests for faction logic and diplomatic rules
+- Integration tests for territory control systems
+- Performance tests for large-scale faction operations
+- Load testing for concurrent diplomatic activities
 
-```json
-POST /api/v1/factions
-{
-  "name": "Night City Outlaws",
-  "type": "criminal_gang",
-  "leader_clan_id": "550e8400-e29b-41d4-a716-446655440001",
-  "ideology": "Freedom through chaos and individual power",
-  "description": "A loose confederation of criminal elements",
-  "initial_niches": ["550e8400-e29b-41d4-a716-446655440003"]
-}
-```
+### Monitoring and Observability
+- Prometheus metrics for faction KPIs
+- Distributed tracing for diplomatic operations
+- Real-time alerting for faction performance issues
+- Health check endpoints for service monitoring
 
-### **Обновление иерархии**
+## Future Enhancements
 
-```json
-POST /api/v1/factions/{factionId}/hierarchy
-{
-  "updates": [
-    {
-      "member_id": "550e8400-e29b-41d4-a716-446655440008",
-      "role": "officer",
-      "permissions": {
-        "manage_members": true,
-        "recruit_new": true
-      }
-    }
-  ]
-}
-```
+### Planned Features
+- **Advanced Diplomacy**: Multi-party negotiations and coalitions
+- **Dynamic Territories**: Shifting borders and contested zones
+- **Faction Alliances**: Complex alliance networks and hierarchies
+- **Economic Integration**: Faction-owned resources and trade
 
-## 🔗 **Связанные сервисы**
+### Performance Improvements
+- **Edge Computing**: Regional faction server distribution
+- **Advanced Caching**: Multi-level diplomatic data caching
+- **Real-time Analytics**: Live faction activity dashboards
+- **AI Assistance**: Automated diplomatic strategy suggestions
 
-- **clan-service**: Управление кланами внутри фракций
-- **territory-service**: Контроль территорий фракциями
-- **diplomacy-service**: Дипломатические отношения
-- **conflict-service**: Разрешение конфликтов
+## Issue Tracking
 
-## 📚 **Дополнительная документация**
+- **API Design**: #FACTION-API-SPECIFICATION
+- **Backend Implementation**: #FACTION-SERVICE-IMPLEMENTATION
+- **Performance Optimization**: Ongoing monitoring
+- **Security Audits**: Regular diplomatic system reviews
 
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник доменов
-- `proto/openapi/common/README.md` - Общие схемы
-- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Оптимизации производительности
+---
+
+*This API specification follows enterprise-grade patterns established in the NECPGAME project, ensuring scalability, performance, and maintainability for a first-class MMOFPS RPG experience with complex political and social dynamics.*

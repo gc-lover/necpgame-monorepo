@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -117,9 +118,13 @@ func main() {
 
 	// Create enterprise-grade HTTP server with MMOFPS optimizations
 	// Configure HTTP server with enterprise-grade timeouts for MMOFPS economy operations
+	mux := http.NewServeMux()
+	mux.Handle("/", svc)                      // Main API routes
+	mux.Handle("/metrics", promhttp.Handler()) // Prometheus metrics endpoint
+
 	srv := &http.Server{
 		Addr:              cfg.Server.Port,
-		Handler:           svc,
+		Handler:           mux,
 		ReadTimeout:       cfg.Server.ReadTimeout,       // BACKEND NOTE: Increased for complex economy operations
 		WriteTimeout:      cfg.Server.WriteTimeout,      // BACKEND NOTE: For economy transaction responses
 		IdleTimeout:       cfg.Server.IdleTimeout,       // BACKEND NOTE: Keep connections alive for economy sessions
