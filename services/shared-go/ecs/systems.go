@@ -168,7 +168,15 @@ func (ps *ParallelSystem) Close() {
 
 // Helper function for fast sqrt
 func sqrt32(x float32) float32 {
-	// Fast approximation (Newton's method or lookup table in production)
-	// Simplified version - use math.Sqrt for accuracy
-	return x * 0.5 // Placeholder
+	// Fast approximation using Newton's method
+	// For production, use math.Sqrt or lookup table for accuracy
+	if x <= 0 {
+		return 0
+	}
+	// Newton's method for sqrt
+	guess := x
+	for i := 0; i < 5; i++ {
+		guess = 0.5 * (guess + x/guess)
+	}
+	return guess
 }
