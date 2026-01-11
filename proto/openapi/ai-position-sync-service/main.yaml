@@ -1,0 +1,1355 @@
+# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
+# AI Position Sync Service - Real-time movement synchronization for AI entities
+# Issue: #2300
+
+openapi: 3.0.3
+info:
+  title: AI Position Sync Service API
+  description: |
+    **AI Position Sync Service** - High-performance real-time movement synchronization for AI entities in NECPGAME MMOFPS RPG.
+
+    ## Domain Purpose
+    Provides sub-millisecond position synchronization, movement prediction, collision detection,
+    and real-time state broadcasting for up to 500+ AI entities per zone with <50ms P99 latency.
+
+    ## Performance Targets
+    - P99 Latency: <25ms for position updates
+    - P99 Latency: <10ms for position queries
+    - Memory Footprint: <30MB per zone
+    - Position Accuracy: <0.1 unit deviation
+    - Concurrent Entities: 500+ per zone supported
+    - Update Frequency: 20+ Hz supported
+
+    ## Domain Inheritance (SOLID/DRY)
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+    - Game Domain entities through `allOf` pattern
+    - Optimistic locking for concurrent operations (version field)
+    - Strict typing with validation rules (min/max, patterns, enums)
+
+    **SOLID/DRY Principle:**
+    - ✅ Наследуем базовые поля через `$ref` и `allOf`
+    - ✅ Добавляем только уникальные поля сервиса
+    - ❌ НЕ дублируем общие поля (id, created_at, updated_at, version)
+    - ❌ НЕ переопределяем базовые структуры
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME AI API Team
+    email: ai@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/ai-position-sync
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/ai-position-sync
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/ai-position-sync
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Position Synchronization
+    description: Real-time position sync and state broadcasting
+  - name: Movement Prediction
+    description: AI movement prediction and pathfinding
+  - name: Collision Detection
+    description: Collision detection and resolution
+  - name: Zone Management
+    description: Zone-based position management
+  - name: Performance Monitoring
+    description: Position sync performance metrics
+  - name: Real-time Broadcasting
+    description: Real-time position broadcasting
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints - Required for all services
+  /health:
+    get:
+      operationId: aiPositionSyncHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: aiPositionSyncDetailedHealthCheck
+      summary: Detailed health check with sync metrics
+      description: Returns comprehensive health status including position sync performance metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  # Position Synchronization Endpoints
+  /positions/{entity_id}:
+    get:
+      operationId: getEntityPosition
+      summary: Get current position of AI entity
+      description: |
+        Retrieve current position, velocity, and movement state of AI entity.
+
+        **Performance Notes:**
+        - Cached position retrieval (<1ms typical)
+        - Real-time synchronization guaranteed
+        - P99 latency target: <5ms
+      tags: [Position Synchronization]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: AI entity identifier
+      responses:
+        '200':
+          description: Entity position retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityPosition'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateEntityPosition
+      summary: Update AI entity position
+      description: |
+        Update position, velocity, and movement state of AI entity with validation.
+
+        **Performance Notes:**
+        - Immediate zone synchronization
+        - Collision validation included
+        - Optimistic locking for concurrent updates
+        - P99 latency target: <15ms
+      tags: [Position Synchronization]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: AI entity identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdateRequest'
+      responses:
+        '200':
+          description: Entity position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityPosition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /positions/batch:
+    get:
+      operationId: getBatchPositions
+      summary: Get positions for multiple entities
+      description: |
+        Retrieve current positions for multiple AI entities in a single request.
+
+        **Performance Notes:**
+        - Optimized batch retrieval
+        - Up to 100 entities per request
+        - P99 latency target: <25ms
+      tags: [Position Synchronization]
+      parameters:
+        - name: entity_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: List of AI entity identifiers
+      responses:
+        '200':
+          description: Entity positions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchPositionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    post:
+      operationId: updateBatchPositions
+      summary: Update positions for multiple entities
+      description: |
+        Update positions for multiple AI entities with batch optimization.
+
+        **Performance Notes:**
+        - SIMD vectorized position updates
+        - Batch collision detection
+        - Up to 50 entities per batch
+        - P99 latency target: <30ms per batch
+      tags: [Position Synchronization, Performance Monitoring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchPositionUpdateRequest'
+      responses:
+        '200':
+          description: Entity positions updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchPositionUpdateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # Movement Prediction Endpoints
+  /movement/{entity_id}/predict:
+    post:
+      operationId: predictEntityMovement
+      summary: Predict AI entity movement path
+      description: |
+        Calculate predicted movement path for AI entity based on current state and objectives.
+
+        **Performance Notes:**
+        - Pathfinding algorithm optimization
+        - Cached environmental data
+        - Prediction horizon up to 10 seconds
+        - P99 latency target: <50ms
+      tags: [Movement Prediction]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: AI entity identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementPredictionRequest'
+      responses:
+        '200':
+          description: Movement prediction calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementPrediction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movement/pathfind:
+    post:
+      operationId: calculatePath
+      summary: Calculate optimal path between points
+      description: |
+        Calculate optimal movement path between two points considering obstacles and AI behavior.
+
+        **Performance Notes:**
+        - A* pathfinding with optimizations
+        - Dynamic obstacle avoidance
+        - Path caching for repeated routes
+        - P99 latency target: <75ms
+      tags: [Movement Prediction]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathfindingRequest'
+      responses:
+        '200':
+          description: Path calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathfindingResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Collision Detection Endpoints
+  /collision/detect:
+    post:
+      operationId: detectCollisions
+      summary: Detect collisions for entity movement
+      description: |
+        Detect potential collisions for entity movement path and calculate resolutions.
+
+        **Performance Notes:**
+        - Spatial partitioning optimization
+        - Broad-phase collision detection
+        - Narrow-phase validation
+        - P99 latency target: <20ms
+      tags: [Collision Detection]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollisionDetectionRequest'
+      responses:
+        '200':
+          description: Collision detection completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollisionDetectionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /collision/resolve:
+    post:
+      operationId: resolveCollision
+      summary: Resolve collision between entities
+      description: |
+        Calculate collision resolution between moving entities with physics simulation.
+
+        **Performance Notes:**
+        - Physics-based resolution
+        - Momentum conservation
+        - Multi-entity collision support
+        - P99 latency target: <15ms
+      tags: [Collision Detection]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollisionResolutionRequest'
+      responses:
+        '200':
+          description: Collision resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollisionResolutionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Zone Management Endpoints
+  /zones/{zone_id}/positions:
+    get:
+      operationId: getZonePositions
+      summary: Get all AI positions in zone
+      description: |
+        Retrieve current positions of all AI entities in a specific zone.
+
+        **Performance Notes:**
+        - Zone-based spatial indexing
+        - Efficient bulk retrieval
+        - Up to 500 entities per zone
+        - P99 latency target: <40ms
+      tags: [Zone Management]
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game zone identifier
+        - name: include_velocity
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include velocity data in response
+        - name: bounding_box
+          in: query
+          schema:
+            type: string
+          description: Optional bounding box filter (x1,y1,x2,y2)
+      responses:
+        '200':
+          description: Zone positions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZonePositionSnapshot'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /zones/{zone_id}/sync:
+    post:
+      operationId: synchronizeZone
+      summary: Synchronize zone position state
+      description: |
+        Force synchronization of all AI positions in zone across all replicas.
+
+        **Performance Notes:**
+        - Cross-replica state synchronization
+        - Conflict resolution included
+        - Background processing for large zones
+        - Processing time target: <2 seconds
+      tags: [Zone Management]
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game zone identifier
+      responses:
+        '202':
+          description: Zone synchronization initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneSyncResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Real-time Broadcasting Endpoints
+  /broadcast/positions:
+    post:
+      operationId: broadcastPositionUpdates
+      summary: Broadcast position updates to subscribers
+      description: |
+        Broadcast real-time position updates to connected clients via WebSocket.
+
+        **Performance Notes:**
+        - Efficient message batching
+        - Compression for large updates
+        - Up to 1000 concurrent subscribers
+        - P99 latency target: <10ms
+      tags: [Real-time Broadcasting]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastRequest'
+      responses:
+        '200':
+          description: Position updates broadcast successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /broadcast/subscribe/{zone_id}:
+    post:
+      operationId: subscribeToZoneBroadcasts
+      summary: Subscribe to zone position broadcasts
+      description: |
+        Subscribe to real-time position broadcasts for a specific zone.
+
+        **Performance Notes:**
+        - WebSocket connection pooling
+        - Zone-based subscription filtering
+        - Automatic cleanup on disconnect
+        - Connection time target: <100ms
+      tags: [Real-time Broadcasting]
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game zone identifier
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # Performance Monitoring Endpoints
+  /metrics/position-sync:
+    get:
+      operationId: getPositionSyncMetrics
+      summary: Get position synchronization performance metrics
+      description: |
+        Retrieve comprehensive position sync performance metrics across all zones.
+
+        **Performance Notes:**
+        - Aggregated metrics collection
+        - Historical data analysis (90 days)
+        - Real-time performance monitoring
+        - P99 latency target: <25ms
+      tags: [Performance Monitoring]
+      parameters:
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Metrics collection start time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Metrics collection end time
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific zone
+      responses:
+        '200':
+          description: Position sync metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionSyncMetrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  schemas:
+
+    # Position Synchronization Schemas
+    EntityPosition:
+      type: object
+      required: [entity_id, position, velocity, timestamp]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: AI entity identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        position:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Vector3'
+        movement_state:
+          type: string
+          enum: [idle, walking, running, sprinting, jumping, falling, stunned]
+          description: Current movement state
+          example: running
+        timestamp:
+          type: string
+          format: date-time
+          description: Position update timestamp
+          example: "2024-01-15T14:20:00Z"
+        zone_id:
+          type: string
+          format: uuid
+          description: Current zone identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        version:
+          type: integer
+          minimum: 1
+          description: Position version for optimistic locking
+          example: 1
+
+    Vector3:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+          example: 125.5
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+          example: 0.0
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+          example: 89.2
+
+    PositionUpdateRequest:
+      type: object
+      required: [position, version]
+      properties:
+        position:
+          $ref: '#/components/schemas/Vector3'
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Vector3'
+        movement_state:
+          type: string
+          enum: [idle, walking, running, sprinting, jumping, falling, stunned]
+          description: New movement state
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+        force_update:
+          type: boolean
+          default: false
+          description: Force update even if version conflicts
+        validate_collision:
+          type: boolean
+          default: true
+          description: Validate collision before update
+
+    BatchPositionResponse:
+      type: object
+      required: [positions, timestamp]
+      properties:
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPosition'
+          description: Array of entity positions
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2024-01-15T14:20:00Z"
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone identifier for batch
+
+    BatchPositionUpdateRequest:
+      type: object
+      required: [updates]
+      properties:
+        updates:
+          type: array
+          items:
+            type: object
+            required: [entity_id, update]
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+                description: AI entity identifier
+              update:
+                $ref: '#/components/schemas/PositionUpdateRequest'
+          minItems: 1
+          maxItems: 50
+          description: Batch of position updates
+
+    BatchPositionUpdateResponse:
+      type: object
+      required: [results, summary]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [entity_id, success, position]
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+                description: AI entity identifier
+              success:
+                type: boolean
+                description: Whether update was successful
+              position:
+                $ref: '#/components/schemas/EntityPosition'
+              error:
+                type: string
+                description: Error message if update failed
+          description: Batch update results
+        summary:
+          $ref: '#/components/schemas/BatchUpdateSummary'
+
+    BatchUpdateSummary:
+      type: object
+      required: [total_requested, successful, failed, average_latency_ms]
+      properties:
+        total_requested:
+          type: integer
+          minimum: 0
+          description: Total updates requested
+          example: 50
+        successful:
+          type: integer
+          minimum: 0
+          description: Number of successful updates
+          example: 48
+        failed:
+          type: integer
+          minimum: 0
+          description: Number of failed updates
+          example: 2
+        average_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average processing latency
+          example: 12.5
+
+    # Movement Prediction Schemas
+    MovementPredictionRequest:
+      type: object
+      required: [entity_id, prediction_horizon_seconds]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: AI entity identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        prediction_horizon_seconds:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: How far ahead to predict movement
+          example: 10
+        current_objective:
+          type: object
+          required: [type, target]
+          properties:
+            type:
+              type: string
+              enum: [move_to_position, follow_entity, patrol_route, flee_from_threat]
+              description: Type of movement objective
+              example: move_to_position
+            target:
+              oneOf:
+                - $ref: '#/components/schemas/Vector3'
+                - type: object
+                  required: [entity_id]
+                  properties:
+                    entity_id:
+                      type: string
+                      format: uuid
+                      description: Target entity to follow/flee from
+          description: Current movement objective
+        environmental_factors:
+          type: array
+          items:
+            type: string
+          description: Environmental factors affecting movement
+          example: ["rough_terrain", "low_visibility", "crowded_area"]
+
+    MovementPrediction:
+      type: object
+      required: [entity_id, predicted_path, confidence_score]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: AI entity identifier
+        predicted_path:
+          type: array
+          items:
+            type: object
+            required: [position, timestamp, confidence]
+            properties:
+              position:
+                $ref: '#/components/schemas/Vector3'
+              velocity:
+                $ref: '#/components/schemas/Vector3'
+              timestamp:
+                type: string
+                format: date-time
+                description: Predicted timestamp
+              confidence:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                description: Prediction confidence
+          description: Predicted movement path
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Overall prediction confidence
+          example: 0.85
+        alternative_paths:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/Vector3'
+          description: Alternative predicted paths
+        obstacles_considered:
+          type: array
+          items:
+            type: string
+          description: Obstacles factored into prediction
+
+    PathfindingRequest:
+      type: object
+      required: [start_position, end_position]
+      properties:
+        start_position:
+          $ref: '#/components/schemas/Vector3'
+        end_position:
+          $ref: '#/components/schemas/Vector3'
+        entity_properties:
+          type: object
+          properties:
+            movement_speed:
+              type: number
+              format: float
+              minimum: 0
+              description: Entity movement speed
+              example: 5.0
+            jump_height:
+              type: number
+              format: float
+              minimum: 0
+              description: Entity jump height
+              example: 2.0
+            can_fly:
+              type: boolean
+              description: Whether entity can fly
+              example: false
+          description: Entity movement properties
+        avoid_obstacles:
+          type: boolean
+          default: true
+          description: Whether to avoid obstacles
+        optimization_goal:
+          type: string
+          enum: [shortest_distance, fastest_time, stealthiest_route, safest_route]
+          default: shortest_distance
+          description: Path optimization goal
+
+    PathfindingResult:
+      type: object
+      required: [path, path_length, estimated_time]
+      properties:
+        path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+          description: Calculated path waypoints
+        path_length:
+          type: number
+          format: float
+          minimum: 0
+          description: Total path length
+          example: 125.5
+        estimated_time:
+          type: number
+          format: float
+          minimum: 0
+          description: Estimated travel time
+          example: 25.1
+        waypoints:
+          type: array
+          items:
+            type: object
+            required: [position, action]
+            properties:
+              position:
+                $ref: '#/components/schemas/Vector3'
+              action:
+                type: string
+                enum: [move, jump, wait, interact]
+                description: Action at waypoint
+          description: Detailed waypoints with actions
+
+    # Collision Detection Schemas
+    CollisionDetectionRequest:
+      type: object
+      required: [moving_entity, movement_path]
+      properties:
+        moving_entity:
+          type: object
+          required: [entity_id, bounding_box]
+          properties:
+            entity_id:
+              type: string
+              format: uuid
+              description: Moving entity identifier
+            bounding_box:
+              $ref: '#/components/schemas/BoundingBox'
+            velocity:
+              $ref: '#/components/schemas/Vector3'
+          description: Moving entity information
+        movement_path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+          description: Planned movement path
+        check_entities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific entities to check collisions with
+        detection_distance:
+          type: number
+          format: float
+          minimum: 0
+          default: 10.0
+          description: Collision detection distance
+
+    BoundingBox:
+      type: object
+      required: [min, max]
+      properties:
+        min:
+          $ref: '#/components/schemas/Vector3'
+        max:
+          $ref: '#/components/schemas/Vector3'
+
+    CollisionDetectionResult:
+      type: object
+      required: [collisions_detected, safe_path]
+      properties:
+        collisions_detected:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollisionInfo'
+          description: Detected collisions
+        safe_path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+          description: Collision-free path
+        path_modified:
+          type: boolean
+          description: Whether original path was modified
+        collision_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability of collision on current path
+
+    CollisionInfo:
+      type: object
+      required: [entity_id, collision_point, collision_time]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: Colliding entity identifier
+        collision_point:
+          $ref: '#/components/schemas/Vector3'
+        collision_time:
+          type: number
+          format: float
+          minimum: 0
+          description: Time to collision in seconds
+        collision_type:
+          type: string
+          enum: [entity_collision, environmental_collision, boundary_collision]
+          description: Type of collision
+        severity:
+          type: string
+          enum: [minor, moderate, severe, critical]
+          description: Collision severity
+
+    CollisionResolutionRequest:
+      type: object
+      required: [entities, collision_point]
+      properties:
+        entities:
+          type: array
+          items:
+            type: object
+            required: [entity_id, position, velocity, mass]
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+                description: Entity identifier
+              position:
+                $ref: '#/components/schemas/Vector3'
+              velocity:
+                $ref: '#/components/schemas/Vector3'
+              mass:
+                type: number
+                format: float
+                minimum: 0
+                description: Entity mass for physics
+          minItems: 2
+          maxItems: 10
+          description: Colliding entities
+        collision_point:
+          $ref: '#/components/schemas/Vector3'
+        resolution_method:
+          type: string
+          enum: [elastic_collision, inelastic_collision, redirection, separation]
+          default: elastic_collision
+          description: Physics resolution method
+
+    CollisionResolutionResult:
+      type: object
+      required: [resolved_positions, resolved_velocities]
+      properties:
+        resolved_positions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Vector3'
+          description: Resolved positions after collision
+        resolved_velocities:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Vector3'
+          description: Resolved velocities after collision
+        energy_conserved:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Percentage of kinetic energy conserved
+        resolution_time_ms:
+          type: integer
+          minimum: 0
+          description: Time taken to resolve collision
+
+    # Zone Management Schemas
+    ZonePositionSnapshot:
+      type: object
+      required: [zone_id, positions, snapshot_timestamp]
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone identifier
+        positions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EntityPosition'
+          description: All AI entity positions in zone
+        snapshot_timestamp:
+          type: string
+          format: date-time
+          description: Snapshot creation timestamp
+        entity_count:
+          type: integer
+          minimum: 0
+          description: Number of entities in snapshot
+        data_compressed:
+          type: boolean
+          description: Whether data is compressed
+
+    ZoneSyncResponse:
+      type: object
+      required: [operation_id, zone_id, sync_status]
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+          description: Synchronization operation identifier
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone being synchronized
+        sync_status:
+          type: string
+          enum: [initiated, in_progress, completed, failed]
+          description: Current sync status
+        entities_affected:
+          type: integer
+          minimum: 0
+          description: Number of entities synchronized
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: Estimated completion timestamp
+
+    # Real-time Broadcasting Schemas
+    BroadcastRequest:
+      type: object
+      required: [zone_id, position_updates]
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone for broadcasting
+        position_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPosition'
+          maxItems: 100
+          description: Position updates to broadcast
+        compression_enabled:
+          type: boolean
+          default: true
+          description: Enable message compression
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+          description: Broadcast priority
+
+    BroadcastResult:
+      type: object
+      required: [broadcast_id, recipients_count, bytes_sent]
+      properties:
+        broadcast_id:
+          type: string
+          format: uuid
+          description: Broadcast operation identifier
+        recipients_count:
+          type: integer
+          minimum: 0
+          description: Number of recipients
+        bytes_sent:
+          type: integer
+          minimum: 0
+          description: Total bytes broadcast
+        compression_ratio:
+          type: number
+          format: float
+          minimum: 0
+          description: Data compression ratio achieved
+        broadcast_latency_ms:
+          type: integer
+          minimum: 0
+          description: End-to-end broadcast latency
+
+    SubscriptionResult:
+      type: object
+      required: [subscription_id, zone_id, websocket_url]
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+          description: Subscription identifier
+        zone_id:
+          type: string
+          format: uuid
+          description: Subscribed zone
+        websocket_url:
+          type: string
+          format: uri
+          description: WebSocket URL for receiving broadcasts
+        heartbeat_interval_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          default: 30
+          description: Heartbeat interval for connection health
+
+    # Performance Monitoring Schemas
+    PositionSyncMetrics:
+      type: object
+      required: [time_range, sync_performance, prediction_accuracy]
+      properties:
+        time_range:
+          type: object
+          required: [start_time, end_time]
+          properties:
+            start_time:
+              type: string
+              format: date-time
+            end_time:
+              type: string
+              format: date-time
+        sync_performance:
+          $ref: '#/components/schemas/SyncPerformanceMetrics'
+        prediction_accuracy:
+          $ref: '#/components/schemas/PredictionAccuracyMetrics'
+        zone_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ZoneSyncMetrics'
+          description: Per-zone synchronization metrics
+
+    SyncPerformanceMetrics:
+      type: object
+      required: [average_sync_latency_ms, p99_sync_latency_ms, sync_success_rate]
+      properties:
+        average_sync_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average synchronization latency
+          example: 12.5
+        p99_sync_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: P99 synchronization latency
+          example: 25.0
+        sync_success_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Synchronization success rate
+          example: 0.997
+        updates_per_second:
+          type: integer
+          minimum: 0
+          description: Position updates per second
+          example: 850
+        bytes_per_second:
+          type: integer
+          minimum: 0
+          description: Network bytes per second
+          example: 125000
+
+    PredictionAccuracyMetrics:
+      type: object
+      required: [path_prediction_accuracy, collision_prediction_rate]
+      properties:
+        path_prediction_accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Path prediction accuracy
+          example: 0.89
+        collision_prediction_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Collision prediction success rate
+          example: 0.94
+        average_prediction_error:
+          type: number
+          format: float
+          minimum: 0
+          description: Average prediction position error
+          example: 2.3
+
+    ZoneSyncMetrics:
+      type: object
+      required: [zone_id, entity_count, sync_latency_ms]
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone identifier
+        entity_count:
+          type: integer
+          minimum: 0
+          description: Number of entities in zone
+        sync_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Zone synchronization latency
+        network_load_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Network load percentage for zone
+
+    # Administration Schemas
+    AdminOperationResponse:
+      type: object
+      required: [operation, status, affected_entities_count]
+      properties:
+        operation:
+          type: string
+          description: Admin operation performed
+          example: "force_position_sync"
+        status:
+          type: string
+          enum: [success, partial_success, failed]
+          description: Operation result status
+          example: success
+        affected_entities_count:
+          type: integer
+          minimum: 0
+          description: Number of entities affected by operation
+          example: 500
+        execution_time_ms:
+          type: integer
+          minimum: 0
+          description: Operation execution time in milliseconds
+          example: 1500
+
+  # Standard Responses
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+    Conflict:
+      description: Conflict - resource state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    AdminAuth:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: Administrative access token

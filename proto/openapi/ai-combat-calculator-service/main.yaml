@@ -1,0 +1,1364 @@
+# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
+# AI Combat Calculator Service - Damage/healing calculations for AI combat systems
+# Issue: #2300
+
+openapi: 3.0.3
+info:
+  title: AI Combat Calculator Service API
+  description: |
+    **AI Combat Calculator Service** - Advanced damage and healing calculation systems for NECPGAME MMOFPS RPG.
+
+    ## Domain Purpose
+    Provides high-performance, mathematically precise combat calculations including damage mitigation,
+    healing amplification, critical hit mechanics, elemental interactions, and status effect calculations
+    for all AI enemy combat interactions.
+
+    ## Performance Targets
+    - P99 Latency: <5ms for damage calculations
+    - P99 Latency: <10ms for complex combat resolution
+    - Memory Footprint: <25MB per zone
+    - Calculation Accuracy: 99.999% precision
+    - Concurrent Calculations: 10000+ per second supported
+
+    ## Domain Inheritance (SOLID/DRY)
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+    - Game Domain entities through `allOf` pattern
+    - Optimistic locking for concurrent operations (version field)
+    - Strict typing with validation rules (min/max, patterns, enums)
+
+    **SOLID/DRY Principle:**
+    - ✅ Наследуем базовые поля через `$ref` и `allOf`
+    - ✅ Добавляем только уникальные поля сервиса
+    - ❌ НЕ дублируем общие поля (id, created_at, updated_at, version)
+    - ❌ НЕ переопределяем базовые структуры
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME AI API Team
+    email: ai@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/ai-combat-calculator
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/ai-combat-calculator
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/ai-combat-calculator
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Damage Calculation
+    description: Core damage calculation and mitigation systems
+  - name: Healing Calculation
+    description: Healing amplification and restoration calculations
+  - name: Critical Hit Systems
+    description: Critical hit probability and damage multipliers
+  - name: Elemental Interactions
+    description: Elemental damage/resistance calculations
+  - name: Status Effects
+    description: Status effect application and calculations
+  - name: Combat Resolution
+    description: Complete combat interaction resolution
+  - name: Performance Monitoring
+    description: Combat calculation performance metrics
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints - Required for all services
+  /health:
+    get:
+      operationId: aiCombatCalculatorHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: aiCombatCalculatorDetailedHealthCheck
+      summary: Detailed health check with calculation metrics
+      description: Returns comprehensive health status including combat calculation performance metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  # Damage Calculation Endpoints
+  /damage/calculate:
+    post:
+      operationId: calculateDamage
+      summary: Calculate damage for combat interaction
+      description: |
+        Calculate precise damage for a combat interaction between attacker and defender.
+
+        **Performance Notes:**
+        - Vectorized calculations for multiple damage types
+        - Pre-calculated mitigation tables
+        - Memory-pooled calculation contexts
+        - P99 latency target: <3ms
+      tags: [Damage Calculation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /damage/batch:
+    post:
+      operationId: calculateBatchDamage
+      summary: Calculate damage for multiple combat interactions
+      description: |
+        Calculate damage for multiple combat interactions in a single request for performance optimization.
+
+        **Performance Notes:**
+        - SIMD vectorized calculations
+        - Shared mitigation table lookups
+        - Up to 100 interactions per batch
+        - P99 latency target: <8ms per interaction
+      tags: [Damage Calculation, Performance Monitoring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDamageRequest'
+      responses:
+        '200':
+          description: Batch damage calculations completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDamageResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /damage/critical:
+    post:
+      operationId: calculateCriticalHit
+      summary: Calculate critical hit damage and probability
+      description: |
+        Calculate critical hit probability, damage multiplier, and special effects.
+
+        **Performance Notes:**
+        - Pre-calculated probability tables
+        - Cached crit multipliers
+        - P99 latency target: <2ms
+      tags: [Critical Hit Systems]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriticalHitRequest'
+      responses:
+        '200':
+          description: Critical hit calculation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriticalHitResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Healing Calculation Endpoints
+  /healing/calculate:
+    post:
+      operationId: calculateHealing
+      summary: Calculate healing amount and effects
+      description: |
+        Calculate precise healing amount including amplification, over-heal, and special effects.
+
+        **Performance Notes:**
+        - Optimized healing formulas
+        - Cached amplification calculations
+        - P99 latency target: <3ms
+      tags: [Healing Calculation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealingCalculationRequest'
+      responses:
+        '200':
+          description: Healing calculation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealingCalculationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /healing/over-time:
+    post:
+      operationId: calculateOverTimeHealing
+      summary: Calculate over-time healing effects
+      description: |
+        Calculate healing-over-time (HoT) effects including tick rates, duration, and stacking rules.
+
+        **Performance Notes:**
+        - Pre-calculated tick schedules
+        - Efficient stacking calculations
+        - P99 latency target: <5ms
+      tags: [Healing Calculation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OverTimeHealingRequest'
+      responses:
+        '200':
+          description: Over-time healing calculation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverTimeHealingResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Elemental Interactions
+  /elemental/interaction:
+    post:
+      operationId: calculateElementalInteraction
+      summary: Calculate elemental damage/resistance interactions
+      description: |
+        Calculate damage modifiers based on elemental interactions (fire vs ice, cyber vs bio, etc.).
+
+        **Performance Notes:**
+        - Pre-calculated interaction matrix
+        - Cached elemental modifiers
+        - P99 latency target: <2ms
+      tags: [Elemental Interactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ElementalInteractionRequest'
+      responses:
+        '200':
+          description: Elemental interaction calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElementalInteractionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Status Effects
+  /status-effects/apply:
+    post:
+      operationId: applyStatusEffect
+      summary: Calculate and apply status effect
+      description: |
+        Calculate status effect application including probability, duration, and stacking rules.
+
+        **Performance Notes:**
+        - Pre-calculated effect probabilities
+        - Efficient stacking resolution
+        - P99 latency target: <4ms
+      tags: [Status Effects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusEffectApplicationRequest'
+      responses:
+        '200':
+          description: Status effect application calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusEffectApplicationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /status-effects/modify:
+    post:
+      operationId: modifyStatusEffect
+      summary: Modify existing status effect
+      description: |
+        Calculate modifications to existing status effects (amplification, reduction, dispelling).
+
+        **Performance Notes:**
+        - Cached effect modification rules
+        - Atomic effect updates
+        - P99 latency target: <3ms
+      tags: [Status Effects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusEffectModificationRequest'
+      responses:
+        '200':
+          description: Status effect modification calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusEffectModificationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Combat Resolution
+  /combat/resolve:
+    post:
+      operationId: resolveCombatInteraction
+      summary: Resolve complete combat interaction
+      description: |
+        Resolve a complete combat interaction including damage, healing, status effects, and special mechanics.
+
+        **Performance Notes:**
+        - Optimized combat resolution pipeline
+        - Cached calculation dependencies
+        - P99 latency target: <10ms
+      tags: [Combat Resolution]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatInteractionRequest'
+      responses:
+        '200':
+          description: Combat interaction resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatInteractionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /combat/batch-resolve:
+    post:
+      operationId: resolveBatchCombatInteractions
+      summary: Resolve multiple combat interactions
+      description: |
+        Resolve multiple combat interactions in batch for high-throughput combat scenarios.
+
+        **Performance Notes:**
+        - Parallel combat resolution
+        - Shared calculation contexts
+        - Up to 50 interactions per batch
+        - P99 latency target: <15ms per interaction
+      tags: [Combat Resolution, Performance Monitoring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCombatRequest'
+      responses:
+        '200':
+          description: Batch combat interactions resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCombatResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # Performance Monitoring
+  /metrics/combat-performance:
+    get:
+      operationId: getCombatPerformanceMetrics
+      summary: Get combat calculation performance metrics
+      description: |
+        Retrieve comprehensive combat calculation performance metrics.
+
+        **Performance Notes:**
+        - Aggregated metrics collection
+        - Historical data analysis (90 days)
+        - Real-time performance monitoring
+        - P99 latency target: <25ms
+      tags: [Performance Monitoring]
+      parameters:
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Metrics collection start time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Metrics collection end time
+        - name: calculation_type
+          in: query
+          schema:
+            type: string
+            enum: [damage, healing, critical, elemental, status_effect, combat_resolution]
+          description: Filter by calculation type
+      responses:
+        '200':
+          description: Combat performance metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatPerformanceMetrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  schemas:
+
+    # Damage Calculation Schemas
+    DamageCalculationRequest:
+      type: object
+      required: [attacker, defender, damage_source]
+      properties:
+        attacker:
+          $ref: '#/components/schemas/CombatParticipant'
+        defender:
+          $ref: '#/components/schemas/CombatParticipant'
+        damage_source:
+          $ref: '#/components/schemas/DamageSource'
+        environmental_factors:
+          $ref: '#/components/schemas/EnvironmentalFactors'
+        special_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Special damage modifiers
+
+    CombatParticipant:
+      type: object
+      required: [entity_id, entity_type, stats]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: Combat participant identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        entity_type:
+          type: string
+          enum: [player, ai_enemy, npc, environmental]
+          description: Type of combat participant
+          example: ai_enemy
+        stats:
+          $ref: '#/components/schemas/CombatStats'
+        position:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        faction:
+          type: string
+          enum: [neutral, hostile, ally, mercenary, corporate, gang]
+          description: Combat participant faction
+
+    CombatStats:
+      type: object
+      required: [level, attack_power, defense_rating]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Combat participant level
+          example: 25
+        attack_power:
+          type: integer
+          minimum: 0
+          description: Base attack power
+          example: 1500
+        defense_rating:
+          type: integer
+          minimum: 0
+          description: Defense rating
+          example: 1200
+        critical_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Critical hit chance
+          example: 0.15
+        critical_multiplier:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 5
+          description: Critical hit damage multiplier
+          example: 2.0
+        elemental_resistances:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: -1
+            maximum: 1
+          description: Elemental resistance values (-1 to 1)
+          example:
+            fire: 0.2
+            ice: -0.1
+            cyber: 0.5
+
+    DamageSource:
+      type: object
+      required: [damage_type, base_damage]
+      properties:
+        damage_type:
+          type: string
+          enum: [physical, energy, elemental, cyber, bio, chemical, explosive]
+          description: Type of damage
+          example: physical
+        base_damage:
+          type: integer
+          minimum: 0
+          description: Base damage amount
+          example: 500
+        elemental_type:
+          type: string
+          enum: [fire, ice, lightning, acid, poison, radiation, cyber, bio]
+          description: Elemental damage type (if applicable)
+          example: fire
+        weapon_type:
+          type: string
+          enum: [pistol, rifle, shotgun, sniper, melee, grenade, ability]
+          description: Weapon or attack type
+          example: rifle
+        armor_penetration:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Armor penetration percentage
+          example: 0.3
+        special_properties:
+          type: array
+          items:
+            type: string
+          description: Special damage properties
+          example: ["bleeding", "stun", "knockback"]
+
+    EnvironmentalFactors:
+      type: object
+      properties:
+        cover_modifier:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: Cover damage modifier
+          example: 0.3
+        range_modifier:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: Range-based damage modifier
+          example: -0.2
+        weather_modifier:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: Weather damage modifier
+          example: 0.1
+        terrain_modifier:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: Terrain damage modifier
+          example: -0.1
+
+    DamageModifier:
+      type: object
+      required: [modifier_type, value]
+      properties:
+        modifier_type:
+          type: string
+          enum: [multiplier, additive, override]
+          description: Type of damage modifier
+          example: multiplier
+        value:
+          type: number
+          format: float
+          description: Modifier value
+          example: 1.5
+        source:
+          type: string
+          description: Source of the modifier
+          example: "ability_boost"
+        duration_ms:
+          type: integer
+          minimum: 0
+          description: Modifier duration in milliseconds
+          example: 10000
+
+    DamageCalculationResult:
+      type: object
+      required: [final_damage, damage_breakdown, hit_result]
+      properties:
+        final_damage:
+          type: integer
+          minimum: 0
+          description: Final calculated damage
+          example: 387
+        damage_breakdown:
+          $ref: '#/components/schemas/DamageBreakdown'
+        hit_result:
+          type: string
+          enum: [hit, critical_hit, dodge, block, immune]
+          description: Result of the attack
+          example: hit
+        status_effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectApplication'
+          description: Status effects applied by this damage
+
+    DamageBreakdown:
+      type: object
+      required: [base_damage, mitigation, modifiers]
+      properties:
+        base_damage:
+          type: integer
+          minimum: 0
+          description: Base damage before modifiers
+          example: 500
+        mitigation:
+          type: object
+          required: [armor_reduction, resistance_reduction]
+          properties:
+            armor_reduction:
+              type: integer
+              minimum: 0
+              description: Damage reduced by armor
+              example: 75
+            resistance_reduction:
+              type: integer
+              minimum: 0
+              description: Damage reduced by resistances
+              example: 38
+        modifiers:
+          type: array
+          items:
+            type: object
+            required: [name, value, type]
+            properties:
+              name:
+                type: string
+                description: Modifier name
+                example: "critical_multiplier"
+              value:
+                type: number
+                format: float
+                description: Modifier value
+                example: 2.0
+              type:
+                type: string
+                enum: [multiplier, additive]
+                description: Modifier type
+                example: multiplier
+        environmental_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Environmental modifier contributions
+
+    BatchDamageRequest:
+      type: object
+      required: [damage_calculations]
+      properties:
+        damage_calculations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageCalculationRequest'
+          minItems: 1
+          maxItems: 100
+          description: Batch of damage calculations
+
+    BatchDamageResult:
+      type: object
+      required: [results, processing_stats]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageCalculationResult'
+          description: Batch damage calculation results
+        processing_stats:
+          $ref: '#/components/schemas/BatchProcessingStats'
+
+    # Critical Hit Schemas
+    CriticalHitRequest:
+      type: object
+      required: [attacker_stats, defender_stats, attack_type]
+      properties:
+        attacker_stats:
+          $ref: '#/components/schemas/CombatStats'
+        defender_stats:
+          $ref: '#/components/schemas/CombatStats'
+        attack_type:
+          type: string
+          enum: [melee, ranged, ability, environmental]
+          description: Type of attack
+          example: ranged
+        situational_modifiers:
+          type: array
+          items:
+            type: string
+          description: Situational modifiers affecting crit chance
+          example: ["backstab", "weak_spot"]
+
+    CriticalHitResult:
+      type: object
+      required: [is_critical, probability, multiplier, special_effects]
+      properties:
+        is_critical:
+          type: boolean
+          description: Whether the attack was critical
+          example: true
+        probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Calculated critical hit probability
+          example: 0.23
+        multiplier:
+          type: number
+          format: float
+          minimum: 1
+          description: Critical damage multiplier
+          example: 2.5
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special effects triggered by critical hit
+          example: ["bleeding", "knockback"]
+
+    # Healing Calculation Schemas
+    HealingCalculationRequest:
+      type: object
+      required: [healer, target, healing_source]
+      properties:
+        healer:
+          $ref: '#/components/schemas/CombatParticipant'
+        target:
+          $ref: '#/components/schemas/CombatParticipant'
+        healing_source:
+          $ref: '#/components/schemas/HealingSource'
+        current_health_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Target's current health percentage
+          example: 0.3
+
+    HealingSource:
+      type: object
+      required: [healing_type, base_healing]
+      properties:
+        healing_type:
+          type: string
+          enum: [direct, over_time, ability, item, environmental]
+          description: Type of healing
+          example: ability
+        base_healing:
+          type: integer
+          minimum: 0
+          description: Base healing amount
+          example: 300
+        amplification_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealingModifier'
+          description: Healing amplification modifiers
+
+    HealingModifier:
+      type: object
+      required: [modifier_type, value]
+      properties:
+        modifier_type:
+          type: string
+          enum: [amplification, reduction, override]
+          description: Type of healing modifier
+          example: amplification
+        value:
+          type: number
+          format: float
+          description: Modifier value
+          example: 1.3
+        source:
+          type: string
+          description: Source of the modifier
+          example: "healing_boost_ability"
+
+    HealingCalculationResult:
+      type: object
+      required: [final_healing, healing_breakdown, over_heal]
+      properties:
+        final_healing:
+          type: integer
+          minimum: 0
+          description: Final calculated healing amount
+          example: 234
+        healing_breakdown:
+          $ref: '#/components/schemas/HealingBreakdown'
+        over_heal:
+          type: integer
+          minimum: 0
+          description: Amount of over-healing
+          example: 66
+        status_effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectApplication'
+          description: Status effects applied by healing
+
+    HealingBreakdown:
+      type: object
+      required: [base_healing, amplification, modifiers]
+      properties:
+        base_healing:
+          type: integer
+          minimum: 0
+          description: Base healing before modifiers
+          example: 300
+        amplification:
+          type: number
+          format: float
+          minimum: 0
+          description: Total healing amplification
+          example: 1.3
+        modifiers:
+          type: array
+          items:
+            type: object
+            required: [name, value, type]
+            properties:
+              name:
+                type: string
+                description: Modifier name
+              value:
+                type: number
+                format: float
+                description: Modifier value
+              type:
+                type: string
+                enum: [multiplier, additive]
+
+    OverTimeHealingRequest:
+      type: object
+      required: [healing_source, duration_seconds, tick_rate]
+      properties:
+        healing_source:
+          $ref: '#/components/schemas/HealingSource'
+        duration_seconds:
+          type: integer
+          minimum: 1
+          maximum: 300
+          description: Total duration of HoT effect
+          example: 15
+        tick_rate:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 10
+          description: Ticks per second
+          example: 1.0
+        max_stacks:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Maximum number of stacks
+          example: 3
+
+    OverTimeHealingResult:
+      type: object
+      required: [total_healing, tick_schedule, stacking_rules]
+      properties:
+        total_healing:
+          type: integer
+          minimum: 0
+          description: Total healing over effect duration
+          example: 1500
+        tick_schedule:
+          type: array
+          items:
+            type: object
+            required: [tick_number, healing_amount, timestamp_offset]
+            properties:
+              tick_number:
+                type: integer
+                minimum: 1
+                description: Sequential tick number
+              healing_amount:
+                type: integer
+                minimum: 0
+                description: Healing amount for this tick
+              timestamp_offset:
+                type: number
+                format: float
+                minimum: 0
+                description: Time offset from start in seconds
+          description: Scheduled healing ticks
+        stacking_rules:
+          type: object
+          required: [can_stack, stack_refresh, max_duration]
+          properties:
+            can_stack:
+              type: boolean
+              description: Whether effect can stack
+            stack_refresh:
+              type: boolean
+              description: Whether applying refreshes existing stacks
+            max_duration:
+              type: integer
+              minimum: 0
+              description: Maximum effect duration
+
+    # Elemental Interaction Schemas
+    ElementalInteractionRequest:
+      type: object
+      required: [attacker_element, defender_elements, damage_type]
+      properties:
+        attacker_element:
+          type: string
+          enum: [fire, ice, lightning, acid, poison, radiation, cyber, bio, neutral]
+          description: Attacker's elemental type
+          example: fire
+        defender_elements:
+          type: array
+          items:
+            type: string
+            enum: [fire, ice, lightning, acid, poison, radiation, cyber, bio, neutral]
+          description: Defender's elemental resistances/types
+          example: ["ice", "neutral"]
+        damage_type:
+          type: string
+          enum: [physical, energy, elemental]
+          description: Base damage type
+          example: elemental
+        environmental_elements:
+          type: array
+          items:
+            type: string
+          description: Environmental elemental influences
+
+    ElementalInteractionResult:
+      type: object
+      required: [damage_multiplier, resistance_modifier, special_effects]
+      properties:
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: Final damage multiplier from elemental interaction
+          example: 1.8
+        resistance_modifier:
+          type: number
+          format: float
+          minimum: -2
+          maximum: 2
+          description: Resistance modifier from elemental interaction
+          example: -0.3
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special elemental effects triggered
+          example: ["melting", "superheated"]
+        interaction_breakdown:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Breakdown of elemental interactions
+          example:
+            "fire_vs_ice": 1.5
+            "fire_vs_water": 0.5
+
+    # Status Effect Schemas
+    StatusEffectApplicationRequest:
+      type: object
+      required: [effect_type, source, target, application_chance]
+      properties:
+        effect_type:
+          type: string
+          enum: [poison, bleed, burn, freeze, stun, slow, weaken, amplify, shield]
+          description: Type of status effect
+          example: poison
+        source:
+          $ref: '#/components/schemas/CombatParticipant'
+        target:
+          $ref: '#/components/schemas/CombatParticipant'
+        application_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability of effect application
+          example: 0.3
+        effect_parameters:
+          type: object
+          additionalProperties: true
+          description: Effect-specific parameters
+          example:
+            damage_per_tick: 50
+            duration_seconds: 10
+            tick_rate: 2.0
+
+    StatusEffectApplication:
+      type: object
+      required: [effect_id, effect_type, duration_seconds, applied_by]
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Unique effect instance identifier
+        effect_type:
+          type: string
+          enum: [poison, bleed, burn, freeze, stun, slow, weaken, amplify, shield]
+          description: Type of status effect
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Effect duration in seconds
+        applied_by:
+          type: string
+          format: uuid
+          description: Entity that applied the effect
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Effect parameters
+
+    StatusEffectApplicationResult:
+      type: object
+      required: [applied, effect_instance, failure_reason]
+      properties:
+        applied:
+          type: boolean
+          description: Whether the effect was successfully applied
+        effect_instance:
+          $ref: '#/components/schemas/StatusEffectApplication'
+        failure_reason:
+          type: string
+          enum: [immune, resisted, already_affected, invalid_target]
+          description: Reason for application failure
+
+    StatusEffectModificationRequest:
+      type: object
+      required: [effect_id, modification_type]
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance to modify
+        modification_type:
+          type: string
+          enum: [amplify, reduce, dispel, refresh, stack]
+          description: Type of modification
+        modification_parameters:
+          type: object
+          additionalProperties: true
+          description: Modification-specific parameters
+
+    StatusEffectModificationResult:
+      type: object
+      required: [success, modified_effect, new_parameters]
+      properties:
+        success:
+          type: boolean
+          description: Whether modification was successful
+        modified_effect:
+          $ref: '#/components/schemas/StatusEffectApplication'
+        new_parameters:
+          type: object
+          additionalProperties: true
+          description: Updated effect parameters
+
+    # Combat Resolution Schemas
+    CombatInteractionRequest:
+      type: object
+      required: [attacker, defender, interaction_type]
+      properties:
+        attacker:
+          $ref: '#/components/schemas/CombatParticipant'
+        defender:
+          $ref: '#/components/schemas/CombatParticipant'
+        interaction_type:
+          type: string
+          enum: [attack, ability, environmental, special]
+          description: Type of combat interaction
+        attack_data:
+          $ref: '#/components/schemas/DamageCalculationRequest'
+        healing_data:
+          $ref: '#/components/schemas/HealingCalculationRequest'
+        status_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectApplicationRequest'
+          description: Status effects to apply
+
+    CombatInteractionResult:
+      type: object
+      required: [interaction_success, damage_result, healing_result, status_effects_applied]
+      properties:
+        interaction_success:
+          type: boolean
+          description: Whether the combat interaction was successful
+        damage_result:
+          $ref: '#/components/schemas/DamageCalculationResult'
+        healing_result:
+          $ref: '#/components/schemas/HealingCalculationResult'
+        status_effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectApplicationResult'
+          description: Results of status effect applications
+
+    BatchCombatRequest:
+      type: object
+      required: [combat_interactions]
+      properties:
+        combat_interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatInteractionRequest'
+          minItems: 1
+          maxItems: 50
+          description: Batch of combat interactions
+
+    BatchCombatResult:
+      type: object
+      required: [results, processing_stats]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatInteractionResult'
+          description: Batch combat interaction results
+        processing_stats:
+          $ref: '#/components/schemas/BatchProcessingStats'
+
+    # Performance Monitoring Schemas
+    CombatPerformanceMetrics:
+      type: object
+      required: [time_range, calculation_metrics, accuracy_metrics]
+      properties:
+        time_range:
+          type: object
+          required: [start_time, end_time]
+          properties:
+            start_time:
+              type: string
+              format: date-time
+            end_time:
+              type: string
+              format: date-time
+        calculation_metrics:
+          $ref: '#/components/schemas/CalculationPerformanceMetrics'
+        accuracy_metrics:
+          $ref: '#/components/schemas/CalculationAccuracyMetrics'
+
+    CalculationPerformanceMetrics:
+      type: object
+      required: [total_calculations, average_latency_ms, p99_latency_ms]
+      properties:
+        total_calculations:
+          type: integer
+          minimum: 0
+          description: Total calculations performed
+          example: 1000000
+        average_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average calculation latency
+          example: 3.2
+        p99_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: P99 calculation latency
+          example: 8.5
+        calculations_per_second:
+          type: integer
+          minimum: 0
+          description: Calculations per second rate
+          example: 8500
+
+    CalculationAccuracyMetrics:
+      type: object
+      required: [precision_errors, calculation_errors, validation_errors]
+      properties:
+        precision_errors:
+          type: integer
+          minimum: 0
+          description: Number of precision errors
+          example: 0
+        calculation_errors:
+          type: integer
+          minimum: 0
+          description: Number of calculation errors
+          example: 5
+        validation_errors:
+          type: integer
+          minimum: 0
+          description: Number of validation errors
+          example: 2
+        error_rate_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall error rate percentage
+          example: 0.0007
+
+    BatchProcessingStats:
+      type: object
+      required: [total_processed, average_latency_ms, max_latency_ms]
+      properties:
+        total_processed:
+          type: integer
+          minimum: 0
+          description: Total items processed
+          example: 50
+        average_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average processing latency
+          example: 12.5
+        max_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Maximum processing latency
+          example: 25.0
+        success_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Success rate of processing
+          example: 0.98
+
+    # Administration Schemas
+    AdminOperationResponse:
+      type: object
+      required: [operation, status, affected_entities_count]
+      properties:
+        operation:
+          type: string
+          description: Admin operation performed
+          example: "recalibrate_damage_formulas"
+        status:
+          type: string
+          enum: [success, partial_success, failed]
+          description: Operation result status
+          example: success
+        affected_entities_count:
+          type: integer
+          minimum: 0
+          description: Number of entities affected by operation
+          example: 5000
+        execution_time_ms:
+          type: integer
+          minimum: 0
+          description: Operation execution time in milliseconds
+          example: 2500
+
+  # Standard Responses
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+    Conflict:
+      description: Conflict - resource state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    AdminAuth:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: Administrative access token

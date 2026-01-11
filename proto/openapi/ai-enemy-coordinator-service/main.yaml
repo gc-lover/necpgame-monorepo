@@ -1,0 +1,831 @@
+# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
+# This template demonstrates proper domain separation with common entity inheritance
+# Issue: #2300
+
+openapi: 3.0.3
+info:
+  title: AI Enemy Coordinator Service API
+  description: |
+    **AI Enemy Coordinator Service** - Central orchestration microservice for AI enemy systems in NECPGAME MMOFPS RPG.
+
+    ## Domain Purpose
+    Provides centralized coordination and state management for all AI enemy entities across the game world.
+    Handles AI lifecycle management, real-time coordination, and performance optimization for up to 500+ AI entities per zone.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per Instance: <50KB baseline
+    - Concurrent Users: 10,000+ supported
+    - AI Entities per Zone: 500+ supported
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance (SOLID/DRY)
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+    - Game Domain entities through `allOf` pattern
+    - Optimistic locking for concurrent operations (version field)
+    - Strict typing with validation rules (min/max, patterns, enums)
+
+    **SOLID/DRY Principle:**
+    - ✅ Наследуем базовые поля через `$ref` и `allOf`
+    - ✅ Добавляем только уникальные поля сервиса
+    - ❌ НЕ дублируем общие поля (id, created_at, updated_at, version)
+    - ❌ НЕ переопределяем базовые структуры
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME AI API Team
+    email: ai@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/ai-enemy-coordinator
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/ai-enemy-coordinator
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/ai-enemy-coordinator
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: AI Enemy Coordination
+    description: Central AI enemy orchestration and state management
+  - name: AI Lifecycle Management
+    description: AI entity lifecycle operations (spawn, despawn, state transitions)
+  - name: Zone Coordination
+    description: Zone-based AI coordination and synchronization
+  - name: Performance Monitoring
+    description: AI performance metrics and optimization
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints - Required for all services
+  /health:
+    get:
+      operationId: aiEnemyCoordinatorHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: aiEnemyCoordinatorDetailedHealthCheck
+      summary: Detailed health check with metrics
+      description: Returns comprehensive health status including AI performance metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
+
+  # AI Enemy Coordination Endpoints
+  /ai-enemies/{enemy_id}/spawn:
+    post:
+      operationId: spawnAiEnemy
+      summary: Spawn AI enemy entity
+      description: |
+        Spawn a new AI enemy entity in the game world with initial state and behavior configuration.
+
+        **Performance Notes:**
+        - Atomic operation with immediate zone synchronization
+        - Memory pooling for AI entity objects (30-50% memory savings)
+        - P99 latency target: <25ms
+      tags: [AI Enemy Coordination, AI Lifecycle Management]
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique AI enemy identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiEnemySpawnRequest'
+      responses:
+        '201':
+          description: AI enemy spawned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /ai-enemies/{enemy_id}/despawn:
+    post:
+      operationId: despawnAiEnemy
+      summary: Despawn AI enemy entity
+      description: |
+        Remove AI enemy entity from the game world and clean up associated resources.
+
+        **Performance Notes:**
+        - Immediate resource cleanup and memory deallocation
+        - Zone synchronization for player visibility updates
+        - P99 latency target: <15ms
+      tags: [AI Enemy Coordination, AI Lifecycle Management]
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique AI enemy identifier
+      responses:
+        '200':
+          description: AI enemy despawned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyDespawnResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /ai-enemies/{enemy_id}/state:
+    get:
+      operationId: getAiEnemyState
+      summary: Get AI enemy current state
+      description: |
+        Retrieve current state of AI enemy entity including position, health, and behavior status.
+
+        **Performance Notes:**
+        - Cached state retrieval (30 second TTL)
+        - Real-time synchronization across zone replicas
+        - P99 latency target: <10ms
+      tags: [AI Enemy Coordination]
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique AI enemy identifier
+      responses:
+        '200':
+          description: AI enemy state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    put:
+      operationId: updateAiEnemyState
+      summary: Update AI enemy state
+      description: |
+        Update AI enemy entity state with optimistic locking for concurrent modifications.
+
+        **Performance Notes:**
+        - Optimistic locking prevents race conditions
+        - Event-driven state synchronization
+        - P99 latency target: <25ms
+      tags: [AI Enemy Coordination]
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique AI enemy identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiEnemyStateUpdate'
+      responses:
+        '200':
+          description: AI enemy state updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /zones/{zone_id}/ai-coordination:
+    get:
+      operationId: getZoneAiCoordination
+      summary: Get zone AI coordination status
+      description: |
+        Retrieve comprehensive AI coordination status for a game zone including active enemies, performance metrics, and coordination statistics.
+
+        **Performance Notes:**
+        - Aggregated zone metrics with real-time updates
+        - Supports up to 500+ AI entities per zone
+        - P99 latency target: <50ms
+      tags: [Zone Coordination, Performance Monitoring]
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game zone identifier
+      responses:
+        '200':
+          description: Zone AI coordination status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneAiCoordinationStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /zones/{zone_id}/ai-coordination/balance:
+    post:
+      operationId: balanceZoneAiLoad
+      summary: Balance AI load across zone
+      description: |
+        Dynamically balance AI processing load across zone servers and optimize resource allocation.
+
+        **Performance Notes:**
+        - Automatic load balancing based on AI entity density
+        - Memory optimization through entity redistribution
+        - P99 latency target: <100ms (background operation)
+      tags: [Zone Coordination, Performance Monitoring]
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game zone identifier
+      responses:
+        '202':
+          description: AI load balancing initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiLoadBalancingResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # Performance Monitoring Endpoints
+  /metrics/ai-performance:
+    get:
+      operationId: getAiPerformanceMetrics
+      summary: Get AI performance metrics
+      description: |
+        Retrieve comprehensive AI performance metrics across all zones and entity types.
+
+        **Performance Notes:**
+        - Aggregated metrics with historical data (90 days)
+        - Real-time performance monitoring
+        - P99 latency target: <30ms
+      tags: [Performance Monitoring]
+      parameters:
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start time for metrics collection
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End time for metrics collection
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific zone
+      responses:
+        '200':
+          description: AI performance metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiPerformanceMetrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # Administration Endpoints
+  /admin/ai-enemies/reset:
+    post:
+      operationId: resetAllAiEnemies
+      summary: Reset all AI enemies (ADMIN)
+      description: |
+        Administrative operation to reset all AI enemies in the system. Use with caution.
+
+        **WARNING:** This operation affects all active AI enemies across all zones.
+        **Requires:** Admin privileges
+      tags: [Administration]
+      security:
+        - BearerAuth: []
+        - AdminAuth: []
+      responses:
+        '200':
+          description: All AI enemies reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOperationResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+components:
+  schemas:
+
+    # AI Enemy Entities - Inherit from Game Domain
+    AiEnemyEntity:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - enemy_type
+            - level
+            - zone_id
+            - position
+            - behavior_state
+          properties:
+            enemy_type:
+              type: string
+              enum: [mercenary_boss, cyberpsychic_elite, corporate_squad, common_enemy]
+              description: Type of AI enemy
+              example: mercenary_boss
+            level:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: AI enemy level
+              example: 25
+            zone_id:
+              type: string
+              format: uuid
+              description: Game zone where enemy is located
+              example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            position:
+              $ref: '#/components/schemas/Vector3'
+            behavior_state:
+              $ref: '#/components/schemas/AiBehaviorState'
+            health:
+              type: integer
+              minimum: 0
+              description: Current health points
+              example: 1500
+            max_health:
+              type: integer
+              minimum: 1
+              description: Maximum health points
+              example: 2000
+            faction:
+              type: string
+              enum: [neutral, hostile, ally, mercenary, corporate, gang]
+              description: AI enemy faction
+              example: hostile
+
+    # Vector3 for 3D positioning (memory-aligned)
+    Vector3:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+          example: 125.5
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+          example: 0.0
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+          example: 89.2
+
+    # AI Behavior State
+    AiBehaviorState:
+      type: object
+      required: [current_behavior, priority]
+      properties:
+        current_behavior:
+          type: string
+          enum: [idle, patrol, combat, flee, hunt, guard]
+          description: Current AI behavior pattern
+          example: combat
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Behavior priority level
+          example: 8
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Target entity for current behavior
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        last_update:
+          type: string
+          format: date-time
+          description: Last behavior state update
+          example: "2024-01-15T14:20:00Z"
+
+    # Request/Response Schemas
+    AiEnemySpawnRequest:
+      type: object
+      required: [enemy_type, level, zone_id, spawn_position]
+      properties:
+        enemy_type:
+          type: string
+          enum: [mercenary_boss, cyberpsychic_elite, corporate_squad, common_enemy]
+          description: Type of AI enemy to spawn
+          example: mercenary_boss
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: AI enemy level
+          example: 25
+        zone_id:
+          type: string
+          format: uuid
+          description: Game zone for spawning
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        spawn_position:
+          $ref: '#/components/schemas/Vector3'
+        initial_behavior:
+          type: string
+          enum: [idle, patrol, guard]
+          description: Initial behavior after spawning
+          example: patrol
+        faction:
+          type: string
+          enum: [neutral, hostile, ally, mercenary, corporate, gang]
+          description: AI enemy faction
+          example: hostile
+
+    AiEnemyState:
+      allOf:
+        - $ref: '#/components/schemas/AiEnemyEntity'
+        - type: object
+          properties:
+            current_target:
+              type: string
+              format: uuid
+              description: Current target entity ID
+              example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            last_damage_taken:
+              type: integer
+              minimum: 0
+              description: Last damage amount received
+              example: 150
+            damage_taken_timestamp:
+              type: string
+              format: date-time
+              description: Timestamp of last damage
+              example: "2024-01-15T14:20:00Z"
+
+    AiEnemyStateUpdate:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+        position:
+          $ref: '#/components/schemas/Vector3'
+        health:
+          type: integer
+          minimum: 0
+          description: Updated health value
+          example: 1400
+        behavior_state:
+          $ref: '#/components/schemas/AiBehaviorState'
+        faction:
+          type: string
+          enum: [neutral, hostile, ally, mercenary, corporate, gang]
+          description: Updated faction
+          example: hostile
+
+    AiEnemyDespawnResponse:
+      type: object
+      required: [enemy_id, despawn_reason, despawn_timestamp]
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+          description: ID of despawned enemy
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        despawn_reason:
+          type: string
+          enum: [killed, timeout, zone_change, admin_action]
+          description: Reason for despawning
+          example: killed
+        despawn_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of despawn
+          example: "2024-01-15T14:20:00Z"
+        final_position:
+          $ref: '#/components/schemas/Vector3'
+
+    # Zone Coordination Schemas
+    ZoneAiCoordinationStatus:
+      type: object
+      required: [zone_id, active_enemies_count, performance_metrics]
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Game zone identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        active_enemies_count:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Number of active AI enemies in zone
+          example: 150
+        performance_metrics:
+          $ref: '#/components/schemas/ZonePerformanceMetrics'
+        enemy_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Distribution of enemy types in zone
+          example:
+            mercenary_boss: 2
+            cyberpsychic_elite: 5
+            corporate_squad: 15
+            common_enemy: 128
+        load_balance_status:
+          type: string
+          enum: [balanced, overloaded, underloaded]
+          description: Current load balance status
+          example: balanced
+
+    ZonePerformanceMetrics:
+      type: object
+      required: [cpu_usage_percent, memory_usage_mb, ai_decision_latency_ms]
+      properties:
+        cpu_usage_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: CPU usage percentage
+          example: 45.5
+        memory_usage_mb:
+          type: integer
+          minimum: 0
+          description: Memory usage in MB
+          example: 256
+        ai_decision_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average AI decision latency in milliseconds
+          example: 12.5
+        network_sync_latency_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Network synchronization latency in milliseconds
+          example: 25.0
+        active_connections:
+          type: integer
+          minimum: 0
+          description: Number of active player connections
+          example: 500
+
+    AiLoadBalancingResponse:
+      type: object
+      required: [operation_id, status, estimated_completion_time]
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+          description: Unique operation identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        status:
+          type: string
+          enum: [initiated, in_progress, completed, failed]
+          description: Load balancing operation status
+          example: initiated
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: Estimated completion timestamp
+          example: "2024-01-15T14:25:00Z"
+        affected_enemies_count:
+          type: integer
+          minimum: 0
+          description: Number of enemies affected by balancing
+          example: 50
+
+    # Performance Monitoring Schemas
+    AiPerformanceMetrics:
+      type: object
+      required: [time_range, global_metrics, zone_metrics]
+      properties:
+        time_range:
+          type: object
+          required: [start_time, end_time]
+          properties:
+            start_time:
+              type: string
+              format: date-time
+              description: Metrics collection start time
+              example: "2024-01-15T00:00:00Z"
+            end_time:
+              type: string
+              format: date-time
+              description: Metrics collection end time
+              example: "2024-01-15T23:59:59Z"
+        global_metrics:
+          $ref: '#/components/schemas/GlobalAiMetrics'
+        zone_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneAiMetrics'
+          description: Per-zone AI performance metrics
+
+    GlobalAiMetrics:
+      type: object
+      required: [total_active_enemies, average_decision_latency, total_zones]
+      properties:
+        total_active_enemies:
+          type: integer
+          minimum: 0
+          description: Total active AI enemies across all zones
+          example: 5000
+        average_decision_latency:
+          type: number
+          format: float
+          minimum: 0
+          description: Average AI decision latency in milliseconds
+          example: 15.2
+        total_zones:
+          type: integer
+          minimum: 0
+          description: Total number of active zones
+          example: 25
+        memory_usage_mb:
+          type: integer
+          minimum: 0
+          description: Total memory usage in MB
+          example: 2048
+        error_rate_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: AI operation error rate percentage
+          example: 0.5
+
+    ZoneAiMetrics:
+      type: object
+      required: [zone_id, active_enemies, performance_metrics]
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone identifier
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        active_enemies:
+          type: integer
+          minimum: 0
+          description: Number of active enemies in zone
+          example: 150
+        performance_metrics:
+          $ref: '#/components/schemas/ZonePerformanceMetrics'
+
+    # Administration Schemas
+    AdminOperationResponse:
+      type: object
+      required: [operation, status, affected_entities_count]
+      properties:
+        operation:
+          type: string
+          description: Admin operation performed
+          example: "reset_all_ai_enemies"
+        status:
+          type: string
+          enum: [success, partial_success, failed]
+          description: Operation result status
+          example: success
+        affected_entities_count:
+          type: integer
+          minimum: 0
+          description: Number of entities affected by operation
+          example: 5000
+        execution_time_ms:
+          type: integer
+          minimum: 0
+          description: Operation execution time in milliseconds
+          example: 2500
+
+  # Standard Responses
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+    Conflict:
+      description: Conflict - resource state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    AdminAuth:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: Administrative access token
