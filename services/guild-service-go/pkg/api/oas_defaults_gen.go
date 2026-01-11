@@ -3,137 +3,17 @@
 package api
 
 // setDefaults set default value of fields.
-func (s *CreateAnnouncementRequest) setDefaults() {
+func (s *AddMemberRequest) setDefaults() {
 	{
-		val := bool(false)
-		s.IsPinned.SetTo(val)
+		val := AddMemberRequestRole("recruit")
+		s.Role.SetTo(val)
 	}
 }
 
 // setDefaults set default value of fields.
-func (s *CreateBankTransactionRequest) setDefaults() {
-	{
-		val := string("credits")
-		s.Currency = val
-	}
-	{
-		val := bool(false)
-		s.RequiresApproval.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *CreateEventRequest) setDefaults() {
-	{
-		val := int(120)
-		s.DurationMinutes.SetTo(val)
-	}
-	{
-		val := bool(true)
-		s.RequiresRsvp.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *Gameplay) setDefaults() {
-	{
-		val := float64(0.05)
-		s.TaxRate.SetTo(val)
-	}
-	{
-		val := bool(false)
-		s.AllowFriendlyFire.SetTo(val)
-	}
-	{
-		val := int(30)
-		s.AutoKickInactiveDays.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *GuildSettingsResponseGameplay) setDefaults() {
-	{
-		val := float64(0.05)
-		s.TaxRate.SetTo(val)
-	}
-	{
-		val := bool(false)
-		s.AllowFriendlyFire.SetTo(val)
-	}
-	{
-		val := int(30)
-		s.AutoKickInactiveDays.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *GuildSettingsResponsePrivacy) setDefaults() {
-	{
-		val := GuildSettingsResponsePrivacyMemberListVisibility("members_only")
-		s.MemberListVisibility.SetTo(val)
-	}
-	{
-		val := GuildSettingsResponsePrivacyAnnouncementVisibility("members_only")
-		s.AnnouncementVisibility.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *GuildSettingsResponseRecruitment) setDefaults() {
-	{
-		val := bool(true)
-		s.IsOpen.SetTo(val)
-	}
-	{
-		val := bool(true)
-		s.RequiresApplication.SetTo(val)
-	}
-	{
-		val := int(5)
-		s.MinLevel.SetTo(val)
-	}
+func (s *CreateGuildRequest) setDefaults() {
 	{
 		val := int(100)
-		s.MinReputation.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *InviteMemberRequest) setDefaults() {
-	{
-		val := InviteMemberRequestInitialRole("recruit")
-		s.InitialRole.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *Privacy) setDefaults() {
-	{
-		val := PrivacyMemberListVisibility("members_only")
-		s.MemberListVisibility.SetTo(val)
-	}
-	{
-		val := PrivacyAnnouncementVisibility("members_only")
-		s.AnnouncementVisibility.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *Recruitment) setDefaults() {
-	{
-		val := bool(true)
-		s.IsOpen.SetTo(val)
-	}
-	{
-		val := bool(true)
-		s.RequiresApplication.SetTo(val)
-	}
-	{
-		val := int(5)
-		s.MinLevel.SetTo(val)
-	}
-	{
-		val := int(100)
-		s.MinReputation.SetTo(val)
+		s.MaxMembers.SetTo(val)
 	}
 }

@@ -5,6 +5,8 @@
 package territory
 
 import (
+	"context"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -24,4 +26,10 @@ func NewRepository(db *pgxpool.Pool, redis *redis.Client, log *zap.Logger) *Repo
 		redis: redis,
 		log:   log,
 	}
+}
+
+// NeutralizeGuildTerritories neutralizes all territories owned by guild
+func (r *Repository) NeutralizeGuildTerritories(ctx context.Context, guildID uuid.UUID) error {
+	// TODO: Implement territory neutralization
+	return nil
 }

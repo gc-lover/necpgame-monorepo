@@ -5,6 +5,10 @@
 package event
 
 import (
+	"context"
+
+	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -24,4 +28,18 @@ func NewRepository(db *pgxpool.Pool, redis *redis.Client, log *zap.Logger) *Repo
 		redis: redis,
 		log:   log,
 	}
+}
+
+// CancelGuildEvents cancels all active events for a guild
+func (r *Repository) CancelGuildEvents(ctx context.Context, guildID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE guild_events
+		SET status = 'cancelled', cancelled_at = NOW()
+		WHERE guild_id = $1 AND status = 'active'`, guildID)
+
+	if err != nil {
+		return errors.Wrap(err, "cancel guild events")
+	}
+
+	return nil
 }

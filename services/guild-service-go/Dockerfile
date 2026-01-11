@@ -1,8 +1,8 @@
-# Multi-stage build for optimized production image
-FROM golang:1.24-alpine AS builder
+# Build stage
+FROM golang:1.21-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
+# Install git and ca-certificates
+RUN apk add --no-cache git ca-certificates
 
 # Set working directory
 WORKDIR /app
@@ -16,39 +16,26 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build optimized binary
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -a -installsuffix cgo \
-    -o guild-service \
-    -ldflags="-w -s -X main.version=$(date -u +%Y%m%d-%H%M%S)" \
-    .
+# Build the binary with optimizations
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-# Final stage - minimal runtime image
+# Final stage
 FROM alpine:latest
 
-# Install runtime dependencies
-RUN apk --no-cache add ca-certificates tzdata && \
-    addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Install ca-certificates for HTTPS calls
+RUN apk --no-cache add ca-certificates
 
-# Set working directory
-WORKDIR /app
+WORKDIR /root/
 
-# Copy binary from builder stage
-COPY --from=builder /app/guild-service .
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
 
-# Change ownership to non-root user
-RUN chown appuser:appgroup guild-service
-
-# Switch to non-root user
-USER appuser
-
-# Expose ports
-EXPOSE 8084 9094
+# Expose port
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# Run the service
-CMD ["./guild-service"]
+# Run the binary
+CMD ["./main"]

@@ -10,8 +10,8 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeApplyForGuildMembershipRequest(
-	req *GuildApplicationRequest,
+func encodeGuildServiceAddGuildMemberRequest(
+	req *AddMemberRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -24,7 +24,7 @@ func encodeApplyForGuildMembershipRequest(
 	return nil
 }
 
-func encodeCreateGuildRequest(
+func encodeGuildServiceCreateGuildRequest(
 	req *CreateGuildRequest,
 	r *http.Request,
 ) error {
@@ -38,106 +38,8 @@ func encodeCreateGuildRequest(
 	return nil
 }
 
-func encodeCreateGuildAnnouncementRequest(
-	req *CreateAnnouncementRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCreateGuildBankTransactionRequest(
-	req *CreateBankTransactionRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeCreateGuildEventRequest(
-	req *CreateEventRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeInviteGuildMemberRequest(
-	req *InviteMemberRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeReviewGuildApplicationRequest(
-	req *ReviewApplicationRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateGuildRequest(
+func encodeGuildServiceUpdateGuildRequest(
 	req *UpdateGuildRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateGuildMemberRequest(
-	req *UpdateMemberRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateGuildSettingsRequest(
-	req *UpdateGuildSettingsRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

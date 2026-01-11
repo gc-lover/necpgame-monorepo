@@ -8,219 +8,48 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// ApplyForGuildMembership implements applyForGuildMembership operation.
+	// GuildServiceAddGuildMember implements guildServiceAddGuildMember operation.
 	//
-	// **Submit application for guild membership**
-	// Requires meeting minimum requirements and application approval.
-	// **Performance:** <45ms with validation and duplicate checking.
-	//
-	// POST /guilds/{guildId}/applications
-	ApplyForGuildMembership(ctx context.Context, req *GuildApplicationRequest, params ApplyForGuildMembershipParams) (ApplyForGuildMembershipRes, error)
-	// CreateGuild implements createGuild operation.
-	//
-	// **Create a new guild organization**
-	// Requires founder to meet minimum requirements and pay creation fee.
-	// **Performance:** <150ms with validation and resource allocation.
-	//
-	// POST /guilds
-	CreateGuild(ctx context.Context, req *CreateGuildRequest) (CreateGuildRes, error)
-	// CreateGuildAnnouncement implements createGuildAnnouncement operation.
-	//
-	// **Create a new guild announcement**
-	// Requires appropriate permissions and supports rich formatting.
-	// **Performance:** <40ms with content validation.
-	//
-	// POST /guilds/{guildId}/announcements
-	CreateGuildAnnouncement(ctx context.Context, req *CreateAnnouncementRequest, params CreateGuildAnnouncementParams) (CreateGuildAnnouncementRes, error)
-	// CreateGuildBankTransaction implements createGuildBankTransaction operation.
-	//
-	// **Execute a guild bank transaction**
-	// Requires appropriate permissions and sufficient funds.
-	// **Performance:** <60ms with balance validation and audit logging.
-	//
-	// POST /guilds/{guildId}/bank/transactions
-	CreateGuildBankTransaction(ctx context.Context, req *CreateBankTransactionRequest, params CreateGuildBankTransactionParams) (CreateGuildBankTransactionRes, error)
-	// CreateGuildEvent implements createGuildEvent operation.
-	//
-	// **Create a new guild event**
-	// Supports scheduling, RSVPs, and automated reminders.
-	// **Performance:** <50ms with calendar integration.
-	//
-	// POST /guilds/{guildId}/events
-	CreateGuildEvent(ctx context.Context, req *CreateEventRequest, params CreateGuildEventParams) (CreateGuildEventRes, error)
-	// DisbandGuild implements disbandGuild operation.
-	//
-	// **Disband/dissolve a guild**
-	// Only guild leader can disband. Handles asset distribution and member cleanup.
-	// **Performance:** <200ms with complex cleanup operations.
-	//
-	// DELETE /guilds/{guildId}
-	DisbandGuild(ctx context.Context, params DisbandGuildParams) (DisbandGuildRes, error)
-	// GetGuild implements getGuild operation.
-	//
-	// **Retrieve comprehensive guild information**
-	// Includes full member list, settings, and statistics for authorized users.
-	// **Performance:** <50ms with caching, real-time member counts.
-	//
-	// GET /guilds/{guildId}
-	GetGuild(ctx context.Context, params GetGuildParams) (GetGuildRes, error)
-	// GetGuildAnnouncements implements getGuildAnnouncements operation.
-	//
-	// **Retrieve guild announcements and news**
-	// Includes pinned announcements and recent updates.
-	// **Performance:** <30ms with announcement caching.
-	//
-	// GET /guilds/{guildId}/announcements
-	GetGuildAnnouncements(ctx context.Context, params GetGuildAnnouncementsParams) (GetGuildAnnouncementsRes, error)
-	// GetGuildApplications implements getGuildApplications operation.
-	//
-	// **Retrieve pending membership applications**
-	// Includes application details and review status.
-	// **Performance:** <35ms with application caching.
-	//
-	// GET /guilds/{guildId}/applications
-	GetGuildApplications(ctx context.Context, params GetGuildApplicationsParams) (GetGuildApplicationsRes, error)
-	// GetGuildBank implements getGuildBank operation.
-	//
-	// **Retrieve guild treasury and resource information**
-	// Includes current funds, transaction history, and access permissions.
-	// **Performance:** <40ms with balance calculations.
-	//
-	// GET /guilds/{guildId}/bank
-	GetGuildBank(ctx context.Context, params GetGuildBankParams) (GetGuildBankRes, error)
-	// GetGuildBankTransactions implements getGuildBankTransactions operation.
-	//
-	// **Retrieve paginated transaction history**
-	// Supports filtering by type, amount, and time period.
-	// **Performance:** <50ms with transaction indexing.
-	//
-	// GET /guilds/{guildId}/bank/transactions
-	GetGuildBankTransactions(ctx context.Context, params GetGuildBankTransactionsParams) (GetGuildBankTransactionsRes, error)
-	// GetGuildEvents implements getGuildEvents operation.
-	//
-	// **Retrieve upcoming and past guild events**
-	// Includes raids, meetings, and social gatherings.
-	// **Performance:** <35ms with event scheduling.
-	//
-	// GET /guilds/{guildId}/events
-	GetGuildEvents(ctx context.Context, params GetGuildEventsParams) (GetGuildEventsRes, error)
-	// GetGuildMember implements getGuildMember operation.
-	//
-	// **Retrieve detailed information about a specific guild member**
-	// Includes full activity history and permissions.
-	// **Performance:** <25ms with member-specific caching.
-	//
-	// GET /guilds/{guildId}/members/{userId}
-	GetGuildMember(ctx context.Context, params GetGuildMemberParams) (GetGuildMemberRes, error)
-	// GetGuildMembers implements getGuildMembers operation.
-	//
-	// **Retrieve paginated list of guild members**
-	// Includes member roles, activity status, and contribution metrics.
-	// **Performance:** <40ms with member caching.
-	//
-	// GET /guilds/{guildId}/members
-	GetGuildMembers(ctx context.Context, params GetGuildMembersParams) (GetGuildMembersRes, error)
-	// GetGuildSettings implements getGuildSettings operation.
-	//
-	// **Retrieve guild configuration settings**
-	// Includes privacy, recruitment, and gameplay preferences.
-	// **Performance:** <20ms with settings caching.
-	//
-	// GET /guilds/{guildId}/settings
-	GetGuildSettings(ctx context.Context, params GetGuildSettingsParams) (GetGuildSettingsRes, error)
-	// GetGuildTerritory implements getGuildTerritory operation.
-	//
-	// **Retrieve guild-owned territories and control zones**
-	// Includes territory status, defenses, and resource generation.
-	// **Performance:** <45ms with territory mapping.
-	//
-	// GET /guilds/{guildId}/territory
-	GetGuildTerritory(ctx context.Context, params GetGuildTerritoryParams) (GetGuildTerritoryRes, error)
-	// GuildBatchHealthCheck implements guildBatchHealthCheck operation.
-	//
-	// **Batch health check for guild service dependencies**
-	// Checks health of core systems, banking, territory, and social features.
-	// **Performance:** <10ms response time, cached for 15 seconds.
-	//
-	// GET /health/batch
-	GuildBatchHealthCheck(ctx context.Context) (GuildBatchHealthCheckRes, error)
-	// GuildHealthCheck implements guildHealthCheck operation.
-	//
-	// **Enterprise-grade health check endpoint**
-	// Provides real-time health status of the guild domain microservice.
-	// Critical for service discovery, load balancing, and monitoring.
-	// **Performance:** <1ms response time, cached for 30 seconds.
-	//
-	// GET /health
-	GuildHealthCheck(ctx context.Context, params GuildHealthCheckParams) (GuildHealthCheckRes, error)
-	// InviteGuildMember implements inviteGuildMember operation.
-	//
-	// **Send guild membership invitation**
-	// Requires appropriate permissions and available member slots.
-	// **Performance:** <50ms with notification dispatch.
+	// Add guild member.
 	//
 	// POST /guilds/{guildId}/members
-	InviteGuildMember(ctx context.Context, req *InviteMemberRequest, params InviteGuildMemberParams) (InviteGuildMemberRes, error)
-	// ListGuilds implements listGuilds operation.
+	GuildServiceAddGuildMember(ctx context.Context, req *AddMemberRequest, params GuildServiceAddGuildMemberParams) (*GuildMember, error)
+	// GuildServiceCreateGuild implements guildServiceCreateGuild operation.
 	//
-	// **Retrieve paginated list of guilds with filtering**
-	// Supports advanced filtering by level, reputation, recruitment status, and more.
-	// **Performance:** <75ms with database indexing, supports 100k+ guilds.
+	// Create guild.
+	//
+	// POST /guilds
+	GuildServiceCreateGuild(ctx context.Context, req *CreateGuildRequest) (GuildServiceCreateGuildRes, error)
+	// GuildServiceGetGuild implements guildServiceGetGuild operation.
+	//
+	// Get guild details.
+	//
+	// GET /guilds/{guildId}
+	GuildServiceGetGuild(ctx context.Context, params GuildServiceGetGuildParams) (GuildServiceGetGuildRes, error)
+	// GuildServiceHealthCheck implements guildServiceHealthCheck operation.
+	//
+	// Guild service health check.
+	//
+	// GET /health
+	GuildServiceHealthCheck(ctx context.Context) (*HealthResponse, error)
+	// GuildServiceListGuildMembers implements guildServiceListGuildMembers operation.
+	//
+	// List guild members.
+	//
+	// GET /guilds/{guildId}/members
+	GuildServiceListGuildMembers(ctx context.Context, params GuildServiceListGuildMembersParams) (*GuildMemberListResponse, error)
+	// GuildServiceListGuilds implements guildServiceListGuilds operation.
+	//
+	// List guilds.
 	//
 	// GET /guilds
-	ListGuilds(ctx context.Context, params ListGuildsParams) (ListGuildsRes, error)
-	// RemoveGuildMember implements removeGuildMember operation.
+	GuildServiceListGuilds(ctx context.Context, params GuildServiceListGuildsParams) (*GuildListResponse, error)
+	// GuildServiceUpdateGuild implements guildServiceUpdateGuild operation.
 	//
-	// **Remove or expel a member from the guild**
-	// Requires appropriate permissions and handles asset redistribution.
-	// **Performance:** <60ms with cleanup and notifications.
-	//
-	// DELETE /guilds/{guildId}/members/{userId}
-	RemoveGuildMember(ctx context.Context, params RemoveGuildMemberParams) (RemoveGuildMemberRes, error)
-	// ReviewGuildApplication implements reviewGuildApplication operation.
-	//
-	// **Approve or reject a membership application**
-	// Requires officer permissions and updates member roster.
-	// **Performance:** <55ms with member creation and notifications.
-	//
-	// PUT /guilds/{guildId}/applications/{applicationId}
-	ReviewGuildApplication(ctx context.Context, req *ReviewApplicationRequest, params ReviewGuildApplicationParams) (ReviewGuildApplicationRes, error)
-	// SearchGuilds implements searchGuilds operation.
-	//
-	// **Advanced guild search with full-text capabilities**
-	// Supports fuzzy matching, relevance scoring, and multiple filter combinations.
-	// **Performance:** <100ms with Elasticsearch integration.
-	//
-	// GET /guilds/search
-	SearchGuilds(ctx context.Context, params SearchGuildsParams) (*SearchGuildsOK, error)
-	// UpdateGuild implements updateGuild operation.
-	//
-	// **Update guild settings and information**
-	// Requires appropriate permissions based on member role.
-	// **Performance:** <75ms with validation and audit logging.
+	// Update guild.
 	//
 	// PUT /guilds/{guildId}
-	UpdateGuild(ctx context.Context, req *UpdateGuildRequest, params UpdateGuildParams) (UpdateGuildRes, error)
-	// UpdateGuildMember implements updateGuildMember operation.
-	//
-	// **Update guild member's role and permissions**
-	// Requires appropriate authority level.
-	// **Performance:** <40ms with permission validation.
-	//
-	// PUT /guilds/{guildId}/members/{userId}
-	UpdateGuildMember(ctx context.Context, req *UpdateMemberRequest, params UpdateGuildMemberParams) (UpdateGuildMemberRes, error)
-	// UpdateGuildSettings implements updateGuildSettings operation.
-	//
-	// **Update guild configuration settings**
-	// Requires leadership permissions for sensitive changes.
-	// **Performance:** <45ms with validation and audit logging.
-	//
-	// PUT /guilds/{guildId}/settings
-	UpdateGuildSettings(ctx context.Context, req *UpdateGuildSettingsRequest, params UpdateGuildSettingsParams) (UpdateGuildSettingsRes, error)
-	// NewError creates *ErrRespStatusCode from error returned by handler.
-	//
-	// Used for common default response.
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
+	GuildServiceUpdateGuild(ctx context.Context, req *UpdateGuildRequest, params GuildServiceUpdateGuildParams) (*Guild, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

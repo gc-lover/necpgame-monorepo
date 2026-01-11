@@ -14,7 +14,6 @@ import (
 // SecurityHandler is handler for security parameters.
 type SecurityHandler interface {
 	// HandleBearerAuth handles BearerAuth security.
-	// JWT Bearer token authentication.
 	HandleBearerAuth(ctx context.Context, operationName OperationName, t BearerAuth) (context.Context, error)
 }
 
@@ -34,32 +33,13 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	ApplyForGuildMembershipOperation:    []string{},
-	CreateGuildOperation:                []string{},
-	CreateGuildAnnouncementOperation:    []string{},
-	CreateGuildBankTransactionOperation: []string{},
-	CreateGuildEventOperation:           []string{},
-	DisbandGuildOperation:               []string{},
-	GetGuildOperation:                   []string{},
-	GetGuildAnnouncementsOperation:      []string{},
-	GetGuildApplicationsOperation:       []string{},
-	GetGuildBankOperation:               []string{},
-	GetGuildBankTransactionsOperation:   []string{},
-	GetGuildEventsOperation:             []string{},
-	GetGuildMemberOperation:             []string{},
-	GetGuildMembersOperation:            []string{},
-	GetGuildSettingsOperation:           []string{},
-	GetGuildTerritoryOperation:          []string{},
-	GuildBatchHealthCheckOperation:      []string{},
-	GuildHealthCheckOperation:           []string{},
-	InviteGuildMemberOperation:          []string{},
-	ListGuildsOperation:                 []string{},
-	RemoveGuildMemberOperation:          []string{},
-	ReviewGuildApplicationOperation:     []string{},
-	SearchGuildsOperation:               []string{},
-	UpdateGuildOperation:                []string{},
-	UpdateGuildMemberOperation:          []string{},
-	UpdateGuildSettingsOperation:        []string{},
+	GuildServiceAddGuildMemberOperation:   []string{},
+	GuildServiceCreateGuildOperation:      []string{},
+	GuildServiceGetGuildOperation:         []string{},
+	GuildServiceHealthCheckOperation:      []string{},
+	GuildServiceListGuildMembersOperation: []string{},
+	GuildServiceListGuildsOperation:       []string{},
+	GuildServiceUpdateGuildOperation:      []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
@@ -82,7 +62,6 @@ func (s *Server) securityBearerAuth(ctx context.Context, operationName Operation
 // SecuritySource is provider of security values (tokens, passwords, etc.).
 type SecuritySource interface {
 	// BearerAuth provides BearerAuth security value.
-	// JWT Bearer token authentication.
 	BearerAuth(ctx context.Context, operationName OperationName) (BearerAuth, error)
 }
 

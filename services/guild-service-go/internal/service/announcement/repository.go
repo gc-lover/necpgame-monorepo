@@ -5,6 +5,8 @@
 package announcement
 
 import (
+	"context"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -24,4 +26,10 @@ func NewRepository(db *pgxpool.Pool, redis *redis.Client, log *zap.Logger) *Repo
 		redis: redis,
 		log:   log,
 	}
+}
+
+// ArchiveGuildAnnouncements archives all announcements for a guild
+func (r *Repository) ArchiveGuildAnnouncements(ctx context.Context, guildID uuid.UUID) error {
+	// TODO: Implement announcement archiving
+	return nil
 }

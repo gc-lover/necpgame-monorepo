@@ -1,0 +1,426 @@
+openapi: 3.0.3
+info:
+  title: Guild Service API - Enterprise-Grade Social Gaming Systems
+  description: 'Enterprise-Grade Guild Service API for NECPGAME'
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1/guild
+    description: Local development server
+security:
+  - BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Guild service health check
+      operationId: guildServiceHealthCheck
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /guilds:
+    get:
+      summary: List guilds
+      operationId: guildServiceListGuilds
+      tags:
+        - Guild Management
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Guilds retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildListResponse'
+    post:
+      summary: Create guild
+      operationId: guildServiceCreateGuild
+      tags:
+        - Guild Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        "201":
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        "400":
+          description: Bad request
+  /guilds/{guildId}:
+    get:
+      summary: Get guild details
+      operationId: guildServiceGetGuild
+      tags:
+        - Guild Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        "404":
+          description: Guild not found
+    put:
+      summary: Update guild
+      operationId: guildServiceUpdateGuild
+      tags:
+        - Guild Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        "200":
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+  /guilds/{guildId}/members:
+    get:
+      summary: List guild members
+      operationId: guildServiceListGuildMembers
+      tags:
+        - Member Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMemberListResponse'
+    post:
+      summary: Add guild member
+      operationId: guildServiceAddGuildMember
+      tags:
+        - Member Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        "201":
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, critical]
+          example: ok
+        message:
+          type: string
+          example: "Service is healthy"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - leaderId
+      properties:
+        id:
+          type: string
+          example: "guild-123"
+        name:
+          type: string
+          example: "Night City Avengers"
+        description:
+          type: string
+          example: "Elite guild for cyberpunk veterans"
+        leaderId:
+          type: string
+          example: "user-456"
+        memberCount:
+          type: integer
+          example: 25
+        maxMembers:
+          type: integer
+          example: 100
+        level:
+          type: integer
+          example: 15
+        experience:
+          type: integer
+          example: 125000
+        reputation:
+          type: integer
+          example: 8500
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "Night City Avengers"
+        description:
+          type: string
+          maxLength: 500
+          example: "Elite guild for cyberpunk veterans"
+        maxMembers:
+          type: integer
+          minimum: 5
+          maximum: 1000
+          default: 100
+          example: 100
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        maxMembers:
+          type: integer
+          minimum: 5
+          maximum: 1000
+    GuildListResponse:
+      type: object
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+        total:
+          type: integer
+          example: 150
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+    GuildMember:
+      type: object
+      required:
+        - userId
+        - guildId
+        - role
+      properties:
+        userId:
+          type: string
+          example: "user-789"
+        guildId:
+          type: string
+          example: "guild-123"
+        username:
+          type: string
+          example: "CyberNinja"
+        role:
+          type: string
+          enum: [leader, officer, member, recruit]
+          example: member
+        joinedAt:
+          type: string
+          format: date-time
+        lastActive:
+          type: string
+          format: date-time
+        contribution:
+          type: integer
+          example: 15000
+    AddMemberRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          example: "user-789"
+        role:
+          type: string
+          enum: [member, recruit]
+          default: recruit
+          example: member
+    GuildMemberListResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total:
+          type: integer
+          example: 25
+    GuildBank:
+      type: object
+      properties:
+        guildId:
+          type: string
+          example: "guild-123"
+        balance:
+          type: integer
+          example: 50000
+        currency:
+          type: string
+          example: "eddies"
+        lastTransaction:
+          type: string
+          format: date-time
+    GuildEvent:
+      type: object
+      required:
+        - id
+        - type
+        - guildId
+      properties:
+        id:
+          type: string
+          example: "event-456"
+        type:
+          type: string
+          enum: [raid, tournament, meeting, announcement]
+          example: raid
+        guildId:
+          type: string
+          example: "guild-123"
+        title:
+          type: string
+          example: "Night City Raid"
+        description:
+          type: string
+          example: "Major raid operation in the badlands"
+        scheduledAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    GuildRelationship:
+      type: object
+      required:
+        - guildId
+        - targetGuildId
+        - type
+      properties:
+        guildId:
+          type: string
+          example: "guild-123"
+        targetGuildId:
+          type: string
+          example: "guild-456"
+        type:
+          type: string
+          enum: [ally, enemy, neutral]
+          example: ally
+        establishedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          example: "Strategic alliance for mutual protection"
+    GuildApplicationResponse:
+      type: object
+      required:
+        - id
+        - applicantId
+        - guildId
+        - status
+      properties:
+        id:
+          type: string
+          example: "app-789"
+        applicantId:
+          type: string
+          example: "user-101"
+        guildId:
+          type: string
+          example: "guild-123"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: approved
+        appliedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: string
+          format: date-time
+        reviewerId:
+          type: string
+          example: "user-456"
+        message:
+          type: string
+          example: "Welcome to the guild!"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

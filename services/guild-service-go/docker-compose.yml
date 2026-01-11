@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  guild-service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_ADDR=:8080
+      - DATABASE_URL=postgres://guild_user:guild_password@guild-db:5432/guild_db?sslmode=disable
+      - REDIS_URL=redis://guild-redis:6379
+      - LOG_LEVEL=info
+      - GOGC=50
+    depends_on:
+      - guild-db
+      - guild-redis
+    networks:
+      - guild-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  guild-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=guild_db
+      - POSTGRES_USER=guild_user
+      - POSTGRES_PASSWORD=guild_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - guild_db_data:/var/lib/postgresql/data
+      - ./infrastructure/liquibase/migrations/guild-service:/docker-entrypoint-initdb.d
+    networks:
+      - guild-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guild_user -d guild_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  guild-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - guild_redis_data:/data
+    networks:
+      - guild-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  guild_db_data:
+  guild_redis_data:
+
+networks:
+  guild-network:
+    driver: bridge

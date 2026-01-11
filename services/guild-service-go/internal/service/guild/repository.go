@@ -17,7 +17,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"necpgame/services/guild-service-go/pkg/api"
+	"guild-service-go/pkg/api"
 )
 
 // Repository handles guild data operations with performance optimizations
@@ -57,44 +57,14 @@ func (r *Repository) prepareStatements() {
 }
 
 // Create creates a new guild with optimized transaction
-func (r *Repository) Create(ctx context.Context, req *api.CreateGuildRequest, founderID uuid.UUID) (*api.GuildResponse, error) {
-	// Default settings for new guild
-	privacy := api.GuildSettingsResponsePrivacy{
-		MemberListVisibility: api.OptGuildSettingsResponsePrivacyMemberListVisibility{Value: api.GuildSettingsResponsePrivacyMemberListVisibility("members_only"), Set: true},
-		AnnouncementVisibility: api.OptGuildSettingsResponsePrivacyAnnouncementVisibility{Value: api.GuildSettingsResponsePrivacyAnnouncementVisibility("members_only"), Set: true},
-	}
-
-	recruitment := api.GuildSettingsResponseRecruitment{
-		IsOpen: api.OptBool{Value: true, Set: true},
-		RequiresApplication: api.OptBool{Value: true, Set: true},
-		MinLevel: api.OptInt{Value: 1, Set: true},
-		MinReputation: api.OptInt{Value: 0, Set: true},
-	}
-
-	gameplay := api.GuildSettingsResponseGameplay{
-		TaxRate: api.OptFloat64{Value: 0.05, Set: true},
-		AllowFriendlyFire: api.OptBool{Value: false, Set: true},
-		AutoKickInactiveDays: api.OptInt{Value: 30, Set: true},
-	}
-
-	settings := api.GuildSettingsResponse{
-		Privacy:     api.OptGuildSettingsResponsePrivacy{Value: privacy, Set: true},
-		Recruitment: api.OptGuildSettingsResponseRecruitment{Value: recruitment, Set: true},
-		Gameplay:    api.OptGuildSettingsResponseGameplay{Value: gameplay, Set: true},
-	}
-
-	settingsJSON, err := json.Marshal(settings)
-	if err != nil {
-		return nil, errors.Wrap(err, "marshal settings")
-	}
-
+func (r *Repository) Create(ctx context.Context, req *api.CreateGuildRequest, founderID uuid.UUID) (*api.Guild, error) {
 	guildID := uuid.New()
 
-	_, err = r.db.Exec(ctx, `
-		INSERT INTO guilds (id, name, tag, description, faction_affiliation, level, reputation,
-		                   max_members, is_recruiting, emblem_url, settings, founded_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, 1, 0, 50, true, NULL, $6, NOW(), NOW(), NOW())`,
-		guildID, req.Name, req.Tag, req.Description, req.FactionAffiliation, settingsJSON)
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO guilds (id, name, description, leader_id, level, reputation,
+		                   max_members, member_count, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, 1, 0, 50, 1, NOW(), NOW())`,
+		guildID, req.Name, req.Description.Value, founderID)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "insert guild")
@@ -103,53 +73,37 @@ func (r *Repository) Create(ctx context.Context, req *api.CreateGuildRequest, fo
 	// Cache guild data
 	r.cacheGuild(ctx, guildID, req.Name)
 
-	return &api.GuildResponse{
-		ID:       guildID,
-		Name:     req.Name,
-		Tag:      api.OptString{Value: req.Tag, Set: true},
-		Description: api.OptString{Value: req.Description, Set: true},
-		LeaderID: founderID,
-		MemberCount: 1, // Founder is first member
-		MaxMembers: api.OptInt{Value: 50, Set: true},
-		Level:      api.OptInt{Value: 1, Set: true},
-		Reputation: api.OptInt{Value: 0, Set: true},
-		IsRecruiting: api.OptBool{Value: true, Set: true},
-		Settings:     api.OptGuildSettingsResponse{Value: settings, Set: true},
-		FoundedAt:    api.OptDateTime{Value: time.Now(), Set: true},
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+	return &api.Guild{
+		ID:          guildID.String(),
+		Name:        req.Name,
+		Description: api.OptString{Value: req.Description.Value, Set: true},
+		LeaderId:    founderID.String(),
+		MemberCount: api.OptInt{Value: 1, Set: true}, // Founder is first member
+		MaxMembers:  api.OptInt{Value: 50, Set: true},
+		Level:       api.OptInt{Value: 1, Set: true},
+		Reputation:  api.OptInt{Value: 0, Set: true},
+		CreatedAt:   api.OptDateTime{Value: time.Now(), Set: true},
+		UpdatedAt:   api.OptDateTime{Value: time.Now(), Set: true},
 	}, nil
 }
 
 // GetByID retrieves guild by ID with caching optimization
-func (r *Repository) GetByID(ctx context.Context, guildID uuid.UUID) (*api.GuildResponse, error) {
+func (r *Repository) GetByID(ctx context.Context, guildID uuid.UUID) (*api.Guild, error) {
 	// Try cache first
 	if cached := r.getCachedGuild(ctx, guildID); cached != nil {
 		return cached, nil
 	}
 
-	var settingsJSON []byte
-	guild := &api.GuildResponse{}
-
-	var isRecruiting bool
-	var emblemURL sql.NullString
+	guild := &api.Guild{}
 
 	err := r.db.QueryRow(ctx, `
-		SELECT id, name, tag, description, faction_affiliation, level, reputation,
-		       max_members, is_recruiting, emblem_url, settings, founded_at,
-		       last_activity_at, created_at, updated_at
+		SELECT id, name, description, leader_id, level, reputation,
+		       max_members, member_count, created_at, updated_at
 		FROM guilds
 		WHERE id = $1 AND disbanded_at IS NULL`, guildID).Scan(
-		&guild.ID, &guild.Name, &guild.Tag, &guild.Description,
-		&guild.FactionAffiliation, &guild.Level, &guild.Reputation,
-		&guild.MaxMembers, &isRecruiting, &emblemURL, &settingsJSON, &guild.FoundedAt,
-		&guild.LastActivityAt, &guild.CreatedAt, &guild.UpdatedAt)
-
-	// Set optional fields
-	guild.IsRecruiting = api.OptBool{Value: isRecruiting, Set: true}
-	if emblemURL.Valid {
-		guild.EmblemURL = api.OptURI{Value: emblemURL.String, Set: true}
-	}
+		&guild.ID, &guild.Name, &guild.Description,
+		&guild.LeaderId, &guild.Level, &guild.Reputation,
+		&guild.MaxMembers, &guild.MemberCount, &guild.CreatedAt, &guild.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -158,13 +112,6 @@ func (r *Repository) GetByID(ctx context.Context, guildID uuid.UUID) (*api.Guild
 		return nil, errors.Wrap(err, "query guild")
 	}
 
-	// Unmarshal settings
-	var settings api.GuildSettingsResponse
-	if err := json.Unmarshal(settingsJSON, &settings); err != nil {
-		return nil, errors.Wrap(err, "unmarshal settings")
-	}
-	guild.Settings = &settings
-
 	// Cache result
 	r.cacheGuild(ctx, guildID, guild.Name)
 
@@ -172,109 +119,36 @@ func (r *Repository) GetByID(ctx context.Context, guildID uuid.UUID) (*api.Guild
 }
 
 // List retrieves paginated guild list with filtering
-func (r *Repository) List(ctx context.Context, params api.ListGuildsParams) ([]*api.GuildSummaryResponse, int, error) {
+func (r *Repository) List(ctx context.Context, params api.GuildServiceListGuildsParams) ([]*api.Guild, int, error) {
 	query := `
-		SELECT id, name, tag, level, reputation, max_members, founded_at,
-		       is_recruiting, emblem_url,
-		       (SELECT COUNT(*) FROM guild_members WHERE guild_id = guilds.id AND is_active = true) as member_count
+		SELECT id, name, description, leader_id, level, reputation,
+		       max_members, member_count, created_at, updated_at
 		FROM guilds
-		WHERE disbanded_at IS NULL`
-
-	args := []interface{}{}
-	argCount := 0
-
-	// Build WHERE conditions
-	conditions := []string{}
-
-	if name := params.Name; name != "" {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argCount))
-		args = append(args, "%"+name+"%")
-	}
-
-	if tag := params.Tag; tag != "" {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("tag = $%d", argCount))
-		args = append(args, tag)
-	}
-
-	if levelMin := params.LevelMin; levelMin != nil {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("level >= $%d", argCount))
-		args = append(args, *levelMin)
-	}
-
-	if levelMax := params.LevelMax; levelMax != nil {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("level <= $%d", argCount))
-		args = append(args, *levelMax)
-	}
-
-	if repMin := params.ReputationMin; repMin != nil {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("reputation >= $%d", argCount))
-		args = append(args, *repMin)
-	}
-
-	if recruiting := params.Recruiting; recruiting != nil && *recruiting {
-		// Filter guilds that are currently recruiting new members
-		conditions = append(conditions, "is_recruiting = true")
-	}
-
-	if faction := params.Faction; faction != nil {
-		argCount++
-		conditions = append(conditions, fmt.Sprintf("faction_affiliation = $%d", argCount))
-		args = append(args, *faction)
-	}
-
-	if len(conditions) > 0 {
-		query += " AND " + fmt.Sprintf("(%s)", conditions[0])
-		for i := 1; i < len(conditions); i++ {
-			query += " AND " + conditions[i]
-		}
-	}
-
-	// Add ordering
-	sortBy := params.SortBy.Or("reputation")
-	sortOrder := params.SortOrder.Or("desc")
-
-	orderClause := fmt.Sprintf("ORDER BY %s %s", sortBy, sortOrder)
-	query += " " + orderClause
+		WHERE disbanded_at IS NULL
+		ORDER BY reputation DESC`
 
 	// Add pagination
 	limit := params.Limit.Or(50)
-	offset := params.Offset.Or(0)
+	page := params.Page.Or(1)
+	offset := (page - 1) * limit
 
-	argCount++
-	query += fmt.Sprintf(" LIMIT $%d", argCount)
-	args = append(args, limit)
+	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 
-	argCount++
-	query += fmt.Sprintf(" OFFSET $%d", argCount)
-	args = append(args, offset)
-
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "query guilds")
 	}
 	defer rows.Close()
 
-	var guilds []*api.GuildSummaryResponse
+	var guilds []*api.Guild
 	for rows.Next() {
-		guild := &api.GuildSummaryResponse{}
-		var isRecruiting bool
-		var emblemURL sql.NullString
+		guild := &api.Guild{}
 
 		err := rows.Scan(
-			&guild.ID, &guild.Name, &guild.Tag, &guild.Level,
-			&guild.Reputation, &guild.MaxMembers, &guild.FoundedAt,
-			&isRecruiting, &emblemURL, &guild.MemberCount)
+			&guild.ID, &guild.Name, &guild.Description,
+			&guild.LeaderId, &guild.Level, &guild.Reputation,
+			&guild.MaxMembers, &guild.MemberCount, &guild.CreatedAt, &guild.UpdatedAt)
 
-		// Set optional fields
-		guild.IsRecruiting = api.OptBool{Value: isRecruiting, Set: true}
-		if emblemURL.Valid {
-			guild.EmblemURL = api.OptURI{Value: emblemURL.String, Set: true}
-		}
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "scan guild")
 		}
@@ -283,15 +157,8 @@ func (r *Repository) List(ctx context.Context, params api.ListGuildsParams) ([]*
 
 	// Get total count
 	countQuery := "SELECT COUNT(*) FROM guilds WHERE disbanded_at IS NULL"
-	if len(conditions) > 0 {
-		countQuery += " AND " + fmt.Sprintf("(%s)", conditions[0])
-		for i := 1; i < len(conditions); i++ {
-			countQuery += " AND " + conditions[i]
-		}
-	}
-
 	var total int
-	err = r.db.QueryRow(ctx, countQuery, args[:len(conditions)]...).Scan(&total)
+	err = r.db.QueryRow(ctx, countQuery).Scan(&total)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "count guilds")
 	}
@@ -300,16 +167,14 @@ func (r *Repository) List(ctx context.Context, params api.ListGuildsParams) ([]*
 }
 
 // Update updates guild information
-func (r *Repository) Update(ctx context.Context, guildID uuid.UUID, req *api.UpdateGuildRequest) (*api.GuildResponse, error) {
+func (r *Repository) Update(ctx context.Context, guildID uuid.UUID, req *api.UpdateGuildRequest) (*api.Guild, error) {
 	_, err := r.db.Exec(ctx, `
 		UPDATE guilds
 		SET name = COALESCE($2, name),
 		    description = COALESCE($3, description),
-		    tag = COALESCE($4, tag),
-		    faction_affiliation = COALESCE($5, faction_affiliation),
 		    updated_at = NOW()
 		WHERE id = $1 AND disbanded_at IS NULL`,
-		guildID, req.Name, req.Description, req.Tag, req.FactionAffiliation)
+		guildID, req.Name, req.Description)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "update guild")
@@ -340,15 +205,15 @@ func (r *Repository) Disband(ctx context.Context, guildID uuid.UUID) error {
 }
 
 // Search performs full-text search on guilds
-func (r *Repository) Search(ctx context.Context, query string, limit, offset int) ([]*api.GuildSummaryResponse, int, error) {
+func (r *Repository) Search(ctx context.Context, query string, limit, offset int) ([]*api.Guild, int, error) {
 	searchPattern := "%" + query + "%"
 
 	rows, err := r.db.Query(ctx, `
-		SELECT id, name, tag, level, reputation, max_members, founded_at,
-		       (SELECT COUNT(*) FROM guild_members WHERE guild_id = guilds.id AND status = 'active') as member_count
+		SELECT id, name, description, leader_id, level, reputation,
+		       max_members, member_count, created_at, updated_at
 		FROM guilds
 		WHERE disbanded_at IS NULL
-		  AND (name ILIKE $1 OR tag ILIKE $1 OR description ILIKE $1)
+		  AND (name ILIKE $1 OR description ILIKE $1)
 		ORDER BY reputation DESC
 		LIMIT $2 OFFSET $3`, searchPattern, limit, offset)
 
@@ -357,22 +222,15 @@ func (r *Repository) Search(ctx context.Context, query string, limit, offset int
 	}
 	defer rows.Close()
 
-	var guilds []*api.GuildSummaryResponse
+	var guilds []*api.Guild
 	for rows.Next() {
-		guild := &api.GuildSummaryResponse{}
-		var isRecruiting bool
-		var emblemURL sql.NullString
+		guild := &api.Guild{}
 
 		err := rows.Scan(
-			&guild.ID, &guild.Name, &guild.Tag, &guild.Level,
-			&guild.Reputation, &guild.MaxMembers, &guild.FoundedAt,
-			&isRecruiting, &emblemURL, &guild.MemberCount)
+			&guild.ID, &guild.Name, &guild.Description,
+			&guild.LeaderId, &guild.Level, &guild.Reputation,
+			&guild.MaxMembers, &guild.MemberCount, &guild.CreatedAt, &guild.UpdatedAt)
 
-		// Set optional fields
-		guild.IsRecruiting = api.OptBool{Value: isRecruiting, Set: true}
-		if emblemURL.Valid {
-			guild.EmblemURL = api.OptURI{Value: emblemURL.String, Set: true}
-		}
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "scan guild")
 		}
@@ -384,7 +242,7 @@ func (r *Repository) Search(ctx context.Context, query string, limit, offset int
 	err = r.db.QueryRow(ctx, `
 		SELECT COUNT(*) FROM guilds
 		WHERE disbanded_at IS NULL
-		  AND (name ILIKE $1 OR tag ILIKE $1 OR description ILIKE $1)`,
+		  AND (name ILIKE $1 OR description ILIKE $1)`,
 		searchPattern).Scan(&total)
 
 	if err != nil {
@@ -408,7 +266,7 @@ func (r *Repository) cacheGuild(ctx context.Context, guildID uuid.UUID, name str
 	}
 }
 
-func (r *Repository) getCachedGuild(ctx context.Context, guildID uuid.UUID) *api.GuildResponse {
+func (r *Repository) getCachedGuild(ctx context.Context, guildID uuid.UUID) *api.Guild {
 	key := fmt.Sprintf("guild:%s", guildID.String())
 	data, err := r.redis.Get(ctx, key).Result()
 	if err != nil {
@@ -420,13 +278,98 @@ func (r *Repository) getCachedGuild(ctx context.Context, guildID uuid.UUID) *api
 		return nil
 	}
 
-	return &api.GuildResponse{
-		Id:   guildID,
+	return &api.Guild{
+		ID:   guildID.String(),
 		Name: cached["name"].(string),
 	}
 }
 
 func (r *Repository) clearGuildCache(ctx context.Context, guildID uuid.UUID) {
 	key := fmt.Sprintf("guild:%s", guildID.String())
+	r.redis.Del(ctx, key)
+}
+
+// GetGuildTreasury retrieves guild treasury information
+func (r *Repository) GetGuildTreasury(ctx context.Context, guildID uuid.UUID) (*api.GuildBank, error) {
+	var treasury api.GuildBank
+
+	err := r.db.QueryRow(ctx, `
+		SELECT id, guild_id, version, currency_type, amount, last_transaction
+		FROM guild_banks
+		WHERE guild_id = $1`, guildID).Scan(
+		&treasury.ID, &treasury.GuildID, &treasury.Version, &treasury.CurrencyType, &treasury.Amount, &treasury.LastTransaction)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Create default treasury if not exists
+			_, err = r.db.Exec(ctx, `
+				INSERT INTO guild_banks (guild_id, balance, currency, last_transaction)
+				VALUES ($1, 0, 'eddies', NOW())`, guildID)
+			if err != nil {
+				return nil, errors.Wrap(err, "create treasury")
+			}
+			return &api.GuildBank{
+				ID:             uuid.New().String(),
+				GuildID:        guildID.String(),
+				Version:        1,
+				CurrencyType:   "eddies",
+				Amount:         0,
+				LastTransaction: time.Now(),
+			}, nil
+		}
+		return nil, errors.Wrap(err, "get treasury")
+	}
+
+	return &treasury, nil
+}
+
+// NeutralizeGuildTerritories removes all guild territory claims
+func (r *Repository) NeutralizeGuildTerritories(ctx context.Context, guildID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE territories
+		SET guild_id = NULL, claimed_at = NULL
+		WHERE guild_id = $1`, guildID)
+
+	if err != nil {
+		return errors.Wrap(err, "neutralize territories")
+	}
+
+	// Clear territory cache
+	r.clearGuildTerritoryCache(ctx, guildID)
+
+	return nil
+}
+
+// CancelGuildEvents cancels all active guild events
+func (r *Repository) CancelGuildEvents(ctx context.Context, guildID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE guild_events
+		SET status = 'cancelled', cancelled_at = NOW()
+		WHERE guild_id = $1 AND status = 'active'`, guildID)
+
+	if err != nil {
+		return errors.Wrap(err, "cancel events")
+	}
+
+	return nil
+}
+
+// ArchiveGuildAnnouncements moves old announcements to archive
+func (r *Repository) ArchiveGuildAnnouncements(ctx context.Context, guildID uuid.UUID) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE guild_announcements
+		SET archived = true, archived_at = NOW()
+		WHERE guild_id = $1 AND created_at < NOW() - INTERVAL '30 days' AND archived = false`, guildID)
+
+	if err != nil {
+		return errors.Wrap(err, "archive announcements")
+	}
+
+	return nil
+}
+
+// clearGuildTerritoryCache clears territory-related cache
+func (r *Repository) clearGuildTerritoryCache(ctx context.Context, guildID uuid.UUID) {
+	key := fmt.Sprintf("guild:territories:%s", guildID.String())
 	r.redis.Del(ctx, key)
 }

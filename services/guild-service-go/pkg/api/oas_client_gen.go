@@ -28,215 +28,48 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// ApplyForGuildMembership invokes applyForGuildMembership operation.
+	// GuildServiceAddGuildMember invokes guildServiceAddGuildMember operation.
 	//
-	// **Submit application for guild membership**
-	// Requires meeting minimum requirements and application approval.
-	// **Performance:** <45ms with validation and duplicate checking.
-	//
-	// POST /guilds/{guildId}/applications
-	ApplyForGuildMembership(ctx context.Context, request *GuildApplicationRequest, params ApplyForGuildMembershipParams) (ApplyForGuildMembershipRes, error)
-	// CreateGuild invokes createGuild operation.
-	//
-	// **Create a new guild organization**
-	// Requires founder to meet minimum requirements and pay creation fee.
-	// **Performance:** <150ms with validation and resource allocation.
-	//
-	// POST /guilds
-	CreateGuild(ctx context.Context, request *CreateGuildRequest) (CreateGuildRes, error)
-	// CreateGuildAnnouncement invokes createGuildAnnouncement operation.
-	//
-	// **Create a new guild announcement**
-	// Requires appropriate permissions and supports rich formatting.
-	// **Performance:** <40ms with content validation.
-	//
-	// POST /guilds/{guildId}/announcements
-	CreateGuildAnnouncement(ctx context.Context, request *CreateAnnouncementRequest, params CreateGuildAnnouncementParams) (CreateGuildAnnouncementRes, error)
-	// CreateGuildBankTransaction invokes createGuildBankTransaction operation.
-	//
-	// **Execute a guild bank transaction**
-	// Requires appropriate permissions and sufficient funds.
-	// **Performance:** <60ms with balance validation and audit logging.
-	//
-	// POST /guilds/{guildId}/bank/transactions
-	CreateGuildBankTransaction(ctx context.Context, request *CreateBankTransactionRequest, params CreateGuildBankTransactionParams) (CreateGuildBankTransactionRes, error)
-	// CreateGuildEvent invokes createGuildEvent operation.
-	//
-	// **Create a new guild event**
-	// Supports scheduling, RSVPs, and automated reminders.
-	// **Performance:** <50ms with calendar integration.
-	//
-	// POST /guilds/{guildId}/events
-	CreateGuildEvent(ctx context.Context, request *CreateEventRequest, params CreateGuildEventParams) (CreateGuildEventRes, error)
-	// DisbandGuild invokes disbandGuild operation.
-	//
-	// **Disband/dissolve a guild**
-	// Only guild leader can disband. Handles asset distribution and member cleanup.
-	// **Performance:** <200ms with complex cleanup operations.
-	//
-	// DELETE /guilds/{guildId}
-	DisbandGuild(ctx context.Context, params DisbandGuildParams) (DisbandGuildRes, error)
-	// GetGuild invokes getGuild operation.
-	//
-	// **Retrieve comprehensive guild information**
-	// Includes full member list, settings, and statistics for authorized users.
-	// **Performance:** <50ms with caching, real-time member counts.
-	//
-	// GET /guilds/{guildId}
-	GetGuild(ctx context.Context, params GetGuildParams) (GetGuildRes, error)
-	// GetGuildAnnouncements invokes getGuildAnnouncements operation.
-	//
-	// **Retrieve guild announcements and news**
-	// Includes pinned announcements and recent updates.
-	// **Performance:** <30ms with announcement caching.
-	//
-	// GET /guilds/{guildId}/announcements
-	GetGuildAnnouncements(ctx context.Context, params GetGuildAnnouncementsParams) (GetGuildAnnouncementsRes, error)
-	// GetGuildApplications invokes getGuildApplications operation.
-	//
-	// **Retrieve pending membership applications**
-	// Includes application details and review status.
-	// **Performance:** <35ms with application caching.
-	//
-	// GET /guilds/{guildId}/applications
-	GetGuildApplications(ctx context.Context, params GetGuildApplicationsParams) (GetGuildApplicationsRes, error)
-	// GetGuildBank invokes getGuildBank operation.
-	//
-	// **Retrieve guild treasury and resource information**
-	// Includes current funds, transaction history, and access permissions.
-	// **Performance:** <40ms with balance calculations.
-	//
-	// GET /guilds/{guildId}/bank
-	GetGuildBank(ctx context.Context, params GetGuildBankParams) (GetGuildBankRes, error)
-	// GetGuildBankTransactions invokes getGuildBankTransactions operation.
-	//
-	// **Retrieve paginated transaction history**
-	// Supports filtering by type, amount, and time period.
-	// **Performance:** <50ms with transaction indexing.
-	//
-	// GET /guilds/{guildId}/bank/transactions
-	GetGuildBankTransactions(ctx context.Context, params GetGuildBankTransactionsParams) (GetGuildBankTransactionsRes, error)
-	// GetGuildEvents invokes getGuildEvents operation.
-	//
-	// **Retrieve upcoming and past guild events**
-	// Includes raids, meetings, and social gatherings.
-	// **Performance:** <35ms with event scheduling.
-	//
-	// GET /guilds/{guildId}/events
-	GetGuildEvents(ctx context.Context, params GetGuildEventsParams) (GetGuildEventsRes, error)
-	// GetGuildMember invokes getGuildMember operation.
-	//
-	// **Retrieve detailed information about a specific guild member**
-	// Includes full activity history and permissions.
-	// **Performance:** <25ms with member-specific caching.
-	//
-	// GET /guilds/{guildId}/members/{userId}
-	GetGuildMember(ctx context.Context, params GetGuildMemberParams) (GetGuildMemberRes, error)
-	// GetGuildMembers invokes getGuildMembers operation.
-	//
-	// **Retrieve paginated list of guild members**
-	// Includes member roles, activity status, and contribution metrics.
-	// **Performance:** <40ms with member caching.
-	//
-	// GET /guilds/{guildId}/members
-	GetGuildMembers(ctx context.Context, params GetGuildMembersParams) (GetGuildMembersRes, error)
-	// GetGuildSettings invokes getGuildSettings operation.
-	//
-	// **Retrieve guild configuration settings**
-	// Includes privacy, recruitment, and gameplay preferences.
-	// **Performance:** <20ms with settings caching.
-	//
-	// GET /guilds/{guildId}/settings
-	GetGuildSettings(ctx context.Context, params GetGuildSettingsParams) (GetGuildSettingsRes, error)
-	// GetGuildTerritory invokes getGuildTerritory operation.
-	//
-	// **Retrieve guild-owned territories and control zones**
-	// Includes territory status, defenses, and resource generation.
-	// **Performance:** <45ms with territory mapping.
-	//
-	// GET /guilds/{guildId}/territory
-	GetGuildTerritory(ctx context.Context, params GetGuildTerritoryParams) (GetGuildTerritoryRes, error)
-	// GuildBatchHealthCheck invokes guildBatchHealthCheck operation.
-	//
-	// **Batch health check for guild service dependencies**
-	// Checks health of core systems, banking, territory, and social features.
-	// **Performance:** <10ms response time, cached for 15 seconds.
-	//
-	// GET /health/batch
-	GuildBatchHealthCheck(ctx context.Context) (GuildBatchHealthCheckRes, error)
-	// GuildHealthCheck invokes guildHealthCheck operation.
-	//
-	// **Enterprise-grade health check endpoint**
-	// Provides real-time health status of the guild domain microservice.
-	// Critical for service discovery, load balancing, and monitoring.
-	// **Performance:** <1ms response time, cached for 30 seconds.
-	//
-	// GET /health
-	GuildHealthCheck(ctx context.Context, params GuildHealthCheckParams) (GuildHealthCheckRes, error)
-	// InviteGuildMember invokes inviteGuildMember operation.
-	//
-	// **Send guild membership invitation**
-	// Requires appropriate permissions and available member slots.
-	// **Performance:** <50ms with notification dispatch.
+	// Add guild member.
 	//
 	// POST /guilds/{guildId}/members
-	InviteGuildMember(ctx context.Context, request *InviteMemberRequest, params InviteGuildMemberParams) (InviteGuildMemberRes, error)
-	// ListGuilds invokes listGuilds operation.
+	GuildServiceAddGuildMember(ctx context.Context, request *AddMemberRequest, params GuildServiceAddGuildMemberParams) (*GuildMember, error)
+	// GuildServiceCreateGuild invokes guildServiceCreateGuild operation.
 	//
-	// **Retrieve paginated list of guilds with filtering**
-	// Supports advanced filtering by level, reputation, recruitment status, and more.
-	// **Performance:** <75ms with database indexing, supports 100k+ guilds.
+	// Create guild.
+	//
+	// POST /guilds
+	GuildServiceCreateGuild(ctx context.Context, request *CreateGuildRequest) (GuildServiceCreateGuildRes, error)
+	// GuildServiceGetGuild invokes guildServiceGetGuild operation.
+	//
+	// Get guild details.
+	//
+	// GET /guilds/{guildId}
+	GuildServiceGetGuild(ctx context.Context, params GuildServiceGetGuildParams) (GuildServiceGetGuildRes, error)
+	// GuildServiceHealthCheck invokes guildServiceHealthCheck operation.
+	//
+	// Guild service health check.
+	//
+	// GET /health
+	GuildServiceHealthCheck(ctx context.Context) (*HealthResponse, error)
+	// GuildServiceListGuildMembers invokes guildServiceListGuildMembers operation.
+	//
+	// List guild members.
+	//
+	// GET /guilds/{guildId}/members
+	GuildServiceListGuildMembers(ctx context.Context, params GuildServiceListGuildMembersParams) (*GuildMemberListResponse, error)
+	// GuildServiceListGuilds invokes guildServiceListGuilds operation.
+	//
+	// List guilds.
 	//
 	// GET /guilds
-	ListGuilds(ctx context.Context, params ListGuildsParams) (ListGuildsRes, error)
-	// RemoveGuildMember invokes removeGuildMember operation.
+	GuildServiceListGuilds(ctx context.Context, params GuildServiceListGuildsParams) (*GuildListResponse, error)
+	// GuildServiceUpdateGuild invokes guildServiceUpdateGuild operation.
 	//
-	// **Remove or expel a member from the guild**
-	// Requires appropriate permissions and handles asset redistribution.
-	// **Performance:** <60ms with cleanup and notifications.
-	//
-	// DELETE /guilds/{guildId}/members/{userId}
-	RemoveGuildMember(ctx context.Context, params RemoveGuildMemberParams) (RemoveGuildMemberRes, error)
-	// ReviewGuildApplication invokes reviewGuildApplication operation.
-	//
-	// **Approve or reject a membership application**
-	// Requires officer permissions and updates member roster.
-	// **Performance:** <55ms with member creation and notifications.
-	//
-	// PUT /guilds/{guildId}/applications/{applicationId}
-	ReviewGuildApplication(ctx context.Context, request *ReviewApplicationRequest, params ReviewGuildApplicationParams) (ReviewGuildApplicationRes, error)
-	// SearchGuilds invokes searchGuilds operation.
-	//
-	// **Advanced guild search with full-text capabilities**
-	// Supports fuzzy matching, relevance scoring, and multiple filter combinations.
-	// **Performance:** <100ms with Elasticsearch integration.
-	//
-	// GET /guilds/search
-	SearchGuilds(ctx context.Context, params SearchGuildsParams) (*SearchGuildsOK, error)
-	// UpdateGuild invokes updateGuild operation.
-	//
-	// **Update guild settings and information**
-	// Requires appropriate permissions based on member role.
-	// **Performance:** <75ms with validation and audit logging.
+	// Update guild.
 	//
 	// PUT /guilds/{guildId}
-	UpdateGuild(ctx context.Context, request *UpdateGuildRequest, params UpdateGuildParams) (UpdateGuildRes, error)
-	// UpdateGuildMember invokes updateGuildMember operation.
-	//
-	// **Update guild member's role and permissions**
-	// Requires appropriate authority level.
-	// **Performance:** <40ms with permission validation.
-	//
-	// PUT /guilds/{guildId}/members/{userId}
-	UpdateGuildMember(ctx context.Context, request *UpdateMemberRequest, params UpdateGuildMemberParams) (UpdateGuildMemberRes, error)
-	// UpdateGuildSettings invokes updateGuildSettings operation.
-	//
-	// **Update guild configuration settings**
-	// Requires leadership permissions for sensitive changes.
-	// **Performance:** <45ms with validation and audit logging.
-	//
-	// PUT /guilds/{guildId}/settings
-	UpdateGuildSettings(ctx context.Context, request *UpdateGuildSettingsRequest, params UpdateGuildSettingsParams) (UpdateGuildSettingsRes, error)
+	GuildServiceUpdateGuild(ctx context.Context, request *UpdateGuildRequest, params GuildServiceUpdateGuildParams) (*Guild, error)
 }
 
 // Client implements OAS client.
@@ -245,12 +78,8 @@ type Client struct {
 	sec       SecuritySource
 	baseClient
 }
-type errorHandler interface {
-	NewError(ctx context.Context, err error) *ErrRespStatusCode
-}
 
 var _ Handler = struct {
-	errorHandler
 	*Client
 }{}
 
@@ -288,23 +117,21 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// ApplyForGuildMembership invokes applyForGuildMembership operation.
+// GuildServiceAddGuildMember invokes guildServiceAddGuildMember operation.
 //
-// **Submit application for guild membership**
-// Requires meeting minimum requirements and application approval.
-// **Performance:** <45ms with validation and duplicate checking.
+// Add guild member.
 //
-// POST /guilds/{guildId}/applications
-func (c *Client) ApplyForGuildMembership(ctx context.Context, request *GuildApplicationRequest, params ApplyForGuildMembershipParams) (ApplyForGuildMembershipRes, error) {
-	res, err := c.sendApplyForGuildMembership(ctx, request, params)
+// POST /guilds/{guildId}/members
+func (c *Client) GuildServiceAddGuildMember(ctx context.Context, request *AddMemberRequest, params GuildServiceAddGuildMemberParams) (*GuildMember, error) {
+	res, err := c.sendGuildServiceAddGuildMember(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *GuildApplicationRequest, params ApplyForGuildMembershipParams) (res ApplyForGuildMembershipRes, err error) {
+func (c *Client) sendGuildServiceAddGuildMember(ctx context.Context, request *AddMemberRequest, params GuildServiceAddGuildMemberParams) (res *GuildMember, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("applyForGuildMembership"),
+		otelogen.OperationID("guildServiceAddGuildMember"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/applications"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/members"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -320,7 +147,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ApplyForGuildMembershipOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceAddGuildMemberOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -347,7 +174,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+			return e.EncodeValue(conv.StringToString(params.GuildId))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -357,7 +184,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 		}
 		pathParts[1] = encoded
 	}
-	pathParts[2] = "/applications"
+	pathParts[2] = "/members"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -365,7 +192,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeApplyForGuildMembershipRequest(request, r); err != nil {
+	if err := encodeGuildServiceAddGuildMemberRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -374,7 +201,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ApplyForGuildMembershipOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceAddGuildMemberOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -410,7 +237,7 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeApplyForGuildMembershipResponse(resp)
+	result, err := decodeGuildServiceAddGuildMemberResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -418,21 +245,19 @@ func (c *Client) sendApplyForGuildMembership(ctx context.Context, request *Guild
 	return result, nil
 }
 
-// CreateGuild invokes createGuild operation.
+// GuildServiceCreateGuild invokes guildServiceCreateGuild operation.
 //
-// **Create a new guild organization**
-// Requires founder to meet minimum requirements and pay creation fee.
-// **Performance:** <150ms with validation and resource allocation.
+// Create guild.
 //
 // POST /guilds
-func (c *Client) CreateGuild(ctx context.Context, request *CreateGuildRequest) (CreateGuildRes, error) {
-	res, err := c.sendCreateGuild(ctx, request)
+func (c *Client) GuildServiceCreateGuild(ctx context.Context, request *CreateGuildRequest) (GuildServiceCreateGuildRes, error) {
+	res, err := c.sendGuildServiceCreateGuild(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildRequest) (res CreateGuildRes, err error) {
+func (c *Client) sendGuildServiceCreateGuild(ctx context.Context, request *CreateGuildRequest) (res GuildServiceCreateGuildRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createGuild"),
+		otelogen.OperationID("guildServiceCreateGuild"),
 		semconv.HTTPRequestMethodKey.String("POST"),
 		semconv.URLTemplateKey.String("/guilds"),
 	}
@@ -450,7 +275,7 @@ func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildReques
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateGuildOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceCreateGuildOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -476,7 +301,7 @@ func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildReques
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeCreateGuildRequest(request, r); err != nil {
+	if err := encodeGuildServiceCreateGuildRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -485,7 +310,7 @@ func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildReques
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, CreateGuildOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceCreateGuildOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -521,7 +346,7 @@ func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildReques
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeCreateGuildResponse(resp)
+	result, err := decodeGuildServiceCreateGuildResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -529,537 +354,19 @@ func (c *Client) sendCreateGuild(ctx context.Context, request *CreateGuildReques
 	return result, nil
 }
 
-// CreateGuildAnnouncement invokes createGuildAnnouncement operation.
+// GuildServiceGetGuild invokes guildServiceGetGuild operation.
 //
-// **Create a new guild announcement**
-// Requires appropriate permissions and supports rich formatting.
-// **Performance:** <40ms with content validation.
-//
-// POST /guilds/{guildId}/announcements
-func (c *Client) CreateGuildAnnouncement(ctx context.Context, request *CreateAnnouncementRequest, params CreateGuildAnnouncementParams) (CreateGuildAnnouncementRes, error) {
-	res, err := c.sendCreateGuildAnnouncement(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendCreateGuildAnnouncement(ctx context.Context, request *CreateAnnouncementRequest, params CreateGuildAnnouncementParams) (res CreateGuildAnnouncementRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createGuildAnnouncement"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/announcements"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateGuildAnnouncementOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/announcements"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeCreateGuildAnnouncementRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, CreateGuildAnnouncementOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeCreateGuildAnnouncementResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// CreateGuildBankTransaction invokes createGuildBankTransaction operation.
-//
-// **Execute a guild bank transaction**
-// Requires appropriate permissions and sufficient funds.
-// **Performance:** <60ms with balance validation and audit logging.
-//
-// POST /guilds/{guildId}/bank/transactions
-func (c *Client) CreateGuildBankTransaction(ctx context.Context, request *CreateBankTransactionRequest, params CreateGuildBankTransactionParams) (CreateGuildBankTransactionRes, error) {
-	res, err := c.sendCreateGuildBankTransaction(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendCreateGuildBankTransaction(ctx context.Context, request *CreateBankTransactionRequest, params CreateGuildBankTransactionParams) (res CreateGuildBankTransactionRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createGuildBankTransaction"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/bank/transactions"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateGuildBankTransactionOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/bank/transactions"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeCreateGuildBankTransactionRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, CreateGuildBankTransactionOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeCreateGuildBankTransactionResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// CreateGuildEvent invokes createGuildEvent operation.
-//
-// **Create a new guild event**
-// Supports scheduling, RSVPs, and automated reminders.
-// **Performance:** <50ms with calendar integration.
-//
-// POST /guilds/{guildId}/events
-func (c *Client) CreateGuildEvent(ctx context.Context, request *CreateEventRequest, params CreateGuildEventParams) (CreateGuildEventRes, error) {
-	res, err := c.sendCreateGuildEvent(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendCreateGuildEvent(ctx context.Context, request *CreateEventRequest, params CreateGuildEventParams) (res CreateGuildEventRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createGuildEvent"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/events"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateGuildEventOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/events"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeCreateGuildEventRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, CreateGuildEventOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeCreateGuildEventResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// DisbandGuild invokes disbandGuild operation.
-//
-// **Disband/dissolve a guild**
-// Only guild leader can disband. Handles asset distribution and member cleanup.
-// **Performance:** <200ms with complex cleanup operations.
-//
-// DELETE /guilds/{guildId}
-func (c *Client) DisbandGuild(ctx context.Context, params DisbandGuildParams) (DisbandGuildRes, error) {
-	res, err := c.sendDisbandGuild(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendDisbandGuild(ctx context.Context, params DisbandGuildParams) (res DisbandGuildRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("disbandGuild"),
-		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, DisbandGuildOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "DELETE", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, DisbandGuildOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeDisbandGuildResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuild invokes getGuild operation.
-//
-// **Retrieve comprehensive guild information**
-// Includes full member list, settings, and statistics for authorized users.
-// **Performance:** <50ms with caching, real-time member counts.
+// Get guild details.
 //
 // GET /guilds/{guildId}
-func (c *Client) GetGuild(ctx context.Context, params GetGuildParams) (GetGuildRes, error) {
-	res, err := c.sendGetGuild(ctx, params)
+func (c *Client) GuildServiceGetGuild(ctx context.Context, params GuildServiceGetGuildParams) (GuildServiceGetGuildRes, error) {
+	res, err := c.sendGuildServiceGetGuild(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res GetGuildRes, err error) {
+func (c *Client) sendGuildServiceGetGuild(ctx context.Context, params GuildServiceGetGuildParams) (res GuildServiceGetGuildRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuild"),
+		otelogen.OperationID("guildServiceGetGuild"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/guilds/{guildId}"),
 	}
@@ -1077,7 +384,7 @@ func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res G
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceGetGuildOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -1104,7 +411,7 @@ func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res G
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+			return e.EncodeValue(conv.StringToString(params.GuildId))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1127,7 +434,7 @@ func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res G
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceGetGuildOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -1163,7 +470,7 @@ func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res G
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeGetGuildResponse(resp)
+	result, err := decodeGuildServiceGetGuildResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1171,1702 +478,19 @@ func (c *Client) sendGetGuild(ctx context.Context, params GetGuildParams) (res G
 	return result, nil
 }
 
-// GetGuildAnnouncements invokes getGuildAnnouncements operation.
+// GuildServiceHealthCheck invokes guildServiceHealthCheck operation.
 //
-// **Retrieve guild announcements and news**
-// Includes pinned announcements and recent updates.
-// **Performance:** <30ms with announcement caching.
-//
-// GET /guilds/{guildId}/announcements
-func (c *Client) GetGuildAnnouncements(ctx context.Context, params GetGuildAnnouncementsParams) (GetGuildAnnouncementsRes, error) {
-	res, err := c.sendGetGuildAnnouncements(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildAnnouncements(ctx context.Context, params GetGuildAnnouncementsParams) (res GetGuildAnnouncementsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildAnnouncements"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/announcements"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildAnnouncementsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/announcements"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "pinned_only" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "pinned_only",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.PinnedOnly.Get(); ok {
-				return e.EncodeValue(conv.BoolToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildAnnouncementsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildAnnouncementsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildApplications invokes getGuildApplications operation.
-//
-// **Retrieve pending membership applications**
-// Includes application details and review status.
-// **Performance:** <35ms with application caching.
-//
-// GET /guilds/{guildId}/applications
-func (c *Client) GetGuildApplications(ctx context.Context, params GetGuildApplicationsParams) (GetGuildApplicationsRes, error) {
-	res, err := c.sendGetGuildApplications(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildApplications(ctx context.Context, params GetGuildApplicationsParams) (res GetGuildApplicationsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildApplications"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/applications"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildApplicationsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/applications"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "status" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "status",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Status.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildApplicationsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildApplicationsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildBank invokes getGuildBank operation.
-//
-// **Retrieve guild treasury and resource information**
-// Includes current funds, transaction history, and access permissions.
-// **Performance:** <40ms with balance calculations.
-//
-// GET /guilds/{guildId}/bank
-func (c *Client) GetGuildBank(ctx context.Context, params GetGuildBankParams) (GetGuildBankRes, error) {
-	res, err := c.sendGetGuildBank(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildBank(ctx context.Context, params GetGuildBankParams) (res GetGuildBankRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildBank"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/bank"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildBankOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/bank"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildBankOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildBankResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildBankTransactions invokes getGuildBankTransactions operation.
-//
-// **Retrieve paginated transaction history**
-// Supports filtering by type, amount, and time period.
-// **Performance:** <50ms with transaction indexing.
-//
-// GET /guilds/{guildId}/bank/transactions
-func (c *Client) GetGuildBankTransactions(ctx context.Context, params GetGuildBankTransactionsParams) (GetGuildBankTransactionsRes, error) {
-	res, err := c.sendGetGuildBankTransactions(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildBankTransactions(ctx context.Context, params GetGuildBankTransactionsParams) (res GetGuildBankTransactionsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildBankTransactions"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/bank/transactions"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildBankTransactionsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/bank/transactions"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "type" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "type",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Type.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "amount_min" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "amount_min",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.AmountMin.Get(); ok {
-				return e.EncodeValue(conv.Float64ToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "amount_max" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "amount_max",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.AmountMax.Get(); ok {
-				return e.EncodeValue(conv.Float64ToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "date_from" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "date_from",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.DateFrom.Get(); ok {
-				return e.EncodeValue(conv.DateToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "date_to" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "date_to",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.DateTo.Get(); ok {
-				return e.EncodeValue(conv.DateToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildBankTransactionsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildBankTransactionsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildEvents invokes getGuildEvents operation.
-//
-// **Retrieve upcoming and past guild events**
-// Includes raids, meetings, and social gatherings.
-// **Performance:** <35ms with event scheduling.
-//
-// GET /guilds/{guildId}/events
-func (c *Client) GetGuildEvents(ctx context.Context, params GetGuildEventsParams) (GetGuildEventsRes, error) {
-	res, err := c.sendGetGuildEvents(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildEvents(ctx context.Context, params GetGuildEventsParams) (res GetGuildEventsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildEvents"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/events"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildEventsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/events"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "status" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "status",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Status.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "type" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "type",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Type.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildEventsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildEventsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildMember invokes getGuildMember operation.
-//
-// **Retrieve detailed information about a specific guild member**
-// Includes full activity history and permissions.
-// **Performance:** <25ms with member-specific caching.
-//
-// GET /guilds/{guildId}/members/{userId}
-func (c *Client) GetGuildMember(ctx context.Context, params GetGuildMemberParams) (GetGuildMemberRes, error) {
-	res, err := c.sendGetGuildMember(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildMember(ctx context.Context, params GetGuildMemberParams) (res GetGuildMemberRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildMember"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/members/{userId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildMemberOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [4]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/members/"
-	{
-		// Encode "userId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "userId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.UserId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[3] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildMemberOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildMemberResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildMembers invokes getGuildMembers operation.
-//
-// **Retrieve paginated list of guild members**
-// Includes member roles, activity status, and contribution metrics.
-// **Performance:** <40ms with member caching.
-//
-// GET /guilds/{guildId}/members
-func (c *Client) GetGuildMembers(ctx context.Context, params GetGuildMembersParams) (GetGuildMembersRes, error) {
-	res, err := c.sendGetGuildMembers(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildMembers(ctx context.Context, params GetGuildMembersParams) (res GetGuildMembersRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildMembers"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/members"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildMembersOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/members"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "role" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "role",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Role.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "status" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "status",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Status.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "sort_by" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "sort_by",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.SortBy.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "sort_order" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "sort_order",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.SortOrder.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildMembersOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildMembersResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildSettings invokes getGuildSettings operation.
-//
-// **Retrieve guild configuration settings**
-// Includes privacy, recruitment, and gameplay preferences.
-// **Performance:** <20ms with settings caching.
-//
-// GET /guilds/{guildId}/settings
-func (c *Client) GetGuildSettings(ctx context.Context, params GetGuildSettingsParams) (GetGuildSettingsRes, error) {
-	res, err := c.sendGetGuildSettings(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildSettings(ctx context.Context, params GetGuildSettingsParams) (res GetGuildSettingsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildSettings"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/settings"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildSettingsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/settings"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildSettingsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildSettingsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetGuildTerritory invokes getGuildTerritory operation.
-//
-// **Retrieve guild-owned territories and control zones**
-// Includes territory status, defenses, and resource generation.
-// **Performance:** <45ms with territory mapping.
-//
-// GET /guilds/{guildId}/territory
-func (c *Client) GetGuildTerritory(ctx context.Context, params GetGuildTerritoryParams) (GetGuildTerritoryRes, error) {
-	res, err := c.sendGetGuildTerritory(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetGuildTerritory(ctx context.Context, params GetGuildTerritoryParams) (res GetGuildTerritoryRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getGuildTerritory"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/territory"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetGuildTerritoryOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/territory"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetGuildTerritoryOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetGuildTerritoryResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GuildBatchHealthCheck invokes guildBatchHealthCheck operation.
-//
-// **Batch health check for guild service dependencies**
-// Checks health of core systems, banking, territory, and social features.
-// **Performance:** <10ms response time, cached for 15 seconds.
-//
-// GET /health/batch
-func (c *Client) GuildBatchHealthCheck(ctx context.Context) (GuildBatchHealthCheckRes, error) {
-	res, err := c.sendGuildBatchHealthCheck(ctx)
-	return res, err
-}
-
-func (c *Client) sendGuildBatchHealthCheck(ctx context.Context) (res GuildBatchHealthCheckRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("guildBatchHealthCheck"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/health/batch"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GuildBatchHealthCheckOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/health/batch"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GuildBatchHealthCheckOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGuildBatchHealthCheckResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GuildHealthCheck invokes guildHealthCheck operation.
-//
-// **Enterprise-grade health check endpoint**
-// Provides real-time health status of the guild domain microservice.
-// Critical for service discovery, load balancing, and monitoring.
-// **Performance:** <1ms response time, cached for 30 seconds.
+// Guild service health check.
 //
 // GET /health
-func (c *Client) GuildHealthCheck(ctx context.Context, params GuildHealthCheckParams) (GuildHealthCheckRes, error) {
-	res, err := c.sendGuildHealthCheck(ctx, params)
+func (c *Client) GuildServiceHealthCheck(ctx context.Context) (*HealthResponse, error) {
+	res, err := c.sendGuildServiceHealthCheck(ctx)
 	return res, err
 }
 
-func (c *Client) sendGuildHealthCheck(ctx context.Context, params GuildHealthCheckParams) (res GuildHealthCheckRes, err error) {
+func (c *Client) sendGuildServiceHealthCheck(ctx context.Context) (res *HealthResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("guildHealthCheck"),
+		otelogen.OperationID("guildServiceHealthCheck"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/health"),
 	}
@@ -2884,7 +508,7 @@ func (c *Client) sendGuildHealthCheck(ctx context.Context, params GuildHealthChe
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GuildHealthCheckOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceHealthCheckOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -2911,29 +535,12 @@ func (c *Client) sendGuildHealthCheck(ctx context.Context, params GuildHealthChe
 		return res, errors.Wrap(err, "create request")
 	}
 
-	stage = "EncodeHeaderParams"
-	h := uri.NewHeaderEncoder(r.Header)
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "Accept-Encoding",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.AcceptEncoding.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
-	}
-
 	{
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GuildHealthCheckOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceHealthCheckOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -2969,7 +576,7 @@ func (c *Client) sendGuildHealthCheck(ctx context.Context, params GuildHealthChe
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeGuildHealthCheckResponse(resp)
+	result, err := decodeGuildServiceHealthCheckResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -2977,22 +584,20 @@ func (c *Client) sendGuildHealthCheck(ctx context.Context, params GuildHealthChe
 	return result, nil
 }
 
-// InviteGuildMember invokes inviteGuildMember operation.
+// GuildServiceListGuildMembers invokes guildServiceListGuildMembers operation.
 //
-// **Send guild membership invitation**
-// Requires appropriate permissions and available member slots.
-// **Performance:** <50ms with notification dispatch.
+// List guild members.
 //
-// POST /guilds/{guildId}/members
-func (c *Client) InviteGuildMember(ctx context.Context, request *InviteMemberRequest, params InviteGuildMemberParams) (InviteGuildMemberRes, error) {
-	res, err := c.sendInviteGuildMember(ctx, request, params)
+// GET /guilds/{guildId}/members
+func (c *Client) GuildServiceListGuildMembers(ctx context.Context, params GuildServiceListGuildMembersParams) (*GuildMemberListResponse, error) {
+	res, err := c.sendGuildServiceListGuildMembers(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMemberRequest, params InviteGuildMemberParams) (res InviteGuildMemberRes, err error) {
+func (c *Client) sendGuildServiceListGuildMembers(ctx context.Context, params GuildServiceListGuildMembersParams) (res *GuildMemberListResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("inviteGuildMember"),
-		semconv.HTTPRequestMethodKey.String("POST"),
+		otelogen.OperationID("guildServiceListGuildMembers"),
+		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/guilds/{guildId}/members"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
@@ -3009,7 +614,7 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, InviteGuildMemberOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceListGuildMembersOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -3036,7 +641,7 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+			return e.EncodeValue(conv.StringToString(params.GuildId))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3050,12 +655,9 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
+	r, err := ht.NewRequest(ctx, "GET", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeInviteGuildMemberRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	{
@@ -3063,7 +665,7 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, InviteGuildMemberOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceListGuildMembersOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -3099,7 +701,7 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeInviteGuildMemberResponse(resp)
+	result, err := decodeGuildServiceListGuildMembersResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -3107,21 +709,19 @@ func (c *Client) sendInviteGuildMember(ctx context.Context, request *InviteMembe
 	return result, nil
 }
 
-// ListGuilds invokes listGuilds operation.
+// GuildServiceListGuilds invokes guildServiceListGuilds operation.
 //
-// **Retrieve paginated list of guilds with filtering**
-// Supports advanced filtering by level, reputation, recruitment status, and more.
-// **Performance:** <75ms with database indexing, supports 100k+ guilds.
+// List guilds.
 //
 // GET /guilds
-func (c *Client) ListGuilds(ctx context.Context, params ListGuildsParams) (ListGuildsRes, error) {
-	res, err := c.sendListGuilds(ctx, params)
+func (c *Client) GuildServiceListGuilds(ctx context.Context, params GuildServiceListGuildsParams) (*GuildListResponse, error) {
+	res, err := c.sendGuildServiceListGuilds(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (res ListGuildsRes, err error) {
+func (c *Client) sendGuildServiceListGuilds(ctx context.Context, params GuildServiceListGuildsParams) (res *GuildListResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("listGuilds"),
+		otelogen.OperationID("guildServiceListGuilds"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/guilds"),
 	}
@@ -3139,7 +739,7 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ListGuildsOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceListGuildsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -3163,152 +763,16 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 	stage = "EncodeQueryParams"
 	q := uri.NewQueryEncoder()
 	{
-		// Encode "name" parameter.
+		// Encode "page" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "name",
+			Name:    "page",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Name.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "tag" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "tag",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Tag.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "level_min" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "level_min",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.LevelMin.Get(); ok {
+			if val, ok := params.Page.Get(); ok {
 				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "level_max" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "level_max",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.LevelMax.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "reputation_min" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "reputation_min",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.ReputationMin.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "recruiting" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "recruiting",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Recruiting.Get(); ok {
-				return e.EncodeValue(conv.BoolToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "faction" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "faction",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Faction.Get(); ok {
-				return e.EncodeValue(conv.UUIDToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "sort_by" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "sort_by",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.SortBy.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "sort_order" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "sort_order",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.SortOrder.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
 			}
 			return nil
 		}); err != nil {
@@ -3332,23 +796,6 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 			return res, errors.Wrap(err, "encode query")
 		}
 	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
 	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"
@@ -3362,7 +809,7 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ListGuildsOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceListGuildsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -3398,7 +845,7 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeListGuildsResponse(resp)
+	result, err := decodeGuildServiceListGuildsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -3406,495 +853,19 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 	return result, nil
 }
 
-// RemoveGuildMember invokes removeGuildMember operation.
+// GuildServiceUpdateGuild invokes guildServiceUpdateGuild operation.
 //
-// **Remove or expel a member from the guild**
-// Requires appropriate permissions and handles asset redistribution.
-// **Performance:** <60ms with cleanup and notifications.
-//
-// DELETE /guilds/{guildId}/members/{userId}
-func (c *Client) RemoveGuildMember(ctx context.Context, params RemoveGuildMemberParams) (RemoveGuildMemberRes, error) {
-	res, err := c.sendRemoveGuildMember(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendRemoveGuildMember(ctx context.Context, params RemoveGuildMemberParams) (res RemoveGuildMemberRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("removeGuildMember"),
-		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/members/{userId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, RemoveGuildMemberOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [4]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/members/"
-	{
-		// Encode "userId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "userId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.UserId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[3] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "reason" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "reason",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Reason.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "DELETE", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, RemoveGuildMemberOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeRemoveGuildMemberResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ReviewGuildApplication invokes reviewGuildApplication operation.
-//
-// **Approve or reject a membership application**
-// Requires officer permissions and updates member roster.
-// **Performance:** <55ms with member creation and notifications.
-//
-// PUT /guilds/{guildId}/applications/{applicationId}
-func (c *Client) ReviewGuildApplication(ctx context.Context, request *ReviewApplicationRequest, params ReviewGuildApplicationParams) (ReviewGuildApplicationRes, error) {
-	res, err := c.sendReviewGuildApplication(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendReviewGuildApplication(ctx context.Context, request *ReviewApplicationRequest, params ReviewGuildApplicationParams) (res ReviewGuildApplicationRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("reviewGuildApplication"),
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/applications/{applicationId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ReviewGuildApplicationOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [4]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/applications/"
-	{
-		// Encode "applicationId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "applicationId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.ApplicationId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[3] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "PUT", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeReviewGuildApplicationRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ReviewGuildApplicationOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeReviewGuildApplicationResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// SearchGuilds invokes searchGuilds operation.
-//
-// **Advanced guild search with full-text capabilities**
-// Supports fuzzy matching, relevance scoring, and multiple filter combinations.
-// **Performance:** <100ms with Elasticsearch integration.
-//
-// GET /guilds/search
-func (c *Client) SearchGuilds(ctx context.Context, params SearchGuildsParams) (*SearchGuildsOK, error) {
-	res, err := c.sendSearchGuilds(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendSearchGuilds(ctx context.Context, params SearchGuildsParams) (res *SearchGuildsOK, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("searchGuilds"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/guilds/search"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, SearchGuildsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/guilds/search"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "query" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "query",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(params.Query))
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, SearchGuildsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeSearchGuildsResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// UpdateGuild invokes updateGuild operation.
-//
-// **Update guild settings and information**
-// Requires appropriate permissions based on member role.
-// **Performance:** <75ms with validation and audit logging.
+// Update guild.
 //
 // PUT /guilds/{guildId}
-func (c *Client) UpdateGuild(ctx context.Context, request *UpdateGuildRequest, params UpdateGuildParams) (UpdateGuildRes, error) {
-	res, err := c.sendUpdateGuild(ctx, request, params)
+func (c *Client) GuildServiceUpdateGuild(ctx context.Context, request *UpdateGuildRequest, params GuildServiceUpdateGuildParams) (*Guild, error) {
+	res, err := c.sendGuildServiceUpdateGuild(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildRequest, params UpdateGuildParams) (res UpdateGuildRes, err error) {
+func (c *Client) sendGuildServiceUpdateGuild(ctx context.Context, request *UpdateGuildRequest, params GuildServiceUpdateGuildParams) (res *Guild, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("updateGuild"),
+		otelogen.OperationID("guildServiceUpdateGuild"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
 		semconv.URLTemplateKey.String("/guilds/{guildId}"),
 	}
@@ -3912,7 +883,7 @@ func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildReques
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, UpdateGuildOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GuildServiceUpdateGuildOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -3939,7 +910,7 @@ func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildReques
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+			return e.EncodeValue(conv.StringToString(params.GuildId))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3956,7 +927,7 @@ func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildReques
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeUpdateGuildRequest(request, r); err != nil {
+	if err := encodeGuildServiceUpdateGuildRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
 	}
 
@@ -3965,7 +936,7 @@ func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildReques
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, UpdateGuildOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GuildServiceUpdateGuildOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -4001,285 +972,7 @@ func (c *Client) sendUpdateGuild(ctx context.Context, request *UpdateGuildReques
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeUpdateGuildResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// UpdateGuildMember invokes updateGuildMember operation.
-//
-// **Update guild member's role and permissions**
-// Requires appropriate authority level.
-// **Performance:** <40ms with permission validation.
-//
-// PUT /guilds/{guildId}/members/{userId}
-func (c *Client) UpdateGuildMember(ctx context.Context, request *UpdateMemberRequest, params UpdateGuildMemberParams) (UpdateGuildMemberRes, error) {
-	res, err := c.sendUpdateGuildMember(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendUpdateGuildMember(ctx context.Context, request *UpdateMemberRequest, params UpdateGuildMemberParams) (res UpdateGuildMemberRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("updateGuildMember"),
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/members/{userId}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, UpdateGuildMemberOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [4]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/members/"
-	{
-		// Encode "userId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "userId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.UserId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[3] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "PUT", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeUpdateGuildMemberRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, UpdateGuildMemberOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeUpdateGuildMemberResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// UpdateGuildSettings invokes updateGuildSettings operation.
-//
-// **Update guild configuration settings**
-// Requires leadership permissions for sensitive changes.
-// **Performance:** <45ms with validation and audit logging.
-//
-// PUT /guilds/{guildId}/settings
-func (c *Client) UpdateGuildSettings(ctx context.Context, request *UpdateGuildSettingsRequest, params UpdateGuildSettingsParams) (UpdateGuildSettingsRes, error) {
-	res, err := c.sendUpdateGuildSettings(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendUpdateGuildSettings(ctx context.Context, request *UpdateGuildSettingsRequest, params UpdateGuildSettingsParams) (res UpdateGuildSettingsRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("updateGuildSettings"),
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/guilds/{guildId}/settings"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, UpdateGuildSettingsOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/guilds/"
-	{
-		// Encode "guildId" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "guildId",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.GuildId))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/settings"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "PUT", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeUpdateGuildSettingsRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, UpdateGuildSettingsOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeUpdateGuildSettingsResponse(resp)
+	result, err := decodeGuildServiceUpdateGuildResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

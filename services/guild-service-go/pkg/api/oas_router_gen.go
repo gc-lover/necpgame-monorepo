@@ -40,7 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	args := [2]string{}
+	args := [1]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -72,9 +72,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleListGuildsRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleGuildServiceListGuildsRequest([0]string{}, elemIsEscaped, w, r)
 					case "POST":
-						s.handleCreateGuildRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleGuildServiceCreateGuildRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET,POST")
 					}
@@ -90,32 +90,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 's': // Prefix: "search"
-						origElem := elem
-						if l := len("search"); len(elem) >= l && elem[0:l] == "search" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "GET":
-								s.handleSearchGuildsRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "GET")
-							}
-
-							return
-						}
-
-						elem = origElem
-					}
 					// Param: "guildId"
 					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
@@ -127,328 +101,45 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 					if len(elem) == 0 {
 						switch r.Method {
-						case "DELETE":
-							s.handleDisbandGuildRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
 						case "GET":
-							s.handleGetGuildRequest([1]string{
+							s.handleGuildServiceGetGuildRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						case "PUT":
-							s.handleUpdateGuildRequest([1]string{
+							s.handleGuildServiceUpdateGuildRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
-							s.notAllowed(w, r, "DELETE,GET,PUT")
+							s.notAllowed(w, r, "GET,PUT")
 						}
 
 						return
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/"
+					case '/': // Prefix: "/members"
 
-						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						if l := len("/members"); len(elem) >= l && elem[0:l] == "/members" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							break
-						}
-						switch elem[0] {
-						case 'a': // Prefix: "a"
-
-							if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
-								elem = elem[l:]
-							} else {
-								break
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGuildServiceListGuildMembersRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "POST":
+								s.handleGuildServiceAddGuildMemberRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET,POST")
 							}
 
-							if len(elem) == 0 {
-								break
-							}
-							switch elem[0] {
-							case 'n': // Prefix: "nnouncements"
-
-								if l := len("nnouncements"); len(elem) >= l && elem[0:l] == "nnouncements" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch r.Method {
-									case "GET":
-										s.handleGetGuildAnnouncementsRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									case "POST":
-										s.handleCreateGuildAnnouncementRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									default:
-										s.notAllowed(w, r, "GET,POST")
-									}
-
-									return
-								}
-
-							case 'p': // Prefix: "pplications"
-
-								if l := len("pplications"); len(elem) >= l && elem[0:l] == "pplications" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									switch r.Method {
-									case "GET":
-										s.handleGetGuildApplicationsRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									case "POST":
-										s.handleApplyForGuildMembershipRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									default:
-										s.notAllowed(w, r, "GET,POST")
-									}
-
-									return
-								}
-								switch elem[0] {
-								case '/': // Prefix: "/"
-
-									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									// Param: "applicationId"
-									// Leaf parameter, slashes are prohibited
-									idx := strings.IndexByte(elem, '/')
-									if idx >= 0 {
-										break
-									}
-									args[1] = elem
-									elem = ""
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "PUT":
-											s.handleReviewGuildApplicationRequest([2]string{
-												args[0],
-												args[1],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, "PUT")
-										}
-
-										return
-									}
-
-								}
-
-							}
-
-						case 'b': // Prefix: "bank"
-
-							if l := len("bank"); len(elem) >= l && elem[0:l] == "bank" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								switch r.Method {
-								case "GET":
-									s.handleGetGuildBankRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, "GET")
-								}
-
-								return
-							}
-							switch elem[0] {
-							case '/': // Prefix: "/transactions"
-
-								if l := len("/transactions"); len(elem) >= l && elem[0:l] == "/transactions" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch r.Method {
-									case "GET":
-										s.handleGetGuildBankTransactionsRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									case "POST":
-										s.handleCreateGuildBankTransactionRequest([1]string{
-											args[0],
-										}, elemIsEscaped, w, r)
-									default:
-										s.notAllowed(w, r, "GET,POST")
-									}
-
-									return
-								}
-
-							}
-
-						case 'e': // Prefix: "events"
-
-							if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch r.Method {
-								case "GET":
-									s.handleGetGuildEventsRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								case "POST":
-									s.handleCreateGuildEventRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, "GET,POST")
-								}
-
-								return
-							}
-
-						case 'm': // Prefix: "members"
-
-							if l := len("members"); len(elem) >= l && elem[0:l] == "members" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								switch r.Method {
-								case "GET":
-									s.handleGetGuildMembersRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								case "POST":
-									s.handleInviteGuildMemberRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, "GET,POST")
-								}
-
-								return
-							}
-							switch elem[0] {
-							case '/': // Prefix: "/"
-
-								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								// Param: "userId"
-								// Leaf parameter, slashes are prohibited
-								idx := strings.IndexByte(elem, '/')
-								if idx >= 0 {
-									break
-								}
-								args[1] = elem
-								elem = ""
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch r.Method {
-									case "DELETE":
-										s.handleRemoveGuildMemberRequest([2]string{
-											args[0],
-											args[1],
-										}, elemIsEscaped, w, r)
-									case "GET":
-										s.handleGetGuildMemberRequest([2]string{
-											args[0],
-											args[1],
-										}, elemIsEscaped, w, r)
-									case "PUT":
-										s.handleUpdateGuildMemberRequest([2]string{
-											args[0],
-											args[1],
-										}, elemIsEscaped, w, r)
-									default:
-										s.notAllowed(w, r, "DELETE,GET,PUT")
-									}
-
-									return
-								}
-
-							}
-
-						case 's': // Prefix: "settings"
-
-							if l := len("settings"); len(elem) >= l && elem[0:l] == "settings" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch r.Method {
-								case "GET":
-									s.handleGetGuildSettingsRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								case "PUT":
-									s.handleUpdateGuildSettingsRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, "GET,PUT")
-								}
-
-								return
-							}
-
-						case 't': // Prefix: "territory"
-
-							if l := len("territory"); len(elem) >= l && elem[0:l] == "territory" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch r.Method {
-								case "GET":
-									s.handleGetGuildTerritoryRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, "GET")
-								}
-
-								return
-							}
-
+							return
 						}
 
 					}
@@ -464,36 +155,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleGuildHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleGuildServiceHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET")
 					}
 
 					return
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/batch"
-
-					if l := len("/batch"); len(elem) >= l && elem[0:l] == "/batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGuildBatchHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
-						}
-
-						return
-					}
-
 				}
 
 			}
@@ -511,7 +181,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [2]string
+	args           [1]string
 }
 
 // Name returns ogen operation name.
@@ -607,18 +277,18 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = ListGuildsOperation
+						r.name = GuildServiceListGuildsOperation
 						r.summary = "List guilds"
-						r.operationID = "listGuilds"
+						r.operationID = "guildServiceListGuilds"
 						r.operationGroup = ""
 						r.pathPattern = "/guilds"
 						r.args = args
 						r.count = 0
 						return r, true
 					case "POST":
-						r.name = CreateGuildOperation
+						r.name = GuildServiceCreateGuildOperation
 						r.summary = "Create guild"
-						r.operationID = "createGuild"
+						r.operationID = "guildServiceCreateGuild"
 						r.operationGroup = ""
 						r.pathPattern = "/guilds"
 						r.args = args
@@ -637,37 +307,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case 's': // Prefix: "search"
-						origElem := elem
-						if l := len("search"); len(elem) >= l && elem[0:l] == "search" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "GET":
-								r.name = SearchGuildsOperation
-								r.summary = "Search guilds"
-								r.operationID = "searchGuilds"
-								r.operationGroup = ""
-								r.pathPattern = "/guilds/search"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-						elem = origElem
-					}
 					// Param: "guildId"
 					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
@@ -679,28 +318,19 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 					if len(elem) == 0 {
 						switch method {
-						case "DELETE":
-							r.name = DisbandGuildOperation
-							r.summary = "Disband guild"
-							r.operationID = "disbandGuild"
-							r.operationGroup = ""
-							r.pathPattern = "/guilds/{guildId}"
-							r.args = args
-							r.count = 1
-							return r, true
 						case "GET":
-							r.name = GetGuildOperation
+							r.name = GuildServiceGetGuildOperation
 							r.summary = "Get guild details"
-							r.operationID = "getGuild"
+							r.operationID = "guildServiceGetGuild"
 							r.operationGroup = ""
 							r.pathPattern = "/guilds/{guildId}"
 							r.args = args
 							r.count = 1
 							return r, true
 						case "PUT":
-							r.name = UpdateGuildOperation
+							r.name = GuildServiceUpdateGuildOperation
 							r.summary = "Update guild"
-							r.operationID = "updateGuild"
+							r.operationID = "guildServiceUpdateGuild"
 							r.operationGroup = ""
 							r.pathPattern = "/guilds/{guildId}"
 							r.args = args
@@ -711,375 +341,38 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/"
+					case '/': // Prefix: "/members"
 
-						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						if l := len("/members"); len(elem) >= l && elem[0:l] == "/members" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							break
-						}
-						switch elem[0] {
-						case 'a': // Prefix: "a"
-
-							if l := len("a"); len(elem) >= l && elem[0:l] == "a" {
-								elem = elem[l:]
-							} else {
-								break
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GuildServiceListGuildMembersOperation
+								r.summary = "List guild members"
+								r.operationID = "guildServiceListGuildMembers"
+								r.operationGroup = ""
+								r.pathPattern = "/guilds/{guildId}/members"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "POST":
+								r.name = GuildServiceAddGuildMemberOperation
+								r.summary = "Add guild member"
+								r.operationID = "guildServiceAddGuildMember"
+								r.operationGroup = ""
+								r.pathPattern = "/guilds/{guildId}/members"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
 							}
-
-							if len(elem) == 0 {
-								break
-							}
-							switch elem[0] {
-							case 'n': // Prefix: "nnouncements"
-
-								if l := len("nnouncements"); len(elem) >= l && elem[0:l] == "nnouncements" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch method {
-									case "GET":
-										r.name = GetGuildAnnouncementsOperation
-										r.summary = "Get guild announcements"
-										r.operationID = "getGuildAnnouncements"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/announcements"
-										r.args = args
-										r.count = 1
-										return r, true
-									case "POST":
-										r.name = CreateGuildAnnouncementOperation
-										r.summary = "Create guild announcement"
-										r.operationID = "createGuildAnnouncement"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/announcements"
-										r.args = args
-										r.count = 1
-										return r, true
-									default:
-										return
-									}
-								}
-
-							case 'p': // Prefix: "pplications"
-
-								if l := len("pplications"); len(elem) >= l && elem[0:l] == "pplications" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									switch method {
-									case "GET":
-										r.name = GetGuildApplicationsOperation
-										r.summary = "Get membership applications"
-										r.operationID = "getGuildApplications"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/applications"
-										r.args = args
-										r.count = 1
-										return r, true
-									case "POST":
-										r.name = ApplyForGuildMembershipOperation
-										r.summary = "Apply for guild membership"
-										r.operationID = "applyForGuildMembership"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/applications"
-										r.args = args
-										r.count = 1
-										return r, true
-									default:
-										return
-									}
-								}
-								switch elem[0] {
-								case '/': // Prefix: "/"
-
-									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									// Param: "applicationId"
-									// Leaf parameter, slashes are prohibited
-									idx := strings.IndexByte(elem, '/')
-									if idx >= 0 {
-										break
-									}
-									args[1] = elem
-									elem = ""
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "PUT":
-											r.name = ReviewGuildApplicationOperation
-											r.summary = "Review membership application"
-											r.operationID = "reviewGuildApplication"
-											r.operationGroup = ""
-											r.pathPattern = "/guilds/{guildId}/applications/{applicationId}"
-											r.args = args
-											r.count = 2
-											return r, true
-										default:
-											return
-										}
-									}
-
-								}
-
-							}
-
-						case 'b': // Prefix: "bank"
-
-							if l := len("bank"); len(elem) >= l && elem[0:l] == "bank" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								switch method {
-								case "GET":
-									r.name = GetGuildBankOperation
-									r.summary = "Get guild bank overview"
-									r.operationID = "getGuildBank"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/bank"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
-							}
-							switch elem[0] {
-							case '/': // Prefix: "/transactions"
-
-								if l := len("/transactions"); len(elem) >= l && elem[0:l] == "/transactions" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch method {
-									case "GET":
-										r.name = GetGuildBankTransactionsOperation
-										r.summary = "Get guild bank transactions"
-										r.operationID = "getGuildBankTransactions"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/bank/transactions"
-										r.args = args
-										r.count = 1
-										return r, true
-									case "POST":
-										r.name = CreateGuildBankTransactionOperation
-										r.summary = "Create bank transaction"
-										r.operationID = "createGuildBankTransaction"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/bank/transactions"
-										r.args = args
-										r.count = 1
-										return r, true
-									default:
-										return
-									}
-								}
-
-							}
-
-						case 'e': // Prefix: "events"
-
-							if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch method {
-								case "GET":
-									r.name = GetGuildEventsOperation
-									r.summary = "Get guild events"
-									r.operationID = "getGuildEvents"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/events"
-									r.args = args
-									r.count = 1
-									return r, true
-								case "POST":
-									r.name = CreateGuildEventOperation
-									r.summary = "Create guild event"
-									r.operationID = "createGuildEvent"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/events"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
-							}
-
-						case 'm': // Prefix: "members"
-
-							if l := len("members"); len(elem) >= l && elem[0:l] == "members" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								switch method {
-								case "GET":
-									r.name = GetGuildMembersOperation
-									r.summary = "Get guild members"
-									r.operationID = "getGuildMembers"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/members"
-									r.args = args
-									r.count = 1
-									return r, true
-								case "POST":
-									r.name = InviteGuildMemberOperation
-									r.summary = "Invite member to guild"
-									r.operationID = "inviteGuildMember"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/members"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
-							}
-							switch elem[0] {
-							case '/': // Prefix: "/"
-
-								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-									elem = elem[l:]
-								} else {
-									break
-								}
-
-								// Param: "userId"
-								// Leaf parameter, slashes are prohibited
-								idx := strings.IndexByte(elem, '/')
-								if idx >= 0 {
-									break
-								}
-								args[1] = elem
-								elem = ""
-
-								if len(elem) == 0 {
-									// Leaf node.
-									switch method {
-									case "DELETE":
-										r.name = RemoveGuildMemberOperation
-										r.summary = "Remove member from guild"
-										r.operationID = "removeGuildMember"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/members/{userId}"
-										r.args = args
-										r.count = 2
-										return r, true
-									case "GET":
-										r.name = GetGuildMemberOperation
-										r.summary = "Get member details"
-										r.operationID = "getGuildMember"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/members/{userId}"
-										r.args = args
-										r.count = 2
-										return r, true
-									case "PUT":
-										r.name = UpdateGuildMemberOperation
-										r.summary = "Update member role/permissions"
-										r.operationID = "updateGuildMember"
-										r.operationGroup = ""
-										r.pathPattern = "/guilds/{guildId}/members/{userId}"
-										r.args = args
-										r.count = 2
-										return r, true
-									default:
-										return
-									}
-								}
-
-							}
-
-						case 's': // Prefix: "settings"
-
-							if l := len("settings"); len(elem) >= l && elem[0:l] == "settings" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch method {
-								case "GET":
-									r.name = GetGuildSettingsOperation
-									r.summary = "Get guild settings"
-									r.operationID = "getGuildSettings"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/settings"
-									r.args = args
-									r.count = 1
-									return r, true
-								case "PUT":
-									r.name = UpdateGuildSettingsOperation
-									r.summary = "Update guild settings"
-									r.operationID = "updateGuildSettings"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/settings"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
-							}
-
-						case 't': // Prefix: "territory"
-
-							if l := len("territory"); len(elem) >= l && elem[0:l] == "territory" {
-								elem = elem[l:]
-							} else {
-								break
-							}
-
-							if len(elem) == 0 {
-								// Leaf node.
-								switch method {
-								case "GET":
-									r.name = GetGuildTerritoryOperation
-									r.summary = "Get guild territory"
-									r.operationID = "getGuildTerritory"
-									r.operationGroup = ""
-									r.pathPattern = "/guilds/{guildId}/territory"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
-							}
-
 						}
 
 					}
@@ -1095,11 +388,12 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				if len(elem) == 0 {
+					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = GuildHealthCheckOperation
+						r.name = GuildServiceHealthCheckOperation
 						r.summary = "Guild service health check"
-						r.operationID = "guildHealthCheck"
+						r.operationID = "guildServiceHealthCheck"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
 						r.args = args
@@ -1108,33 +402,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					default:
 						return
 					}
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/batch"
-
-					if l := len("/batch"); len(elem) >= l && elem[0:l] == "/batch" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GuildBatchHealthCheckOperation
-							r.summary = "Batch health check for guild dependencies"
-							r.operationID = "guildBatchHealthCheck"
-							r.operationGroup = ""
-							r.pathPattern = "/health/batch"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-
 				}
 
 			}
