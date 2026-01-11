@@ -113,6 +113,10 @@ func (s *QuestEngineService) CreateQuest(ctx context.Context, req *api.CreateQue
 		slog.Info("CreateQuest completed", "duration_ms", duration.Milliseconds())
 	}()
 
+	// Performance: Context timeout for external operations
+	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
 	// Generate quest ID
 	questID := uuid.New()
 
@@ -131,7 +135,7 @@ func (s *QuestEngineService) CreateQuest(ctx context.Context, req *api.CreateQue
 	}
 
 	// Save to repository
-	if err := s.repo.CreateQuest(ctx, quest); err != nil {
+	if err := s.repo.CreateQuest(dbCtx, quest); err != nil {
 		return nil, fmt.Errorf("failed to create quest: %w", err)
 	}
 
@@ -152,6 +156,10 @@ func (s *QuestEngineService) GetQuest(ctx context.Context, questID openapi_types
 		slog.Info("GetQuest completed", "duration_ms", duration.Milliseconds())
 	}()
 
+	// Performance: Context timeout for external operations
+	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
 	uuid := uuid.UUID(questID)
 
 	// Check cache first
@@ -163,7 +171,7 @@ func (s *QuestEngineService) GetQuest(ctx context.Context, questID openapi_types
 	s.mu.RUnlock()
 
 	// Get from repository
-	quest, err := s.repo.GetQuest(ctx, uuid)
+	quest, err := s.repo.GetQuest(dbCtx, uuid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get quest: %w", err)
 	}
