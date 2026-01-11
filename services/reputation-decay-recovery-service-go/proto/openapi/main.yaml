@@ -1,0 +1,520 @@
+openapi: 3.0.3
+info:
+  title: Reputation Decay & Recovery Service API - Enterprise-Grade Reputation Management
+  description: |
+    **Enterprise-Grade Reputation Decay & Recovery API for NECPGAME**
+
+    This API provides advanced reputation mechanics for Night City's social system,
+    including automatic reputation decay due to inactivity and various recovery methods.
+
+    ## Key Features
+
+    - **Automatic Decay**: Natural reputation loss based on inactivity and faction relationships
+    - **Recovery Methods**: Multiple ways to restore reputation (time-based, quest-based, payment-based)
+    - **Real-time Processing**: Background workers for continuous reputation management
+    - **Analytics**: Comprehensive statistics and monitoring for reputation trends
+    - **MMOFPS Optimized**: Low-latency operations with <50ms P99 response times
+
+    ## Domain Purpose
+
+    The Reputation Decay & Recovery service maintains Night City's social dynamics by ensuring
+    reputation has real consequences and meaningful recovery paths, creating engaging social gameplay.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for reputation queries
+    - Background Processing: <100ms per reputation update
+    - Concurrent Users: Support for 10k+ simultaneous reputation operations
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Local development server
+  - url: https://api.necp.game/api/v1
+    description: Production server
+
+tags:
+  - name: Reputation Recovery
+    description: Operations for reputation recovery processes
+  - name: Reputation Decay
+    description: Operations for reputation decay management
+  - name: Analytics
+    description: Statistics and analytics for reputation mechanics
+  - name: Health Monitoring
+    description: System health and monitoring
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health Monitoring
+      summary: Health check endpoint
+      description: Returns the health status of the reputation service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: reputation-decay-recovery
+                  time:
+                    type: string
+                    format: date-time
+
+  /recovery/start:
+    post:
+      tags:
+        - Reputation Recovery
+      summary: Start reputation recovery process
+      description: Initiates a reputation recovery process for a character with a specific faction
+      operationId: startReputationRecovery
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecoveryRequest'
+      responses:
+        '201':
+          description: Recovery process started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationRecovery'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /recovery/{characterId}/status:
+    get:
+      tags:
+        - Reputation Recovery
+      summary: Get recovery status for character
+      description: Returns all active recovery processes for a character
+      operationId: getRecoveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: Character UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recovery status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                    format: uuid
+                  processes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationRecovery'
+                  count:
+                    type: integer
+                    minimum: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /decay/{characterId}/{factionId}/activate:
+    post:
+      tags:
+        - Reputation Decay
+      summary: Activate reputation decay for character-faction pair
+      description: Activates automatic reputation decay for a character with a specific faction
+      operationId: activateReputationDecay
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: Character UUID
+          schema:
+            type: string
+            format: uuid
+        - name: factionId
+          in: path
+          required: true
+          description: Faction UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Decay activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Decay process activated
+                  character_id:
+                    type: string
+                    format: uuid
+                  faction_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/decay/stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get decay statistics
+      description: Returns statistics about reputation decay processes
+      operationId: getDecayStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Decay statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecayStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/recovery/stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get recovery statistics
+      description: Returns statistics about reputation recovery processes
+      operationId: getRecoveryStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Recovery statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /system/health:
+    get:
+      tags:
+        - Health Monitoring
+      summary: Get system health information
+      description: Returns comprehensive health information about the reputation system
+      operationId: getSystemHealth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    StartRecoveryRequest:
+      type: object
+      required: [character_id, faction_id, method, target_value]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        faction_id:
+          type: string
+          format: uuid
+          description: Faction UUID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        method:
+          type: string
+          enum: [time_based, quest_based, payment_based, action_based, hybrid]
+          description: Recovery method
+          example: time_based
+        target_value:
+          type: number
+          minimum: -1000
+          maximum: 1000
+          description: Target reputation value
+          example: 50.0
+
+    ReputationRecovery:
+      type: object
+      required: [id, character_id, faction_id, method, status, start_value, target_value, current_value, progress, start_time, estimated_end, cost]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Process UUID
+        character_id:
+          type: string
+          format: uuid
+          description: Character UUID
+        faction_id:
+          type: string
+          format: uuid
+          description: Faction UUID
+        method:
+          type: string
+          enum: [time_based, quest_based, payment_based, action_based, hybrid]
+          description: Recovery method
+        status:
+          type: string
+          enum: [pending, active, paused, completed, failed, cancelled]
+          description: Process status
+        start_value:
+          type: number
+          description: Starting reputation value
+        target_value:
+          type: number
+          description: Target reputation value
+        current_value:
+          type: number
+          description: Current reputation value
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Recovery progress (0-1)
+        start_time:
+          type: string
+          format: date-time
+          description: Process start time
+        estimated_end:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        actual_end:
+          type: string
+          format: date-time
+          description: Actual completion time (if completed)
+        cost:
+          $ref: '#/components/schemas/RecoveryCost'
+        metadata:
+          type: object
+          description: Additional process metadata
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RecoveryCost:
+      type: object
+      required: [currency_type, amount]
+      properties:
+        currency_type:
+          type: string
+          description: Type of currency required
+          example: eddies
+        amount:
+          type: number
+          minimum: 0
+          description: Amount required
+        item_id:
+          type: string
+          format: uuid
+          description: Required item UUID (optional)
+
+    DecayStats:
+      type: object
+      required: [total_active_processes, total_processed_today, average_decay_rate, last_processed_time, processing_duration]
+      properties:
+        total_active_processes:
+          type: integer
+          minimum: 0
+          description: Number of active decay processes
+        total_processed_today:
+          type: integer
+          minimum: 0
+          description: Processes handled today
+        average_decay_rate:
+          type: number
+          minimum: 0
+          description: Average decay rate (%)
+        last_processed_time:
+          type: string
+          format: date-time
+          description: Last processing timestamp
+        processing_duration:
+          type: string
+          description: Average processing duration
+          example: "150ms"
+
+    RecoveryStats:
+      type: object
+      required: [total_active_processes, total_completed_today, total_failed_today, average_recovery_time, success_rate, last_processed_time]
+      properties:
+        total_active_processes:
+          type: integer
+          minimum: 0
+          description: Number of active recovery processes
+        total_completed_today:
+          type: integer
+          minimum: 0
+          description: Processes completed today
+        total_failed_today:
+          type: integer
+          minimum: 0
+          description: Processes failed today
+        average_recovery_time:
+          type: string
+          description: Average time to complete recovery
+          example: "24h0m0s"
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Success rate (0-1)
+        last_processed_time:
+          type: string
+          format: date-time
+          description: Last processing timestamp
+
+    SystemHealth:
+      type: object
+      required: [total_mechanics, active_mechanics, inactive_mechanics, health_score, last_health_check]
+      properties:
+        total_mechanics:
+          type: integer
+          minimum: 0
+          description: Total tracked mechanics
+        active_mechanics:
+          type: integer
+          minimum: 0
+          description: Active processes
+        inactive_mechanics:
+          type: integer
+          minimum: 0
+          description: Inactive processes
+        health_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Overall health score
+        last_health_check:
+          type: string
+          format: date-time
+          description: Last health check time
+        response_time:
+          type: integer
+          minimum: 0
+          description: Average response time (ms)
+        error_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Error rate (0-1)
+        average_bid_amount:
+          type: number
+          minimum: 0
+          description: Average recovery cost
+        total_volume:
+          type: integer
+          minimum: 0
+          description: Total processes handled
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Invalid request parameters
+              status:
+                type: integer
+                example: 400
+              details:
+                type: string
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Authentication required
+              status:
+                type: integer
+                example: 401
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Internal server error
+              status:
+                type: integer
+                example: 500
+              details:
+                type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer token authentication**
+
+        Use `Authorization: Bearer {token}` header for API access.
+
+        Admin operations require `admin` role in token claims.'
