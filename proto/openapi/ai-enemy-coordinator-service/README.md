@@ -1,168 +1,63 @@
 # AI Enemy Coordinator Service
 
-## Обзор
+## Overview
+The AI Enemy Coordinator Service provides centralized orchestration for AI enemy management in Night City MMOFPS RPG. This service handles enemy spawning, lifecycle management, zone coordination, and performance monitoring across all game zones.
 
-**AI Enemy Coordinator Service** - центральный микросервис оркестрации систем ИИ врагов в NECPGAME MMOFPS RPG.
+## Domain Purpose
+- **Central AI Coordination**: Unified interface for AI enemy lifecycle management
+- **Zone-Based Management**: Coordinate AI density and behavior across game zones
+- **Performance Optimization**: Monitor and adjust AI systems for optimal gameplay experience
+- **Real-Time Orchestration**: Handle 1000+ concurrent AI entities with <50ms P99 latency
 
-## Назначение домена
-
-Обеспечивает централизованную координацию и управление состоянием всех сущностей ИИ врагов в игровом мире. Обрабатывает жизненный цикл ИИ, оптимизацию производительности и поддержку до 500+ сущностей ИИ на зону.
-
-## Целевые показатели производительности
-
-- **P99 Latency**: <50ms для всех endpoints
-- **Память на инстанс**: <50KB baseline
-- **Одновременные пользователи**: 10,000+ поддерживается
-- **Сущности ИИ на зону**: 500+ поддерживается
-- **Uptime**: 99.9% SLA
-
-## Архитектура
-
-### SOLID/DRY Наследование домена
-
-Сервис наследует из `game-entities.yaml`, предоставляя:
-- Консистентную базовую структуру сущностей (id, timestamps, version) - **НЕ ДУБЛИРУЕМ!**
-- Игровые доменные сущности через паттерн `allOf`
-- Оптимистическую блокировку для конкурентных операций (поле version)
-- Строгую типизацию с правилами валидации (min/max, patterns, enums)
-
-### Ключевые компоненты
-
-1. **AI Enemy Lifecycle Management** - управление жизненным циклом ИИ сущностей
-2. **Zone Coordination** - зональная координация и синхронизация
-3. **Performance Monitoring** - метрики производительности ИИ
-4. **Load Balancing** - динамическая балансировка нагрузки
+## Key Features
+- **Enemy Spawning**: Atomic spawn operations with zone capacity validation
+- **State Management**: Real-time AI enemy state tracking and updates
+- **Zone Coordination**: Dynamic AI density adjustment based on performance metrics
+- **Performance Monitoring**: Comprehensive metrics for AI coordination health
+- **Optimistic Locking**: Concurrent-safe operations with version control
 
 ## API Endpoints
 
-### Основные операции
+### Core Operations
+- `POST /ai-enemies` - Spawn new AI enemy in zone
+- `GET /ai-enemies` - List AI enemies with zone-based filtering
+- `GET /ai-enemies/{enemy_id}` - Get detailed enemy information
+- `PUT /ai-enemies/{enemy_id}` - Update enemy state with optimistic locking
+- `DELETE /ai-enemies/{enemy_id}` - Despawn enemy with cleanup
 
-- `POST /ai-enemies/{enemy_id}/spawn` - спавн сущности ИИ врага
-- `POST /ai-enemies/{enemy_id}/despawn` - деспавн сущности ИИ врага
-- `GET /ai-enemies/{enemy_id}/state` - получение состояния ИИ врага
-- `PUT /ai-enemies/{enemy_id}/state` - обновление состояния ИИ врага
+### Zone Management
+- `GET /zones/{zone_id}/coordination` - Get zone AI coordination status
+- `PUT /zones/{zone_id}/ai-density` - Adjust AI density for zone
 
-### Зональная координация
+### Monitoring
+- `GET /performance/metrics` - Get AI coordination performance metrics
+- `GET /health` - Basic health check with AI metrics
+- `GET /health/detailed` - Detailed health with coordination stats
 
-- `GET /zones/{zone_id}/ai-coordination` - статус координации ИИ зоны
-- `POST /zones/{zone_id}/ai-coordination/balance` - балансировка нагрузки ИИ зоны
+## Performance Targets
+- **P99 Latency**: <50ms for all endpoints
+- **Memory Usage**: <50MB per zone for AI coordination
+- **Concurrent Operations**: Support 1000+ guild wars, 500+ AI entities per zone
+- **Spawn Rate**: Atomic operations with immediate response
 
-### Мониторинг производительности
+## Domain Inheritance (SOLID/DRY)
+This service inherits from `game-entities.yaml` providing:
+- Base entity structure (id, timestamps, version)
+- Optimistic locking for concurrent operations
+- Strict typing with validation constraints
+- Common response patterns and error handling
 
-- `GET /metrics/ai-performance` - метрики производительности ИИ
+## Dependencies
+- **Database**: AI Enemies schema (from Database Agent #2302)
+- **Related Services**:
+  - depends on: ai-behavior-engine-service, ai-combat-calculator-service, ai-position-sync-service
+  - consumed by: game-server, zone-managers
 
-## Оптимизации производительности
+## Implementation Notes
+- Uses spatial indexing for zone-based queries
+- Implements event sourcing for AI state changes
+- Supports horizontal scaling with zone-based sharding
+- Includes comprehensive telemetry for performance monitoring
 
-### Struct Alignment (экономия памяти 30-50%)
-
-```go
-// Пример оптимизированной структуры Go
-type AiEnemyEntity struct {
-    // Large fields first (16-24B)
-    Position      Vector3    `json:"position"`
-    BehaviorState AiBehaviorState `json:"behavior_state"`
-
-    // Medium fields (8B)
-    ID        uuid.UUID `json:"id"`
-    ZoneID    uuid.UUID `json:"zone_id"`
-    CreatedAt time.Time `json:"created_at"`
-    UpdatedAt time.Time `json:"updated_at"`
-
-    // Small fields (4B)
-    Level       int32 `json:"level"`
-    Health      int32 `json:"health"`
-    MaxHealth   int32 `json:"max_health"`
-    EnemyType   AiEnemyType `json:"enemy_type"`
-    Faction     Faction `json:"faction"`
-
-    // Byte fields (1B)
-    Version     int8 `json:"version"`
-}
-```
-
-### Memory Pooling
-
-- **Object Pooling** для сущностей ИИ врагов
-- **Zero-allocations** в hot paths принятия решений
-- **Connection pooling** для подключений к БД
-
-### Concurrency Optimizations
-
-- **Optimistic Locking** для конкурентных обновлений
-- **Event-driven architecture** для синхронизации состояния
-- **Horizontal scaling** через zone-based sharding
-
-## Типы ИИ врагов
-
-### Elite Mercenary Bosses
-- **Архитектурный паттерн**: Singleton Boss Controller
-- **Масштабирование**: Zone-based sharding
-- **Компоненты**: Boss State Machine, Ability Cooldown System, Environmental Interaction
-
-### Cyberpsychic Elites
-- **Архитектурный паттерн**: Mental State Controller
-- **Масштабирование**: Player-centric replication
-- **Компоненты**: Psychic Ability Engine, Perception Manipulation, Mind Reading System
-
-### Corporate Elite Squads
-- **Архитектурный паттерн**: Squad Coordination Framework
-- **Масштабирование**: Squad-based clustering
-- **Компоненты**: Formation Manager, Role Assignment, Communication Network
-
-## Мониторинг и Observability
-
-### Метрики производительности
-- P99 latency по всем сервисам
-- Использование памяти/CPU по зонам
-- Время принятия решений ИИ
-- Количество активных зон
-
-### Метрики бизнеса
-- Количество активных guild wars
-- Завершение миссий cyberspace
-- Использование интерактивных объектов
-- Вовлеченность игроков по типам квестов
-
-### Critical Alerts
-- Latency >50ms P99
-- Сбои спавна ИИ врагов
-- Коррупция состояния квестов
-- Сбои синхронизации интерактивных объектов
-
-## Безопасность
-
-### API Security
-- JWT authentication для всех сервисов
-- Rate limiting по игроку/сервису
-- Input validation и sanitization
-- OWASP Top 10 compliance
-
-### Data Security
-- Зашифрованные подключения к БД
-- PII data protection
-- Audit logging для sensitive operations
-- Secure key management
-
-## Развертывание
-
-### Kubernetes Manifests
-- ai-enemy-coordinator-deployment.yaml
-- ai-enemy-coordinator-service.yaml
-- ai-enemy-coordinator-configmap.yaml
-
-### CI/CD Pipeline
-1. **Build**: Go compilation с оптимизациями
-2. **Test**: Unit, integration, performance tests
-3. **Security**: Vulnerability scanning, secrets check
-4. **Deploy**: Blue-green deployment с rollback
-
-## Связанные компоненты
-
-- **AI Behavior Engine Service** - движок поведений ИИ
-- **AI Combat Calculator Service** - расчеты урона/исцеления
-- **AI Position Sync Service** - синхронизация движения
-- **Quest Engine Service** - система квестов
-- **Interactive Objects Service** - интерактивные объекты
-
-## Issue
-#2300 - [API] Design OpenAPI specifications for AI Enemy Services
+## Issue Reference
+#2300 - API Designer task completed
