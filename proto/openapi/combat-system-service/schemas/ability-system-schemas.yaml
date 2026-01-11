@@ -1,0 +1,269 @@
+# Ability System Schemas - Enterprise-grade Combat System API
+# Domain Separation: Combat abilities and special moves management
+# Issue: #2231
+
+components:
+  schemas:
+
+    # Ability Configurations Response
+    AbilityConfigurationsResponse:
+      type: object
+      required:
+        - abilities
+        - pagination
+      properties:
+        # Large fields first (16-24 bytes): array (24+), object (24+)
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityConfiguration'
+          description: List of ability configurations
+        pagination:
+          $ref: '../../common/schemas/pagination.yaml#/components/schemas/PaginationResponse'
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of abilities
+          example: 150
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+
+    # Ability configuration
+    AbilityConfiguration:
+      allOf:
+        - $ref: '../../common/schemas/game-entities.yaml#/components/schemas/AbilityEntity'
+        - type: object
+          properties:
+            # Large fields first (16-24 bytes): string (16+), object (24+)
+            balance_notes:
+              type: string
+              maxLength: 1000
+              description: Balance and gameplay notes
+              example: "High damage but long cooldown, suitable for burst damage"
+            stat_requirements:
+              type: object
+              additionalProperties:
+                type: integer
+                minimum: 0
+              description: Required stats to use ability
+              example: {"intelligence": 15, "agility": 10}
+            # Medium fields (8 bytes aligned): integer (grouped together)
+            power_level:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Ability power level for balancing
+              example: 7
+      description:
+        "BACKEND NOTE: SOLID inheritance from AbilityEntity. Fields
+        ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Update Ability Configuration Request
+    UpdateAbilityConfigurationRequest:
+      type: object
+      required:
+        - ability_id
+        - version
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        ability_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the ability to update
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        balance_notes:
+          type: string
+          maxLength: 1000
+          description: Updated balance and gameplay notes
+        stat_requirements:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Updated required stats to use ability
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Updated ability power level for balancing
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+          maximum: 300
+          description: Updated ability cooldown in seconds
+        mana_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Updated mana/energy cost
+        # Small fields (≤4 bytes): boolean, integer
+        is_enabled:
+          type: boolean
+          default: true
+          description: Whether the ability is enabled
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+          example: 3
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Optimistic locking prevents concurrent modification conflicts."
+
+    # Ability Balance Update
+    AbilityBalanceUpdate:
+      type: object
+      required:
+        - ability_id
+        - field
+        - new_value
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        ability_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the ability
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        field:
+          type: string
+          enum: [power_level, cooldown_seconds, mana_cost, damage_multiplier, stat_requirements]
+          description: Field being updated
+          example: "power_level"
+        # Medium fields (8 bytes aligned): various numeric types
+        new_value:
+          oneOf:
+            - type: integer
+              minimum: 0
+            - type: number
+              format: float
+              minimum: 0.0
+            - type: object
+              additionalProperties:
+                type: integer
+                minimum: 0
+          description: New value for the field
+          example: 8
+        # Small fields (≤4 bytes): string, integer
+        update_reason:
+          type: string
+          maxLength: 500
+          description: Reason for the balance change
+          example: "Nerf due to overpowered in ranked matches"
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+          example: 3
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+
+    # Ability Balance Bulk Update Request
+    AbilityBalanceBulkUpdateRequest:
+      type: object
+      required:
+        - updates
+      properties:
+        # Large fields first (16-24 bytes): array (24+)
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityBalanceUpdate'
+          minItems: 1
+          maxItems: 100
+          description: List of ability balance updates to apply
+        # Small fields (≤4 bytes): boolean, string
+        validate_only:
+          type: boolean
+          default: false
+          description: If true, validate updates without applying them
+          example: false
+        update_reason:
+          type: string
+          maxLength: 500
+          description: Reason for the bulk balance changes
+          example: "Season 2 balance pass"
+      description:
+        "BACKEND NOTE: Bulk operations reduce database round trips.
+        Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Ability Balance Bulk Update Response
+    AbilityBalanceBulkUpdateResponse:
+      type: object
+      required:
+        - success_count
+        - failure_count
+        - results
+      properties:
+        # Large fields first (16-24 bytes): array (24+)
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityBalanceUpdateResult'
+          description: Results for each update attempt
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        success_count:
+          type: integer
+          minimum: 0
+          description: Number of successful updates
+          example: 15
+        failure_count:
+          type: integer
+          minimum: 0
+          description: Number of failed updates
+          example: 2
+        # Small fields (≤4 bytes): boolean
+        all_successful:
+          type: boolean
+          description: Whether all updates were successful
+          example: false
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+
+    # Ability Balance Update Result
+    AbilityBalanceUpdateResult:
+      type: object
+      required:
+        - ability_id
+        - success
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        ability_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the ability
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        error_message:
+          type: string
+          description: Error message if update failed
+          example: "Version conflict: entity was modified by another request"
+        # Medium fields (8 bytes aligned): integer
+        old_power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Previous power level value
+          example: 7
+        new_power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New power level value
+          example: 8
+        # Small fields (≤4 bytes): boolean, string
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+        failure_reason:
+          type: string
+          enum: [version_conflict, invalid_value, permission_denied, not_found]
+          description: Reason for failure
+          example: "version_conflict"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."

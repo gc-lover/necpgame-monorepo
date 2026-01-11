@@ -1,0 +1,124 @@
+# Common Pagination Schemas - SOLID/DRY Foundation
+# These pagination schemas are inherited by all services
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Pagination parameters for requests
+    PaginationParams:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of items per page
+          example: 20
+        sort_by:
+          type: string
+          description: Field to sort by
+          example: "created_at"
+        sort_order:
+          type: string
+          enum: [asc, desc]
+          default: desc
+          description: Sort direction
+          example: "desc"
+        search:
+          type: string
+          description: Search query string
+          example: "combat system"
+        filters:
+          type: object
+          description: Additional filter parameters
+          example: {"status": "active", "type": "melee"}
+
+    # Pagination metadata in responses
+    PaginationResponse:
+      type: object
+      required:
+        - page
+        - limit
+        - total_count
+        - total_pages
+        - has_next
+        - has_previous
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+          example: 20
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of items across all pages
+          example: 150
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 8
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+        next_page_url:
+          type: string
+          format: uri
+          description: URL for the next page
+          example: "/api/v1/combat-system?page=2&limit=20"
+        previous_page_url:
+          type: string
+          format: uri
+          description: URL for the previous page
+          example: null
+
+    # Paginated response wrapper
+    PaginatedResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          description: Array of result items
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+        meta:
+          type: object
+          description: Additional metadata
+          properties:
+            query_time_ms:
+              type: integer
+              minimum: 0
+              description: Query execution time in milliseconds
+              example: 45
+            cache_hit:
+              type: boolean
+              description: Whether this response came from cache
+              example: true
+            total_filtered_count:
+              type: integer
+              minimum: 0
+              description: Total items after applying filters
+              example: 75

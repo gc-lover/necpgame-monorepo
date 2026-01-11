@@ -1,0 +1,186 @@
+# Balance Configuration Schemas - Enterprise-grade Combat System API
+# Domain Separation: Combat balance and configuration management
+# Issue: #2231
+
+components:
+  schemas:
+
+    # Combat Balance Config - main balance entity
+    CombatBalanceConfig:
+      allOf:
+        - $ref: '../../common/schemas/infrastructure-entities.yaml#/components/schemas/InfrastructureEntity'
+        - type: object
+          required:
+            - global_multipliers
+            - character_balance
+            - environment_balance
+          properties:
+            # Large fields first (16-24 bytes): object (24+)
+            global_multipliers:
+              $ref: '#/components/schemas/GlobalBalanceMultipliers'
+            character_balance:
+              $ref: '#/components/schemas/CharacterBalanceConfig'
+            environment_balance:
+              $ref: '#/components/schemas/EnvironmentBalanceConfig'
+            # Medium fields (8 bytes aligned): float64 (grouped together)
+            balance_version:
+              type: number
+              format: float
+              minimum: 1.0
+              maximum: 999.9
+              description: Balance configuration version
+              example: 1.0
+      description:
+        "BACKEND NOTE: SOLID inheritance from InfrastructureEntity. Fields
+        ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Update Combat Balance Config Request
+    UpdateCombatBalanceConfigRequest:
+      type: object
+      required:
+        - version
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        global_multipliers:
+          $ref: '#/components/schemas/GlobalBalanceMultipliers'
+        character_balance:
+          $ref: '#/components/schemas/CharacterBalanceConfig'
+        environment_balance:
+          $ref: '#/components/schemas/EnvironmentBalanceConfig'
+        # Medium fields (8 bytes aligned): float64, integer
+        balance_version:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 999.9
+          description: New balance configuration version
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+          example: 5
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Optimistic locking prevents concurrent modification conflicts."
+
+    # Global Balance Multipliers
+    GlobalBalanceMultipliers:
+      type: object
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        faction_multipliers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 3.0
+          description: Balance multipliers by faction
+          example: {"corporation": 1.0, "nomad": 1.1, "street_kid": 0.95}
+        region_multipliers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 3.0
+          description: Balance multipliers by region
+          example: {"america": 1.0, "europe": 1.05, "asia": 0.95}
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        global_damage_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Global damage modifier affecting all combat
+          example: 1.0
+        global_health_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Global health modifier affecting all entities
+          example: 1.0
+        global_speed_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Global speed modifier affecting all entities
+          example: 1.0
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+
+    # Character balance configuration
+    CharacterBalanceConfig:
+      type: object
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        class_balance_multipliers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0.5
+            maximum: 2.0
+          description: Balance multipliers by character class
+          example: {"solo": 1.0, "netrunner": 1.1, "techie": 0.95}
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        stat_balance_modifier:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 1.5
+          default: 1.0
+          description: Stat balance modifier
+          example: 1.0
+        ability_cooldown_modifier:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2.0
+          default: 1.0
+          description: Ability cooldown modifier
+          example: 1.0
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+
+    # Environment balance configuration
+    EnvironmentBalanceConfig:
+      type: object
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        terrain_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 2.0
+          description: Combat modifiers by terrain type
+          example: {"urban": 1.0, "industrial": 1.1, "wilderness": 0.9}
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        environmental_damage_modifier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.2
+          description: Environmental damage modifier
+          example: 0.2
+        cover_effectiveness_modifier:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 1.5
+          default: 1.0
+          description: Cover effectiveness modifier
+          example: 1.0
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."

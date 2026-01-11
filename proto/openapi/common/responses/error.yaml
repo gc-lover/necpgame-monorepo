@@ -1,165 +1,109 @@
 # Common Error Responses - SOLID/DRY Foundation
-# These responses are inherited by all services for consistent error handling
+# These error responses are inherited by all services
 # Issue: #openapi-refactor
 
 components:
-  schemas:
+  responses:
 
-    # Base Error Response
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          minimum: 100
-          maximum: 599
-          example: 400
-        message:
-          type: string
-          example: "Bad request"
-        details:
-          type: object
-          description: Additional error details
-
-    # Bad Request Error (400)
+    # 400 Bad Request - validation errors
     BadRequest:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 400
-            message:
-              example: "Invalid request parameters"
-            validation_errors:
-              type: array
-              items:
-                type: object
-                properties:
-                  field:
-                    type: string
-                    example: "email"
-                  message:
-                    type: string
-                    example: "Invalid email format"
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Unauthorized Error (401)
+    # 401 Unauthorized - authentication required
     Unauthorized:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 401
-            message:
-              example: "Authentication required"
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Forbidden Error (403)
+    # 403 Forbidden - insufficient permissions
     Forbidden:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 403
-            message:
-              example: "Access denied"
+      description: Forbidden - insufficient permissions for this operation
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Not Found Error (404)
+    # 404 Not Found - resource not found
     NotFound:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 404
-            message:
-              example: "Resource not found"
-            resource_type:
-              type: string
-              example: "user"
-            resource_id:
-              type: string
-              example: "123e4567-e89b-12d3-a456-426614174000"
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Conflict Error (409)
+    # 409 Conflict - version mismatch or concurrent modification
     Conflict:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 409
-            message:
-              example: "Resource conflict"
-            conflict_type:
-              type: string
-              enum: [duplicate, version_conflict, state_conflict]
-              example: "duplicate"
-            existing_resource:
-              type: object
-              description: Information about existing conflicting resource
+      description: Conflict - resource has been modified by another request
 
-    # Too Many Requests Error (429)
+    # 422 Unprocessable Entity - business logic validation
+    UnprocessableEntity:
+      description: Unprocessable entity - business logic validation failed
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 429 Too Many Requests - rate limiting
     TooManyRequests:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 429
-            message:
-              example: "Rate limit exceeded"
-            retry_after:
-              type: integer
-              description: Seconds to wait before retrying
-              example: 60
-            limit:
-              type: integer
-              description: Request limit per time window
-              example: 100
-            window_seconds:
-              type: integer
-              description: Time window in seconds
-              example: 60
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+            description: Maximum requests per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+            description: Time when rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Internal Server Error (500)
+    # 500 Internal Server Error - unexpected errors
     InternalServerError:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 500
-            message:
-              example: "Internal server error"
-            request_id:
-              type: string
-              description: Request ID for tracing
-              example: "req-123456789"
-            timestamp:
-              type: string
-              format: date-time
-              example: "2024-01-15T10:30:00Z"
+      description: Internal server error - unexpected system error occurred
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
 
-    # Service Unavailable Error (503)
+    # 503 Service Unavailable - maintenance or overload
     ServiceUnavailable:
-      allOf:
-        - $ref: '#/components/schemas/Error'
-        - type: object
-          properties:
-            code:
-              example: 503
-            message:
-              example: "Service temporarily unavailable"
-            estimated_recovery_time:
-              type: integer
-              description: Estimated recovery time in seconds
-              example: 300
-            maintenance_mode:
-              type: boolean
-              description: Whether service is in maintenance mode
-              example: false
+      description: Service unavailable - system is under maintenance or overloaded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 300
+            description: Seconds until service is available again
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

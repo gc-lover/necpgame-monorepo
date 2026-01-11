@@ -1,0 +1,74 @@
+# Common Security Schemes - SOLID/DRY Foundation
+# These security schemes are inherited by all services
+# Issue: #openapi-refactor
+
+components:
+  securitySchemes:
+
+    # Bearer Authentication - JWT tokens
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        **JWT Bearer Authentication**
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+        **Security Features:**
+        - RS256 signature verification
+        - Token blacklisting on logout
+        - Rate limiting per user
+        - Geographic restrictions (optional)
+
+    # API Key Authentication - for third-party integrations
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        **API Key Authentication**
+
+        Use API keys obtained from the admin panel.
+
+        **Header Format:** `X-API-Key: <api_key>`
+
+        **Rate Limits:** Configurable per key (default: 60 requests/minute)
+
+        **Security Features:**
+        - SHA-256 hashed storage
+        - IP whitelisting support
+        - Automatic key rotation
+        - Usage analytics
+
+    # OAuth2 Authentication - social login
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.necpgame.com/oauth/authorize
+          tokenUrl: https://auth.necpgame.com/oauth/token
+          scopes:
+            read:user: Read user profile information
+            write:user: Modify user profile information
+            read:character: Read character data
+            write:character: Modify character data
+            read:inventory: Read inventory data
+            write:inventory: Modify inventory data
+            admin: Full administrative access
+      description: |
+        **OAuth2 Authentication**
+
+        Supports authorization code flow for social login integration.
+
+        **Supported Providers:** Google, Discord, Steam, GitHub
+
+        **Security Features:**
+        - PKCE (Proof Key for Code Exchange)
+        - State parameter validation
+        - Automatic token refresh
+        - Account linking support

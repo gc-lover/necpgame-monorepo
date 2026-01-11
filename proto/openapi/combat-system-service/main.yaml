@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: Combat System Service API - Enterprise-Grade Combat Engine
+  description: "**Enterprise-grade API for Combat System Management**
+
+    Complete combat system management for NECPGAME with domain separation architecture.
+    Handles combat rules, balance configurations, damage calculations, and ability management.
+
+    ## Key Features
+
+    - **Domain Separation**: Schemas organized in separate files by responsibility
+    - **Backend Optimization**: Struct alignment hints for 30-50% memory savings
+    - **Enterprise-grade**: Full OpenAPI 3.0 compliance with ogen code generation
+    - **Performance Targets**: P99 <10ms, 1000+ concurrent calculations
+
+    ## Architecture
+
+    - **Combat Rules**: `schemas/combat-rules-schemas.yaml` - Core combat mechanics
+    - **Damage Calculations**: `schemas/damage-calculation-schemas.yaml` - Damage resolution
+    - **Balance Config**: `schemas/balance-config-schemas.yaml` - Balance parameters
+    - **Ability System**: `schemas/ability-system-schemas.yaml` - Combat abilities
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for configuration reads, <50ms for damage calculations
+    - Memory: <50KB per active configuration with struct alignment optimizations
+    - Concurrent Systems: 1000+ simultaneous combat calculations supported
+    - Data Consistency: ACID compliance with optimistic locking for updates
+
+    "
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+  - url: https://api.necpgame.com/v1/combat-system
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/combat-system
+    description: Staging server
+  - url: http://localhost:8080/api/v1/combat-system
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: Combat Rules
+    description: Combat system rule management and configuration
+  - name: Damage Calculations
+    description: Damage calculation engine and modifiers
+  - name: Balance Config
+    description: Combat balance parameter management
+  - name: Ability System
+    description: Combat ability configurations and balancing
+  - name: Health Monitoring
+    description: System health and performance monitoring
+
+paths:
+  /health:
+    get:
+      summary: Combat system service health check
+      description: "**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the combat system microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        "
+      operationId: combatSystemServiceHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        "200":
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"combat-system-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        "429":
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  /combat-system/rules:
+    get:
+      summary: Get combat system rules
+      description: "**Retrieve current combat system configuration**
+
+        Returns the active combat system rules including damage calculations,
+        combat mechanics, and balance parameters.
+
+        **BACKEND NOTE:** Cached configuration, <1ms response time.
+
+        "
+      operationId: combatSystemServiceGetRules
+      tags:
+        - Combat Rules
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Combat system rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+    put:
+      summary: Update combat system rules
+      description: "**Update combat system configuration**
+
+        Modifies combat system rules with optimistic locking for concurrency control.
+
+        **BACKEND NOTE:** Triggers cache invalidation and audit logging.
+
+        "
+      operationId: combatSystemServiceUpdateRules
+      tags:
+        - Combat Rules
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatSystemRulesRequest'
+      responses:
+        "200":
+          description: Combat system rules updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+        "400":
+          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        "409":
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+        "429":
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  /combat-system/damage/calculator:
+    post:
+      summary: Calculate combat damage
+      description: "**Advanced damage calculation engine**
+
+        Processes damage calculations with all modifiers, environmental factors,
+        and critical hit mechanics for accurate combat resolution.
+
+        **BACKEND NOTE:** <50ms P99 latency, handles 1000+ concurrent calculations.
+
+        "
+      operationId: combatSystemServiceCalculateDamage
+      tags:
+        - Damage Calculations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        "200":
+          description: Damage calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResponse'
+        "400":
+          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        "429":
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+        "500":
+          description: Internal calculation error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  /combat-system/balance:
+    get:
+      summary: Get combat balance configuration
+      description: "**Retrieve combat balance parameters**
+
+        Returns current balance configuration including global multipliers,
+        character balance, and environmental modifiers.
+
+        **BACKEND NOTE:** Cached configuration with <1ms response time.
+
+        "
+      operationId: combatSystemServiceGetBalance
+      tags:
+        - Balance Config
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Balance configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+    put:
+      summary: Update combat balance configuration
+      description: "**Update combat balance parameters**
+
+        Modifies balance configuration with optimistic locking for safe concurrent updates.
+
+        **BACKEND NOTE:** Triggers global cache invalidation and audit logging.
+
+        "
+      operationId: combatSystemServiceUpdateBalance
+      tags:
+        - Balance Config
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatBalanceConfigRequest'
+      responses:
+        "200":
+          description: Balance configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+        "400":
+          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        "409":
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+        "429":
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  /combat-system/abilities:
+    get:
+      summary: List ability configurations
+      description: "**Retrieve ability configurations with pagination**
+
+        Returns paginated list of combat ability configurations with balance notes
+        and stat requirements for game design and balancing.
+
+        **BACKEND NOTE:** Database query with pagination, <10ms P99 for first page.
+
+        "
+      operationId: combatSystemServiceListAbilities
+      tags:
+        - Ability System
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Items per page
+        - name: ability_type
+          in: query
+          schema:
+            type: string
+            enum: [offensive, defensive, utility, ultimate]
+          description: Filter by ability type
+      responses:
+        "200":
+          description: Ability configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityConfigurationsResponse'
+        "401":
+          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # Domain Separation - Combat Rules Schemas
+    CombatSystemRules:
+      $ref: './schemas/combat-rules-schemas.yaml#/components/schemas/CombatSystemRules'
+    UpdateCombatSystemRulesRequest:
+      $ref: './schemas/combat-rules-schemas.yaml#/components/schemas/UpdateCombatSystemRulesRequest'
+
+    # Domain Separation - Damage Calculation Schemas
+    DamageCalculationRequest:
+      $ref: './schemas/damage-calculation-schemas.yaml#/components/schemas/DamageCalculationRequest'
+    DamageCalculationResponse:
+      $ref: './schemas/damage-calculation-schemas.yaml#/components/schemas/DamageCalculationResponse'
+
+    # Domain Separation - Balance Config Schemas
+    CombatBalanceConfig:
+      $ref: './schemas/balance-config-schemas.yaml#/components/schemas/CombatBalanceConfig'
+    UpdateCombatBalanceConfigRequest:
+      $ref: './schemas/balance-config-schemas.yaml#/components/schemas/UpdateCombatBalanceConfigRequest'
+
+    # Domain Separation - Ability System Schemas
+    AbilityConfigurationsResponse:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/AbilityConfigurationsResponse'
+    AbilityConfiguration:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/AbilityConfiguration'
+    UpdateAbilityConfigurationRequest:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/UpdateAbilityConfigurationRequest'
+    AbilityBalanceUpdate:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/AbilityBalanceUpdate'
+    AbilityBalanceBulkUpdateRequest:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/AbilityBalanceBulkUpdateRequest'
+    AbilityBalanceBulkUpdateResponse:
+      $ref: './schemas/ability-system-schemas.yaml#/components/schemas/AbilityBalanceBulkUpdateResponse'
+
+  responses:
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+            description: Maximum requests per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+            description: Time when rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/components/securitySchemes/BearerAuth'
