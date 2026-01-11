@@ -1,0 +1,48 @@
+# Content Personalization - Player Recommendations Endpoint
+# Issue: #2025
+
+openapi: 3.0.3
+paths:
+  /personalization/player/{playerId}/recommendations:
+    get:
+      summary: Get personalized content recommendations
+      description: Retrieves personalized content recommendations based on player behavior and preferences
+      operationId: getPersonalizedRecommendations
+      tags:
+        - Content Personalization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - quests
+              - items
+              - challenges
+              - events
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Personalized recommendations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/PersonalizedRecommendations'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../common/responses/error.yaml#/components/responses/Unauthorized'

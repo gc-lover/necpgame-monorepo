@@ -1,0 +1,1104 @@
+components:
+  schemas:
+    PlayerSkillAssessment:
+      type: object
+      required:
+      - account_id
+      - skill_level
+      - confidence_score
+      - assessed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        assessed_at:
+          type: string
+          format: date-time
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        preferred_game_modes:
+          type: array
+          items:
+            type: string
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Player skill level (0-10 scale)
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in assessment (0-1)
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large
+        → small). Expected memory savings: 30-50%.'
+    PerformanceMetrics:
+      type: object
+      properties:
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        average_score:
+          type: number
+          format: float
+        average_kills_per_match:
+          type: number
+          format: float
+        average_deaths_per_match:
+          type: number
+          format: float
+        accuracy_percentage:
+          type: number
+          format: float
+        average_match_duration:
+          type: integer
+          description: Average match duration in seconds
+    UpdateSkillAssessmentRequest:
+      type: object
+      properties:
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_data:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+    DifficultyScaling:
+      type: object
+      required:
+      - session_id
+      - difficulty_multiplier
+      - applied_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        applied_at:
+          type: string
+          format: date-time
+        adjustment_reason:
+          type: string
+          enum:
+          - player_performance
+          - group_composition
+          - time_pressure
+          - streak_detection
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Difficulty multiplier (1.0 = normal)
+        enemy_spawn_rate:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_health_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+    UpdateDifficultyScalingRequest:
+      type: object
+      properties:
+        adjustment_reason:
+          type: string
+          enum:
+          - manual_override
+          - emergency_adjustment
+          - balance_testing
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+    NpcBehavior:
+      type: object
+      required:
+      - npc_id
+      - behavior_type
+      - aggressiveness
+      - intelligence
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        last_updated:
+          type: string
+          format: date-time
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    UpdateNpcBehaviorRequest:
+      type: object
+      properties:
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    GenerateNpcRequest:
+      type: object
+      required:
+      - npc_type
+      - location
+      properties:
+        npc_type:
+          type: string
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        faction:
+          type: string
+        custom_properties:
+          type: object
+          additionalProperties: true
+        location:
+          $ref: '#/components/schemas/Vector3'
+        difficulty_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          default: 1
+    GeneratedNpc:
+      type: object
+      required:
+      - id
+      - npc_type
+      - location
+      - behavior
+      - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_type:
+          type: string
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+          description: Seed used for procedural generation
+        behavior:
+          $ref: '#/components/schemas/NpcBehavior'
+        stats:
+          $ref: '#/components/schemas/NpcStats'
+        location:
+          $ref: '#/components/schemas/Vector3'
+    NpcStats:
+      type: object
+      properties:
+        speed:
+          type: number
+          format: float
+          minimum: 0
+        health:
+          type: integer
+          minimum: 1
+        damage:
+          type: integer
+          minimum: 0
+        defense:
+          type: integer
+          minimum: 0
+        level:
+          type: integer
+          minimum: 1
+    Vector3:
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    PersonalizedRecommendations:
+      type: object
+      required:
+      - account_id
+      - recommendations
+      - generated_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        generated_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentRecommendation'
+        personalization_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    ContentRecommendation:
+      type: object
+      required:
+      - content_id
+      - content_type
+      - relevance_score
+      properties:
+        content_id:
+          type: string
+          format: uuid
+        content_type:
+          type: string
+          enum:
+          - quest
+          - item
+          - challenge
+          - event
+          - location
+        reason:
+          type: string
+          enum:
+          - skill_level
+          - play_style
+          - preferences
+          - achievements
+          - social_circle
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    PlayerBehaviorAnalytics:
+      type: object
+      required:
+      - account_id
+      - time_range
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        time_range:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+        analyzed_at:
+          type: string
+          format: date-time
+        engagement_metrics:
+          $ref: '#/components/schemas/EngagementMetrics'
+        behavior_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorPattern'
+        risk_indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskIndicator'
+    BehaviorPattern:
+      type: object
+      required:
+      - pattern_type
+      - frequency
+      - confidence
+      properties:
+        pattern_type:
+          type: string
+          enum:
+          - aggressive_play
+          - defensive_play
+          - team_player
+          - lone_wolf
+          - achievement_hunter
+          - casual_player
+        detected_at:
+          type: string
+          format: date-time
+        frequency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    RiskIndicator:
+      type: object
+      required:
+      - indicator_type
+      - severity
+      - description
+      properties:
+        indicator_type:
+          type: string
+          enum:
+          - aimbot_suspicion
+          - speed_hack_suspicion
+          - wall_hack_suspicion
+          - unusual_win_rate
+          - pattern_exploitation
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    EngagementMetrics:
+      type: object
+      properties:
+        sessions_per_day:
+          type: number
+          format: float
+        retention_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        progression_rate:
+          type: number
+          format: float
+        average_session_duration:
+          type: integer
+          description: Average session duration in minutes
+    GenerateQuestRequest:
+      type: object
+      required:
+      - player_level
+      - quest_type
+      properties:
+        quest_type:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - collection
+          - escort
+          - puzzle
+          - assassination
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+          default: medium
+        theme:
+          type: string
+          enum:
+          - cyberpunk
+          - military
+          - supernatural
+          - mystery
+          - adventure
+        location:
+          type: string
+        custom_parameters:
+          type: object
+          additionalProperties: true
+        player_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        time_limit:
+          type: integer
+          description: Time limit in minutes
+    GeneratedQuest:
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - objectives
+      - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+        estimated_duration:
+          type: integer
+          description: Estimated completion time in minutes
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - interact
+          - survive
+          - escort
+        location:
+          type: string
+        target_count:
+          type: integer
+          minimum: 1
+    QuestReward:
+      type: object
+      required:
+      - reward_type
+      - amount
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+          - experience
+          - currency
+          - item
+          - reputation
+          - title
+        amount:
+          type: integer
+          minimum: 0
+    CombatStrategyPrediction:
+      type: object
+      required:
+      - account_id
+      - predicted_strategy
+      - confidence_score
+      - predicted_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        predicted_strategy:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - flanking
+          - camping
+          - rushdown
+          - kite
+        predicted_at:
+          type: string
+          format: date-time
+        strategy_explanation:
+          type: string
+        counter_strategies:
+          type: array
+          items:
+            type: string
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    SuspiciousBehaviorReport:
+      type: object
+      required:
+      - account_id
+      - behavior_type
+      - evidence
+      - severity
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - aimbot
+          - speed_hack
+          - wall_hack
+          - unusual_accuracy
+          - pattern_exploitation
+          - stat_manipulation
+        timestamp:
+          type: string
+          format: date-time
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    BehaviorAnalysisResult:
+      type: object
+      required:
+      - account_id
+      - analysis_id
+      - risk_level
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+    ModelTrainingRequest:
+      type: object
+      required:
+      - model_type
+      - training_data
+      properties:
+        model_type:
+          type: string
+          enum:
+          - difficulty_scaling
+          - behavior_prediction
+          - content_recommendation
+          - anti_cheat
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+        training_data:
+          type: object
+          properties:
+            dataset_size:
+              type: integer
+              minimum: 1000
+            data_sources:
+              type: array
+              items:
+                type: string
+            time_range:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+        hyperparameters:
+          type: object
+          additionalProperties: true
+    ModelTrainingJob:
+      type: object
+      required:
+      - job_id
+      - model_type
+      - status
+      - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - training
+          - validating
+          - completed
+          - failed
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+    ModelTrainingStatus:
+      type: object
+      required:
+      - model_id
+      - status
+      - last_updated
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - training
+          - deployed
+          - failed
+          - deprecated
+        last_updated:
+          type: string
+          format: date-time
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    CombatStrategyRequest:
+      type: object
+      required:
+        - player_id
+        - combat_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_state:
+          type: object
+          properties:
+            current_health:
+              type: number
+              format: float
+              minimum: 0
+            enemy_count:
+              type: integer
+              minimum: 0
+            ammo_remaining:
+              type: integer
+              minimum: 0
+            position:
+              $ref: '#/components/schemas/Vector3'
+        context:
+          type: object
+          additionalProperties: true
+    AntiCheatDetection:
+      type: object
+      required:
+        - account_id
+        - risk_level
+        - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+      description: 'BACKEND NOTE: Anti-cheat detection result with risk assessment. Fields ordered for optimal memory alignment.'
+    AIModel:
+      type: object
+      required:
+        - model_id
+        - model_type
+        - status
+        - created_at
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+          enum:
+            - difficulty_scaling
+            - behavior_prediction
+            - content_recommendation
+            - anti_cheat
+        status:
+          type: string
+          enum:
+            - training
+            - deployed
+            - failed
+            - deprecated
+        created_at:
+          type: string
+          format: date-time
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        version:
+          type: string
+        performance_metrics:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: AI model information with training status and performance metrics. Fields ordered for optimal memory alignment.'
+    ModelTrainingResponse:
+      type: object
+      required:
+        - job_id
+        - model_type
+        - status
+        - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - training
+            - validating
+            - completed
+            - failed
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+      description: 'BACKEND NOTE: Model training job response. Fields ordered for optimal memory alignment.'
+    CombatStrategyRequest:
+      type: object
+      required:
+        - player_id
+        - combat_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_state:
+          type: object
+          properties:
+            current_health:
+              type: number
+              format: float
+              minimum: 0
+            enemy_count:
+              type: integer
+              minimum: 0
+            ammo_remaining:
+              type: integer
+              minimum: 0
+            position:
+              $ref: '#/components/schemas/Vector3'
+        context:
+          type: object
+          additionalProperties: true
+    AntiCheatDetection:
+      type: object
+      required:
+        - account_id
+        - risk_level
+        - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+    AIModel:
+      type: object
+      required:
+        - model_id
+        - model_type
+        - status
+        - created_at
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+          enum:
+            - difficulty_scaling
+            - behavior_prediction
+            - content_recommendation
+            - anti_cheat
+        status:
+          type: string
+          enum:
+            - training
+            - deployed
+            - failed
+            - deprecated
+        created_at:
+          type: string
+          format: date-time
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        version:
+          type: string
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    ModelTrainingResponse:
+      type: object
+      required:
+        - job_id
+        - model_type
+        - status
+        - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - training
+            - validating
+            - completed
+            - failed
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100

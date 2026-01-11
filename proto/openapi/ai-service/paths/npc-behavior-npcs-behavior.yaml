@@ -1,0 +1,64 @@
+# NPC Behavior - NPC Configuration Endpoints
+# Issue: #2025
+
+openapi: 3.0.3
+paths:
+  /npc-behavior/npcs/{npcId}/behavior:
+    get:
+      summary: Get NPC behavior configuration
+      description: Retrieves current behavior configuration for a specific NPC
+      operationId: getNpcBehavior
+      tags:
+        - NPC Behavior
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: NPC behavior retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/NpcBehavior'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../common/responses/error.yaml#/components/responses/Unauthorized'
+    put:
+      summary: Update NPC behavior configuration
+      description: Updates behavior configuration for a specific NPC
+      operationId: updateNpcBehavior
+      tags:
+        - NPC Behavior
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npcId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/UpdateNpcBehaviorRequest'
+      responses:
+        '200':
+          description: NPC behavior updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/NpcBehavior'
+        '400':
+          $ref: '../../common/responses/error.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'

@@ -1,0 +1,64 @@
+# Adaptive Difficulty - Player Assessment Endpoints
+# Issue: #2025
+
+openapi: 3.0.3
+paths:
+  /adaptive-difficulty/player/{playerId}/assessment:
+    get:
+      summary: Get player skill assessment
+      description: Retrieves current player skill assessment for adaptive difficulty scaling
+      operationId: getPlayerSkillAssessment
+      tags:
+        - Adaptive Difficulty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Player skill assessment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/PlayerSkillAssessment'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../common/responses/error.yaml#/components/responses/Unauthorized'
+    post:
+      summary: Update player skill assessment
+      description: Updates player skill assessment based on recent performance data
+      operationId: updatePlayerSkillAssessment
+      tags:
+        - Adaptive Difficulty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/UpdateSkillAssessmentRequest'
+      responses:
+        '200':
+          description: Player skill assessment updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/PlayerSkillAssessment'
+        '400':
+          $ref: '../../common/responses/error.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'

@@ -1,0 +1,43 @@
+# Behavior Analytics - Player Behavior Analysis Endpoint
+# Issue: #2025
+
+openapi: 3.0.3
+paths:
+  /analytics/player/{playerId}/behavior:
+    get:
+      summary: Get player behavior analytics
+      description: Retrieves comprehensive behavior analytics for a player including patterns, engagement metrics, and insights
+      operationId: getPlayerBehaviorAnalytics
+      tags:
+        - Behavior Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - 1h
+              - 24h
+              - 7d
+              - 30d
+              - 90d
+            default: 7d
+      responses:
+        '200':
+          description: Player behavior analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/PlayerBehaviorAnalytics'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../common/responses/error.yaml#/components/responses/Unauthorized'

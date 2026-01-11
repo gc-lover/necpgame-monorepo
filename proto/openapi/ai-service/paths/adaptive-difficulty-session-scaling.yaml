@@ -1,0 +1,64 @@
+# Adaptive Difficulty - Session Scaling Endpoints
+# Issue: #2025
+
+openapi: 3.0.3
+paths:
+  /adaptive-difficulty/session/{sessionId}/scaling:
+    get:
+      summary: Get difficulty scaling for session
+      description: Retrieves current difficulty scaling configuration for a game session
+      operationId: getSessionDifficultyScaling
+      tags:
+        - Adaptive Difficulty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session difficulty scaling retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/DifficultyScaling'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../common/responses/error.yaml#/components/responses/Unauthorized'
+    put:
+      summary: Update difficulty scaling for session
+      description: Updates difficulty scaling configuration for a game session
+      operationId: updateSessionDifficultyScaling
+      tags:
+        - Adaptive Difficulty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/UpdateDifficultyScalingRequest'
+      responses:
+        '200':
+          description: Difficulty scaling updated
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ai-service-schemas.yaml#/components/schemas/DifficultyScaling'
+        '400':
+          $ref: '../../common/responses/error.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../common/responses/error.yaml#/components/responses/NotFound'
