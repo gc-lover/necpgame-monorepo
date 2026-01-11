@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /reputation/quest-triggers:
+    post:
+      summary: Evaluate quest triggers based on reputation changes
+      description: |
+        **Evaluate and return quest triggers based on reputation changes**
+
+        Processes reputation change events and determines which quests should be
+        triggered, unlocked, or modified based on player's current reputation state.
+
+        **Performance:** <45ms with reputation lookup and quest evaluation
+      operationId: evaluateQuestTriggers
+      tags:
+      - Reputation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/relationship-service-schemas.yaml#/components/schemas/EvaluateQuestTriggersRequest
+      responses:
+        '200':
+          description: Quest triggers evaluated successfully
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/relationship-service-schemas.yaml#/components/schemas/QuestTriggersResponse
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          description: Player reputation not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,135 @@
+# Redis Cluster Network Policy
+# Issue: #2001 - Network security for Redis cluster access
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-cluster-policy
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-cluster
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow access from application services
+  - from:
+    - podSelector:
+        matchLabels:
+          component: backend
+    - podSelector:
+        matchLabels:
+          component: api-gateway
+    - podSelector:
+        matchLabels:
+          app: redis-sentinel
+    ports:
+    - protocol: TCP
+      port: 6379  # Redis port
+    - protocol: TCP
+      port: 16379 # Cluster bus port
+  # Allow cluster internal communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app: redis-cluster
+    ports:
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 16379
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow cluster internal communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis-cluster
+    ports:
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 16379
+  # Allow communication with monitoring
+  - to:
+    - podSelector:
+        matchLabels:
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 3000
+
+---
+# Redis Sentinel Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-sentinel-policy
+  namespace: necpgame
+  labels:
+    app: redis-sentinel
+    component: cache-ha
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-sentinel
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow access from monitoring and management
+  - from:
+    - podSelector:
+        matchLabels:
+          component: monitoring
+    - podSelector:
+        matchLabels:
+          component: backend
+    ports:
+    - protocol: TCP
+      port: 26379
+  # Allow sentinel-to-sentinel communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app: redis-sentinel
+    ports:
+    - protocol: TCP
+      port: 26379
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow communication with Redis cluster
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis-cluster
+    ports:
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 16379
+  # Allow communication with monitoring
+  - to:
+    - podSelector:
+        matchLabels:
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 3000

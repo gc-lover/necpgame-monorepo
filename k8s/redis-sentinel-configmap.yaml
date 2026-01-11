@@ -1,0 +1,118 @@
+# Redis Sentinel Configuration
+# Issue: #2001 - Sentinel configuration for automatic failover and monitoring
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-sentinel-config
+  namespace: necpgame
+  labels:
+    app: redis-sentinel
+    component: cache-ha
+data:
+  sentinel.conf: |
+    # Redis Sentinel Configuration
+    # Monitors Redis cluster masters and handles automatic failover
+
+    # Port
+    port 26379
+
+    # Directory for sentinel data
+    dir /tmp
+
+    # Monitoring configuration for Redis cluster
+    # Sentinel monitors each master in the cluster
+    sentinel monitor redis-cluster-master redis-cluster-0.redis-cluster.necpgame.svc.cluster.local 6379 2
+    sentinel monitor redis-cluster-replica1 redis-cluster-1.redis-cluster.necpgame.svc.cluster.local 6379 2
+    sentinel monitor redis-cluster-replica2 redis-cluster-2.redis-cluster.necpgame.svc.cluster.local 6379 2
+
+    # Authentication
+    sentinel auth-pass redis-cluster-master ${REDIS_PASSWORD}
+    sentinel auth-pass redis-cluster-replica1 ${REDIS_PASSWORD}
+    sentinel auth-pass redis-cluster-replica2 ${REDIS_PASSWORD}
+
+    # Failover timeouts and conditions
+    sentinel down-after-milliseconds redis-cluster-master 5000
+    sentinel down-after-milliseconds redis-cluster-replica1 5000
+    sentinel down-after-milliseconds redis-cluster-replica2 5000
+
+    sentinel failover-timeout redis-cluster-master 60000
+    sentinel failover-timeout redis-cluster-replica1 60000
+    sentinel failover-timeout redis-cluster-replica2 60000
+
+    sentinel parallel-syncs redis-cluster-master 1
+    sentinel parallel-syncs redis-cluster-replica1 1
+    sentinel parallel-syncs redis-cluster-replica2 1
+
+    # Notification settings
+    sentinel notification-script redis-cluster-master /scripts/notify-failover.sh
+    sentinel client-reconfig-script redis-cluster-master /scripts/reconfig-clients.sh
+
+    # Logging
+    loglevel notice
+    logfile ""
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-sentinel-scripts
+  namespace: necpgame
+  labels:
+    app: redis-sentinel
+    component: cache-ha
+data:
+  notify-failover.sh: |
+    #!/bin/bash
+    # Notification script for Redis Sentinel failover events
+
+    MASTER_NAME=$1
+    OLD_IP=$2
+    OLD_PORT=$3
+    NEW_IP=$4
+    NEW_PORT=$5
+
+    echo "$(date): Redis failover detected for $MASTER_NAME"
+    echo "Old master: $OLD_IP:$OLD_PORT"
+    echo "New master: $NEW_IP:$NEW_PORT"
+
+    # Send notification to monitoring system
+    # curl -X POST -H "Content-Type: application/json" \
+    #   -d "{\"event\":\"redis_failover\",\"master\":\"$MASTER_NAME\",\"old_ip\":\"$OLD_IP\",\"new_ip\":\"$NEW_IP\"}" \
+    #   http://monitoring.necpgame.svc.cluster.local/notify
+
+  reconfig-clients.sh: |
+    #!/bin/bash
+    # Client reconfiguration script for Redis Sentinel
+
+    MASTER_NAME=$1
+    OLD_IP=$2
+    OLD_PORT=$3
+    NEW_IP=$4
+    NEW_PORT=$5
+
+    echo "$(date): Reconfiguring clients for Redis failover"
+    echo "Master $MASTER_NAME changed from $OLD_IP:$OLD_PORT to $NEW_IP:$NEW_PORT"
+
+    # Update service discovery or load balancer configuration
+    # kubectl patch service redis-cluster-master -p "{\"spec\":{\"selector\":{\"redis-role\":\"$MASTER_NAME\"}}}"
+
+  check-sentinel.sh: |
+    #!/bin/bash
+    # Check Redis Sentinel health
+
+    SENTINEL_COUNT=$(redis-cli -p 26379 sentinel masters | grep -c "name")
+    if [ "$SENTINEL_COUNT" -lt 3 ]; then
+      echo "ERROR: Only $SENTINEL_COUNT masters monitored, expected 3"
+      exit 1
+    fi
+
+    # Check if sentinels can communicate
+    SENTINEL_INFO=$(redis-cli -p 26379 sentinel master redis-cluster-master)
+    if [ $? -ne 0 ]; then
+      echo "ERROR: Cannot get master info from sentinel"
+      exit 1
+    fi
+
+    echo "SUCCESS: Redis Sentinel is healthy"
+    exit 0

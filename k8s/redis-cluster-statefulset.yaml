@@ -1,0 +1,164 @@
+# Redis Cluster StatefulSet
+# Issue: #2001 - Redis cluster - data sharding, replication, high availability
+# PERFORMANCE: Redis cluster with 6 nodes (3 masters + 3 replicas) for sharding and HA
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+    version: "7.2"
+spec:
+  serviceName: redis-cluster
+  replicas: 6
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        component: cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        - containerPort: 16379
+          name: cluster-bus
+        command:
+        - redis-server
+        - /etc/redis/redis.conf
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: redis-config
+          mountPath: /etc/redis
+        - name: redis-data
+          mountPath: /data
+        - name: redis-scripts
+          mountPath: /scripts
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+      initContainers:
+      - name: init-redis-cluster
+        image: redis:7.2-alpine
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Wait for all Redis pods to be ready
+          for i in $(seq 0 5); do
+            while ! redis-cli -h redis-cluster-$i.redis-cluster.necpgame.svc.cluster.local ping > /dev/null 2>&1; do
+              echo "Waiting for redis-cluster-$i..."
+              sleep 2
+            done
+            echo "redis-cluster-$i is ready"
+          done
+
+          # Create cluster if not exists
+          if [ ! -f /data/nodes.conf ]; then
+            echo "Creating Redis cluster..."
+            redis-cli --cluster create \
+              redis-cluster-0.redis-cluster.necpgame.svc.cluster.local:6379 \
+              redis-cluster-1.redis-cluster.necpgame.svc.cluster.local:6379 \
+              redis-cluster-2.redis-cluster.necpgame.svc.cluster.local:6379 \
+              redis-cluster-3.redis-cluster.necpgame.svc.cluster.local:6379 \
+              redis-cluster-4.redis-cluster.necpgame.svc.cluster.local:6379 \
+              redis-cluster-5.redis-cluster.necpgame.svc.cluster.local:6379 \
+              --cluster-replicas 1 \
+              --cluster-yes
+          fi
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-cluster-config
+      - name: redis-scripts
+        configMap:
+          name: redis-cluster-scripts
+  volumeClaimTemplates:
+  - metadata:
+    name: redis-data
+    labels:
+      app: redis-cluster
+  spec:
+    accessModes: ["ReadWriteOnce"]
+    storageClassName: fast-ssd
+    resources:
+      requests:
+        storage: 10Gi
+---
+# Redis Cluster Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    name: redis
+  - port: 16379
+    targetPort: 16379
+    name: cluster-bus
+  selector:
+    app: redis-cluster
+---
+# Headless Service for Redis Cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-headless
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+spec:
+  clusterIP: None
+  ports:
+  - port: 6379
+    targetPort: 6379
+    name: redis
+  - port: 16379
+    targetPort: 16379
+    name: cluster-bus
+  selector:
+    app: redis-cluster

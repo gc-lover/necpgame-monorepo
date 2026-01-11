@@ -1,0 +1,112 @@
+# Redis Cluster Configuration
+# Issue: #2001 - Redis cluster configuration with sharding and replication
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+data:
+  redis.conf: |
+    # Redis Cluster Configuration
+    # PERFORMANCE: Optimized for MMOFPS caching with 75k+ concurrent users
+
+    # Network
+    bind 0.0.0.0
+    port 6379
+    timeout 0
+    tcp-keepalive 300
+
+    # Cluster Configuration
+    cluster-enabled yes
+    cluster-config-file /data/nodes.conf
+    cluster-node-timeout 15000
+    cluster-migration-barrier 1
+    cluster-require-full-coverage no
+
+    # Memory Management
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 5
+
+    # Persistence (AOF for durability, RDB for snapshots)
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+
+    save 900 1
+    save 300 10
+    save 60 10000
+
+    # Security
+    protected-mode no
+    requirepass ${REDIS_PASSWORD}
+
+    # Performance Tuning
+    tcp-backlog 511
+    databases 16
+
+    # Logging
+    loglevel notice
+    logfile ""
+
+    # Disable dangerous commands in production
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+    rename-command SHUTDOWN SHUTDOWN_REDIS
+    rename-command CONFIG CONFIG_REDIS
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-scripts
+  namespace: necpgame
+  labels:
+    app: redis-cluster
+    component: cache
+data:
+  cluster-check.sh: |
+    #!/bin/bash
+    # Check Redis cluster health
+
+    CLUSTER_NODES=$(redis-cli -c cluster nodes | wc -l)
+    if [ "$CLUSTER_NODES" -lt 6 ]; then
+      echo "ERROR: Redis cluster has only $CLUSTER_NODES nodes, expected 6"
+      exit 1
+    fi
+
+    # Check if cluster is in OK state
+    CLUSTER_STATE=$(redis-cli -c cluster info | grep cluster_state | cut -d: -f2 | tr -d ' ')
+    if [ "$CLUSTER_STATE" != "ok" ]; then
+      echo "ERROR: Redis cluster state is $CLUSTER_STATE, expected ok"
+      exit 1
+    fi
+
+    echo "SUCCESS: Redis cluster is healthy with $CLUSTER_NODES nodes"
+    exit 0
+
+  cluster-rebalance.sh: |
+    #!/bin/bash
+    # Rebalance Redis cluster slots
+
+    echo "Rebalancing Redis cluster slots..."
+    redis-cli --cluster rebalance redis-cluster-0.redis-cluster.necpgame.svc.cluster.local:6379 --cluster-use-empty-masters
+    echo "Cluster rebalance completed"
+
+  cluster-failover.sh: |
+    #!/bin/bash
+    # Manual failover script
+
+    MASTER_NODE=$1
+    if [ -z "$MASTER_NODE" ]; then
+      echo "Usage: $0 <master-node-id>"
+      exit 1
+    fi
+
+    echo "Failing over master node $MASTER_NODE..."
+    redis-cli -c cluster failover $MASTER_NODE
+    echo "Failover completed"

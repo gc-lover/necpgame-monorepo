@@ -1,4 +1,106 @@
 openapi: 3.0.3
+info:
+  title: Relationship Service API - Enterprise-Grade Social Domain Service
+  description: '**Enterprise-Grade Relationship Management API for NECPGAME Social
+    Domain**
+
+    This API manages all character relationships in the cyberpunk MMOFPS RPG, including
+    friendship, romance, rivalry, mentorship, and business connections between players.
+
+    ## Key Features
+
+    - **Multi-Type Relationships**: Friendship, romance, rivalry, mentorship, business
+    - **Dynamic Relationship Levels**: Intensity tracking from -10 to +10 - **Reputation
+    System**: Community standing and trust metrics - **Social History**: Interaction
+    tracking and relationship evolution - **Performance Optimized**: MMOFPS-grade
+    performance with <50ms P99 latency
+
+    ## Domain Purpose
+
+    The Relationship domain handles all social connections between characters in Night
+    City. Players form alliances, rivalries, romantic connections, and mentorship
+    bonds that affect gameplay, reputation, and community standing.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for relationship operations, <30ms for reputation queries
+    - Memory: <60KB per active user relationship network - Concurrent users: 75,000+
+    simultaneous relationship updates - Database queries: <25ms average response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/relationship
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/relationship
+  description: Staging server
+- url: http://localhost:8080/api/v1/relationship
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Relationships
+  description: Core relationship management
+- name: Friendship
+  description: Friendship-specific operations
+- name: Reputation
+  description: Reputation and trust metrics
+- name: Social Network
+  description: Social graph and connections
+- name: Mentorship
+  description: Mentorship and guidance relationships
+- name: Romance
+  description: Romantic relationship management
+- name: Rivalry
+  description: Rivalry and conflict tracking
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /health/batch:
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
+  /relationships:
+    $ref: ./paths/relationships.yaml#/paths/~1relationships
+  /relationships/{relationshipId}:
+    $ref: ./paths/relationships-{relationshipId}.yaml#/paths/~1relationships~1{relationshipId}
+  /relationships/search:
+    $ref: ./paths/relationships-search.yaml#/paths/~1relationships~1search
+  /friendships:
+    $ref: ./paths/friendships.yaml#/paths/~1friendships
+  /friendships/{friendshipId}:
+    $ref: ./paths/friendships-{friendshipId}.yaml#/paths/~1friendships~1{friendshipId}
+  /reputation/{userId}:
+    $ref: ./paths/reputation-{userId}.yaml#/paths/~1reputation~1{userId}
+  /reputation/{userId}/history:
+    $ref: ./paths/reputation-{userId}-history.yaml#/paths/~1reputation~1{userId}~1history
+  /reputation/events:
+    $ref: ./paths/reputation-events.yaml#/paths/~1reputation~1events
+  /reputation/quest-triggers:
+    $ref: ./paths/reputation-quest-triggers.yaml#/paths/~1reputation~1quest-triggers
+  /social-network/{userId}/connections:
+    $ref: ./paths/social-network-{userId}-connections.yaml#/paths/~1social-network~1{userId}~1connections
+  /social-network/{userId}/influence:
+    $ref: ./paths/social-network-{userId}-influence.yaml#/paths/~1social-network~1{userId}~1influence
+  /mentorship:
+    $ref: ./paths/mentorship.yaml#/paths/~1mentorship
+  /mentorship/{mentorshipId}:
+    $ref: ./paths/mentorship-{mentorshipId}.yaml#/paths/~1mentorship~1{mentorshipId}
+  /mentorship/{mentorshipId}/progress:
+    $ref: ./paths/mentorship-{mentorshipId}-progress.yaml#/paths/~1mentorship~1{mentorshipId}~1progress
+  /romance:
+    $ref: ./paths/romance.yaml#/paths/~1romance
+  /romance/proposals:
+    $ref: ./paths/romance-proposals.yaml#/paths/~1romance~1proposals
+  /rivalries:
+    $ref: ./paths/rivalries.yaml#/paths/~1rivalries
 components:
   schemas:
     RelationshipResponse:
@@ -227,16 +329,26 @@ components:
           description: ID of the player whose reputation is being affected
         target_id:
           $ref: ../common/schemas/common.yaml#/UUID
-          description: ID of the target (player, faction, location) of the reputation event
+          description: ID of the target (player, faction, location) of the reputation
+            event
         category:
           type: string
-          enum: [combat, social, trading, leadership, craftsmanship, reliability, generosity, combat_skill]
+          enum:
+          - combat
+          - social
+          - trading
+          - leadership
+          - craftsmanship
+          - reliability
+          - generosity
+          - combat_skill
           description: Category of reputation being affected
         points:
           type: integer
           minimum: -1000
           maximum: 1000
-          description: Points to add/subtract from reputation (positive = gain, negative = loss)
+          description: Points to add/subtract from reputation (positive = gain, negative
+            = loss)
         description:
           type: string
           maxLength: 500
@@ -245,12 +357,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReputationConsequence'
-          description: Dynamic consequences that should be triggered by this reputation change
+          description: Dynamic consequences that should be triggered by this reputation
+            change
         quest_triggers:
           type: array
           items:
             $ref: '#/components/schemas/QuestTrigger'
-          description: Quest triggers that should be evaluated based on this reputation change
+          description: Quest triggers that should be evaluated based on this reputation
+            change
     SocialNetworkResponse:
       type: object
       properties:
@@ -653,8 +767,6 @@ components:
           type: boolean
           default: true
           description: Whether rivalry declaration is public
-
-    # Reputation Consequences Schema
     ReputationConsequence:
       type: object
       required:
@@ -663,21 +775,35 @@ components:
       properties:
         type:
           type: string
-          enum: [social_penalty, economic_penalty, quest_penalty, faction_penalty, access_restriction, relationship_damage]
+          enum:
+          - social_penalty
+          - economic_penalty
+          - quest_penalty
+          - faction_penalty
+          - access_restriction
+          - relationship_damage
           description: Type of consequence triggered by reputation change
         target:
           type: string
-          enum: [player, faction, location, global]
+          enum:
+          - player
+          - faction
+          - location
+          - global
           description: Scope of the consequence
         severity:
           type: string
-          enum: [minor, moderate, major, critical]
+          enum:
+          - minor
+          - moderate
+          - major
+          - critical
           default: moderate
           description: Severity level of the consequence
         duration_hours:
           type: integer
           minimum: 1
-          maximum: 8760  # 1 year
+          maximum: 8760
           description: How long the consequence lasts (in hours)
         description:
           type: string
@@ -698,8 +824,6 @@ components:
                 type: string
                 format: uuid
               description: IDs of entities affected by this consequence
-
-    # Quest Triggers Schema
     QuestTrigger:
       type: object
       required:
@@ -711,7 +835,11 @@ components:
           description: ID of the quest that may be triggered
         trigger_type:
           type: string
-          enum: [unlock, block, modify_requirements, change_rewards]
+          enum:
+          - unlock
+          - block
+          - modify_requirements
+          - change_rewards
           description: Type of trigger action
         condition:
           $ref: '#/components/schemas/ReputationCondition'
@@ -722,8 +850,6 @@ components:
           maximum: 100
           default: 50
           description: Priority of this trigger (higher = more important)
-
-    # Reputation Condition Schema
     ReputationCondition:
       type: object
       required:
@@ -733,11 +859,26 @@ components:
       properties:
         category:
           type: string
-          enum: [combat, social, trading, leadership, craftsmanship, reliability, generosity, combat_skill, overall]
+          enum:
+          - combat
+          - social
+          - trading
+          - leadership
+          - craftsmanship
+          - reliability
+          - generosity
+          - combat_skill
+          - overall
           description: Reputation category to check
         operator:
           type: string
-          enum: [greater_than, less_than, equal, greater_equal, less_equal, between]
+          enum:
+          - greater_than
+          - less_than
+          - equal
+          - greater_equal
+          - less_equal
+          - between
           description: Comparison operator
         threshold:
           type: integer
@@ -751,11 +892,12 @@ components:
           description: Upper threshold for 'between' operator
         target:
           type: string
-          enum: [player, faction, location]
+          enum:
+          - player
+          - faction
+          - location
           default: player
           description: Target of reputation check
-
-    # Quest Triggers Evaluation Schema
     EvaluateQuestTriggersRequest:
       type: object
       required:
@@ -776,7 +918,15 @@ components:
             properties:
               category:
                 type: string
-                enum: [combat, social, trading, leadership, craftsmanship, reliability, generosity, combat_skill]
+                enum:
+                - combat
+                - social
+                - trading
+                - leadership
+                - craftsmanship
+                - reliability
+                - generosity
+                - combat_skill
                 description: Reputation category that changed
               old_value:
                 type: integer
@@ -794,9 +944,8 @@ components:
         evaluate_all_active:
           type: boolean
           default: false
-          description: Whether to evaluate all active quest triggers, not just those affected by recent changes
-
-    # Quest Triggers Response Schema
+          description: Whether to evaluate all active quest triggers, not just those
+            affected by recent changes
     QuestTriggersResponse:
       type: object
       required:
@@ -820,7 +969,11 @@ components:
                 description: ID of the triggered quest
               trigger_type:
                 type: string
-                enum: [unlocked, blocked, requirements_modified, rewards_modified]
+                enum:
+                - unlocked
+                - blocked
+                - requirements_modified
+                - rewards_modified
                 description: Type of trigger that occurred
               reason:
                 type: string
@@ -848,3 +1001,31 @@ components:
         execution_time_ms:
           type: number
           description: Time taken to evaluate triggers (in milliseconds)
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    TooManyRequests:
+      $ref: ../common/responses/error.yaml#/TooManyRequests
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth
