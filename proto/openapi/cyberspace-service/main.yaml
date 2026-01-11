@@ -1,3544 +1,1457 @@
-openapi: 3.0.3
+openapi: "3.0.3"
+
 info:
-  title: Cyberspace Service API - Enterprise-Grade Digital Realm Navigation
-  description: '**Enterprise-Grade Cyberspace Navigation API for NECPGAME**
+  title: "Cyberspace Service API"
+  description: |
+    Enterprise-grade Cyberspace Navigation System для NECPGAME платформы.
 
-    This API manages digital realm navigation, risk assessment, and interactive elements
-    in the cyberspace, providing neural implant integration, connection management,
-    and survival mechanics with enterprise-grade security and performance.
+    ## 🎯 **Cyberspace Service Overview**
 
-    ## Key Features
+    Cyberspace Service предоставляет комплексную систему навигации в киберпространстве для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
 
-    - **Neural Navigation**: Real-time cyberspace exploration with implant integration
-    - **Risk Assessment**: Dynamic risk calculation for Blackwall interactions - **Connection
-    Management**: Strength and time management for digital presence - **Easter Eggs**:
-    Hidden content discovery with rewards and achievements - **Survival Mechanics**:
-    Stress management and consequence application - **Blackwall Breach**: Multi-layer
-    barrier penetration with mortality risks - **Performance Optimized**: MMOFPS-grade
-    performance with <50ms P99 latency
+    ### **Ключевые Возможности**
+    - **Node Management**: Управление узлами киберпространства
+    - **Navigation System**: Система навигации и маршрутизации
+    - **ICE Breaking**: Взлом систем защиты (Intrusion Countermeasures Electronics)
+    - **Data Extraction**: Извлечение данных из систем
 
-    ## Domain Purpose
+    ### **Типы Узлов**
+    - **Data Nodes**: Узлы данных и информации
+    - **Security Nodes**: Узлы безопасности и защиты
+    - **Corporate Nodes**: Корпоративные системы
+    - **Black Market Nodes**: Черный рынок данных
 
-    The Cyberspace domain handles all aspects of digital realm navigation in Night
-    City. Players explore networks, discover hidden content, assess risks, and manage
-    their digital survival through neural implants and cyberware.
+    ### **Расширенные Возможности**
+    - **Neural Interface**: Нейронные интерфейсы подключения
+    - **ICE Combat**: Боевые взаимодействия с ICE
+    - **Trace Detection**: Обнаружение отслеживания
+    - **Data Mining**: Добыча и анализ данных
 
-    ## Performance Targets
+    ## 📊 **Performance Targets**
+    - **P99 Latency**: <20ms для навигационных операций
+    - **Throughput**: 40,000+ cyberspace operations/second
+    - **Concurrent Players**: 500,000+ активных игроков
+    - **Memory per Player**: <3KB для состояния в киберпространстве
 
-    - P99 Latency: <50ms for navigation operations - Memory: <25KB per active cyberspace
-    session - Concurrent users: 50,000+ simultaneous explorations - Risk calculations:
-    <10ms response time
+    ## 🔐 **Security**
+    - JWT RS256 аутентификация
+    - Rate limiting для предотвращения спама
+    - Input validation и sanitization
+    - Audit logging всех операций
 
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@necpgame.com
+    name: "NECPGAME Platform Team"
+    email: "platform@necpgame.com"
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: "Proprietary"
+    url: "https://necpgame.com/license"
+
 servers:
-- url: https://api.necpgame.com/v1/cyberspace
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/cyberspace
-  description: Staging server
-- url: http://localhost:8080/api/v1/cyberspace
-  description: Local development server
+  - url: "https://cyberspace.necpgame.com/api/v1"
+    description: "Production Environment"
+  - url: "https://cyberspace-staging.necpgame.com/api/v1"
+    description: "Staging Environment"
+  - url: "http://localhost:8080/api/v1"
+    description: "Local Development"
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: Navigation
-  description: Core cyberspace navigation operations
-- name: Blackwall Breach
-  description: Blackwall barrier penetration
-- name: Risk Assessment
-  description: Dynamic risk calculation and management
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: "Cyberspace Navigation"
+    description: "Навигация в киберпространстве"
+  - name: "Node Management"
+    description: "Управление узлами"
+  - name: "ICE Systems"
+    description: "Системы ICE защиты"
+  - name: "Data Operations"
+    description: "Операции с данными"
+  - name: "Neural Interface"
+    description: "Нейронные интерфейсы"
+  - name: "Health"
+    description: "Мониторинг здоровья сервиса"
+
 paths:
   /health:
     get:
-      summary: Cyberspace domain health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the cyberspace domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: cyberspaceDomainHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      summary: "Проверка здоровья сервиса"
+      operationId: "healthCheck"
+      tags: ["Health"]
       responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"-api-v1-cyberspace-health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
+        "200":
+          description: "Сервис работает корректно"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '503':
-      description: Service is unhealthy
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: "Сервис недоступен"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
   /health/batch:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
-        single request
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: cyberspaceDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
+      summary: "Пакетная проверка здоровья"
+      operationId: "healthBatchCheck"
+      tags: ["Health"]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - cyberspace
-                    - hacking
-                    - neural-link
-                    - implant
-                    - cyberware
-                    maxItems: 10
-      description: List of services to check
+              $ref: "#/components/schemas/HealthBatchRequest"
       responses:
-        '200':
-          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-        '400':
-      description: Invalid request - malformed service list
+        "200":
+          description: "Результаты проверки здоровья"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-      description: Seconds to wait before retrying
+                $ref: "#/components/schemas/HealthBatchResponse"
+        "400":
+          description: "Некорректный запрос"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
   /health/ws:
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: cyberspaceDomainHealthWebSocket
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - cyberspace
-            - neural
-            - hacking
-            example:
-            - cyberspace
-            - neural
-      description: Services to monitor (optional, monitors all if not specified)
+      summary: "WebSocket проверка здоровья"
+      operationId: "healthWebSocketCheck"
+      tags: ["Health"]
       responses:
-        '200':
-      description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/cyberspace/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-      description: WebSocket connection established successfully
-      headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-      description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-      description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '401':
-      description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - WebSocket connection limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions:
+        "101":
+          description: "WebSocket соединение установлено"
+        "503":
+          description: "WebSocket недоступен"
+
+  /cyberspace/connect:
     post:
-      summary: Initialize cyberspace navigation session
-      description: '**Enterprise-grade navigation session initialization**
-
-        Creates secure cyberspace session with neural synchronization, risk assessment,
-        and connection management.
-
-        **Critical Operation:** Requires full neural link verification
-
-        '
-      operationId: initializeNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
+      summary: "Подключение к киберпространству"
+      operationId: "connectToCyberspace"
+      tags: ["Cyberspace Navigation"]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InitializeNavigationRequest'
+              $ref: "#/components/schemas/ConnectRequest"
       responses:
-        '201':
-          $ref: '#/components/responses/NavigationSessionCreated'
-        '400':
-      description: Invalid request - insufficient neural capacity or incompatible
-            implants
+        "200":
+          description: "Подключение установлено"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '403':
-      description: Forbidden - neural link not synchronized or blacklisted
+                $ref: "#/components/schemas/ConnectResponse"
+        "400":
+          description: "Невозможно подключиться"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - active navigation session already exists
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Превышен лимит подключений"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - navigation session rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cyberspace/disconnect:
+    post:
+      summary: "Отключение от киберпространства"
+      operationId: "disconnectFromCyberspace"
+      tags: ["Cyberspace Navigation"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisconnectRequest"
+      responses:
+        "200":
+          description: "Отключение выполнено"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
+                $ref: "#/components/schemas/DisconnectResponse"
+
+  /cyberspace/navigate:
+    post:
+      summary: "Навигация между узлами"
+      operationId: "navigateNodes"
+      tags: ["Cyberspace Navigation"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigateRequest"
+      responses:
+        "200":
+          description: "Навигация выполнена"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/NavigateResponse"
+        "400":
+          description: "Невозможно выполнить навигацию"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cyberspace/map:
     get:
-      summary: List navigation sessions with filtering
-      description: '**Enterprise-grade session listing**
-
-        Lists active and historical navigation sessions with comprehensive filtering
-        by status, risk level, duration, and neural health metrics.
-
-        **Performance:** <10ms P95, supports complex queries
-
-        '
-      operationId: listNavigationSessions
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
+      summary: "Получение карты киберпространства"
+      operationId: "getCyberspaceMap"
+      tags: ["Cyberspace Navigation"]
       parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Filter by player
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - INITIALIZING
-          - ACTIVE
-          - COMPLETED
-          - DISCONNECTED
-          - CRASHED
-      description: Filter by session status
-      - name: risk_level
-        in: query
-        schema:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-      description: Filter by risk assessment
-      - name: duration_min
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-      description: Minimum session duration in seconds
-      - name: neural_health_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-      description: Minimum neural health percentage
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      description: Number of items per page
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionListSuccess'
-        '400':
-      description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions/{session_id}:
-    get:
-      summary: Get navigation session details
-      description: '**Enterprise-grade session retrieval**
-
-        Returns comprehensive navigation session information including real-time status,
-        neural metrics, risk assessment, and connection quality.
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Navigation session unique identifier
-      - name: include_neural_data
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include detailed neural pathway data
-      - name: include_risk_assessment
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include real-time risk assessment
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-      description: Conditional request - return 304 if ETag matches
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionRetrieved'
-        '304':
-      description: Not modified - session has not changed
-      headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, private
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update navigation session
-      description: '**Enterprise-grade session update**
-
-        Updates session parameters, risk tolerance, or neural optimization settings.
-        Supports optimistic locking for concurrent modifications.
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Navigation session unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-      description: ETag for optimistic locking
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNavigationSessionRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionUpdated'
-        '400':
-      description: Invalid request - malformed data or session ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - version conflict or concurrent modification
-      headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Terminate navigation session
-      description: '**Emergency session termination**
-
-        Immediately terminates cyberspace session with emergency disconnection protocols.
-        Preserves neural integrity and generates incident report.
-
-        **High-Risk Operation:** May cause neural feedback
-
-        '
-      operationId: terminateNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Session to terminate
-      - name: emergency_disconnect
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Force emergency disconnect (may cause neural damage)
-      responses:
-        '200':
-      description: Session terminated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationSessionTerminationResult'
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot terminate - session in critical operation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions/{session_id}/navigate:
-    post:
-      summary: Execute navigation action
-      description: '**Core navigation operation**
-
-        Performs navigation action in cyberspace: movement, interaction, data access,
-        or barrier penetration with real-time risk monitoring.
-
-        **Critical Operation:** High neural load, risk of disconnection
-
-        '
-      operationId: executeNavigationAction
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Active navigation session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExecuteNavigationRequest'
-      responses:
-        '200':
-      description: Navigation action executed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationExecutionResult'
-        '400':
-      description: Invalid navigation action
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Action blocked - connection instability or barrier resistance
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many actions - neural overload protection
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach:
-    post:
-      summary: Initiate Blackwall breach attempt
-      description: '**Enterprise-grade Blackwall breach initiation**
-
-        Begins multi-layer barrier penetration with mortality risk assessment, ICE
-        detection, and emergency abort protocols.
-
-        **Extreme-Risk Operation:** 10-90% mortality based on breach depth
-
-        '
-      operationId: initiateBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InitiateBreachRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/BreachSessionCreated'
-        '400':
-      description: Invalid breach parameters or insufficient preparation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '403':
-      description: Forbidden - inadequate cyberware or neural capacity
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - active breach already in progress
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - breach attempt rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 3600
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary: List Blackwall breach attempts
-      description: '**Enterprise-grade breach history**
-
-        Lists historical breach attempts with success rates, mortality statistics,
-        and reward analysis for strategic planning.
-
-        '
-      operationId: listBlackwallBreaches
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Filter by player
-      - name: outcome
-        in: query
-        schema:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILURE
-          - ABORTED
-          - DEATH
-      description: Filter by breach outcome
-      - name: breach_depth
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5
-      description: Filter by breach depth (1-5 layers)
-      - name: mortality_risk_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-      description: Minimum mortality risk percentage
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      description: Number of items per page
-      responses:
-        '200':
-          $ref: '#/components/responses/BreachListSuccess'
-        '400':
-      description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach/{breach_id}:
-    get:
-      summary: Get Blackwall breach status
-      description: '**Real-time breach monitoring**
-
-        Returns current breach status, layer progress, ICE encounters, and survival
-        probability calculations.
-
-        '
-      operationId: getBlackwallBreachStatus
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt unique identifier
-      - name: include_ice_details
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include detailed ICE encounter information
-      - name: include_layer_analysis
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include layer-by-layer risk analysis
-      responses:
-        '200':
-          $ref: '#/components/responses/BreachStatusRetrieved'
-        '404':
-      description: Breach attempt not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Abort Blackwall breach
-      description: '**Emergency breach abort**
-
-        Immediately aborts breach attempt with maximum survival priority. May result
-        in partial rewards but guarantees safe extraction.
-
-        **Critical Safety Operation:** Overrides all other priorities
-
-        '
-      operationId: abortBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt to abort
-      - name: force_abort
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Force abort regardless of current layer (higher risk)
-      responses:
-        '200':
-      description: Breach aborted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BreachAbortResult'
-        '404':
-      description: Breach attempt not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot abort - breach in irreversible state
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach/{breach_id}/complete:
-    post:
-      summary: Complete Blackwall breach
-      description: '**Breach completion and extraction**
-
-        Finalizes successful breach, extracts all data and rewards, and safely returns
-        consciousness to physical body.
-
-        **Success Operation:** Grants access to hidden content and achievements
-
-        '
-      operationId: completeBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt to complete
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompleteBreachRequest'
-      responses:
-        '200':
-      description: Breach completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BreachCompleteResult'
-        '400':
-      description: Completion failed - data corruption or incomplete breach
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot complete - breach compromised or unstable
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /risk/assessment:
-    post:
-      summary: Perform risk assessment
-      description: '**Dynamic risk calculation engine**
-
-        Analyzes current cyberspace conditions, neural state, cyberware status, and
-        environmental factors to provide comprehensive risk assessment.
-
-        **Real-time Analysis:** Updates every navigation action
-
-        '
-      operationId: performRiskAssessment
-      tags:
-      - Risk Assessment
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RiskAssessmentRequest'
-      responses:
-        '200':
-      description: Risk assessment completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RiskAssessmentResult'
-        '400':
-      description: Invalid assessment parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /easter-eggs/discover:
-    post:
-      summary: Attempt easter egg discovery
-      description: '**Hidden content discovery**
-
-        Analyzes navigation patterns and neural responses to detect hidden easter
-        eggs and secret content in cyberspace.
-
-        **Intelligence Operation:** Requires pattern recognition
-
-        '
-      operationId: attemptEasterEggDiscovery
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Active navigation session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EasterEggDiscoveryRequest'
-      responses:
-        '200':
-      description: Discovery attempt completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasterEggDiscoveryResult'
-        '400':
-      description: Invalid discovery parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-components:
-  responses:
-    OK:
-      $ref: ../common-service/responses/success.yaml#/OK
-    Created:
-      $ref: ../common-service/responses/success.yaml#/Created
-    Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
-    BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    NavigationSessionCreated:
-      description: Navigation session initiated successfully
-      headers:
-        Location:
+        - name: "playerId"
+          in: "query"
+          required: true
           schema:
             type: string
-            example: /api/v1/cyberspace/navigation/sessions/550e8400-e29b-41d4-a716-446655440000
-      description: URL of the created session
-        ETag:
+            format: "uuid"
+        - name: "centerNodeId"
+          in: "query"
           schema:
             type: string
-            example: '"session-123-v1"'
-      description: Entity tag for caching and optimistic locking
-        Cache-Control:
+            format: "uuid"
+        - name: "radius"
+          in: "query"
           schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionRetrieved:
-      description: Navigation session retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v1"'
-      description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=30, private
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-      description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-      description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionUpdated:
-      description: Navigation session updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v2"'
-      description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-      description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-      description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionListSuccess:
-      description: Navigation sessions retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-      description: Total number of sessions matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-      description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionListResponse'
-    BreachSessionCreated:
-      description: Blackwall breach initiated successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/cyberspace/blackwall/breach/550e8400-e29b-41d4-a716-446655440000
-      description: URL of the created breach
-        ETag:
-          schema:
-            type: string
-            example: '"breach-123-v1"'
-      description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        Warning:
-          schema:
-            type: string
-            example: '199 - "Extreme Risk: 70-90% mortality probability"'
-      description: Risk warning header
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachSessionResponse'
-    BreachStatusRetrieved:
-      description: Breach status retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Mortality-Risk:
-          schema:
-            type: integer
-            example: 75
-      description: Current mortality risk percentage
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachStatusResponse'
-    BreachListSuccess:
-      description: Breach attempts retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 50
-      description: Total number of breach attempts matching criteria
-        X-Success-Rate:
-          schema:
-            type: number
-            example: 23.5
-      description: Average success rate percentage
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachListResponse'
-  schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-      description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: ../common-service/schemas/health.yaml#/HealthResponse
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    NavigationSessionEntity:
-      allOf:
-        - $ref: "#/components/schemas/AuditableEntity"
-        - type: object
-          required:
-          - player_id
-          - neural_link_id
-          - status
-          properties:        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-      description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/cyberspace/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-      description: WebSocket connection established successfully
-      headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-      description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-      description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '401':
-      description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - WebSocket connection limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions:
-    post:
-      summary: Initialize cyberspace navigation session
-      description: '**Enterprise-grade navigation session initialization**
-
-        Creates secure cyberspace session with neural synchronization, risk assessment,
-        and connection management.
-
-        **Critical Operation:** Requires full neural link verification
-
-        '
-      operationId: initializeNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InitializeNavigationRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/NavigationSessionCreated'
-        '400':
-      description: Invalid request - insufficient neural capacity or incompatible
-            implants
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '403':
-      description: Forbidden - neural link not synchronized or blacklisted
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - active navigation session already exists
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - navigation session rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary: List navigation sessions with filtering
-      description: '**Enterprise-grade session listing**
-
-        Lists active and historical navigation sessions with comprehensive filtering
-        by status, risk level, duration, and neural health metrics.
-
-        **Performance:** <10ms P95, supports complex queries
-
-        '
-      operationId: listNavigationSessions
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Filter by player
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - INITIALIZING
-          - ACTIVE
-          - COMPLETED
-          - DISCONNECTED
-          - CRASHED
-      description: Filter by session status
-      - name: risk_level
-        in: query
-        schema:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-      description: Filter by risk assessment
-      - name: duration_min
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-      description: Minimum session duration in seconds
-      - name: neural_health_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-      description: Minimum neural health percentage
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      description: Number of items per page
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionListSuccess'
-        '400':
-      description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions/{session_id}:
-    get:
-      summary: Get navigation session details
-      description: '**Enterprise-grade session retrieval**
-
-        Returns comprehensive navigation session information including real-time status,
-        neural metrics, risk assessment, and connection quality.
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Navigation session unique identifier
-      - name: include_neural_data
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include detailed neural pathway data
-      - name: include_risk_assessment
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include real-time risk assessment
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-      description: Conditional request - return 304 if ETag matches
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionRetrieved'
-        '304':
-      description: Not modified - session has not changed
-      headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, private
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update navigation session
-      description: '**Enterprise-grade session update**
-
-        Updates session parameters, risk tolerance, or neural optimization settings.
-        Supports optimistic locking for concurrent modifications.
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Navigation session unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-      description: ETag for optimistic locking
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNavigationSessionRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/NavigationSessionUpdated'
-        '400':
-      description: Invalid request - malformed data or session ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - version conflict or concurrent modification
-      headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Terminate navigation session
-      description: '**Emergency session termination**
-
-        Immediately terminates cyberspace session with emergency disconnection protocols.
-        Preserves neural integrity and generates incident report.
-
-        **High-Risk Operation:** May cause neural feedback
-
-        '
-      operationId: terminateNavigationSession
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Session to terminate
-      - name: emergency_disconnect
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Force emergency disconnect (may cause neural damage)
-      responses:
-        '200':
-      description: Session terminated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationSessionTerminationResult'
-        '404':
-      description: Navigation session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot terminate - session in critical operation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /navigation/sessions/{session_id}/navigate:
-    post:
-      summary: Execute navigation action
-      description: '**Core navigation operation**
-
-        Performs navigation action in cyberspace: movement, interaction, data access,
-        or barrier penetration with real-time risk monitoring.
-
-        **Critical Operation:** High neural load, risk of disconnection
-
-        '
-      operationId: executeNavigationAction
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Active navigation session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExecuteNavigationRequest'
-      responses:
-        '200':
-      description: Navigation action executed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NavigationExecutionResult'
-        '400':
-      description: Invalid navigation action
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Action blocked - connection instability or barrier resistance
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many actions - neural overload protection
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach:
-    post:
-      summary: Initiate Blackwall breach attempt
-      description: '**Enterprise-grade Blackwall breach initiation**
-
-        Begins multi-layer barrier penetration with mortality risk assessment, ICE
-        detection, and emergency abort protocols.
-
-        **Extreme-Risk Operation:** 10-90% mortality based on breach depth
-
-        '
-      operationId: initiateBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InitiateBreachRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/BreachSessionCreated'
-        '400':
-      description: Invalid breach parameters or insufficient preparation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '403':
-      description: Forbidden - inadequate cyberware or neural capacity
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Conflict - active breach already in progress
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - breach attempt rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 3600
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary: List Blackwall breach attempts
-      description: '**Enterprise-grade breach history**
-
-        Lists historical breach attempts with success rates, mortality statistics,
-        and reward analysis for strategic planning.
-
-        '
-      operationId: listBlackwallBreaches
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Filter by player
-      - name: outcome
-        in: query
-        schema:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILURE
-          - ABORTED
-          - DEATH
-      description: Filter by breach outcome
-      - name: breach_depth
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5
-      description: Filter by breach depth (1-5 layers)
-      - name: mortality_risk_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-      description: Minimum mortality risk percentage
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      description: Number of items per page
-      responses:
-        '200':
-          $ref: '#/components/responses/BreachListSuccess'
-        '400':
-      description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach/{breach_id}:
-    get:
-      summary: Get Blackwall breach status
-      description: '**Real-time breach monitoring**
-
-        Returns current breach status, layer progress, ICE encounters, and survival
-        probability calculations.
-
-        '
-      operationId: getBlackwallBreachStatus
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt unique identifier
-      - name: include_ice_details
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include detailed ICE encounter information
-      - name: include_layer_analysis
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Include layer-by-layer risk analysis
-      responses:
-        '200':
-          $ref: '#/components/responses/BreachStatusRetrieved'
-        '404':
-      description: Breach attempt not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-      description: Too many requests - rate limit exceeded
-      headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Abort Blackwall breach
-      description: '**Emergency breach abort**
-
-        Immediately aborts breach attempt with maximum survival priority. May result
-        in partial rewards but guarantees safe extraction.
-
-        **Critical Safety Operation:** Overrides all other priorities
-
-        '
-      operationId: abortBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt to abort
-      - name: force_abort
-        in: query
-        schema:
-          type: boolean
-          default: false
-      description: Force abort regardless of current layer (higher risk)
-      responses:
-        '200':
-      description: Breach aborted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BreachAbortResult'
-        '404':
-      description: Breach attempt not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot abort - breach in irreversible state
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /blackwall/breach/{breach_id}/complete:
-    post:
-      summary: Complete Blackwall breach
-      description: '**Breach completion and extraction**
-
-        Finalizes successful breach, extracts all data and rewards, and safely returns
-        consciousness to physical body.
-
-        **Success Operation:** Grants access to hidden content and achievements
-
-        '
-      operationId: completeBlackwallBreach
-      tags:
-      - Blackwall Breach
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: breach_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      description: Breach attempt to complete
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompleteBreachRequest'
-      responses:
-        '200':
-      description: Breach completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BreachCompleteResult'
-        '400':
-      description: Completion failed - data corruption or incomplete breach
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-      description: Cannot complete - breach compromised or unstable
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /risk/assessment:
-    post:
-      summary: Perform risk assessment
-      description: '**Dynamic risk calculation engine**
-
-        Analyzes current cyberspace conditions, neural state, cyberware status, and
-        environmental factors to provide comprehensive risk assessment.
-
-        **Real-time Analysis:** Updates every navigation action
-
-        '
-      operationId: performRiskAssessment
-      tags:
-      - Risk Assessment
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RiskAssessmentRequest'
-      responses:
-        '200':
-      description: Risk assessment completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RiskAssessmentResult'
-        '400':
-      description: Invalid assessment parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /easter-eggs/discover:
-    post:
-      summary: Attempt easter egg discovery
-      description: '**Hidden content discovery**
-
-        Analyzes navigation patterns and neural responses to detect hidden easter
-        eggs and secret content in cyberspace.
-
-        **Intelligence Operation:** Requires pattern recognition
-
-        '
-      operationId: attemptEasterEggDiscovery
-      tags:
-      - Navigation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      description: Active navigation session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EasterEggDiscoveryRequest'
-      responses:
-        '200':
-      description: Discovery attempt completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasterEggDiscoveryResult'
-        '400':
-      description: Invalid discovery parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-      description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-components:
-  responses:
-    OK:
-      $ref: ../common-service/responses/success.yaml#/OK
-    Created:
-      $ref: ../common-service/responses/success.yaml#/Created
-    Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
-    BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    NavigationSessionCreated:
-      description: Navigation session initiated successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/cyberspace/navigation/sessions/550e8400-e29b-41d4-a716-446655440000
-      description: URL of the created session
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v1"'
-      description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionRetrieved:
-      description: Navigation session retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v1"'
-      description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=30, private
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-      description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-      description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionUpdated:
-      description: Navigation session updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v2"'
-      description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-      description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-      description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionResponse'
-    NavigationSessionListSuccess:
-      description: Navigation sessions retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-      description: Total number of sessions matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-      description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NavigationSessionListResponse'
-    BreachSessionCreated:
-      description: Blackwall breach initiated successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/cyberspace/blackwall/breach/550e8400-e29b-41d4-a716-446655440000
-      description: URL of the created breach
-        ETag:
-          schema:
-            type: string
-            example: '"breach-123-v1"'
-      description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        Warning:
-          schema:
-            type: string
-            example: '199 - "Extreme Risk: 70-90% mortality probability"'
-      description: Risk warning header
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachSessionResponse'
-    BreachStatusRetrieved:
-      description: Breach status retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Mortality-Risk:
-          schema:
-            type: integer
-            example: 75
-      description: Current mortality risk percentage
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachStatusResponse'
-    BreachListSuccess:
-      description: Breach attempts retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 50
-      description: Total number of breach attempts matching criteria
-        X-Success-Rate:
-          schema:
-            type: number
-            example: 23.5
-      description: Average success rate percentage
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BreachListResponse'
-  schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-      description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: ../common-service/schemas/health.yaml#/HealthResponse
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    NavigationSessionEntity:
-      allOf:
-        - $ref: "#/components/schemas/AuditableEntity"
-        - type: object
-          required:
-          - player_id
-          - neural_link_id
-          - status
-          properties:
-          player_id:
-            type: string
-            format: uuid
-      description: Player navigating cyberspace
-          neural_link_id:
-            type: string
-            format: uuid
-      description: Neural link providing access
-          status:
-            type: string
-            enum:
-            - INITIALIZING
-            - ACTIVE
-            - COMPLETED
-            - DISCONNECTED
-            - CRASHED
-      description: Current session status
-            example: ACTIVE
-          connection_strength:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Neural connection strength percentage
-            example: 94.7
-          neural_health:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Neural pathway health
-            example: 87.3
-          stress_level:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Mental stress accumulation
-            example: 45.2
-          data_extracted:
-            type: integer
-      description: Amount of data extracted (in arbitrary units)
-            example: 1250
-          areas_explored:
-            type: array
-            items:
-              type: string
-              format: uuid
-      description: Network areas successfully explored
-            maxItems: 100
-          risk_encounters:
-            type: array
-            items:
-              $ref: '#/components/schemas/RiskEncounter'
-      description: Risk events encountered
-            maxItems: 50
-          easter_eggs_found:
-            type: array
-            items:
-              type: string
-              format: uuid
-      description: Hidden content discovered
-            maxItems: 20
-          session_duration:
-            type: integer
-      description: Session duration in seconds
-            example: 1847
-          start_location:
-            type: object
-      description: Initial connection coordinates
-            additionalProperties: true
-          current_location:
-            type: object
-      description: Current position in cyberspace
-            additionalProperties: true
-          navigation_path:
-            type: array
-            items:
-              type: object
-      description: Navigation waypoints
-              additionalProperties: true
-      description: Complete navigation path
-            maxItems: 1000
-      description: 'BACKEND NOTE: Inherits from AuditableEntity. Complex navigation
-        tracking with neural monitoring. Memory savings: 30-50% via struct alignment.'
-    RiskEncounter:
-      type: object
-      required:
-      - risk_type
-      - severity
-      - encountered_at
-      properties:
-        risk_type:
-          type: string
-          enum:
-          - CONNECTION_INSTABILITY
-          - NEURAL_FEEDBACK
-          - ICE_DETECTION
-          - DATA_CORRUPTION
-          - SYSTEM_OVERLOAD
-      description: Type of risk encountered
-          example: NEURAL_FEEDBACK
-        severity:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - CRITICAL
-      description: Risk severity level
-          example: MEDIUM
-        encountered_at:
-          type: string
-          format: date-time
-      description: When the risk was encountered
-        mitigated:
-          type: boolean
-      description: Whether the risk was successfully mitigated
-          example: true
-        consequences:
-          type: array
-          items:
-            type: string
-            maxLength: 200
-      description: Consequences if not mitigated
-          maxItems: 5
-          example:
-          - neural_damage
-          - connection_loss
-          - data_loss
-      description: 'BACKEND NOTE: Risk event tracking for navigation safety.'
-    BlackwallBreachEntity:
-      allOf:
-        - $ref: "#/components/schemas/AuditableEntity"
-        - type: object
-          required:
-            - player_id
-            - breach_depth
-            - status
-          properties:
-            player_id:
-            type: string
-            format: uuid
-      description: Player attempting breach
-            breach_depth:
             type: integer
             minimum: 1
-            maximum: 5
-      description: Number of Blackwall layers to penetrate (1-5)
-            example: 3
-            status:
-            type: string
-            enum:
-            - INITIATED
-            - BARRIER_INTERACTION
-            - PENETRATION
-            - DEEP_EXPEDITION
-            - COMPLETED
-            - FAILED
-            - ABORTED
-            - DEATH
-      description: Current breach status
-            example: PENETRATION
-            current_layer:
-            type: integer
-            minimum: 0
-            maximum: 5
-      description: Current layer being breached
-            example: 2
-            mortality_risk:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Current mortality probability
-            example: 65.4
-            ice_encounters:
-            type: array
-            items:
-              $ref: '#/components/schemas/ICEEncounter'
-      description: ICE entities encountered
-            maxItems: 20
-            layer_progress:
-            type: array
-            items:
-              type: object
-              required:
-              - layer_number
-              - progress_percentage
-              - breach_method
-              properties:
-                layer_number:
-                  type: integer
-                  minimum: 1
-                  maximum: 5
-                progress_percentage:
-                  type: number
-                  format: float
-                  minimum: 0
-                  maximum: 100
-                breach_method:
-                  type: string
-                  enum:
-                  - STEALTH
-                  - FORCE
-                  - EXPLOIT
-                  - BYPASS
-      description: Progress through each layer
-            maxItems: 5
-            preparation_level:
-            type: string
-            enum:
-            - NONE
-            - BASIC
-            - GOOD
-            - EXCELLENT
-      description: Pre-breach preparation quality
-            example: EXCELLENT
-            survival_probability:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Real-time survival calculation
-            example: 34.6
-            abort_warnings:
-            type: array
-            items:
-              type: string
-              maxLength: 300
-      description: Warnings recommending abort
-            maxItems: 10
-            breach_rewards:
-            type: object
-      description: Potential rewards for successful breach
-            additionalProperties: true
-      description: 'BACKEND NOTE: Extreme-risk operation tracking with mortality
-            calculations. Memory savings: 30-50% via struct alignment.'
-    ICEEncounter:
-      type: object
-      required:
-      - ice_type
-      - threat_level
-      - layer
-      properties:
-        ice_type:
-            type: string
-            enum:
-            - SCORCHER
-            - ASP
-            - CERBERUS
-            - ANGEL
-            - JESTER
-            - BARGHEST
-            - RAVEN
-      description: Type of ICE encountered
-            example: SCORCHER
-        threat_level:
-            type: string
-            enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - EXTREME
-      description: ICE threat assessment
-            example: HIGH
-        layer:
-            type: integer
-            minimum: 1
-            maximum: 5
-      description: Blackwall layer where encountered
-        damage_capability:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-      description: Potential damage percentage
-            example: 85.3
-        defense_status:
-            type: string
-            enum:
-            - ACTIVE
-            - WEAKENED
-            - BYPASSED
-            - DESTROYED
-      description: Current ICE defensive status
-            example: ACTIVE
-        countermeasures_applied:
-            type: array
-            items:
-            type: string
-            maxLength: 100
-      description: Applied countermeasures
-            maxItems: 10
-            example:
-            - decoy
-            - overload
-            - neural_shield
-      description: 'BACKEND NOTE: ICE threat assessment and countermeasure tracking.'
-    NavigationSessionResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/NavigationSessionEntity'
-        meta:
-          type: object
-          properties:
-            version:
-              type: string
-              example: '1.0'
-            processing_time_ms:
-              type: integer
-              example: 15
-      description: Standard response wrapper for single navigation session
-    NavigationSessionListResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/NavigationSessionEntity'
-        meta:
-          allOf:
-          - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-          - type: object
-            properties:
-              processing_time_ms:
-                type: integer
-                example: 45
-      description: Standard paginated response wrapper
-    BreachSessionResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/BlackwallBreachEntity'
-        meta:
-          type: object
-          properties:
-            version:
-              type: string
-              example: '1.0'
-            mortality_warning:
-              type: string
-              example: 'EXTREME RISK: 70-90% chance of death'
-            processing_time_ms:
-              type: integer
-              example: 25
-      description: High-risk response wrapper with mortality warnings
-    BreachStatusResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/BlackwallBreachEntity'
-        risk_assessment:
-          type: object
-          properties:
-            immediate_mortality_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            abort_recommended:
-              type: boolean
-            survival_strategies:
-              type: array
-              items:
-                type: string
-              maxItems: 5
-        meta:
-          type: object
-          properties:
-            processing_time_ms:
-              type: integer
-              example: 10
-      description: Real-time breach status with risk assessment
-    BreachListResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/BlackwallBreachEntity'
-        meta:
-          allOf:
-          - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-          - type: object
-            properties:
-              processing_time_ms:
-                type: integer
-                example: 35
-              overall_success_rate:
-                type: number
-                format: float
-                example: 23.5
-              average_mortality:
-                type: number
-                format: float
-                example: 67.8
-      description: Breach history with statistical analysis
-    InitializeNavigationRequest:
-      type: object
-      required:
-      - player_id
-      - neural_link_id
-      properties:
-        player_id:
-          type: string
-          format: uuid
-      description: Player entering cyberspace
-        neural_link_id:
-          type: string
-          format: uuid
-      description: Neural link for connection
-        entry_point:
-          type: string
-          enum:
-          - PUBLIC_TERMINAL
-          - PERSONAL_DECK
-          - CORPORATE_NETWORK
-          - UNDERGROUND_GRID
-          default: PUBLIC_TERMINAL
-      description: Cyberspace entry method
-        risk_tolerance:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-          default: MEDIUM
-      description: Acceptable risk level
-        session_duration_limit:
-          type: integer
-          minimum: 300
-          maximum: 7200
-          default: 3600
-      description: Maximum session duration in seconds
-        enable_easter_egg_detection:
-          type: boolean
-          default: true
-      description: Attempt to detect hidden content
-        stealth_mode:
-          type: boolean
-          default: true
-      description: Prioritize stealth over speed
-      description: Cyberspace navigation session initialization with safety parameters
-    UpdateNavigationSessionRequest:
-      allOf:
-      - $ref: ../common-service/operations/crud.yaml#/UpdateRequest
-      - type: object
-        properties:
-          risk_tolerance:
-            type: string
-            enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - EXTREME
-      description: Update acceptable risk level
-          stealth_mode:
-            type: boolean
-      description: Toggle stealth priority
-          extend_duration_limit:
-            type: integer
-            minimum: 300
-            maximum: 3600
-      description: Extend session duration limit by seconds
-          enable_emergency_protocols:
+            maximum: 10
+            default: 3
+        - name: "includeHidden"
+          in: "query"
+          schema:
             type: boolean
             default: false
-      description: Enable emergency disconnection protocols
-      description: Session update with optimistic locking (version field from UpdateRequest)
-    ExecuteNavigationRequest:
+      responses:
+        "200":
+          description: "Карта киберпространства"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberspaceMapResponse"
+
+  /nodes:
+    post:
+      summary: "Создание узла киберпространства"
+      operationId: "createNode"
+      tags: ["Node Management"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNodeRequest"
+      responses:
+        "201":
+          description: "Узел создан"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeResponse"
+        "400":
+          description: "Некорректные данные"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: "Получение списка узлов"
+      operationId: "getNodes"
+      tags: ["Node Management"]
+      parameters:
+        - name: "type"
+          in: "query"
+          schema:
+            type: string
+            enum: ["data", "security", "corporate", "black_market", "public"]
+        - name: "corporationId"
+          in: "query"
+          schema:
+            type: string
+            format: "uuid"
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: "offset"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: "Список узлов"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeListResponse"
+
+  /nodes/{nodeId}:
+    get:
+      summary: "Получение узла по ID"
+      operationId: "getNode"
+      tags: ["Node Management"]
+      parameters:
+        - name: "nodeId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Узел найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeResponse"
+        "404":
+          description: "Узел не найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: "Обновление узла"
+      operationId: "updateNode"
+      tags: ["Node Management"]
+      parameters:
+        - name: "nodeId"
+          in: "path"
+          required: true
+          schema:
+            type: "string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNodeRequest"
+      responses:
+        "200":
+          description: "Узел обновлен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeResponse"
+        "403":
+          description: "Недостаточно прав"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Узел не найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nodes/{nodeId}/data:
+    get:
+      summary: "Получение данных узла"
+      operationId: "getNodeData"
+      tags: ["Data Operations"]
+      parameters:
+        - name: "nodeId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+        - name: "playerId"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+        - name: "dataType"
+          in: "query"
+          schema:
+            type: string
+            enum: ["files", "logs", "credentials", "financial", "intel"]
+      responses:
+        "200":
+          description: "Данные узла"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeDataResponse"
+        "403":
+          description: "Доступ запрещен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Узел не найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nodes/{nodeId}/data/extract:
+    post:
+      summary: "Извлечение данных из узла"
+      operationId: "extractNodeData"
+      tags: ["Data Operations"]
+      parameters:
+        - name: "nodeId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtractDataRequest"
+      responses:
+        "200":
+          description: "Данные извлечены"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractDataResponse"
+        "400":
+          description: "Невозможно извлечь данные"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Лимит извлечений превышен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ice/break:
+    post:
+      summary: "Взлом ICE защиты"
+      operationId: "breakICE"
+      tags: ["ICE Systems"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BreakICERequest"
+      responses:
+        "200":
+          description: "ICE взломан"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreakICEResponse"
+        "400":
+          description: "Взлом не удался"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Система перегружена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ice/combat:
+    post:
+      summary: "Бой с ICE"
+      operationId: "combatICE"
+      tags: ["ICE Systems"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CombatICERequest"
+      responses:
+        "200":
+          description: "Результат боя"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombatICEResponse"
+        "400":
+          description: "Некорректные действия"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trace/detect:
+    get:
+      summary: "Проверка на отслеживание"
+      operationId: "detectTrace"
+      tags: ["Cyberspace Navigation"]
+      parameters:
+        - name: "playerId"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Статус отслеживания"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TraceDetectionResponse"
+
+  /neural-link/status:
+    get:
+      summary: "Статус нейронной связи"
+      operationId: "getNeuralLinkStatus"
+      tags: ["Neural Interface"]
+      parameters:
+        - name: "playerId"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Статус нейронной связи"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralLinkStatusResponse"
+
+  /neural-link/calibrate:
+    post:
+      summary: "Калибровка нейронной связи"
+      operationId: "calibrateNeuralLink"
+      tags: ["Neural Interface"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalibrateNeuralLinkRequest"
+      responses:
+        "200":
+          description: "Калибровка выполнена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalibrateNeuralLinkResponse"
+        "400":
+          description: "Ошибка калибровки"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/cyberspace-session:
+    get:
+      summary: "Сессия игрока в киберпространстве"
+      operationId: "getPlayerCyberspaceSession"
+      tags: ["Cyberspace Navigation"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Сессия игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerCyberspaceSessionResponse"
+
+  /analytics/cyberspace-activity:
+    get:
+      summary: "Аналитика активности в киберпространстве"
+      operationId: "getCyberspaceAnalytics"
+      tags: ["Data Operations"]
+      parameters:
+        - name: "period"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["hourly", "daily", "weekly", "monthly"]
+            default: "daily"
+        - name: "nodeType"
+          in: "query"
+          schema:
+            type: string
+            enum: ["data", "security", "corporate", "black_market"]
+      responses:
+        "200":
+          description: "Аналитика активности"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberspaceAnalyticsResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common inherited entities
+    CharacterEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity"
+    BaseEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/BaseEntity"
+    OptimisticLock:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock"
+    ErrorResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse"
+    HealthResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse"
+    HealthBatchRequest:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest"
+    HealthBatchResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse"
+
+    # Cyberspace specific schemas
+    CyberspaceNodeEntity:
+      type: object
+      description: "Сущность узла киберпространства"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - name
+            - type
+            - coordinates
+          properties:
+            name:
+              type: string
+              description: "Название узла"
+              maxLength: 100
+              example: "Arasaka Mainframe"
+            description:
+              type: string
+              description: "Описание узла"
+              maxLength: 500
+              example: "Главный сервер корпорации Arasaka"
+            type:
+              type: string
+              description: "Тип узла"
+              enum: ["data", "security", "corporate", "black_market", "public"]
+              example: "corporate"
+            coordinates:
+              type: object
+              description: "Координаты в киберпространстве"
+              required:
+                - x
+                - y
+                - z
+              properties:
+                x:
+                  type: number
+                  description: "X координата"
+                  example: 150.5
+                y:
+                  type: number
+                  description: "Y координата"
+                  example: -25.3
+                z:
+                  type: number
+                  description: "Z координата"
+                  example: 75.0
+            corporationId:
+              type: string
+              description: "ID корпорации-владельца"
+              format: uuid
+            securityLevel:
+              type: integer
+              description: "Уровень безопасности"
+              minimum: 1
+              maximum: 10
+              example: 8
+            iceSystems:
+              type: array
+              description: "Системы ICE защиты"
+              items:
+                $ref: "#/components/schemas/ICESystemEntity"
+            dataVaults:
+              type: array
+              description: "Хранилища данных"
+              items:
+                $ref: "#/components/schemas/DataVaultEntity"
+            connectedNodes:
+              type: array
+              description: "Подключенные узлы"
+              items:
+                type: string
+                format: uuid
+            isActive:
+              type: boolean
+              description: "Узел активен"
+              default: true
+            lastScanned:
+              type: string
+              description: "Последнее сканирование"
+              format: date-time
+            $ref: "#/components/schemas/OptimisticLock"
+
+    ICESystemEntity:
+      type: object
+      description: "Сущность ICE системы"
+      required:
+        - type
+        - strength
+        - integrity
+      properties:
+        type:
+          type: string
+          description: "Тип ICE"
+          enum: ["black_ice", "white_ice", "killer_ice", "spider_ice"]
+          example: "black_ice"
+        strength:
+          type: integer
+          description: "Сила ICE"
+          minimum: 1
+          maximum: 100
+          example: 75
+        integrity:
+          type: integer
+          description: "Целостность ICE"
+          minimum: 0
+          maximum: 100
+          example: 100
+        behavior:
+          type: string
+          description: "Поведение ICE"
+          enum: ["aggressive", "defensive", "stealth", "adaptive"]
+          example: "adaptive"
+        effects:
+          type: array
+          description: "Эффекты при активации"
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: ["damage", "trace", "shutdown", "alert"]
+              severity:
+                type: integer
+                minimum: 1
+                maximum: 10
+
+    DataVaultEntity:
+      type: object
+      description: "Сущность хранилища данных"
+      required:
+        - type
+        - size
+        - securityLevel
+      properties:
+        type:
+          type: string
+          description: "Тип данных"
+          enum: ["financial", "intel", "personal", "corporate", "black_market"]
+          example: "intel"
+        size:
+          type: integer
+          description: "Размер данных в байтах"
+          minimum: 1
+          example: 1048576
+        securityLevel:
+          type: integer
+          description: "Уровень защиты данных"
+          minimum: 1
+          maximum: 10
+          example: 7
+        value:
+          type: integer
+          description: "Ценность данных"
+          minimum: 0
+          example: 50000
+        encryptionLevel:
+          type: integer
+          description: "Уровень шифрования"
+          minimum: 1
+          maximum: 10
+          example: 8
+        accessLogs:
+          type: array
+          description: "Логи доступа"
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              accessTime:
+                type: string
+                format: date-time
+              action:
+                type: string
+                enum: ["read", "extract", "modify"]
+
+    PlayerCyberspaceSessionEntity:
+      type: object
+      description: "Сессия игрока в киберпространстве"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - playerId
+            - currentNodeId
+            - connectionTime
+          properties:
+            playerId:
+              type: string
+              description: "ID игрока"
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            currentNodeId:
+              type: string
+              description: "Текущий узел"
+              format: uuid
+              example: "456e7890-e89b-12d3-a456-426614174001"
+            connectionTime:
+              type: string
+              description: "Время подключения"
+              format: date-time
+            neuralLinkQuality:
+              type: number
+              description: "Качество нейронной связи"
+              minimum: 0
+              maximum: 1
+              example: 0.95
+            traceLevel:
+              type: number
+              description: "Уровень отслеживания"
+              minimum: 0
+              maximum: 1
+              example: 0.15
+            bandwidthUsed:
+              type: integer
+              description: "Использованная пропускная способность"
+              minimum: 0
+              example: 500
+            dataExtracted:
+              type: integer
+              description: "Извлеченные данные"
+              minimum: 0
+              example: 1024
+            iceEncounters:
+              type: integer
+              description: "Встречи с ICE"
+              minimum: 0
+              example: 3
+            isActive:
+              type: boolean
+              description: "Сессия активна"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    # Request/Response schemas
+    ConnectRequest:
       type: object
       required:
-      - action_type
+        - playerId
+        - neuralLinkId
       properties:
-        action_type:
-          type: string
-          enum:
-          - MOVE
-          - INTERACT
-          - SCAN
-          - EXTRACT
-          - HIDE
-          - ESCAPE
-      description: Type of navigation action
-        target_coordinates:
-          type: object
-      description: Target location in cyberspace
-          additionalProperties: true
-        interaction_parameters:
-          type: object
-      description: Parameters for interaction actions
-          additionalProperties: true
-        risk_override:
-          type: boolean
-          default: false
-      description: Override risk warnings for this action
-        priority:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - CRITICAL
-          default: MEDIUM
-      description: Action execution priority
-      description: Navigation action execution with risk management
-    InitiateBreachRequest:
-      type: object
-      required:
-      - player_id
-      - breach_depth
-      properties:
-        player_id:
+        playerId:
           type: string
           format: uuid
-      description: Player attempting breach
-        breach_depth:
+        neuralLinkId:
+          type: string
+          format: uuid
+        entryNodeId:
+          type: string
+          format: uuid
+          description: "Узел входа (опционально)"
+
+    ConnectResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        currentNode:
+          $ref: "#/components/schemas/CyberspaceNodeEntity"
+        neuralLinkQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+        connectionTime:
+          type: string
+          format: date-time
+
+    DisconnectRequest:
+      type: object
+      required:
+        - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+
+    DisconnectResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        sessionDuration:
+          type: integer
+          description: "Длительность сессии в секундах"
+        dataExtracted:
+          type: integer
+        experienceGained:
+          type: integer
+        disconnectTime:
+          type: string
+          format: date-time
+
+    NavigateRequest:
+      type: object
+      required:
+        - playerId
+        - targetNodeId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        targetNodeId:
+          type: string
+          format: uuid
+        useQuickhack:
+          type: boolean
+          description: "Использовать быстрый хак"
+          default: false
+
+    NavigateResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        fromNodeId:
+          type: string
+          format: uuid
+        toNodeId:
+          type: string
+          format: uuid
+        navigationTime:
+          type: integer
+          description: "Время навигации в миллисекундах"
+        bandwidthCost:
+          type: integer
+        success:
+          type: boolean
+        detected:
+          type: boolean
+          description: "Был ли обнаружен"
+
+    CyberspaceMapResponse:
+      type: object
+      properties:
+        centerNode:
+          $ref: "#/components/schemas/CyberspaceNodeEntity"
+        visibleNodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberspaceNodeEntity"
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              fromNodeId:
+                type: string
+                format: uuid
+              toNodeId:
+                type: string
+                format: uuid
+              connectionType:
+                type: string
+                enum: ["public", "private", "secure", "hidden"]
+              securityLevel:
+                type: integer
+                minimum: 1
+                maximum: 10
+        playerPosition:
+          type: object
+          properties:
+            nodeId:
+              type: string
+              format: uuid
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+
+    CreateNodeRequest:
+      type: object
+      required:
+        - name
+        - type
+        - coordinates
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum: ["data", "security", "corporate", "black_market", "public"]
+        coordinates:
+          type: object
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        corporationId:
+          type: string
+          format: uuid
+        securityLevel:
           type: integer
           minimum: 1
-          maximum: 5
-      description: Number of Blackwall layers to penetrate
-        preparation_level:
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: "#/components/schemas/ICESystemEntity"
+        dataVaults:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataVaultEntity"
+
+    UpdateNodeRequest:
+      type: object
+      properties:
+        name:
           type: string
-          enum:
-          - NONE
-          - BASIC
-          - GOOD
-          - EXCELLENT
-          default: BASIC
-      description: Pre-breach preparation quality
-        breach_strategy:
+          maxLength: 100
+        description:
           type: string
-          enum:
-          - STEALTH
-          - AGGRESSIVE
-          - BALANCED
-          default: BALANCED
-      description: Overall breach approach
-        emergency_abort_enabled:
+          maxLength: 500
+        type:
+          type: string
+          enum: ["data", "security", "corporate", "black_market", "public"]
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: "#/components/schemas/ICESystemEntity"
+        dataVaults:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataVaultEntity"
+        isActive:
           type: boolean
-          default: true
-      description: Allow automatic abort on critical risk
-        accept_mortality_risk:
+
+    NodeResponse:
+      type: object
+      properties:
+        node:
+          $ref: "#/components/schemas/CyberspaceNodeEntity"
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    NodeListResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberspaceNodeEntity"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+
+    NodeDataResponse:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          format: uuid
+        data:
+          type: object
+          additionalProperties: true
+          description: "Данные узла"
+        accessLevel:
+          type: string
+          enum: ["public", "restricted", "classified", "black_ice"]
+        lastAccessed:
+          type: string
+          format: date-time
+
+    ExtractDataRequest:
+      type: object
+      required:
+        - playerId
+        - dataType
+        - extractionMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        dataType:
+          type: string
+          enum: ["files", "logs", "credentials", "financial", "intel"]
+        extractionMethod:
+          type: string
+          enum: ["quick", "stealth", "brute_force", "social_engineering"]
+        targetSize:
+          type: integer
+          description: "Целевой размер извлечения"
+          minimum: 1
+          maximum: 10485760  # 10MB
+
+    ExtractDataResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        extractedData:
+          type: object
+          additionalProperties: true
+        dataSize:
+          type: integer
+          minimum: 0
+        extractionTime:
+          type: integer
+          description: "Время извлечения в миллисекундах"
+        detectionRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+        success:
           type: boolean
-          default: false
-      description: Explicit acceptance of mortality risk
-        reward_prioritization:
+
+    BreakICERequest:
+      type: object
+      required:
+        - playerId
+        - nodeId
+        - iceType
+        - hackingMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        iceType:
+          type: string
+          enum: ["black_ice", "white_ice", "killer_ice", "spider_ice"]
+        hackingMethod:
+          type: string
+          enum: ["bypass", "overload", "exploit", "brute_force"]
+        tools:
+          type: array
+          description: "Используемые инструменты"
+          items:
+            type: string
+
+    BreakICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        damageDealt:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        timeElapsed:
+          type: integer
+          description: "Время в миллисекундах"
+
+    CombatICERequest:
+      type: object
+      required:
+        - playerId
+        - iceId
+        - action
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: ["attack", "defend", "evade", "counter"]
+        power:
+          type: integer
+          description: "Сила действия"
+          minimum: 1
+          maximum: 100
+
+    CombatICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        playerHealth:
+          type: integer
+          minimum: 0
+          maximum: 100
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        actionResult:
+          type: string
+          enum: ["hit", "miss", "critical", "evaded"]
+        damage:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        combatEnded:
+          type: boolean
+
+    TraceDetectionResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        traceLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        detectionRisk:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+        estimatedTime:
+          type: integer
+          description: "Оценочное время до обнаружения в секундах"
+        countermeasures:
           type: array
           items:
             type: string
-            enum:
-            - DATA
-            - UNIQUE_ITEMS
-            - ACHIEVEMENTS
-            - REPUTATION
-      description: Priority order for potential rewards
-          default:
-          - DATA
-          - UNIQUE_ITEMS
-          - ACHIEVEMENTS
-          - REPUTATION
-      description: Blackwall breach initiation with extreme risk parameters
-    CompleteBreachRequest:
+            enum: ["disconnect", "use_proxy", "clean_logs", "deploy_decoys"]
+
+    NeuralLinkStatusResponse:
       type: object
       properties:
-        extract_maximum_data:
-          type: boolean
-          default: true
-      description: Attempt to extract all accessible data
-        preserve_connection:
-          type: boolean
-          default: false
-      description: Maintain connection for future access (risky)
-        generate_comprehensive_report:
-          type: boolean
-          default: true
-      description: Create detailed breach report
-        claim_achievements:
-          type: boolean
-          default: true
-      description: Automatically claim breach achievements
-      description: Breach completion with data extraction and reward claiming
-    RiskAssessmentRequest:
-      type: object
-      required:
-      - player_id
-      properties:
-        player_id:
+        playerId:
           type: string
           format: uuid
-      description: Player to assess risks for
-        current_location:
-          type: object
-      description: Current cyberspace coordinates
-          additionalProperties: true
-        planned_action:
-          type: string
-          enum:
-          - NAVIGATE
-          - INTERACT
-          - BREACH
-          - EXTRACT
-          - ESCAPE
-      description: Intended action for risk calculation
-        time_window:
-          type: integer
-          minimum: 60
-          maximum: 3600
-          default: 300
-      description: Time window for risk assessment (seconds)
-        include_historical_data:
-          type: boolean
-          default: true
-      description: Include historical risk patterns
-      description: Comprehensive risk assessment for cyberspace operations
-    EasterEggDiscoveryRequest:
-      type: object
-      properties:
-        discovery_method:
-          type: string
-          enum:
-          - PATTERN_ANALYSIS
-          - NEURAL_RESPONSE
-          - RANDOM_SCAN
-          - COORDINATE_HINT
-          default: PATTERN_ANALYSIS
-      description: Method to use for discovery
-        search_radius:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 10
-      description: Search radius in cyberspace units
-        neural_sensitivity:
+        quality:
           type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
-          default: 0.7
-      description: Neural pattern detection sensitivity
-        time_limit:
-          type: integer
-          minimum: 30
-          maximum: 300
-          default: 120
-      description: Maximum time to spend searching (seconds)
-      description: Easter egg discovery with configurable detection parameters
-    NavigationExecutionResult:
-      type: object
-      required:
-      - action_id
-      - status
-      - execution_time_ms
-      properties:
-        action_id:
-          type: string
-          format: uuid
-      description: Unique action identifier
-        status:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - BLOCKED
-          - INTERRUPTED
-      description: Action execution outcome
-        execution_time_ms:
-          type: integer
-      description: Time taken to execute action
-        new_location:
-          type: object
-      description: Updated cyberspace coordinates
-          additionalProperties: true
-        data_discovered:
-          type: object
-      description: Data extracted during action
-          additionalProperties: true
-        risk_events:
-          type: array
-          items:
-            $ref: '#/components/schemas/RiskEncounter'
-      description: New risk events triggered
-        neural_impact:
+          minimum: 0
+          maximum: 1
+        stability:
           type: number
-          format: float
-      description: Neural processing impact
-        connection_stability_change:
-          type: number
-          format: float
-      description: Change in connection stability
+          minimum: 0
+          maximum: 1
+        bandwidth:
+          type: integer
+          minimum: 0
+        latency:
+          type: integer
+          description: "Задержка в миллисекундах"
+        lastCalibration:
+          type: string
+          format: date-time
         warnings:
           type: array
           items:
             type: string
-      description: Action execution warnings
-      description: Navigation action outcome with position and risk updates
-    NavigationSessionTerminationResult:
+            enum: ["low_quality", "instability", "overheating", "interference"]
+
+    CalibrateNeuralLinkRequest:
       type: object
       required:
-      - session_id
-      - termination_reason
-      - data_preserved
+        - playerId
       properties:
-        session_id:
+        playerId:
           type: string
           format: uuid
-      description: Terminated session ID
-        termination_reason:
+        calibrationType:
           type: string
-          enum:
-          - USER_REQUEST
-          - CONNECTION_LOSS
-          - NEURAL_OVERLOAD
-          - SYSTEM_CRASH
-          - EMERGENCY_PROTOCOL
-      description: Reason for termination
-        data_preserved:
+          enum: ["quick", "full", "emergency"]
+          default: "quick"
+
+    CalibrateNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        qualityBefore:
           type: number
-          format: float
           minimum: 0
-          maximum: 100
-      description: Percentage of session data preserved
-        final_statistics:
-          type: object
-          properties:
-            total_duration:
-              type: integer
-            areas_explored:
-              type: integer
-            data_extracted:
-              type: integer
-            easter_eggs_found:
-              type: integer
-            risk_events_encountered:
-              type: integer
-      description: Session summary statistics
-        neural_recovery_time:
+          maximum: 1
+        qualityAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrationTime:
           type: integer
-      description: Required neural recovery time (seconds)
-        disconnection_effects:
+          description: "Время калибровки в миллисекундах"
+        recommendations:
           type: array
           items:
             type: string
-      description: Post-disconnection neural effects
-      description: Session termination outcome with data preservation status
-    BreachAbortResult:
+
+    PlayerCyberspaceSessionResponse:
       type: object
-      required:
-      - breach_id
-      - abort_successful
-      - survival_status
       properties:
-        breach_id:
+        session:
+          $ref: "#/components/schemas/PlayerCyberspaceSessionEntity"
+        statistics:
+          type: object
+          properties:
+            totalSessions:
+              type: integer
+              minimum: 0
+            averageSessionTime:
+              type: integer
+              description: "Среднее время сессии в секундах"
+            totalDataExtracted:
+              type: integer
+              minimum: 0
+            successRate:
+              type: number
+              minimum: 0
+              maximum: 1
+            favoriteNodeType:
+              type: string
+              enum: ["data", "security", "corporate", "black_market", "public"]
+
+    CyberspaceAnalyticsResponse:
+      type: object
+      properties:
+        period:
           type: string
-          format: uuid
-      description: Aborted breach ID
-        abort_successful:
-          type: boolean
-      description: Whether abort completed without additional damage
-        survival_status:
-          type: string
-          enum:
-          - ALIVE
-          - INJURED
-          - CRITICAL
-          - DEAD
-      description: Player survival status after abort
-        layers_penetrated:
+          enum: ["hourly", "daily", "weekly", "monthly"]
+        totalSessions:
           type: integer
           minimum: 0
-          maximum: 5
-      description: Number of layers successfully penetrated before abort
-        partial_rewards:
-          type: object
-      description: Any rewards earned before abort
-          additionalProperties: true
-        damage_assessment:
-          type: object
-          properties:
-            neural_damage:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            cyberware_damage:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            psychological_impact:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-      description: Damage assessment from abort procedure
-        recovery_requirements:
-          type: object
-      description: Required recovery actions and timeframes
-          additionalProperties: true
-      description: Breach abort outcome with survival and damage assessment
-    BreachCompleteResult:
-      type: object
-      required:
-      - breach_id
-      - completion_status
-      - survival_confirmed
-      properties:
-        breach_id:
-          type: string
-          format: uuid
-      description: Completed breach ID
-        completion_status:
-          type: string
-          enum:
-          - FULL_SUCCESS
-          - PARTIAL_SUCCESS
-          - MINIMAL_SUCCESS
-      description: Breach completion quality
-        survival_confirmed:
-          type: boolean
-      description: Player survival confirmation
-        layers_breached:
+        activePlayers:
           type: integer
-          minimum: 1
-          maximum: 5
-      description: Total layers successfully breached
-        breach_duration:
+          minimum: 0
+        dataExtracted:
           type: integer
-      description: Total breach duration in seconds
-        ice_encounters_total:
+          minimum: 0
+        iceEncounters:
           type: integer
-      description: Total ICE entities encountered
-        ice_defeated:
-          type: integer
-      description: Number of ICE entities defeated
-        data_extracted:
+          minimum: 0
+        nodeTypeDistribution:
           type: object
-          properties:
-            raw_data_volume:
-              type: integer
-            classified_documents:
-              type: integer
-            access_credentials:
-              type: integer
-            system_vulnerabilities:
-              type: integer
-      description: Comprehensive data extraction summary
-        rewards_earned:
-          type: object
-          properties:
-            unique_items:
-              type: array
-              items:
-                type: string
-            achievements_unlocked:
-              type: array
-              items:
-                type: string
-            reputation_changes:
-              type: object
-              additionalProperties:
+          additionalProperties:
+            type: integer
+            minimum: 0
+        peakHours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
                 type: integer
-            access_granted:
-              type: array
-              items:
-                type: string
-      description: All rewards and benefits from successful breach
-        post_breach_effects:
-          type: object
-          properties:
-            neural_fatigue:
-              type: number
-              format: float
-            psychological_impact:
-              type: string
-              enum:
-              - MINIMAL
-              - MODERATE
-              - SEVERE
-              - TRAUMATIC
-            system_adaptation:
-              type: string
-              enum:
-              - NONE
-              - MINOR
-              - SIGNIFICANT
-              - MAJOR
-      description: Post-breach physiological and psychological effects
-        breach_report:
-          type: object
-      description: Detailed breach execution report
-          additionalProperties: true
-      description: Successful Blackwall breach completion with comprehensive results
-    RiskAssessmentResult:
-      type: object
-      required:
-      - assessment_id
-      - overall_risk_level
-      - confidence_score
-      properties:
-        assessment_id:
-          type: string
-          format: uuid
-      description: Unique assessment identifier
-        overall_risk_level:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-      description: Overall risk assessment
-        confidence_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-      description: Assessment confidence percentage
-        risk_breakdown:
-          type: object
-          properties:
-            connection_instability_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            neural_feedback_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            ice_detection_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            data_corruption_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            system_overload_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-      description: Detailed risk breakdown by category
-        recommended_actions:
-          type: array
-          items:
-            type: object
-            required:
-            - action
-            - priority
-            - risk_reduction
-            properties:
-              action:
-                type: string
-                enum:
-                - ABORT_SESSION
-                - CHANGE_LOCATION
-                - ACTIVATE_SHIELDS
-                - SLOW_DOWN
-                - ACCELERATE
-              priority:
-                type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-                - CRITICAL
-              risk_reduction:
-                type: number
-                format: float
                 minimum: 0
-                maximum: 100
-      description: Recommended risk mitigation actions
-          maxItems: 10
-        time_window_validity:
-          type: integer
-      description: How long this assessment remains valid (seconds)
-      description: Comprehensive risk assessment with mitigation recommendations
-    EasterEggDiscoveryResult:
-      type: object
-      required:
-      - discovery_attempt_id
-      - discoveries_made
-      properties:
-        discovery_attempt_id:
-          type: string
-          format: uuid
-      description: Unique discovery attempt identifier
-        discoveries_made:
+                maximum: 23
+              sessionCount:
+                type: integer
+                minimum: 0
+        securityIncidents:
           type: integer
           minimum: 0
-      description: Number of easter eggs discovered
-        easter_eggs:
-          type: array
-          items:
-            type: object
-            required:
-            - egg_id
-            - egg_type
-            - rarity
-            properties:
-              egg_id:
-                type: string
-                format: uuid
-              egg_type:
-                type: string
-                enum:
-                - LORE_FRAGMENT
-                - SECRET_DATA
-                - ACHIEVEMENT_UNLOCK
-                - UNIQUE_ITEM
-                - ACCESS_CODE
-              rarity:
-                type: string
-                enum:
-                - COMMON
-                - UNCOMMON
-                - RARE
-                - EPIC
-                - LEGENDARY
-              coordinates:
-                type: object
-      description: Cyberspace coordinates where found
-                additionalProperties: true
-              content:
-                type: object
-      description: Discovered content details
-                additionalProperties: true
-      description: Details of discovered easter eggs
-          maxItems: 20
-        search_statistics:
-          type: object
-          properties:
-            areas_scanned:
-              type: integer
-            neural_patterns_analyzed:
-              type: integer
-            time_spent_searching:
-              type: integer
-            detection_accuracy:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-      description: Search process statistics
-        neural_impact:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-      description: Neural processing impact from discovery attempt
-      description: Easter egg discovery results with content and statistics
-  securitySchemes:
-    BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
-    ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth

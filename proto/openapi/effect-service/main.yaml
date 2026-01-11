@@ -1,153 +1,227 @@
+# Enterprise-Grade Effect Service API - SOLID/DRY Domain Inheritance
+# Game domain service for effect management, buffs, and debuffs
+# Issue: #openapi-refactor
+
 openapi: 3.0.3
 info:
-  title: "Weapon Elemental Effects Service API"
-  description: '**Enterprise-Grade Weapon Elemental Effects API with Game Domain Inheritance**
+  title: Effect Service API
+  description: |
+    **Enterprise-grade API for Game Effects, Buffs, and Debuffs Management**
 
     ## Domain Purpose
+    Comprehensive effect management service providing real-time application, tracking,
+    and synchronization of game effects, buffs, debuffs, and status modifications across
+    all NECPGAME gameplay systems.
 
-    The Weapon Elemental Effects Service manages all elemental weapon effects and their
-    interactions in Night City. Handles fire, ice, poison, acid, electric, and void
-    effects with complex interaction rules, damage calculations, and real-time
-    combat mechanics for immersive cyberpunk gameplay.
-
-    ## Key Features
-
-    - **Elemental Effects Management**: Complete CRUD for weapon elemental effects
-    - **Interaction Engine**: Dynamic damage multipliers based on elemental combinations
-    - **Real-time Combat**: Live effect application and damage calculations
-    - **Domain Inheritance**: SOLID/DRY architecture using game-entities.yaml
-    - **Performance Optimized**: MMOFPS-grade performance with struct alignment
+    ## Business Value
+    - Real-time effect calculations and application
+    - Complex effect stacking and interaction systems
+    - Performance-optimized effect persistence and synchronization
+    - Enterprise-grade scalability for millions of concurrent effects
+    - Advanced effect analytics and balancing tools
 
     ## Performance Targets
+    - P99 Latency: <25ms for effect operations
+    - Throughput: 100,000+ effect operations per second
+    - Concurrent Effects: 1,000,000+ active effects supported
+    - Memory per Character: <2KB for effect storage
 
-    - P99 Latency: <10ms for effect application, <25ms for interactions
-    - Memory: <50KB per active effect session, 30-50% savings from struct alignment
-    - Concurrent users: 15,000+ simultaneous effect processing
-    - Effect combinations: <5ms for complex multi-element calculations
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Effect templates as game entities with versioning
+    - Character effect tracking with optimistic locking
+    - Combat action integration for effect application
+    - Ability system integration for effect sources
+    - Strict typing with validation rules
 
-    ## Architecture
-
-    Uses domain inheritance from `../common-service/schemas/game-entities.yaml#/CombatEffectEntity`
-    with weapon-specific elemental extensions.
-
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
+
 servers:
-- url: https://api.necpgame.com/v1/weapon-effects
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/weapon-effects
-  description: Staging server
-- url: http://localhost:8080/api/v1/weapon-effects
-  description: Local development server
+  - url: https://api.necpgame.com/v1/effect-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/effect-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/effect-service
+    description: Local development
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: Weapon Elemental Effects
-  description: CRUD operations for weapon elemental effects
-- name: Effect Interactions
-  description: Rules and calculations for effect combinations
-- name: Effect Preview
-  description: Real-time preview of effect interactions
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Effect Management
+    description: Core effect application and lifecycle operations
+  - name: Effect Templates
+    description: Effect template creation and management
+  - name: Character Effects
+    description: Character-specific effect tracking
+  - name: Effect Analytics
+    description: Effect usage and performance analytics
+  - name: Effect Balancing
+    description: Effect balancing and modification tools
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
 paths:
+
   /health:
     get:
-      summary: Example domain health check
-      description: '**Enterprise-grade health check endpoint**
-
-
-        Provides real-time health status of the example domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
       operationId: effectServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
       responses:
         '200':
           description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/batch:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+  /effects/apply:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
-        single request
+      operationId: effectServiceApplyEffect
+      summary: Apply effect to target
+      description: |
+        Apply an effect to a character or game object with real-time calculation.
 
+        **Effect Application Process:**
+        - Validate effect template and target compatibility
+        - Calculate effect modifiers and stacking rules
+        - Apply effect with immediate synchronization
+        - Update character stats and abilities
+        - Trigger effect-specific events and notifications
+      tags: [Effect Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectRequest'
+      responses:
+        '200':
+          description: Effect applied successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AppliedEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Effect cannot be applied due to stacking rules
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
 
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+  /effects/remove:
+    post:
+      operationId: effectServiceRemoveEffect
+      summary: Remove effect from target
+      description: |
+        Remove an active effect from a character or game object.
 
-        Eliminates network overhead in health monitoring scenarios.
+        **Effect Removal Process:**
+        - Validate effect ownership and permissions
+        - Calculate effect cleanup and stat restoration
+        - Remove effect with immediate synchronization
+        - Trigger removal events and notifications
+        - Update character stats and abilities
+      tags: [Effect Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveEffectRequest'
+      responses:
+        '200':
+          description: Effect removed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          removed_effect_id:
+                            type: string
+                            format: uuid
+                            description: ID of removed effect
+                          stat_changes:
+                            $ref: '#/components/schemas/StatChanges'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
+  /effects/modify:
+    post:
+      operationId: effectServiceModifyEffect
+      summary: Modify active effect
+      description: |
+        Modify parameters of an active effect (strength, duration, etc.).
 
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
+        **Effect Modification:**
+        - Strength adjustment for balancing
+        - Duration extension or reduction
+        - Stacking rule changes
+        - Real-time synchronization
+      tags: [Effect Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyEffectRequest'
+      responses:
+        '200':
+          description: Effect modified successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AppliedEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-        '
-      operationId: effectServiceBatchHealthCheck
-      tags:
-      - Health Monitoring
+  /effects/{effectId}/extend:
+    post:
+      operationId: effectServiceExtendEffect
+      summary: Extend effect duration
+      description: |
+        Extend the duration of an active effect.
+
+        **Duration Extension:**
+        - Add time to existing effect
+        - Maintain effect strength and properties
+        - Handle maximum duration limits
+        - Real-time synchronization
+      tags: [Effect Management]
+      parameters:
+        - name: effectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Effect instance ID
       requestBody:
         required: true
         content:
@@ -155,2014 +229,1187 @@ paths:
             schema:
               type: object
               required:
-              - services
+                - additional_duration_seconds
               properties:
-                services:
+                additional_duration_seconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 86400
+                  description: Additional duration in seconds
+      responses:
+        '200':
+          description: Effect duration extended
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AppliedEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /characters/{characterId}/effects:
+    get:
+      operationId: effectServiceGetCharacterEffects
+      summary: Get character active effects
+      description: |
+        Retrieve all active effects on a character with real-time status.
+
+        **Effect Retrieval:**
+        - Active effects with current status
+        - Effect stacking information
+        - Remaining duration and strength
+        - Source information and timestamps
+      tags: [Character Effects]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+        - name: include_expired
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include recently expired effects
+        - name: effect_type
+          in: query
+          schema:
+            type: string
+            enum: [buff, debuff, crowd_control, healing, damage_over_time]
+          description: Filter by effect type
+      responses:
+        '200':
+          description: Character effects retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AppliedEffect'
+                      summary:
+                        $ref: '#/components/schemas/CharacterEffectSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /characters/{characterId}/effects/batch:
+    post:
+      operationId: effectServiceBatchApplyEffects
+      summary: Batch apply effects to character
+      description: |
+        Apply multiple effects to a character in a single operation.
+
+        **Batch Processing:**
+        - Atomic application of multiple effects
+        - Stacking rule validation across effects
+        - Performance optimization for multiple effects
+        - Rollback on partial failures
+      tags: [Character Effects]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchApplyEffectsRequest'
+      responses:
+        '200':
+          description: Effects batch applied successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          applied_effects:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/AppliedEffect'
+                          failed_effects:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                effect_template_id:
+                                  type: string
+                                  format: uuid
+                                error_message:
+                                  type: string
+                          stat_changes:
+                            $ref: '#/components/schemas/StatChanges'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /characters/{characterId}/effects/clear:
+    post:
+      operationId: effectServiceClearCharacterEffects
+      summary: Clear all character effects
+      description: |
+        Remove all active effects from a character.
+
+        **Effect Clearing:**
+        - Remove all effects of specified types
+        - Restore character to base stats
+        - Trigger cleanup events
+        - Performance-optimized bulk removal
+      tags: [Character Effects]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                effect_types:
                   type: array
                   items:
                     type: string
-                    enum:
-                    - effect
-                    - system-domain
-                    - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
+                    enum: [buff, debuff, crowd_control, healing, damage_over_time]
+                  description: Effect types to clear (empty = all types)
+                preserve_permanent:
+                  type: boolean
+                  default: true
+                  description: Preserve permanent effects
       responses:
         '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
+          description: Character effects cleared
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          removed_count:
+                            type: integer
+                            description: Number of effects removed
+                          stat_changes:
+                            $ref: '#/components/schemas/StatChanges'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /templates:
+    post:
+      operationId: effectServiceCreateTemplate
+      summary: Create effect template
+      description: |
+        Create a new effect template with comprehensive configuration.
+
+        **Template Creation:**
+        - Define effect properties and modifiers
+        - Configure stacking and interaction rules
+        - Set visual and audio effects
+        - Define balancing parameters
+      tags: [Effect Templates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEffectTemplateRequest'
+      responses:
+        '201':
+          description: Effect template created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EffectTemplate'
         '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/ws:
+          $ref: '#/components/responses/BadRequest'
+
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
-
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: effectServiceHealthWebSocket
-      tags:
-      - Health Monitoring
+      operationId: effectServiceListTemplates
+      summary: List effect templates
+      description: Retrieve paginated list of effect templates with filtering
+      tags: [Effect Templates]
       parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
+        - name: effect_type
+          in: query
+          schema:
             type: string
-            enum:
-            - effect
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
+            enum: [buff, debuff, crowd_control, healing, damage_over_time]
+          description: Filter by effect type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include only active templates
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of templates to return
       responses:
         '200':
-          description: WebSocket upgrade information returned
+          description: Effect templates retrieved
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/effect/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EffectTemplateSummary'
+
+  /templates/{templateId}:
     get:
-      summary: List weapon elemental effects
-      description: '**Enterprise-grade listing endpoint for weapon elemental effects**
-
-        Returns paginated list of all weapon elemental effects (fire, ice, poison,
-        acid, electric, void) with domain inheritance from CombatEffectEntity.
-        Supports filtering by elemental type and advanced search capabilities.
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests with caching.
-        **Domain:** Uses game-entities.yaml inheritance for SOLID/DRY compliance.
-
-        '
-      operationId: listEffects
-      tags:
-      - Weapon Elemental Effects
+      operationId: effectServiceGetTemplate
+      summary: Get effect template
+      description: Retrieve detailed effect template information
+      tags: [Effect Templates]
       parameters:
-      - name: type
-        in: query
-        schema:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Template unique identifier
+      responses:
+        '200':
+          description: Effect template retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EffectTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: effectServiceUpdateTemplate
+      summary: Update effect template
+      description: |
+        Update template configuration with versioning.
+
+        **Template Updates:**
+        - Create new template version
+        - Validate effect calculations
+        - Update active effects if safe
+        - Maintain version history
+      tags: [Effect Templates]
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Template unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEffectTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EffectTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /analytics/usage:
+    get:
+      operationId: effectServiceGetUsageAnalytics
+      summary: Get effect usage analytics
+      description: |
+        Retrieve comprehensive analytics about effect usage and performance.
+
+        **Analytics Coverage:**
+        - Effect application frequency and patterns
+        - Popular effect combinations and stacking
+        - Performance impact on gameplay
+        - Balancing effectiveness metrics
+        - Geographic usage distribution
+      tags: [Effect Analytics]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for analytics
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for analytics
+        - name: effect_type
+          in: query
+          schema:
+            type: string
+            enum: [buff, debuff, crowd_control, healing, damage_over_time]
+          description: Filter by effect type
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific template
+      responses:
+        '200':
+          description: Usage analytics retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EffectUsageAnalytics'
+
+  /balancing/adjust:
+    post:
+      operationId: effectServiceAdjustEffectBalancing
+      summary: Adjust effect balancing parameters
+      description: |
+        Adjust effect parameters for game balancing.
+
+        **Balancing Operations:**
+        - Strength modification across effect types
+        - Duration adjustments
+        - Stacking rule changes
+        - Real-time effect updates for active instances
+      tags: [Effect Balancing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectBalancingAdjustmentRequest'
+      responses:
+        '200':
+          description: Balancing adjustments applied
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          adjusted_templates:
+                            type: integer
+                            description: Number of templates adjusted
+                          affected_characters:
+                            type: integer
+                            description: Number of characters affected
+                          balancing_version:
+                            type: string
+                            description: New balancing version
+
+components:
+
+  responses:
+    OK:
+      $ref: '../common/responses/success.yaml#/OK'
+    Created:
+      $ref: '../common/responses/success.yaml#/Created'
+    Updated:
+      $ref: '../common/responses/success.yaml#/Updated'
+    BadRequest:
+      $ref: '../common/responses/error.yaml#/BadRequest'
+    NotFound:
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/Conflict'
+
+  schemas:
+
+    # Domain Inheritance - Effect Service Entities
+    AppliedEffect:
+      description: Active effect instance applied to a character
+      type: object
+      required:
+        - id
+        - character_id
+        - template_id
+        - applied_at
+        - expires_at
+        - current_strength
+      properties:
+        id:
           type: string
-          enum:
-          - fire
-          - ice
-          - poison
-          - acid
-          - electric
-          - void
-        description: Filter by elemental effect type
-      - name: limit
-        in: query
-        schema:
+          format: uuid
+          description: Effect instance unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character this effect is applied to
+        template_id:
+          type: string
+          format: uuid
+          description: Effect template used
+        source_id:
+          type: string
+          format: uuid
+          description: Source that applied the effect (ability, item, etc.)
+        source_type:
+          type: string
+          enum: [ability, item, skill, environment, system]
+          description: Type of effect source
+        applied_at:
+          type: string
+          format: date-time
+          description: When effect was applied
+        expires_at:
+          type: string
+          format: date-time
+          description: When effect expires
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Total effect duration in seconds
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Remaining duration in seconds
+        current_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Current effect strength (can be modified)
+        base_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Base strength from template
+        stat_modifiers:
+          type: object
+          description: Current stat modifications applied
+          additionalProperties:
+            type: number
+          example:
+            strength: 15
+            agility: -5
+            health_regen: 10
+        stacking_count:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of stacked instances
+        max_stacks:
+          type: integer
+          minimum: 1
+          description: Maximum allowed stacks
+        is_permanent:
+          type: boolean
+          default: false
+          description: Whether effect is permanent
+        can_dispel:
+          type: boolean
+          default: true
+          description: Whether effect can be dispelled
+        dispel_resistance:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: Resistance to dispelling (0-1)
+        visual_effect_id:
+          type: string
+          description: Associated visual effect identifier
+        audio_effect_id:
+          type: string
+          description: Associated audio effect identifier
+        metadata:
+          type: object
+          description: Additional effect metadata
+          additionalProperties: true
+
+    EffectTemplate:
+      description: Effect template configuration with game domain inheritance
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/BaseGameEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Effect template name
+            description:
+              type: string
+              maxLength: 500
+              description: Effect description
+            effect_type:
+              type: string
+              enum: [buff, debuff, crowd_control, healing, damage_over_time]
+              description: Primary effect type
+            category:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Effect category for organization
+            base_strength:
+              type: number
+              minimum: 0
+              maximum: 1000
+              description: Base effect strength
+            duration_seconds:
+              type: integer
+              minimum: 0
+              description: Base duration (0 = permanent)
+            stat_modifiers:
+              type: object
+              description: Stat modifications applied
+              additionalProperties:
+                oneOf:
+                  - type: number
+                    description: Flat modifier
+                  - type: string
+                    pattern: '^[-+]?\\d*\\.?\\d+%$'
+                    description: Percentage modifier
+              example:
+                strength: "+15"
+                agility: "-10%"
+                health_regen: "+5"
+            stacking_rules:
+              $ref: '#/components/schemas/EffectStackingRules'
+            interaction_rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/EffectInteractionRule'
+              description: Rules for interacting with other effects
+            visual_config:
+              type: object
+              properties:
+                icon_id:
+                  type: string
+                  description: Effect icon identifier
+                particle_effect_id:
+                  type: string
+                  description: Particle effect identifier
+                color_hex:
+                  type: string
+                  pattern: '^#[0-9A-Fa-f]{6}$'
+                  description: Effect color
+                animation_type:
+                  type: string
+                  enum: [static, pulsing, rotating, fading]
+                  description: Visual animation type
+              description: Visual effect configuration
+            audio_config:
+              type: object
+              properties:
+                sound_effect_id:
+                  type: string
+                  description: Sound effect identifier
+                volume_multiplier:
+                  type: number
+                  minimum: 0
+                  maximum: 2
+                  default: 1
+                  description: Volume adjustment
+                loop:
+                  type: boolean
+                  default: false
+                  description: Whether to loop audio
+              description: Audio effect configuration
+            balancing_config:
+              type: object
+              properties:
+                power_level:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  description: Effect power level for balancing
+                target_difficulty:
+                  type: string
+                  enum: [easy, normal, hard, expert]
+                  description: Intended difficulty level
+                scaling_factor:
+                  type: number
+                  minimum: 0.1
+                  maximum: 10
+                  default: 1
+                  description: Difficulty scaling multiplier
+              description: Balancing configuration
+            is_active:
+              type: boolean
+              default: true
+              description: Whether template is active
+
+    EffectStackingRules:
+      description: Rules for effect stacking behavior
+      type: object
+      properties:
+        stacking_type:
+          type: string
+          enum: [none, replace, refresh, intensify, separate]
+          default: "none"
+          description: How effects stack
+        max_stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Maximum number of stacks
+        stack_duration_refresh:
+          type: boolean
+          default: false
+          description: Whether new stacks refresh duration
+        strength_per_stack:
+          type: number
+          minimum: 0
+          description: Additional strength per stack
+        stack_limit_source:
+          type: boolean
+          default: false
+          description: Whether stacks are limited by source
+
+    EffectInteractionRule:
+      description: Rules for effect interactions
+      type: object
+      required:
+        - target_effect_type
+        - interaction_type
+      properties:
+        target_effect_type:
+          type: string
+          enum: [buff, debuff, crowd_control, healing, damage_over_time]
+          description: Type of effect to interact with
+        interaction_type:
+          type: string
+          enum: [amplify, reduce, cancel, prevent, combine]
+          description: Type of interaction
+        strength_modifier:
+          type: number
+          description: Strength modification factor
+        priority:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: offset
-        in: query
-        schema:
+          description: Interaction priority
+
+    CharacterEffectSummary:
+      description: Summary of character active effects
+      type: object
+      properties:
+        total_effects:
+          type: integer
+          description: Total number of active effects
+        effect_counts_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by effect type
+        active_buff_count:
+          type: integer
+          description: Number of active buffs
+        active_debuff_count:
+          type: integer
+          description: Number of active debuffs
+        crowd_control_active:
+          type: boolean
+          description: Whether character is under crowd control
+        permanent_effects_count:
+          type: integer
+          description: Number of permanent effects
+
+    StatChanges:
+      description: Summary of stat changes from effect operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        health:
+          type: number
+          description: Health change
+        max_health:
+          type: number
+          description: Max health change
+        mana:
+          type: number
+          description: Mana change
+        max_mana:
+          type: number
+          description: Max mana change
+        health_regen:
+          type: number
+          description: Health regeneration change
+        mana_regen:
+          type: number
+          description: Mana regeneration change
+        movement_speed:
+          type: number
+          description: Movement speed change
+        attack_speed:
+          type: number
+          description: Attack speed change
+        critical_chance:
+          type: number
+          description: Critical hit chance change
+        damage_reduction:
+          type: number
+          description: Damage reduction change
+
+    EffectUsageAnalytics:
+      description: Comprehensive effect usage analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_applications:
+          type: integer
+          description: Total effect applications
+        unique_characters_affected:
+          type: integer
+          description: Number of unique characters affected
+        average_effects_per_character:
+          type: number
+          description: Average effects per character
+        effect_type_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Distribution by effect type
+        popular_templates:
+          type: array
+          items:
+            type: object
+            properties:
+              template_id:
+                type: string
+                format: uuid
+              application_count:
+                type: integer
+              average_duration_seconds:
+                type: number
+          description: Most used effect templates
+        stacking_analytics:
+          type: object
+          properties:
+            average_stacks_per_effect:
+              type: number
+              description: Average number of stacks per effect
+            max_stacks_reached:
+              type: integer
+              description: Highest stack count reached
+            stacking_efficiency:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: How effectively stacking is used
+        performance_impact:
+          type: object
+          properties:
+            average_calculation_time_ms:
+              type: number
+              description: Average effect calculation time
+            memory_usage_per_effect_kb:
+              type: number
+              description: Memory usage per active effect
+
+    EffectTemplateSummary:
+      description: Effect template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        effect_type:
+          type: string
+          enum: [buff, debuff, crowd_control, healing, damage_over_time]
+        category:
+          type: string
+        base_strength:
+          type: number
+        duration_seconds:
+          type: integer
+        is_active:
+          type: boolean
+        last_updated:
+          type: string
+          format: date-time
+
+    # Request/Response schemas
+    ApplyEffectRequest:
+      description: Request payload for applying an effect
+      type: object
+      required:
+        - character_id
+        - template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        template_id:
+          type: string
+          format: uuid
+          description: Effect template to apply
+        source_id:
+          type: string
+          format: uuid
+          description: Source applying the effect
+        source_type:
+          type: string
+          enum: [ability, item, skill, environment, system]
+          default: "system"
+          description: Type of effect source
+        strength_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          default: 1
+          description: Strength multiplier
+        duration_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          default: 1
+          description: Duration multiplier
+        custom_metadata:
+          type: object
+          description: Additional effect metadata
+          additionalProperties: true
+
+    RemoveEffectRequest:
+      description: Request payload for removing an effect
+      type: object
+      required:
+        - effect_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID to remove
+        removal_reason:
+          type: string
+          enum: [expired, dispelled, cancelled, replaced, system_removal]
+          default: "system_removal"
+          description: Reason for effect removal
+
+    ModifyEffectRequest:
+      description: Request payload for modifying an effect
+      type: object
+      required:
+        - effect_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID to modify
+        strength_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          description: New strength multiplier
+        duration_extension_seconds:
+          type: integer
+          minimum: 0
+          maximum: 86400
+          description: Additional duration in seconds
+        stat_modifiers_override:
+          type: object
+          description: Override stat modifiers
+          additionalProperties:
+            type: number
+
+    BatchApplyEffectsRequest:
+      description: Request payload for batch effect application
+      type: object
+      required:
+        - effects
+      properties:
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplyEffectRequest'
+          minItems: 1
+          maxItems: 50
+          description: Effects to apply
+        atomic_operation:
+          type: boolean
+          default: true
+          description: Whether all effects must succeed or fail together
+        ignore_stacking_conflicts:
+          type: boolean
+          default: false
+          description: Ignore stacking rule conflicts
+
+    CreateEffectTemplateRequest:
+      description: Request payload for creating effect template
+      type: object
+      required:
+        - name
+        - effect_type
+        - category
+        - base_strength
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        effect_type:
+          type: string
+          enum: [buff, debuff, crowd_control, healing, damage_over_time]
+          description: Effect type
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Effect category
+        base_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Base effect strength
+        duration_seconds:
           type: integer
           minimum: 0
           default: 0
-        description: Number of items to skip
-      responses:
-        '200':
-          description: Effects retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WeaponEffectListResponse'
-        '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    post:
-      summary: Create weapon elemental effect
-      description: '**Enterprise-grade creation endpoint for weapon elemental effects**
-
-        Creates new weapon elemental effect with domain inheritance validation.
-        Ensures effect uniqueness and proper damage calculations using game-entities.yaml.
-
-        **Performance:** <25ms P95, includes validation and business logic.
-        **Domain:** Extends CombatEffectEntity with elemental-specific fields.
-
-        '
-      operationId: createEffect
-      tags:
-      - Weapon Elemental Effects
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WeaponEffectUpsertRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/EffectCreated'
-        '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          description: Conflict - effect with this name already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/apply:
-    post:
-      summary: Apply combat effects to target
-      description: '**Enterprise-grade effect application endpoint**
-
-        Applies buffs, debuffs, and status effects to combat participants. Validates
-        effect compatibility, stacking rules, and duration calculations.
-
-        Essential for combat mechanics, abilities, and environmental effects.
-
-        **Performance:** <10ms P95, synchronous application required
-
-        **Validation:** Effect stacking limits, immunity checks, duration caps
-
-        '
-      operationId: applyEffects
-      tags:
-      - Effect Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplyEffectsRequest'
-            examples:
-              buff_example:
-                summary: Strength buff application
-                value:
-                  target_id: 123e4567-e89b-12d3-a456-426614174000
-                  effects:
-                  - effect_type: buff
-                    effect_name: strength_boost
-                    duration_seconds: 180
-                    value: 20
-                    source_id: 123e4567-e89b-12d3-a456-426614174001
-              debuff_example:
-                summary: Movement debuff application
-                value:
-                  target_id: 123e4567-e89b-12d3-a456-426614174000
-                  effects:
-                  - effect_type: debuff
-                    effect_name: movement_slow
-                    duration_seconds: 60
-                    value: 0.3
-                    stacks: 1
-                    source_id: 123e4567-e89b-12d3-a456-426614174001
-      responses:
-        '200':
-          description: Effects applied successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplyEffectsResponse'
-          headers:
-            X-Effects-Applied:
-              schema:
-                type: integer
-                minimum: 0
-              description: Number of effects successfully applied
-        '400':
-          description: Invalid effect application request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Forbidden - cannot apply effects to target
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Target entity not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Effect application conflict - stacking limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/{effect_id}:
-    parameters:
-    - name: effect_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    get:
-      summary: Get weapon elemental effect
-      operationId: getEffect
-      tags:
-      - Weapon Elemental Effects
-      responses:
-        '200':
-          $ref: '#/components/responses/EffectRetrieved'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          description: Effect not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    patch:
-      summary: Update weapon elemental effect
-      operationId: updateEffect
-      tags:
-      - Weapon Elemental Effects
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WeaponEffectUpsertRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/EffectUpdated'
-        '400':
-          description: Invalid request - malformed data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          description: Effect not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Delete weapon elemental effect
-      operationId: deleteEffect
-      tags:
-      - Weapon Elemental Effects
-      security:
-      - BearerAuth: []
-      responses:
-        '204':
-          $ref: '#/components/responses/EffectDeleted'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          description: Effect not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/interactions:
-    get:
-      summary: List elemental interaction rules
-      operationId: listInteractions
-      tags:
-      - Effect Interactions
-      responses:
-        '200':
-          description: Interaction rules retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InteractionListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    post:
-      summary: Create elemental interaction rule
-      operationId: createInteraction
-      tags:
-      - Effect Interactions
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InteractionUpsertRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/InteractionCreated'
-        '400':
-          description: Invalid request - malformed data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          description: Conflict - interaction rule already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/interactions/preview:
-    post:
-      summary: Preview effect interaction
-      operationId: previewInteraction
-      tags:
-      - Effect Preview
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InteractionPreviewRequest'
-      responses:
-        '200':
-          description: Interaction preview calculated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InteractionPreviewResponse'
-        '400':
-          description: Invalid request - malformed data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: Validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/active:
-    get:
-      summary: Get active effects for target
-      description: '**Enterprise-grade active effects retrieval endpoint**
-
-        Retrieves all currently active effects on a target entity. Includes buffs,
-        debuffs, status effects with remaining duration.
-
-        Critical for UI display, effect tracking, and gameplay awareness.
-
-        **Performance:** <15ms P95 with effect caching
-
-        **Real-time:** Effects updated via WebSocket for active combat
-
-        '
-      operationId: getActiveEffects
-      tags:
-      - Effect Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: target_id
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Target entity identifier
-      - name: effect_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - buff
-          - debuff
-          - status
-          - all
-          default: all
-        description: Filter by effect type
-      - name: include_expired
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include recently expired effects
-      responses:
-        '200':
-          description: Active effects retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActiveEffectsResponse'
-        '404':
-          description: Target entity not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /effects/{effectId}/extend:
-    put:
-      summary: Extend effect duration
-      description: '**Enterprise-grade effect extension endpoint**
-
-        Extends the duration of an existing active effect. Validates extension limits
-        and stacking rules.
-
-        Used for effect refresh mechanics and duration bonuses.
-
-        **Performance:** <5ms P95, atomic duration update
-
-        '
-      operationId: extendEffect
-      tags:
-      - Effect Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: effectId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Effect instance identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExtendEffectRequest'
-      responses:
-        '200':
-          description: Effect duration extended successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EffectResponse'
-        '400':
-          description: Invalid extension request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Effect not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Extension limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-components:
-  responses:
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    EffectCreated:
-      description: Weapon elemental effect created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/weapon-effects/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created effect
-        ETag:
-          schema:
-            type: string
-            example: '"effect-fire-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/WeaponEffectResponse'
-    EffectRetrieved:
-      description: Weapon elemental effect retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"effect-fire-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/WeaponEffectResponse'
-    EffectUpdated:
-      description: Weapon elemental effect updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"effect-fire-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 10
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/WeaponEffectResponse'
-    EffectDeleted:
-      description: Weapon elemental effect deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 8
-            description: Processing time in milliseconds
-    InteractionCreated:
-      description: Effect interaction rule created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/weapon-effects/interactions/550e8400-e29b-41d4-a716-446655440001
-            description: URL of the created interaction rule
-        ETag:
-          schema:
-            type: string
-            example: '"interaction-fire-ice-v1"'
-            description: Entity tag for caching and optimistic locking
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/InteractionResponse'
-    OK:
-      $ref: ../common-service/responses/success.yaml#/OK
-    Created:
-      $ref: ../common-service/responses/success.yaml#/Created
-    BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
-    NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    Conflict:
-      $ref: ../common-service/responses/error.yaml#/Conflict
-    InternalServerError:
-      $ref: ../common-service/responses/error.yaml#/InternalServerError
-    HealthOK:
-      $ref: ../common-service/responses/success.yaml#/HealthOK
-  schemas:
-    HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: weapon-effects
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: '#/components/schemas/HealthResponse'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
+          description: Effect duration (0 = permanent)
+        stat_modifiers:
           type: object
-          description: Additional error details
-
-    # ============================================================================
-    # WEAPON ELEMENTAL EFFECTS DOMAIN SCHEMAS
-    # ============================================================================
-
-    # Weapon Elemental Effect - Domain-specific extension of CombatEffectEntity
-    WeaponElementalEffect:
-      allOf:
-        - $ref: '../common-service/schemas/game-entities.yaml#/CombatEffectEntity'
-        - type: object
-          required:
-            - elemental_type
-            - base_damage_modifier
+          description: Stat modifications
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
+                pattern: '^[-+]?\\d*\\.?\\d+%$'
+        stacking_rules:
+          $ref: '#/components/schemas/EffectStackingRules'
+        visual_config:
+          type: object
           properties:
-            elemental_type:
+            icon_id:
               type: string
-              enum:
-                - fire
-                - ice
-                - poison
-                - acid
-                - electric
-                - void
-              description: Elemental damage type
-              example: "fire"
-            base_damage_modifier:
-              type: number
-              format: float
-              minimum: 0.1
-              maximum: 5.0
-              description: Base damage multiplier for this element
-              example: 1.2
-            damage_over_time:
-              type: boolean
-              description: Whether this effect deals damage over time
-              example: true
-              default: false
-            dot_damage:
-              type: integer
-              minimum: 0
-              maximum: 1000
-              description: Damage per tick for DoT effects
-              example: 25
-            dot_duration:
-              type: integer
-              minimum: 1000
-              maximum: 300000
-              description: DoT duration in milliseconds
-              example: 10000
-            dot_ticks:
+            color_hex:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+        balancing_config:
+          type: object
+          properties:
+            power_level:
               type: integer
               minimum: 1
-              maximum: 50
-              description: Number of DoT ticks
-              example: 10
-            resistance_penalty:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1.0
-              description: Percentage reduction in target resistance
-              example: 0.15
-            visual_effect:
+              maximum: 100
+            target_difficulty:
               type: string
-              description: Visual effect identifier
-              example: "fire_trail"
-              maxLength: 100
-            sound_effect:
-              type: string
-              description: Sound effect identifier
-              example: "fire_crackle"
-              maxLength: 100
-            is_weapon_attached:
-              type: boolean
-              description: Whether effect is permanently attached to weapon
-              example: false
-              default: false
-      description: 'BACKEND NOTE: Weapon elemental effect with domain inheritance.
-        Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.
-        Optimized for MMOFPS combat with <10ms P99 latency targets.'
+              enum: [easy, normal, hard, expert]
 
-    # Applied Weapon Elemental Effect
-    AppliedWeaponEffect:
-      allOf:
-        - $ref: '#/components/schemas/WeaponElementalEffect'
-        - type: object
-          required:
-            - applied_at
-            - expires_at
-            - current_stacks
-          properties:
-            applied_at:
-              type: string
-              format: date-time
-              description: When effect was applied
-              example: '2025-12-21T10:00:00Z'
-            expires_at:
-              type: string
-              format: date-time
-              description: When effect expires
-              example: '2025-12-21T10:00:10Z'
-            current_stacks:
-              type: integer
-              minimum: 1
-              maximum: 10
-              description: Current number of effect stacks
-              example: 2
-            effect_level:
-              type: integer
-              minimum: 1
-              maximum: 50
-              description: Effect potency level
-              example: 3
-            is_primary:
-              type: boolean
-              description: Whether this is the primary effect
-              example: true
-              default: false
-      description: 'BACKEND NOTE: Active weapon elemental effect instance.
-        Includes timing and stacking information for real-time combat tracking.'
-
-    # Elemental Interaction Rule
-    ElementalInteractionRule:
-      allOf:
-        - $ref: '../common-service/schemas/common.yaml#/BaseEntity'
-        - type: object
-          required:
-            - attacker_element
-            - defender_element
-            - damage_multiplier
-          properties:
-            attacker_element:
-              type: string
-              enum:
-                - fire
-                - ice
-                - poison
-                - acid
-                - electric
-                - void
-              description: Attacking elemental type
-              example: "fire"
-            defender_element:
-              type: string
-              enum:
-                - fire
-                - ice
-                - poison
-                - acid
-                - electric
-                - void
-              description: Defending elemental type
-              example: "ice"
-            result_element:
-              type: string
-              enum:
-                - fire
-                - ice
-                - poison
-                - acid
-                - electric
-                - void
-                - steam
-                - plasma
-                - conductive
-              description: Resulting elemental type from interaction
-              example: "steam"
-            damage_multiplier:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 10.0
-              description: Damage multiplier for this interaction
-              example: 1.5
-            interaction_type:
-              type: string
-              enum:
-                - synergy
-                - conflict
-                - neutral
-              description: Type of elemental interaction
-              example: "synergy"
-            description:
-              type: string
-              description: Human-readable description of the interaction
-              example: "Fire melts ice, creating steam with increased damage"
-              maxLength: 500
-      description: 'BACKEND NOTE: Elemental interaction rule for damage calculations.
-        Defines how different elements interact in combat scenarios.'
-
-    # Request/Response Schemas
-    WeaponEffectUpsertRequest:
+    UpdateEffectTemplateRequest:
+      description: Request payload for updating effect template
       type: object
       properties:
         name:
           type: string
-          minLength: 3
-          maxLength: 64
-          description: Effect display name
-          example: "Inferno Blaze"
-        elemental_type:
+          minLength: 1
+          maxLength: 100
+        description:
           type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-          description: Elemental damage type
-          example: "fire"
-        base_damage_modifier:
+          maxLength: 500
+        base_strength:
           type: number
-          format: float
-          minimum: 0.1
-          maximum: 5.0
-          description: Base damage multiplier
-          example: 1.2
-        damage_over_time:
-          type: boolean
-          description: Enables DoT mechanics
-          example: true
-        dot_damage:
-          type: integer
           minimum: 0
           maximum: 1000
-          description: Damage per DoT tick
-          example: 25
-        dot_duration:
+        duration_seconds:
           type: integer
-          minimum: 1000
-          maximum: 300000
-          description: DoT duration in milliseconds
-          example: 10000
-        dot_ticks:
-          type: integer
-          minimum: 1
-          maximum: 50
-          description: Number of DoT ticks
-          example: 10
-        resistance_penalty:
-          type: number
-          format: float
           minimum: 0
-          maximum: 1.0
-          description: Resistance reduction percentage
-          example: 0.15
-        visual_effect:
-          type: string
-          description: Visual effect identifier
-          example: "fire_trail"
-          maxLength: 100
-        sound_effect:
-          type: string
-          description: Sound effect identifier
-          example: "fire_crackle"
-          maxLength: 100
-      required:
-        - name
-        - elemental_type
-        - base_damage_modifier
-      additionalProperties: false
-      description: 'BACKEND NOTE: Weapon effect creation/update request.
-        Fields ordered for struct alignment (large → small).'
-
-    WeaponEffectResponse:
-      type: object
-      required:
-      - effect
-      properties:
-        effect:
-          $ref: '#/components/schemas/WeaponElementalEffect'
-      description: 'BACKEND NOTE: Weapon effect response wrapper.
-        Optimized for API serialization.'
-
-    WeaponEffectListResponse:
-      type: object
-      required:
-      - effects
-      - pagination
-      properties:
-        effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/WeaponElementalEffect'
-          description: List of weapon effects
-        pagination:
+        stat_modifiers:
           type: object
-          required:
-            - items
-            - total
-            - limit
-            - offset
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
+                pattern: '^[-+]?\\d*\\.?\\d+%$'
+        stacking_rules:
+          $ref: '#/components/schemas/EffectStackingRules'
+        visual_config:
+          type: object
           properties:
-            items:
-              type: integer
-              minimum: 0
-              description: Number of items in this response
-              example: 20
-            total:
-              type: integer
-              minimum: 0
-              description: Total number of effects matching criteria
-              example: 150
-            limit:
+            icon_id:
+              type: string
+            color_hex:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+        balancing_config:
+          type: object
+          properties:
+            power_level:
               type: integer
               minimum: 1
               maximum: 100
-              description: Items per page
-              example: 20
-            offset:
-              type: integer
-              minimum: 0
-              description: Number of items to skip
-              example: 0
-      description: 'BACKEND NOTE: Paginated weapon effects list.
-        Optimized for large datasets with efficient memory usage.'
-
-    InteractionUpsertRequest:
-      type: object
-      properties:
-        attacker_element:
-          type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-          description: Attacking elemental type
-          example: "fire"
-        defender_element:
-          type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-          description: Defending elemental type
-          example: "ice"
-        result_element:
-          type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-            - steam
-            - plasma
-            - conductive
-          description: Resulting elemental type
-          example: "steam"
-        damage_multiplier:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 10.0
-          description: Damage multiplier for this interaction
-          example: 1.5
-        interaction_type:
-          type: string
-          enum:
-            - synergy
-            - conflict
-            - neutral
-          description: Type of elemental interaction
-          example: "synergy"
-        description:
-          type: string
-          description: Human-readable description
-          example: "Fire melts ice, creating steam with increased damage"
-          maxLength: 500
-      required:
-        - attacker_element
-        - defender_element
-        - damage_multiplier
-      additionalProperties: false
-      description: 'BACKEND NOTE: Elemental interaction rule creation/update.
-        Defines elemental synergies and conflicts.'
-
-    InteractionResponse:
-      type: object
-      required:
-      - interaction
-      properties:
-        interaction:
-          $ref: '#/components/schemas/ElementalInteractionRule'
-      description: 'BACKEND NOTE: Interaction rule response wrapper.'
-
-    InteractionListResponse:
-      type: object
-      required:
-      - interactions
-      properties:
-        interactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ElementalInteractionRule'
-          description: List of elemental interaction rules
-      description: 'BACKEND NOTE: Interaction rules list for combat calculations.'
-
-    InteractionPreviewRequest:
-      type: object
-      properties:
-        attacker_element:
-          type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-          description: Attacking elemental type
-          example: "fire"
-        defender_element:
-          type: string
-          enum:
-            - fire
-            - ice
-            - poison
-            - acid
-            - electric
-            - void
-          description: Defending elemental type
-          example: "ice"
-        base_damage:
-          type: number
-          format: float
-          minimum: 0
-          description: Base damage amount
-          example: 100.0
-        defender_is_wet:
+            target_difficulty:
+              type: string
+              enum: [easy, normal, hard, expert]
+        is_active:
           type: boolean
-          description: Whether defender is wet (affects electric/fire interactions)
-          example: false
-        defender_is_armor_broken:
-          type: boolean
-          description: Whether defender armor is broken (affects physical/elemental interactions)
-          example: false
-        stacks_applied:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Number of effect stacks already applied
-          example: 2
-      required:
-        - attacker_element
-        - defender_element
-        - base_damage
-      additionalProperties: false
-      description: 'BACKEND NOTE: Preview request for elemental interactions.
-        Used for real-time combat calculations and UI feedback.'
 
-    InteractionPreviewResponse:
-      type: object
-      properties:
-        applied_status:
-          type: string
-          description: Status effect that will be applied
-          example: "burn"
-          maxLength: 64
-        notes:
-          type: array
-          items:
-            type: string
-            maxLength: 256
-          description: Human-readable interaction notes
-          example: ["Fire damage increased due to ice weakness", "Steam cloud created"]
-        total_damage:
-          type: number
-          format: float
-          minimum: 0
-          description: Total calculated damage after interactions
-          example: 150.0
-        damage_multiplier:
-          type: number
-          format: float
-          minimum: 0
-          description: Applied damage multiplier
-          example: 1.5
-      required:
-        - total_damage
-        - damage_multiplier
-      additionalProperties: false
-      description: 'BACKEND NOTE: Preview response with calculated damage and effects.
-        Critical for real-time combat feedback and UI updates.'
-
-    # Combat-specific schemas
-    ApplyEffectsRequest:
+    EffectBalancingAdjustmentRequest:
+      description: Request payload for effect balancing adjustments
       type: object
       required:
-        - target_id
-        - effects
+        - adjustments
       properties:
-        target_id:
-          type: string
-          format: uuid
-          description: Target entity to apply effects to
-        effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/EffectApplication'
-          minItems: 1
-          maxItems: 10
-          description: Effects to apply
-        source_id:
-          type: string
-          format: uuid
-          description: Source entity applying effects
-        combat_session_id:
-          type: string
-          format: uuid
-          description: Associated combat session
-      description: 'BACKEND NOTE: Request validated for effect stacking limits.
-        Source authorization checked before application.'
-
-    EffectApplication:
-      type: object
-      required:
-        - effect_type
-        - effect_name
-        - duration_seconds
-        - value
-      properties:
-        effect_type:
-          type: string
-          enum:
-            - buff
-            - debuff
-            - status
-          description: Category of effect
-        effect_name:
-          type: string
-          enum:
-            - strength_boost
-            - agility_boost
-            - intelligence_boost
-            - speed_boost
-            - regeneration
-            - shield
-            - critical_chance
-            - damage_reduction
-            - movement_slow
-            - weakness
-            - poison
-            - bleed
-            - burn
-            - stun
-            - blind
-            - paralyze
-          description: Specific effect identifier
-        duration_seconds:
-          type: integer
-          minimum: 1
-          maximum: 3600
-          description: Effect duration in seconds
-        value:
-          type: number
-          format: float
-          description: Effect magnitude (damage, percentage, etc.)
-        stacks:
-          type: integer
-          minimum: 1
-          maximum: 5
-          default: 1
-          description: Number of stacks to apply
-        source_id:
-          type: string
-          format: uuid
-          description: Effect source override
-      description: 'BACKEND NOTE: Effect parameters validated against game balance rules.
-        Duration capped to prevent permanent effects.'
-
-    ApplyEffectsResponse:
-      type: object
-      required:
-        - target_id
-        - applied_effects
-        - timestamp
-      properties:
-        target_id:
-          type: string
-          format: uuid
-          description: Target entity identifier
-        applied_effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/AppliedEffect'
-          description: Successfully applied effects
-        rejected_effects:
+        adjustments:
           type: array
           items:
             type: object
             required:
-              - effect_name
-              - reason
+              - template_ids
+              - adjustment_type
             properties:
-              effect_name:
+              template_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Templates to adjust
+              adjustment_type:
                 type: string
-              reason:
-                type: string
-                enum:
-                  - stacking_limit_exceeded
-                  - immunity
-                  - invalid_parameters
-                  - target_not_found
-              details:
-                type: string
-          description: Effects that could not be applied
-        timestamp:
-          type: string
-          format: date-time
-          description: Application timestamp
-      description: 'BACKEND NOTE: Response includes rejection reasons for debugging.
-        Applied effects logged for audit trail.'
-
-    AppliedEffect:
-      type: object
-      required:
-        - effect_id
-        - effect_type
-        - effect_name
-        - remaining_seconds
-        - value
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-          description: Unique effect instance identifier
-        effect_type:
-          type: string
-          enum:
-            - buff
-            - debuff
-            - status
-        effect_name:
-          type: string
-        remaining_seconds:
-          type: integer
-          minimum: 0
-          description: Time remaining in seconds
-        value:
-          type: number
-          format: float
-        stacks:
-          type: integer
-          minimum: 1
-        source_id:
-          type: string
-          format: uuid
-        applied_at:
-          type: string
-          format: date-time
-      description: 'BACKEND NOTE: Effect instances tracked for cleanup and stacking.
-        IDs used for effect removal and modification.'
-
-    ActiveEffectsResponse:
-      type: object
-      required:
-        - target_id
-        - effects
-        - timestamp
-      properties:
-        target_id:
-          type: string
-          format: uuid
-          description: Target entity identifier
-        effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActiveEffect'
-          description: Currently active effects
-        summary:
-          type: object
-          properties:
-            buff_count:
-              type: integer
-              minimum: 0
-            debuff_count:
-              type: integer
-              minimum: 0
-            status_count:
-              type: integer
-              minimum: 0
-            total_effects:
-              type: integer
-              minimum: 0
-          description: Effects count summary
-        timestamp:
-          type: string
-          format: date-time
-          description: Response timestamp
-      description: 'BACKEND NOTE: Response optimized for real-time UI updates.
-        Effects sorted by remaining duration for priority display.'
-
-    ActiveEffect:
-      type: object
-      required:
-        - effect_id
-        - effect_type
-        - effect_name
-        - remaining_seconds
-        - value
-        - source_id
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-          description: Effect instance identifier
-        effect_type:
-          type: string
-          enum:
-            - buff
-            - debuff
-            - status
-        effect_name:
-          type: string
-        remaining_seconds:
-          type: integer
-          minimum: 0
-          description: Time remaining in seconds
-        value:
-          type: number
-          format: float
-          description: Current effect magnitude
-        stacks:
-          type: integer
-          minimum: 1
-          description: Current stack count
-        source_id:
-          type: string
-          format: uuid
-          description: Effect source
-        applied_at:
-          type: string
-          format: date-time
-          description: When effect was applied
-        max_stacks:
-          type: integer
-          minimum: 1
-          description: Maximum allowed stacks
-        is_expired:
+                enum: [strength_multiplier, duration_multiplier, stat_modifier_adjustment]
+                description: Type of adjustment
+              value:
+                type: number
+                description: Adjustment value
+              effect_types:
+                type: array
+                items:
+                  type: string
+                  enum: [buff, debuff, crowd_control, healing, damage_over_time]
+                description: Effect types to adjust (alternative to template_ids)
+          description: Balancing adjustments to apply
+        apply_to_active_effects:
           type: boolean
           default: false
-          description: Whether effect has expired
-      description: 'BACKEND NOTE: Active effects cached for performance.
-        Expiration tracked for automatic cleanup.'
+          description: Apply adjustments to currently active effects
+        balancing_version:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: New balancing version identifier
 
-    ExtendEffectRequest:
-      type: object
-      required:
-        - additional_seconds
-      properties:
-        additional_seconds:
-          type: integer
-          minimum: 1
-          maximum: 3600
-          description: Seconds to add to effect duration
-        new_value:
-          type: number
-          format: float
-          description: Optional value override
-        source_id:
-          type: string
-          format: uuid
-          description: Extension source
-      description: 'BACKEND NOTE: Extension validated against duration caps.
-        Source authorization checked for effect modification.'
-
-    EffectResponse:
-      type: object
-      required:
-        - effect_id
-        - status
-        - remaining_seconds
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-            - extended
-            - unchanged
-            - expired
-        remaining_seconds:
-          type: integer
-          minimum: 0
-        new_value:
-          type: number
-          format: float
-        updated_at:
-          type: string
-          format: date-time
-      description: 'BACKEND NOTE: Response indicates effect modification result.
-        Used for effect refresh mechanics and duration tracking.'
-components:
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-          type: string
-          format: uuid
-          description: Associated combat session
-      description: '"BACKEND NOTE: Request validated for effect stacking limits.
-
-        Source authorization checked before application."
-
-        '
-    EffectApplication:
-      type: object
-      required:
-      - effect_type
-      - effect_name
-      - duration_seconds
-      - value
-      properties:
-        effect_type:
-          type: string
-          enum:
-          - buff
-          - debuff
-          - status
-          description: Category of effect
-        effect_name:
-          type: string
-          enum:
-          - strength_boost
-          - agility_boost
-          - intelligence_boost
-          - speed_boost
-          - regeneration
-          - shield
-          - critical_chance
-          - damage_reduction
-          - movement_slow
-          - weakness
-          - poison
-          - bleed
-          - burn
-          - stun
-          - blind
-          - paralyze
-          description: Specific effect identifier
-        duration_seconds:
-          type: integer
-          minimum: 1
-          maximum: 3600
-          description: Effect duration in seconds
-        value:
-          type: number
-          format: float
-          description: Effect magnitude (damage, percentage, etc.)
-        stacks:
-          type: integer
-          minimum: 1
-          maximum: 5
-          default: 1
-          description: Number of stacks to apply
-        source_id:
-          type: string
-          format: uuid
-          description: Effect source override
-      description: '"BACKEND NOTE: Effect parameters validated against game balance
-        rules.
-
-        Duration capped to prevent permanent effects."
-
-        '
-    ApplyEffectsResponse:
-      type: object
-      required:
-      - target_id
-      - applied_effects
-      - timestamp
-      properties:
-        target_id:
-          type: string
-          format: uuid
-          description: Target entity identifier
-        applied_effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/AppliedEffect'
-          description: Successfully applied effects
-        rejected_effects:
-          type: array
-          items:
-            type: object
-            required:
-            - effect_name
-            - reason
-            properties:
-              effect_name:
-                type: string
-              reason:
-                type: string
-                enum:
-                - stacking_limit_exceeded
-                - immunity
-                - invalid_parameters
-                - target_not_found
-              details:
-                type: string
-          description: Effects that could not be applied
-        timestamp:
-          type: string
-          format: date-time
-          description: Application timestamp
-      description: '"BACKEND NOTE: Response includes rejection reasons for debugging.
-
-        Applied effects logged for audit trail."
-
-        '
-    AppliedEffect:
-      type: object
-      required:
-      - effect_id
-      - effect_type
-      - effect_name
-      - remaining_seconds
-      - value
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-          description: Unique effect instance identifier
-        effect_type:
-          type: string
-          enum:
-          - buff
-          - debuff
-          - status
-        effect_name:
-          type: string
-        remaining_seconds:
-          type: integer
-          minimum: 0
-          description: Remaining duration
-        value:
-          type: number
-          format: float
-        stacks:
-          type: integer
-          minimum: 1
-        source_id:
-          type: string
-          format: uuid
-        applied_at:
-          type: string
-          format: date-time
-      description: '"BACKEND NOTE: Effect instances tracked for cleanup and stacking.
-
-        IDs used for effect removal and modification."
-
-        '
-    ActiveEffectsResponse:
-      type: object
-      required:
-      - target_id
-      - effects
-      - timestamp
-      properties:
-        target_id:
-          type: string
-          format: uuid
-          description: Target entity identifier
-        effects:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActiveEffect'
-          description: Currently active effects
-        summary:
-          type: object
-          properties:
-            buff_count:
-              type: integer
-              minimum: 0
-            debuff_count:
-              type: integer
-              minimum: 0
-            status_count:
-              type: integer
-              minimum: 0
-            total_effects:
-              type: integer
-              minimum: 0
-          description: Effects count summary
-        timestamp:
-          type: string
-          format: date-time
-          description: Response timestamp
-      description: '"BACKEND NOTE: Response optimized for real-time UI updates.
-
-        Effects sorted by remaining duration for priority display."
-
-        '
-    ActiveEffect:
-      type: object
-      required:
-      - effect_id
-      - effect_type
-      - effect_name
-      - remaining_seconds
-      - value
-      - source_id
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-          description: Effect instance identifier
-        effect_type:
-          type: string
-          enum:
-          - buff
-          - debuff
-          - status
-        effect_name:
-          type: string
-        remaining_seconds:
-          type: integer
-          minimum: 0
-          description: Time remaining in seconds
-        value:
-          type: number
-          format: float
-          description: Current effect magnitude
-        stacks:
-          type: integer
-          minimum: 1
-          description: Current stack count
-        source_id:
-          type: string
-          format: uuid
-          description: Effect source
-        applied_at:
-          type: string
-          format: date-time
-          description: When effect was applied
-        max_stacks:
-          type: integer
-          minimum: 1
-          description: Maximum allowed stacks
-        is_expired:
-          type: boolean
-          default: false
-          description: Whether effect has expired
-      description: '"BACKEND NOTE: Active effects cached for performance.
-
-        Expiration tracked for automatic cleanup."
-
-        '
-    ExtendEffectRequest:
-      type: object
-      required:
-      - additional_seconds
-      properties:
-        additional_seconds:
-          type: integer
-          minimum: 1
-          maximum: 3600
-          description: Seconds to add to effect duration
-        new_value:
-          type: number
-          format: float
-          description: Optional value override
-        source_id:
-          type: string
-          format: uuid
-          description: Extension source
-      description: '"BACKEND NOTE: Extension validated against duration caps.
-
-        Source authorization checked for effect modification."
-
-        '
-    EffectResponse:
-      type: object
-      required:
-      - effect_id
-      - status
-      - remaining_seconds
-      properties:
-        effect_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - extended
-          - unchanged
-          - expired
-        remaining_seconds:
-          type: integer
-          minimum: 0
-        new_value:
-          type: number
-          format: float
-        updated_at:
-          type: string
-          format: date-time
-      description: '"BACKEND NOTE: Response indicates effect modification result.
-
-        Used for effect refresh mechanics and duration tracking."
-
-        '
-    BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: '../common/security/security.yaml#/BearerAuth'
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<25ms"
+  throughput-target: "100,000+ effect operations/second"
+  concurrent-effects-target: "1,000,000+ active effects"
+  memory-per-character-target: "<2KB for effects"
+  database-indexes: "Composite indexes on (character_id, expires_at), (template_id, effect_type), (source_id, source_type)"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - effect_apply_rate
+    - active_effects_count
+    - effect_calculation_time
+    - stacking_operations
+    - effect_expiration_rate
+  alerts:
+    - effect_calculation_time > 25ms
+    - active_effects_count > 1000000
+    - effect_apply_failure_rate > 1%
+
+# Effect system specifics
+x-effect-system:
+  stacking-types: "none, replace, refresh, intensify, separate - configurable per effect type"
+  interaction-rules: "amplify, reduce, cancel, prevent, combine - with priority-based resolution"
+  real-time-sync: "WebSocket-based synchronization for effect changes across clients"
+  balancing-tools: "Real-time effect strength adjustment, A/B testing, performance analytics"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/game-entities.yaml"
+  inherited-entities: "BaseGameEntity, CharacterEntity, CombatActionEntity, AbilityEntity"
+  additional-schemas: "Effect stacking rules, interaction systems, visual/audio configurations, balancing tools"
+  no-duplication: "All common fields inherited, effect-specific real-time synchronization and balancing extensions added"

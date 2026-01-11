@@ -1,0 +1,415 @@
+# Game Domain Entities - SOLID/DRY Foundation
+# These entities are inherited by all game-related services
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Base Game Entity - inherited by all game objects
+    GameEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for game entity
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-01-15T14:20:00Z"
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+
+    # Character Entity - inherited by player/NPC characters
+    CharacterEntity:
+      allOf:
+        - $ref: '#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - level
+            - experience
+            - stats
+          properties:
+            level:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Character level
+              example: 25
+            experience:
+              type: integer
+              minimum: 0
+              description: Current experience points
+              example: 15420
+            stats:
+              $ref: '#/components/schemas/CharacterStats'
+            cyberware_level:
+              type: integer
+              minimum: 0
+              maximum: 20
+              description: Cyberware enhancement level
+              example: 8
+            reputation:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+              description: Faction reputation score
+              example: 450
+
+    # Character Stats - comprehensive stat system
+    CharacterStats:
+      type: object
+      required:
+        - health
+        - stamina
+        - strength
+        - agility
+        - intelligence
+        - charisma
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current health points
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum health points
+          example: 900
+        stamina:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Current stamina points
+          example: 320
+        max_stamina:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Maximum stamina points
+          example: 350
+        strength:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Physical strength attribute
+          example: 75
+        agility:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Speed and reflexes attribute
+          example: 68
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Mental acuity attribute
+          example: 82
+        charisma:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Social influence attribute
+          example: 45
+        perception:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Awareness and detection attribute
+          example: 71
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Fortune and probability modifier
+          example: 33
+
+    # Combat Action Entity - for combat system operations
+    CombatActionEntity:
+      allOf:
+        - $ref: '#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - action_type
+            - source_character_id
+            - target_character_id
+            - damage_dealt
+          properties:
+            action_type:
+              type: string
+              enum: [attack, defend, ability, item, flee]
+              description: Type of combat action
+              example: "attack"
+            source_character_id:
+              type: string
+              format: uuid
+              description: Character performing the action
+              example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            target_character_id:
+              type: string
+              format: uuid
+              description: Character receiving the action
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            damage_dealt:
+              type: integer
+              minimum: 0
+              description: Damage points inflicted
+              example: 145
+            accuracy_roll:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Accuracy percentage for the action
+              example: 87
+            critical_hit:
+              type: boolean
+              description: Whether this was a critical hit
+              example: false
+            status_effects:
+              type: array
+              items:
+                $ref: '#/components/schemas/StatusEffect'
+              description: Status effects applied by this action
+
+    # Status Effect Entity - buffs/debuffs system
+    StatusEffect:
+      type: object
+      required:
+        - effect_type
+        - duration
+        - potency
+      properties:
+        effect_type:
+          type: string
+          enum: [poison, bleed, stun, buff_strength, buff_agility, heal_over_time, damage_over_time]
+          description: Type of status effect
+          example: "buff_strength"
+        duration:
+          type: integer
+          minimum: 0
+          description: Effect duration in combat rounds
+          example: 3
+        potency:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effect strength percentage
+          example: 25
+        source:
+          type: string
+          enum: [ability, item, environment, cyberware]
+          description: Source of the effect
+          example: "ability"
+
+    # Ability Entity - character abilities and skills
+    AbilityEntity:
+      allOf:
+        - $ref: '#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - name
+            - ability_type
+            - cooldown
+            - mana_cost
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Ability name
+              example: "Neural Overload"
+            ability_type:
+              type: string
+              enum: [offensive, defensive, healing, utility, passive]
+              description: Category of ability
+              example: "offensive"
+            cooldown:
+              type: integer
+              minimum: 0
+              description: Cooldown in combat rounds
+              example: 3
+            mana_cost:
+              type: integer
+              minimum: 0
+              description: Mana/stamina cost to use
+              example: 45
+            damage_type:
+              type: string
+              enum: [physical, energy, chemical, cyber, elemental]
+              description: Type of damage dealt
+              example: "cyber"
+            range:
+              type: integer
+              minimum: 0
+              description: Ability range in game units
+              example: 25
+            area_effect:
+              type: boolean
+              description: Whether ability affects multiple targets
+              example: false
+
+    # Inventory Item Entity - items in character inventory
+    InventoryItemEntity:
+      allOf:
+        - $ref: '#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - item_id
+            - quantity
+            - durability
+          properties:
+            item_id:
+              type: string
+              format: uuid
+              description: Reference to item definition
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            quantity:
+              type: integer
+              minimum: 1
+              description: Number of items in stack
+              example: 5
+            durability:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Item condition percentage
+              example: 87
+            equipped:
+              type: boolean
+              description: Whether item is currently equipped
+              example: true
+            enhancement_level:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Item enhancement/modification level
+              example: 2
+
+    # Quest Entity - game quests and missions
+    QuestEntity:
+      allOf:
+        - $ref: '#/components/schemas/GameEntity'
+        - type: object
+        - type: object
+          required:
+            - title
+            - description
+            - quest_type
+            - status
+            - objectives
+          properties:
+            title:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Quest title
+              example: "Corporate Espionage"
+            description:
+              type: string
+              minLength: 1
+              maxLength: 1000
+              description: Detailed quest description
+              example: "Infiltrate Arasaka corporation headquarters and extract sensitive data..."
+            quest_type:
+              type: string
+              enum: [main_story, side_quest, daily, event, faction]
+              description: Category of quest
+              example: "faction"
+            status:
+              type: string
+              enum: [available, active, completed, failed, expired]
+              description: Current quest status
+              example: "active"
+            objectives:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestObjective'
+              minItems: 1
+              description: Quest completion objectives
+            rewards:
+              $ref: '#/components/schemas/QuestRewards'
+            time_limit:
+              type: integer
+              minimum: 0
+              description: Time limit in hours (0 = no limit)
+              example: 168
+            faction_id:
+              type: string
+              format: uuid
+              description: Associated faction
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+
+    # Quest Objective - individual quest goals
+    QuestObjective:
+      type: object
+      required:
+        - description
+        - objective_type
+        - current_progress
+        - target_progress
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Objective description
+          example: "Hack 3 corporate terminals"
+        objective_type:
+          type: string
+          enum: [kill, collect, deliver, explore, interact, hack, craft]
+          description: Type of objective
+          example: "hack"
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current completion progress
+          example: 2
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Required completion target
+          example: 3
+
+    # Quest Rewards - quest completion rewards
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 2500
+        currency:
+          type: integer
+          minimum: 0
+          description: Currency reward
+          example: 15000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemEntity'
+          description: Item rewards
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Faction reputation change
+          example: 150

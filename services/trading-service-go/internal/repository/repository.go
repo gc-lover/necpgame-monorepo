@@ -226,3 +226,366 @@ func (r *Repository) GetTradeHistory(ctx context.Context, playerID uuid.UUID, li
 
 	return transactions, nil
 }
+
+// ============================================================================
+// TRADE ORDERS METHODS
+// ============================================================================
+
+// CreateTradeOrder creates a new trade order
+func (r *Repository) CreateTradeOrder(ctx context.Context, order *models.TradeOrder) error {
+	query := `
+		INSERT INTO trade_orders (
+			id, player_id, item_id, order_type, order_mode, item_name,
+			quantity, price, min_quantity, max_quantity, filled_quantity,
+			currency_type, is_active, is_partial, created_at, updated_at, expires_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+	`
+
+	_, err := r.db.Exec(ctx, query,
+		order.ID, order.PlayerID, order.ItemID, order.OrderType, order.OrderMode, order.ItemName,
+		order.Quantity, order.Price, order.MinQuantity, order.MaxQuantity, order.FilledQuantity,
+		order.CurrencyType, order.IsActive, order.IsPartial, order.CreatedAt, order.UpdatedAt, order.ExpiresAt)
+
+	if err != nil {
+		r.logger.Error("Failed to create trade order", zap.Error(err))
+		return fmt.Errorf("failed to create trade order: %w", err)
+	}
+
+	return nil
+}
+
+// GetTradeOrder retrieves a trade order by ID
+func (r *Repository) GetTradeOrder(ctx context.Context, orderID uuid.UUID) (*models.TradeOrder, error) {
+	query := `
+		SELECT id, player_id, item_id, order_type, order_mode, item_name,
+			   quantity, price, min_quantity, max_quantity, filled_quantity,
+			   currency_type, is_active, is_partial, created_at, updated_at, expires_at
+		FROM trade_orders WHERE id = $1
+	`
+
+	var order models.TradeOrder
+	err := r.db.QueryRow(ctx, query, orderID).Scan(
+		&order.ID, &order.PlayerID, &order.ItemID, &order.OrderType, &order.OrderMode, &order.ItemName,
+		&order.Quantity, &order.Price, &order.MinQuantity, &order.MaxQuantity, &order.FilledQuantity,
+		&order.CurrencyType, &order.IsActive, &order.IsPartial, &order.CreatedAt, &order.UpdatedAt, &order.ExpiresAt)
+
+	if err != nil {
+		r.logger.Error("Failed to get trade order", zap.Error(err))
+		return nil, fmt.Errorf("failed to get trade order: %w", err)
+	}
+
+	return &order, nil
+}
+
+// UpdateTradeOrder updates a trade order
+func (r *Repository) UpdateTradeOrder(ctx context.Context, order *models.TradeOrder) error {
+	query := `
+		UPDATE trade_orders
+		SET filled_quantity = $2, is_active = $3, updated_at = $4
+		WHERE id = $1
+	`
+
+	order.UpdatedAt = time.Now()
+	_, err := r.db.Exec(ctx, query, order.ID, order.FilledQuantity, order.IsActive, order.UpdatedAt)
+
+	if err != nil {
+		r.logger.Error("Failed to update trade order", zap.Error(err))
+		return fmt.Errorf("failed to update trade order: %w", err)
+	}
+
+	return nil
+}
+
+// CancelTradeOrder cancels an active trade order
+func (r *Repository) CancelTradeOrder(ctx context.Context, orderID uuid.UUID) error {
+	query := `
+		UPDATE trade_orders
+		SET is_active = false, updated_at = $2
+		WHERE id = $1 AND is_active = true
+	`
+
+	_, err := r.db.Exec(ctx, query, orderID, time.Now())
+
+	if err != nil {
+		r.logger.Error("Failed to cancel trade order", zap.Error(err))
+		return fmt.Errorf("failed to cancel trade order: %w", err)
+	}
+
+	return nil
+}
+
+// ListPlayerTradeOrders lists trade orders for a specific player
+func (r *Repository) ListPlayerTradeOrders(ctx context.Context, playerID uuid.UUID, status, orderType string) ([]*models.TradeOrder, error) {
+	query := `
+		SELECT id, player_id, item_id, order_type, order_mode, item_name,
+			   quantity, price, min_quantity, max_quantity, filled_quantity,
+			   currency_type, is_active, is_partial, created_at, updated_at, expires_at
+		FROM trade_orders
+		WHERE player_id = $1
+	`
+
+	args := []interface{}{playerID}
+	argCount := 1
+
+	if status != "" {
+		argCount++
+		query += fmt.Sprintf(" AND status = $%d", argCount)
+		args = append(args, status)
+	}
+
+	if orderType != "" {
+		argCount++
+		query += fmt.Sprintf(" AND order_type = $%d", argCount)
+		args = append(args, orderType)
+	}
+
+	query += " ORDER BY created_at DESC LIMIT 100"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		r.logger.Error("Failed to list trade orders", zap.Error(err))
+		return nil, fmt.Errorf("failed to list trade orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*models.TradeOrder
+	for rows.Next() {
+		var order models.TradeOrder
+		err := rows.Scan(
+			&order.ID, &order.PlayerID, &order.ItemID, &order.OrderType, &order.OrderMode, &order.ItemName,
+			&order.Quantity, &order.Price, &order.MinQuantity, &order.MaxQuantity, &order.FilledQuantity,
+			&order.CurrencyType, &order.IsActive, &order.IsPartial, &order.CreatedAt, &order.UpdatedAt, &order.ExpiresAt)
+		if err != nil {
+			r.logger.Error("Failed to scan trade order", zap.Error(err))
+			return nil, fmt.Errorf("failed to scan trade order: %w", err)
+		}
+		orders = append(orders, &order)
+	}
+
+	return orders, nil
+}
+
+// GetMatchingOrders retrieves orders that can be matched with the given order
+func (r *Repository) GetMatchingOrders(ctx context.Context, itemID uuid.UUID, orderType, orderMode string) ([]*models.TradeOrder, error) {
+	query := `
+		SELECT id, player_id, item_id, order_type, order_mode, item_name,
+			   quantity, price, min_quantity, max_quantity, filled_quantity,
+			   currency_type, is_active, is_partial, created_at, updated_at, expires_at
+		FROM trade_orders
+		WHERE item_id = $1 AND order_type = $2 AND order_mode = $3 AND is_active = true
+		AND expires_at > NOW()
+		ORDER BY
+			CASE WHEN order_type = 'buy' THEN -price ELSE price END,
+			created_at ASC
+		LIMIT 50
+	`
+
+	rows, err := r.db.Query(ctx, query, itemID, orderType, orderMode)
+	if err != nil {
+		r.logger.Error("Failed to get matching orders", zap.Error(err))
+		return nil, fmt.Errorf("failed to get matching orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*models.TradeOrder
+	for rows.Next() {
+		var order models.TradeOrder
+		err := rows.Scan(
+			&order.ID, &order.PlayerID, &order.ItemID, &order.OrderType, &order.OrderMode, &order.ItemName,
+			&order.Quantity, &order.Price, &order.MinQuantity, &order.MaxQuantity, &order.FilledQuantity,
+			&order.CurrencyType, &order.IsActive, &order.IsPartial, &order.CreatedAt, &order.UpdatedAt, &order.ExpiresAt)
+		if err != nil {
+			r.logger.Error("Failed to scan matching order", zap.Error(err))
+			return nil, fmt.Errorf("failed to scan matching order: %w", err)
+		}
+		orders = append(orders, &order)
+	}
+
+	return orders, nil
+}
+
+// ============================================================================
+// TRADE CONTRACTS METHODS
+// ============================================================================
+
+// CreateTradeContract creates a new trade contract
+func (r *Repository) CreateTradeContract(ctx context.Context, contract *models.TradeContract) error {
+	query := `
+		INSERT INTO trade_contracts (
+			id, seller_id, buyer_id, contract_type, status, item_name,
+			total_quantity, delivered_quantity, unit_price, escrow_amount,
+			delivery_deadline, expires_at, is_escrow_active, is_completed,
+			created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+	`
+
+	_, err := r.db.Exec(ctx, query,
+		contract.ID, contract.SellerID, contract.BuyerID, contract.ContractType, contract.Status, contract.ItemName,
+		contract.TotalQuantity, contract.DeliveredQuantity, contract.UnitPrice, contract.EscrowAmount,
+		contract.DeliveryDeadline, contract.ExpiresAt, contract.IsEscrowActive, contract.IsCompleted,
+		contract.CreatedAt, contract.UpdatedAt)
+
+	if err != nil {
+		r.logger.Error("Failed to create trade contract", zap.Error(err))
+		return fmt.Errorf("failed to create trade contract: %w", err)
+	}
+
+	return nil
+}
+
+// GetTradeContract retrieves a trade contract by ID
+func (r *Repository) GetTradeContract(ctx context.Context, contractID uuid.UUID) (*models.TradeContract, error) {
+	query := `
+		SELECT id, seller_id, buyer_id, contract_type, status, item_name,
+			   total_quantity, delivered_quantity, unit_price, escrow_amount,
+			   delivery_deadline, expires_at, is_escrow_active, is_completed,
+			   created_at, updated_at
+		FROM trade_contracts WHERE id = $1
+	`
+
+	var contract models.TradeContract
+	err := r.db.QueryRow(ctx, query, contractID).Scan(
+		&contract.ID, &contract.SellerID, &contract.BuyerID, &contract.ContractType, &contract.Status, &contract.ItemName,
+		&contract.TotalQuantity, &contract.DeliveredQuantity, &contract.UnitPrice, &contract.EscrowAmount,
+		&contract.DeliveryDeadline, &contract.ExpiresAt, &contract.IsEscrowActive, &contract.IsCompleted,
+		&contract.CreatedAt, &contract.UpdatedAt)
+
+	if err != nil {
+		r.logger.Error("Failed to get trade contract", zap.Error(err))
+		return nil, fmt.Errorf("failed to get trade contract: %w", err)
+	}
+
+	// Load deliveries
+	deliveries, err := r.getContractDeliveries(ctx, contractID)
+	if err != nil {
+		r.logger.Warn("Failed to load contract deliveries", zap.Error(err))
+	}
+	contract.Deliveries = deliveries
+
+	return &contract, nil
+}
+
+// getContractDeliveries retrieves deliveries for a contract
+func (r *Repository) getContractDeliveries(ctx context.Context, contractID uuid.UUID) ([]models.ContractDelivery, error) {
+	query := `SELECT id, contract_id, quantity, delivered_at, status FROM contract_deliveries WHERE contract_id = $1 ORDER BY delivered_at`
+
+	rows, err := r.db.Query(ctx, query, contractID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get contract deliveries: %w", err)
+	}
+	defer rows.Close()
+
+	var deliveries []models.ContractDelivery
+	for rows.Next() {
+		var delivery models.ContractDelivery
+		err := rows.Scan(&delivery.ID, &delivery.ContractID, &delivery.Quantity, &delivery.DeliveredAt, &delivery.Status)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan contract delivery: %w", err)
+		}
+		deliveries = append(deliveries, delivery)
+	}
+
+	return deliveries, nil
+}
+
+// ============================================================================
+// AUCTION METHODS
+// ============================================================================
+
+// CreateAuction creates a new auction
+func (r *Repository) CreateAuction(ctx context.Context, auction *models.Auction) error {
+	query := `
+		INSERT INTO auctions (
+			id, seller_id, item_id, item_name, auction_type, status,
+			starting_price, current_price, reserve_price, quantity,
+			created_at, updated_at, ends_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+	`
+
+	_, err := r.db.Exec(ctx, query,
+		auction.ID, auction.SellerID, auction.ItemID, auction.ItemName, auction.AuctionType, auction.Status,
+		auction.StartingPrice, auction.CurrentPrice, auction.ReservePrice, auction.Quantity,
+		auction.CreatedAt, auction.UpdatedAt, auction.EndsAt)
+
+	if err != nil {
+		r.logger.Error("Failed to create auction", zap.Error(err))
+		return fmt.Errorf("failed to create auction: %w", err)
+	}
+
+	return nil
+}
+
+// GetAuction retrieves an auction by ID
+func (r *Repository) GetAuction(ctx context.Context, auctionID uuid.UUID) (*models.Auction, error) {
+	query := `
+		SELECT id, seller_id, item_id, item_name, auction_type, status,
+			   starting_price, current_price, reserve_price, quantity,
+			   created_at, updated_at, ends_at, winner_id, final_price
+		FROM auctions WHERE id = $1
+	`
+
+	var auction models.Auction
+	err := r.db.QueryRow(ctx, query, auctionID).Scan(
+		&auction.ID, &auction.SellerID, &auction.ItemID, &auction.ItemName, &auction.AuctionType, &auction.Status,
+		&auction.StartingPrice, &auction.CurrentPrice, &auction.ReservePrice, &auction.Quantity,
+		&auction.CreatedAt, &auction.UpdatedAt, &auction.EndsAt, &auction.WinnerID, &auction.FinalPrice)
+
+	if err != nil {
+		r.logger.Error("Failed to get auction", zap.Error(err))
+		return nil, fmt.Errorf("failed to get auction: %w", err)
+	}
+
+	// Load bids
+	bids, err := r.getAuctionBids(ctx, auctionID)
+	if err != nil {
+		r.logger.Warn("Failed to load auction bids", zap.Error(err))
+	}
+	auction.Bids = bids
+
+	return &auction, nil
+}
+
+// PlaceAuctionBid places a bid on an auction
+func (r *Repository) PlaceAuctionBid(ctx context.Context, bid *models.AuctionBid) error {
+	// First, update the auction's current price
+	_, err := r.db.Exec(ctx, "UPDATE auctions SET current_price = $2, updated_at = $3 WHERE id = $1 AND current_price < $2",
+		bid.AuctionID, bid.Amount, time.Now())
+	if err != nil {
+		r.logger.Error("Failed to update auction price", zap.Error(err))
+		return fmt.Errorf("failed to update auction price: %w", err)
+	}
+
+	// Then, insert the bid
+	query := `INSERT INTO auction_bids (id, auction_id, bidder_id, amount, bid_time, is_winning) VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err = r.db.Exec(ctx, query, bid.ID, bid.AuctionID, bid.BidderID, bid.Amount, bid.BidTime, bid.IsWinning)
+	if err != nil {
+		r.logger.Error("Failed to place auction bid", zap.Error(err))
+		return fmt.Errorf("failed to place auction bid: %w", err)
+	}
+
+	return nil
+}
+
+// getAuctionBids retrieves bids for an auction
+func (r *Repository) getAuctionBids(ctx context.Context, auctionID uuid.UUID) ([]models.AuctionBid, error) {
+	query := `SELECT id, auction_id, bidder_id, amount, bid_time, is_winning FROM auction_bids WHERE auction_id = $1 ORDER BY bid_time DESC`
+
+	rows, err := r.db.Query(ctx, query, auctionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get auction bids: %w", err)
+	}
+	defer rows.Close()
+
+	var bids []models.AuctionBid
+	for rows.Next() {
+		var bid models.AuctionBid
+		err := rows.Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.BidTime, &bid.IsWinning)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan auction bid: %w", err)
+		}
+		bids = append(bids, bid)
+	}
+
+	return bids, nil
+}

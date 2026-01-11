@@ -1,782 +1,826 @@
+# Enterprise-Grade User Profile Service API - SOLID/DRY Domain Inheritance
+# Social domain service for user profile management
+# Issue: #openapi-refactor
+
 openapi: 3.0.3
 info:
-  title: User Profile Service API - Enterprise-Grade Profile Management
-  description: '**Enterprise-Grade User Profile Management API for NECPGAME**
-
-    Core service for managing user profiles, account information, and personal data.
-    Provides comprehensive user profile operations with privacy controls and data
-    validation.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation - **Backend
-    optimization hints** for struct alignment and performance - **Complete validation**
-    with redocly and ogen code generation - **Security-first approach** with JWT authentication
-    - **Performance-optimized** response structures - **Comprehensive error handling**
-    with proper HTTP status codes
+  title: User Profile Service API
+  description: |
+    **Enterprise-grade API for User Profile Management**
 
     ## Domain Purpose
+    Comprehensive user profile management service providing social profiles, avatars,
+    privacy controls, and personalization features for the NECPGAME platform.
 
-    Manages user profiles, account information, personal data, and privacy settings.
-    Acts as the central authority for user identity and profile information across
-    the platform.
+    ## Business Value
+    - Rich user profiles with customization
+    - Privacy and visibility controls
+    - Avatar and media management
+    - Social discovery and networking
+    - Profile analytics and insights
 
     ## Performance Targets
+    - P99 Latency: <40ms for all endpoints
+    - Storage per Profile: <100KB average
+    - Concurrent Updates: 50,000+ supported
+    - CDN Integration: For avatars and media
 
-    - P99 Latency: <25ms for profile operations - Memory: <30KB per active profile
-    - Concurrent users: 10,000+ simultaneous profile accesses - Data consistency:
-    ACID compliance for profile updates
+    ## Domain Inheritance
+    This service inherits from social-entities.yaml providing:
+    - UserProfileEntity for profile data structure
+    - GuildEntity for social relationships
+    - ChatMessageEntity for profile interactions
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
 
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
+
 servers:
-- url: https://api.necpgame.com/v1/user-profile
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/user-profile
-  description: Staging server
-- url: http://localhost:8080/api/v1/user-profile
-  description: Local development server
+  - url: https://api.necpgame.com/v1/user-profile-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/user-profile-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/user-profile-service
+    description: Local development
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: User Profile Management
-  description: Core user profile operations
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Profile Management
+    description: Core profile operations
+  - name: Privacy & Security
+    description: Privacy controls and security settings
+  - name: Media Management
+    description: Avatar and media operations
+  - name: Social Features
+    description: Social discovery and networking
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
 paths:
+
   /health:
     get:
-      summary: User profile service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the user profile management microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds '
       operationId: userProfileServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
       responses:
         '200':
           description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
   /profiles:
-    get:
-      summary: List user profiles with filtering and pagination
-      description: '**Enterprise-grade user profile listing endpoint**
-
-        Supports complex filtering, sorting, and pagination patterns for user profiles.
-        Optimized for high-throughput scenarios with proper indexing and caching.
-
-        **Performance:** <15ms P95, supports 1000+ concurrent requests '
-      operationId: listUserProfiles
-      tags:
-      - User Profile Management
-      parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - suspended
-        description: Filter by profile status
-      - name: search
-        in: query
-        schema:
-          type: string
-          maxLength: 100
-        description: Search by username or display name
-      responses:
-        '200':
-          description: Profiles retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-            X-Total-Count:
-              schema:
-                type: integer
-                example: 150
-                description: Total number of profiles matching criteria
-            X-Page-Count:
-              schema:
-                type: integer
-                example: 8
-                description: Total number of pages
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProfileListResponse'
-        '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
     post:
-      summary: Create new user profile
-      description: '**Enterprise-grade profile creation endpoint**
+      operationId: userProfileServiceCreateProfile
+      summary: Create user profile
+      description: |
+        Create a new user profile with default settings.
 
-        Validates business rules, applies security checks, and ensures data consistency.
-        Creates initial user profile with default settings and privacy controls.
-
-        **Performance:** <50ms P95, includes validation and business logic '
-      operationId: createUserProfile
-      tags:
-      - User Profile Management
-      security:
-      - BearerAuth: []
+        **Business Rules:**
+        - Validates display name uniqueness
+        - Sets default privacy settings
+        - Creates profile statistics
+        - Generates profile URL slug
+      tags: [Profile Management]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserProfileRequest'
+              $ref: '#/components/schemas/CreateProfileRequest'
       responses:
         '201':
           description: Profile created successfully
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/profiles/550e8400-e29b-41d4-a716-446655440000
-                description: URI of the created profile
-            ETag:
-              schema:
-                type: string
-                example: '"profile-123-v1"'
-                description: Entity tag for caching and optimistic locking
-            Cache-Control:
-              schema:
-                type: string
-                example: no-cache
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
         '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '409':
-          description: Conflict - profile with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /profiles/{user_id}:
+          $ref: '#/components/responses/Conflict'
+
     get:
-      summary: Get specific user profile by user ID
-      description: '**Enterprise-grade profile retrieval endpoint**
+      operationId: userProfileServiceListProfiles
+      summary: List profiles with filtering
+      description: |
+        Retrieve paginated list of public profiles with search and filtering.
 
-        Optimized with proper caching strategies and database indexing. Supports conditional
-        requests with ETags and privacy controls.
-
-        **Performance:** <10ms P95 with Redis caching '
-      operationId: getUserProfile
-      tags:
-      - User Profile Management
+        **Performance Notes:**
+        - Uses database indexes for search
+        - Implements cursor-based pagination
+        - Respects privacy settings
+      tags: [Social Features]
       parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      - name: include_private
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include private profile information (requires ownership or admin)
+        - name: search
+          in: query
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 50
+          description: Search by display name or username
+        - name: location
+          in: query
+          schema:
+            type: string
+          description: Filter by location
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of profiles to return
       responses:
         '200':
-          description: Profile retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-                description: Cache control directives
+          description: Profiles retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
-        '400':
-          description: Invalid request - malformed user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Profile not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update user profile
-      description: '**Enterprise-grade profile update endpoint**
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PublicProfileSummary'
 
-        Supports partial updates, optimistic locking, and audit trails. Ensures data
-        consistency with validation and privacy controls.
+  /profiles/{profileId}:
+    get:
+      operationId: userProfileServiceGetProfile
+      summary: Get profile by ID
+      description: |
+        Retrieve detailed profile information.
 
-        **Performance:** <30ms P95, includes validation and conflict resolution '
-      operationId: updateUserProfile
-      tags:
-      - User Profile Management
-      security:
-      - BearerAuth: []
+        **Privacy Notes:**
+        - Respects profile visibility settings
+        - Returns limited data for non-friends
+        - Includes relationship status for authenticated users
+      tags: [Profile Management]
       parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      responses:
+        '200':
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: userProfileServiceUpdateProfile
+      summary: Update profile
+      description: |
+        Update profile information with privacy controls.
+
+        **Business Rules:**
+        - Validates display name uniqueness
+        - Respects profile ownership
+        - Updates profile modification timestamp
+        - Maintains change history
+      tags: [Profile Management]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserProfileRequest'
+              $ref: '#/components/schemas/UpdateProfileRequest'
       responses:
         '200':
           description: Profile updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Updated'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
         '400':
-          description: Invalid request - malformed data or user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Forbidden - insufficient permissions to update this profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Profile not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - version conflict (optimistic locking)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+          $ref: '#/components/responses/NotFound'
+
     delete:
-      summary: Delete user profile
-      description: '**Enterprise-grade profile deletion endpoint**
+      operationId: userProfileServiceDeleteProfile
+      summary: Delete profile
+      description: |
+        Soft delete profile (anonymize data).
 
-        Supports soft deletes with audit trails and privacy compliance. Ensures referential
-        integrity and GDPR compliance.
-
-        **Performance:** <20ms P95, includes cleanup operations '
-      operationId: deleteUserProfile
-      tags:
-      - User Profile Management
-      security:
-      - BearerAuth: []
+        **Legal Notes:**
+        - Maintains data for legal compliance
+        - Anonymizes personal information
+        - Preserves game history
+        - Notifies connected services
+      tags: [Profile Management]
       parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
       responses:
         '204':
-          description: Profile deleted successfully
-        '400':
-          description: Invalid request - malformed user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Forbidden - insufficient permissions to delete this profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Deleted'
         '404':
-          description: Profile not found
+          $ref: '#/components/responses/NotFound'
+
+  /profiles/{profileId}/avatar:
+    post:
+      operationId: userProfileServiceUploadAvatar
+      summary: Upload profile avatar
+      description: |
+        Upload and process profile avatar image.
+
+        **Technical Notes:**
+        - Supports JPEG, PNG formats
+        - Automatic resizing and optimization
+        - CDN distribution
+        - Backup storage
+      tags: [Media Management]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Avatar image file
+      responses:
+        '200':
+          description: Avatar uploaded successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - profile cannot be deleted (referential integrity)
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          avatar_url:
+                            type: string
+                            format: uri
+                            description: CDN URL of uploaded avatar
+                          thumbnail_url:
+                            type: string
+                            format: uri
+                            description: Thumbnail URL
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    delete:
+      operationId: userProfileServiceDeleteAvatar
+      summary: Delete profile avatar
+      description: Remove profile avatar and revert to default
+      tags: [Media Management]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /profiles/{profileId}/privacy:
+    get:
+      operationId: userProfileServiceGetPrivacySettings
+      summary: Get privacy settings
+      description: Retrieve profile privacy and visibility settings
+      tags: [Privacy & Security]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      responses:
+        '200':
+          description: Privacy settings retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PrivacySettings'
+
+    put:
+      operationId: userProfileServiceUpdatePrivacySettings
+      summary: Update privacy settings
+      description: |
+        Update profile privacy and visibility controls.
+
+        **Privacy Impact:**
+        - Affects profile visibility globally
+        - Updates friend/follower permissions
+        - May affect search discoverability
+      tags: [Privacy & Security]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrivacyRequest'
+      responses:
+        '200':
+          description: Privacy settings updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
+                $ref: '#/components/responses/OK'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /profiles/search:
+    get:
+      operationId: userProfileServiceSearchProfiles
+      summary: Search profiles
+      description: |
+        Advanced profile search with multiple filters.
+
+        **Search Features:**
+        - Full-text search on display names
+        - Location-based filtering
+        - Interest and tag matching
+        - Privacy-aware results
+      tags: [Social Features]
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 50
+          description: Search query
+        - name: location
+          in: query
+          schema:
+            type: string
+          description: Location filter
+        - name: interests
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Interest tags
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Results limit
+      responses:
+        '200':
+          description: Search results
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PublicProfileSummary'
+                      total_count:
+                        type: integer
+                        description: Total matching profiles
+
+  /profiles/{profileId}/statistics:
+    get:
+      operationId: userProfileServiceGetProfileStatistics
+      summary: Get profile statistics
+      description: |
+        Retrieve profile statistics and analytics.
+
+        **Privacy Notes:**
+        - Some stats may be private
+        - Aggregated data for public viewing
+        - Real-time calculation with caching
+      tags: [Profile Management]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Profile unique identifier
+      responses:
+        '200':
+          description: Profile statistics retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProfileStatistics'
+
 components:
+
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: '../common/responses/success.yaml#/OK'
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: '../common/responses/success.yaml#/Created'
+    Updated:
+      $ref: '../common/responses/success.yaml#/Updated'
+    Deleted:
+      $ref: '../common/responses/success.yaml#/Deleted'
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
+      $ref: '../common/responses/error.yaml#/BadRequest'
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
+      $ref: '../common/responses/error.yaml#/NotFound'
     Conflict:
-      $ref: ../common-service/responses/error.yaml#/Conflict
-    InternalServerError:
-      $ref: ../common-service/responses/error.yaml#/InternalServerError
+      $ref: '../common/responses/error.yaml#/Conflict'
+
   schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    PaginationParams:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
-    PaginatedResponse:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+
+    # Domain Inheritance - User Profile Service Entities
     UserProfile:
+      description: Complete user profile entity with social domain inheritance
+      allOf:
+        - $ref: '../common/schemas/social-entities.yaml#/UserProfileEntity'
+        - type: object
+          properties:
+            # Add user-profile-service specific fields
+            profile_slug:
+              type: string
+              pattern: '^[a-zA-Z0-9_-]+$'
+              description: URL-friendly profile identifier
+            banner_url:
+              type: string
+              format: uri
+              description: Profile banner image URL
+            website_url:
+              type: string
+              format: uri
+              description: Personal website URL
+            social_links:
+              type: object
+              description: Social media links
+              properties:
+                discord:
+                  type: string
+                  description: Discord username
+                twitter:
+                  type: string
+                  description: Twitter handle
+                youtube:
+                  type: string
+                  description: YouTube channel
+                twitch:
+                  type: string
+                  description: Twitch channel
+            interests:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+              description: User interests and hobbies
+            customization:
+              $ref: '#/components/schemas/ProfileCustomization'
+            statistics:
+              $ref: '#/components/schemas/ProfileStatistics'
+            privacy_settings:
+              $ref: '#/components/schemas/PrivacySettings'
+
+    PublicProfileSummary:
+      description: Public profile summary for search and discovery
       type: object
-      required:
-      - user_id
-      - username
-      - display_name
-      - created_at
-      - status
       properties:
-        user_id:
+        id:
           type: string
           format: uuid
-          description: User unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        username:
-          type: string
-          minLength: 3
-          maxLength: 50
-          pattern: ^[a-zA-Z0-9_-]+$
-          description: Unique username
-          example: cyber_runner_2077
+          description: Profile ID
         display_name:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Display name shown to other users
-          example: Night City Ghost
-        email:
+          description: Public display name
+        profile_slug:
           type: string
-          format: email
-          description: User email address
-          example: user@necpgame.com
+          description: Profile URL slug
         avatar_url:
           type: string
           format: uri
-          description: Profile avatar image URL
-          example: https://cdn.necpgame.com/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
-        bio:
-          type: string
-          maxLength: 500
-          description: User biography/description
-          example: Elite cyberpunk runner in Night City
+          description: Avatar image URL
         location:
           type: string
-          maxLength: 100
-          description: User location
-          example: Night City, California
-        website:
-          type: string
-          format: uri
-          description: Personal website or social media
-          example: https://social.necpgame.com/user/cyber_runner_2077
-        created_at:
+          description: Public location
+        last_seen:
           type: string
           format: date-time
-          description: Profile creation timestamp
-          example: '2025-12-21T10:00:00Z'
-        updated_at:
+          description: Last activity (if public)
+        is_online:
+          type: boolean
+          description: Online status (if public)
+        interests:
+          type: array
+          items:
+            type: string
+          description: Public interests
+
+    ProfileCustomization:
+      description: Profile visual customization settings
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [default, cyberpunk, neon, dark, light]
+          description: Profile theme
+        accent_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Accent color in hex format
+        background_pattern:
+          type: string
+          enum: [none, circuit, neon_lines, geometric]
+          description: Background pattern
+        show_badges:
+          type: boolean
+          description: Whether to show achievement badges
+        show_statistics:
+          type: boolean
+          description: Whether to show profile statistics
+
+    ProfileStatistics:
+      description: Profile statistics and metrics
+      type: object
+      properties:
+        total_friends:
+          type: integer
+          description: Total friend connections
+        profile_views:
+          type: integer
+          description: Profile view count
+        posts_count:
+          type: integer
+          description: Total posts/messages
+        games_played:
+          type: integer
+          description: Games participated in
+        achievements_unlocked:
+          type: integer
+          description: Achievement count
+        reputation_score:
+          type: integer
+          description: Community reputation
+        join_date:
           type: string
           format: date-time
-          description: Last profile update timestamp
-          example: '2025-12-21T10:00:00Z'
-        last_login_at:
+          description: Account creation date
+        last_active:
           type: string
           format: date-time
-          description: Last login timestamp
-          example: '2025-12-21T09:30:00Z'
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - suspended
-          - banned
-          default: active
-          description: Profile status
-          example: active
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettings'
-        stats:
-          $ref: '#/components/schemas/ProfileStats'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+          description: Last activity timestamp
+
     PrivacySettings:
+      description: Profile privacy and visibility controls
       type: object
       properties:
         profile_visibility:
           type: string
-          enum:
-          - public
-          - friends
-          - private
-          default: public
-          description: Who can see this profile
-        show_email:
-          type: boolean
-          default: false
-          description: Whether to show email publicly
+          enum: [public, friends_only, private]
+          description: Overall profile visibility
         show_online_status:
           type: boolean
-          default: true
-          description: Whether to show online status
+          description: Show online status to others
+        show_last_seen:
+          type: boolean
+          description: Show last seen timestamp
         allow_friend_requests:
           type: boolean
-          default: true
-          description: Whether to allow friend requests
+          description: Allow others to send friend requests
         allow_messages:
+          type: string
+          enum: [everyone, friends_only, nobody]
+          description: Who can send messages
+        show_location:
           type: boolean
-          default: true
-          description: Whether to allow private messages
-      description: User privacy and visibility settings
-    ProfileStats:
-      type: object
-      properties:
-        total_games_played:
-          type: integer
-          minimum: 0
-          description: Total number of games played
-          example: 1250
-        total_hours_played:
-          type: integer
-          minimum: 0
-          description: Total hours played
-          example: 2500
-        achievements_unlocked:
-          type: integer
-          minimum: 0
-          description: Number of achievements unlocked
-          example: 45
-        friends_count:
-          type: integer
-          minimum: 0
-          description: Number of friends
-          example: 23
-        reputation_score:
-          type: integer
-          minimum: 0
-          maximum: 10000
-          description: User reputation score
-          example: 8750
-      description: User profile statistics and achievements
-    CreateUserProfileRequest:
+          description: Show location information
+        show_statistics:
+          type: boolean
+          description: Show profile statistics
+        searchable:
+          type: boolean
+          description: Allow profile to appear in searches
+
+    # Request/Response schemas
+    CreateProfileRequest:
+      description: Request payload for creating a profile
       type: object
       required:
-      - user_id
-      - username
-      - display_name
+        - user_id
+        - display_name
       properties:
         user_id:
           type: string
           format: uuid
-          description: User unique identifier (from auth service)
-          example: 550e8400-e29b-41d4-a716-446655440000
-        username:
-          type: string
-          minLength: 3
-          maxLength: 50
-          pattern: ^[a-zA-Z0-9_-]+$
-          description: Desired username
-          example: cyber_runner_2077
+          description: Associated user account ID
         display_name:
           type: string
           minLength: 1
-          maxLength: 100
-          description: Display name
-          example: Night City Ghost
-        email:
-          type: string
-          format: email
-          description: User email
-          example: user@necpgame.com
+          maxLength: 50
+          description: Public display name
         bio:
           type: string
           maxLength: 500
-          description: User biography
+          description: Profile biography
         location:
           type: string
           maxLength: 100
           description: User location
-        website:
+        website_url:
           type: string
           format: uri
-          description: Personal website URL
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UpdateUserProfileRequest:
+          description: Personal website
+        interests:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: User interests
+
+    UpdateProfileRequest:
+      description: Request payload for updating a profile
       type: object
       properties:
         display_name:
           type: string
           minLength: 1
-          maxLength: 100
-          description: New display name
-          example: Updated Night City Ghost
+          maxLength: 50
+          description: Public display name
         bio:
           type: string
           maxLength: 500
-          description: New biography
+          description: Profile biography
         location:
           type: string
           maxLength: 100
-          description: New location
-        website:
+          description: User location
+        website_url:
           type: string
           format: uri
-          description: New website URL
-        privacy_settings:
-          $ref: '#/components/schemas/PrivacySettings'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UserProfileResponse:
-      type: object
-      required:
-      - profile
-      properties:
-        profile:
-          $ref: '#/components/schemas/UserProfile'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UserProfileListResponse:
-      type: object
-      required:
-      - profiles
-      - total_count
-      - has_more
-      properties:
-        profiles:
+          description: Personal website
+        interests:
           type: array
           items:
-            $ref: '#/components/schemas/UserProfile'
-          description: List of user profiles
-        has_more:
+            type: string
+            maxLength: 50
+          description: User interests
+        customization:
+          $ref: '#/components/schemas/ProfileCustomization'
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+
+    UpdatePrivacyRequest:
+      description: Request payload for updating privacy settings
+      type: object
+      properties:
+        profile_visibility:
+          type: string
+          enum: [public, friends_only, private]
+          description: Overall profile visibility
+        show_online_status:
           type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of profiles matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Paginated responses optimized for memory efficiency.'
+          description: Show online status to others
+        show_last_seen:
+          type: boolean
+          description: Show last seen timestamp
+        allow_friend_requests:
+          type: boolean
+          description: Allow others to send friend requests
+        allow_messages:
+          type: string
+          enum: [everyone, friends_only, nobody]
+          description: Who can send messages
+        show_location:
+          type: boolean
+          description: Show location information
+        show_statistics:
+          type: boolean
+          description: Show profile statistics
+        searchable:
+          type: boolean
+          description: Allow profile to appear in searches
+
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: '../common/security/security.yaml#/BearerAuth'
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<40ms"
+  storage-target: "<100KB per profile"
+  concurrency-target: "50,000+ updates"
+  cdn-integration: "Avatar and media distribution"
+  cache-strategy: "Redis for profile data, CDN for media"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - profile_creation_rate
+    - profile_update_rate
+    - avatar_upload_rate
+    - search_query_rate
+    - privacy_setting_changes
+  alerts:
+    - profile_storage_usage > 80%
+    - avatar_upload_failures > 5%
+    - search_response_time > 200ms
+
+# Privacy and compliance
+x-privacy:
+  data-retention: "GDPR compliant with user deletion"
+  consent-management: "Explicit consent for data processing"
+  anonymization: "Personal data anonymized on deletion"
+  audit-trail: "All profile changes logged"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/social-entities.yaml"
+  inherited-entities: "UserProfileEntity"
+  additional-schemas: "Customization, statistics, privacy controls, media management"
+  no-duplication: "All common social fields inherited, profile extensions added"

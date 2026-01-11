@@ -1,6 +1,6 @@
 module necpgame/services/global-state-service-go
 
-go 1.24.0
+go 1.21
 
 require (
 	github.com/go-faster/errors v0.7.1
@@ -8,9 +8,12 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.4
 	github.com/ogen-go/ogen v1.18.0
+	github.com/prometheus/client_golang v1.19.0
+	github.com/redis/go-redis/v9 v9.5.1
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/metric v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
+	go.uber.org/zap v1.27.0
 )
 
 require (

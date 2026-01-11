@@ -1,0 +1,642 @@
+# Social Domain Entities - SOLID/DRY Foundation
+# These entities are inherited by all social-related services
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Base Social Entity - inherited by all social objects
+    SocialEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for social entity
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-01-15T14:20:00Z"
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+
+    # User Profile Entity - comprehensive player profile
+    UserProfileEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - user_id
+            - display_name
+            - profile_visibility
+          properties:
+            user_id:
+              type: string
+              format: uuid
+              description: Reference to user account
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            display_name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              pattern: '^[a-zA-Z0-9_\-\.]+$'
+              description: Public display name
+              example: "NightRunner_2077"
+            profile_visibility:
+              type: string
+              enum: [public, friends_only, private]
+              description: Profile visibility settings
+              example: "friends_only"
+            bio:
+              type: string
+              maxLength: 500
+              description: User biography/description
+              example: "Street samurai from Night City. Looking for the next big score."
+            avatar_url:
+              type: string
+              format: uri
+              description: Profile avatar image URL
+              example: "https://cdn.necpgame.com/avatars/nightrunner_2077.jpg"
+            banner_url:
+              type: string
+              format: uri
+              description: Profile banner image URL
+              example: "https://cdn.necpgame.com/banners/cyberpunk_city.jpg"
+            location:
+              type: string
+              maxLength: 100
+              description: User's claimed location
+              example: "Night City, Badlands"
+            timezone:
+              type: string
+              description: User's timezone
+              example: "America/New_York"
+            languages:
+              type: array
+              items:
+                type: string
+                enum: [en, es, zh, ja, ru, de, fr, pl, ko, pt]
+              description: Languages the user speaks
+              example: ["en", "es"]
+            last_seen:
+              type: string
+              format: date-time
+              description: Last activity timestamp
+              example: "2024-01-15T16:45:00Z"
+            is_online:
+              type: boolean
+              description: Whether user is currently online
+              example: true
+
+    # Guild Entity - player organizations and clans
+    GuildEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - name
+            - leader_id
+            - guild_type
+            - member_count
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              pattern: '^[a-zA-Z0-9_\-\s]+$'
+              description: Guild name
+              example: "Night City Nomads"
+            leader_id:
+              type: string
+              format: uuid
+              description: Guild leader user ID
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            guild_type:
+              type: string
+              enum: [mercenary, corporation, nomad, gang, faction_allied, independent]
+              description: Type of guild organization
+              example: "nomad"
+            description:
+              type: string
+              maxLength: 1000
+              description: Guild description and manifesto
+              example: "We are the nomads of the digital wasteland..."
+            motto:
+              type: string
+              maxLength: 200
+              description: Guild motto or slogan
+              example: "Adapt or die in the Net"
+            member_count:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Current number of members
+              example: 47
+            max_members:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Maximum allowed members
+              example: 100
+            reputation:
+              type: integer
+              minimum: -10000
+              maximum: 10000
+              description: Guild reputation score
+              example: 2450
+            level:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: Guild level
+              example: 12
+            experience:
+              type: integer
+              minimum: 0
+              description: Guild experience points
+              example: 125000
+            headquarters_location:
+              type: string
+              format: uuid
+              description: Guild headquarters location ID
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            emblem_url:
+              type: string
+              format: uri
+              description: Guild emblem/badge image URL
+              example: "https://cdn.necpgame.com/guilds/nomads_emblem.png"
+            banner_url:
+              type: string
+              format: uri
+              description: Guild banner image URL
+              example: "https://cdn.necpgame.com/guilds/nomads_banner.jpg"
+            join_policy:
+              type: string
+              enum: [open, invite_only, application_required, closed]
+              description: How new members can join
+              example: "application_required"
+            minimum_level:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Minimum character level to join
+              example: 10
+            application_fee:
+              type: integer
+              minimum: 0
+              description: Fee to submit join application
+              example: 50000
+
+    # Chat Message Entity - messaging system
+    ChatMessageEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - sender_id
+            - channel_id
+            - content
+            - message_type
+          properties:
+            sender_id:
+              type: string
+              format: uuid
+              description: User who sent the message
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            channel_id:
+              type: string
+              format: uuid
+              description: Chat channel/room identifier
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            content:
+              type: string
+              minLength: 1
+              maxLength: 2000
+              description: Message content
+              example: "Watch out for Arasaka patrols in the badlands!"
+            message_type:
+              type: string
+              enum: [text, system, emote, location, item_share, quest_invite]
+              description: Type of message
+              example: "text"
+            is_edited:
+              type: boolean
+              description: Whether message was edited
+              example: false
+            edited_at:
+              type: string
+              format: date-time
+              description: When message was last edited
+              example: "2024-01-15T15:30:00Z"
+            reply_to_message_id:
+              type: string
+              format: uuid
+              description: ID of message this is replying to
+              example: "f6g7h8i9-j0k1-2345-f012-678901234567"
+            mentions:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: User IDs mentioned in message
+              example: ["g7h8i9j0-k1l2-3456-0123-456789012345"]
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/MessageAttachment'
+              description: Files/images attached to message
+            reactions:
+              type: object
+              description: Message reactions/emojis
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              example: {"thumbs_up": ["user1", "user2"], "laugh": ["user3"]}
+
+    # Message Attachment - files/images in messages
+    MessageAttachment:
+      type: object
+      required:
+        - attachment_type
+        - url
+        - filename
+      properties:
+        attachment_type:
+          type: string
+          enum: [image, video, file, location_pin, item_link, quest_link]
+          description: Type of attachment
+          example: "image"
+        url:
+          type: string
+          format: uri
+          description: Attachment URL
+          example: "https://cdn.necpgame.com/attachments/screenshot_2024_01_15.png"
+        filename:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Original filename
+          example: "cyberpunk_screenshot.png"
+        size_bytes:
+          type: integer
+          minimum: 0
+          description: File size in bytes
+          example: 2048576
+        thumbnail_url:
+          type: string
+          format: uri
+          description: Thumbnail URL for images/videos
+          example: "https://cdn.necpgame.com/thumbnails/screenshot_thumb.jpg"
+
+    # Chat Channel Entity - chat rooms and channels
+    ChatChannelEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - name
+            - channel_type
+            - owner_id
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              pattern: '^[a-zA-Z0-9_\-\s]+$'
+              description: Channel name
+              example: "Night City General"
+            channel_type:
+              type: string
+              enum: [public, private, guild, faction, direct_message, system]
+              description: Type of chat channel
+              example: "guild"
+            owner_id:
+              type: string
+              format: uuid
+              description: Channel owner/creator
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            description:
+              type: string
+              maxLength: 500
+              description: Channel description
+              example: "General discussion for Night City residents"
+            member_count:
+              type: integer
+              minimum: 0
+              maximum: 10000
+              description: Number of members in channel
+              example: 234
+            max_members:
+              type: integer
+              minimum: 0
+              maximum: 10000
+              description: Maximum allowed members (0 = unlimited)
+              example: 1000
+            is_archived:
+              type: boolean
+              description: Whether channel is archived
+              example: false
+            last_message_at:
+              type: string
+              format: date-time
+              description: Timestamp of last message
+              example: "2024-01-15T16:50:00Z"
+            message_count:
+              type: integer
+              minimum: 0
+              description: Total messages in channel
+              example: 15432
+            permissions:
+              $ref: '#/components/schemas/ChannelPermissions'
+            parent_channel_id:
+              type: string
+              format: uuid
+              description: Parent channel for threaded conversations
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+
+    # Channel Permissions - access control for channels
+    ChannelPermissions:
+      type: object
+      properties:
+        can_send_messages:
+          type: boolean
+          description: Permission to send messages
+          example: true
+        can_read_messages:
+          type: boolean
+          description: Permission to read messages
+          example: true
+        can_invite_users:
+          type: boolean
+          description: Permission to invite new members
+          example: false
+        can_kick_users:
+          type: boolean
+          description: Permission to remove members
+          example: false
+        can_modify_channel:
+          type: boolean
+          description: Permission to edit channel settings
+          example: false
+        can_delete_messages:
+          type: boolean
+          description: Permission to delete messages
+          example: false
+        required_role_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Minimum role level required to join
+          example: 5
+
+    # Friend Relationship Entity - friendships between players
+    FriendRelationshipEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+        - type: object
+          required:
+            - user_id
+            - friend_id
+            - relationship_type
+            - status
+          properties:
+            user_id:
+              type: string
+              format: uuid
+              description: First user in relationship
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            friend_id:
+              type: string
+              format: uuid
+              description: Second user in relationship
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            relationship_type:
+              type: string
+              enum: [friend, blocked, muted, favorite]
+              description: Type of relationship
+              example: "friend"
+            status:
+              type: string
+              enum: [pending, accepted, declined, blocked]
+              description: Relationship status
+              example: "accepted"
+            initiated_by:
+              type: string
+              format: uuid
+              description: Which user initiated the relationship
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            friendship_level:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Strength of friendship (1-10 scale)
+              example: 7
+            trust_level:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Trust percentage between players
+              example: 85
+            shared_activities:
+              type: integer
+              minimum: 0
+              description: Number of shared quests/activities
+              example: 23
+            last_interaction:
+              type: string
+              format: date-time
+              description: Last time users interacted
+              example: "2024-01-15T14:20:00Z"
+            notes:
+              type: string
+              maxLength: 500
+              description: Personal notes about the friend
+              example: "Great hacker, helped me with the Arasaka job"
+
+    # Social Event Entity - parties, tournaments, gatherings
+    SocialEventEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - title
+            - event_type
+            - organizer_id
+            - start_time
+            - max_participants
+          properties:
+            title:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Event title
+              example: "Night City Cyberpunk Tournament"
+            description:
+              type: string
+              maxLength: 1000
+              description: Detailed event description
+              example: "Monthly PvP tournament in the Combat Zone..."
+            event_type:
+              type: string
+              enum: [tournament, party, raid, meeting, concert, exhibition]
+              description: Type of social event
+              example: "tournament"
+            organizer_id:
+              type: string
+              format: uuid
+              description: User organizing the event
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            start_time:
+              type: string
+              format: date-time
+              description: When event starts
+              example: "2024-01-20T20:00:00Z"
+            end_time:
+              type: string
+              format: date-time
+              description: When event ends
+              example: "2024-01-20T23:00:00Z"
+            location_id:
+              type: string
+              format: uuid
+              description: In-game location of event
+              example: "f6g7h8i9-j0k1-2345-f012-678901234567"
+            max_participants:
+              type: integer
+              minimum: 2
+              maximum: 1000
+              description: Maximum number of participants
+              example: 64
+            current_participants:
+              type: integer
+              minimum: 0
+              description: Currently registered participants
+              example: 47
+            participant_list:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: List of confirmed participants
+            entry_fee:
+              type: integer
+              minimum: 0
+              description: Cost to participate
+              example: 10000
+            prizes:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventPrize'
+              description: Event prizes/rewards
+            status:
+              type: string
+              enum: [planning, open, full, in_progress, completed, cancelled]
+              description: Event status
+              example: "open"
+            visibility:
+              type: string
+              enum: [public, guild_only, invite_only, private]
+              description: Who can see and join the event
+              example: "public"
+
+    # Event Prize - rewards for event participants
+    EventPrize:
+      type: object
+      required:
+        - rank
+        - reward_type
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Placement rank for this prize
+          example: 1
+        reward_type:
+          type: string
+          enum: [currency, item, title, reputation, experience]
+          description: Type of reward
+          example: "currency"
+        reward_value:
+          type: integer
+          minimum: 0
+          description: Reward amount/value
+          example: 500000
+        reward_item_id:
+          type: string
+          format: uuid
+          description: Item ID if reward is an item
+          example: "g7h8i9j0-k1l2-3456-0123-456789012345"
+        description:
+          type: string
+          maxLength: 200
+          description: Prize description
+          example: "1st Place Champion Trophy"
+
+    # Reputation Entity - social reputation system
+    ReputationEntity:
+      allOf:
+        - $ref: '#/components/schemas/SocialEntity'
+        - type: object
+          required:
+            - subject_id
+            - target_id
+            - reputation_type
+            - score
+          properties:
+            subject_id:
+              type: string
+              format: uuid
+              description: Entity whose reputation is being rated
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            target_id:
+              type: string
+              format: uuid
+              description: Entity giving the reputation rating
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            reputation_type:
+              type: string
+              enum: [player, guild, faction, trader, mercenary, hacker]
+              description: Type of reputation being rated
+              example: "trader"
+            score:
+              type: integer
+              minimum: -100
+              maximum: 100
+              description: Reputation score (-100 to +100)
+              example: 75
+            context:
+              type: string
+              enum: [trade, quest, combat, social, general]
+              description: Context in which reputation was earned
+              example: "trade"
+            comment:
+              type: string
+              maxLength: 500
+              description: Optional comment with reputation rating
+              example: "Reliable trader, fair prices, good communication"
+            transaction_id:
+              type: string
+              format: uuid
+              description: Related transaction/quest ID
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            is_anonymous:
+              type: boolean
+              description: Whether reputation rating is anonymous
+              example: false

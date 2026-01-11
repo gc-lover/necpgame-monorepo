@@ -12,12 +12,14 @@ import (
 )
 
 // Service handles business logic for global state management
+// PERFORMANCE: Enterprise-grade service with multi-level caching and MMOFPS optimizations
 type Service struct {
 	repo            *repository.Repository
 	stateCache      *StateCache
 	eventBuffer     *EventBuffer
 	memoryPools     *MemoryPools
 	circuitBreaker  *CircuitBreaker
+	logger          *zap.Logger
 }
 
 // StateCache provides multi-level caching for state data
@@ -50,7 +52,7 @@ type CircuitBreaker struct {
 }
 
 // NewService creates a new service instance with MMOFPS optimizations
-func NewService(repo *repository.Repository) *Service {
+func NewService(repo *repository.Repository, logger *zap.Logger) *Service {
 	return &Service{
 		repo: repo,
 		stateCache: &StateCache{
@@ -87,6 +89,7 @@ func NewService(repo *repository.Repository) *Service {
 			threshold: 5,
 			timeout:   30 * time.Second,
 		},
+		logger: logger,
 	}
 }
 
@@ -98,6 +101,9 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 
 	// Check circuit breaker
 	if !s.circuitBreaker.Allow() {
+		s.logger.Warn("Circuit breaker open, rejecting request",
+			zap.String("aggregate_type", aggregateType),
+			zap.String("aggregate_id", aggregateID))
 		return nil, nil, fmt.Errorf("circuit breaker open: service temporarily unavailable")
 	}
 
@@ -106,12 +112,20 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	s.stateCache.l1Mutex.RLock()
 	if cached, exists := s.stateCache.l1Cache[cacheKey]; exists {
 		s.stateCache.l1Mutex.RUnlock()
+		s.logger.Debug("L1 cache hit",
+			zap.String("aggregate_type", aggregateType),
+			zap.String("aggregate_id", aggregateID))
+
 		var events []*repository.GameEvent
 		if includeEvents {
 			var err error
 			events, _, err = s.repo.GetAggregateEvents(ctx, aggregateType, aggregateID, nil, nil, 100, 0)
 			if err != nil {
 				s.recordFailure()
+				s.logger.Error("Failed to get events for cached state",
+					zap.Error(err),
+					zap.String("aggregate_type", aggregateType),
+					zap.String("aggregate_id", aggregateID))
 				return nil, nil, fmt.Errorf("failed to get events: %w", err)
 			}
 		}
@@ -119,10 +133,14 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	}
 	s.stateCache.l1Mutex.RUnlock()
 
-	// Get from repository
+	// Get from repository (L2 cache or database)
 	state, err := s.repo.GetAggregateState(ctx, aggregateType, aggregateID, version)
 	if err != nil {
 		s.recordFailure()
+		s.logger.Error("Failed to get aggregate state from repository",
+			zap.Error(err),
+			zap.String("aggregate_type", aggregateType),
+			zap.String("aggregate_id", aggregateID))
 		return nil, nil, fmt.Errorf("failed to get aggregate state: %w", err)
 	}
 
@@ -130,6 +148,11 @@ func (s *Service) GetAggregateState(ctx context.Context, aggregateType, aggregat
 	s.stateCache.l1Mutex.Lock()
 	s.stateCache.l1Cache[cacheKey] = state
 	s.stateCache.l1Mutex.Unlock()
+
+	s.logger.Debug("Cached state in L1",
+		zap.String("aggregate_type", aggregateType),
+		zap.String("aggregate_id", aggregateID),
+		zap.Int64("version", state.Version))
 
 	var events []*repository.GameEvent
 	if includeEvents {

@@ -15,6 +15,12 @@ tags:
     description: Управление торговыми сессиями
   - name: Trade History
     description: История сделок
+  - name: Trade Orders
+    description: Торговые заказы и ордерная книга
+  - name: Trade Contracts
+    description: Долгосрочные торговые контракты
+  - name: Auctions
+    description: Аукционы для редких предметов
 paths:
   /health:
     get:
@@ -221,6 +227,264 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TradeHistoryResponse'
+
+  # ============================================================================
+  # TRADE ORDERS ENDPOINTS
+  # ============================================================================
+  /api/v1/trade/orders:
+    post:
+      tags:
+        - Trade Orders
+      summary: Создать торговый заказ
+      operationId: CreateTradeOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeOrderRequest'
+      responses:
+        '200':
+          description: Торговый заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTradeOrderResponse'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Trade Orders
+      summary: Получить список торговых заказов
+      operationId: ListTradeOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: orderType
+          in: query
+          schema:
+            type: string
+            enum: [buy, sell]
+      responses:
+        '200':
+          description: Список торговых заказов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeOrdersListResponse'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/trade/orders/{orderId}:
+    get:
+      tags:
+        - Trade Orders
+      summary: Получить торговый заказ по ID
+      operationId: GetTradeOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали торгового заказа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeOrderResponse'
+        '404':
+          description: Заказ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Trade Orders
+      summary: Отменить торговый заказ
+      operationId: CancelTradeOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Заказ отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelTradeOrderResponse'
+        '404':
+          description: Заказ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ============================================================================
+  # TRADE CONTRACTS ENDPOINTS
+  # ============================================================================
+  /api/v1/trade/contracts:
+    post:
+      tags:
+        - Trade Contracts
+      summary: Создать торговый контракт
+      operationId: CreateTradeContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeContractRequest'
+      responses:
+        '200':
+          description: Торговый контракт создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTradeContractResponse'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/trade/contracts/{contractId}:
+    get:
+      tags:
+        - Trade Contracts
+      summary: Получить торговый контракт по ID
+      operationId: GetTradeContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали торгового контракта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeContractResponse'
+        '404':
+          description: Контракт не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ============================================================================
+  # AUCTION ENDPOINTS
+  # ============================================================================
+  /api/v1/trade/auctions:
+    post:
+      tags:
+        - Auctions
+      summary: Создать аукцион
+      operationId: CreateAuction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '200':
+          description: Аукцион создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAuctionResponse'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/trade/auctions/{auctionId}/bid:
+    post:
+      tags:
+        - Auctions
+      summary: Сделать ставку на аукционе
+      operationId: PlaceAuctionBid
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceAuctionBidRequest'
+      responses:
+        '200':
+          description: Ставка принята
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceAuctionBidResponse'
+        '400':
+          description: Неверная ставка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 security:
   - BearerAuth: []
 components:
@@ -479,3 +743,447 @@ components:
         offset:
           type: integer
           format: int64
+
+    # ============================================================================
+    # TRADE ORDERS SCHEMAS
+    # ============================================================================
+    CreateTradeOrderRequest:
+      type: object
+      required:
+        - playerId
+        - itemId
+        - orderType
+        - orderMode
+        - itemName
+        - quantity
+        - price
+        - currencyType
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        orderType:
+          type: string
+          enum: [buy, sell]
+        orderMode:
+          type: string
+          enum: [limit, market, stop]
+        itemName:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        price:
+          type: integer
+          format: int64
+        minQuantity:
+          type: integer
+          format: int32
+        maxQuantity:
+          type: integer
+          format: int32
+        currencyType:
+          type: string
+        isPartial:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+
+    CreateTradeOrderResponse:
+      type: object
+      required:
+        - orderId
+        - status
+        - message
+        - createdAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TradeOrderResponse:
+      type: object
+      required:
+        - id
+        - playerId
+        - itemId
+        - orderType
+        - orderMode
+        - itemName
+        - quantity
+        - price
+        - filledQuantity
+        - currencyType
+        - status
+        - isActive
+        - isPartial
+        - createdAt
+        - updatedAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        orderType:
+          type: string
+        orderMode:
+          type: string
+        itemName:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        price:
+          type: integer
+          format: int64
+        minQuantity:
+          type: integer
+          format: int32
+        maxQuantity:
+          type: integer
+          format: int32
+        filledQuantity:
+          type: integer
+          format: int32
+        currencyType:
+          type: string
+        status:
+          type: string
+        isActive:
+          type: boolean
+        isPartial:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    TradeOrdersListResponse:
+      type: object
+      required:
+        - orders
+        - count
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeOrderSummary'
+        count:
+          type: integer
+
+    TradeOrderSummary:
+      type: object
+      required:
+        - id
+        - itemName
+        - orderType
+        - orderMode
+        - quantity
+        - price
+        - filledQuantity
+        - status
+        - createdAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemName:
+          type: string
+        orderType:
+          type: string
+        orderMode:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        price:
+          type: integer
+          format: int64
+        filledQuantity:
+          type: integer
+          format: int32
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    CancelTradeOrderResponse:
+      type: object
+      required:
+        - orderId
+        - status
+        - message
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        message:
+          type: string
+
+    # ============================================================================
+    # TRADE CONTRACTS SCHEMAS
+    # ============================================================================
+    CreateTradeContractRequest:
+      type: object
+      required:
+        - sellerId
+        - buyerId
+        - contractType
+        - itemName
+        - totalQuantity
+        - unitPrice
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        contractType:
+          type: string
+          enum: [supply, exclusive, bulk]
+        itemName:
+          type: string
+        totalQuantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: integer
+          format: int64
+        escrowAmount:
+          type: integer
+          format: int64
+        deliveryDeadline:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        isEscrowActive:
+          type: boolean
+
+    CreateTradeContractResponse:
+      type: object
+      required:
+        - contractId
+        - status
+        - message
+        - createdAt
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TradeContractResponse:
+      type: object
+      required:
+        - id
+        - sellerId
+        - buyerId
+        - contractType
+        - status
+        - itemName
+        - totalQuantity
+        - deliveredQuantity
+        - unitPrice
+        - escrowAmount
+        - deliveryDeadline
+        - expiresAt
+        - deliveries
+        - isEscrowActive
+        - isCompleted
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        contractType:
+          type: string
+        status:
+          type: string
+        itemName:
+          type: string
+        totalQuantity:
+          type: integer
+          format: int32
+        deliveredQuantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: integer
+          format: int64
+        escrowAmount:
+          type: integer
+          format: int64
+        deliveryDeadline:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractDeliverySummary'
+        isEscrowActive:
+          type: boolean
+        isCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ContractDeliverySummary:
+      type: object
+      required:
+        - id
+        - quantity
+        - deliveredAt
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+        deliveredAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+
+    # ============================================================================
+    # AUCTION SCHEMAS
+    # ============================================================================
+    CreateAuctionRequest:
+      type: object
+      required:
+        - sellerId
+        - itemId
+        - itemName
+        - auctionType
+        - startingPrice
+        - quantity
+        - endsAt
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        itemName:
+          type: string
+        auctionType:
+          type: string
+          enum: [english, dutch, sealed]
+        startingPrice:
+          type: integer
+          format: int64
+        reservePrice:
+          type: integer
+          format: int64
+        quantity:
+          type: integer
+          format: int32
+        endsAt:
+          type: string
+          format: date-time
+
+    CreateAuctionResponse:
+      type: object
+      required:
+        - auctionId
+        - status
+        - message
+        - createdAt
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PlaceAuctionBidRequest:
+      type: object
+      required:
+        - bidderId
+        - amount
+      properties:
+        bidderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          format: int64
+
+    PlaceAuctionBidResponse:
+      type: object
+      required:
+        - bidId
+        - status
+        - message
+        - bidTime
+      properties:
+        bidId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        message:
+          type: string
+        bidTime:
+          type: string
+          format: date-time

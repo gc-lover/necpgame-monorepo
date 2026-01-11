@@ -1,118 +1,138 @@
-openapi: 3.0.3
+openapi: "3.0.3"
+
 info:
-  title: Auction Service API - Enterprise-Grade Auction System
-  description: "**Enterprise-Grade Auction API for NECPGAME**
+  title: "Auction Service API"
+  description: |
+    Enterprise-grade Auction System для NECPGAME платформы.
 
-    Auction Service handles real-time bidding, auction management, bid validation,
-    and auction lifecycle operations. Supports both traditional auctions and real-time
-    competitive bidding systems.
+    ## 🎯 **Auction Service Overview**
 
-    ## Key Features
+    Auction Service предоставляет комплексную систему аукционов для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
 
-    - **Real-time bidding** with WebSocket support - **Auction lifecycle management**
-    from creation to settlement - **Bid validation** and fraud prevention - **Multi-item
-    auctions** with complex rules - **Performance-optimized** for high-frequency bidding
-    - **Enterprise-grade** transaction handling
+    ### **Ключевые Возможности**
+    - **Auction Creation**: Создание аукционов с различными правилами
+    - **Bidding System**: Система ставок и конкуренции
+    - **Real-time Updates**: Обновления в реальном времени
+    - **Auction Completion**: Автоматическое завершение и распределение
 
-    ## Domain Purpose
+    ### **Типы Аукционов**
+    - **English Auction**: Английский аукцион с повышением ставок
+    - **Dutch Auction**: Голландский аукцион с понижением цены
+    - **Sealed Bid**: Закрытый аукцион с тайными ставками
+    - **Reserve Auction**: Аукцион с резервной ценой
 
-    Handles all auction operations including bid placement, auction creation, bid
-    validation, winner determination, and settlement. Provides both traditional timed
-    auctions and real-time competitive bidding.
+    ### **Расширенные Возможности**
+    - **Auto-bidding**: Автоматические ставки
+    - **Auction Analytics**: Аналитика аукционов
+    - **Fraud Prevention**: Защита от мошенничества
+    - **Multi-item Auctions**: Аукционы с множеством предметов
 
-    ## Performance Targets
+    ## 📊 **Performance Targets**
+    - **P99 Latency**: <25ms для операций с ставками
+    - **Throughput**: 50,000+ bids/second
+    - **Concurrent Auctions**: 10,000+ активных аукционов
+    - **Real-time Updates**: <100ms для обновлений ставок
 
-    - P99 Latency: <50ms for bid placement - Memory: <50KB per active auction - Concurrent
-    users: 10,000+ simultaneous bidders - Real-time updates: <100ms delivery
+    ## 🔐 **Security**
+    - JWT RS256 аутентификация
+    - Rate limiting для предотвращения спама
+    - Input validation и sanitization
+    - Audit logging всех операций
 
-    "
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@necpgame.com
+    name: "NECPGAME Platform Team"
+    email: "platform@necpgame.com"
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: "Proprietary"
+    url: "https://necpgame.com/license"
+
 servers:
-  - url: https://api.necpgame.com/v1/auction
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/auction
-    description: Staging server
-  - url: http://localhost:8080/api/v1/auction
-    description: Local development server
+  - url: "https://auction.necpgame.com/api/v1"
+    description: "Production Environment"
+  - url: "https://auction-staging.necpgame.com/api/v1"
+    description: "Staging Environment"
+  - url: "http://localhost:8080/api/v1"
+    description: "Local Development"
+
 security:
   - BearerAuth: []
+
 tags:
-  - name: Auctions
-    description: Auction creation and management
-  - name: Bidding
-    description: Bid placement and validation
-  - name: Auction Lifecycle
-    description: Auction start, end, and settlement
-  - name: Auction Items
-    description: Item management in auctions
+  - name: "Auction Management"
+    description: "Управление аукционами"
+  - name: "Bidding Operations"
+    description: "Операции со ставками"
+  - name: "Auction Monitoring"
+    description: "Мониторинг аукционов"
+  - name: "Analytics"
+    description: "Аналитика аукционов"
+  - name: "Auto-bidding"
+    description: "Автоматические ставки"
+  - name: "Health"
+    description: "Мониторинг здоровья сервиса"
+
 paths:
   /health:
     get:
-      summary: Auction service health check
-      description: "**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the auction service microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds"
-      operationId: auctionServiceHealthCheck
-      tags:
-        - Health Monitoring
-      parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            example: "gzip"
-            description: "Accepted encoding types"
+      summary: "Проверка здоровья сервиса"
+      operationId: "healthCheck"
+      tags: ["Health"]
       responses:
         "200":
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"auction-health-v1.0"'
+          description: "Сервис работает корректно"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+                $ref: "#/components/schemas/HealthResponse"
         "503":
-          description: Service is unhealthy
+          description: "Сервис недоступен"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        default:
-          description: Unexpected error
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/batch:
+    post:
+      summary: "Пакетная проверка здоровья"
+      operationId: "healthBatchCheck"
+      tags: ["Health"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HealthBatchRequest"
+      responses:
+        "200":
+          description: "Результаты проверки здоровья"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/HealthBatchResponse"
+        "400":
+          description: "Некорректный запрос"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/ws:
+    get:
+      summary: "WebSocket проверка здоровья"
+      operationId: "healthWebSocketCheck"
+      tags: ["Health"]
+      responses:
+        "101":
+          description: "WebSocket соединение установлено"
+        "503":
+          description: "WebSocket недоступен"
+
   /auctions:
     post:
-      summary: Create new auction
-      description: "**Create auction for item with bidding system**
-
-        Initiates a timed auction with configurable bidding rules and buyout options.
-
-        **Security:** Only item owner can create auctions **Performance:** <50ms P99
-        latency for auction creation"
-      operationId: createAuction
-      tags:
-        - Auction Management
+      summary: "Создание аукциона"
+      operationId: "createAuction"
+      tags: ["Auction Management"]
       requestBody:
         required: true
         content:
@@ -121,219 +141,182 @@ paths:
               $ref: "#/components/schemas/CreateAuctionRequest"
       responses:
         "201":
-          description: Auction created successfully
+          description: "Аукцион создан"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuctionResponse"
         "400":
-          description: Invalid auction data
+          description: "Некорректные данные"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        "403":
-          description: Not authorized to auction this item
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Предметы недоступны для аукциона"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
     get:
-      summary: List auctions
-      description: "**Get paginated list of active auctions**
-
-        Returns auctions with filtering by status, item type, and price range.
-
-        **Performance:** Optimized with database indexes on status and end_time"
-      operationId: listAuctions
-      tags:
-        - Auction Management
+      summary: "Получение списка аукционов"
+      operationId: "getAuctions"
+      tags: ["Auction Management"]
       parameters:
-        - name: limit
-          in: query
+        - name: "status"
+          in: "query"
+          schema:
+            type: string
+            enum: ["pending", "active", "ended", "cancelled"]
+            default: "active"
+        - name: "type"
+          in: "query"
+          schema:
+            type: string
+            enum: ["english", "dutch", "sealed_bid", "reserve"]
+        - name: "category"
+          in: "query"
+          schema:
+            type: string
+            enum: ["weapons", "armor", "cyberware", "vehicles", "misc"]
+        - name: "minPrice"
+          in: "query"
           schema:
             type: integer
+            minimum: 0
+        - name: "maxPrice"
+          in: "query"
+          schema:
+            type: integer
+            minimum: 0
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
             minimum: 1
             maximum: 100
             default: 20
-            example: 20
-          description: Number of items to return
-        - name: offset
-          in: query
+        - name: "offset"
+          in: "query"
           schema:
-            type: integer
+            type: "integer"
             minimum: 0
             default: 0
-            example: 0
-          description: Number of items to skip
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - scheduled
-              - active
-              - ended
-              - cancelled
-          description: Filter by auction status
-        - name: min_price
-          in: query
-          schema:
-            type: number
-            minimum: 0
-          description: Minimum current bid price
-        - name: max_price
-          in: query
-          schema:
-            type: number
-            minimum: 0
-          description: Maximum current bid price
       responses:
         "200":
-          description: Auctions retrieved successfully
+          description: "Список аукционов"
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginatedResponse"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/AuctionResponse"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/AuctionListResponse"
+
   /auctions/{auctionId}:
     get:
-      summary: Get auction details
-      description: "**Retrieve detailed auction information**
-
-        Returns complete auction data including bidding history and current bids.
-
-        **Performance:** Cached for active auctions"
-      operationId: getAuction
-      tags:
-        - Auction Management
+      summary: "Получение информации об аукционе"
+      operationId: "getAuction"
+      tags: ["Auction Management"]
       parameters:
-        - name: auctionId
-          in: path
+        - name: "auctionId"
+          in: "path"
           required: true
           schema:
             type: string
-            format: uuid
-          description: Auction UUID
+            format: "uuid"
       responses:
         "200":
-          description: Auction details retrieved
+          description: "Информация об аукционе"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuctionResponse"
         "404":
-          description: Auction not found
+          description: "Аукцион не найден"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
     put:
-      summary: Update auction
-      description: "**Update auction configuration**
-
-        Allows auction owner to modify auction settings before start.
-
-        **Security:** Only auction creator can update"
-      operationId: updateAuction
-      tags:
-        - Auction Management
+      summary: "Обновление аукциона"
+      operationId: "updateAuction"
+      tags: ["Auction Management"]
       parameters:
-        - name: auctionId
-          in: path
+        - name: "auctionId"
+          in: "path"
           required: true
           schema:
             type: string
-            format: uuid
-          description: Auction UUID
+            format: "uuid"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                buyout_price:
-                  type: number
-                  minimum: 0
-                  description: New buyout price
-                minimum_bid_increment:
-                  type: number
-                  minimum: 0.01
-                  description: New minimum bid increment
-                description:
-                  type: string
-                  maxLength: 1000
-                  description: New auction description
+              $ref: "#/components/schemas/UpdateAuctionRequest"
       responses:
         "200":
-          description: Auction updated successfully
+          description: "Аукцион обновлен"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuctionResponse"
         "403":
-          description: Not authorized to update this auction
+          description: "Недостаточно прав"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        "409":
-          description: Auction already started
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Аукцион не найден"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /auctions/{auctionId}/bids:
-    post:
-      summary: Place bid on auction
-      description: "**Place a bid on active auction**
+                $ref: "#/components/schemas/ErrorResponse"
 
-        Validates bid amount, updates current price, and handles automatic bidding.
-
-        **Concurrency:** Optimistic locking prevents bid conflicts **Performance:**
-        <30ms P99 latency for bid placement"
-      operationId: placeBid
-      tags:
-        - Bidding Operations
+    delete:
+      summary: "Отмена аукциона"
+      operationId: "cancelAuction"
+      tags: ["Auction Management"]
       parameters:
-        - name: auctionId
-          in: path
+        - name: "auctionId"
+          in: "path"
           required: true
           schema:
             type: string
-            format: uuid
-          description: Auction UUID
+            format: "uuid"
+      responses:
+        "200":
+          description: "Аукцион отменен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionResponse"
+        "403":
+          description: "Невозможно отменить аукцион"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Аукцион не найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/{auctionId}/bid:
+    post:
+      summary: "Сделать ставку"
+      operationId: "placeBid"
+      tags: ["Bidding Operations"]
+      parameters:
+        - name: "auctionId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
       requestBody:
         required: true
         content:
@@ -342,443 +325,907 @@ paths:
               $ref: "#/components/schemas/PlaceBidRequest"
       responses:
         "200":
-          description: Bid placed successfully
+          description: "Ставка принята"
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - auction
-                  - bid_result
-                properties:
-                  auction:
-                    $ref: "#/components/schemas/AuctionResponse"
-                  bid_result:
-                    type: object
-                    properties:
-                      bid_amount:
-                        type: number
-                        description: Actual bid amount placed
-                      is_winning:
-                        type: boolean
-                        description: Whether this bid is currently winning
-                      outbid_previous:
-                        type: boolean
-                        description: Whether previous bidder was outbid
+                $ref: "#/components/schemas/BidResponse"
         "400":
-          description: Invalid bid (too low, auction ended, etc.)
+          description: "Некорректная ставка"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: Optimistic locking conflict - auction state changed
+          description: "Ставка слишком низкая или аукцион завершен"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/{auctionId}/bids:
     get:
-      summary: Get auction bidding history
-      description: "**Get paginated bidding history for auction**
-
-        Returns chronological list of all bids placed on the auction.
-
-        **Performance:** Indexed queries with efficient pagination"
-      operationId: getAuctionBids
-      tags:
-        - Bidding Operations
+      summary: "Получение ставок аукциона"
+      operationId: "getAuctionBids"
+      tags: ["Bidding Operations"]
       parameters:
-        - name: auctionId
-          in: path
+        - name: "auctionId"
+          in: "path"
           required: true
           schema:
             type: string
-            format: uuid
-          description: Auction UUID
-        - name: limit
-          in: query
+            format: "uuid"
+        - name: "limit"
+          in: "query"
           schema:
-            type: integer
+            type: "integer"
             minimum: 1
-            maximum: 100
+            maximum: 50
             default: 20
-            example: 20
-          description: Number of items to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-            example: 0
-          description: Number of items to skip
       responses:
         "200":
-          description: Bidding history retrieved
+          description: "Ставки аукциона"
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginatedResponse"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          type: object
-                          required:
-                            - bidder_id
-                            - bid_amount
-                            - bid_time
-                          properties:
-                            bidder_id:
-                              $ref: ../common-service/schemas/common.yaml#/UUID
-                            bid_amount:
-                              type: number
-                              description: Bid amount
-                            bid_time:
-                              $ref: ../common-service/schemas/common.yaml#/Timestamp
-                            is_auto_bid:
-                              type: boolean
-                              description: Whether this was an automatic bid
-        default:
-          description: Unexpected error
+                $ref: "#/components/schemas/AuctionBidsResponse"
+        "404":
+          description: "Аукцион не найден"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /auctions/{auctionId}/buyout:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/{auctionId}/auto-bid:
     post:
-      summary: Buyout auction immediately
-      description: "**Immediately purchase auction at buyout price**
-
-        Ends auction early if buyout price is set and buyer has sufficient funds.
-
-        **Atomicity:** All operations executed in single transaction"
-      operationId: buyoutAuction
-      tags:
-        - Auction Management
+      summary: "Установить авто-ставку"
+      operationId: "setAutoBid"
+      tags: ["Auto-bidding"]
       parameters:
-        - name: auctionId
-          in: path
+        - name: "auctionId"
+          in: "path"
           required: true
           schema:
             type: string
-            format: uuid
-          description: Auction UUID
-      responses:
-        "200":
-          description: Auction bought out successfully
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-              ETag:
-                schema:
-                  type: string
-                  example: '"health-v1.0"'
-              Content-Encoding:
-                schema:
-                  type: string
-                  enum:
-                    - gzip
-                    - deflate
-                    - br
-        "400":
-          description: Buyout not available or insufficient funds
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-              Content-Encoding:
-                schema:
-                  type: string
-                  enum:
-                    - gzip
-                    - deflate
-                    - br
-        503:
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        429:
-          $ref: "#/components/responses/TooManyRequests"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/batch:
-    post:
-      summary: Batch health check for multiple services
-      description:
-        "**Performance optimization:** Check multiple services health in
-        single request
-
-        Reduces N HTTP calls to 1 call. Critical for orchestration.
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        "
-      operationId: auctionServiceBatchHealthCheck
-      tags:
-        - Health Monitoring
+            format: "uuid"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                      - auth-service
-                      - user-service
-                      - session-service
-                  maxItems: 10
-                  description: List of services to check
+              $ref: "#/components/schemas/SetAutoBidRequest"
       responses:
         "200":
-          $ref: "#/components/responses/HealthBatchSuccess"
+          description: "Авто-ставка установлена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutoBidResponse"
         "400":
-          description: Invalid request - malformed service list
+          description: "Некорректные параметры авто-ставки"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        "429":
-          $ref: "#/components/responses/TooManyRequests"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/ws:
-    get:
-      summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
-        polling
+                $ref: "#/components/schemas/ErrorResponse"
 
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        "
-      operationId: auctionServiceHealthWebSocket
-      tags:
-        - Health Monitoring
+    delete:
+      summary: "Отменить авто-ставку"
+      operationId: "cancelAutoBid"
+      tags: ["Auto-bidding"]
       parameters:
-        - name: services
-          in: query
+        - name: "auctionId"
+          in: "path"
+          required: true
           schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - auth-service
-                - user-service
-                - session-service
-          description: Services to monitor (optional, monitors all if not specified)
+            type: string
+            format: "uuid"
       responses:
         "200":
-          description: WebSocket upgrade information returned
+          description: "Авто-ставка отменена"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/auction/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                      - health-monitoring-v1
-        "101":
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
+                $ref: "#/components/schemas/AutoBidResponse"
+
+  /auctions/{auctionId}/watch:
+    post:
+      summary: "Следить за аукционом"
+      operationId: "watchAuction"
+      tags: ["Auction Monitoring"]
+      parameters:
+        - name: "auctionId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchAuctionRequest"
+      responses:
+        "200":
+          description: "Подписка на аукцион установлена"
+          content:
+            application/json:
               schema:
-                type: string
-                example: websocket
-            Connection:
+                $ref: "#/components/schemas/WatchResponse"
+        "409":
+          description: "Уже подписаны на этот аукцион"
+          content:
+            application/json:
               schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: "Прекратить следить за аукционом"
+      operationId: "unwatchAuction"
+      tags: ["Auction Monitoring"]
+      parameters:
+        - name: "auctionId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Подписка отменена"
+          content:
+            application/json:
               schema:
-                type: string
-                description: WebSocket handshake acceptance key
+                $ref: "#/components/schemas/WatchResponse"
+
+  /players/{playerId}/auctions:
+    get:
+      summary: "Аукционы игрока"
+      operationId: "getPlayerAuctions"
+      tags: ["Auction Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+        - name: "role"
+          in: "query"
+          schema:
+            type: string
+            enum: ["seller", "bidder", "watcher"]
+            default: "seller"
+        - name: "status"
+          in: "query"
+          schema:
+            type: string
+            enum: ["active", "won", "lost", "ended"]
+      responses:
+        "200":
+          description: "Аукционы игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAuctionsResponse"
+
+  /auctions/{auctionId}/complete:
+    post:
+      summary: "Завершить аукцион"
+      operationId: "completeAuction"
+      tags: ["Auction Management"]
+      parameters:
+        - name: "auctionId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteAuctionRequest"
+      responses:
+        "200":
+          description: "Аукцион завершен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionCompletionResponse"
         "400":
-          description: Invalid request - malformed service parameters
+          description: "Невозможно завершить аукцион"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        "401":
-          description: Unauthorized - authentication required for WebSocket
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/analytics/summary:
+    get:
+      summary: "Аналитика аукционов"
+      operationId: "getAuctionAnalytics"
+      tags: ["Analytics"]
+      parameters:
+        - name: "period"
+          in: "query"
+          schema:
+            type: string
+            enum: ["hourly", "daily", "weekly", "monthly"]
+            default: "daily"
+        - name: "category"
+          in: "query"
+          schema:
+            type: string
+            enum: ["weapons", "armor", "cyberware", "vehicles", "misc"]
+      responses:
+        "200":
+          description: "Аналитика аукционов"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        "429":
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
+                $ref: "#/components/schemas/AuctionAnalyticsResponse"
+
+  /auctions/popular:
+    get:
+      summary: "Популярные аукционы"
+      operationId: "getPopularAuctions"
+      tags: ["Analytics"]
+      parameters:
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: "Популярные аукционы"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/PopularAuctionsResponse"
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # Common inherited entities
+    CharacterEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity"
+    BaseEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/BaseEntity"
+    OptimisticLock:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock"
+    ErrorResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse"
+    HealthResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse"
+    HealthBatchRequest:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest"
+    HealthBatchResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse"
+
+    # Auction specific schemas
     AuctionEntity:
-      description: Auction entity with economy domain inheritance
+      type: object
+      description: "Сущность аукциона"
       allOf:
-        - $ref: ../common-service/schemas/economy-entities.yaml#/AuctionEntity
-        - type: object
-    MarketplaceListingEntity:
-      allOf:
-        - $ref: ../common-service/schemas/economy-entities.yaml#/MarketplaceListingEntity
-        - type: object
-    TransactionEntity:
-      allOf:
-        - $ref: ../common-service/schemas/economy-entities.yaml#/TransactionEntity
-        - type: object
-    CreateAuctionRequest:
-      allOf:
-        - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
+        - $ref: "#/components/schemas/BaseEntity"
         - type: object
           required:
-            - item_id
-            - starting_price
-            - currency_code
-            - start_time
-            - end_time
+            - sellerId
+            - item
+            - type
+            - startingPrice
+            - status
           properties:
-            item_id:
-              $ref: ../common-service/schemas/common.yaml#/UUID
-            starting_price:
-              type: number
-              minimum: 0.01
-              description: Auction starting price
-              example: 100.0
-            currency_code:
+            sellerId:
               type: string
-              pattern: ^[A-Z]{3}$
-              description: Auction currency
-              example: EDY
-            minimum_bid_increment:
-              type: number
-              minimum: 0.01
-              description: Minimum bid increase
-              example: 10.0
-            buyout_price:
-              type: number
+              description: "ID продавца"
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            item:
+              $ref: "#/components/schemas/AuctionItemEntity"
+            type:
+              type: string
+              description: "Тип аукциона"
+              enum: ["english", "dutch", "sealed_bid", "reserve"]
+              example: "english"
+            startingPrice:
+              type: integer
+              description: "Стартовая цена"
+              minimum: 1
+              example: 1000
+            reservePrice:
+              type: integer
+              description: "Резервная цена (для reserve аукционов)"
+              minimum: 1
+            buyoutPrice:
+              type: integer
+              description: "Цена выкупа"
+              minimum: 1
+            currentPrice:
+              type: integer
+              description: "Текущая цена"
               minimum: 0
-              description: Optional buyout price
-              example: 500.0
-            start_time:
-              $ref: ../common-service/schemas/common.yaml#/Timestamp
-            end_time:
-              $ref: ../common-service/schemas/common.yaml#/Timestamp
-            description:
+            status:
               type: string
-              maxLength: 1000
-              description: Auction description
-              example: Rare cybernetic implant from Arasaka raid
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Optimistic locking for concurrent auctions."
+              description: "Статус аукциона"
+              enum: ["pending", "active", "ended", "cancelled", "completed"]
+              example: "active"
+            startTime:
+              type: string
+              description: "Время начала"
+              format: date-time
+            endTime:
+              type: string
+              description: "Время окончания"
+              format: date-time
+            duration:
+              type: integer
+              description: "Длительность в минутах"
+              minimum: 5
+              maximum: 10080
+              example: 1440
+            winnerId:
+              type: string
+              description: "ID победителя"
+              format: uuid
+            winningBid:
+              type: integer
+              description: "Победная ставка"
+              minimum: 0
+            totalBids:
+              type: integer
+              description: "Общее количество ставок"
+              minimum: 0
+            uniqueBidders:
+              type: integer
+              description: "Уникальных участников"
+              minimum: 0
+            watchers:
+              type: integer
+              description: "Количество наблюдателей"
+              minimum: 0
+            category:
+              type: string
+              description: "Категория предмета"
+              enum: ["weapons", "armor", "cyberware", "vehicles", "misc"]
+              example: "weapons"
+            rules:
+              type: object
+              description: "Правила аукциона"
+              properties:
+                minBidIncrement:
+                  type: integer
+                  description: "Минимальный шаг ставки"
+                  minimum: 1
+                  default: 1
+                maxBidsPerPlayer:
+                  type: integer
+                  description: "Максимум ставок от игрока"
+                  minimum: 1
+                allowAutoBidding:
+                  type: boolean
+                  description: "Разрешить авто-ставки"
+                  default: true
+                requireVerification:
+                  type: boolean
+                  description: "Требовать верификацию"
+                  default: false
+            isActive:
+              type: boolean
+              description: "Аукцион активен"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    AuctionItemEntity:
+      type: object
+      description: "Предмет аукциона"
+      required:
+        - itemId
+        - quantity
+      properties:
+        itemId:
+          type: string
+          description: "ID предмета"
+          format: uuid
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        quantity:
+          type: integer
+          description: "Количество"
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: "Название предмета"
+          maxLength: 100
+          example: "Militech M-10AF Lexington"
+        itemType:
+          type: string
+          description: "Тип предмета"
+          enum: ["weapon", "armor", "cyberware", "consumable", "misc"]
+          example: "weapon"
+        rarity:
+          type: string
+          description: "Редкость предмета"
+          enum: ["common", "uncommon", "rare", "epic", "legendary"]
+          example: "rare"
+        level:
+          type: integer
+          description: "Уровень предмета"
+          minimum: 1
+          example: 15
+        description:
+          type: string
+          description: "Описание предмета"
+          maxLength: 500
+        attributes:
+          type: object
+          description: "Атрибуты предмета"
+          additionalProperties: true
+        images:
+          type: array
+          description: "Изображения предмета"
+          items:
+            type: string
+            format: uri
+
+    BidEntity:
+      type: object
+      description: "Сущность ставки"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - auctionId
+            - bidderId
+            - amount
+          properties:
+            auctionId:
+              type: string
+              description: "ID аукциона"
+              format: uuid
+            bidderId:
+              type: string
+              description: "ID участника"
+              format: uuid
+            amount:
+              type: integer
+              description: "Сумма ставки"
+              minimum: 1
+              example: 1500
+            bidTime:
+              type: string
+              description: "Время ставки"
+              format: date-time
+            isAutoBid:
+              type: boolean
+              description: "Автоматическая ставка"
+              default: false
+            bidPosition:
+              type: integer
+              description: "Позиция ставки в аукционе"
+              minimum: 1
+            outbid:
+              type: boolean
+              description: "Ставка перебита"
+              default: false
+            $ref: "#/components/schemas/OptimisticLock"
+
+    AutoBidEntity:
+      type: object
+      description: "Сущность авто-ставки"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - auctionId
+            - bidderId
+            - maxAmount
+            - increment
+          properties:
+            auctionId:
+              type: string
+              description: "ID аукциона"
+              format: uuid
+            bidderId:
+              type: string
+              description: "ID участника"
+              format: uuid
+            maxAmount:
+              type: integer
+              description: "Максимальная сумма"
+              minimum: 1
+              example: 5000
+            increment:
+              type: integer
+              description: "Шаг увеличения"
+              minimum: 1
+              example: 100
+            isActive:
+              type: boolean
+              description: "Авто-ставка активна"
+              default: true
+            lastBidAmount:
+              type: integer
+              description: "Последняя сумма ставки"
+              minimum: 0
+            bidsPlaced:
+              type: integer
+              description: "Количество размещенных ставок"
+              minimum: 0
+            $ref: "#/components/schemas/OptimisticLock"
+
+    AuctionWatcherEntity:
+      type: object
+      description: "Наблюдатель аукциона"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - auctionId
+            - watcherId
+          properties:
+            auctionId:
+              type: string
+              description: "ID аукциона"
+              format: uuid
+            watcherId:
+              type: string
+              description: "ID наблюдателя"
+              format: uuid
+            watchStarted:
+              type: string
+              description: "Время начала наблюдения"
+              format: date-time
+            notificationsEnabled:
+              type: boolean
+              description: "Уведомления включены"
+              default: true
+            lastActivity:
+              type: string
+              description: "Последняя активность"
+              format: date-time
+            $ref: "#/components/schemas/OptimisticLock"
+
+    # Request/Response schemas
+    CreateAuctionRequest:
+      type: object
+      required:
+        - item
+        - type
+        - startingPrice
+        - duration
+      properties:
+        item:
+          $ref: "#/components/schemas/AuctionItemEntity"
+        type:
+          type: string
+          enum: ["english", "dutch", "sealed_bid", "reserve"]
+        startingPrice:
+          type: integer
+          minimum: 1
+        reservePrice:
+          type: integer
+          minimum: 1
+        buyoutPrice:
+          type: integer
+          minimum: 1
+        duration:
+          type: integer
+          minimum: 5
+          maximum: 10080
+        category:
+          type: string
+          enum: ["weapons", "armor", "cyberware", "vehicles", "misc"]
+        rules:
+          type: object
+          properties:
+            minBidIncrement:
+              type: integer
+              minimum: 1
+            maxBidsPerPlayer:
+              type: integer
+              minimum: 1
+            allowAutoBidding:
+              type: boolean
+            requireVerification:
+              type: boolean
+
+    UpdateAuctionRequest:
+      type: object
+      properties:
+        reservePrice:
+          type: integer
+          minimum: 1
+        buyoutPrice:
+          type: integer
+          minimum: 1
+        duration:
+          type: integer
+          minimum: 5
+          maximum: 10080
+        rules:
+          type: object
+          properties:
+            minBidIncrement:
+              type: integer
+              minimum: 1
+            maxBidsPerPlayer:
+              type: integer
+              minimum: 1
+            allowAutoBidding:
+              type: boolean
+            requireVerification:
+              type: boolean
+
+    AuctionResponse:
+      type: object
+      properties:
+        auction:
+          $ref: "#/components/schemas/AuctionEntity"
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: "Оставшееся время в секундах"
+            currentHighestBid:
+              type: integer
+            totalBids:
+              type: integer
+
+    AuctionListResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuctionEntity"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+
     PlaceBidRequest:
       type: object
       required:
-        - auction_id
-        - bid_amount
+        - bidderId
+        - amount
       properties:
-        auction_id:
-          $ref: ../common-service/schemas/common.yaml#/UUID
-        bid_amount:
+        bidderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        isAutoBid:
+          type: boolean
+          default: false
+
+    BidResponse:
+      type: object
+      properties:
+        bid:
+          $ref: "#/components/schemas/BidEntity"
+        auction:
+          $ref: "#/components/schemas/AuctionEntity"
+        bidAccepted:
+          type: boolean
+        newHighestBid:
+          type: boolean
+        outbidPlayers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        timeRemaining:
+          type: integer
+          description: "Оставшееся время в секундах"
+
+    AuctionBidsResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        bids:
+          type: array
+          items:
+            type: object
+            properties:
+              bidderId:
+                type: string
+                format: uuid
+              amount:
+                type: integer
+              bidTime:
+                type: string
+                format: date-time
+              isAutoBid:
+                type: boolean
+        highestBid:
+          type: integer
+        totalBids:
+          type: integer
+
+    SetAutoBidRequest:
+      type: object
+      required:
+        - bidderId
+        - maxAmount
+        - increment
+      properties:
+        bidderId:
+          type: string
+          format: uuid
+        maxAmount:
+          type: integer
+          minimum: 1
+        increment:
+          type: integer
+          minimum: 1
+
+    AutoBidResponse:
+      type: object
+      properties:
+        autoBid:
+          $ref: "#/components/schemas/AutoBidEntity"
+        currentBid:
+          type: integer
+          description: "Текущая ставка аукциона"
+
+    WatchAuctionRequest:
+      type: object
+      required:
+        - watcherId
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+        notificationsEnabled:
+          type: boolean
+          default: true
+
+    WatchResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        watcherId:
+          type: string
+          format: uuid
+        isWatching:
+          type: boolean
+        watchersCount:
+          type: integer
+
+    PlayerAuctionsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        auctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuctionEntity"
+        statistics:
+          type: object
+          properties:
+            totalAuctions:
+              type: integer
+              minimum: 0
+            activeAuctions:
+              type: integer
+              minimum: 0
+            wonAuctions:
+              type: integer
+              minimum: 0
+            lostAuctions:
+              type: integer
+              minimum: 0
+
+    CompleteAuctionRequest:
+      type: object
+      required:
+        - completedBy
+      properties:
+        completedBy:
+          type: string
+          format: uuid
+
+    AuctionCompletionResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        winnerId:
+          type: string
+          format: uuid
+        winningBid:
+          type: integer
+        sellerId:
+          type: string
+          format: uuid
+        item:
+          $ref: "#/components/schemas/AuctionItemEntity"
+        completionTime:
+          type: string
+          format: date-time
+        transactionId:
+          type: string
+          format: uuid
+
+    AuctionAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: ["hourly", "daily", "weekly", "monthly"]
+        totalAuctions:
+          type: integer
+          minimum: 0
+        totalValue:
+          type: integer
+          minimum: 0
+        averageAuctionPrice:
           type: number
-          minimum: 0.01
-          description: Bid amount
-          example: 150.0
-        max_bid:
+        auctionsByCategory:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        auctionsByType:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        completionRate:
           type: number
           minimum: 0
-          description: Maximum bid for automatic bidding
-          example: 300.0
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    AuctionResponse:
-      allOf:
-        - $ref: "#/components/schemas/AuctionEntity"
-        - type: object
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    PaginationParams:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
-    PaginatedResponse:
-      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-  responses:
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    TooManyRequests:
-      description: Too many requests - rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-            example: 60
-            description: Seconds to wait before retrying
-      content:
-        application/json:
-          schema:
-            $ref: ../common-service/schemas/error.yaml#/Error
-  securitySchemes:
-    BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
-    ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+          maximum: 1
+        averageBidsPerAuction:
+          type: number
+
+    PopularAuctionsResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            type: object
+            properties:
+              auction:
+                $ref: "#/components/schemas/AuctionEntity"
+              popularityScore:
+                type: number
+              watchersCount:
+                type: integer
+              bidsCount:
+                type: integer
+              timeRemaining:
+                type: integer

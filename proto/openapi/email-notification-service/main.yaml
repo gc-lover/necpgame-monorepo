@@ -1,431 +1,405 @@
+# Enterprise-Grade Email Notification Service API - SOLID/DRY Domain Inheritance
+# Infrastructure domain service for email notifications
+# Issue: #openapi-refactor
+
 openapi: 3.0.3
 info:
-  title: Email Notification Service API - Enterprise-Grade Email Notifications
-  description: '**Enterprise-Grade Email Notification API for NECPGAME**
-
-    Service for managing email notifications, templates, and delivery across the platform.
-    Provides HTML email rendering, template management, bounce handling, and delivery
-    analytics.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation
-
-    - **Backend optimization hints** for struct alignment and performance
-
-    - **Complete validation** with redocly and ogen code generation
-
-    - **Security-first approach** with JWT authentication
-
-    - **Performance-optimized** response structures
-
-    - **Comprehensive error handling** with proper HTTP status codes
+  title: Email Notification Service API
+  description: |
+    **Enterprise-grade API for Email Notifications**
 
     ## Domain Purpose
+    Comprehensive email notification service providing template-based email delivery,
+    personalization, analytics, and compliance management for the NECPGAME platform.
 
-    Manages email notification delivery, template management, bounce processing, and
-    analytics. Supports HTML emails, attachments, scheduling, and multi-language content.
+    ## Business Value
+    - High-volume email delivery with 99%+ success rate
+    - Advanced personalization and template management
+    - Real-time delivery analytics and engagement tracking
+    - GDPR compliant with user consent management
+    - Enterprise-grade scalability and reliability
 
     ## Performance Targets
+    - P99 Latency: <50ms for queue operations
+    - Throughput: 10,000+ emails per second
+    - Delivery Success Rate: >99% across all providers
+    - Bounce Rate: <2% with automated cleanup
 
-    - P99 Latency: <200ms for email queuing
+    ## Domain Inheritance
+    This service inherits from infrastructure-entities.yaml providing:
+    - Notification queue entity for async email processing
+    - Audit trails for email operations and compliance
+    - Configuration management for SMTP and provider settings
+    - User account references for personalization
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
 
-    - Memory: <25KB per email template
-
-    - Concurrent users: 50,000+ simultaneous emails
-
-    - Delivery rate: 99.5% inbox placement
-
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
+
 servers:
-- url: https://api.necpgame.com/v1/email-notification
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/email-notification
-  description: Staging server
-- url: http://localhost:8080/api/v1/email-notification
-  description: Local development server
+  - url: https://api.necpgame.com/v1/email-notification-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/email-notification-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/email-notification-service
+    description: Local development
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: Device Management
-  description: Device token registration and management
-- name: Notification Delivery
-  description: Sending and managing push notifications
-- name: Targeting & Scheduling
-  description: Audience targeting and delivery scheduling
-- name: Analytics & Reporting
-  description: Notification analytics and reporting
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Email Delivery
+    description: Core email sending and queuing operations
+  - name: Template Management
+    description: Email template creation and management
+  - name: Campaign Management
+    description: Email campaigns and bulk operations
+  - name: Analytics & Reporting
+    description: Delivery analytics and engagement metrics
+  - name: Compliance & Consent
+    description: GDPR compliance and user consent management
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
 paths:
+
   /health:
     get:
-      summary: Push notification service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the push notification microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds '
       operationId: emailNotificationServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
       responses:
         '200':
           description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /subscriptions:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+  /emails/send:
     post:
-      summary: Subscribe email address for notifications
-      description: '**Device registration endpoint**
+      operationId: emailNotificationServiceSendEmail
+      summary: Send email notification
+      description: |
+        Send email notification to specified recipients with personalization.
 
-        Registers a device token for receiving push notifications. Supports multiple
-        platforms and handles token updates.
-
-        **Performance:** <50ms P95, includes token validation '
-      operationId: registerDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
+        **Delivery Process:**
+        - Template rendering with personalization
+        - Queue placement for async processing
+        - Provider selection based on routing rules
+        - Real-time delivery tracking
+      tags: [Email Delivery]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterDeviceRequest'
-      responses:
-        '201':
-          description: Device registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeviceResponse'
-        '400':
-          description: Invalid request - malformed device data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Device already registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - registration rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /devices/{device_id}:
-    put:
-      summary: Update device information
-      description: '**Device update endpoint**
-
-        Updates device token, platform info, or user preferences for the device.
-
-        **Performance:** <25ms P95, real-time updates '
-      operationId: updateDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: device_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Device unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateDeviceRequest'
-      responses:
-        '200':
-          description: Device updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeviceResponse'
-        '400':
-          description: Invalid request - malformed device data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Device not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Unregister device
-      description: '**Device unregistration endpoint**
-
-        Removes device from push notification delivery. Supports soft delete with
-        cleanup scheduling.
-
-        **Performance:** <15ms P95, includes cleanup operations '
-      operationId: unregisterDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: device_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Device unique identifier
-      responses:
-        '204':
-          description: Device unregistered successfully
-        '400':
-          description: Invalid request - malformed device ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Device not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - unregistration rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 5
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /notifications/send:
-    post:
-      summary: Send push notification
-      description: '**Notification delivery endpoint**
-
-        Sends push notification to specified users or devices. Supports targeting,
-        scheduling, and delivery guarantees.
-
-        **Performance:** <100ms P95, includes queueing and delivery '
-      operationId: sendNotification
-      tags:
-      - Notification Delivery
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendNotificationRequest'
+              $ref: '#/components/schemas/SendEmailRequest'
       responses:
         '202':
-          description: Notification queued for delivery
-          headers:
-            X-Notification-ID:
-              schema:
-                type: string
-                format: uuid
-                description: Unique notification identifier
-            Location:
-              schema:
-                type: string
-                example: /api/v1/notifications/status/550e8400-e29b-41d4-a716-446655440000
-                description: Status tracking endpoint
+          description: Email queued for delivery
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationQueuedResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Accepted'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          email_id:
+                            type: string
+                            format: uuid
+                            description: Email tracking ID
+                          estimated_delivery_time:
+                            type: string
+                            format: date-time
+                            description: Expected delivery time
+                          recipient_count:
+                            type: integer
+                            description: Number of recipients
         '400':
-          description: Invalid request - malformed notification data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '429':
-          description: Too many requests - notification rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 5
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /notifications/{notification_id}/status:
+          $ref: '#/components/responses/TooManyRequests'
+
+  /emails/{emailId}/status:
     get:
-      summary: Get notification delivery status
-      description: '**Notification status endpoint**
+      operationId: emailNotificationServiceGetEmailStatus
+      summary: Get email delivery status
+      description: |
+        Retrieve delivery status and tracking information for specific email.
 
-        Retrieves delivery status and analytics for a specific notification.
-
-        **Performance:** <20ms P95, cached status data '
-      operationId: getNotificationStatus
-      tags:
-      - Notification Delivery
-      security:
-      - BearerAuth: []
+        **Tracking Information:**
+        - Delivery status across all providers
+        - Open and click tracking data
+        - Bounce and complaint information
+        - Geographic delivery data
+      tags: [Email Delivery]
       parameters:
-      - name: notification_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Notification unique identifier
+        - name: emailId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Email unique identifier
       responses:
         '200':
-          description: Notification status retrieved successfully
+          description: Email status retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationStatusResponse'
-        '400':
-          description: Invalid request - malformed notification ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailDeliveryStatus'
         '404':
-          description: Notification not found
+          $ref: '#/components/responses/NotFound'
+
+  /emails/batch/send:
+    post:
+      operationId: emailNotificationServiceSendBatchEmails
+      summary: Send batch email notifications
+      description: |
+        Send multiple email notifications in a single operation.
+
+        **Batch Processing:**
+        - Atomic batch queue placement
+        - Duplicate recipient detection
+        - Priority-based processing
+        - Progress tracking and reporting
+      tags: [Email Delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBatchEmailsRequest'
+      responses:
+        '202':
+          description: Emails queued for batch delivery
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Accepted'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BatchEmailResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Batch too large
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: '../common/responses/error.yaml#/PayloadTooLarge'
+
+  /templates:
+    post:
+      operationId: emailNotificationServiceCreateTemplate
+      summary: Create email template
+      description: |
+        Create reusable email template with variables and localization.
+
+        **Template Features:**
+        - Handlebars-style variable substitution
+        - Multi-language support
+        - Responsive HTML design
+        - A/B testing variants
+        - Version control and rollback
+      tags: [Template Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      operationId: emailNotificationServiceListTemplates
+      summary: List email templates
+      description: Retrieve paginated list of email templates with filtering
+      tags: [Template Management]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by template category
+        - name: language
+          in: query
+          schema:
+            type: string
+          description: Filter by template language
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include only active templates
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of templates to return
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TemplateSummary'
+
+  /templates/{templateId}:
+    get:
+      operationId: emailNotificationServiceGetTemplate
+      summary: Get email template
+      description: Retrieve detailed email template information
+      tags: [Template Management]
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Template unique identifier
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: emailNotificationServiceUpdateTemplate
+      summary: Update email template
+      description: |
+        Update template content, variables, or metadata.
+
+        **Update Process:**
+        - Create new template version
+        - Validate template syntax
+        - Test rendering with sample data
+        - Maintain version history
+      tags: [Template Management]
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Template unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: emailNotificationServiceDeleteTemplate
+      summary: Delete email template
+      description: |
+        Soft delete template (deactivate and archive).
+
+        **Deletion Rules:**
+        - Prevent deletion of templates in active campaigns
+        - Archive template history
+        - Update dependent campaigns
+        - Maintain audit trail
+      tags: [Template Management]
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Template unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /campaigns:
     post:
-      summary: Create notification campaign
-      description: '**Campaign creation endpoint**
+      operationId: emailNotificationServiceCreateCampaign
+      summary: Create email campaign
+      description: |
+        Create email campaign for targeted bulk sending.
 
-        Creates scheduled notification campaigns with targeting and analytics.
-
-        **Performance:** <75ms P95, includes validation and scheduling '
-      operationId: createCampaign
-      tags:
-      - Targeting & Scheduling
-      security:
-      - BearerAuth: []
+        **Campaign Features:**
+        - Advanced recipient segmentation
+        - A/B testing configuration
+        - Scheduled delivery
+        - Performance tracking
+        - Budget and rate controls
+      tags: [Campaign Management]
       requestBody:
         required: true
         content:
@@ -435,598 +409,1327 @@ paths:
       responses:
         '201':
           description: Campaign created successfully
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/campaigns/550e8400-e29b-41d4-a716-446655440000
-                description: Campaign management endpoint
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CampaignResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailCampaign'
         '400':
-          description: Invalid request - malformed campaign data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - campaign creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /analytics/summary:
+          $ref: '#/components/responses/BadRequest'
+
     get:
-      summary: Get notification analytics summary
-      description: '**Analytics endpoint**
-
-        Provides aggregated analytics for notifications and campaigns.
-
-        **Performance:** <50ms P95, cached aggregated data '
-      operationId: getAnalyticsSummary
-      tags:
-      - Analytics & Reporting
-      security:
-      - BearerAuth: []
+      operationId: emailNotificationServiceListCampaigns
+      summary: List email campaigns
+      description: Retrieve paginated list of email campaigns with performance metrics
+      tags: [Campaign Management]
       parameters:
-      - name: start_date
-        in: query
-        schema:
-          type: string
-          format: date
-        description: Start date for analytics (YYYY-MM-DD)
-      - name: end_date
-        in: query
-        schema:
-          type: string
-          format: date
-        description: End date for analytics (YYYY-MM-DD)
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, scheduled, active, completed, cancelled, paused]
+          description: Filter by campaign status
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for campaigns
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for campaigns
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of campaigns to return
       responses:
         '200':
-          description: Analytics summary retrieved successfully
+          description: Campaigns retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnalyticsSummaryResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CampaignSummary'
+
+  /campaigns/{campaignId}:
+    get:
+      operationId: emailNotificationServiceGetCampaign
+      summary: Get campaign details
+      description: Retrieve detailed campaign information with real-time metrics
+      tags: [Campaign Management]
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign unique identifier
+      responses:
+        '200':
+          description: Campaign details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailCampaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: emailNotificationServiceUpdateCampaign
+      summary: Update campaign
+      description: |
+        Update campaign settings, targeting, or content.
+
+        **Update Constraints:**
+        - Cannot modify active campaigns
+        - Validate targeting criteria
+        - Update scheduling if needed
+        - Maintain campaign integrity
+      tags: [Campaign Management]
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCampaignRequest'
+      responses:
+        '200':
+          description: Campaign updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EmailCampaign'
         '400':
-          description: Invalid request - malformed date parameters
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: emailNotificationServiceCancelCampaign
+      summary: Cancel campaign
+      description: |
+        Cancel scheduled or active campaign.
+
+        **Cancellation Process:**
+        - Stop further email delivery
+        - Update campaign status
+        - Generate cancellation report
+        - Process refunds if applicable
+      tags: [Campaign Management]
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /analytics/delivery:
+    get:
+      operationId: emailNotificationServiceGetDeliveryAnalytics
+      summary: Get delivery analytics
+      description: |
+        Retrieve comprehensive email delivery analytics and metrics.
+
+        **Analytics Coverage:**
+        - Delivery success rates by provider
+        - Geographic delivery performance
+        - Time-based sending patterns
+        - Bounce and complaint analysis
+        - User engagement metrics
+        - Template performance comparison
+      tags: [Analytics & Reporting]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for analytics
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for analytics
+        - name: campaign_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific campaign
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by template
+        - name: provider
+          in: query
+          schema:
+            type: string
+            enum: [sendgrid, mailgun, ses, smtp]
+          description: Filter by email provider
+      responses:
+        '200':
+          description: Delivery analytics retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - analytics rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DeliveryAnalytics'
+
+  /consent/preferences:
+    get:
+      operationId: emailNotificationServiceGetUserConsent
+      summary: Get user email consent preferences
+      description: |
+        Retrieve user's email consent and preference settings.
+
+        **GDPR Compliance:**
+        - Granular consent tracking
+        - Consent history maintenance
+        - Legal basis documentation
+        - Withdrawal handling
+      tags: [Compliance & Consent]
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User unique identifier
+      responses:
+        '200':
+          description: User consent preferences retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserEmailConsent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: emailNotificationServiceUpdateUserConsent
+      summary: Update user email consent
+      description: |
+        Update user's email consent preferences and marketing opt-ins.
+
+        **Consent Management:**
+        - Validate consent changes
+        - Update suppression lists
+        - Maintain consent history
+        - Trigger preference sync
+      tags: [Compliance & Consent]
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserConsentRequest'
+      responses:
+        '200':
+          description: User consent updated successfully
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserEmailConsent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
+
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: '../common/responses/success.yaml#/OK'
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: '../common/responses/success.yaml#/Created'
+    Accepted:
+      $ref: '../common/responses/success.yaml#/Accepted'
+    Updated:
+      $ref: '../common/responses/success.yaml#/Updated'
+    Deleted:
+      $ref: '../common/responses/success.yaml#/Deleted'
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    Forbidden:
-      $ref: ../common-service/responses/error.yaml#/Forbidden
+      $ref: '../common/responses/error.yaml#/BadRequest'
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    Conflict:
-      $ref: ../common-service/responses/error.yaml#/Conflict
-    InternalServerError:
-      $ref: ../common-service/responses/error.yaml#/InternalServerError
+      $ref: '../common/responses/error.yaml#/NotFound'
+    TooManyRequests:
+      $ref: '../common/responses/error.yaml#/TooManyRequests'
+
   schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    Device:
+
+    # Domain Inheritance - Email Notification Service Entities
+    EmailDelivery:
+      description: Email delivery entity with infrastructure domain inheritance
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/NotificationQueueEntity'
+        - type: object
+          properties:
+            # Add email-specific fields
+            recipient_email:
+              type: string
+              format: email
+              description: Recipient email address
+            sender_email:
+              type: string
+              format: email
+              description: Sender email address
+            subject:
+              type: string
+              maxLength: 200
+              description: Email subject line
+            template_id:
+              type: string
+              format: uuid
+              description: Template used for email
+            personalization_data:
+              type: object
+              description: Data for template personalization
+              additionalProperties: true
+            priority:
+              type: string
+              enum: [low, normal, high, critical]
+              default: "normal"
+              description: Email delivery priority
+            provider:
+              type: string
+              enum: [sendgrid, mailgun, ses, smtp]
+              description: Email service provider used
+            provider_message_id:
+              type: string
+              description: Provider-specific message identifier
+            delivery_status:
+              type: string
+              enum: [queued, sent, delivered, bounced, complained, suppressed]
+              default: "queued"
+              description: Current delivery status
+            delivered_at:
+              type: string
+              format: date-time
+              description: When email was delivered
+            opened_at:
+              type: string
+              format: date-time
+              description: When email was opened
+            clicked_at:
+              type: string
+              format: date-time
+              description: When links were clicked
+            bounce_reason:
+              type: string
+              description: Bounce reason if applicable
+            complaint_reason:
+              type: string
+              description: Complaint reason if applicable
+            suppression_reason:
+              type: string
+              enum: [unsubscribed, hard_bounce, spam_complaint, manual_suppression]
+              description: Suppression reason
+            metadata:
+              type: object
+              description: Additional delivery metadata
+              properties:
+                ip_address:
+                  type: string
+                  description: Sending IP address
+                user_agent:
+                  type: string
+                  description: User agent if opened
+                geo_location:
+                  type: string
+                  description: Geographic location of open/click
+
+    EmailTemplate:
+      description: Email template entity with infrastructure domain inheritance
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Template name
+            category:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Template category
+            subject_template:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Subject line template
+            html_body:
+              type: string
+              description: HTML email body template
+            text_body:
+              type: string
+              description: Plain text email body template
+            variables:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - type
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 50
+                    description: Variable name
+                  type:
+                    type: string
+                    enum: [string, number, boolean, date]
+                    description: Variable data type
+                  required:
+                    type: boolean
+                    default: false
+                    description: Whether variable is required
+                  default_value:
+                    type: string
+                    description: Default value if not provided
+              description: Template variables
+            languages:
+              type: array
+              items:
+                type: string
+                enum: [en, es, zh, ja, ru, de, fr, pl, ko, pt]
+              description: Supported languages
+            test_data:
+              type: object
+              description: Sample data for template testing
+              additionalProperties: true
+            ab_test_variants:
+              type: array
+              items:
+                $ref: '#/components/schemas/TemplateVariant'
+              description: A/B testing variants
+
+    EmailCampaign:
+      description: Email campaign entity with infrastructure domain inheritance
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Campaign name
+            description:
+              type: string
+              maxLength: 500
+              description: Campaign description
+            campaign_type:
+              type: string
+              enum: [promotional, transactional, newsletter, announcement]
+              description: Campaign type
+            template_id:
+              type: string
+              format: uuid
+              description: Template to use for campaign
+            target_audience:
+              $ref: '#/components/schemas/CampaignTargetAudience'
+            scheduling:
+              $ref: '#/components/schemas/CampaignScheduling'
+            status:
+              type: string
+              enum: [draft, scheduled, active, completed, cancelled, paused]
+              default: "draft"
+              description: Campaign status
+            performance_metrics:
+              $ref: '#/components/schemas/CampaignPerformanceMetrics'
+            ab_test_config:
+              $ref: '#/components/schemas/ABTestConfiguration'
+
+    UserEmailConsent:
+      description: User email consent and preferences
       type: object
       required:
-      - device_id
-      - platform
-      - token
-      - user_id
-      - status
+        - user_id
+        - marketing_consent
+        - transactional_consent
       properties:
-        device_id:
-          type: string
-          format: uuid
-          description: Device unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        platform:
-          type: string
-          enum:
-          - ios
-          - android
-          - web
-          - gaming_console
-          description: Device platform
-          example: ios
-        token:
-          type: string
-          maxLength: 500
-          description: Push notification token
-          example: eA1B2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV2wX3yZ
         user_id:
           type: string
           format: uuid
-          description: Associated user ID
-          example: 660e8400-e29b-41d4-a716-446655440001
-        app_version:
-          type: string
-          maxLength: 50
-          description: App version on device
-          example: 2.1.0
-        os_version:
-          type: string
-          maxLength: 50
-          description: Operating system version
-          example: iOS 17.0
-        timezone:
-          type: string
-          maxLength: 50
-          description: Device timezone
-          example: America/New_York
-        language:
-          type: string
-          maxLength: 10
-          description: Device language
-          example: en
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - blocked
-          default: active
-          description: Device registration status
-          example: active
-        registered_at:
+          description: User unique identifier
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing emails
+        transactional_consent:
+          type: boolean
+          description: Consent for transactional emails (required)
+        promotional_consent:
+          type: boolean
+          description: Consent for promotional emails
+        newsletter_consent:
+          type: boolean
+          description: Consent for newsletter emails
+        consent_sources:
+          type: array
+          items:
+            type: object
+            required:
+              - source
+              - timestamp
+            properties:
+              source:
+                type: string
+                enum: [registration, profile_update, explicit_opt_in, imported]
+                description: How consent was obtained
+              timestamp:
+                type: string
+                format: date-time
+                description: When consent was given
+              ip_address:
+                type: string
+                description: IP address when consent was given
+              legal_basis:
+                type: string
+                enum: [consent, legitimate_interest, contract, legal_obligation]
+                description: GDPR legal basis
+          description: History of consent changes
+        suppression_lists:
+          type: array
+          items:
+            type: string
+            enum: [hard_bounce, spam_complaint, unsubscribed, manual_suppression]
+          description: Email suppression reasons
+        preferences_updated_at:
           type: string
           format: date-time
-          description: Registration timestamp
-          example: '2025-12-21T10:00:00Z'
-        last_seen_at:
-          type: string
-          format: date-time
-          description: Last activity timestamp
-          example: '2025-12-21T15:30:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RegisterDeviceRequest:
+          description: When preferences were last updated
+
+    # Supporting schemas
+    TemplateVariant:
+      description: A/B testing template variant
       type: object
       required:
-      - platform
-      - token
+        - variant_id
+        - weight
       properties:
-        platform:
+        variant_id:
           type: string
-          enum:
-          - ios
-          - android
-          - web
-          - gaming_console
-          description: Device platform
-        token:
-          type: string
-          maxLength: 500
-          description: Push notification token
-        app_version:
-          type: string
+          minLength: 1
           maxLength: 50
-          description: App version
-        os_version:
+          description: Variant identifier
+        subject_template:
           type: string
-          maxLength: 50
-          description: Operating system version
-        timezone:
+          maxLength: 200
+          description: Variant subject template
+        html_body:
           type: string
-          maxLength: 50
-          description: Device timezone
-        language:
+          description: Variant HTML body
+        text_body:
           type: string
-          maxLength: 10
-          description: Device language
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UpdateDeviceRequest:
-      type: object
-      properties:
-        token:
-          type: string
-          maxLength: 500
-          description: New push notification token
-        app_version:
-          type: string
-          maxLength: 50
-          description: Updated app version
-        timezone:
-          type: string
-          maxLength: 50
-          description: Updated timezone
-        language:
-          type: string
-          maxLength: 10
-          description: Updated language
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    DeviceResponse:
-      type: object
-      required:
-      - device
-      properties:
-        device:
-          $ref: '#/components/schemas/Device'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Notification:
-      type: object
-      required:
-      - notification_id
-      - title
-      - body
-      - target
-      properties:
-        notification_id:
-          type: string
-          format: uuid
-          description: Notification unique identifier
-          example: 770e8400-e29b-41d4-a716-446655440002
-        title:
-          type: string
-          maxLength: 100
-          description: Notification title
-          example: Achievement Unlocked!
-        body:
-          type: string
-          maxLength: 500
-          description: Notification body text
-          example: Congratulations! You unlocked the 'Cyber Runner' achievement.
-        data:
-          type: object
-          description: Additional notification data/payload
-          example:
-            achievement_id: cyber_runner
-            points: 100
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-          description: Notification priority
-        ttl_seconds:
+          description: Variant text body
+        weight:
           type: integer
-          minimum: 0
-          maximum: 604800
-          default: 86400
-          description: Time-to-live in seconds (max 7 days)
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationTarget:
+          minimum: 1
+          maximum: 100
+          description: Traffic distribution weight
+
+    CampaignTargetAudience:
+      description: Campaign target audience definition
       type: object
       properties:
-        user_ids:
+        user_segments:
           type: array
           items:
             type: string
             format: uuid
-          maxItems: 1000
-          description: Specific user IDs to target
-        segments:
+          description: User segment IDs to target
+        email_domains:
           type: array
           items:
             type: string
-            maxLength: 100
-          description: User segments to target (e.g., "premium_users", "new_players")
-        all_users:
-          type: boolean
-          default: false
-          description: Send to all registered users
-      description: Notification targeting configuration
-    SendNotificationRequest:
-      type: object
-      required:
-      - title
-      - body
-      - target
-      properties:
-        title:
-          type: string
-          maxLength: 100
-          description: Notification title
-        body:
-          type: string
-          maxLength: 500
-          description: Notification body text
-        data:
+          description: Email domains to target
+        geographic_filters:
+          type: array
+          items:
+            type: string
+          description: Geographic region filters
+        consent_filters:
           type: object
-          description: Additional notification data/payload
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-        ttl_seconds:
-          type: integer
-          minimum: 0
-          maximum: 604800
-          default: 86400
+          properties:
+            marketing_consent:
+              type: boolean
+              description: Require marketing consent
+            promotional_consent:
+              type: boolean
+              description: Require promotional consent
+          description: Consent-based filtering
+        custom_filters:
+          type: object
+          description: Custom targeting filters
+          additionalProperties: true
+
+    CampaignScheduling:
+      description: Campaign scheduling configuration
+      type: object
+      properties:
         scheduled_at:
           type: string
           format: date-time
-          description: Schedule delivery for future time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationQueuedResponse:
+          description: Campaign scheduled time
+        timezone:
+          type: string
+          default: "UTC"
+          description: Scheduling timezone
+        send_rate:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          description: Emails per hour rate limit
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Batch size for processing
+
+    CampaignPerformanceMetrics:
+      description: Campaign performance tracking
       type: object
-      required:
-      - notification_id
-      - status
-      - estimated_delivery_time
       properties:
-        notification_id:
-          type: string
-          format: uuid
-          description: Notification unique identifier
-        status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - delivered
-          - failed
-          description: Current delivery status
-          example: queued
-        estimated_delivery_time:
-          type: string
-          format: date-time
-          description: Estimated delivery completion time
-          example: '2025-12-21T10:01:00Z'
         target_count:
           type: integer
-          minimum: 0
-          description: Number of target devices
-          example: 15420
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationStatusResponse:
-      type: object
-      required:
-      - notification
-      - delivery_stats
-      properties:
-        notification:
-          $ref: '#/components/schemas/Notification'
-        delivery_stats:
-          $ref: '#/components/schemas/DeliveryStats'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    DeliveryStats:
-      type: object
-      properties:
-        total_targeted:
+          description: Total target recipients
+        sent_count:
           type: integer
-          minimum: 0
-          description: Total devices targeted
-          example: 15420
-        delivered:
+          description: Emails successfully sent
+        delivered_count:
           type: integer
-          minimum: 0
-          description: Successfully delivered notifications
-          example: 15200
-        failed:
+          description: Emails delivered to inbox
+        opened_count:
           type: integer
-          minimum: 0
-          description: Failed deliveries
-          example: 120
-        pending:
+          description: Emails opened by recipients
+        clicked_count:
           type: integer
-          minimum: 0
-          description: Still pending delivery
-          example: 100
+          description: Link clicks in emails
+        bounced_count:
+          type: integer
+          description: Hard bounces
+        complained_count:
+          type: integer
+          description: Spam complaints
+        unsubscribed_count:
+          type: integer
+          description: Unsubscribes during campaign
         delivery_rate:
           type: number
           minimum: 0
           maximum: 1
-          description: Delivery success rate (0.0 to 1.0)
-          example: 0.987
-        average_delivery_time_ms:
-          type: integer
+          description: Delivery success rate
+        open_rate:
+          type: number
           minimum: 0
-          description: Average delivery time in milliseconds
-          example: 85
-      description: Notification delivery statistics
-    CreateCampaignRequest:
+          maximum: 1
+          description: Email open rate
+        click_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Email click rate
+
+    ABTestConfiguration:
+      description: A/B testing configuration for campaign
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether A/B testing is enabled
+        winner_criteria:
+          type: string
+          enum: [open_rate, click_rate, delivery_rate]
+          default: "open_rate"
+          description: Criteria for selecting winner
+        test_duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+          description: Test duration before winner selection
+        winner_distribution:
+          type: integer
+          minimum: 50
+          maximum: 100
+          default: 100
+          description: Percentage of traffic to winner variant
+
+    DeliveryAnalytics:
+      description: Comprehensive delivery analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_sent:
+          type: integer
+          description: Total emails sent
+        total_delivered:
+          type: integer
+          description: Total emails delivered
+        total_opened:
+          type: integer
+          description: Total emails opened
+        total_clicked:
+          type: integer
+          description: Total link clicks
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall delivery rate
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall open rate
+        click_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall click rate
+        bounce_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Bounce rate
+        complaint_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Spam complaint rate
+        provider_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProviderDeliveryMetrics'
+          description: Metrics by email provider
+        geographic_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeographicDeliveryMetrics'
+          description: Delivery metrics by geography
+
+    ProviderDeliveryMetrics:
+      description: Delivery metrics for specific email provider
+      type: object
+      properties:
+        sent:
+          type: integer
+          description: Emails sent via provider
+        delivered:
+          type: integer
+          description: Emails delivered by provider
+        bounced:
+          type: integer
+          description: Bounces from provider
+        complained:
+          type: integer
+          description: Complaints from provider
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Provider delivery rate
+        average_delivery_time:
+          type: number
+          description: Average delivery time in seconds
+
+    GeographicDeliveryMetrics:
+      description: Delivery metrics by geographic region
+      type: object
+      properties:
+        region:
+          type: string
+          description: Geographic region
+        sent_count:
+          type: integer
+          description: Emails sent to region
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Regional delivery rate
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Regional open rate
+        average_delivery_time:
+          type: number
+          description: Regional average delivery time
+
+    EmailDeliveryStatus:
+      description: Detailed email delivery status
       type: object
       required:
-      - name
-      - notification
-      - target
-      - schedule
+        - email_id
+        - status
+        - recipient_email
+        - sent_at
+      properties:
+        email_id:
+          type: string
+          format: uuid
+          description: Email unique identifier
+        status:
+          type: string
+          enum: [queued, sent, delivered, bounced, complained, suppressed]
+          description: Current delivery status
+        recipient_email:
+          type: string
+          format: email
+          description: Recipient email address
+        sent_at:
+          type: string
+          format: date-time
+          description: When email was sent
+        delivered_at:
+          type: string
+          format: date-time
+          description: When email was delivered
+        opened_at:
+          type: string
+          format: date-time
+          description: When email was opened
+        clicked_at:
+          type: string
+          format: date-time
+          description: When links were clicked
+        bounced_at:
+          type: string
+          format: date-time
+          description: When bounce occurred
+        bounce_reason:
+          type: string
+          description: Bounce reason
+        complaint_at:
+          type: string
+          format: date-time
+          description: When complaint was received
+        suppression_reason:
+          type: string
+          enum: [unsubscribed, hard_bounce, spam_complaint, manual_suppression]
+          description: Suppression reason
+        retry_count:
+          type: integer
+          minimum: 0
+          description: Number of delivery retries
+        provider:
+          type: string
+          enum: [sendgrid, mailgun, ses, smtp]
+          description: Email provider used
+
+    TemplateSummary:
+      description: Template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+        name:
+          type: string
+          description: Template name
+        category:
+          type: string
+          description: Template category
+        languages:
+          type: array
+          items:
+            type: string
+          description: Supported languages
+        is_active:
+          type: boolean
+          description: Template active status
+        last_updated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CampaignSummary:
+      description: Campaign summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Campaign ID
+        name:
+          type: string
+          description: Campaign name
+        campaign_type:
+          type: string
+          enum: [promotional, transactional, newsletter, announcement]
+          description: Campaign type
+        status:
+          type: string
+          enum: [draft, scheduled, active, completed, cancelled, paused]
+          description: Campaign status
+        target_count:
+          type: integer
+          description: Number of target recipients
+        sent_count:
+          type: integer
+          description: Emails sent
+        delivered_count:
+          type: integer
+          description: Emails delivered
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Email open rate
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Campaign scheduled time
+
+    # Request/Response schemas
+    SendEmailRequest:
+      description: Request payload for sending email
+      type: object
+      required:
+        - to
+        - template_id
+      properties:
+        to:
+          oneOf:
+            - type: string
+              format: email
+              description: Single recipient email
+            - type: array
+              items:
+                type: string
+                format: email
+              minItems: 1
+              maxItems: 100
+              description: Multiple recipient emails
+          description: Email recipient(s)
+        template_id:
+          type: string
+          format: uuid
+          description: Template to use for email
+        personalization_data:
+          type: object
+          description: Data for template personalization
+          additionalProperties: true
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: "normal"
+          description: Email delivery priority
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Schedule email for future delivery
+        tracking:
+          type: object
+          properties:
+            enable_opens:
+              type: boolean
+              default: true
+              description: Track email opens
+            enable_clicks:
+              type: boolean
+              default: true
+              description: Track link clicks
+            custom_tracking_id:
+              type: string
+              maxLength: 100
+              description: Custom tracking identifier
+          description: Email tracking configuration
+
+    SendBatchEmailsRequest:
+      description: Request payload for batch email sending
+      type: object
+      required:
+        - emails
+      properties:
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SendEmailRequest'
+          minItems: 1
+          maxItems: 1000
+          description: Individual email requests
+        batch_config:
+          type: object
+          properties:
+            priority:
+              type: string
+              enum: [low, normal, high, critical]
+              default: "normal"
+              description: Batch priority
+            deduplicate:
+              type: boolean
+              default: true
+              description: Remove duplicate recipients
+            rate_limit:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Emails per minute rate limit
+          description: Batch processing configuration
+
+    BatchEmailResult:
+      description: Result of batch email operation
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch operation identifier
+        total_requested:
+          type: integer
+          description: Total emails requested
+        queued_count:
+          type: integer
+          description: Emails successfully queued
+        duplicate_count:
+          type: integer
+          description: Duplicate emails removed
+        error_count:
+          type: integer
+          description: Emails with errors
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: Expected completion time
+        email_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Individual email IDs created
+
+    CreateTemplateRequest:
+      description: Request payload for creating email template
+      type: object
+      required:
+        - name
+        - category
+        - subject_template
+        - html_body
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Template category
+        subject_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Subject line template
+        html_body:
+          type: string
+          minLength: 1
+          description: HTML email body template
+        text_body:
+          type: string
+          description: Plain text email body template
+        variables:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - type
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Variable name
+              type:
+                type: string
+                enum: [string, number, boolean, date]
+                description: Variable data type
+              required:
+                type: boolean
+                default: false
+                description: Whether variable is required
+              default_value:
+                type: string
+                description: Default value if not provided
+          description: Template variables
+        languages:
+          type: array
+          items:
+            type: string
+            enum: [en, es, zh, ja, ru, de, fr, pl, ko, pt]
+          default: ["en"]
+          description: Supported languages
+        test_data:
+          type: object
+          description: Sample data for template testing
+          additionalProperties: true
+
+    UpdateTemplateRequest:
+      description: Request payload for updating email template
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Template category
+        subject_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Subject line template
+        html_body:
+          type: string
+          minLength: 1
+          description: HTML email body template
+        text_body:
+          type: string
+          description: Plain text email body template
+        variables:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - type
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Variable name
+              type:
+                type: string
+                enum: [string, number, boolean, date]
+                description: Variable data type
+              required:
+                type: boolean
+                description: Whether variable is required
+              default_value:
+                type: string
+                description: Default value if not provided
+          description: Template variables
+        languages:
+          type: array
+          items:
+            type: string
+            enum: [en, es, zh, ja, ru, de, fr, pl, ko, pt]
+          description: Supported languages
+        test_data:
+          type: object
+          description: Sample data for template testing
+          additionalProperties: true
+
+    CreateCampaignRequest:
+      description: Request payload for creating email campaign
+      type: object
+      required:
+        - name
+        - template_id
+        - target_audience
+      properties:
+        name:
+          type: string
+          minLength: 1
           maxLength: 100
           description: Campaign name
-          example: Holiday Achievement Push
         description:
           type: string
           maxLength: 500
           description: Campaign description
-        notification:
-          $ref: '#/components/schemas/SendNotificationRequest'
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        schedule:
-          type: object
-          required:
-          - type
-          properties:
-            type:
-              type: string
-              enum:
-              - immediate
-              - scheduled
-              - recurring
-              description: Campaign schedule type
-            scheduled_at:
-              type: string
-              format: date-time
-              description: Specific delivery time
-            recurring_pattern:
-              type: string
-              enum:
-              - daily
-              - weekly
-              - monthly
-              description: Recurring delivery pattern
-        max_sends_per_hour:
-          type: integer
-          minimum: 1
-          maximum: 100000
-          default: 10000
-          description: Rate limiting for large campaigns
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    CampaignResponse:
+        campaign_type:
+          type: string
+          enum: [promotional, transactional, newsletter, announcement]
+          default: "promotional"
+          description: Campaign type
+        template_id:
+          type: string
+          format: uuid
+          description: Template to use for campaign
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+        ab_test_config:
+          $ref: '#/components/schemas/ABTestConfiguration'
+
+    UpdateCampaignRequest:
+      description: Request payload for updating campaign
       type: object
-      required:
-      - campaign
       properties:
-        campaign:
-          type: object
-          required:
-          - campaign_id
-          - name
-          - status
-          properties:
-            campaign_id:
-              type: string
-              format: uuid
-              description: Campaign unique identifier
-            name:
-              type: string
-              maxLength: 100
-              description: Campaign name
-            status:
-              type: string
-              enum:
-              - draft
-              - scheduled
-              - running
-              - completed
-              - cancelled
-              description: Campaign status
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp
-            scheduled_at:
-              type: string
-              format: date-time
-              description: Scheduled delivery time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    AnalyticsSummaryResponse:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Campaign name
+        description:
+          type: string
+          maxLength: 500
+          description: Campaign description
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+        ab_test_config:
+          $ref: '#/components/schemas/ABTestConfiguration'
+
+    UpdateUserConsentRequest:
+      description: Request payload for updating user email consent
       type: object
-      required:
-      - summary
       properties:
-        summary:
-          type: object
-          properties:
-            total_notifications_sent:
-              type: integer
-              minimum: 0
-              description: Total notifications sent in period
-              example: 1250000
-            total_delivered:
-              type: integer
-              minimum: 0
-              description: Total notifications delivered
-              example: 1235000
-            overall_delivery_rate:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Overall delivery success rate
-              example: 0.988
-            average_delivery_time_ms:
-              type: integer
-              minimum: 0
-              description: Average delivery time
-              example: 92
-            platform_breakdown:
-              type: object
-              properties:
-                ios:
-                  $ref: '#/components/schemas/DeliveryStats'
-                android:
-                  $ref: '#/components/schemas/DeliveryStats'
-                web:
-                  $ref: '#/components/schemas/DeliveryStats'
-            top_campaigns:
-              type: array
-              items:
-                type: object
-                properties:
-                  campaign_name:
-                    type: string
-                  delivery_rate:
-                    type: number
-                  total_sent:
-                    type: integer
-              maxItems: 10
-          description: Aggregated notification analytics
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing emails
+        transactional_consent:
+          type: boolean
+          description: Consent for transactional emails
+        promotional_consent:
+          type: boolean
+          description: Consent for promotional emails
+        newsletter_consent:
+          type: boolean
+          description: Consent for newsletter emails
+        consent_source:
+          type: string
+          enum: [profile_update, explicit_opt_in, withdrawal]
+          default: "profile_update"
+          description: Source of consent change
+        legal_basis:
+          type: string
+          enum: [consent, legitimate_interest, contract, legal_obligation]
+          description: GDPR legal basis for processing
+
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: '../common/security/security.yaml#/BearerAuth'
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<50ms"
+  throughput-target: "10,000+ emails/second"
+  delivery-rate-target: ">99%"
+  bounce-rate-target: "<2%"
+  database-indexes: "Composite indexes on (recipient_email, status), (template_id, created_at), (campaign_id, sent_at)"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - email_send_rate
+    - delivery_success_rate
+    - bounce_rate
+    - open_rate
+    - click_rate
+    - queue_depth
+  alerts:
+    - delivery_rate < 99%
+    - bounce_rate > 2%
+    - queue_depth > 10000
+    - send_failure_rate > 1%
+
+# Compliance and legal
+x-compliance:
+  gdpr-compliant: "User consent tracking and withdrawal support"
+  can-spam-compliant: "Physical and virtual mailing addresses included"
+  audit-trail: "Complete email operations audit logging"
+  data-retention: "Configurable retention policies for email data"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/infrastructure-entities.yaml"
+  inherited-entities: "NotificationQueueEntity, ConfigurationEntity, AuditLogEntity"
+  additional-schemas: "Email delivery tracking, template management, campaign analytics, consent handling"
+  no-duplication: "All common fields inherited, email-specific delivery and compliance extensions added"

@@ -1,2207 +1,1651 @@
-openapi: 3.0.3
+openapi: "3.0.3"
+
 info:
-  title: Neural Link Service API - Enterprise-Grade Neural Interface Management
-  description: '**Enterprise-Grade Neural Link Management API for NECPGAME**
+  title: "Neural Link Service API"
+  description: |
+    Enterprise-grade Neural Interface System для NECPGAME платформы.
 
-    This API manages neural interfaces, brain-computer connections, synchronization
-    protocols, and neural health monitoring for all cyberpunk augmentations with enterprise-grade
-    safety protocols and performance optimization.
+    ## 🎯 **Neural Link Service Overview**
 
-    ## Key Features
+    Neural Link Service предоставляет комплексную систему нейронных интерфейсов и связей для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
 
-    - **Neural Synchronization**: Advanced brain-computer interface management - **Health
-    Monitoring**: Real-time neural pathway health assessment - **Connection Management**:
-    Neural link lifecycle and optimization - **Safety Protocols**: Multi-layer neural
-    safety and emergency systems - **Calibration Systems**: Neural interface calibration
-    and tuning - **Performance Optimized**: MMOFPS-grade performance with <50ms P99
-    latency
+    ### **Ключевые Возможности**
+    - **Neural Link Management**: Управление нейронными интерфейсами
+    - **Implant Integration**: Интеграция имплантов и кибернетических устройств
+    - **Signal Processing**: Обработка нейронных сигналов
+    - **Cyberpsychosis Monitoring**: Мониторинг киберпсихоза
 
-    ## Domain Purpose
+    ### **Типы Нейронных Интерфейсов**
+    - **Basic Neural Links**: Базовые нейронные связи
+    - **Advanced Implants**: Продвинутые импланты
+    - **Corporate Interfaces**: Корпоративные интерфейсы
+    - **Black Market Devices**: Устройства черного рынка
 
-    The Neural Link domain handles all brain-computer interface operations in Night
-    City. Players require neural links for implant functionality, cyberspace navigation,
-    and cyberware control with comprehensive health monitoring and risk management.
+    ### **Расширенные Возможности**
+    - **Signal Calibration**: Калибровка сигналов
+    - **Implant Compatibility**: Совместимость имплантов
+    - **Real-time Monitoring**: Мониторинг в реальном времени
+    - **Emergency Shutdown**: Аварийное отключение
 
-    ## Performance Targets
+    ## 📊 **Performance Targets**
+    - **P99 Latency**: <15ms для операций с нейронными связями
+    - **Throughput**: 50,000+ neural operations/second
+    - **Concurrent Players**: 500,000+ активных игроков
+    - **Memory per Player**: <4KB для состояния нейронной связи
 
-    - P99 Latency: <50ms for neural operations - Memory: <25KB per active neural session
-    - Concurrent users: 50,000+ simultaneous neural connections - Sync time: <15ms
-    response time
+    ## 🔐 **Security**
+    - JWT RS256 аутентификация
+    - Rate limiting для предотвращения спама
+    - Input validation и sanitization
+    - Audit logging всех операций
 
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@necpgame.com
+    name: "NECPGAME Platform Team"
+    email: "platform@necpgame.com"
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: "Proprietary"
+    url: "https://necpgame.com/license"
+
 servers:
-- url: https://api.necpgame.com/v1/neural-link
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/neural-link
-  description: Staging server
-- url: http://localhost:8080/api/v1/neural-link
-  description: Local development server
+  - url: "https://neural-link.necpgame.com/api/v1"
+    description: "Production Environment"
+  - url: "https://neural-link-staging.necpgame.com/api/v1"
+    description: "Staging Environment"
+  - url: "http://localhost:8080/api/v1"
+    description: "Local Development"
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: Neural Links
-  description: Core neural interface management
-- name: Synchronization
-  description: Neural synchronization operations
-- name: Health Monitoring
-  description: Neural health assessment and monitoring
-- name: Calibration
-  description: Neural interface calibration and tuning
+  - name: "Neural Link Management"
+    description: "Управление нейронными связями"
+  - name: "Implant Management"
+    description: "Управление имплантами"
+  - name: "Signal Processing"
+    description: "Обработка сигналов"
+  - name: "Health Monitoring"
+    description: "Мониторинг здоровья"
+  - name: "Cyberpsychosis"
+    description: "Киберпсихоз"
+  - name: "Health"
+    description: "Мониторинг здоровья сервиса"
+
 paths:
   /health:
     get:
-      summary: Neural link domain health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the neural link domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: neuralLinkDomainHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      summary: "Проверка здоровья сервиса"
+      operationId: "healthCheck"
+      tags: ["Health"]
       responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"-api-v1-neural-link-health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
+        "200":
+          description: "Сервис работает корректно"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '503':
-          description: Service is unhealthy
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: "Сервис недоступен"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
   /health/batch:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
-        single request
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: neuralLinkDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
+      summary: "Пакетная проверка здоровья"
+      operationId: "healthBatchCheck"
+      tags: ["Health"]
       requestBody:
         required: true
         content:
           application/json:
             schema:
+              $ref: "#/components/schemas/HealthBatchRequest"
+      responses:
+        "200":
+          description: "Результаты проверки здоровья"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthBatchResponse"
+        "400":
+          description: "Некорректный запрос"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/ws:
+    get:
+      summary: "WebSocket проверка здоровья"
+      operationId: "healthWebSocketCheck"
+      tags: ["Health"]
+      responses:
+        "101":
+          description: "WebSocket соединение установлено"
+        "503":
+          description: "WebSocket недоступен"
+
+  /neural-links:
+    post:
+      summary: "Создание нейронной связи"
+      operationId: "createNeuralLink"
+      tags: ["Neural Link Management"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNeuralLinkRequest"
+      responses:
+        "201":
+          description: "Нейронная связь создана"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralLinkResponse"
+        "400":
+          description: "Некорректные данные"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Недостаточно прав"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: "Получение списка нейронных связей"
+      operationId: "getNeuralLinks"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "manufacturer"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["arasaka", "militech", "biotechnica", "trauma_team", "black_market"]
+        - name: "type"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["basic", "advanced", "military", "prototype"]
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: "offset"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: "Список нейронных связей"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralLinkListResponse"
+
+  /neural-links/{neuralLinkId}:
+    get:
+      summary: "Получение нейронной связи по ID"
+      operationId: "getNeuralLink"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "neuralLinkId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Нейронная связь найдена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralLinkResponse"
+        "404":
+          description: "Нейронная связь не найдена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: "Обновление нейронной связи"
+      operationId: "updateNeuralLink"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "neuralLinkId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNeuralLinkRequest"
+      responses:
+        "200":
+          description: "Нейронная связь обновлена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralLinkResponse"
+        "403":
+          description: "Недостаточно прав"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Нейронная связь не найдена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/neural-link:
+    get:
+      summary: "Нейронная связь игрока"
+      operationId: "getPlayerNeuralLink"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Нейронная связь игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerNeuralLinkResponse"
+        "404":
+          description: "Игрок не найден или нет нейронной связи"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      summary: "Установка нейронной связи игроку"
+      operationId: "installNeuralLink"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallNeuralLinkRequest"
+      responses:
+        "200":
+          description: "Нейронная связь установлена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallNeuralLinkResponse"
+        "400":
+          description: "Невозможно установить нейронную связь"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Игрок или нейронная связь не найдены"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: "Удаление нейронной связи игрока"
+      operationId: "uninstallNeuralLink"
+      tags: ["Neural Link Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Нейронная связь удалена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UninstallNeuralLinkResponse"
+        "404":
+          description: "Игрок или нейронная связь не найдены"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/neural-link/calibrate:
+    post:
+      summary: "Калибровка нейронной связи"
+      operationId: "calibrateNeuralLink"
+      tags: ["Signal Processing"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalibrateNeuralLinkRequest"
+      responses:
+        "200":
+          description: "Калибровка выполнена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalibrateNeuralLinkResponse"
+        "400":
+          description: "Ошибка калибровки"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Слишком частая калибровка"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/neural-link/emergency-shutdown:
+    post:
+      summary: "Аварийное отключение нейронной связи"
+      operationId: "emergencyShutdown"
+      tags: ["Health Monitoring"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmergencyShutdownRequest"
+      responses:
+        "200":
+          description: "Аварийное отключение выполнено"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmergencyShutdownResponse"
+        "400":
+          description: "Невозможно выполнить аварийное отключение"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /implants:
+    post:
+      summary: "Создание импланта"
+      operationId: "createImplant"
+      tags: ["Implant Management"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateImplantRequest"
+      responses:
+        "201":
+          description: "Имплант создан"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImplantResponse"
+        "400":
+          description: "Некорректные данные"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: "Получение списка имплантов"
+      operationId: "getImplants"
+      tags: ["Implant Management"]
+      parameters:
+        - name: "category"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["neural", "cybernetic", "optic", "sensory", "muscle"]
+        - name: "rarity"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["common", "uncommon", "rare", "epic", "legendary"]
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: "offset"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: "Список имплантов"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImplantListResponse"
+
+  /implants/{implantId}:
+    get:
+      summary: "Получение импланта по ID"
+      operationId: "getImplant"
+      tags: ["Implant Management"]
+      parameters:
+        - name: "implantId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Имплант найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImplantResponse"
+        "404":
+          description: "Имплант не найден"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /implants/compatibility:
+    post:
+      summary: "Проверка совместимости имплантов"
+      operationId: "checkImplantCompatibility"
+      tags: ["Implant Management"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckCompatibilityRequest"
+      responses:
+        "200":
+          description: "Результаты проверки совместимости"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckCompatibilityResponse"
+
+  /players/{playerId}/implants:
+    get:
+      summary: "Импланты игрока"
+      operationId: "getPlayerImplants"
+      tags: ["Implant Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+        - name: "status"
+          in: "query"
+          schema:
+            type: string
+            enum: ["installed", "available", "malfunctioning"]
+      responses:
+        "200":
+          description: "Импланты игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerImplantsResponse"
+
+    post:
+      summary: "Установка импланта игроку"
+      operationId: "installImplant"
+      tags: ["Implant Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallImplantRequest"
+      responses:
+        "200":
+          description: "Имплант установлен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallImplantResponse"
+        "400":
+          description: "Невозможно установить имплант"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/cyberpsychosis:
+    get:
+      summary: "Статус киберпсихоза игрока"
+      operationId: "getCyberpsychosisStatus"
+      tags: ["Cyberpsychosis"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Статус киберпсихоза"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CyberpsychosisStatusResponse"
+
+  /players/{playerId}/cyberpsychosis/treatment:
+    post:
+      summary: "Лечение киберпсихоза"
+      operationId: "treatCyberpsychosis"
+      tags: ["Cyberpsychosis"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TreatCyberpsychosisRequest"
+      responses:
+        "200":
+          description: "Лечение выполнено"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreatCyberpsychosisResponse"
+        "400":
+          description: "Невозможно выполнить лечение"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /signals/process:
+    post:
+      summary: "Обработка нейронных сигналов"
+      operationId: "processNeuralSignals"
+      tags: ["Signal Processing"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessSignalsRequest"
+      responses:
+        "200":
+          description: "Сигналы обработаны"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessSignalsResponse"
+
+  /analytics/neural-activity:
+    get:
+      summary: "Аналитика нейронной активности"
+      operationId: "getNeuralActivityAnalytics"
+      tags: ["Health Monitoring"]
+      parameters:
+        - name: "period"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["hourly", "daily", "weekly", "monthly"]
+            default: "daily"
+        - name: "metric"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["signal_quality", "cyberpsychosis_incidents", "implant_failures", "calibration_success"]
+      responses:
+        "200":
+          description: "Аналитика нейронной активности"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NeuralActivityAnalyticsResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common inherited entities
+    CharacterEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity"
+    BaseEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/BaseEntity"
+    OptimisticLock:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock"
+    ErrorResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse"
+    HealthResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse"
+    HealthBatchRequest:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest"
+    HealthBatchResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse"
+
+    # Neural Link specific schemas
+    NeuralLinkEntity:
+      type: object
+      description: "Сущность нейронной связи"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - model
+            - manufacturer
+            - type
+            - firmwareVersion
+          properties:
+            model:
+              type: string
+              description: "Модель нейронной связи"
+              maxLength: 50
+              example: "Arasaka Mk.4"
+            manufacturer:
+              type: string
+              description: "Производитель"
+              enum: ["arasaka", "militech", "biotechnica", "trauma_team", "black_market"]
+              example: "arasaka"
+            type:
+              type: string
+              description: "Тип нейронной связи"
+              enum: ["basic", "advanced", "military", "prototype"]
+              example: "advanced"
+            firmwareVersion:
+              type: string
+              description: "Версия прошивки"
+              pattern: "^\\d+\\.\\d+\\.\\d+$"
+              example: "2.1.3"
+            hardwareSpecs:
               type: object
-              required:
-              - services
+              description: "Характеристики оборудования"
               properties:
-                services:
+                bandwidth:
+                  type: integer
+                  description: "Пропускная способность (Mbps)"
+                  minimum: 1
+                  example: 1000
+                latency:
+                  type: integer
+                  description: "Задержка (ms)"
+                  minimum: 1
+                  example: 5
+                powerConsumption:
+                  type: integer
+                  description: "Потребление энергии (W)"
+                  minimum: 1
+                  example: 25
+            supportedImplants:
+              type: array
+              description: "Поддерживаемые импланты"
+              items:
+                type: string
+                maxLength: 50
+            maxImplants:
+              type: integer
+              description: "Максимальное количество имплантов"
+              minimum: 1
+              maximum: 20
+              example: 8
+            cyberpsychosisResistance:
+              type: integer
+              description: "Сопротивление киберпсихозу"
+              minimum: 0
+              maximum: 100
+              example: 75
+            price:
+              type: integer
+              description: "Цена в eddies"
+              minimum: 0
+              example: 50000
+            isActive:
+              type: boolean
+              description: "Активна ли модель"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    ImplantEntity:
+      type: object
+      description: "Сущность импланта"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - name
+            - category
+            - rarity
+            - effects
+          properties:
+            name:
+              type: string
+              description: "Название импланта"
+              maxLength: 100
+              example: "Kerenzikov Boost System"
+            description:
+              type: string
+              description: "Описание импланта"
+              maxLength: 500
+            category:
+              type: string
+              description: "Категория импланта"
+              enum: ["neural", "cybernetic", "optic", "sensory", "muscle"]
+              example: "muscle"
+            rarity:
+              type: string
+              description: "Редкость импланта"
+              enum: ["common", "uncommon", "rare", "epic", "legendary"]
+              example: "rare"
+            effects:
+              type: array
+              description: "Эффекты импланта"
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: ["stat_boost", "ability_unlock", "damage_resistance", "stealth_bonus"]
+                  value:
+                    type: number
+                  duration:
+                    type: integer
+                    description: "Длительность в секундах"
+                  cooldown:
+                    type: integer
+                    description: "Перезарядка в секундах"
+            requirements:
+              type: object
+              description: "Требования для установки"
+              properties:
+                neuralLinkType:
+                  type: string
+                  enum: ["basic", "advanced", "military", "prototype"]
+                minNeuralLinkLevel:
+                  type: integer
+                  minimum: 1
+                incompatibleImplants:
                   type: array
                   items:
                     type: string
-                    enum:
-                    - neural-link
-                    - implant
-                    - cyberspace
-                    - cyberware
-                    - hacking
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/ws:
-    get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: neuralLinkDomainHealthWebSocket
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - neural-link
-            - neural
-            - implant
-            example:
-            - neural-link
-            - implant
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/neural-link/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-links:
-    post:
-      summary: Install neural link
-      description: '**Enterprise-grade neural link installation**
-
-        Creates and installs neural interface with comprehensive compatibility validation,
-        safety protocols, and initial calibration.
-
-        **Critical Operation:** Permanent neural modification
-
-        '
-      operationId: installNeuralLink
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstallNeuralLinkRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/NeuralLinkInstalled'
-        '400':
-          description: Invalid installation parameters or neural incompatibility
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Conflict - neural link already exists or brain damage detected
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Unprocessable entity - medical contraindications
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - neural surgery rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 3600
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary: List neural links with filtering
-      description: '**Enterprise-grade neural link listing**
-
-        Lists all neural interfaces with comprehensive filtering by health status,
-        synchronization quality, and operational metrics.
-
-        **Performance:** <10ms P95, supports complex queries
-
-        '
-      operationId: listNeuralLinks
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-        description: Filter by player
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - ACTIVE
-          - INACTIVE
-          - MALFUNCTIONING
-          - MAINTENANCE
-          - CALIBRATING
-        description: Filter by link status
-      - name: sync_quality_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-        description: Minimum synchronization quality percentage
-      - name: neural_health_min
-        in: query
-        schema:
-          type: number
-          minimum: 0
-          maximum: 100
-        description: Minimum neural health percentage
-      - name: firmware_version
-        in: query
-        schema:
-          type: string
-        description: Filter by firmware version
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      responses:
-        '200':
-          $ref: '#/components/responses/NeuralLinkListSuccess'
-        '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-links/{link_id}:
-    get:
-      summary: Get neural link details
-      description: '**Enterprise-grade neural link retrieval**
-
-        Returns comprehensive neural interface information including real-time synchronization
-        status, neural pathway health, and operational metrics.
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getNeuralLink
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link unique identifier
-      - name: include_diagnostics
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include detailed neural diagnostics
-      - name: include_sync_history
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include synchronization history
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      responses:
-        '200':
-          $ref: '#/components/responses/NeuralLinkRetrieved'
-        '304':
-          description: Not modified - neural link has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"link-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, private
-        '404':
-          description: Neural link not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update neural link configuration
-      description: '**Enterprise-grade neural link update**
-
-        Updates neural interface settings, firmware, or operational parameters with
-        comprehensive validation and safety checks.
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateNeuralLink
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNeuralLinkRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/NeuralLinkUpdated'
-        '400':
-          description: Invalid request - malformed data or link ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '404':
-          description: Neural link not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Conflict - version conflict or concurrent modification
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"link-123-v1"'
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Remove neural link
-      description: '**Surgical neural link removal**
-
-        Performs controlled removal of neural interface with extensive safety protocols
-        and neural pathway restoration attempts.
-
-        **Extreme-Risk Operation:** Potential permanent brain damage
-
-        '
-      operationId: removeNeuralLink
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link to remove
-      - name: emergency_removal
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Emergency removal (minimal safety protocols)
-      - name: preserve_pathways
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Attempt to preserve neural pathways
-      responses:
-        '200':
-          description: Neural link removed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NeuralLinkRemovalResult'
-        '404':
-          description: Neural link not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Cannot remove - active connections or dependencies
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Unprocessable - medical risks too high
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-links/{link_id}/sync:
-    post:
-      summary: Synchronize neural link
-      description: '**Advanced neural synchronization**
-
-        Performs comprehensive neural recalibration and synchronization with all connected
-        implants and cyberware systems.
-
-        **High-Risk Operation:** Extended neural processing load
-
-        '
-      operationId: synchronizeNeuralLink
-      tags:
-      - Synchronization
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link to synchronize
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NeuralSyncRequest'
-      responses:
-        '200':
-          description: Neural synchronization completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NeuralSyncResult'
-        '400':
-          description: Invalid synchronization parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Synchronization blocked - link busy or unstable
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many synchronizations - neural recovery required
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-links/{link_id}/calibrate:
-    post:
-      summary: Calibrate neural link
-      description: '**Precision neural calibration**
-
-        Performs detailed neural pathway mapping and calibration optimization for
-        maximum performance and minimum latency.
-
-        **Time-Intensive Operation:** Requires neural focus and stability
-
-        '
-      operationId: calibrateNeuralLink
-      tags:
-      - Calibration
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link to calibrate
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CalibrateNeuralLinkRequest'
-      responses:
-        '200':
-          description: Neural calibration completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NeuralCalibrationResult'
-        '400':
-          description: Invalid calibration parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Calibration blocked - neural instability detected
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many calibrations - neural fatigue protection
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 600
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-links/{link_id}/diagnostics:
-    get:
-      summary: Get neural link diagnostics
-      description: '**Comprehensive neural diagnostics**
-
-        Provides detailed neural pathway analysis, synchronization quality metrics,
-        and predictive health assessments with maintenance recommendations.
-
-        **Non-Invasive Analysis:** Safe monitoring operation
-
-        '
-      operationId: getNeuralLinkDiagnostics
-      tags:
-      - Health Monitoring
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: link_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Neural link to diagnose
-      - name: diagnostic_depth
-        in: query
-        schema:
-          type: string
-          enum:
-          - BASIC
-          - COMPREHENSIVE
-          - PREDICTIVE
-          default: BASIC
-        description: Depth of neural pathway analysis
-      - name: include_predictions
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include predictive health modeling
-      - name: time_range_hours
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 168
-          default: 24
-        description: Historical data time range in hours
-      responses:
-        '200':
-          description: Neural diagnostics completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NeuralLinkDiagnostics'
-        '404':
-          description: Neural link not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Diagnostics blocked - link in critical operation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-health/batch:
-    post:
-      summary: Batch neural health assessment
-      description: '**Multi-link neural health monitoring**
-
-        Performs simultaneous health assessment across multiple neural links for efficient
-        monitoring in large-scale operations.
-
-        **Performance Optimized:** Single request for multiple assessments
-
-        '
-      operationId: batchNeuralHealthAssessment
-      tags:
-      - Health Monitoring
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchNeuralHealthRequest'
-      responses:
-        '200':
-          description: Batch neural health assessment completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BatchNeuralHealthResult'
-        '400':
-          description: Invalid batch request parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many batch requests - system load protection
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /neural-firmware/update:
-    post:
-      summary: Update neural firmware
-      description: '**Neural firmware update system**
-
-        Deploys firmware updates to neural interfaces with comprehensive rollback
-        capabilities and health monitoring during update process.
-
-        **Critical System Operation:** Potential service interruption
-
-        '
-      operationId: updateNeuralFirmware
-      tags:
-      - Neural Links
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNeuralFirmwareRequest'
-      responses:
-        '200':
-          description: Neural firmware update completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NeuralFirmwareUpdateResult'
-        '400':
-          description: Invalid firmware update parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Update blocked - incompatible version or active operations
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '422':
-          description: Firmware validation failed
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-components:
-  responses:
-    OK:
-      $ref: ../common-service/responses/success.yaml#/OK
-    Created:
-      $ref: ../common-service/responses/success.yaml#/Created
-    Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
-    BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
-    NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    NeuralLinkInstalled:
-      description: Neural link installed successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/neural-links/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created neural link
-        ETag:
-          schema:
-            type: string
-            example: '"link-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        Warning:
-          schema:
-            type: string
-            example: '199 - "Permanent Neural Modification: Regular health monitoring
-              required"'
-            description: Neural modification warning
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NeuralLinkResponse'
-    NeuralLinkRetrieved:
-      description: Neural link retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"link-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=30, private
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NeuralLinkResponse'
-    NeuralLinkUpdated:
-      description: Neural link updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"link-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NeuralLinkResponse'
-    NeuralLinkListSuccess:
-      description: Neural links retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of neural links matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-        X-Average-Sync-Quality:
-          schema:
-            type: number
-            example: 87.3
-            description: Average synchronization quality across results
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NeuralLinkListResponse'
-  schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: ../common-service/schemas/health.yaml#/HealthResponse
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    NeuralLinkEntity:
-      allOf:
-      - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
-      - type: object
-        required:
-        - player_id
-        - firmware_version
-        - status
-        properties:
-          player_id:
-            type: string
-            format: uuid
-            description: Player who owns this neural link
-          firmware_version:
-            type: string
-            pattern: ^\\d+\\.\\d+\\.\\d+$
-            description: Current firmware version
-            example: 3.2.1
-          status:
-            type: string
-            enum:
-            - ACTIVE
-            - INACTIVE
-            - MALFUNCTIONING
-            - MAINTENANCE
-            - CALIBRATING
-            - SYNCHRONIZING
-            description: Current neural link status
-            example: ACTIVE
-          sync_quality:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Neural synchronization quality percentage
-            example: 94.7
-          neural_health:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Neural pathway health percentage
-            example: 89.2
-          signal_strength:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Neural signal strength percentage
-            example: 91.8
-          processing_latency:
-            type: integer
-            minimum: 0
-            description: Neural processing latency in milliseconds
-            example: 12
-          bandwidth_capacity:
-            type: integer
-            minimum: 0
-            description: Neural bandwidth capacity (Mbps)
-            example: 500
-          active_connections:
-            type: integer
-            minimum: 0
-            description: Number of active neural connections
-            example: 8
-          total_uptime:
-            type: integer
-            description: Total operational uptime in seconds
-            example: 2592000
-          last_sync:
-            type: string
-            format: date-time
-            description: Last successful synchronization timestamp
-          last_calibration:
-            type: string
-            format: date-time
-            description: Last calibration timestamp
-          last_maintenance:
-            type: string
-            format: date-time
-            description: Last maintenance timestamp
-          connected_implants:
-            type: array
-            items:
-              type: string
-              format: uuid
-            description: IDs of connected implants
-            maxItems: 50
-          cyberpsychosis_risk:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Cyberpsychosis risk percentage
-            example: 15.3
-          adaptation_level:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Neural adaptation to cyberware percentage
-            example: 76.4
-          emergency_shutdowns:
-            type: integer
-            minimum: 0
-            description: Number of emergency shutdowns
-            example: 2
-          firmware_update_available:
-            type: boolean
-            description: Whether firmware update is available
-            example: true
-          security_clearance_level:
-            type: string
-            enum:
-            - BASIC
-            - STANDARD
-            - ELEVATED
-            - MAXIMUM
-            description: Neural link security clearance
-            example: ELEVATED
-      description: 'BACKEND NOTE: Inherits from AuditableEntity. Comprehensive neural
-        interface monitoring. Memory savings: 30-50% via struct alignment.'
-    NeuralPathwayEntity:
-      type: object
-      required:
-      - pathway_id
-      - pathway_type
-      - health_status
-      properties:
-        pathway_id:
-          type: string
-          format: uuid
-          description: Unique pathway identifier
-        pathway_type:
-          type: string
-          enum:
-          - MOTOR_CONTROL
-          - SENSORY_PROCESSING
-          - MEMORY_ACCESS
-          - EMOTIONAL_REGULATION
-          - COGNITIVE_ENHANCEMENT
-          - REFLEX_ARC
-          description: Type of neural pathway
-          example: COGNITIVE_ENHANCEMENT
-        health_status:
-          type: string
-          enum:
-          - HEALTHY
-          - DEGRADED
-          - DAMAGED
-          - CRITICAL
-          description: Current pathway health
-          example: HEALTHY
-        conductivity:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Neural signal conductivity percentage
-          example: 88.5
-        latency_ms:
-          type: integer
-          minimum: 0
-          description: Signal transmission latency
-          example: 8
-        adaptation_progress:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Adaptation to cyberware percentage
-          example: 92.1
-        stress_indicators:
-          type: array
-          items:
-            type: string
-            maxLength: 100
-          description: Current stress indicators
-          maxItems: 10
-          example:
-          - high_frequency_signals
-          - adaptation_stress
-      description: 'BACKEND NOTE: Individual neural pathway monitoring for detailed
-        diagnostics.'
-    NeuralLinkResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/NeuralLinkEntity'
-        meta:
-          type: object
-          properties:
-            version:
-              type: string
-              example: '1.0'
-            processing_time_ms:
+                    maxLength: 50
+            cyberpsychosisRisk:
               type: integer
+              description: "Риск киберпсихоза"
+              minimum: 0
+              maximum: 100
               example: 15
-            neural_warnings:
+            installationTime:
+              type: integer
+              description: "Время установки в минутах"
+              minimum: 1
+              example: 30
+            price:
+              type: integer
+              description: "Цена в eddies"
+              minimum: 0
+              example: 25000
+            isActive:
+              type: boolean
+              description: "Доступен ли имплант"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    PlayerNeuralLinkEntity:
+      type: object
+      description: "Нейронная связь игрока"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - playerId
+            - neuralLinkId
+            - installationDate
+          properties:
+            playerId:
+              type: string
+              description: "ID игрока"
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            neuralLinkId:
+              type: string
+              description: "ID нейронной связи"
+              format: uuid
+              example: "456e7890-e89b-12d3-a456-426614174001"
+            installationDate:
+              type: string
+              description: "Дата установки"
+              format: date-time
+            firmwareVersion:
+              type: string
+              description: "Текущая версия прошивки"
+              pattern: "^\\d+\\.\\d+\\.\\d+$"
+            signalQuality:
+              type: number
+              description: "Качество сигнала"
+              minimum: 0
+              maximum: 1
+              example: 0.95
+            bandwidthUsage:
+              type: number
+              description: "Использование пропускной способности"
+              minimum: 0
+              maximum: 1
+              example: 0.3
+            activeImplants:
               type: array
+              description: "Активные импланты"
               items:
                 type: string
-              maxItems: 5
-      description: Standard response wrapper for single neural link with health warnings
-    NeuralLinkListResponse:
+                format: uuid
+            cyberpsychosisLevel:
+              type: number
+              description: "Уровень киберпсихоза"
+              minimum: 0
+              maximum: 1
+              example: 0.05
+            lastCalibration:
+              type: string
+              description: "Последняя калибровка"
+              format: date-time
+            emergencyShutdowns:
+              type: integer
+              description: "Количество аварийных отключений"
+              minimum: 0
+            isActive:
+              type: boolean
+              description: "Активна ли связь"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    PlayerImplantEntity:
+      type: object
+      description: "Имплант игрока"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - playerId
+            - implantId
+            - status
+          properties:
+            playerId:
+              type: string
+              description: "ID игрока"
+              format: uuid
+            implantId:
+              type: string
+              description: "ID импланта"
+              format: uuid
+            status:
+              type: string
+              description: "Статус импланта"
+              enum: ["installed", "installing", "malfunctioning", "removed"]
+              example: "installed"
+            installationDate:
+              type: string
+              description: "Дата установки"
+              format: date-time
+            malfunctionDate:
+              type: string
+              description: "Дата поломки"
+              format: date-time
+            repairCost:
+              type: integer
+              description: "Стоимость ремонта"
+              minimum: 0
+            isActive:
+              type: boolean
+              description: "Активен ли имплант"
+              default: true
+            $ref: "#/components/schemas/OptimisticLock"
+
+    # Request/Response schemas
+    CreateNeuralLinkRequest:
       type: object
       required:
-      - data
-      - meta
+        - model
+        - manufacturer
+        - type
+        - firmwareVersion
       properties:
-        data:
+        model:
+          type: string
+          maxLength: 50
+        manufacturer:
+          type: string
+          enum: ["arasaka", "militech", "biotechnica", "trauma_team", "black_market"]
+        type:
+          type: string
+          enum: ["basic", "advanced", "military", "prototype"]
+        firmwareVersion:
+          type: string
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+        hardwareSpecs:
+          type: object
+          properties:
+            bandwidth:
+              type: integer
+              minimum: 1
+            latency:
+              type: integer
+              minimum: 1
+            powerConsumption:
+              type: integer
+              minimum: 1
+        supportedImplants:
           type: array
           items:
-            $ref: '#/components/schemas/NeuralLinkEntity'
-        meta:
-          allOf:
-          - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-          - type: object
-            properties:
-              processing_time_ms:
-                type: integer
-                example: 45
-              average_sync_quality:
-                type: number
-                format: float
-                example: 87.3
-              health_concerns_count:
-                type: integer
-                example: 3
-      description: Standard paginated response wrapper with neural health statistics
+            type: string
+            maxLength: 50
+        maxImplants:
+          type: integer
+          minimum: 1
+          maximum: 20
+        cyberpsychosisResistance:
+          type: integer
+          minimum: 0
+          maximum: 100
+        price:
+          type: integer
+          minimum: 0
+
+    UpdateNeuralLinkRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          maxLength: 50
+        manufacturer:
+          type: string
+          enum: ["arasaka", "militech", "biotechnica", "trauma_team", "black_market"]
+        type:
+          type: string
+          enum: ["basic", "advanced", "military", "prototype"]
+        firmwareVersion:
+          type: string
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+        hardwareSpecs:
+          type: object
+          properties:
+            bandwidth:
+              type: integer
+              minimum: 1
+            latency:
+              type: integer
+              minimum: 1
+            powerConsumption:
+              type: integer
+              minimum: 1
+        supportedImplants:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        maxImplants:
+          type: integer
+          minimum: 1
+          maximum: 20
+        cyberpsychosisResistance:
+          type: integer
+          minimum: 0
+          maximum: 100
+        price:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+
+    NeuralLinkResponse:
+      type: object
+      properties:
+        neuralLink:
+          $ref: "#/components/schemas/NeuralLinkEntity"
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    NeuralLinkListResponse:
+      type: object
+      properties:
+        neuralLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/NeuralLinkEntity"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+
     InstallNeuralLinkRequest:
       type: object
       required:
-      - player_id
-      - implant_type
-      - neural_interface_model
+        - neuralLinkId
       properties:
-        player_id:
+        neuralLinkId:
           type: string
           format: uuid
-          description: Player to receive neural link
-        implant_type:
-          type: string
-          enum:
-          - SURGICAL
-          - NON_SURGICAL
-          - HYBRID
-          description: Type of neural implantation
-        neural_interface_model:
-          type: string
-          enum:
-          - BASIC_CHROME
-          - MILITECH_PARASITE
-          - ARASAKA_SYNTHLINK
-          - TRAUMA_TEAM_NEURALWEB
-          - DYNAMITE_NEUROPEPTIDE
-          description: Neural interface model
-        firmware_version:
-          type: string
-          pattern: ^\\d+\\.\\d+\\.\\d+$
-          default: 1.0.0
-          description: Initial firmware version
-        security_clearance:
-          type: string
-          enum:
-          - BASIC
-          - STANDARD
-          - ELEVATED
-          default: BASIC
-          description: Initial security clearance level
-        risk_assessment_override:
-          type: boolean
-          default: false
-          description: Override standard medical risk assessment
-        post_installation_monitoring:
-          type: boolean
-          default: true
-          description: Enable extended post-installation monitoring
-      description: Neural link installation with comprehensive medical and technical
-        validation
-    UpdateNeuralLinkRequest:
-      allOf:
-      - $ref: ../common-service/operations/crud.yaml#/UpdateRequest
-      - type: object
-        properties:
-          firmware_update:
-            type: string
-            pattern: ^\\d+\\.\\d+\\.\\d+$
-            description: Firmware version to update to
-          security_clearance_upgrade:
-            type: string
-            enum:
-            - STANDARD
-            - ELEVATED
-            - MAXIMUM
-            description: Upgrade security clearance level
-          calibration_settings:
-            type: object
-            description: Neural calibration parameters
-            additionalProperties: true
-          monitoring_sensitivity:
-            type: string
-            enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            description: Health monitoring sensitivity level
-          emergency_protocols:
-            type: object
-            description: Emergency shutdown and safety protocols
-            additionalProperties: true
-      description: Neural link update with optimistic locking (version field from
-        UpdateRequest)
-    NeuralSyncRequest:
+
+    InstallNeuralLinkResponse:
       type: object
-      required:
-      - player_id
       properties:
-        player_id:
+        playerId:
           type: string
           format: uuid
-          description: Player neural link to synchronize
-        sync_type:
+        neuralLink:
+          $ref: "#/components/schemas/NeuralLinkEntity"
+        installationDate:
           type: string
-          enum:
-          - FULL
-          - PARTIAL
-          - EMERGENCY
-          default: FULL
-          description: Synchronization scope
-        force_sync:
-          type: boolean
-          default: false
-          description: Force sync even if risks detected
-        include_implants:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Specific implants to include in sync
-          maxItems: 20
-        exclude_implants:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Implants to exclude from sync
-          maxItems: 10
-        sync_priority:
-          type: string
-          enum:
-          - SPEED
-          - SAFETY
-          - THOROUGHNESS
-          default: SAFETY
-          description: Synchronization priority balance
-        neural_load_limit:
-          type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
-          default: 0.8
-          description: Maximum neural load allowed during sync
-      description: Comprehensive neural synchronization with risk management
-    CalibrateNeuralLinkRequest:
-      type: object
-      properties:
-        calibration_type:
-          type: string
-          enum:
-          - QUICK
-          - STANDARD
-          - DEEP
-          - CUSTOM
-          default: STANDARD
-          description: Type of calibration to perform
-        target_sync_quality:
-          type: number
-          format: float
-          minimum: 70
-          maximum: 100
-          description: Target synchronization quality percentage
-        optimize_for:
-          type: array
-          items:
-            type: string
-            enum:
-            - SPEED
-            - ACCURACY
-            - STABILITY
-            - LOW_LATENCY
-            - HIGH_BANDWIDTH
-          description: Optimization priorities
-          minItems: 1
-          maxItems: 3
-          default:
-          - STABILITY
-          - ACCURACY
-        neural_stress_tolerance:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1.0
-          default: 0.7
-          description: Acceptable neural stress during calibration
-        include_pathway_mapping:
-          type: boolean
-          default: true
-          description: Perform detailed neural pathway mapping
-        custom_parameters:
-          type: object
-          description: Custom calibration parameters
-          additionalProperties: true
-      description: Advanced neural calibration with multiple optimization targets
-    BatchNeuralHealthRequest:
-      type: object
-      required:
-      - link_ids
-      properties:
-        link_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          minItems: 1
-          maxItems: 50
-          description: Neural link IDs to assess
-        assessment_type:
-          type: string
-          enum:
-          - QUICK
-          - COMPREHENSIVE
-          default: QUICK
-          description: Type of health assessment
-        include_predictions:
-          type: boolean
-          default: false
-          description: Include predictive health modeling
-        priority_order:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Assessment order (if different from provided list)
-          maxItems: 50
-      description: Batch neural health assessment for multiple links
-    UpdateNeuralFirmwareRequest:
-      type: object
-      required:
-      - target_version
-      - link_ids
-      properties:
-        target_version:
-          type: string
-          pattern: ^\\d+\\.\\d+\\.\\d+$
-          description: Target firmware version
-        link_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          minItems: 1
-          maxItems: 100
-          description: Neural links to update
-        update_strategy:
-          type: string
-          enum:
-          - SEQUENTIAL
-          - PARALLEL
-          - PHASED
-          default: SEQUENTIAL
-          description: Firmware update deployment strategy
-        rollback_enabled:
-          type: boolean
-          default: true
-          description: Enable automatic rollback on failure
-        health_monitoring:
-          type: boolean
-          default: true
-          description: Enhanced health monitoring during update
-        maintenance_window_minutes:
-          type: integer
-          minimum: 30
-          maximum: 480
-          default: 120
-          description: Expected maintenance window duration
-      description: Neural firmware update with comprehensive safety protocols
-    NeuralLinkRemovalResult:
-      type: object
-      required:
-      - link_id
-      - removal_status
-      - neural_integrity_preserved
-      properties:
-        link_id:
-          type: string
-          format: uuid
-          description: Removed neural link ID
-        removal_status:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILED
-          - EMERGENCY_REMOVAL
-          description: Removal outcome
-        neural_integrity_preserved:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Percentage of neural pathways preserved
-        physical_damage:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Physical damage to neural tissue
-        functionality_restored:
-          type: array
-          items:
-            type: string
-            enum:
-            - MOTOR_CONTROL
-            - SENSORY_PROCESSING
-            - MEMORY_ACCESS
-            - EMOTIONAL_REGULATION
-            - COGNITIVE_FUNCTIONS
-          description: Neural functions successfully restored
-        permanent_impairments:
-          type: array
-          items:
-            type: string
-          description: Permanent neural impairments
-        recovery_requirements:
-          type: object
-          description: Required recovery and rehabilitation procedures
-          additionalProperties: true
-        cyberware_compatibility_affected:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Cyberware that may be affected by removal
-      description: Neural link removal outcome with comprehensive neurological assessment
-    NeuralSyncResult:
-      type: object
-      required:
-      - link_id
-      - sync_status
-      - final_sync_quality
-      properties:
-        link_id:
-          type: string
-          format: uuid
-          description: Synchronized neural link ID
-        sync_status:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILED
-          - INTERRUPTED
-          description: Synchronization outcome
-        final_sync_quality:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Final synchronization quality percentage
-        implants_synchronized:
-          type: integer
-          description: Number of implants successfully synchronized
-        sync_duration_seconds:
-          type: integer
-          description: Total synchronization time
-        neural_load_peak:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Peak neural processing load
-        bandwidth_utilized:
-          type: integer
-          description: Neural bandwidth utilized (Mbps)
-        errors_encountered:
-          type: array
-          items:
-            type: object
-            required:
-            - error_type
-            - severity
-            - description
-            properties:
-              error_type:
-                type: string
-                enum:
-                - CONNECTION_FAILURE
-                - IMPLANT_INCOMPATIBILITY
-                - NEURAL_OVERLOAD
-                - SIGNAL_INTERFERENCE
-              severity:
-                type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-                - CRITICAL
-              description:
-                type: string
-                maxLength: 300
-          description: Synchronization errors encountered
-          maxItems: 20
-        performance_improvements:
+          format: date-time
+        initialCalibration:
           type: object
           properties:
-            latency_reduction_ms:
-              type: integer
-            bandwidth_increase_mbps:
-              type: integer
-            signal_stability_improvement:
+            signalQuality:
               type: number
-              format: float
-          description: Performance improvements achieved
+              minimum: 0
+              maximum: 1
+            success:
+              type: boolean
+
+    UninstallNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLinkId:
+          type: string
+          format: uuid
+        uninstallDate:
+          type: string
+          format: date-time
+        finalStats:
+          type: object
+          properties:
+            totalUsageTime:
+              type: integer
+              description: "Общее время использования в часах"
+            implantsInstalled:
+              type: integer
+            cyberpsychosisIncidents:
+              type: integer
+
+    PlayerNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLink:
+          $ref: "#/components/schemas/PlayerNeuralLinkEntity"
+        activeImplants:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerImplantEntity"
+        healthStatus:
+          type: object
+          properties:
+            signalQuality:
+              type: number
+              minimum: 0
+              maximum: 1
+            cyberpsychosisRisk:
+              type: string
+              enum: ["low", "medium", "high", "critical"]
+            warnings:
+              type: array
+              items:
+                type: string
+
+    CalibrateNeuralLinkRequest:
+      type: object
+      required:
+        - calibrationType
+      properties:
+        calibrationType:
+          type: string
+          enum: ["quick", "full", "emergency"]
+          default: "quick"
+        targetSignalQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.95
+
+    CalibrateNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        calibrationType:
+          type: string
+          enum: ["quick", "full", "emergency"]
+        success:
+          type: boolean
+        signalQualityBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        signalQualityAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrationTime:
+          type: integer
+          description: "Время калибровки в миллисекундах"
         recommendations:
           type: array
           items:
             type: string
-          description: Post-sync recommendations
-      description: Neural synchronization outcome with detailed performance metrics
-    NeuralCalibrationResult:
+
+    EmergencyShutdownRequest:
       type: object
       required:
-      - link_id
-      - calibration_status
-      - performance_improvements
+        - reason
       properties:
-        link_id:
+        reason:
+          type: string
+          enum: ["cyberpsychosis", "signal_failure", "overheat", "user_request"]
+        force:
+          type: boolean
+          description: "Принудительное отключение"
+          default: false
+
+    EmergencyShutdownResponse:
+      type: object
+      properties:
+        playerId:
           type: string
           format: uuid
-          description: Calibrated neural link ID
-        calibration_status:
+        shutdownReason:
           type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILED
-          - REQUIRES_MAINTENANCE
-          description: Calibration outcome
-        performance_improvements:
+        success:
+          type: boolean
+        shutdownTime:
+          type: string
+          format: date-time
+        recoveryTime:
+          type: integer
+          description: "Время восстановления в секундах"
+        dataLoss:
+          type: boolean
+          description: "Были ли потери данных"
+
+    CreateImplantRequest:
+      type: object
+      required:
+        - name
+        - category
+        - rarity
+        - effects
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum: ["neural", "cybernetic", "optic", "sensory", "muscle"]
+        rarity:
+          type: string
+          enum: ["common", "uncommon", "rare", "epic", "legendary"]
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: ["stat_boost", "ability_unlock", "damage_resistance", "stealth_bonus"]
+              value:
+                type: number
+              duration:
+                type: integer
+              cooldown:
+                type: integer
+        requirements:
           type: object
           properties:
-            sync_quality_improvement:
-              type: number
-              format: float
-            latency_reduction_ms:
+            neuralLinkType:
+              type: string
+              enum: ["basic", "advanced", "military", "prototype"]
+            minNeuralLinkLevel:
               type: integer
-            bandwidth_optimization:
-              type: number
-              format: float
-            signal_stability_improvement:
-              type: number
-              format: float
-          description: Calibration performance improvements
-        pathways_mapped:
+              minimum: 1
+            incompatibleImplants:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+        cyberpsychosisRisk:
           type: integer
-          description: Number of neural pathways successfully mapped
-        calibration_duration_seconds:
-          type: integer
-          description: Total calibration time
-        neural_stress_induced:
-          type: number
-          format: float
           minimum: 0
           maximum: 100
-          description: Neural stress induced during calibration
-        pathway_health_changes:
-          type: object
-          description: Changes in individual pathway health
-          additionalProperties:
-            type: number
-            format: float
-        optimization_achieved:
-          type: array
-          items:
-            type: string
-            enum:
-            - SPEED_OPTIMIZED
-            - ACCURACY_OPTIMIZED
-            - STABILITY_OPTIMIZED
-            - LATENCY_OPTIMIZED
-            - BANDWIDTH_OPTIMIZED
-          description: Optimization targets achieved
-        next_calibration_recommended:
-          type: string
-          format: date-time
-          description: When next calibration is recommended
-        calibration_warnings:
-          type: array
-          items:
-            type: string
-          description: Calibration warnings and notes
-      description: Neural calibration outcome with pathway mapping and optimization
-        results
-    BatchNeuralHealthResult:
-      type: object
-      required:
-      - assessment_id
-      - links_assessed
-      - results
-      properties:
-        assessment_id:
-          type: string
-          format: uuid
-          description: Unique batch assessment identifier
-        links_assessed:
+        installationTime:
           type: integer
-          description: Number of neural links assessed
-        results:
-          type: array
-          items:
-            type: object
-            required:
-            - link_id
-            - health_status
-            - sync_quality
-            - neural_health
-            properties:
-              link_id:
-                type: string
-                format: uuid
-              health_status:
-                type: string
-                enum:
-                - HEALTHY
-                - WARNING
-                - CRITICAL
-                - UNKNOWN
-              sync_quality:
-                type: number
-                format: float
-                minimum: 0
-                maximum: 100
-              neural_health:
-                type: number
-                format: float
-                minimum: 0
-                maximum: 100
-              critical_issues:
-                type: array
-                items:
-                  type: string
-                maxItems: 5
-          description: Individual assessment results
-          maxItems: 50
-        summary_statistics:
-          type: object
-          properties:
-            healthy_links:
-              type: integer
-            warning_links:
-              type: integer
-            critical_links:
-              type: integer
-            average_sync_quality:
-              type: number
-              format: float
-            average_neural_health:
-              type: number
-              format: float
-            assessment_duration_ms:
-              type: integer
-          description: Batch assessment summary statistics
-        critical_findings:
-          type: array
-          items:
-            type: object
-            required:
-            - link_id
-            - finding_type
-            - severity
-            - description
-            properties:
-              link_id:
-                type: string
-                format: uuid
-              finding_type:
-                type: string
-                enum:
-                - NEURAL_DEGRADATION
-                - SYNC_FAILURE
-                - IMPLANT_CONFLICT
-                - FIRMWARE_ISSUE
-              severity:
-                type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-                - CRITICAL
-              description:
-                type: string
-                maxLength: 500
-          description: Critical health findings requiring attention
-          maxItems: 20
-      description: Batch neural health assessment results with summary statistics
-    NeuralFirmwareUpdateResult:
-      type: object
-      required:
-      - update_id
-      - overall_status
-      - links_updated
-      properties:
-        update_id:
-          type: string
-          format: uuid
-          description: Unique firmware update identifier
-        overall_status:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILED
-          - ROLLED_BACK
-          description: Overall update outcome
-        links_updated:
+          minimum: 1
+        price:
           type: integer
-          description: Number of neural links successfully updated
-        target_version:
-          type: string
-          description: Firmware version deployed
-        update_duration_seconds:
-          type: integer
-          description: Total update duration
-        individual_results:
-          type: array
-          items:
-            type: object
-            required:
-            - link_id
-            - update_status
-            properties:
-              link_id:
-                type: string
-                format: uuid
-              update_status:
-                type: string
-                enum:
-                - SUCCESS
-                - FAILED
-                - ROLLED_BACK
-                - SKIPPED
-              error_message:
-                type: string
-                maxLength: 300
-              rollback_reason:
-                type: string
-                maxLength: 300
-          description: Individual link update results
-          maxItems: 100
-        performance_impact:
-          type: object
-          properties:
-            average_sync_improvement:
-              type: number
-              format: float
-            average_latency_reduction:
-              type: number
-              format: float
-            new_features_enabled:
-              type: array
-              items:
-                type: string
-            known_issues_resolved:
-              type: array
-              items:
-                type: string
-          description: Performance and functionality improvements
-        rollback_information:
-          type: object
-          description: Rollback details if update was reversed
-          properties:
-            rollback_triggered:
-              type: boolean
-            rollback_reason:
-              type: string
-            links_rolled_back:
-              type: integer
-            rollback_duration_seconds:
-              type: integer
-        next_update_recommended:
-          type: string
-          format: date-time
-          description: When next firmware update is recommended
-      description: Neural firmware update outcome with comprehensive deployment tracking
-    NeuralLinkDiagnostics:
-      type: object
-      required:
-      - link_id
-      - diagnostic_timestamp
-      - overall_health_score
-      properties:
-        link_id:
-          type: string
-          format: uuid
-          description: Diagnosed neural link ID
-        diagnostic_timestamp:
-          type: string
-          format: date-time
-          description: When diagnostics were performed
-        overall_health_score:
-          type: number
-          format: float
           minimum: 0
-          maximum: 100
-          description: Overall neural health score
-        sync_quality_assessment:
+
+    ImplantResponse:
+      type: object
+      properties:
+        implant:
+          $ref: "#/components/schemas/ImplantEntity"
+        metadata:
           type: object
           properties:
-            current_quality:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            quality_trend:
-              type: string
-              enum:
-              - IMPROVING
-              - STABLE
-              - DECLINING
-              - CRITICAL
-            quality_volatility:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-          description: Synchronization quality analysis
-        neural_pathway_analysis:
-          type: array
-          items:
-            $ref: '#/components/schemas/NeuralPathwayEntity'
-          description: Individual neural pathway assessments
-          maxItems: 20
-        implant_integration_status:
-          type: object
-          description: Integration status with connected implants
-          additionalProperties:
-            type: object
-            properties:
-              integration_quality:
-                type: number
-                format: float
-                minimum: 0
-                maximum: 100
-              conflicts_detected:
-                type: array
-                items:
-                  type: string
-                maxItems: 5
-              recommended_actions:
-                type: array
-                items:
-                  type: string
-                maxItems: 3
-        cyberpsychosis_indicators:
-          type: object
-          properties:
-            current_risk_level:
-              type: string
-              enum:
-              - LOW
-              - MEDIUM
-              - HIGH
-              - CRITICAL
-            risk_factors:
-              type: array
-              items:
-                type: string
-                enum:
-                - HIGH_IMPLANT_COUNT
-                - RAPID_ADAPTATION
-                - NEURAL_OVERLOAD
-                - EMOTIONAL_SUPPRESSION
-              maxItems: 10
-            mitigation_suggestions:
-              type: array
-              items:
-                type: string
-              maxItems: 5
-          description: Cyberpsychosis risk assessment
-        performance_metrics:
-          type: object
-          properties:
-            average_latency_ms:
-              type: integer
-            peak_bandwidth_mbps:
-              type: integer
-            signal_stability_percentage:
-              type: number
-              format: float
-            processing_efficiency:
-              type: number
-              format: float
-          description: Current performance metrics
-        predictive_analysis:
-          type: object
-          description: Predictive health modeling (when requested)
-          properties:
-            health_trajectory_30_days:
-              type: string
-              enum:
-              - STABLE
-              - IMPROVING
-              - DECLINING
-              - CRITICAL
-            recommended_calibration_date:
+            createdAt:
               type: string
               format: date-time
-            potential_failure_points:
-              type: array
-              items:
+            updatedAt:
+              type: string
+              format: date-time
+
+    ImplantListResponse:
+      type: object
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImplantEntity"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+
+    CheckCompatibilityRequest:
+      type: object
+      required:
+        - neuralLinkId
+        - implantIds
+      properties:
+        neuralLinkId:
+          type: string
+          format: uuid
+        implantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 10
+
+    CheckCompatibilityResponse:
+      type: object
+      properties:
+        neuralLinkId:
+          type: string
+          format: uuid
+        implantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        compatibilityResults:
+          type: array
+          items:
+            type: object
+            properties:
+              implantId:
                 type: string
-              maxItems: 5
-        maintenance_recommendations:
+                format: uuid
+              compatible:
+                type: boolean
+              issues:
+                type: array
+                items:
+                  type: string
+                description: "Проблемы совместимости"
+              cyberpsychosisIncrease:
+                type: number
+                minimum: 0
+                maximum: 1
+        overallCompatibility:
+          type: boolean
+        totalCyberpsychosisRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    PlayerImplantsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        implants:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerImplantEntity"
+        maxImplants:
+          type: integer
+        cyberpsychosisLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    InstallImplantRequest:
+      type: object
+      required:
+        - implantId
+      properties:
+        implantId:
+          type: string
+          format: uuid
+        skipCompatibilityCheck:
+          type: boolean
+          default: false
+
+    InstallImplantResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        implant:
+          $ref: "#/components/schemas/PlayerImplantEntity"
+        installationTime:
+          type: integer
+          description: "Время установки в минутах"
+        cyberpsychosisIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        warnings:
+          type: array
+          items:
+            type: string
+
+    CyberpsychosisStatusResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        currentLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        riskLevel:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+        symptoms:
+          type: array
+          items:
+            type: string
+            enum: ["hallucinations", "paranoia", "memory_loss", "aggression", "dissociation"]
+        triggers:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: ["implant_overload", "signal_interference", "combat_stress", "extended_use"]
+              severity:
+                type: string
+                enum: ["low", "medium", "high"]
+              timestamp:
+                type: string
+                format: date-time
+        treatmentHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              treatmentType:
+                type: string
+                enum: ["medication", "neural_recalibration", "implant_removal", "therapy"]
+              date:
+                type: string
+                format: date-time
+              effectiveness:
+                type: number
+                minimum: 0
+                maximum: 1
+
+    TreatCyberpsychosisRequest:
+      type: object
+      required:
+        - treatmentType
+      properties:
+        treatmentType:
+          type: string
+          enum: ["medication", "neural_recalibration", "implant_removal", "therapy"]
+        targetImplantId:
+          type: string
+          format: uuid
+          description: "ID импланта для удаления (если treatmentType = implant_removal)"
+
+    TreatCyberpsychosisResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        treatmentType:
+          type: string
+        success:
+          type: boolean
+        levelBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        levelAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        treatmentCost:
+          type: integer
+          minimum: 0
+        recoveryTime:
+          type: integer
+          description: "Время восстановления в часах"
+        sideEffects:
+          type: array
+          items:
+            type: string
+
+    ProcessSignalsRequest:
+      type: object
+      required:
+        - playerId
+        - signals
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        signals:
           type: array
           items:
             type: object
             required:
-            - action_type
-            - priority
-            - description
+              - type
+              - data
             properties:
-              action_type:
+              type:
                 type: string
-                enum:
-                - CALIBRATION
-                - FIRMWARE_UPDATE
-                - IMPLANT_CHECK
-                - NEURAL_THERAPY
-                - EMERGENCY_SHUTDOWN
-              priority:
+                enum: ["neural_activity", "implant_feedback", "environmental_input", "emotional_state"]
+              data:
+                type: object
+                additionalProperties: true
+              timestamp:
                 type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-                - CRITICAL
-              description:
-                type: string
-                maxLength: 500
-              estimated_time_minutes:
-                type: integer
-              estimated_risk:
-                type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-          description: Recommended maintenance actions
-          maxItems: 10
-        historical_trends:
+                format: date-time
+
+    ProcessSignalsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        processedSignals:
+          type: integer
+          minimum: 0
+        anomaliesDetected:
+          type: integer
+          minimum: 0
+        recommendations:
+          type: array
+          items:
+            type: string
+            enum: ["calibration_needed", "implant_check", "cyberpsychosis_monitoring", "signal_booster"]
+        processedData:
           type: object
-          description: Historical performance and health trends (when requested)
           additionalProperties: true
-      description: Comprehensive neural link diagnostics with predictive analysis
-        and maintenance recommendations
-  securitySchemes:
-    BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
-    ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+          description: "Обработанные данные сигналов"
+
+    NeuralActivityAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: ["hourly", "daily", "weekly", "monthly"]
+        totalActiveLinks:
+          type: integer
+          minimum: 0
+        averageSignalQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+        cyberpsychosisIncidents:
+          type: integer
+          minimum: 0
+        implantFailures:
+          type: integer
+          minimum: 0
+        calibrationSuccessRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        popularImplants:
+          type: array
+          items:
+            type: object
+            properties:
+              implantId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              installationCount:
+                type: integer
+                minimum: 0
+        manufacturerStats:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              activeLinks:
+                type: integer
+                minimum: 0
+              averageQuality:
+                type: number
+                minimum: 0
+                maximum: 1

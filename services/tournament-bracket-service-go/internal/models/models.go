@@ -145,7 +145,7 @@ type BracketMatch struct {
 	ScheduledStart      *time.Time             `json:"scheduled_start,omitempty" db:"scheduled_start"`
 	ActualStart         *time.Time             `json:"actual_start,omitempty" db:"actual_start"`
 	CompletedAt         *time.Time             `json:"completed_at,omitempty" db:"completed_at"`
-	Duration            *time.Duration         `json:"duration,omitempty" db:"duration"`
+	Duration            time.Duration         `json:"duration" db:"duration"`
 	MapName             *string                `json:"map_name,omitempty" db:"map_name"`
 	GameMode            *string                `json:"game_mode,omitempty" db:"game_mode"`
 	SpectatorCount      int                    `json:"spectator_count" db:"spectator_count"`
@@ -269,6 +269,21 @@ type UpdateRoundRequest struct {
 	EndDate   *time.Time  `json:"end_date,omitempty"`
 }
 
+type ReportMatchResultRequest struct {
+	WinnerID    *string `json:"winner_id,omitempty"`
+	WinnerScore int     `json:"winner_score"`
+	LoserScore  int     `json:"loser_score"`
+	IsWalkover  bool    `json:"is_walkover"`
+	IsForfeit   bool    `json:"is_forfeit"`
+}
+
+type AddParticipantRequest struct {
+	ParticipantID   string  `json:"participant_id"`
+	ParticipantName string  `json:"participant_name"`
+	ParticipantType ParticipantType `json:"participant_type"`
+	SeedNumber      *int    `json:"seed_number,omitempty"`
+}
+
 // BracketProgress represents overall bracket progress
 type BracketProgress struct {
 	BracketID         uuid.UUID `json:"bracket_id"`
@@ -292,7 +307,7 @@ type MatchResult struct {
 	LoserName          *string   `json:"loser_name,omitempty"`
 	WinnerScore        int       `json:"winner_score"`
 	LoserScore         int       `json:"loser_score"`
-	Duration           *time.Duration `json:"duration,omitempty"`
+	Duration           time.Duration `json:"duration"`
 	CompletedAt        time.Time `json:"completed_at"`
 	IsWalkover         bool      `json:"is_walkover"`
 	IsForfeit          bool      `json:"is_forfeit"`

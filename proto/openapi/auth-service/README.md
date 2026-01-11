@@ -1,120 +1,208 @@
-# Auth Service - OpenAPI Specification
+# Auth Service - Enterprise-Grade Authentication & Authorization
 
 ## 📋 **Назначение**
 
-Auth Service предоставляет **enterprise-grade аутентификацию и авторизацию** для NECPGAME экосистемы. Сервис отвечает за
-регистрацию пользователей, вход в систему, управление сессиями, сброс паролей и OAuth интеграцию.
+Auth Service предоставляет комплексную систему аутентификации и авторизации для платформы NECPGAME. Сервис построен на принципах SOLID/DRY с domain inheritance от infrastructure entities.
 
 ## 🎯 **Функциональность**
 
-### 🔐 **Аутентификация**
+### **Аутентификация**
+- **Email/Password**: Стандартная аутентификация с валидацией сложности пароля
+- **OAuth Integration**: Google, Discord, Steam провайдеры
+- **Multi-Factor Authentication**: Поддержка TOTP для повышенной безопасности
+- **Email Verification**: Обязательная верификация email при регистрации
 
-- Регистрация новых пользователей с email верификацией
-- Вход в систему с поддержкой 2FA
-- Обновление токенов доступа
-- Выход из системы и инвалидация сессий
+### **Управление Сессиями**
+- **JWT Tokens**: Access и refresh токены с автоматической ротацией
+- **Session Monitoring**: Отслеживание активных сессий пользователя
+- **Device Management**: Возможность отзыва сессий с конкретных устройств
+- **Security Audit**: Полный аудит всех аутентификационных операций
 
-### 🔑 **OAuth Интеграция**
-
-- Поддержка Google, GitHub, Discord
-- Автоматическая регистрация через соцсети
-- Безопасная обработка OAuth callback'ов
-
-### 🔒 **Управление Паролями**
-
-- Восстановление пароля через email
-- Сброс пароля с токеном
-- Изменение пароля для авторизованных пользователей
-
-### 👤 **Управление Пользователями**
-
-- Получение информации о текущем пользователе
-- Управление ролями и правами доступа
-- Профили пользователей с расширенной информацией
+### **Безопасность**
+- **Rate Limiting**: Защита от brute force атак
+- **Account Lockout**: Автоматическая блокировка при множественных неудачных попытках
+- **Password Policies**: Строгие требования к сложности паролей
+- **Audit Trail**: Полное логирование всех операций безопасности
 
 ## 📁 **Структура**
 
 ```
-proto/openapi/auth-service/
-├── main.yaml           # Основная спецификация
-├── README.md          # Эта документация
-└── docs/              # Сгенерированная документация (опционально)
-    └── index.html
+auth-service/
+├── main.yaml              # Enterprise-grade спецификация с domain inheritance
+└── README.md              # Эта документация
 ```
 
-## 🔗 **Зависимости**
+## 🔗 **Domain Inheritance - Infrastructure Entities**
 
-- **common**: Общие схемы ответов и ошибок
-- **session-service**: Для управления пользовательскими сессиями
-- **user-profile-service**: Для расширенной информации о профилях
+### **Наследуемые Сущности**
+
+#### **UserAccountEntity** → UserAccount
+```yaml
+# Автоматически наследует 15+ полей:
+- id, created_at, updated_at, version
+- username, email, password_hash
+- account_status, registration_method
+- last_login_at, login_count
+- two_factor_enabled, recovery_email
+
+# Добавляет auth-specific поля:
+- auth_provider_data (OAuth IDs)
+- last_password_change
+- password_reset_tokens
+```
+
+#### **SessionEntity** → Session
+```yaml
+# Автоматически наследует 10+ полей:
+- id, created_at, updated_at, version
+- user_id, session_token, ip_address
+- user_agent, expires_at, is_active
+- security_level, session_metadata
+
+# Добавляет auth-specific поля:
+- oauth_provider
+- mfa_verified
+```
+
+#### **AuditLogEntity** → AuthAuditLog
+```yaml
+# Автоматически наследует 15+ полей:
+- id, created_at, updated_at, version
+- event_type, actor_id, resource_type
+- action, severity, ip_address
+- success, error_message, metadata
+
+# Добавляет auth-specific поля:
+- user_id
+- operation_type (login, logout, register, etc.)
+```
+
+## 🚀 **API Endpoints**
+
+### **Аутентификация**
+- `POST /auth/login` - Вход в систему
+- `POST /auth/register` - Регистрация пользователя
+- `POST /auth/verify-email` - Верификация email
+- `POST /auth/logout` - Выход из системы
+- `POST /auth/refresh` - Обновление токенов
+
+### **Восстановление Пароля**
+- `POST /auth/forgot-password` - Запрос сброса пароля
+- `POST /auth/reset-password` - Сброс пароля
+
+### **Управление Сессиями**
+- `GET /sessions` - Список активных сессий
+- `POST /sessions/{id}/revoke` - Отзыв сессии
+
+### **OAuth Интеграция**
+- `GET /oauth/{provider}/authorize` - Инициация OAuth
+- `GET/POST /oauth/{provider}/callback` - OAuth callback
 
 ## 📊 **Performance**
 
-- **P99 Latency**: <50ms для операций аутентификации
-- **Memory per Instance**: <50KB
-- **Concurrent Users**: 10,000+ одновременных аутентификаций
-- **Security**: JWT-based с refresh tokens и rate limiting
+- **P99 Latency**: <50ms для всех endpoints
+- **Memory per Instance**: <50KB baseline
+- **Concurrent Users**: 10,000+ поддержка
+- **Rate Limiting**: 100 req/min per IP
+- **Session Management**: Redis с 5min TTL
 
-## 🚀 **Использование**
+## 🔒 **Безопасность**
 
-### Валидация
+### **Аутентификация**
+- **JWT RS256** с ротацией refresh токенов
+- **bcrypt** хеширование паролей
+- **Progressive delay** на неудачных попытках
+- **Account lockout** после 5 неудач
 
+### **Авторизация**
+- **Role-Based Access Control** (RBAC)
+- **OAuth 2.0** стандарты
+- **MFA Support** для повышенной безопасности
+- **Session Security** с device fingerprinting
+
+### **Мониторинг**
+- **Failed Login Tracking** с IP и user agent
+- **Audit Logging** всех security events
+- **Rate Limiting** на всех endpoints
+- **Suspicious Activity Detection**
+
+## 🧪 **Валидация и Тестирование**
+
+### **Pre-Commit Checks**
 ```bash
+# Lint спецификации
 npx @redocly/cli lint main.yaml
+
+# Генерация Go кода
+ogen --target /tmp/codegen --package api --clean main.yaml
+
+# Запуск тестов
+go test ./...
 ```
 
-### Генерация Go кода
+### **Enterprise Requirements**
+- [x] **Domain Inheritance**: Использует infrastructure-entities
+- [x] **Zero Duplication**: Нет повторяющихся полей
+- [x] **Strict Security**: JWT, bcrypt, rate limiting
+- [x] **Audit Trail**: Полное логирование операций
+- [x] **Health Endpoints**: 4 типа health проверок
+- [x] **Error Handling**: Стандартизированные ошибки
+- [x] **Documentation**: OpenAPI 3.0 спецификация
 
-```bash
-ogen --target ../../services/auth-service-go/pkg/api \
-     --package api --clean main.yaml
-```
+## 🔗 **Зависимости**
 
-### Документация
+### **Внешние Сервисы**
+- **Email Service**: Отправка verification emails
+- **Redis**: Session storage и caching
+- **PostgreSQL**: User accounts и audit logs
 
-```bash
-npx @redocly/cli build-docs main.yaml -o docs/index.html
-```
-
-## 🔗 **Основные Endpoints**
-
-| Method | Endpoint                 | Description                       |
-|--------|--------------------------|-----------------------------------|
-| POST   | `/auth/register`         | Регистрация нового пользователя   |
-| POST   | `/auth/login`            | Вход в систему                    |
-| POST   | `/auth/logout`           | Выход из системы                  |
-| POST   | `/auth/refresh`          | Обновление токена доступа         |
-| GET    | `/auth/me`               | Информация о текущем пользователе |
-| GET    | `/auth/roles`            | Роли пользователя                 |
-| GET    | `/auth/permissions`      | Права доступа пользователя        |
-| GET    | `/auth/oauth/{provider}` | OAuth вход                        |
-| POST   | `/auth/password/forgot`  | Запрос сброса пароля              |
-| POST   | `/auth/password/reset`   | Сброс пароля                      |
-
-## 🛡️ **Безопасность**
-
-- **JWT Tokens**: Access и refresh tokens с expiration
-- **Rate Limiting**: Защита от brute force атак
-- **Password Hashing**: Argon2id алгоритм
-- **2FA Support**: Готовность к двухфакторной аутентификации
-- **Audit Logging**: Полное логирование операций безопасности
+### **Внутренние Сервисы**
+- **User Profile Service**: Extended user data
+- **Notification Service**: Security alerts
+- **Audit Service**: Centralized audit logging
 
 ## 📈 **Мониторинг**
 
-### Health Endpoints
+### **Метрики**
+- `auth_login_attempts_total` - Общее число попыток входа
+- `auth_login_success_rate` - Процент успешных входов
+- `auth_active_sessions` - Активных сессий
+- `auth_failed_attempts` - Неудачных попыток
+- `auth_oauth_usage` - Использование OAuth провайдеров
 
-- `/health` - Базовая проверка здоровья
-- `/health/batch` - Пакетная проверка нескольких сервисов
-- `/health/ws` - Real-time мониторинг через WebSocket
+### **Alerts**
+- Login failure rate > 5%
+- P95 latency > 100ms
+- Active sessions > 50,000
+- Memory usage > 80%
 
-### Метрики
+## 🚀 **Использование**
 
-- Количество активных сессий
-- Rate limiting события
-- Failed login attempts
-- Token refresh statistics
+### **Валидация**
+```bash
+npx @redocly/cli lint proto/openapi/auth-service/main.yaml
+```
+
+### **Генерация Go кода**
+```bash
+ogen --target ../../services/auth-service-go/pkg/api \
+  --package api --clean proto/openapi/auth-service/main.yaml
+```
+
+### **Документация**
+```bash
+npx @redocly/cli build-docs proto/openapi/auth-service/main.yaml \
+  -o docs/index.html
+```
+
+## 📞 **Поддержка**
+
+- **Security Team**: security@necpgame.com
+- **DevOps**: devops@necpgame.com
+- **Architecture**: architecture@necpgame.com
+
+**Все вопросы по Auth Service направлять в #auth-service Slack канал**
 
 ---
 
-**Auth Service является критически важным компонентом инфраструктуры NECPGAME, обеспечивая безопасный доступ ко всем
-системам платформы.**
+*Auth Service обеспечивает enterprise-grade безопасность для миллиона+ пользователей NECPGAME*

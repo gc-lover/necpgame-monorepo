@@ -1,0 +1,564 @@
+# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
+# This template demonstrates proper domain separation with common entity inheritance
+# Issue: #openapi-refactor
+
+openapi: 3.0.3
+info:
+  title: {ServiceName} Service API
+  description: |
+    **Enterprise-grade API for {ServiceDomain}**
+
+    ## Domain Purpose
+    {Describe service responsibility and business value}
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per Instance: <50KB baseline
+    - Concurrent Users: 10,000+ supported
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance
+    This service inherits from {domain}-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version)
+    - Domain-specific business entities
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/{service-name}
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/{service-name}
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/{service-name}
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: {ServiceDomain}
+    description: Core {service-domain} operations
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints - Required for all services
+  /health:
+    get:
+      operationId: {serviceName}HealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: {serviceName}DetailedHealthCheck
+      summary: Detailed health check with metrics
+      description: Returns comprehensive health status including performance metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/batch:
+    get:
+      operationId: {serviceName}BatchHealthCheck
+      summary: Batch health check for multiple services
+      description: Checks health of this service and its dependencies
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/BatchHealthResponse'
+
+  # WebSocket Health Check - Required for real-time services
+  /health/ws:
+    get:
+      operationId: {serviceName}WebSocketHealthCheck
+      summary: WebSocket connection health check
+      description: Tests WebSocket connectivity and real-time messaging
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: WebSocket connection healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/WebSocketHealthResponse'
+
+  # Example Core Business Endpoint
+  /{resource}s:
+    get:
+      operationId: list{Resource}s
+      summary: List {resources} with filtering and pagination
+      description: |
+        Retrieve a paginated list of {resources} with advanced filtering options.
+
+        **Performance Notes:**
+        - Uses database indexes for efficient filtering
+        - Implements cursor-based pagination for large datasets
+        - Response cached for 30 seconds
+      tags: [{ServiceDomain}]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items to return
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, name]
+            default: created_at
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort direction
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/{Resource}Summary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    post:
+      operationId: create{Resource}
+      summary: Create a new {resource}
+      description: |
+        Create a new {resource} with validation and business rules.
+
+        **Business Rules:**
+        - Validates all required fields
+        - Applies domain-specific constraints
+        - Generates audit trail
+      tags: [{ServiceDomain}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Create{Resource}Request'
+      responses:
+        '201':
+          description: {Resource} created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/{Resource}'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /{resource}s/{id}:
+    get:
+      operationId: get{Resource}
+      summary: Get {resource} by ID
+      description: Retrieve a specific {resource} with full details
+      tags: [{ServiceDomain}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: {Resource} unique identifier
+      responses:
+        '200':
+          description: {Resource} found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/{Resource}'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: update{Resource}
+      summary: Update {resource}
+      description: |
+        Update an existing {resource} with optimistic locking.
+
+        **Concurrency Control:**
+        - Uses version field for optimistic locking
+        - Prevents concurrent modification conflicts
+        - Returns 409 Conflict on version mismatch
+      tags: [{ServiceDomain}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: {Resource} unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Update{Resource}Request'
+      responses:
+        '200':
+          description: {Resource} updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Updated'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/{Resource}'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      operationId: delete{Resource}
+      summary: Delete {resource}
+      description: Soft delete a {resource} (marks as deleted)
+      tags: [{ServiceDomain}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: {Resource} unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Example Business Action Endpoint
+  /{resource}s/{id}/actions/{action}:
+    post:
+      operationId: {resource}{Action}
+      summary: Perform action on {resource}
+      description: Execute a specific business action on a {resource}
+      tags: [{ServiceDomain}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: {Resource} unique identifier
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [{action1}, {action2}, {action3}]
+          description: Action to perform
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/{Resource}{Action}Request'
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/{Resource}{Action}Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+
+  # Domain-Specific Success Responses
+  responses:
+    # Use common responses for consistency
+    OK:
+      $ref: '../common/responses/success.yaml#/OK'
+    Created:
+      $ref: '../common/responses/success.yaml#/Created'
+    Updated:
+      $ref: '../common/responses/success.yaml#/Updated'
+    Deleted:
+      $ref: '../common/responses/success.yaml#/Deleted'
+
+    # Domain-specific success responses (extend common)
+    {Resource}ActionSuccess:
+      description: {Resource} action completed successfully
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../common/responses/success.yaml#/ActionSuccess'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      {resource}_id:
+                        type: string
+                        format: uuid
+                        description: ID of the affected {resource}
+                      action_result:
+                        type: object
+                        description: Result of the action performed
+
+    # Error responses
+    BadRequest:
+      $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      $ref: '../common/responses/error.yaml#/Unauthorized'
+    Forbidden:
+      $ref: '../common/responses/error.yaml#/Forbidden'
+    NotFound:
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/Conflict'
+    TooManyRequests:
+      $ref: '../common/responses/error.yaml#/TooManyRequests'
+    InternalServerError:
+      $ref: '../common/responses/error.yaml#/InternalServerError'
+
+  schemas:
+
+    # Example Domain Entity - inherits from common domain entities
+    {Resource}:
+      description: Complete {resource} entity with domain inheritance
+      allOf:
+        - $ref: '../common/schemas/{domain}-entities.yaml#{Resource}Entity'  # Domain inheritance
+        - type: object
+          properties:
+            # Add service-specific fields here (not in common)
+            custom_field:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Service-specific custom field
+              example: "custom value"
+
+    # Summary version for list endpoints (reduced payload)
+    {Resource}Summary:
+      description: Summary {resource} for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: {Resource} ID
+        name:
+          type: string
+          description: {Resource} name
+        status:
+          type: string
+          enum: [active, inactive, pending]
+          description: {Resource} status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    # Request schemas
+    Create{Resource}Request:
+      description: Request payload for creating a {resource}
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: {Resource} name
+          example: "Example {Resource}"
+        description:
+          type: string
+          maxLength: 500
+          description: {Resource} description
+          example: "Description of the {resource}"
+        metadata:
+          type: object
+          description: Additional metadata
+          additionalProperties: true
+
+    Update{Resource}Request:
+      description: Request payload for updating a {resource}
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: {Resource} name
+        description:
+          type: string
+          maxLength: 500
+          description: {Resource} description
+        metadata:
+          type: object
+          description: Additional metadata
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+
+    {Resource}{Action}Request:
+      description: Request payload for {action} action
+      type: object
+      properties:
+        parameters:
+          type: object
+          description: Action-specific parameters
+          additionalProperties: true
+
+    # Domain-specific business entities
+    {Domain}Configuration:
+      description: Service-specific configuration entity
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
+        - type: object
+          properties:
+            {domain}_settings:
+              type: object
+              description: Domain-specific settings
+              additionalProperties: true
+
+    # Audit and monitoring entities
+    {Resource}AuditLog:
+      description: Audit trail for {resource} operations
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/AuditLogEntity'
+        - type: object
+          properties:
+            {resource}_id:
+              type: string
+              format: uuid
+              description: Associated {resource} ID
+            operation_type:
+              type: string
+              enum: [create, update, delete, action_{action1}, action_{action2}]
+              description: Type of operation performed
+
+  # Security schemes
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'
+    ApiKeyAuth:
+      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+    ServiceAuth:
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<50ms"
+  memory-target: "<50KB per instance"
+  concurrency-target: "10,000+ users"
+  cache-strategy: "Redis with 30s TTL"
+  database-indexes: "Composite indexes on commonly filtered fields"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - request_count
+    - request_duration
+    - error_rate
+    - active_connections
+  alerts:
+    - latency_p95 > 100ms
+    - error_rate > 1%
+    - memory_usage > 80%
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/{domain}-entities.yaml"
+  additional-schemas: "Service-specific extensions only"
+  no-duplication: "All common fields inherited, not redefined"

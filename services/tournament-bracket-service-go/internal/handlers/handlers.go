@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
@@ -331,8 +332,6 @@ func (h *Handlers) HandleBracketWebSocket(w http.ResponseWriter, r *http.Request
 func (h *Handlers) handleGetBrackets(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	tournamentID := r.URL.Query().Get("tournament_id")
-	status := r.URL.Query().Get("status")
-	bracketType := r.URL.Query().Get("bracket_type")
 
 	limitStr := r.URL.Query().Get("limit")
 	limit := 50 // default
@@ -351,6 +350,11 @@ func (h *Handlers) handleGetBrackets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	brackets, err := h.service.ListBrackets(r.Context(), &tournamentID, nil, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to get brackets", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	if err != nil {
 		h.logger.Error("Failed to get brackets", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -387,7 +391,14 @@ func (h *Handlers) handleCreateBracket(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) handleGetBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
-	bracket, err := h.service.GetBracket(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	bracket, err := h.service.GetBracket(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Bracket not found", http.StatusNotFound)
@@ -399,14 +410,20 @@ func (h *Handlers) handleGetBracket(w http.ResponseWriter, r *http.Request, brac
 }
 
 func (h *Handlers) handleUpdateBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
 	var req models.UpdateBracketRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	req.ID = bracketID
-	bracket, err := h.service.UpdateBracket(r.Context(), &req)
+	bracket, err := h.service.UpdateBracket(r.Context(), id, &req)
 	if err != nil {
 		h.logger.Error("Failed to update bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -418,7 +435,14 @@ func (h *Handlers) handleUpdateBracket(w http.ResponseWriter, r *http.Request, b
 }
 
 func (h *Handlers) handleDeleteBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
-	err := h.service.DeleteBracket(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.DeleteBracket(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to delete bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -429,7 +453,14 @@ func (h *Handlers) handleDeleteBracket(w http.ResponseWriter, r *http.Request, b
 }
 
 func (h *Handlers) handleStartBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
-	err := h.service.StartBracket(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.StartBracket(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to start bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -441,7 +472,14 @@ func (h *Handlers) handleStartBracket(w http.ResponseWriter, r *http.Request, br
 }
 
 func (h *Handlers) handleAdvanceBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
-	err := h.service.AdvanceBracket(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.AdvanceBracket(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to advance bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -453,7 +491,14 @@ func (h *Handlers) handleAdvanceBracket(w http.ResponseWriter, r *http.Request, 
 }
 
 func (h *Handlers) handleFinishBracket(w http.ResponseWriter, r *http.Request, bracketID string) {
-	err := h.service.FinishBracket(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.FinishBracket(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to finish bracket", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -471,7 +516,14 @@ func (h *Handlers) handleGetRounds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rounds, err := h.service.GetRounds(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	rounds, err := h.service.GetRounds(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get rounds", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -483,7 +535,14 @@ func (h *Handlers) handleGetRounds(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) handleGetRound(w http.ResponseWriter, r *http.Request, roundID string) {
-	round, err := h.service.GetRound(r.Context(), roundID)
+	id, err := uuid.Parse(roundID)
+	if err != nil {
+		h.logger.Error("Invalid round ID", zap.String("round_id", roundID), zap.Error(err))
+		http.Error(w, "Invalid round ID", http.StatusBadRequest)
+		return
+	}
+
+	round, err := h.service.GetRound(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get round", zap.String("round_id", roundID), zap.Error(err))
 		http.Error(w, "Round not found", http.StatusNotFound)
@@ -496,26 +555,19 @@ func (h *Handlers) handleGetRound(w http.ResponseWriter, r *http.Request, roundI
 
 func (h *Handlers) handleGetMatches(w http.ResponseWriter, r *http.Request) {
 	bracketID := r.URL.Query().Get("bracket_id")
-	roundID := r.URL.Query().Get("round_id")
-	status := r.URL.Query().Get("status")
-
-	limitStr := r.URL.Query().Get("limit")
-	limit := 50 // default
-	if limitStr != "" {
-		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 && parsed <= 1000 {
-			limit = parsed
-		}
+	if bracketID == "" {
+		http.Error(w, "bracket_id parameter required", http.StatusBadRequest)
+		return
 	}
 
-	offsetStr := r.URL.Query().Get("offset")
-	offset := 0 // default
-	if offsetStr != "" {
-		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
-			offset = parsed
-		}
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
 	}
 
-	matches, total, err := h.service.GetMatches(r.Context(), bracketID, roundID, status, limit, offset)
+	matches, err := h.service.GetMatches(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get matches", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -524,9 +576,6 @@ func (h *Handlers) handleGetMatches(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"matches": matches,
-		"total":   total,
-		"limit":   limit,
-		"offset":  offset,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -534,7 +583,14 @@ func (h *Handlers) handleGetMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) handleGetMatch(w http.ResponseWriter, r *http.Request, matchID string) {
-	match, err := h.service.GetMatch(r.Context(), matchID)
+	id, err := uuid.Parse(matchID)
+	if err != nil {
+		h.logger.Error("Invalid match ID", zap.String("match_id", matchID), zap.Error(err))
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
+	match, err := h.service.GetMatch(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get match", zap.String("match_id", matchID), zap.Error(err))
 		http.Error(w, "Match not found", http.StatusNotFound)
@@ -546,14 +602,20 @@ func (h *Handlers) handleGetMatch(w http.ResponseWriter, r *http.Request, matchI
 }
 
 func (h *Handlers) handleUpdateMatch(w http.ResponseWriter, r *http.Request, matchID string) {
+	id, err := uuid.Parse(matchID)
+	if err != nil {
+		h.logger.Error("Invalid match ID", zap.String("match_id", matchID), zap.Error(err))
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
 	var req models.UpdateMatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	req.ID = matchID
-	match, err := h.service.UpdateMatch(r.Context(), &req)
+	match, err := h.service.UpdateMatch(r.Context(), id, &req)
 	if err != nil {
 		h.logger.Error("Failed to update match", zap.String("match_id", matchID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -565,7 +627,14 @@ func (h *Handlers) handleUpdateMatch(w http.ResponseWriter, r *http.Request, mat
 }
 
 func (h *Handlers) handleStartMatch(w http.ResponseWriter, r *http.Request, matchID string) {
-	err := h.service.StartMatch(r.Context(), matchID)
+	id, err := uuid.Parse(matchID)
+	if err != nil {
+		h.logger.Error("Invalid match ID", zap.String("match_id", matchID), zap.Error(err))
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.StartMatch(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to start match", zap.String("match_id", matchID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -577,7 +646,14 @@ func (h *Handlers) handleStartMatch(w http.ResponseWriter, r *http.Request, matc
 }
 
 func (h *Handlers) handleFinishMatch(w http.ResponseWriter, r *http.Request, matchID string) {
-	err := h.service.FinishMatch(r.Context(), matchID)
+	id, err := uuid.Parse(matchID)
+	if err != nil {
+		h.logger.Error("Invalid match ID", zap.String("match_id", matchID), zap.Error(err))
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.FinishMatch(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to finish match", zap.String("match_id", matchID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -589,14 +665,20 @@ func (h *Handlers) handleFinishMatch(w http.ResponseWriter, r *http.Request, mat
 }
 
 func (h *Handlers) handleReportMatchResult(w http.ResponseWriter, r *http.Request, matchID string) {
+	id, err := uuid.Parse(matchID)
+	if err != nil {
+		h.logger.Error("Invalid match ID", zap.String("match_id", matchID), zap.Error(err))
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
 	var req models.ReportMatchResultRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	req.MatchID = matchID
-	result, err := h.service.ReportMatchResult(r.Context(), &req)
+	result, err := h.service.ReportMatchResult(r.Context(), id, &req)
 	if err != nil {
 		h.logger.Error("Failed to report match result", zap.String("match_id", matchID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -614,7 +696,14 @@ func (h *Handlers) handleGetParticipants(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	participants, err := h.service.GetParticipants(r.Context(), bracketID)
+	id, err := uuid.Parse(bracketID)
+	if err != nil {
+		h.logger.Error("Invalid bracket ID", zap.String("bracket_id", bracketID), zap.Error(err))
+		http.Error(w, "Invalid bracket ID", http.StatusBadRequest)
+		return
+	}
+
+	participants, err := h.service.GetParticipants(r.Context(), id)
 	if err != nil {
 		h.logger.Error("Failed to get participants", zap.String("bracket_id", bracketID), zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -626,7 +715,7 @@ func (h *Handlers) handleGetParticipants(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handlers) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
-	var req models.AddParticipantRequest
+	var req models.CreateParticipantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return

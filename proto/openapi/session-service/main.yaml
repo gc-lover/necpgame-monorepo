@@ -1,0 +1,672 @@
+# Enterprise-Grade Session Service API - SOLID/DRY Domain Inheritance
+# Infrastructure domain service for session management
+# Issue: #openapi-refactor
+
+openapi: 3.0.3
+info:
+  title: Session Service API
+  description: |
+    **Enterprise-grade API for Session Management**
+
+    ## Domain Purpose
+    Core session management service providing secure session lifecycle, token validation,
+    device tracking, and security monitoring for the NECPGAME platform.
+
+    ## Business Value
+    - Secure session lifecycle management
+    - JWT token validation and rotation
+    - Device fingerprinting and tracking
+    - Geographic session monitoring
+    - Suspicious activity detection
+
+    ## Performance Targets
+    - P99 Latency: <30ms for all endpoints
+    - Memory per Instance: <40KB baseline
+    - Redis Operations: <5ms average response
+    - Concurrent Sessions: 100,000+ supported
+
+    ## Domain Inheritance
+    This service inherits from infrastructure-entities.yaml providing:
+    - SessionEntity for session data structure
+    - AuditLogEntity for security auditing
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/session-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/session-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/session-service
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Session Management
+    description: Core session operations
+  - name: Security Monitoring
+    description: Session security and monitoring
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
+paths:
+
+  /health:
+    get:
+      operationId: sessionServiceHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+  /sessions:
+    post:
+      operationId: sessionServiceCreateSession
+      summary: Create new session
+      description: |
+        Create a new user session with JWT tokens and device tracking.
+
+        **Security Notes:**
+        - Validates user credentials through auth service
+        - Generates unique session tokens
+        - Records device fingerprint and location
+        - Sets appropriate security levels
+      tags: [Session Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      operationId: sessionServiceListSessions
+      summary: List sessions with filtering
+      description: |
+        Retrieve paginated list of sessions with advanced filtering.
+
+        **Performance Notes:**
+        - Uses Redis for fast session lookups
+        - Supports cursor-based pagination
+        - Cached for 30 seconds
+      tags: [Session Management]
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by user ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, revoked]
+          description: Filter by session status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of sessions to return
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SessionSummary'
+
+  /sessions/{sessionId}:
+    get:
+      operationId: sessionServiceGetSession
+      summary: Get session by ID
+      description: Retrieve detailed session information
+      tags: [Session Management]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session unique identifier
+      responses:
+        '200':
+          description: Session found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: sessionServiceUpdateSession
+      summary: Update session
+      description: |
+        Update session properties with optimistic locking.
+
+        **Security Notes:**
+        - Validates session ownership
+        - Updates activity timestamps
+        - Maintains audit trail
+      tags: [Session Management]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Updated'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      operationId: sessionServiceDeleteSession
+      summary: Delete session
+      description: |
+        Permanently delete a session (admin operation).
+
+        **Security Notes:**
+        - Requires admin privileges
+        - Immediately invalidates all tokens
+        - Creates security audit log
+      tags: [Security Monitoring]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/extend:
+    post:
+      operationId: sessionServiceExtendSession
+      summary: Extend session duration
+      description: |
+        Extend session expiration time.
+
+        **Business Rules:**
+        - Maximum extension limits apply
+        - Updates last activity timestamp
+        - Maintains security context
+      tags: [Session Management]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendSessionRequest'
+      responses:
+        '200':
+          description: Session extended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/OK'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/{sessionId}/revoke:
+    post:
+      operationId: sessionServiceRevokeSession
+      summary: Revoke session
+      description: |
+        Revoke session and invalidate all associated tokens.
+
+        **Security Notes:**
+        - Immediate token invalidation
+        - Adds session to blacklist
+        - Security audit logging
+        - Notifies affected user
+      tags: [Security Monitoring]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session unique identifier
+      responses:
+        '200':
+          description: Session revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/OK'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sessions/user/{userId}/active:
+    get:
+      operationId: sessionServiceGetUserActiveSessions
+      summary: Get user's active sessions
+      description: |
+        Retrieve all active sessions for a specific user.
+
+        **Privacy Notes:**
+        - Users can only view their own sessions
+        - Admins can view any user's sessions
+        - Includes device and location information
+      tags: [Session Management]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User unique identifier
+      responses:
+        '200':
+          description: Active sessions retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SessionSummary'
+
+  /sessions/security/validate:
+    post:
+      operationId: sessionServiceValidateSession
+      summary: Validate session token
+      description: |
+        Validate session token and return session information.
+
+        **Performance Notes:**
+        - Redis-based validation for speed
+        - No database hits for active sessions
+        - Updates last activity timestamp
+      tags: [Security Monitoring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateSessionRequest'
+      responses:
+        '200':
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SessionValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+
+  responses:
+    OK:
+      $ref: '../common/responses/success.yaml#/OK'
+    Created:
+      $ref: '../common/responses/success.yaml#/Created'
+    Updated:
+      $ref: '../common/responses/success.yaml#/Updated'
+    Deleted:
+      $ref: '../common/responses/success.yaml#/Deleted'
+    BadRequest:
+      $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/Conflict'
+
+  schemas:
+
+    # Domain Inheritance - Session Service Entities
+    Session:
+      description: Complete session entity with infrastructure domain inheritance
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/SessionEntity'
+        - type: object
+          properties:
+            # Add session-service specific fields
+            device_fingerprint_hash:
+              type: string
+              description: Hashed device fingerprint for security tracking
+            geographic_location:
+              type: object
+              properties:
+                country:
+                  type: string
+                  description: Country code
+                region:
+                  type: string
+                  description: Region/state
+                city:
+                  type: string
+                  description: City name
+                coordinates:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                      minimum: -90
+                      maximum: 90
+                    longitude:
+                      type: number
+                      minimum: -180
+                      maximum: 180
+            security_events:
+              type: array
+              items:
+                $ref: '#/components/schemas/SecurityEvent'
+              description: Security events associated with this session
+
+    SessionSummary:
+      description: Summary session for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Session ID
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+        ip_address:
+          type: string
+          description: Client IP address
+        user_agent:
+          type: string
+          description: Client user agent
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation time
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration time
+        is_active:
+          type: boolean
+          description: Whether session is active
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+
+    SecurityEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - severity
+      properties:
+        event_type:
+          type: string
+          enum: [suspicious_location, device_change, unusual_activity, failed_validation]
+          description: Type of security event
+        timestamp:
+          type: string
+          format: date-time
+          description: When event occurred
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Security severity level
+        description:
+          type: string
+          maxLength: 500
+          description: Event description
+        metadata:
+          type: object
+          description: Additional event data
+
+    # Request/Response schemas
+    CreateSessionRequest:
+      description: Request payload for creating a session
+      type: object
+      required:
+        - user_id
+        - ip_address
+        - user_agent
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to create session for
+        ip_address:
+          type: string
+          description: Client IP address
+        user_agent:
+          type: string
+          description: Client user agent string
+        device_fingerprint:
+          type: string
+          description: Unique device identifier
+        session_metadata:
+          type: object
+          description: Additional session metadata
+        expires_in_seconds:
+          type: integer
+          minimum: 300
+          maximum: 2592000
+          default: 3600
+          description: Session duration in seconds
+
+    UpdateSessionRequest:
+      description: Request payload for updating a session
+      type: object
+      properties:
+        expires_at:
+          type: string
+          format: date-time
+          description: New expiration time
+        metadata:
+          type: object
+          description: Updated metadata
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+
+    ExtendSessionRequest:
+      description: Request payload for extending session
+      type: object
+      properties:
+        additional_seconds:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          default: 3600
+          description: Seconds to add to session duration
+
+    ValidateSessionRequest:
+      description: Request payload for session validation
+      type: object
+      required:
+        - session_token
+      properties:
+        session_token:
+          type: string
+          description: Session token to validate
+        update_activity:
+          type: boolean
+          default: true
+          description: Whether to update last activity timestamp
+
+    SessionValidationResult:
+      description: Result of session validation
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Validated session ID
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+        is_valid:
+          type: boolean
+          description: Whether session is valid
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration time
+        time_remaining_seconds:
+          type: integer
+          description: Seconds until expiration
+        security_warnings:
+          type: array
+          items:
+            type: string
+          description: Any security warnings for this session
+
+    # Audit and monitoring entities
+    SessionAuditLog:
+      description: Audit trail for session operations
+      allOf:
+        - $ref: '../common/schemas/infrastructure-entities.yaml#/AuditLogEntity'
+        - type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Associated session ID
+            operation_type:
+              type: string
+              enum: [create, validate, extend, revoke, delete, security_event]
+              description: Type of session operation performed
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'
+    ServiceAuth:
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<30ms"
+  memory-target: "<40KB per instance"
+  redis-ops: "<5ms average"
+  concurrency-target: "100,000+ sessions"
+  cache-strategy: "Redis with sliding expiration"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - session_creation_rate
+    - session_validation_rate
+    - active_session_count
+    - session_revoke_rate
+    - security_event_rate
+  alerts:
+    - active_sessions > 100000
+    - session_validation_errors > 5%
+    - redis_connection_failures > 1%
+
+# Security configuration
+x-security:
+  token-validation: "JWT RS256 with Redis blacklist"
+  device-tracking: "SHA-256 fingerprint hashing"
+  audit-trail: "All session operations logged"
+  rate-limiting: "100 validations/minute per session"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/infrastructure-entities.yaml"
+  inherited-entities: "SessionEntity, AuditLogEntity"
+  additional-schemas: "Security events, geographic tracking, device fingerprinting"
+  no-duplication: "All common fields inherited, security extensions added"

@@ -1,0 +1,534 @@
+# Economy Domain Entities - SOLID/DRY Foundation
+# These entities are inherited by all economy-related services
+# Issue: #openapi-refactor
+
+components:
+  schemas:
+
+    # Base Economy Entity - inherited by all economic objects
+    EconomyEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for economy entity
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-01-15T14:20:00Z"
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+
+    # Wallet Entity - player currency containers
+    WalletEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - owner_id
+            - currency_type
+            - balance
+          properties:
+            owner_id:
+              type: string
+              format: uuid
+              description: Player or entity owning the wallet
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            currency_type:
+              type: string
+              enum: [credits, eurodollars, bitcoin, corporate_script, faction_tokens]
+              description: Type of currency in this wallet
+              example: "credits"
+            balance:
+              type: integer
+              minimum: 0
+              description: Current balance in smallest currency unit
+              example: 1542000
+            frozen_balance:
+              type: integer
+              minimum: 0
+              description: Amount temporarily frozen (in escrow, pending transactions)
+              example: 50000
+            daily_limit:
+              type: integer
+              minimum: 0
+              description: Daily transaction limit
+              example: 1000000
+            transaction_count_today:
+              type: integer
+              minimum: 0
+              description: Transactions made today
+              example: 12
+
+    # Transaction Entity - all economic transactions
+    TransactionEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - transaction_type
+            - amount
+            - currency_type
+            - source_wallet_id
+            - destination_wallet_id
+            - status
+          properties:
+            transaction_type:
+              type: string
+              enum: [transfer, purchase, sale, auction_bid, quest_reward, refund, tax, fee]
+              description: Type of economic transaction
+              example: "purchase"
+            amount:
+              type: integer
+              minimum: 1
+              description: Transaction amount in smallest currency unit
+              example: 250000
+            currency_type:
+              type: string
+              enum: [credits, eurodollars, bitcoin, corporate_script, faction_tokens]
+              description: Currency used in transaction
+              example: "credits"
+            source_wallet_id:
+              type: string
+              format: uuid
+              description: Source wallet for the transaction
+              example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            destination_wallet_id:
+              type: string
+              format: uuid
+              description: Destination wallet for the transaction
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            status:
+              type: string
+              enum: [pending, processing, completed, failed, cancelled, refunded]
+              description: Transaction processing status
+              example: "completed"
+            fee_amount:
+              type: integer
+              minimum: 0
+              description: Transaction fee deducted
+              example: 2500
+            tax_amount:
+              type: integer
+              minimum: 0
+              description: Tax amount collected
+              example: 12500
+            reference_id:
+              type: string
+              description: External reference (order ID, auction ID, etc.)
+              example: "order_12345"
+            processed_at:
+              type: string
+              format: date-time
+              description: When transaction was processed
+              example: "2024-01-15T14:30:00Z"
+            metadata:
+              type: object
+              description: Additional transaction metadata
+              properties:
+                location:
+                  type: string
+                  description: Transaction location context
+                  example: "Night City Marketplace"
+                device_fingerprint:
+                  type: string
+                  description: Device fingerprint for fraud detection
+                  example: "fp_abcdef123456"
+
+    # Auction Entity - auction house system
+    AuctionEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - seller_id
+            - item_id
+            - starting_bid
+            - buyout_price
+            - auction_duration
+            - status
+          properties:
+            seller_id:
+              type: string
+              format: uuid
+              description: Player selling the item
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            item_id:
+              type: string
+              format: uuid
+              description: Item being auctioned
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            starting_bid:
+              type: integer
+              minimum: 1
+              description: Minimum starting bid
+              example: 100000
+            current_bid:
+              type: integer
+              minimum: 0
+              description: Current highest bid
+              example: 250000
+            buyout_price:
+              type: integer
+              minimum: 0
+              description: Instant buyout price (0 = no buyout)
+              example: 500000
+            bid_increment:
+              type: integer
+              minimum: 1
+              description: Minimum bid increment
+              example: 10000
+            auction_duration:
+              type: integer
+              minimum: 1
+              maximum: 168
+              description: Auction duration in hours
+              example: 24
+            status:
+              type: string
+              enum: [active, ended, cancelled, sold]
+              description: Auction status
+              example: "active"
+            current_bidder_id:
+              type: string
+              format: uuid
+              description: Player with current highest bid
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            end_time:
+              type: string
+              format: date-time
+              description: When auction ends
+              example: "2024-01-16T10:30:00Z"
+            bid_history:
+              type: array
+              items:
+                $ref: '#/components/schemas/AuctionBid'
+              description: History of all bids placed
+
+    # Auction Bid - individual bids in auction
+    AuctionBid:
+      type: object
+      required:
+        - bidder_id
+        - bid_amount
+        - bid_time
+      properties:
+        bidder_id:
+          type: string
+          format: uuid
+          description: Player who placed the bid
+          example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+        bid_amount:
+          type: integer
+          minimum: 1
+          description: Amount of the bid
+          example: 250000
+        bid_time:
+          type: string
+          format: date-time
+          description: When bid was placed
+          example: "2024-01-15T16:45:00Z"
+        is_buyout:
+          type: boolean
+          description: Whether this was a buyout bid
+          example: false
+
+    # Trade Session Entity - P2P trading system
+    TradeSessionEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - initiator_id
+            - participants
+            - status
+          properties:
+            initiator_id:
+              type: string
+              format: uuid
+              description: Player who initiated the trade
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            participants:
+              type: array
+              items:
+                type: string
+                format: uuid
+              minItems: 1
+              maxItems: 8
+              description: All participants in the trade session
+              example: ["e5f6g7h8-i9j0-1234-ef01-567890123456", "f6g7h8i9-j0k1-2345-f012-678901234567"]
+            status:
+              type: string
+              enum: [negotiating, pending_confirmation, confirmed, completed, cancelled]
+              description: Current trade session status
+              example: "negotiating"
+            trade_location:
+              type: string
+              enum: [safe_zone, combat_zone, guild_hall, marketplace, neutral_territory]
+              description: Location context for the trade
+              example: "marketplace"
+            offered_items:
+              type: object
+              description: Items offered by each participant
+              additionalProperties:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TradeItem'
+            offered_currency:
+              type: object
+              description: Currency offered by each participant
+              additionalProperties:
+                type: integer
+                minimum: 0
+              example: {"e5f6g7h8-i9j0-1234-ef01-567890123456": 50000}
+            time_limit:
+              type: integer
+              minimum: 0
+              maximum: 3600
+              description: Time limit for trade completion in seconds
+              example: 300
+
+    # Trade Item - items in trade negotiations
+    TradeItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item being traded
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of items
+          example: 3
+        appraised_value:
+          type: integer
+          minimum: 0
+          description: Estimated market value
+          example: 75000
+
+    # Marketplace Listing Entity - marketplace system
+    MarketplaceListingEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - seller_id
+            - item_id
+            - price
+            - listing_type
+          properties:
+            seller_id:
+              type: string
+              format: uuid
+              description: Player selling the item
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            item_id:
+              type: string
+              format: uuid
+              description: Item being sold
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            price:
+              type: integer
+              minimum: 1
+              description: Listed price per unit
+              example: 150000
+            quantity:
+              type: integer
+              minimum: 1
+              description: Quantity available for sale
+              example: 5
+            listing_type:
+              type: string
+              enum: [instant_buy, auction, barter_only]
+              description: Type of marketplace listing
+              example: "instant_buy"
+            status:
+              type: string
+              enum: [active, sold, expired, cancelled]
+              description: Listing status
+              example: "active"
+            expires_at:
+              type: string
+              format: date-time
+              description: When listing expires
+              example: "2024-01-22T10:30:00Z"
+            view_count:
+              type: integer
+              minimum: 0
+              description: Number of times listing was viewed
+              example: 45
+            favorite_count:
+              type: integer
+              minimum: 0
+              description: Number of players who favorited this listing
+              example: 12
+
+    # Shop Entity - in-game shops and vendors
+    ShopEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - name
+            - shop_type
+            - location_id
+            - inventory
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Shop name
+              example: "Container's Black Market"
+            shop_type:
+              type: string
+              enum: [weapons, armor, cyberware, consumables, general, black_market, faction]
+              description: Type of shop
+              example: "black_market"
+            location_id:
+              type: string
+              format: uuid
+              description: Location where shop is situated
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            owner_id:
+              type: string
+              format: uuid
+              description: Shop owner (NPC or player)
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            reputation_required:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+              description: Minimum reputation required to access shop
+              example: 200
+            inventory:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShopItem'
+              description: Items available in shop
+            restock_interval:
+              type: integer
+              minimum: 0
+              description: Hours between inventory restocks (0 = manual)
+              example: 24
+            last_restock:
+              type: string
+              format: date-time
+              description: Last time inventory was restocked
+              example: "2024-01-15T06:00:00Z"
+
+    # Shop Item - items available in shops
+    ShopItem:
+      type: object
+      required:
+        - item_id
+        - price
+        - stock_quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+          example: "f6g7h8i9-j0k1-2345-f012-678901234567"
+        price:
+          type: integer
+          minimum: 0
+          description: Sale price per unit
+          example: 75000
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Available stock
+          example: 3
+        discount_percentage:
+          type: integer
+          minimum: 0
+          maximum: 90
+          description: Current discount percentage
+          example: 15
+        rarity_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 5.0
+          description: Price multiplier for item rarity
+          example: 1.5
+
+    # Economic Event Entity - market events and fluctuations
+    EconomicEventEntity:
+      allOf:
+        - $ref: '#/components/schemas/EconomyEntity'
+        - type: object
+          required:
+            - event_type
+            - affected_items
+            - start_time
+            - end_time
+          properties:
+            event_type:
+              type: string
+              enum: [market_crash, inflation, shortage, surplus, faction_war, corporate_takeover]
+              description: Type of economic event
+              example: "market_crash"
+            title:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Event title
+              example: "Corporate Data Breach - Market Panic"
+            description:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: Detailed event description
+              example: "Major data breach at Arasaka has caused widespread market panic..."
+            affected_items:
+              type: array
+              items:
+                type: string
+                format: uuid
+              minItems: 1
+              description: Items affected by this event
+              example: ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"]
+            price_modifiers:
+              type: object
+              description: Price change multipliers for affected items
+              additionalProperties:
+                type: number
+                minimum: 0.1
+                maximum: 10.0
+              example: {"a1b2c3d4-e5f6-7890-abcd-ef1234567890": 0.7}
+            start_time:
+              type: string
+              format: date-time
+              description: When event begins
+              example: "2024-01-15T12:00:00Z"
+            end_time:
+              type: string
+              format: date-time
+              description: When event ends
+              example: "2024-01-16T12:00:00Z"
+            severity:
+              type: string
+              enum: [minor, moderate, major, catastrophic]
+              description: Impact severity of the event
+              example: "major"

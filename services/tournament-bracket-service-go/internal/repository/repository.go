@@ -507,3 +507,353 @@ func (r *Repository) GetBracketProgress(ctx context.Context, bracketID uuid.UUID
 
 	return &progress, nil
 }
+
+// DeleteBracket deletes a bracket by ID
+func (r *Repository) DeleteBracket(ctx context.Context, bracketID uuid.UUID) error {
+	query := `
+		DELETE FROM tournament.brackets
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, bracketID)
+	if err != nil {
+		return fmt.Errorf("failed to delete bracket: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateBracketStatus updates the status of a bracket
+func (r *Repository) UpdateBracketStatus(ctx context.Context, bracketID uuid.UUID, status models.BracketStatus) error {
+	query := `
+		UPDATE tournament.brackets
+		SET status = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+
+	_, err := r.pool.Exec(ctx, query, status, bracketID)
+	if err != nil {
+		return fmt.Errorf("failed to update bracket status: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateBracketCurrentRound updates the current round of a bracket
+func (r *Repository) UpdateBracketCurrentRound(ctx context.Context, bracketID uuid.UUID, currentRound int) error {
+	query := `
+		UPDATE tournament.brackets
+		SET current_round = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+
+	_, err := r.pool.Exec(ctx, query, currentRound, bracketID)
+	if err != nil {
+		return fmt.Errorf("failed to update bracket current round: %w", err)
+	}
+
+	return nil
+}
+
+// GetRoundsByBracketID retrieves all rounds for a bracket
+func (r *Repository) GetRoundsByBracketID(ctx context.Context, bracketID uuid.UUID) ([]*models.BracketRound, error) {
+	query := `
+		SELECT id, bracket_id, round_number, name, status, start_date, end_date,
+			   created_at, updated_at
+		FROM tournament.bracket_rounds
+		WHERE bracket_id = $1
+		ORDER BY round_number ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, bracketID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query rounds: %w", err)
+	}
+	defer rows.Close()
+
+	var rounds []*models.BracketRound
+	for rows.Next() {
+		var round models.BracketRound
+		var startDate, endDate *time.Time
+
+		err := rows.Scan(&round.ID, &round.BracketID, &round.RoundNumber, &round.RoundName,
+			&round.Status, &startDate, &endDate, &round.CreatedAt, &round.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan round: %w", err)
+		}
+
+		round.StartDate = startDate
+		round.EndDate = endDate
+		rounds = append(rounds, &round)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return rounds, nil
+}
+
+// GetRound retrieves a round by ID
+func (r *Repository) GetRound(ctx context.Context, roundID uuid.UUID) (*models.BracketRound, error) {
+	query := `
+		SELECT id, bracket_id, round_number, name, status, start_date, end_date,
+			   created_at, updated_at
+		FROM tournament.bracket_rounds
+		WHERE id = $1
+	`
+
+	var round models.BracketRound
+	var startDate, endDate *time.Time
+
+	err := r.pool.QueryRow(ctx, query, roundID).Scan(
+		&round.ID, &round.BracketID, &round.RoundNumber, &round.RoundName,
+		&round.Status, &startDate, &endDate, &round.CreatedAt, &round.UpdatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get round: %w", err)
+	}
+
+	round.StartDate = startDate
+	round.EndDate = endDate
+	return &round, nil
+}
+
+// UpdateRound updates an existing round
+func (r *Repository) UpdateRound(ctx context.Context, round *models.BracketRound) error {
+	query := `
+		UPDATE tournament.bracket_rounds
+		SET name = $1, status = $2, start_date = $3, end_date = $4, updated_at = NOW()
+		WHERE id = $5
+	`
+
+	_, err := r.pool.Exec(ctx, query, round.RoundName, round.Status, round.StartDate,
+		round.EndDate, round.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update round: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteRound deletes a round by ID
+func (r *Repository) DeleteRound(ctx context.Context, roundID uuid.UUID) error {
+	query := `
+		DELETE FROM tournament.bracket_rounds
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, roundID)
+	if err != nil {
+		return fmt.Errorf("failed to delete round: %w", err)
+	}
+
+	return nil
+}
+
+// GetMatch retrieves a match by ID
+func (r *Repository) GetMatch(ctx context.Context, matchID uuid.UUID) (*models.BracketMatch, error) {
+	query := `
+		SELECT id, bracket_id, round_id, match_number, participant1_id, participant1_name,
+			   participant1_seed, participant2_id, participant2_name, participant2_seed,
+			   status, winner_id, winner_name, score_participant1, score_participant2,
+			   scheduled_time, started_at, completed_at, duration, metadata, created_at, updated_at
+		FROM tournament.bracket_matches
+		WHERE id = $1
+	`
+
+	var match models.BracketMatch
+	var scheduledTime, startedAt, completedAt *time.Time
+	var duration time.Duration
+
+	err := r.pool.QueryRow(ctx, query, matchID).Scan(
+		&match.ID, &match.BracketID, &match.RoundID, &match.MatchNumber,
+		&match.Participant1ID, &match.Participant1Name, &match.Participant1Seed,
+		&match.Participant2ID, &match.Participant2Name, &match.Participant2Seed,
+		&match.Status, &match.WinnerID, &match.WinnerName,
+		&match.Participant1Score, &match.Participant2Score,
+		&scheduledTime, &startedAt, &completedAt, &duration,
+		&match.Metadata, &match.CreatedAt, &match.UpdatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get match: %w", err)
+	}
+
+	match.ScheduledStart = scheduledTime
+	match.ActualStart = startedAt
+	match.CompletedAt = completedAt
+	match.Duration = duration
+	return &match, nil
+}
+
+// DeleteMatch deletes a match by ID
+func (r *Repository) DeleteMatch(ctx context.Context, matchID uuid.UUID) error {
+	query := `
+		DELETE FROM tournament.bracket_matches
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, matchID)
+	if err != nil {
+		return fmt.Errorf("failed to delete match: %w", err)
+	}
+
+	return nil
+}
+
+// GetParticipant retrieves a participant by ID
+func (r *Repository) GetParticipant(ctx context.Context, participantID string) (*models.BracketParticipant, error) {
+	query := `
+		SELECT id, bracket_id, user_id, display_name, seed_number, status,
+			   current_round, final_rank, total_score, total_wins, total_losses,
+			   total_draws, performance_stats, metadata, joined_at, updated_at
+		FROM tournament.bracket_participants
+		WHERE id = $1
+	`
+
+	var participant models.BracketParticipant
+	var joinedAt time.Time
+
+	err := r.pool.QueryRow(ctx, query, participantID).Scan(
+		&participant.ID, &participant.BracketID, &participant.ParticipantID,
+		&participant.ParticipantName, &participant.SeedNumber, &participant.Status,
+		&participant.CurrentRound, &participant.FinalRank, &participant.TotalScore,
+		&participant.TotalWins, &participant.TotalLosses, &participant.TotalDraws,
+		&participant.PerformanceStats, &participant.Metadata,
+		&joinedAt, &participant.UpdatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get participant: %w", err)
+	}
+
+	participant.JoinedAt = joinedAt
+	return &participant, nil
+}
+
+// RemoveParticipant removes a participant from bracket
+func (r *Repository) RemoveParticipant(ctx context.Context, participantID string) error {
+	query := `
+		DELETE FROM tournament.bracket_participants
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, participantID)
+	if err != nil {
+		return fmt.Errorf("failed to remove participant: %w", err)
+	}
+
+	return nil
+}
+
+// GetParticipantsByBracketID retrieves all participants for a bracket
+func (r *Repository) GetParticipantsByBracketID(ctx context.Context, bracketID uuid.UUID) ([]*models.BracketParticipant, error) {
+	query := `
+		SELECT id, bracket_id, user_id, display_name, seed_number, status,
+			   current_round, final_rank, total_score, total_wins, total_losses,
+			   total_draws, performance_stats, metadata, joined_at, updated_at
+		FROM tournament.bracket_participants
+		WHERE bracket_id = $1
+		ORDER BY seed_number ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, bracketID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query participants: %w", err)
+	}
+	defer rows.Close()
+
+	var participants []*models.BracketParticipant
+	for rows.Next() {
+		var participant models.BracketParticipant
+		var joinedAt time.Time
+
+		err := rows.Scan(&participant.ID, &participant.BracketID, &participant.ParticipantID,
+			&participant.ParticipantName, &participant.SeedNumber, &participant.Status,
+			&participant.CurrentRound, &participant.FinalRank, &participant.TotalScore,
+			&participant.TotalWins, &participant.TotalLosses, &participant.TotalDraws,
+			&participant.PerformanceStats, &participant.Metadata,
+			&joinedAt, &participant.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan participant: %w", err)
+		}
+
+		participant.JoinedAt = joinedAt
+		participants = append(participants, &participant)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return participants, nil
+}
+
+// GetMatchesByBracketID retrieves all matches for a bracket
+func (r *Repository) GetMatchesByBracketID(ctx context.Context, bracketID uuid.UUID) ([]*models.BracketMatch, error) {
+	query := `
+		SELECT m.id, m.bracket_id, m.round_id, m.match_number, m.participant1_id, m.participant1_name,
+			   m.participant1_seed, m.participant2_id, m.participant2_name, m.participant2_seed,
+			   m.status, m.winner_id, m.winner_name, m.score_participant1, m.score_participant2,
+			   m.scheduled_time, m.started_at, m.completed_at, m.duration, m.metadata,
+			   m.created_at, m.updated_at, r.round_number
+		FROM tournament.bracket_matches m
+		JOIN tournament.bracket_rounds r ON m.round_id = r.id
+		WHERE m.bracket_id = $1
+		ORDER BY r.round_number ASC, m.match_number ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, bracketID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query matches: %w", err)
+	}
+	defer rows.Close()
+
+	var matches []*models.BracketMatch
+	for rows.Next() {
+		var match models.BracketMatch
+		var scheduledTime, startedAt, completedAt *time.Time
+		var duration time.Duration
+
+		err := rows.Scan(&match.ID, &match.BracketID, &match.RoundID, &match.MatchNumber,
+			&match.Participant1ID, &match.Participant1Name, &match.Participant1Seed,
+			&match.Participant2ID, &match.Participant2Name, &match.Participant2Seed,
+			&match.Status, &match.WinnerID, &match.WinnerName,
+			&match.Participant1Score, &match.Participant2Score,
+			&scheduledTime, &startedAt, &completedAt, &duration,
+			&match.Metadata, &match.CreatedAt, &match.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan match: %w", err)
+		}
+
+		match.ScheduledStart = scheduledTime
+		match.ActualStart = startedAt
+		match.CompletedAt = completedAt
+		match.Duration = duration
+		matches = append(matches, &match)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return matches, nil
+}
+
+// UpdateMatchStatus updates the status of a match
+func (r *Repository) UpdateMatchStatus(ctx context.Context, matchID uuid.UUID, status models.MatchStatus) error {
+	query := `
+		UPDATE tournament.bracket_matches
+		SET status = $1,
+		    started_at = CASE WHEN $1 = 'in_progress' AND started_at IS NULL THEN NOW() ELSE started_at END,
+		    completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE completed_at END,
+		    updated_at = NOW()
+		WHERE id = $2
+	`
+
+	_, err := r.pool.Exec(ctx, query, status, matchID)
+	if err != nil {
+		return fmt.Errorf("failed to update match status: %w", err)
+	}
+
+	return nil
+}

@@ -14,6 +14,11 @@ import (
 // This is a non-deterministic test that shows BazaarBot learning behavior
 // Issue: #2278
 func TestPriceConvergenceSmokeTest(t *testing.T) {
+	// Save and restore global random state to avoid interference with other tests
+	oldRand := rand.Int63()
+	defer func() {
+		rand.Seed(oldRand)
+	}()
 	rand.Seed(42) // Deterministic seed for reproducible results
 
 	const numAgents = 20

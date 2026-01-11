@@ -1,310 +1,104 @@
+# Enterprise-Grade Hacking Service API - SOLID/DRY Domain Inheritance
+# Cyberpunk hacking mechanics service
+# Issue: #openapi-refactor
+
 openapi: 3.0.3
 info:
-  title: Hacking Service API - Enterprise-Grade Cyber Operations
-  description: '**Enterprise-Grade Hacking and Cyber Operations API for NECPGAME**
-
-    This API manages all aspects of cyber operations, digital intrusion, and network
-    manipulation in the cyberpunk world, providing secure hacking sessions, ICE defense
-    systems, and cyber attack mechanics with enterprise-grade security and performance.
-
-    ## Key Features
-
-    - **Session Management**: Secure hacking session lifecycle management - **ICE
-    Defense**: Black ICE and security countermeasures - **Network Operations**: Multi-layer
-    network penetration and control - **Risk Assessment**: Dynamic risk calculation
-    and mitigation - **Performance Optimized**: MMOFPS-grade performance with <50ms
-    P99 latency
+  title: Hacking Service API
+  description: |
+    **Enterprise-grade API for Cyberpunk Hacking Mechanics**
 
     ## Domain Purpose
+    Comprehensive cyberpunk hacking mechanics service providing ICE breaking, network navigation,
+    data mining, and trace detection for the NECPGAME cyberpunk universe.
 
-    The Hacking domain handles all cyber operations in Night City. Players can hack
-    systems, breach networks, deploy countermeasures, and manage digital security
-    with realistic cyberpunk mechanics and risk management.
+    ## Business Value
+    - Real-time cyberpunk hacking simulation with authentic mechanics
+    - Advanced ICE (Intrusion Countermeasures Electronics) systems
+    - Dynamic network topology with evolving security
+    - Performance-optimized trace detection and countermeasures
+    - Enterprise-grade scalability for millions of concurrent hacking sessions
 
     ## Performance Targets
+    - P99 Latency: <50ms for hacking operations
+    - Throughput: 10,000+ hacking sessions per second
+    - Concurrent Networks: 100,000+ active networks supported
+    - Memory per Session: <10KB for hacking state storage
 
-    - P99 Latency: <50ms for hacking operations - Memory: <25KB per active hacking
-    session - Concurrent users: 50,000+ simultaneous cyber operations - Risk calculations:
-    <10ms response time
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Hacking session state tracking with optimistic locking
+    - Network node entity management with versioning
+    - ICE system integration with combat mechanics
+    - Character hacking progression and ability tracking
+    - Strict typing with validation rules
 
-    '
-  version: 1.0.0
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
+
 servers:
-- url: https://api.necpgame.com/v1/hacking
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/hacking
-  description: Staging server
-- url: http://localhost:8080/api/v1/hacking
-  description: Local development server
+  - url: https://api.necpgame.com/v1/hacking-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/hacking-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/hacking-service
+    description: Local development
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 tags:
-- name: Hacking Operations
-  description: Core hacking session management
-- name: ICE Defense
-  description: Black ICE and security countermeasures
-- name: Network Control
-  description: Network penetration and manipulation
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Hacking Sessions
+    description: Core hacking session management and lifecycle
+  - name: ICE Systems
+    description: Intrusion Countermeasures Electronics management
+  - name: Network Navigation
+    description: Network topology and node navigation
+  - name: Data Operations
+    description: Data mining, extraction, and manipulation
+  - name: Trace Detection
+    description: Trace detection and countermeasures
+  - name: Minigames
+    description: Hacking minigame mechanics and scoring
+  - name: Analytics & Balancing
+    description: Hacking analytics and balance tools
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
 paths:
+
   /health:
     get:
-      summary: Hacking domain health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the hacking domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: hackingDomainHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+      operationId: hackingServiceHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
       responses:
         '200':
           description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"-api-v1-hacking-health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/health.yaml#/HealthResponse
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/batch:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+  /hacking/initiate:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in
-        single request
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: hackingDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - hacking
-                    - cyberspace
-                    - neural-link
-                    - implant
-                    - cyberware
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /health/ws:
-    get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: hackingDomainHealthWebSocket
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - hacking
-            - cyberspace
-            - neural-link
-            example:
-            - hacking
-            - cyberspace
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/hacking/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions:
-    post:
+      operationId: hackingServiceInitiateHacking
       summary: Initiate hacking session
-      description: '**Enterprise-grade hacking session initiation**
+      description: |
+        Initiate a new hacking session with network access and ICE initialization.
 
-        Creates secure hacking session with risk assessment, neural validation, and
-        ICE detection. Initializes all security protocols and monitoring.
-
-        **Critical Operation:** Requires full neural link verification
-
-        '
-      operationId: initiateHackingSession
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
+        **Session Initialization:**
+        - Validate hacker credentials and neural interface
+        - Generate dynamic network topology
+        - Initialize ICE systems and security levels
+        - Set up trace detection parameters
+        - Establish real-time connection monitoring
+      tags: [Hacking Sessions]
       requestBody:
         required: true
         content:
@@ -313,1389 +107,1210 @@ paths:
               $ref: '#/components/schemas/InitiateHackingRequest'
       responses:
         '201':
-          $ref: '#/components/responses/HackingSessionCreated'
-        '400':
-          description: Invalid request - insufficient hacking skills or incompatible
-            equipment
+          description: Hacking session initiated
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/HackingSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
-          description: Forbidden - neural link not synchronized or blacklisted
+          description: Insufficient hacking skills or banned
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Conflict - active hacking session already exists
+                $ref: '../common/responses/error.yaml#/Forbidden'
+
+  /hacking/{sessionId}/navigate:
+    post:
+      operationId: hackingServiceNavigateNetwork
+      summary: Navigate to network node
+      description: |
+        Navigate to a specific network node within the hacking session.
+
+        **Network Navigation:**
+        - Validate navigation path and permissions
+        - Check for ICE activation and countermeasures
+        - Update session position and visibility
+        - Generate navigation events and traces
+      tags: [Network Navigation]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NavigateNetworkRequest'
+      responses:
+        '200':
+          description: Navigation successful
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - hacking session rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/NavigationResult'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hacking/{sessionId}/ice/break:
+    post:
+      operationId: hackingServiceBreakICE
+      summary: Attempt to break ICE system
+      description: |
+        Attempt to break through an ICE (Intrusion Countermeasures Electronics) system.
+
+        **ICE Breaking Process:**
+        - Initialize ICE minigame or automated breaking
+        - Calculate success probability based on hacker skills
+        - Execute breaking attempt with real-time feedback
+        - Handle success/failure outcomes and consequences
+      tags: [ICE Systems]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BreakICERequest'
+      responses:
+        '200':
+          description: ICE breaking attempt completed
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ICEBreakResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /hacking/{sessionId}/data/extract:
+    post:
+      operationId: hackingServiceExtractData
+      summary: Extract data from network node
+      description: |
+        Extract data from a compromised network node.
+
+        **Data Extraction:**
+        - Validate node access and permissions
+        - Calculate extraction time and difficulty
+        - Execute data mining operation
+        - Handle encryption and data integrity
+      tags: [Data Operations]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractDataRequest'
+      responses:
+        '200':
+          description: Data extraction successful
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DataExtractionResult'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hacking/{sessionId}/traces/detect:
     get:
-      summary: List hacking sessions with filtering
-      description: '**Enterprise-grade session listing**
+      operationId: hackingServiceDetectTraces
+      summary: Detect active traces
+      description: |
+        Check for active trace detection in the current hacking session.
 
-        Lists active and historical hacking sessions with comprehensive filtering
-        by status, target, risk level, and time range.
-
-        **Performance:** <10ms P95, supports complex queries
-
-        '
-      operationId: listHackingSessions
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
+        **Trace Detection:**
+        - Scan for security monitoring systems
+        - Calculate trace probability and progress
+        - Provide evasion recommendations
+        - Monitor real-time trace status
+      tags: [Trace Detection]
       parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-        description: Filter by player
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - INITIATING
-          - ACTIVE
-          - COMPLETED
-          - FAILED
-          - ABORTED
-        description: Filter by session status
-      - name: risk_level
-        in: query
-        schema:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-        description: Filter by risk assessment
-      - name: target_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - CORPORATION
-          - PERSONAL
-          - GOVERNMENT
-          - UNDERGROUND
-        description: Filter by target type
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hacking session ID
       responses:
         '200':
-          $ref: '#/components/responses/HackingSessionListSuccess'
+          description: Trace detection completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TraceDetectionResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hacking/{sessionId}/disconnect:
+    post:
+      operationId: hackingServiceDisconnect
+      summary: Disconnect from hacking session
+      description: |
+        Safely disconnect from an active hacking session.
+
+        **Disconnection Process:**
+        - Clean up session resources and connections
+        - Save session progress and statistics
+        - Execute disconnection protocols
+        - Update hacking reputation and statistics
+      tags: [Hacking Sessions]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hacking session ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergency_disconnect:
+                  type: boolean
+                  default: false
+                  description: Force emergency disconnection
+                save_progress:
+                  type: boolean
+                  default: true
+                  description: Save session progress
+      responses:
+        '200':
+          description: Disconnected successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          session_duration_seconds:
+                            type: integer
+                            description: Total session duration
+                          data_extracted_gb:
+                            type: number
+                            description: Data extracted in GB
+                          ice_broken_count:
+                            type: integer
+                            description: Number of ICE systems broken
+                          trace_level_reached:
+                            type: number
+                            minimum: 0
+                            maximum: 1
+                            description: Maximum trace level reached
+                          reputation_change:
+                            type: integer
+                            description: Hacking reputation change
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /minigames/{minigameId}/start:
+    post:
+      operationId: hackingServiceStartMinigame
+      summary: Start hacking minigame
+      description: |
+        Start a specific hacking minigame for ICE breaking or data extraction.
+
+        **Minigame Types:**
+        - ICE Breaking: Pattern matching, sequence solving
+        - Data Decryption: Code breaking, password cracking
+        - Firewall Navigation: Path finding, timing challenges
+        - System Override: Logic puzzles, resource management
+      tags: [Minigames]
+      parameters:
+        - name: minigameId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Minigame template ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartMinigameRequest'
+      responses:
+        '201':
+          description: Minigame started
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MinigameSession'
         '400':
-          description: Invalid request - malformed query parameters
+          $ref: '#/components/responses/BadRequest'
+
+  /minigames/{sessionId}/input:
+    post:
+      operationId: hackingServiceSubmitMinigameInput
+      summary: Submit minigame input
+      description: |
+        Submit player input for an active minigame session.
+
+        **Input Processing:**
+        - Validate input format and timing
+        - Calculate success probability
+        - Update minigame progress
+        - Provide real-time feedback
+      tags: [Minigames]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Minigame session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMinigameInputRequest'
+      responses:
+        '200':
+          description: Input processed
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions/{session_id}:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MinigameInputResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /analytics/sessions:
     get:
-      summary: Get hacking session details
-      description: '**Enterprise-grade session retrieval**
+      operationId: hackingServiceGetSessionAnalytics
+      summary: Get hacking session analytics
+      description: |
+        Retrieve comprehensive analytics about hacking sessions and player behavior.
 
-        Returns comprehensive hacking session information including real-time status,
-        ICE encounters, network topology, and risk metrics.
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getHackingSession
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
+        **Analytics Coverage:**
+        - Session success rates and completion times
+        - Popular hacking targets and methods
+        - ICE breaking difficulty and success patterns
+        - Trace detection trends and countermeasures
+        - Player skill progression and specialization
+      tags: [Analytics & Balancing]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Hacking session unique identifier
-      - name: include_ice_data
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include detailed ICE encounter data
-      - name: include_network_map
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include network topology mapping
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for analytics
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for analytics
+        - name: hacker_level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum hacker level filter
+        - name: hacker_level_max
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum hacker level filter
       responses:
         '200':
-          $ref: '#/components/responses/HackingSessionRetrieved'
-        '304':
-          description: Not modified - session has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, private
-        '404':
-          description: Hacking session not found
+          description: Session analytics retrieved
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary: Update hacking session
-      description: '**Enterprise-grade session update**
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/HackingSessionAnalytics'
 
-        Updates session parameters, risk tolerance, or defensive measures. Supports
-        optimistic locking for concurrent modifications.
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateHackingSession
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Hacking session unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateHackingSessionRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/HackingSessionUpdated'
-        '400':
-          description: Invalid request - malformed data or session ID
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '404':
-          description: Hacking session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Conflict - version conflict or concurrent modification
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"session-123-v1"'
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    delete:
-      summary: Abort hacking session
-      description: '**Emergency session termination**
-
-        Immediately terminates hacking session with emergency shutdown protocols.
-        Preserves session data and generates incident report.
-
-        **High-Risk Operation:** May trigger ICE countermeasures
-
-        '
-      operationId: abortHackingSession
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Hacking session to abort
-      - name: emergency_shutdown
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Force emergency shutdown (may cause data loss)
-      responses:
-        '200':
-          description: Session aborted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HackingSessionAbortResult'
-        '404':
-          description: Hacking session not found
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Cannot abort - session in critical operation
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions/{session_id}/execute:
-    post:
-      summary: Execute hacking operation
-      description: '**Core hacking execution**
-
-        Performs actual hacking operation: ICE penetration, data extraction, system
-        manipulation. Real-time risk monitoring and countermeasures.
-
-        **Critical Operation:** High neural load, risk of detection
-
-        '
-      operationId: executeHackingOperation
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Active hacking session
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExecuteHackingRequest'
-      responses:
-        '200':
-          description: Operation executed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HackingExecutionResult'
-        '400':
-          description: Invalid operation parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Operation blocked - ICE countermeasures active
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '429':
-          description: Too many operations - neural overload protection
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions/{session_id}/ice/{ice_id}/counter:
-    post:
-      summary: Deploy ICE countermeasure
-      description: '**ICE defense operation**
-
-        Deploys countermeasures against specific ICE instance. Requires appropriate
-        hacking tools and neural capacity.
-
-        **Specialized Operation:** Tool and implant dependent
-
-        '
-      operationId: deployICECountermeasure
-      tags:
-      - ICE Defense
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Active hacking session
-      - name: ice_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ICE instance to counter
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeployICECountermeasureRequest'
-      responses:
-        '200':
-          description: Countermeasure deployed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ICECountermeasureResult'
-        '400':
-          description: Invalid countermeasure or insufficient tools
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: ICE already neutralized or countermeasure ineffective
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions/{session_id}/network/scan:
-    post:
-      summary: Perform network scan
-      description: '**Network reconnaissance**
-
-        Scans target network for vulnerabilities, ICE presence, and access points.
-        Builds network topology map for strategic planning.
-
-        **Intelligence Operation:** Provides critical mission data
-
-        '
-      operationId: performNetworkScan
-      tags:
-      - Network Control
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Active hacking session
-      - name: scan_depth
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 5
-          default: 1
-        description: Scan depth (higher = more data but higher risk)
-      responses:
-        '200':
-          description: Network scan completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NetworkScanResult'
-        '400':
-          description: Invalid scan parameters
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Scan blocked - detection risk too high
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /hacking/sessions/{session_id}/complete:
-    post:
-      summary: Complete hacking session
-      description: '**Session completion**
-
-        Finalizes successful hacking operation, extracts all data, and safely disconnects
-        from target network.
-
-        **Critical Operation:** Proper disconnection prevents traces
-
-        '
-      operationId: completeHackingSession
-      tags:
-      - Hacking Operations
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Session to complete
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompleteHackingRequest'
-      responses:
-        '200':
-          description: Session completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HackingSessionCompleteResult'
-        '400':
-          description: Completion failed - data extraction incomplete
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        '409':
-          description: Cannot complete - session compromised
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
 components:
+
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: '../common/responses/success.yaml#/OK'
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: '../common/responses/success.yaml#/Created'
     Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
+      $ref: '../common/responses/success.yaml#/Updated'
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
+      $ref: '../common/responses/error.yaml#/BadRequest'
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
-    TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
-    HealthBatchSuccess:
-      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
-    HackingSessionCreated:
-      description: Hacking session initiated successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/hacking/sessions/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created session
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HackingSessionResponse'
-    HackingSessionRetrieved:
-      description: Hacking session retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=30, private
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HackingSessionResponse'
-    HackingSessionUpdated:
-      description: Hacking session updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"session-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HackingSessionResponse'
-    HackingSessionListSuccess:
-      description: Hacking sessions retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of sessions matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HackingSessionListResponse'
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Forbidden:
+      $ref: '../common/responses/error.yaml#/Forbidden'
+
   schemas:
-    HealthResponse:
-      $ref: ../common-service/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
+
+    # Domain Inheritance - Hacking Service Entities
+    HackingSession:
+      description: Active hacking session with game domain inheritance
       type: object
       required:
-      - type
-      - timestamp
-      - health
+        - id
+        - hacker_id
+        - target_network_id
+        - started_at
+        - current_node_id
       properties:
-        type:
+        id:
           type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
+          format: uuid
+          description: Hacking session unique identifier
+        hacker_id:
+          type: string
+          format: uuid
+          description: Hacker character ID
+        target_network_id:
+          type: string
+          format: uuid
+          description: Target network being hacked
+        started_at:
           type: string
           format: date-time
-          maxLength: 255
-        message_timestamp:
+          description: Session start time
+        current_node_id:
           type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: ../common-service/schemas/health.yaml#/HealthResponse
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    HackingSessionEntity:
+          format: uuid
+          description: Current network node position
+        session_status:
+          type: string
+          enum: [active, disconnected, traced, crashed]
+          default: "active"
+          description: Current session status
+        trace_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: Current trace detection level (0-1)
+        ice_alert_level:
+          type: string
+          enum: [none, passive, active, lethal]
+          default: "none"
+          description: Current ICE alert status
+        data_extracted_bytes:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Total data extracted in session
+        nodes_visited:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Network nodes visited
+        ice_encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEEncounter'
+          description: ICE systems encountered
+        active_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Active hacking effects
+        neural_load:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Current neural interface load percentage
+
+    NetworkNode:
+      description: Network node in hacking topology with game domain inheritance
       allOf:
-      - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
-      - type: object
-        required:
-        - player_id
-        - target_id
-        - status
-        - risk_level
-        properties:
-          player_id:
-            type: string
-            format: uuid
-            description: Hacker player ID
-          target_id:
-            type: string
-            format: uuid
-            description: Target system/network ID
-          target_type:
-            type: string
-            enum:
-            - CORPORATION
-            - PERSONAL
-            - GOVERNMENT
-            - UNDERGROUND
-            description: Type of target
-            example: CORPORATION
-          status:
-            type: string
-            enum:
-            - INITIATING
-            - ACTIVE
-            - COMPLETED
-            - FAILED
-            - ABORTED
-            description: Current session status
-            example: ACTIVE
-          risk_level:
-            type: string
-            enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - EXTREME
-            description: Overall risk assessment
-            example: HIGH
-          detection_risk:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Current detection probability
-            example: 23.5
-          neural_load:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 100
-            description: Neural processing load
-            example: 67.8
-          session_duration:
-            type: integer
-            description: Session duration in seconds
-            example: 1247
-          ice_encounters:
-            type: array
-            items:
-              $ref: '#/components/schemas/ICEEncounter'
-            description: Black ICE encounters during session
-            maxItems: 50
-          network_topology:
-            type: object
-            description: Mapped network structure
-            additionalProperties: true
-          data_extracted:
-            type: object
-            description: Successfully extracted data
-            additionalProperties: true
-          tools_used:
-            type: array
-            items:
+        - $ref: '../common/schemas/game-entities.yaml#/BaseGameEntity'
+        - type: object
+          properties:
+            network_id:
               type: string
               format: uuid
-            description: Hacking tools and implants used
-            maxItems: 20
-          start_time:
-            type: string
-            format: date-time
-            description: Session start timestamp
-          end_time:
-            type: string
-            format: date-time
-            description: Session end timestamp (if completed)
-      description: 'BACKEND NOTE: Inherits from AuditableEntity. Complex session management
-        with risk monitoring. Memory savings: 30-50% via struct alignment.'
-    ICEEncounter:
+              description: Parent network ID
+            node_type:
+              type: string
+              enum: [entry_point, data_node, control_node, security_node, exit_point]
+              description: Type of network node
+            security_level:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Node security level
+            ice_systems:
+              type: array
+              items:
+                $ref: '#/components/schemas/ICESystem'
+              description: ICE systems protecting this node
+            data_value:
+              type: integer
+              minimum: 0
+              description: Data value available at this node
+            connections:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Connected node IDs
+            discovery_status:
+              type: string
+              enum: [undiscovered, discovered, compromised, locked]
+              default: "undiscovered"
+              description: Node discovery status
+            corruption_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Node corruption level from hacking
+
+    ICESystem:
+      description: Intrusion Countermeasures Electronics system
       type: object
       required:
-      - ice_id
-      - ice_type
-      - threat_level
-      - status
+        - id
+        - ice_type
+        - difficulty_level
+        - integrity
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ICE system unique identifier
+        ice_type:
+          type: string
+          enum: [barrier, sentry, wisp, black_ice, white_ice]
+          description: Type of ICE system
+        difficulty_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: ICE difficulty level
+        integrity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: ICE system integrity (1 = fully intact)
+        alert_status:
+          type: string
+          enum: [passive, active, lethal]
+          default: "passive"
+          description: ICE alert status
+        breach_attempts:
+          type: integer
+          minimum: 0
+          description: Number of breach attempts made
+        breach_successes:
+          type: integer
+          minimum: 0
+          description: Number of successful breaches
+        last_breach_attempt:
+          type: string
+          format: date-time
+          description: Timestamp of last breach attempt
+
+    ICEEncounter:
+      description: Record of ICE system encounter in hacking session
+      type: object
+      required:
+        - ice_id
+        - encounter_time
+        - outcome
       properties:
         ice_id:
           type: string
           format: uuid
-          description: Unique ICE instance ID
-        ice_type:
-          type: string
-          enum:
-          - SCORCHER
-          - ASP
-          - CERBERUS
-          - ANGEL
-          - JESTER
-          - BARGHEST
-          - RAVEN
-          description: Type of Black ICE
-          example: SCORCHER
-        threat_level:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-          description: ICE threat assessment
-          example: HIGH
-        status:
-          type: string
-          enum:
-          - ACTIVE
-          - NEUTRALIZED
-          - BYPASSED
-          - ESCALATING
-          description: Current ICE status
-          example: ACTIVE
-        damage_potential:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Potential damage percentage
-          example: 85.3
-        countermeasures_applied:
-          type: array
-          items:
-            type: string
-            maxLength: 100
-          description: Applied countermeasures
-          maxItems: 10
-          example:
-          - decoy
-          - overload
-          - neural_shield
+          description: ICE system encountered
         encounter_time:
           type: string
           format: date-time
-          description: When ICE was encountered
-      description: 'BACKEND NOTE: ICE threat tracking with countermeasure history.'
-    HackingSessionResponse:
+          description: When encounter occurred
+        outcome:
+          type: string
+          enum: [avoided, breached, failed, crashed]
+          description: Encounter outcome
+        breach_method:
+          type: string
+          enum: [minigame, quickhack, brute_force, social_engineering]
+          description: Method used to breach (if successful)
+        damage_taken:
+          type: integer
+          minimum: 0
+          description: Neural damage taken from encounter
+        time_spent_seconds:
+          type: integer
+          minimum: 0
+          description: Time spent on encounter
+
+    TraceDetection:
+      description: Trace detection system status
       type: object
       required:
-      - data
+        - current_level
+        - detection_probability
+        - time_to_trace
       properties:
-        data:
-          $ref: '#/components/schemas/HackingSessionEntity'
-        meta:
-          type: object
-          properties:
-            version:
-              type: string
-              example: '1.0'
-            processing_time_ms:
-              type: integer
-              example: 15
-      description: Standard response wrapper for single hacking session
-    HackingSessionListResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
+        current_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current trace level (0-1)
+        detection_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of detection per minute
+        time_to_trace:
+          type: integer
+          minimum: 0
+          description: Estimated seconds until full trace
+        active_countermeasures:
           type: array
           items:
-            $ref: '#/components/schemas/HackingSessionEntity'
-        meta:
-          allOf:
-          - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
-          - type: object
-            properties:
-              processing_time_ms:
-                type: integer
-                example: 45
-      description: Standard paginated response wrapper
-    InitiateHackingRequest:
+            type: string
+          description: Active trace countermeasures
+        evasion_efficiency:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Effectiveness of evasion measures
+
+    MinigameSession:
+      description: Active hacking minigame session
       type: object
       required:
-      - player_id
-      - target_id
-      - hacking_tools
+        - id
+        - minigame_type
+        - difficulty
+        - started_at
+        - time_limit_seconds
       properties:
-        player_id:
+        id:
           type: string
           format: uuid
-          description: Player initiating the hack
-        target_id:
+          description: Minigame session unique identifier
+        minigame_type:
+          type: string
+          enum: [ice_breaking, data_decryption, firewall_navigation, system_override]
+          description: Type of minigame
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Minigame difficulty level
+        started_at:
+          type: string
+          format: date-time
+          description: Session start time
+        time_limit_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          description: Time limit for completion
+        current_score:
+          type: integer
+          minimum: 0
+          description: Current minigame score
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Completion progress (0-1)
+        lives_remaining:
+          type: integer
+          minimum: 0
+          description: Lives remaining in minigame
+        special_modifiers:
+          type: object
+          description: Active minigame modifiers
+          additionalProperties: true
+
+    # Request/Response schemas
+    InitiateHackingRequest:
+      description: Request payload for initiating hacking session
+      type: object
+      required:
+        - hacker_id
+        - target_network_type
+      properties:
+        hacker_id:
           type: string
           format: uuid
-          description: Target system/network to hack
-        target_type:
+          description: Hacker character ID
+        target_network_type:
           type: string
-          enum:
-          - CORPORATION
-          - PERSONAL
-          - GOVERNMENT
-          - UNDERGROUND
-          description: Type of target for risk calculation
-        hacking_tools:
+          enum: [corporate, government, criminal, personal, public]
+          description: Type of network being targeted
+        entry_method:
+          type: string
+          enum: [direct_access, wireless, social_engineering, physical_breach]
+          default: "wireless"
+          description: Method of network entry
+        hacking_kit_quality:
+          type: string
+          enum: [basic, standard, premium, prototype]
+          default: "standard"
+          description: Quality of hacking tools being used
+        neural_interface_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Hacker's neural interface level
+
+    NavigateNetworkRequest:
+      description: Request payload for network navigation
+      type: object
+      required:
+        - target_node_id
+      properties:
+        target_node_id:
+          type: string
+          format: uuid
+          description: Target network node to navigate to
+        navigation_method:
+          type: string
+          enum: [stealth, speed, brute_force]
+          default: "stealth"
+          description: Navigation approach
+        bypass_ice:
+          type: boolean
+          default: false
+          description: Attempt to bypass ICE systems
+        use_proxy:
+          type: boolean
+          default: true
+          description: Use proxy nodes for navigation
+
+    BreakICERequest:
+      description: Request payload for ICE breaking attempt
+      type: object
+      required:
+        - ice_system_id
+      properties:
+        ice_system_id:
+          type: string
+          format: uuid
+          description: ICE system to break
+        breaking_method:
+          type: string
+          enum: [minigame, quickhack, brute_force, social_engineering]
+          default: "minigame"
+          description: Method to use for breaking
+        allocated_time_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          default: 60
+          description: Time allocated for breaking attempt
+        risk_tolerance:
+          type: string
+          enum: [low, medium, high, maximum]
+          default: "medium"
+          description: Risk tolerance for breaking attempt
+
+    ExtractDataRequest:
+      description: Request payload for data extraction
+      type: object
+      required:
+        - node_id
+        - data_type
+      properties:
+        node_id:
+          type: string
+          format: uuid
+          description: Network node to extract from
+        data_type:
+          type: string
+          enum: [financial, personal, corporate, government, technical]
+          description: Type of data to extract
+        extraction_method:
+          type: string
+          enum: [quick_scan, deep_dive, targeted_search]
+          default: "quick_scan"
+          description: Data extraction approach
+        priority_level:
+          type: string
+          enum: [low, normal, high, critical]
+          default: "normal"
+          description: Extraction priority
+        encryption_handling:
+          type: string
+          enum: [skip_encrypted, attempt_decrypt, force_decrypt]
+          default: "attempt_decrypt"
+          description: How to handle encrypted data
+
+    StartMinigameRequest:
+      description: Request payload for starting minigame
+      type: object
+      required:
+        - session_id
+        - difficulty_modifier
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Associated hacking session ID
+        difficulty_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 5
+          default: 1
+          description: Difficulty multiplier
+        time_limit_modifier:
+          type: number
+          minimum: 0.5
+          maximum: 2
+          default: 1
+          description: Time limit modifier
+        lives_count:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Number of lives for minigame
+
+    SubmitMinigameInputRequest:
+      description: Request payload for minigame input submission
+      type: object
+      required:
+        - input_type
+        - input_data
+      properties:
+        input_type:
+          type: string
+          enum: [sequence, coordinate, timing, choice]
+          description: Type of input being submitted
+        input_data:
+          type: object
+          description: Input data specific to minigame type
+          additionalProperties: true
+        timestamp_ms:
+          type: integer
+          description: Client timestamp for input timing
+
+    # Result schemas
+    NavigationResult:
+      description: Result of network navigation attempt
+      type: object
+      required:
+        - success
+        - new_node_id
+        - navigation_time_seconds
+      properties:
+        success:
+          type: boolean
+          description: Whether navigation was successful
+        new_node_id:
+          type: string
+          format: uuid
+          description: New current node ID
+        navigation_time_seconds:
+          type: number
+          description: Time taken for navigation
+        ice_encountered:
           type: array
           items:
             type: string
             format: uuid
-          description: Hacking tools and implants to use
-          minItems: 1
-          maxItems: 10
-        risk_tolerance:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - EXTREME
-          default: MEDIUM
-          description: Acceptable risk level
-        session_timeout:
-          type: integer
-          minimum: 60
-          maximum: 3600
-          default: 1800
-          description: Maximum session duration in seconds
-        stealth_mode:
-          type: boolean
-          default: true
-          description: Prioritize stealth over speed
-      description: Hacking session initiation with risk assessment and tool validation
-    UpdateHackingSessionRequest:
-      allOf:
-      - $ref: ../common-service/operations/crud.yaml#/UpdateRequest
-      - type: object
-        properties:
-          risk_tolerance:
-            type: string
-            enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - EXTREME
-            description: Update acceptable risk level
-          add_tools:
-            type: array
-            items:
-              type: string
-              format: uuid
-            description: Additional tools to deploy
-            maxItems: 5
-          remove_tools:
-            type: array
-            items:
-              type: string
-              format: uuid
-            description: Tools to withdraw
-            maxItems: 5
-          stealth_mode:
-            type: boolean
-            description: Toggle stealth priority
-          extend_timeout:
-            type: integer
-            minimum: 60
-            maximum: 1800
-            description: Extend session timeout by seconds
-      description: Session update with optimistic locking (version field from UpdateRequest)
-    ExecuteHackingRequest:
-      type: object
-      required:
-      - operation_type
-      properties:
-        operation_type:
-          type: string
-          enum:
-          - SCAN
-          - BREACH
-          - EXTRACT
-          - CONTROL
-          - ESCAPE
-          description: Type of hacking operation to execute
-        target_node:
-          type: string
-          format: uuid
-          description: Specific network node to target
-        parameters:
-          type: object
-          description: Operation-specific parameters
-          additionalProperties: true
-        risk_override:
-          type: boolean
-          default: false
-          description: Override risk warnings for this operation
-        priority:
-          type: string
-          enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - CRITICAL
-          default: MEDIUM
-          description: Operation priority
-      description: Hacking operation execution with risk management
-    DeployICECountermeasureRequest:
-      type: object
-      required:
-      - countermeasure_type
-      - tool_id
-      properties:
-        countermeasure_type:
-          type: string
-          enum:
-          - DECOY
-          - OVERLOAD
-          - NEURAL_SHIELD
-          - DATA_CORRUPTION
-          - SYSTEM_CRASH
-          description: Type of countermeasure to deploy
-        tool_id:
-          type: string
-          format: uuid
-          description: Tool to use for countermeasure
-        intensity:
+          description: ICE systems encountered during navigation
+        trace_level_increase:
           type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
-          default: 1.0
-          description: Countermeasure intensity
-        duration:
-          type: integer
-          minimum: 5
-          maximum: 300
-          description: Countermeasure duration in seconds
-      description: ICE countermeasure deployment with tool validation
-    CompleteHackingRequest:
-      type: object
-      properties:
-        extract_all_data:
-          type: boolean
-          default: true
-          description: Extract all accessible data before disconnecting
-        cleanup_traces:
-          type: boolean
-          default: true
-          description: Attempt to clean up access traces
-        generate_report:
-          type: boolean
-          default: true
-          description: Generate detailed mission report
-        disconnect_safely:
-          type: boolean
-          default: true
-          description: Use safe disconnection protocols
-      description: Hacking session completion with data extraction and cleanup
-    HackingExecutionResult:
-      type: object
-      required:
-      - operation_id
-      - status
-      - execution_time_ms
-      properties:
-        operation_id:
-          type: string
-          format: uuid
-          description: Unique operation identifier
-        status:
-          type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - FAILED
-          - BLOCKED
-          description: Operation outcome
-        execution_time_ms:
-          type: integer
-          description: Time taken to execute operation
-        data_extracted:
-          type: object
-          description: Data successfully extracted
-          additionalProperties: true
-        ice_alerts:
-          type: array
-          items:
-            $ref: '#/components/schemas/ICEEncounter'
-          description: New ICE encounters triggered
-        risk_increase:
-          type: number
-          format: float
           minimum: 0
-          maximum: 100
-          description: Detection risk increase
-        neural_impact:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Neural processing impact
-        warnings:
+          maximum: 1
+          description: Trace level increase from navigation
+        discovered_nodes:
           type: array
           items:
             type: string
-          description: Operation warnings
-      description: Hacking operation outcome with risk and performance metrics
-    ICECountermeasureResult:
+            format: uuid
+          description: New nodes discovered during navigation
+
+    ICEBreakResult:
+      description: Result of ICE breaking attempt
       type: object
       required:
-      - ice_id
-      - countermeasure_type
-      - effectiveness
+        - success
+        - ice_system_id
+        - time_taken_seconds
       properties:
-        ice_id:
+        success:
+          type: boolean
+          description: Whether ICE breaking was successful
+        ice_system_id:
           type: string
           format: uuid
-          description: Targeted ICE instance
-        countermeasure_type:
-          type: string
-          enum:
-          - DECOY
-          - OVERLOAD
-          - NEURAL_SHIELD
-          - DATA_CORRUPTION
-          - SYSTEM_CRASH
-          description: Applied countermeasure
-        effectiveness:
+          description: ICE system that was targeted
+        time_taken_seconds:
           type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Countermeasure effectiveness percentage
-        ice_status_change:
+          description: Time taken for breaking attempt
+        method_used:
           type: string
-          enum:
-          - NEUTRALIZED
-          - WEAKENED
-          - UNAFFECTED
-          - ESCALATED
-          description: How ICE status changed
-        duration_applied:
+          enum: [minigame, quickhack, brute_force, social_engineering]
+          description: Method used for breaking
+        damage_taken:
           type: integer
-          description: Actual duration countermeasure was active
-        side_effects:
+          minimum: 0
+          description: Neural damage taken during attempt
+        trace_level_increase:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trace level increase from attempt
+        ice_integrity_remaining:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Remaining ICE integrity after attempt
+        alert_level_change:
+          type: string
+          enum: [none, passive, active, lethal]
+          description: New ICE alert level
+
+    DataExtractionResult:
+      description: Result of data extraction operation
+      type: object
+      required:
+        - success
+        - data_amount_bytes
+        - extraction_time_seconds
+      properties:
+        success:
+          type: boolean
+          description: Whether extraction was successful
+        data_amount_bytes:
+          type: integer
+          minimum: 0
+          description: Amount of data extracted
+        extraction_time_seconds:
+          type: number
+          description: Time taken for extraction
+        data_quality:
+          type: string
+          enum: [corrupted, partial, complete, enhanced]
+          description: Quality of extracted data
+        encryption_status:
+          type: string
+          enum: [plaintext, decrypted, encrypted]
+          description: Encryption status of data
+        trace_level_increase:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trace level increase from extraction
+        data_types_found:
           type: array
           items:
             type: string
-          description: Unintended consequences
-      description: ICE countermeasure deployment outcome
-    NetworkScanResult:
+          description: Types of data found during extraction
+
+    TraceDetectionResult:
+      description: Result of trace detection scan
       type: object
       required:
-      - scan_id
-      - scan_depth
-      - nodes_discovered
+        - trace_detected
+        - current_level
+        - detection_probability
       properties:
-        scan_id:
-          type: string
-          format: uuid
-          description: Unique scan identifier
-        scan_depth:
+        trace_detected:
+          type: boolean
+          description: Whether active trace was detected
+        current_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current trace level
+        detection_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of detection per minute
+        time_to_full_trace_seconds:
           type: integer
-          minimum: 1
-          maximum: 5
-          description: Depth of scan performed
-        nodes_discovered:
-          type: integer
-          description: Number of network nodes found
-        vulnerabilities_found:
+          minimum: 0
+          description: Estimated time until full trace
+        active_security_systems:
           type: array
           items:
             type: object
-            required:
-            - node_id
-            - vulnerability_type
-            - severity
             properties:
-              node_id:
+              system_type:
                 type: string
-                format: uuid
-              vulnerability_type:
-                type: string
-                enum:
-                - WEAK_ENCRYPTION
-                - OUTDATED_ICE
-                - CONFIG_ERROR
-                - BACKDOOR
-              severity:
-                type: string
-                enum:
-                - LOW
-                - MEDIUM
-                - HIGH
-                - CRITICAL
-          description: Security vulnerabilities discovered
-        ice_presence:
-          type: array
-          items:
-            $ref: '#/components/schemas/ICEEncounter'
-          description: ICE instances detected
-        access_points:
-          type: array
-          items:
-            type: object
-            required:
-            - node_id
-            - access_type
-            - difficulty
-            properties:
-              node_id:
-                type: string
-                format: uuid
-              access_type:
-                type: string
-                enum:
-                - DIRECT
-                - RELAY
-                - BACKDOOR
-                - EXPLOIT
-              difficulty:
-                type: string
-                enum:
-                - EASY
-                - MEDIUM
-                - HARD
-                - EXTREME
-          description: Potential access points identified
-        risk_assessment:
-          type: object
-          properties:
-            detection_probability:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-            average_ice_threat:
-              type: string
-              enum:
-              - LOW
-              - MEDIUM
-              - HIGH
-              - EXTREME
-            recommended_approach:
-              type: string
-              enum:
-              - STEALTH
-              - AGGRESSIVE
-              - MIXED
-          description: Overall network risk assessment
-      description: Network reconnaissance results with vulnerability assessment
-    HackingSessionAbortResult:
-      type: object
-      required:
-      - session_id
-      - abort_reason
-      - data_preserved
-      properties:
-        session_id:
-          type: string
-          format: uuid
-          description: Aborted session ID
-        abort_reason:
-          type: string
-          enum:
-          - USER_REQUEST
-          - DETECTION_RISK
-          - ICE_THREAT
-          - NEURAL_OVERLOAD
-          - SYSTEM_ERROR
-          description: Reason for abort
-        data_preserved:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Percentage of data successfully preserved
-        partial_results:
-          type: object
-          description: Any partial results obtained before abort
-          additionalProperties: true
-        consequences:
+                description: Type of security system
+              detection_strength:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: How strongly this system is detecting
+          description: Active security systems scanning
+        evasion_recommendations:
           type: array
           items:
             type: string
-          description: Negative consequences of abort
-        recovery_time:
-          type: integer
-          description: Neural recovery time required (seconds)
-      description: Emergency session abort outcome with data preservation status
-    HackingSessionCompleteResult:
+          description: Recommended evasion actions
+
+    MinigameInputResult:
+      description: Result of minigame input processing
       type: object
       required:
-      - session_id
-      - completion_status
-      - total_duration
+        - accepted
+        - score_change
+        - progress_change
       properties:
-        session_id:
-          type: string
-          format: uuid
-          description: Completed session ID
+        accepted:
+          type: boolean
+          description: Whether input was accepted
+        score_change:
+          type: integer
+          description: Score change from input
+        progress_change:
+          type: number
+          minimum: -1
+          maximum: 1
+          description: Progress change (can be negative)
+        lives_change:
+          type: integer
+          description: Lives change from input
+        time_bonus_seconds:
+          type: integer
+          description: Time bonus granted
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special effects triggered
         completion_status:
           type: string
-          enum:
-          - SUCCESS
-          - PARTIAL_SUCCESS
-          - CLEAN_EXTRACTION
-          - TRACED_EXIT
-          description: How session was completed
-        total_duration:
-          type: integer
-          description: Total session duration in seconds
-        data_extracted_total:
-          type: integer
-          description: Total amount of data extracted (in arbitrary units)
-        data_extracted_details:
+          enum: [incomplete, failed, completed, perfect]
+          description: Current minigame completion status
+
+    HackingSessionAnalytics:
+      description: Comprehensive hacking session analytics
+      type: object
+      properties:
+        time_range:
           type: object
-          description: Detailed breakdown of extracted data
-          additionalProperties: true
-        ice_encounters_total:
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_sessions:
           type: integer
-          description: Total ICE encounters during session
-        ice_neutralized:
-          type: integer
-          description: Number of ICE instances successfully neutralized
-        detection_events:
-          type: integer
-          description: Number of detection events triggered
-        final_risk_assessment:
-          type: string
-          enum:
-          - CLEAN
-          - MINOR_TRACES
-          - DETECTED
-          - FULL_ALERT
-          description: Final security assessment
-        mission_report:
+          description: Total hacking sessions analyzed
+        average_session_duration_minutes:
+          type: number
+          description: Average session duration
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall session success rate
+        ice_breaking_analytics:
           type: object
-          description: Detailed mission summary and statistics
-          additionalProperties: true
-      description: Successful hacking session completion with comprehensive results
+          properties:
+            total_ice_encounters:
+              type: integer
+              description: Total ICE systems encountered
+            ice_break_success_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: ICE breaking success rate
+            average_breaking_time_seconds:
+              type: number
+              description: Average time to break ICE
+            popular_breaking_methods:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Usage count by breaking method
+        data_extraction_analytics:
+          type: object
+          properties:
+            total_data_extracted_gb:
+              type: number
+              description: Total data extracted
+            average_extraction_per_session_gb:
+              type: number
+              description: Average data per session
+            data_type_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Data extraction by type
+        trace_analytics:
+          type: object
+          properties:
+            average_max_trace_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Average maximum trace level reached
+            trace_detection_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of sessions with trace detection
+            sessions_ended_by_trace:
+              type: integer
+              description: Sessions terminated by trace
+        network_navigation_analytics:
+          type: object
+          properties:
+            average_nodes_visited:
+              type: number
+              description: Average nodes visited per session
+            popular_network_types:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Sessions by network type
+            navigation_efficiency:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Navigation path efficiency
+        player_skill_analytics:
+          type: object
+          properties:
+            skill_level_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Players by skill level
+            learning_curve_metrics:
+              type: array
+              items:
+                type: object
+                properties:
+                  skill_level:
+                    type: integer
+                    description: Skill level milestone
+                  average_sessions_to_reach:
+                    type: number
+                    description: Average sessions to reach level
+                  success_rate_at_level:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Success rate at this level
+              description: Learning curve progression
+
   securitySchemes:
     BearerAuth:
-      $ref: ../common-service/security/security.yaml#/BearerAuth
-    ApiKeyAuth:
-      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+      $ref: '../common/security/security.yaml#/BearerAuth'
     ServiceAuth:
-      $ref: ../common-service/security/security.yaml#/ServiceAuth
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<50ms"
+  throughput-target: "10,000+ hacking sessions/second"
+  concurrent-networks-target: "100,000+ active networks"
+  memory-per-session-target: "<10KB for hacking state"
+  database-indexes: "Composite indexes on (hacker_id, session_status), (network_id, security_level), (session_id, trace_level)"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - hacking_session_rate
+    - ice_break_success_rate
+    - trace_detection_level
+    - data_extraction_volume
+    - minigame_completion_rate
+  alerts:
+    - trace_detection_rate > 0.8
+    - ice_break_failure_rate > 0.7
+    - session_crash_rate > 0.05
+
+# Cyberpunk hacking specifics
+x-cyberpunk-hacking:
+  ice-types: "Barrier (passive), Sentry (active), Wisp (stealth), Black ICE (lethal), White ICE (admin)"
+  trace-mechanics: "Progressive trace detection with evasion mechanics and countermeasures"
+  neural-interface: "Real-time neural load monitoring with damage and recovery mechanics"
+  network-topology: "Dynamic network generation with evolving security and data values"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/game-entities.yaml"
+  inherited-entities: "BaseGameEntity, CharacterEntity, CombatActionEntity, AbilityEntity"
+  additional-schemas: "ICE systems, network nodes, trace detection, minigame mechanics"
+  no-duplication: "All common fields inherited, cyberpunk-specific hacking mechanics and security systems added"

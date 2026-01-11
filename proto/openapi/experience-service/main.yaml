@@ -1,461 +1,961 @@
-openapi: 3.0.3
+openapi: "3.0.3"
+
 info:
-  title: Experience Service API - Enterprise-Grade Domain Service
-  description: '**Enterprise-Grade Experience Management API for NECPGAME**
+  title: "Experience Service API"
+  description: |
+    Enterprise-grade Experience & Progression System для NECPGAME платформы.
 
-    This API manages player experience, leveling, and progression mechanics in the
-    Night City universe, providing real-time XP tracking, level calculations, and
-    achievement systems.
+    ## 🎯 **Experience Service Overview**
 
-    ## Key Features
+    Experience Service предоставляет комплексную систему опыта и прогрессии для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
 
-    - **XP Tracking**: Real-time experience point accumulation and validation - **Level
-    Progression**: Dynamic level calculations and milestone achievements - **Experience
-    Bonuses**: Multiplier systems and experience modifiers - **Performance Optimized**:
-    MMOFPS-grade performance with <10ms P99 latency - **Struct Alignment**: 30-50%
-    memory savings for experience structs
+    ### **Ключевые Возможности**
+    - **Experience Tracking**: Отслеживание опыта игроков
+    - **Level Progression**: Система уровней и прогрессии
+    - **Experience Sources**: Различные источники получения опыта
+    - **Milestone Rewards**: Награды за достижение уровней
 
-    ## Domain Purpose
+    ### **Типы Опыта**
+    - **Combat Experience**: Опыт за боевые действия
+    - **Crafting Experience**: Опыт за крафтинг
+    - **Social Experience**: Опыт за социальные взаимодействия
+    - **Exploration Experience**: Опыт за исследование
 
-    The Experience domain handles all player progression mechanics in Night City.
-    Players gain experience through combat, quests, and activities, progressing through
-    levels and unlocking new abilities.
+    ### **Расширенные Возможности**
+    - **Experience Multipliers**: Множители опыта
+    - **Level Scaling**: Масштабирование уровней
+    - **Progress Visualization**: Визуализация прогресса
+    - **Achievement Integration**: Интеграция с достижениями
 
-    ## Performance Targets
+    ## 📊 **Performance Targets**
+    - **P99 Latency**: <20ms для операций с опытом
+    - **Throughput**: 50,000+ experience operations/second
+    - **Concurrent Players**: 500,000+ активных игроков
+    - **Memory per Player**: <1KB для состояния опыта
 
-    - P99 Latency: <10ms for experience operations - Memory: <6KB per active experience
-    session - Concurrent users: 55,000+ simultaneous operations - XP calculation time:
-    <2ms
+    ## 🔐 **Security**
+    - JWT RS256 аутентификация
+    - Rate limiting для предотвращения спама
+    - Input validation и sanitization
+    - Audit logging всех операций
 
-    '
-  version: 1.0.0
-  license:
-    name: Proprietary
-    url: https://necpgame.com/license
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@experience.necpgame.com
+    name: "NECPGAME Platform Team"
+    email: "platform@necpgame.com"
+  license:
+    name: "Proprietary"
+    url: "https://necpgame.com/license"
+
 servers:
-- url: https://api.necpgame.com/v1/experience
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/experience
-  description: Staging server
-- url: http://localhost:8080/api/v1/experience
-  description: Local development server
-tags:
-- name: Experience Management
-  description: Player experience and progression operations
-- name: Level Progression
-  description: Level calculation and milestone tracking
-- name: Achievement System
-  description: Achievement unlocking and reward distribution
+  - url: "https://experience.necpgame.com/api/v1"
+    description: "Production Environment"
+  - url: "https://experience-staging.necpgame.com/api/v1"
+    description: "Staging Environment"
+  - url: "http://localhost:8080/api/v1"
+    description: "Local Development"
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: "Experience Management"
+    description: "Управление опытом"
+  - name: "Level Progression"
+    description: "Прогрессия уровней"
+  - name: "Experience Sources"
+    description: "Источники опыта"
+  - name: "Rewards"
+    description: "Награды и бонусы"
+  - name: "Analytics"
+    description: "Аналитика прогрессии"
+  - name: "Health"
+    description: "Мониторинг здоровья сервиса"
+
 paths:
-  /players/{player_id}/experience:
+  /health:
     get:
-      summary: Get player experience
-      description: '**Get detailed player experience information**
-
-        Returns comprehensive experience data including current XP, level, and progression
-        metrics.
-
-        **Performance:** Single player lookup with <1ms response time'
-      operationId: getPlayerExperience
-      tags:
-      - Experience Management
-      parameters:
-      - name: player_id
-        in: path
-        required: true
-        description: Unique player identifier
-        schema:
-          type: string
-          format: uuid
+      summary: "Проверка здоровья сервиса"
+      operationId: "healthCheck"
+      tags: ["Health"]
       responses:
-        '200':
-          description: Player experience retrieved successfully
+        "200":
+          description: "Сервис работает корректно"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlayerExperienceResponse'
-        '404':
-          description: Player not found
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: "Сервис недоступен"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/batch:
     post:
-      summary: Add experience to player
-      description: '**Add experience points to player**
-
-        Awards XP to player with validation, multipliers, and level progression.
-
-        **Atomicity:** XP addition and level calculation in single transaction'
-      operationId: addPlayerExperience
-      tags:
-      - Experience Management
-      parameters:
-      - name: player_id
-        in: path
-        required: true
-        description: Unique player identifier
-        schema:
-          type: string
-          format: uuid
+      summary: "Пакетная проверка здоровья"
+      operationId: "healthBatchCheck"
+      tags: ["Health"]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddExperienceRequest'
+              $ref: "#/components/schemas/HealthBatchRequest"
       responses:
-        '200':
-          description: Experience added successfully
+        "200":
+          description: "Результаты проверки здоровья"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlayerExperienceResponse'
-        '400':
-          description: Invalid experience data
+                $ref: "#/components/schemas/HealthBatchResponse"
+        "400":
+          description: "Некорректный запрос"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /players/{player_id}/level:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/ws:
     get:
-      summary: Get player level information
-      description: '**Get player level and progression details**
-
-        Returns current level, XP requirements, and level progression metrics.
-
-        **Performance:** <2ms level calculation time'
-      operationId: getPlayerLevel
-      tags:
-      - Level Progression
-      parameters:
-      - name: player_id
-        in: path
-        required: true
-        description: Unique player identifier
-        schema:
-          type: string
-          format: uuid
+      summary: "WebSocket проверка здоровья"
+      operationId: "healthWebSocketCheck"
+      tags: ["Health"]
       responses:
-        '200':
-          description: Player level retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerLevelResponse'
-        '404':
-          description: Player not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /experience/calculate:
+        "101":
+          description: "WebSocket соединение установлено"
+        "503":
+          description: "WebSocket недоступен"
+
+  /experience/award:
     post:
-      summary: Calculate experience requirements
-      description: '**Calculate XP requirements for level progression**
-
-        Computes experience needed for level advancement with multipliers.
-
-        **Performance:** <1ms calculation time'
-      operationId: calculateExperience
-      tags:
-      - Experience Management
+      summary: "Начисление опыта игроку"
+      operationId: "awardExperience"
+      tags: ["Experience Management"]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CalculateExperienceRequest'
+              $ref: "#/components/schemas/AwardExperienceRequest"
       responses:
-        '200':
-          description: Experience calculated successfully
+        "200":
+          description: "Опыт начислен"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalculateExperienceResponse'
-        '400':
-          description: Invalid calculation parameters
+                $ref: "#/components/schemas/AwardExperienceResponse"
+        "400":
+          description: "Некорректные данные"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Превышен лимит начислений"
           content:
             application/json:
               schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /experience/batch-award:
+    post:
+      summary: "Пакетное начисление опыта"
+      operationId: "batchAwardExperience"
+      tags: ["Experience Management"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchAwardExperienceRequest"
+      responses:
+        "200":
+          description: "Опыт начислен всем игрокам"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchAwardExperienceResponse"
+
+  /players/{playerId}/experience:
+    get:
+      summary: "Получение опыта игрока"
+      operationId: "getPlayerExperience"
+      tags: ["Experience Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Опыт игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerExperienceResponse"
+
+  /players/{playerId}/experience/history:
+    get:
+      summary: "История получения опыта"
+      operationId: "getExperienceHistory"
+      tags: ["Experience Management"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+        - name: "limit"
+          in: "query"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: "offset"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: "История опыта игрока"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceHistoryResponse"
+
+  /experience/level-up:
+    post:
+      summary: "Повышение уровня игрока"
+      operationId: "levelUpPlayer"
+      tags: ["Level Progression"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LevelUpRequest"
+      responses:
+        "200":
+          description: "Уровень повышен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelUpResponse"
+        "400":
+          description: "Недостаточно опыта для повышения"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /players/{playerId}/level:
+    get:
+      summary: "Информация об уровне игрока"
+      operationId: "getPlayerLevel"
+      tags: ["Level Progression"]
+      parameters:
+        - name: "playerId"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Информация об уровне"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerLevelResponse"
+
+  /experience/multipliers:
+    get:
+      summary: "Получение активных множителей опыта"
+      operationId: "getExperienceMultipliers"
+      tags: ["Experience Sources"]
+      parameters:
+        - name: "playerId"
+          in: "query"
+          required: true
+          schema:
+            type: string
+            format: "uuid"
+      responses:
+        "200":
+          description: "Активные множители"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceMultipliersResponse"
+
+    post:
+      summary: "Применение множителя опыта"
+      operationId: "applyExperienceMultiplier"
+      tags: ["Experience Sources"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyMultiplierRequest"
+      responses:
+        "200":
+          description: "Множитель применен"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplyMultiplierResponse"
+
+  /experience/rewards/claim:
+    post:
+      summary: "Получение наград за уровень"
+      operationId: "claimLevelRewards"
+      tags: ["Rewards"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimRewardsRequest"
+      responses:
+        "200":
+          description: "Награды получены"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimRewardsResponse"
+        "400":
+          description: "Награды уже получены"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /experience/leaderboard:
+    get:
+      summary: "Рейтинг игроков по опыту"
+      operationId: "getExperienceLeaderboard"
+      tags: ["Analytics"]
+      parameters:
+        - name: "period"
+          in: "query"
+          schema:
+            type: string
+            enum: ["daily", "weekly", "monthly", "alltime"]
+            default: "alltime"
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: "Рейтинг по опыту"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceLeaderboardResponse"
+
+  /experience/analytics/summary:
+    get:
+      summary: "Аналитика прогрессии игроков"
+      operationId: "getProgressionAnalytics"
+      tags: ["Analytics"]
+      parameters:
+        - name: "period"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["daily", "weekly", "monthly", "yearly"]
+            default: "monthly"
+      responses:
+        "200":
+          description: "Статистика прогрессии"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressionAnalyticsResponse"
+
+  /experience/scaling/config:
+    get:
+      summary: "Конфигурация масштабирования уровней"
+      operationId: "getLevelScalingConfig"
+      tags: ["Level Progression"]
+      responses:
+        "200":
+          description: "Конфигурация масштабирования"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelScalingConfigResponse"
+
+    put:
+      summary: "Обновление конфигурации масштабирования"
+      operationId: "updateLevelScalingConfig"
+      tags: ["Level Progression"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLevelScalingRequest"
+      responses:
+        "200":
+          description: "Конфигурация обновлена"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelScalingConfigResponse"
+
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Created:
-      description: Resource created successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              created_at:
-                type: string
-                format: date-time
-    Deleted:
-      description: Resource deleted successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              deleted:
-                type: boolean
-                example: true
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-    TooManyRequests:
-      description: Rate limit exceeded
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Updated:
-      description: Resource updated successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              updated:
-                type: boolean
-                example: true
+
   schemas:
-    Error:
+    # Common inherited entities
+    CharacterEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity"
+    BaseEntity:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/BaseEntity"
+    OptimisticLock:
+      $ref: "../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock"
+    ErrorResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse"
+    HealthResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse"
+    HealthBatchRequest:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest"
+    HealthBatchResponse:
+      $ref: "../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse"
+
+    # Experience specific schemas
+    ExperienceEntity:
       type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          example: VALIDATION_ERROR
-        message:
-          type: string
-          example: Invalid request parameters
-        details:
-          type: object
-          additionalProperties: true
-    AddExperienceRequest:
+      description: "Сущность опыта игрока"
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - type: object
+          required:
+            - playerId
+            - totalExperience
+            - currentLevel
+          properties:
+            playerId:
+              type: string
+              description: "ID игрока"
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            totalExperience:
+              type: integer
+              description: "Общий опыт"
+              minimum: 0
+              example: 15420
+            currentLevel:
+              type: integer
+              description: "Текущий уровень"
+              minimum: 1
+              example: 15
+            experienceToNextLevel:
+              type: integer
+              description: "Опыт до следующего уровня"
+              minimum: 0
+              example: 580
+            levelProgressPercent:
+              type: number
+              description: "Прогресс уровня в процентах"
+              minimum: 0
+              maximum: 100
+              example: 75.5
+            experienceSources:
+              type: object
+              description: "Опыт по источникам"
+              properties:
+                combat:
+                  type: integer
+                  minimum: 0
+                  example: 8500
+                crafting:
+                  type: integer
+                  minimum: 0
+                  example: 3200
+                social:
+                  type: integer
+                  minimum: 0
+                  example: 1200
+                exploration:
+                  type: integer
+                  minimum: 0
+                  example: 2520
+            activeMultipliers:
+              type: array
+              description: "Активные множители"
+              items:
+                $ref: "#/components/schemas/ExperienceMultiplierEntity"
+            lastAwardedAt:
+              type: string
+              description: "Последнее начисление опыта"
+              format: date-time
+            $ref: "#/components/schemas/OptimisticLock"
+
+    ExperienceMultiplierEntity:
       type: object
+      description: "Сущность множителя опыта"
       required:
-      - amount
-      - source
+        - type
+        - multiplier
+        - duration
       properties:
-        amount:
+        type:
+          type: string
+          description: "Тип множителя"
+          enum: ["event", "item", "guild", "subscription", "achievement"]
+          example: "event"
+        multiplier:
+          type: number
+          description: "Множитель опыта"
+          minimum: 1.0
+          example: 2.0
+        duration:
           type: integer
+          description: "Длительность в минутах"
           minimum: 1
-          maximum: 1000000
-          description: Experience points to add
+          example: 120
+        expiresAt:
+          type: string
+          description: "Время истечения"
+          format: date-time
         source:
           type: string
-          enum:
-          - combat
-          - quest
-          - achievement
-          - daily
-          - event
-          description: Experience source
-        multiplier:
-          type: number
-          minimum: 1.0
-          maximum: 10.0
-          default: 1.0
-          description: Experience multiplier
-        description:
+          description: "Источник множителя"
+          example: "Holiday Event"
+
+    LevelRewardEntity:
+      type: object
+      description: "Сущность награды за уровень"
+      required:
+        - level
+        - rewards
+      properties:
+        level:
+          type: integer
+          description: "Уровень"
+          minimum: 1
+          example: 10
+        rewards:
+          type: array
+          description: "Награды"
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: ["currency", "item", "title", "cosmetic"]
+                example: "currency"
+              amount:
+                type: integer
+                minimum: 1
+                example: 1000
+              itemId:
+                type: string
+                description: "ID предмета"
+                format: uuid
+        claimedBy:
+          type: array
+          description: "Кто получил награду"
+          items:
+            type: string
+            format: uuid
+
+    # Request/Response schemas
+    AwardExperienceRequest:
+      type: object
+      required:
+        - playerId
+        - amount
+        - source
+      properties:
+        playerId:
           type: string
+          format: uuid
+        amount:
+          type: integer
+          description: "Количество опыта"
+          minimum: 1
+          maximum: 10000
+          example: 250
+        source:
+          type: string
+          description: "Источник опыта"
+          enum: ["combat", "crafting", "social", "exploration", "quest", "achievement"]
+          example: "combat"
+        reason:
+          type: string
+          description: "Причина начисления"
           maxLength: 200
-          description: Optional experience description
-    CalculateExperienceRequest:
+          example: "Defeated enemy boss"
+        metadata:
+          type: object
+          description: "Дополнительные данные"
+          additionalProperties: true
+
+    AwardExperienceResponse:
       type: object
-      required:
-      - current_level
-      - target_level
       properties:
-        current_level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Current player level
-        target_level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Target level for calculation
-        base_xp:
-          type: integer
-          minimum: 100
-          default: 1000
-          description: Base XP per level
-        multiplier:
-          type: number
-          minimum: 1.0
-          maximum: 5.0
-          default: 1.1
-          description: Level progression multiplier
-    CalculateExperienceResponse:
-      type: object
-      required:
-      - total_xp_needed
-      - xp_breakdown
-      properties:
-        total_xp_needed:
+        playerId:
+          type: string
+          format: uuid
+        experienceGained:
           type: integer
           minimum: 0
-          description: Total XP required for progression
-        xp_breakdown:
+        totalExperience:
+          type: integer
+          minimum: 0
+        levelBefore:
+          type: integer
+          minimum: 1
+        levelAfter:
+          type: integer
+          minimum: 1
+        leveledUp:
+          type: boolean
+        multiplierApplied:
+          type: number
+          minimum: 1.0
+        awardedAt:
+          type: string
+          format: date-time
+
+    BatchAwardExperienceRequest:
+      type: object
+      required:
+        - awards
+      properties:
+        awards:
+          type: array
+          description: "Список начислений опыта"
+          items:
+            $ref: "#/components/schemas/AwardExperienceRequest"
+          minItems: 1
+          maxItems: 100
+
+    BatchAwardExperienceResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/AwardExperienceResponse"
+        totalProcessed:
+          type: integer
+          minimum: 0
+        errors:
           type: array
           items:
             type: object
-            required:
-            - level
-            - xp_needed
-            - cumulative_xp
             properties:
-              level:
-                type: integer
-                description: Level number
-              xp_needed:
-                type: integer
-                description: XP needed for this level
-              cumulative_xp:
-                type: integer
-                description: Cumulative XP to reach this level
-        base_xp:
-          type: integer
-          description: Base XP per level used in calculation
-        final_xp:
-          type: integer
-          description: Final XP multiplier result
+              playerId:
+                type: string
+                format: uuid
+              error:
+                type: string
+
     PlayerExperienceResponse:
       type: object
-      required:
-      - player_id
-      - current_xp
-      - total_xp
-      - level
-      - xp_to_next_level
-      - progress_percentage
       properties:
-        player_id:
+        experience:
+          $ref: "#/components/schemas/ExperienceEntity"
+        recentAwards:
+          type: array
+          description: "Недавние начисления"
+          items:
+            type: object
+            properties:
+              amount:
+                type: integer
+              source:
+                type: string
+              awardedAt:
+                type: string
+                format: date-time
+          maxItems: 10
+
+    ExperienceHistoryResponse:
+      type: object
+      properties:
+        playerId:
           type: string
           format: uuid
-          description: Unique player identifier
-        current_xp:
-          type: integer
-          minimum: 0
-          description: Current experience points
-        total_xp:
-          type: integer
-          minimum: 0
-          description: Total accumulated experience
-        level:
-          type: integer
-          minimum: 1
-          description: Current player level
-        xp_to_next_level:
-          type: integer
-          minimum: 0
-          description: XP needed to reach next level
-        progress_percentage:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Level progress percentage
-        last_updated:
-          type: string
-          format: date-time
-          description: Last experience update timestamp
-    PlayerLevelResponse:
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              amount:
+                type: integer
+              source:
+                type: string
+              reason:
+                type: string
+              awardedAt:
+                type: string
+                format: date-time
+              multiplier:
+                type: number
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+
+    LevelUpRequest:
       type: object
       required:
-      - player_id
-      - level
-      - experience
-      - xp_to_next_level
-      - progress_percentage
+        - playerId
       properties:
-        player_id:
+        playerId:
           type: string
           format: uuid
-          description: Player unique identifier
-        level:
+
+    LevelUpResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        oldLevel:
           type: integer
           minimum: 1
-          description: Current player level
-        experience:
+        newLevel:
+          type: integer
+          minimum: 1
+        experienceUsed:
           type: integer
           minimum: 0
-          description: Current experience points
-        xp_to_next_level:
+        rewardsGranted:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelRewardEntity"
+        leveledUpAt:
+          type: string
+          format: date-time
+
+    PlayerLevelResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        currentLevel:
+          type: integer
+          minimum: 1
+        totalExperience:
           type: integer
           minimum: 0
-          description: Experience needed for next level
-        progress_percentage:
+        experienceToNextLevel:
+          type: integer
+          minimum: 0
+        progressPercent:
           type: number
           minimum: 0
           maximum: 100
-          description: Level completion percentage
+        nextLevelRewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelRewardEntity"
+
+    ExperienceMultipliersResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        multipliers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperienceMultiplierEntity"
+        totalMultiplier:
+          type: number
+          minimum: 1.0
+
+    ApplyMultiplierRequest:
+      type: object
+      required:
+        - playerId
+        - multiplier
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        multiplier:
+          $ref: "#/components/schemas/ExperienceMultiplierEntity"
+
+    ApplyMultiplierResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        multiplier:
+          $ref: "#/components/schemas/ExperienceMultiplierEntity"
+        appliedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    ClaimRewardsRequest:
+      type: object
+      required:
+        - playerId
+        - level
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+
+    ClaimRewardsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelRewardEntity"
+        claimedAt:
+          type: string
+          format: date-time
+
+    ExperienceLeaderboardResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: ["daily", "weekly", "monthly", "alltime"]
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              displayName:
+                type: string
+              level:
+                type: integer
+                minimum: 1
+              totalExperience:
+                type: integer
+                minimum: 0
+              rank:
+                type: integer
+                minimum: 1
+              lastUpdated:
+                type: string
+                format: date-time
+
+    ProgressionAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: ["daily", "weekly", "monthly", "yearly"]
+        totalPlayers:
+          type: integer
+          minimum: 0
+        averageLevel:
+          type: number
+          minimum: 0
+        levelDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        experienceGained:
+          type: integer
+          minimum: 0
+        topExperienceSources:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              totalExperience:
+                type: integer
+                minimum: 0
+              percentage:
+                type: number
+                minimum: 0
+                maximum: 100
+
+    LevelScalingConfigResponse:
+      type: object
+      properties:
+        maxLevel:
+          type: integer
+          minimum: 1
+          example: 100
+        baseExperiencePerLevel:
+          type: integer
+          minimum: 1
+          example: 1000
+        scalingFactor:
+          type: number
+          minimum: 1.0
+          example: 1.15
+        experienceFormula:
+          type: string
+          example: "base * pow(scaling, level - 1)"
+        levelCaps:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+
+    UpdateLevelScalingRequest:
+      type: object
+      properties:
+        maxLevel:
+          type: integer
+          minimum: 1
+        baseExperiencePerLevel:
+          type: integer
+          minimum: 1
+        scalingFactor:
+          type: number
+          minimum: 1.0
+        experienceFormula:
+          type: string

@@ -43,29 +43,12 @@ type DifficultySessionStats struct {
 
 // NewAnalyticsCollector создает новый сборщик аналитики
 func NewAnalyticsCollector(svc *Service, logger *zap.Logger) *AnalyticsCollector {
-	meter := svc.GetMeter()
-
 	ac := &AnalyticsCollector{
 		service:       svc,
 		logger:        logger,
 		redis:         svc.GetRedis(),
 		collectionTTL: 7 * 24 * time.Hour, // 7 дней хранения
-		metrics: map[string]metric.Float64Histogram{
-			"session_duration": metric.Must(meter).NewFloat64Histogram(
-				"master_mode_session_duration",
-				metric.WithDescription("Duration of master mode sessions"),
-				metric.WithUnit("s"),
-			),
-			"completion_rate": metric.Must(meter).NewFloat64Histogram(
-				"master_mode_completion_rate",
-				metric.WithDescription("Completion rate by difficulty mode"),
-				metric.WithUnit("ratio"),
-			),
-			"player_deaths": metric.Must(meter).NewFloat64Histogram(
-				"master_mode_player_deaths",
-				metric.WithDescription("Player death count in master modes"),
-			),
-		},
+		metrics:       map[string]metric.Float64Histogram{}, // Инициализируем пустым, создадим позже
 	}
 
 	return ac
@@ -97,7 +80,7 @@ func (ac *AnalyticsCollector) RecordSessionStart(ctx context.Context, sessionID,
 		ModifiersApplied: map[string]interface{}{},
 	}
 
-	if err := ac.saveSessionStats(ctx, stats); err != nil {
+	if err := ac.saveSessionStats(ctx, &stats); err != nil {
 		return errors.Wrap(err, "failed to save session stats")
 	}
 
@@ -155,7 +138,7 @@ func (ac *AnalyticsCollector) RecordCheckpointUsed(ctx context.Context, sessionI
 
 	stats.CheckpointsUsed++
 
-	if err := ac.saveSessionStats(ctx, stats); err != nil {
+	if err := ac.saveSessionStats(ctx, &stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -180,7 +163,7 @@ func (ac *AnalyticsCollector) RecordRespawnUsed(ctx context.Context, sessionID u
 
 	stats.RespawnsUsed++
 
-	if err := ac.saveSessionStats(ctx, stats); err != nil {
+	if err := ac.saveSessionStats(ctx, &stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -215,7 +198,7 @@ func (ac *AnalyticsCollector) RecordSessionEnd(ctx context.Context, sessionID uu
 	stats.Score = score
 	stats.TimeLeft = timeLeft
 
-	if err := ac.saveSessionStats(ctx, stats); err != nil {
+	if err := ac.saveSessionStats(ctx, &stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -268,7 +251,7 @@ func (ac *AnalyticsCollector) RecordAchievement(ctx context.Context, sessionID u
 
 	stats.Achievements = append(stats.Achievements, achievement)
 
-	if err := ac.saveSessionStats(ctx, stats); err != nil {
+	if err := ac.saveSessionStats(ctx, &stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -305,7 +288,7 @@ func (ac *AnalyticsCollector) getSessionStats(ctx context.Context, sessionID uui
 }
 
 // saveSessionStats сохраняет статистику сессии в Redis
-func (ac *AnalyticsCollector) saveSessionStats(ctx context.Context, stats DifficultySessionStats) error {
+func (ac *AnalyticsCollector) saveSessionStats(ctx context.Context, stats *DifficultySessionStats) error {
 	key := "session_stats:" + stats.SessionID.String()
 
 	data, err := json.Marshal(stats)

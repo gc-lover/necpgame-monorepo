@@ -21,6 +21,7 @@ type DifficultyMode struct {
 	RewardModifier      float64     `json:"rewardModifier" db:"reward_modifier"`
 	Permadeath          bool        `json:"permadeath" db:"permadeath"`
 	SpecialMechanics    []string    `json:"specialMechanics" db:"special_mechanics"`
+	IsActive            bool        `json:"isActive" db:"is_active"`
 	CreatedAt           time.Time   `json:"createdAt" db:"created_at"`
 	UpdatedAt           time.Time   `json:"updatedAt" db:"updated_at"`
 }
@@ -177,6 +178,7 @@ func NewDifficultyMode(name string, level DifficultyLevel) *DifficultyMode {
 		RewardModifier:      1.0,
 		Permadeath:          false,
 		SpecialMechanics:    make([]string, 0),
+		IsActive:            true,
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
 	}

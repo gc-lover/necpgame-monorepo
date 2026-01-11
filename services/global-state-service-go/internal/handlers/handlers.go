@@ -18,11 +18,15 @@ import (
 // PERFORMANCE: Optimized for MMOFPS real-time state management
 type Handler struct {
 	service *service.Service
+	logger  *zap.Logger
 }
 
 // NewHandler creates a new handler instance
-func NewHandler(svc *service.Service) *Handler {
-	return &Handler{service: svc}
+func NewHandler(svc *service.Service, logger *zap.Logger) *Handler {
+	return &Handler{
+		service: svc,
+		logger:  logger,
+	}
 }
 
 // NewError implements api.Handler.NewError
@@ -81,6 +85,10 @@ func (h *Handler) GetAggregateState(ctx context.Context, params api.GetAggregate
 	// Get aggregate state
 	state, events, err := h.service.GetAggregateState(ctx, params.AggregateType.String(), params.AggregateId, version, params.IncludeEvents)
 	if err != nil {
+		h.logger.Error("Failed to get aggregate state",
+			zap.Error(err),
+			zap.String("aggregate_type", params.AggregateType.String()),
+			zap.String("aggregate_id", params.AggregateId))
 		return &api.GetAggregateStateNotFound{
 			Error:     "STATE_NOT_FOUND",
 			Code:      "404",

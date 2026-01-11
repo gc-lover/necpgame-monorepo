@@ -51,9 +51,14 @@ func main() {
 	httpHandlers := handlers.NewSupportHandlers(supportSvc, logger)
 
 	// Initialize HTTP server
-	srv, err := api.NewServer(httpHandlers, nil)
+	apiSrv, err := api.NewServer(httpHandlers, nil)
 	if err != nil {
 		logger.Fatal("Failed to create HTTP server", zap.Error(err))
+	}
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler: apiSrv,
 	}
 
 	// Start server in goroutine

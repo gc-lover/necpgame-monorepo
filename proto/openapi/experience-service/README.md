@@ -1,354 +1,61 @@
-# Experience Service - OpenAPI Specification
+# Experience Service - Enterprise-Grade Experience & Progression System
 
 ## 📋 **Назначение**
 
-Experience Service предоставляет **enterprise-grade API для управления опытом и прогрессией персонажей** в NECPGAME.
-Сервис отвечает за расчет опыта, повышение уровней, отслеживание прогрессии и валидацию достижений.
+Experience Service предоставляет комплексную систему опыта и прогрессии для платформы NECPGAME с enterprise-grade производительностью и масштабируемостью.
 
 ## 🎯 **Функциональность**
 
-- **Experience Management**: XP earning, spending, and calculation algorithms
-- **Level Progression**: Automatic level advancement and milestone unlocks
-- **Progression Tracking**: Real-time progress monitoring and analytics
-- **Anti-Cheat Integration**: Experience validation and fraud prevention
-- **Performance Optimized**: Real-time XP calculations with <15ms P99 latency
-- **Event-Driven**: Kafka-based experience events for distributed processing
+### **Управление Опытом**
+- **Experience Tracking**: Отслеживание опыта игроков
+- **Level Progression**: Система уровней и прогрессии
+- **Experience Sources**: Различные источники получения опыта
+- **Milestone Rewards**: Награды за достижение уровней
+
+### **Типы Опыта**
+- **Combat Experience**: Опыт за боевые действия
+- **Crafting Experience**: Опыт за крафтинг
+- **Social Experience**: Опыт за социальные взаимодействия
+- **Exploration Experience**: Опыт за исследование
+
+### **Расширенные Возможности**
+- **Experience Multipliers**: Множители опыта
+- **Level Scaling**: Масштабирование уровней
+- **Progress Visualization**: Визуализация прогресса
+- **Achievement Integration**: Интеграция с достижениями
 
 ## 📁 **Структура**
 
 ```
 experience-service/
-├── main.yaml           # Основная спецификация
-├── README.md          # Эта документация
-└── docs/
-    └── index.html     # Сгенерированная документация
+├── main.yaml              # Enterprise-grade спецификация опыта
+└── README.md              # Эта документация
 ```
 
-## 🔗 **Зависимости**
+## 🔗 **Domain Inheritance**
 
-- **common**: Общие схемы и ответы
-- **level-service**: Синхронизация уровней
-- **achievement-service**: Разблокировка достижений
-- **player-analytics-service**: Аналитика прогрессии
+Наследует от `game-entities.yaml` с добавлением:
+- Experience progression mechanics
+- Level management system
+- Reward distribution logic
+- Performance optimization for frequent updates
 
 ## 📊 **Performance**
 
-- **P99 Latency**: <15ms for XP operations
-- **Memory per Instance**: <15KB per active progression profile
-- **Concurrent Users**: 100,000+ simultaneous XP updates
-- **Calculation Speed**: <3ms for complex XP algorithms
+- **P99 Latency**: <20ms для операций с опытом
+- **Throughput**: 50,000+ experience operations/second
+- **Concurrent Players**: 500,000+ активных игроков
+- **Memory per Player**: <1KB для состояния опыта
 
-## 🚀 **Использование**
+## 🚀 **API Endpoints**
 
-### Валидация
+- `POST /experience/award` - Начисление опыта
+- `GET /players/{id}/experience` - Опыт игрока
+- `POST /experience/level-up` - Повышение уровня
+- `GET /experience/leaderboard` - Рейтинг по опыту
 
-```bash
-npx @redocly/cli lint main.yaml
-```
-
-### Генерация Go кода
-
-```bash
-ogen --target ../../services/experience-service-go/pkg/api \
-     --package api --clean main.yaml
-```
-
-### Документация
-
-```bash
-npx @redocly/cli build-docs main.yaml -o docs/index.html
-```
-
-```yaml
-security:
-  - BearerAuth: []
-
-components:
-  securitySchemes:
-    BearerAuth:
-      $ref: '../common-service/security/security.yaml#/BearerAuth'
-    ApiKeyAuth:
-      $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
-    ServiceAuth:
-      $ref: '../common-service/security/security.yaml#/ServiceAuth'
-```
-
-**Использует по умолчанию:**
-
-- `../common-service/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
-
-### 4. **Обязательные Health Endpoints**
-
-#### Health Check
-
-```yaml
-/health:
-  get:
-    operationId: [domain]HealthCheck
-    responses:
-      '200': # Обязательно
-        $ref: '../common-service/responses/success.yaml#/HealthOK'
-      '503': # Обязательно
-        $ref: '../common-service/responses/error.yaml#/InternalServerError'
-```
-
-**Использует по умолчанию:**
-
-- `../common-service/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common-service/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common-service/responses/error.yaml#/InternalServerError` - Ошибка сервера
-
-#### Batch Health Check
-
-```yaml
-/health/batch:
-  post:
-    operationId: [domain]BatchHealthCheck
-    # Проверяет несколько доменов в одном запросе
-```
-
-#### WebSocket Health Monitoring
-
-```yaml
-/health/ws:
-  get:
-    operationId: [domain]HealthWebSocket
-    # Real-time monitoring без polling
-```
-
-### 5. **Общие Схемы (Используются по умолчанию)**
-
-#### Error Responses
-
-```yaml
-components:
-  responses:
-    BadRequest:
-      $ref: '../common-service/responses/error.yaml#/BadRequest'
-    Unauthorized:
-      $ref: '../common-service/responses/error.yaml#/Unauthorized'
-    Forbidden:
-      $ref: '../common-service/responses/error.yaml#/Forbidden'
-    NotFound:
-      $ref: '../common-service/responses/error.yaml#/NotFound'
-    Conflict:
-      $ref: '../common-service/responses/error.yaml#/Conflict'
-    InternalServerError:
-      $ref: '../common-service/responses/error.yaml#/InternalServerError'
-```
-
-#### Common Schemas
-
-```yaml
-components:
-  schemas:
-    Error:
-      $ref: '../common-service/schemas/error.yaml#/Error'
-    HealthResponse:
-      $ref: '../common-service/schemas/health.yaml#/HealthResponse'
-```
-
-**Файлы по умолчанию:**
-
-- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
-- `../common-service/schemas/health.yaml` - Схема здоровья сервиса
-- `../common-service/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common-service/responses/success.yaml` - Успешные ответы
-
-### 6. **Backend Optimization Hints**
-
-#### Struct Alignment
-
-```yaml
-description: 'BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 30-50%.'
-```
-
-#### Performance Targets
-
-```yaml
-description: |
-  **Performance:** <50ms P95, supports 1000+ concurrent requests
-  **Memory:** <50KB per instance
-  **Concurrent users:** 10,000+
-```
-
-## Как Использовать Шаблон
-
-### 1. **Копирование Шаблона**
-
-```bash
-# Создайте новый домен
-mkdir proto/openapi/your-new-domain
-cp proto/openapi/example-domain/main.yaml proto/openapi/your-new-domain/main.yaml
-```
-
-### 2. **Замена Placeholder'ов**
-
-- `[Domain Name]` -> Название вашего домена
-- `[domain purpose]` -> Описание назначения домена
-- `[domain]` -> Кодовое имя домена (kebab-case)
-- Замените example operations на реальные
-
-### 3. **Добавление Реальных Операций**
-
-Замените примеры CRUD операций на реальные endpoints вашего домена:
-
-```yaml
-# Заменить /examples на ваши реальные ресурсы
-/examples:
-  get: # List
-  post: # Create
-/examples/{id}:
-  get: # Get by ID
-  put: # Update
-  delete: # Delete
-```
-
-### 4. **Оптимизация Схем**
-
-Для каждой схемы:
-
-- Упорядочite поля: large -> small
-- Добавьте `BACKEND NOTE` с оптимизациями
-- Добавьте примеры и валидацию
-
-## Валидация Шаблона
-
-### Redocly Lint
-
-```bash
-npx @redocly/cli lint proto/openapi/example-domain/main.yaml
-# Valid. 4 warnings (нормально)
-```
-
-### Go Code Generation
-
-```bash
-# Bundle
-npx @redocly/cli bundle proto/openapi/example-domain/main.yaml -o bundled.yaml
-
-# Generate Go code
-ogen --target temp --package api --clean bundled.yaml
-
-# Compile
-cd temp && go mod init test && go mod tidy && go build .
-# Success
-```
-
-## Performance Benchmarks
-
-Шаблон оптимизирован для:
-
-- **P99 Latency:** <50ms
-- **Memory per Instance:** <50KB
-- **Concurrent Users:** 10,000+
-
-## Связанные Документы
-
-- `.cursor/rules/agent-api-designer.mdc` - Правила API Designer агента
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник enterprise-grade доменов
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Чек-лист оптимизаций
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - Требования к производительности
-
-## Следующие Шаги
-
-1. Скопируйте этот шаблон для нового домена
-2. Замените placeholders на реальные значения
-3. Добавьте domain-specific операции
-4. Оптимизируйте схемы для struct alignment
-5. Проверьте валидацию и генерацию кода
-6. Зарегистрируйте домен в DOMAIN_REFERENCE.md
-
-## Важные Замечания
-
-- **НЕ** удаляйте обязательные health endpoints
-- **ВСЕГДА** добавляйте operationId для генерации Go кода
-- **ОПТИМИЗИРУЙТЕ** порядок полей в схемах
-- **ВАЛИДИРУЙТЕ** перед коммитом
-- **ДОКУМЕНТИРУЙТЕ** performance targets
+*Полная спецификация в main.yaml*
 
 ---
 
-## Использование Общих Схем Между Домеами
-
-Шаблон поддерживает использование общих схем между разными доменами:
-
-### Общая Директория Схем
-
-```bash
-proto/openapi/common-schemas.yaml  # Универсальные схемы для всех доменов
-```
-
-### Примеры Общих Схем
-
-- `Error` - Универсальная схема ошибок
-- `HealthResponse` - Схема здоровья сервисов
-- `PaginationMeta` - Метаданные пагинации
-- `UUID`, `PlayerId`, `GuildId` - Общие типы ID
-- `Timestamp`, `CreatedAt`, `UpdatedAt` - Временные метки
-- `Status`, `Priority` - Перечисления
-
-### Как Использовать Общие Схемы
-
-```yaml
-# В любом домене
-components:
-  schemas:
-    MyEntity:
-      type: object
-      properties:
-        id:
-          $ref: '../../common-schemas.yaml#/components/schemas/UUID'
-        error:
-          $ref: '../../common-schemas.yaml#/components/schemas/Error'
-        created_at:
-          $ref: '../../common-schemas.yaml#/components/schemas/CreatedAt'
-```
-
-### Преимущества
-
-- **Консистентность** - одинаковые схемы во всех доменах
-- **Удобство сопровождения** - изменения в одном месте
-- **Генерация Go кода** - работает без проблем
-- **Enterprise-grade** - профессиональный подход
-
-### Тестирование
-
-Общие схемы протестированы и работают с:
-
-- Redocly bundling
-- ogen code generation
-- Go compilation
-- Cross-domain references
-
----
-
-## Файлы Common, Используемые по умолчанию
-
-Шаблон автоматически использует следующие общие файлы из `../common-service/`:
-
-### Security
-
-- `../common-service/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
-
-### Schemas
-
-- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
-- `../common-service/schemas/health.yaml` - Детальная схема здоровья сервиса
-
-### Responses
-
-- `../common-service/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common-service/responses/success.yaml` - Успешные ответы (200, 201) и health responses
-
-### Готовность к использованию
-
-Все эти файлы:
-
-- Оптимизированы для struct alignment
-- Проходят Redocly валидацию
-- Генерируют корректный Go код с ogen
-- Совместимы с enterprise-grade архитектурой
-
-**Этот шаблон гарантирует, что все новые OpenAPI спецификации будут enterprise-grade и совместимы со всей экосистемой
-NECPGAME AI агентов.**
+*Experience Service обеспечивает enterprise-grade управление опытом для миллионов игроков NECPGAME*

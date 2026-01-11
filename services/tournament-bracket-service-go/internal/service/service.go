@@ -597,7 +597,7 @@ func (s *Service) StartBracket(ctx context.Context, bracketID uuid.UUID) error {
 	s.logger.Info("Starting bracket", zap.String("bracket_id", bracketID.String()))
 
 	// Update bracket status to in_progress
-	err := s.repo.UpdateBracketStatus(ctx, bracketID, models.BracketStatusInProgress)
+	err := s.repo.UpdateBracketStatus(ctx, bracketID, models.BracketStatusActive)
 	if err != nil {
 		s.logger.Error("Failed to start bracket", zap.Error(err))
 		return fmt.Errorf("failed to start bracket: %w", err)
@@ -616,7 +616,11 @@ func (s *Service) AdvanceBracket(ctx context.Context, bracketID uuid.UUID) error
 		return fmt.Errorf("failed to get bracket: %w", err)
 	}
 
-	if bracket.CurrentRound >= bracket.TotalRounds {
+	if bracket.TotalRounds == nil {
+		return fmt.Errorf("bracket total rounds not set")
+	}
+
+	if bracket.CurrentRound >= *bracket.TotalRounds {
 		return fmt.Errorf("bracket already finished")
 	}
 
@@ -682,7 +686,7 @@ func (s *Service) UpdateRound(ctx context.Context, roundID uuid.UUID, req *model
 
 	// Apply updates
 	if req.Name != nil {
-		round.Name = *req.Name
+		round.RoundName = req.Name
 	}
 	if req.Status != nil {
 		round.Status = *req.Status
@@ -797,4 +801,74 @@ func (s *Service) GetMatches(ctx context.Context, bracketID uuid.UUID) ([]*model
 	}
 
 	return matches, nil
+}
+
+// StartMatch starts a tournament match
+func (s *Service) StartMatch(ctx context.Context, matchID uuid.UUID) error {
+	s.logger.Info("Starting match", zap.String("match_id", matchID.String()))
+
+	err := s.repo.UpdateMatchStatus(ctx, matchID, models.MatchStatusInProgress)
+	if err != nil {
+		s.logger.Error("Failed to start match", zap.Error(err))
+		return fmt.Errorf("failed to start match: %w", err)
+	}
+
+	s.logger.Info("Match started successfully", zap.String("match_id", matchID.String()))
+	return nil
+}
+
+// FinishMatch finishes a tournament match
+func (s *Service) FinishMatch(ctx context.Context, matchID uuid.UUID) error {
+	s.logger.Info("Finishing match", zap.String("match_id", matchID.String()))
+
+	err := s.repo.UpdateMatchStatus(ctx, matchID, models.MatchStatusCompleted)
+	if err != nil {
+		s.logger.Error("Failed to finish match", zap.Error(err))
+		return fmt.Errorf("failed to finish match: %w", err)
+	}
+
+	s.logger.Info("Match finished successfully", zap.String("match_id", matchID.String()))
+	return nil
+}
+
+// ReportMatchResult reports the result of a completed match
+func (s *Service) ReportMatchResult(ctx context.Context, matchID uuid.UUID, req *models.ReportMatchResultRequest) (*models.MatchResult, error) {
+	s.logger.Info("Reporting match result", zap.String("match_id", matchID.String()))
+
+	match, err := s.repo.GetMatch(ctx, matchID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get match: %w", err)
+	}
+
+	// Update match with results
+	match.WinnerID = req.WinnerID
+	match.Participant1Score = req.WinnerScore
+	match.Participant2Score = req.LoserScore
+	match.Status = models.MatchStatusCompleted
+	match.CompletedAt = &time.Time{}
+	*match.CompletedAt = time.Now().UTC()
+
+	if match.ActualStart != nil {
+		duration := time.Since(*match.ActualStart)
+		match.Duration = duration
+	}
+
+	err = s.repo.UpdateBracketMatch(ctx, match)
+	if err != nil {
+		s.logger.Error("Failed to update match", zap.Error(err))
+		return nil, fmt.Errorf("failed to update match: %w", err)
+	}
+
+	result := &models.MatchResult{
+		MatchID:     matchID,
+		WinnerID:    req.WinnerID,
+		WinnerScore: req.WinnerScore,
+		LoserScore:  req.LoserScore,
+		CompletedAt: *match.CompletedAt,
+		IsWalkover:  req.IsWalkover,
+		IsForfeit:   req.IsForfeit,
+	}
+
+	s.logger.Info("Match result reported successfully", zap.String("match_id", matchID.String()))
+	return result, nil
 }

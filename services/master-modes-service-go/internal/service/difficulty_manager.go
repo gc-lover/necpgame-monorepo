@@ -432,3 +432,4 @@ func (dm *DifficultyModeManager) validateDifficultyMode(mode *DifficultyMode) er
 	}
 	return nil
 }
+

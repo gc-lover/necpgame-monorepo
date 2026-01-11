@@ -351,3 +351,77 @@ func (rc *RestrictionController) sendRestrictionWarning(ctx context.Context, ses
 
 	// Можно добавить отправку события в event bus для realtime уведомлений клиентам
 }
+
+// StartSessionByMode начинает новую сессию мастер-режима (метод для API)
+func (rc *RestrictionController) StartSessionByMode(ctx context.Context, modeID, playerID uuid.UUID) (sessionID, instanceID uuid.UUID, err error) {
+	ctx, span := rc.service.GetTracer().Start(ctx, "RestrictionController.StartSession")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("mode.id", modeID.String()),
+		attribute.String("player.id", playerID.String()),
+	)
+
+	// Получаем конфигурацию режима
+	mode, err := rc.service.GetDifficultyManager().GetDifficultyMode(ctx, modeID)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, errors.Wrap(err, "failed to get difficulty mode")
+	}
+	if mode == nil {
+		return uuid.Nil, uuid.Nil, errors.Errorf("difficulty mode %s not found", modeID)
+	}
+
+	// Создаем новую сессию
+	instanceID = uuid.New()
+	sessionID = uuid.New()
+
+	restrictions := SessionRestrictions{
+		TimeLimit:    int(float64(3600) * mode.TimeLimitMultiplier), // базовое время 1 час
+		RespawnLimit: mode.RespawnLimit,
+		CheckpointLimit: mode.CheckpointLimit,
+	}
+
+	session := NewDifficultySession(instanceID, modeID, playerID, restrictions)
+	session.ID = sessionID
+	session.Permadeath = mode.Permadeath
+
+	// Сохраняем сессию в кеше и БД
+	if err := rc.StartSession(ctx, session); err != nil {
+		return uuid.Nil, uuid.Nil, errors.Wrap(err, "failed to save session")
+	}
+
+	rc.logger.Info("Started new difficulty session",
+		zap.String("session_id", sessionID.String()),
+		zap.String("instance_id", instanceID.String()),
+		zap.String("mode_id", modeID.String()),
+		zap.String("player_id", playerID.String()))
+
+	return sessionID, instanceID, nil
+}
+
+// GetInstanceDifficulty получает текущий режим сложности для игровой сессии
+func (rc *RestrictionController) GetInstanceDifficulty(ctx context.Context, instanceID uuid.UUID) (*DifficultyMode, error) {
+	ctx, span := rc.service.GetTracer().Start(ctx, "RestrictionController.GetInstanceDifficulty")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("instance.id", instanceID.String()))
+
+	// Ищем активную сессию по instanceID
+	rc.sessionsMu.RLock()
+	defer rc.sessionsMu.RUnlock()
+
+	for _, session := range rc.sessions {
+		if session.InstanceID == instanceID && session.Status == SessionActive {
+			mode, err := rc.service.GetDifficultyManager().GetDifficultyMode(ctx, session.ModeID)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to get difficulty mode")
+			}
+			return mode, nil
+		}
+	}
+
+	// Если не нашли в кеше, проверяем в БД
+	// TODO: добавить запрос в БД для поиска сессии по instanceID
+
+	return nil, errors.Errorf("no active session found for instance %s", instanceID)
+}

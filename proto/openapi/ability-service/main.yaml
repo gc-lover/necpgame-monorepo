@@ -1,95 +1,102 @@
+# Enterprise-Grade Ability Service API - SOLID/DRY Domain Inheritance
+# Game domain service for character abilities and skills management
+# Issue: #openapi-refactor
+
 openapi: 3.0.3
 info:
-  title: Ability Service API - Enterprise-Grade Domain Service
-  description: '**Enterprise-Grade Ability Management API for NECPGAME**
-
-    This API manages character abilities, skills, and special powers in the Night
-    City universe, providing comprehensive ability activation, cooldown management,
-    and resource tracking.
-
-    ## Key Features
-
-    - **Ability Activation**: Real-time ability execution with validation - **Cooldown
-    Management**: Dynamic cooldown tracking and reset mechanics - **Resource Tracking**:
-    Mana, energy, and resource consumption monitoring - **Ability Synergies**: Combo
-    interactions and ability chaining - **Performance Optimized**: MMOFPS-grade performance
-    with <15ms P99 latency - **Struct Alignment**: 30-50% memory savings for ability
-    structs
+  title: Ability Service API
+  description: |
+    **Enterprise-grade API for Character Abilities and Skills Management**
 
     ## Domain Purpose
+    Comprehensive ability management service providing character progression, skill trees,
+    cooldown systems, and real-time ability activation for the NECPGAME platform.
 
-    The Ability domain handles all character abilities and special powers in Night
-    City. Players activate abilities that define their combat style and strategic
-    capabilities in dynamic gameplay scenarios.
+    ## Business Value
+    - Real-time ability activation and synchronization
+    - Complex skill tree and progression systems
+    - Performance-optimized cooldown and resource management
+    - Enterprise-grade scalability for millions of concurrent players
+    - Advanced combo and talent systems
 
     ## Performance Targets
+    - P99 Latency: <30ms for ability activation
+    - Throughput: 50,000+ ability activations per second
+    - Concurrent Abilities: 500,000+ active abilities supported
+    - Memory per Character: <5KB for ability storage
 
-    - P99 Latency: <15ms for ability operations - Memory: <12KB per active ability
-    session - Concurrent users: 45,000+ simultaneous ability operations - Activation
-    time: <5ms response time
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Ability templates as game entities with versioning
+    - Character ability progression tracking
+    - Combat action integration for ability usage
+    - Effect system integration for ability effects
+    - Strict typing with validation rules
 
-    '
-  version: 1.0.0
-  license:
-    name: Proprietary
-    url: https://necpgame.com/license
+  version: "1.0.0"
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@combat-abilities.necpgame.com
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+
 servers:
-- url: https://api.necpgame.com/v1/ability
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/ability
-  description: Staging server
-- url: http://localhost:8080/api/v1/ability
-  description: Local development server
+  - url: https://api.necpgame.com/v1/ability-service
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/ability-service
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/ability-service
+    description: Local development
+
+security:
+  - BearerAuth: []
+
 tags:
-- name: Ability Management
-  description: Combat ability lifecycle operations
-- name: Ability Activation
-  description: Real-time ability activation and execution
-- name: Ability Cooldowns
-  description: Cooldown management and tracking
-- name: Ability Synergies
-  description: Ability combinations and synergies
-- name: Anti-Cheat
-  description: Ability validation and cheat prevention
-- name: AI Training
-  description: AI-powered ability learning and adaptation
-- name: AI Recommendations
-  description: Personalized ability recommendations
+  - name: Ability Activation
+    description: Core ability activation and execution operations
+  - name: Character Abilities
+    description: Character-specific ability management
+  - name: Skill Trees
+    description: Skill tree and progression systems
+  - name: Ability Templates
+    description: Ability template creation and management
+  - name: Combo Systems
+    description: Combo and sequence management
+  - name: Analytics & Balancing
+    description: Ability usage analytics and balancing tools
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+
 paths:
+
   /health:
     get:
-      summary: Service health check
-      operationId: combatAbilitiesHealthCheck
-      tags:
-      - Health
+      operationId: abilityServiceHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
       responses:
         '200':
-          $ref: '#/components/responses/OK'
-        '503':
-          description: Service is unhealthy
+          description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /combat/abilities:
-    post:
-      summary: Activate combat ability
-      operationId: combatAbilitiesActivateAbility
-      description: 'Activate a combat ability with validation and anti-cheat checks.
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
 
-        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
-      tags:
-      - Ability Activation
+  /abilities/activate:
+    post:
+      operationId: abilityServiceActivateAbility
+      summary: Activate character ability
+      description: |
+        Activate an ability for a character with real-time validation and execution.
+
+        **Activation Process:**
+        - Validate ability ownership and requirements
+        - Check cooldown and resource availability
+        - Calculate ability effects and modifiers
+        - Execute ability with immediate synchronization
+        - Update cooldowns and resource consumption
+      tags: [Ability Activation]
       requestBody:
         required: true
         content:
@@ -102,725 +109,1473 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActivateAbilityResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AbilityActivationResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
-          $ref: '#/components/responses/Unauthorized'
+          description: Ability not available or requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Forbidden'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary: List available abilities
-      operationId: combatAbilitiesListAbilities
-      description: Get list of available combat abilities for a character.
-      tags:
-      - Ability Management
-      parameters:
-      - name: character_id
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Character ID
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Maximum number of abilities to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Number of abilities to skip
-      responses:
-        '200':
-          description: List of available abilities
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListAbilitiesResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /combat/abilities/{ability_id}/cooldown:
-    get:
-      summary: Get ability cooldown status
-      operationId: combatAbilitiesGetAbilityCooldown
-      description: Get current cooldown status for a specific ability.
-      tags:
-      - Ability Cooldowns
-      parameters:
-      - name: ability_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Ability ID
-      - name: character_id
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Character ID
-      responses:
-        '200':
-          description: Ability cooldown status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbilityCooldownResponse'
-        '404':
-          description: Ability not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /combat/abilities/{ability_id}/synergies:
-    get:
-      summary: Get ability synergies
-      operationId: combatAbilitiesGetAbilitySynergies
-      description: Get synergies and combo possibilities for an ability.
-      tags:
-      - Ability Synergies
-      parameters:
-      - name: ability_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Ability ID
-      responses:
-        '200':
-          description: Ability synergies
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbilitySynergiesResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-  /combat/abilities/validate:
-    post:
-      summary: Validate ability activation
-      operationId: combatAbilitiesValidateAbilityActivation
-      description: 'Validate ability activation for anti-cheat purposes.
 
-        **BACKEND NOTE:** Used for cheat detection and prevention. '
-      tags:
-      - Anti-Cheat
+  /abilities/cancel:
+    post:
+      operationId: abilityServiceCancelAbility
+      summary: Cancel active ability
+      description: |
+        Cancel an active ability if possible.
+
+        **Cancellation Rules:**
+        - Only cancellable abilities can be cancelled
+        - Refund partial resource costs
+        - Remove active effects if applicable
+        - Maintain cooldown integrity
+      tags: [Ability Activation]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidateAbilityRequest'
+              type: object
+              required:
+                - character_id
+                - ability_instance_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                  description: Character ID
+                ability_instance_id:
+                  type: string
+                  format: uuid
+                  description: Active ability instance ID
       responses:
         '200':
-          description: Validation result
+          description: Ability cancelled successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidateAbilityResponse'
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          resource_refund:
+                            $ref: '#/components/schemas/ResourceAmount'
+                          cooldown_reduction_seconds:
+                            type: integer
         '400':
-          description: Invalid validation request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    /combat/abilities/adaptive/train:
-      post:
-        summary: Submit ability usage data for AI training
-        operationId: trainAbilityAI
-        description: 'Submit ability usage patterns for adaptive AI learning.
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-          **AI Integration:** Trains models for personalized ability recommendations
-          and combat tactics.
+  /characters/{characterId}/abilities:
+    get:
+      operationId: abilityServiceGetCharacterAbilities
+      summary: Get character abilities
+      description: |
+        Retrieve all abilities available to a character with current status.
 
-          **BACKEND NOTE:** Hot path for AI training data, batched processing.'
-        tags:
-        - AI Training
-        security:
-        - BearerAuth: []
-        requestBody:
+        **Ability Status:**
+        - Learned abilities with current levels
+        - Active cooldowns and resource status
+        - Ability modifiers and enhancements
+        - Progression requirements
+      tags: [Character Abilities]
+      parameters:
+        - name: characterId
+          in: path
           required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+        - name: ability_type
+          in: query
+          schema:
+            type: string
+            enum: [active, passive, ultimate, trait]
+          description: Filter by ability type
+        - name: include_cooldowns
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include current cooldown status
+      responses:
+        '200':
+          description: Character abilities retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AbilityTrainingData'
-        responses:
-          '200':
-            description: Training data accepted
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/TrainingResponse'
-          '400':
-            description: Invalid training data
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-    /combat/abilities/adaptive/recommend:
-      get:
-        summary: Get AI-powered ability recommendations
-        operationId: getAbilityRecommendations
-        description: 'Get personalized ability recommendations based on player style
-          and combat patterns.
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CharacterAbility'
+                      summary:
+                        $ref: '#/components/schemas/CharacterAbilitySummary'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-          **AI Integration:** Uses trained models for tactical suggestions.'
-        tags:
-        - AI Recommendations
-        security:
-        - BearerAuth: []
-        parameters:
+  /characters/{characterId}/abilities/learn:
+    post:
+      operationId: abilityServiceLearnAbility
+      summary: Learn new ability
+      description: |
+        Learn a new ability for a character using talent points or requirements.
+
+        **Learning Process:**
+        - Validate learning requirements
+        - Check available talent points
+        - Deduct learning costs
+        - Add ability to character repertoire
+        - Update skill tree progression
+      tags: [Character Abilities]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LearnAbilityRequest'
+      responses:
+        '201':
+          description: Ability learned successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Forbidden'
+
+  /characters/{characterId}/abilities/upgrade:
+    post:
+      operationId: abilityServiceUpgradeAbility
+      summary: Upgrade character ability
+      description: |
+        Upgrade an existing ability to higher level.
+
+        **Upgrade Process:**
+        - Validate upgrade requirements
+        - Check resource availability
+        - Apply upgrade benefits
+        - Update ability stats and effects
+      tags: [Character Abilities]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeAbilityRequest'
+      responses:
+        '200':
+          description: Ability upgraded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /characters/{characterId}/abilities/reset:
+    post:
+      operationId: abilityServiceResetAbilities
+      summary: Reset character abilities
+      description: |
+        Reset character's ability progression and talent points.
+
+        **Reset Process:**
+        - Remove all learned abilities
+        - Refund talent points and resources
+        - Reset skill tree to initial state
+        - Clear all ability modifiers
+      tags: [Character Abilities]
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset_type:
+                  type: string
+                  enum: [full_reset, partial_reset, respec]
+                  default: "respec"
+                  description: Type of reset operation
+                refund_percentage:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  default: 0.5
+                  description: Percentage of costs to refund
+      responses:
+        '200':
+          description: Abilities reset successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          refunded_talent_points:
+                            type: integer
+                            description: Talent points refunded
+                          refunded_resources:
+                            $ref: '#/components/schemas/ResourceAmount'
+                          reset_abilities_count:
+                            type: integer
+                            description: Number of abilities reset
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /skill-trees/{treeId}:
+    get:
+      operationId: abilityServiceGetSkillTree
+      summary: Get skill tree configuration
+      description: |
+        Retrieve detailed skill tree configuration and progression.
+
+        **Tree Structure:**
+        - Hierarchical ability organization
+        - Prerequisite requirements
+        - Talent point costs
+        - Unlock progression paths
+      tags: [Skill Trees]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Skill tree unique identifier
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Character ID for progress overlay
+      responses:
+        '200':
+          description: Skill tree retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillTree'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /skill-trees/{treeId}/progress:
+    get:
+      operationId: abilityServiceGetTreeProgress
+      summary: Get character skill tree progress
+      description: |
+        Retrieve character's progress in a specific skill tree.
+
+        **Progress Tracking:**
+        - Learned abilities and their levels
+        - Available talent points
+        - Unlocked progression paths
+        - Remaining requirements
+      tags: [Skill Trees]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Skill tree unique identifier
         - name: character_id
           in: query
           required: true
           schema:
             type: string
             format: uuid
-          description: Character ID for personalization
-        - name: combat_context
+          description: Character unique identifier
+      responses:
+        '200':
+          description: Tree progress retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillTreeProgress'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /skill-trees/{treeId}/abilities/{abilityId}/unlock:
+    post:
+      operationId: abilityServiceUnlockAbilityInTree
+      summary: Unlock ability in skill tree
+      description: |
+        Unlock an ability in the skill tree for a character.
+
+        **Unlock Process:**
+        - Validate prerequisites
+        - Check talent point availability
+        - Deduct costs and unlock ability
+        - Update tree progression
+      tags: [Skill Trees]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Skill tree unique identifier
+        - name: abilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Ability unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                  description: Character ID
+      responses:
+        '200':
+          description: Ability unlocked successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /combos/validate:
+    post:
+      operationId: abilityServiceValidateCombo
+      summary: Validate ability combo sequence
+      description: |
+        Validate and process an ability combo sequence.
+
+        **Combo Validation:**
+        - Check sequence validity
+        - Calculate combo bonuses
+        - Apply combo effects
+        - Update combo progress
+      tags: [Combo Systems]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateComboRequest'
+      responses:
+        '200':
+          description: Combo validated and processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ComboValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /templates:
+    post:
+      operationId: abilityServiceCreateTemplate
+      summary: Create ability template
+      description: |
+        Create a new ability template with comprehensive configuration.
+
+        **Template Creation:**
+        - Define ability properties and effects
+        - Configure cooldown and resource costs
+        - Set visual and balancing parameters
+        - Define progression requirements
+      tags: [Ability Templates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAbilityTemplateRequest'
+      responses:
+        '201':
+          description: Ability template created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/Created'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AbilityTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      operationId: abilityServiceListTemplates
+      summary: List ability templates
+      description: Retrieve paginated list of ability templates
+      tags: [Ability Templates]
+      parameters:
+        - name: ability_type
           in: query
           schema:
             type: string
-            enum:
-            - solo
-            - team
-            - boss
-            - pvp
-          description: Current combat context
-        responses:
-          '200':
-            description: Ability recommendations
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AbilityRecommendations'
-          '404':
-            description: Character not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
+            enum: [active, passive, ultimate, trait]
+          description: Filter by ability type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include only active templates
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of templates to return
+      responses:
+        '200':
+          description: Ability templates retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AbilityTemplateSummary'
+
+  /analytics/usage:
+    get:
+      operationId: abilityServiceGetUsageAnalytics
+      summary: Get ability usage analytics
+      description: |
+        Retrieve comprehensive analytics about ability usage and performance.
+
+        **Analytics Coverage:**
+        - Ability activation frequency and patterns
+        - Popular ability combinations and combos
+        - Performance impact on gameplay sessions
+        - Balancing effectiveness and player satisfaction
+        - Geographic usage distribution and trends
+      tags: [Analytics & Balancing]
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for analytics
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for analytics
+        - name: ability_type
+          in: query
+          schema:
+            type: string
+            enum: [active, passive, ultimate, trait]
+          description: Filter by ability type
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific template
+      responses:
+        '200':
+          description: Usage analytics retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/OK'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AbilityUsageAnalytics'
+
 components:
+
   responses:
     OK:
-      $ref: ../common-service/responses/success.yaml#/OK
+      $ref: '../common/responses/success.yaml#/OK'
     Created:
-      $ref: ../common-service/responses/success.yaml#/Created
+      $ref: '../common/responses/success.yaml#/Created'
     Updated:
-      $ref: ../common-service/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common-service/responses/success.yaml#/Deleted
+      $ref: '../common/responses/success.yaml#/Updated'
     BadRequest:
-      $ref: ../common-service/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common-service/responses/error.yaml#/Unauthorized
+      $ref: '../common/responses/error.yaml#/BadRequest'
     NotFound:
-      $ref: ../common-service/responses/error.yaml#/NotFound
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Forbidden:
+      $ref: '../common/responses/error.yaml#/Forbidden'
     TooManyRequests:
-      $ref: ../common-service/responses/error.yaml#/TooManyRequests
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      description: JWT Bearer token authentication
+      $ref: '../common/responses/error.yaml#/TooManyRequests'
+
   schemas:
-    HealthResponse:
-      $ref: ./health.yaml#/HealthResponse
-    Error:
-      $ref: ../common-service/schemas/error.yaml#/Error
-    Ability:
-      allOf:
-      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
-      - type: object
-        required:
-        - name
-        - type
-        - cooldown
-        properties:
-          name:
-            type: string
-            description: Ability display name
-            example: Sandevistan Overdrive
-            maxLength: 100
-          description:
-            type: string
-            description: Ability description
-            example: Temporarily increases movement speed by 300%
-          type:
-            type: string
-            enum:
-            - passive
-            - active
-            - toggle
-            description: Ability activation type
-            example: active
-          cooldown:
-            type: integer
-            minimum: 0
-            description: Cooldown in milliseconds
-            example: 30000
-          mana_cost:
-            type: integer
-            minimum: 0
-            description: Mana/energy cost
-            example: 50
-      - type: object
-        properties:
-          synergy_abilities:
-            type: array
-            items:
-              $ref: ../common-service/schemas/common.yaml#/components/schemas/UUID
-            description: Compatible abilities for synergy activation
-            example:
-            - 123e4567-e89b-12d3-a456-426614174000
-          anti_cheat_token:
-            type: string
-            description: Token for anti-cheat validation
-          unlock_requirements:
-            type: array
-            items:
-              $ref: ../common-service/schemas/common.yaml#/components/schemas/UUID
-            description: Requirements to unlock this ability
-            example:
-            - 123e4567-e89b-12d3-a456-426614174001
-          is_unlocked:
-            type: boolean
-            description: Whether ability is unlocked for character
-      description: 'BACKEND NOTE: Ability entity with domain inheritance (SOLID/DRY).'
-    ActivateAbilityRequest:
+
+    # Domain Inheritance - Ability Service Entities
+    CharacterAbility:
+      description: Character's learned ability instance with game domain inheritance
       type: object
       required:
-      - ability_id
-      - character_id
-      - target_position
+        - id
+        - character_id
+        - template_id
+        - learned_at
+        - current_level
       properties:
-        ability_id:
+        id:
           type: string
           format: uuid
-          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+          description: Character ability instance unique identifier
         character_id:
           type: string
           format: uuid
-          description: Character activating the ability
-        target_entity_id:
+          description: Character this ability belongs to
+        template_id:
           type: string
           format: uuid
-          description: Target entity ID (optional for area abilities)
-        client_version:
+          description: Ability template used
+        current_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Current ability level
+        learned_at:
           type: string
-          description: Client version for compatibility checks
-        target_position:
+          format: date-time
+          description: When ability was learned
+        last_used_at:
+          type: string
+          format: date-time
+          description: When ability was last used
+        usage_count:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Total times ability was used
+        cooldown_remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Current cooldown remaining
+        resource_cost_modifiers:
           type: object
-          required:
-          - x
-          - y
-          - z
-          properties:
-            x:
-              type: number
-              format: float
-              description: X coordinate
-            y:
-              type: number
-              format: float
-              description: Y coordinate
-            z:
-              type: number
-              format: float
-              description: Z coordinate
-          description: 'BACKEND NOTE: 3D vector for positioning, optimized for game
-            coordinates. Target position for the ability'
-        synergy_abilities:
+          description: Modified resource costs
+          additionalProperties:
+            type: number
+          example:
+            mana: -10
+            energy: "+5%"
+        damage_modifiers:
+          type: object
+          description: Damage and effect modifiers
+          additionalProperties:
+            type: number
+          example:
+            damage_multiplier: 1.2
+            effect_duration: "+25%"
+        unlocked_upgrades:
           type: array
           items:
             type: string
             format: uuid
-          description: IDs of synergistic abilities activated together
-          maxItems: 5
-        timestamp:
-          type: integer
-          format: int64
-          description: Client timestamp for anti-cheat validation
-        version:
-          type: integer
-          description: Optimistic locking version for concurrent operations
-          example: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
-        types). Expected memory savings: 30-50% for activation requests.'
-    ActivateAbilityResponse:
+          description: IDs of unlocked ability upgrades
+        skill_tree_position:
+          type: object
+          properties:
+            tree_id:
+              type: string
+              format: uuid
+              description: Skill tree ID
+            node_x:
+              type: integer
+              description: X position in tree
+            node_y:
+              type: integer
+              description: Y position in tree
+          description: Position in skill tree
+
+    AbilityTemplate:
+      description: Ability template configuration with game domain inheritance
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/BaseGameEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Ability template name
+            description:
+              type: string
+              maxLength: 500
+              description: Ability description
+            ability_type:
+              type: string
+              enum: [active, passive, ultimate, trait]
+              description: Primary ability type
+            category:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Ability category for organization
+            base_cooldown_seconds:
+              type: integer
+              minimum: 0
+              description: Base cooldown duration
+            resource_costs:
+              type: object
+              description: Resources required to use ability
+              additionalProperties:
+                type: number
+              example:
+                mana: 50
+                energy: 25
+                health: 10
+            damage_config:
+              $ref: '#/components/schemas/AbilityDamageConfig'
+            effect_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: IDs of effects this ability applies
+            targeting_config:
+              $ref: '#/components/schemas/AbilityTargetingConfig'
+            visual_config:
+              type: object
+              properties:
+                icon_id:
+                  type: string
+                  description: Ability icon identifier
+                animation_id:
+                  type: string
+                  description: Ability animation identifier
+                particle_effect_id:
+                  type: string
+                  description: Particle effect identifier
+                sound_effect_id:
+                  type: string
+                  description: Sound effect identifier
+              description: Visual and audio configuration
+            progression_config:
+              $ref: '#/components/schemas/AbilityProgressionConfig'
+            balancing_config:
+              type: object
+              properties:
+                power_level:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  description: Ability power level for balancing
+                target_difficulty:
+                  type: string
+                  enum: [easy, normal, hard, expert]
+                  description: Intended difficulty level
+                scaling_factor:
+                  type: number
+                  minimum: 0.1
+                  maximum: 10
+                  default: 1
+                  description: Difficulty scaling multiplier
+              description: Balancing configuration
+            is_active:
+              type: boolean
+              default: true
+              description: Whether template is active
+
+    SkillTree:
+      description: Skill tree configuration with hierarchical ability organization
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/BaseGameEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Skill tree name
+            description:
+              type: string
+              maxLength: 500
+              description: Skill tree description
+            tree_type:
+              type: string
+              enum: [combat, magic, technology, social]
+              description: Skill tree type
+            max_talent_points:
+              type: integer
+              minimum: 1
+              description: Maximum talent points in this tree
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/SkillTreeNode'
+              description: Skill tree nodes
+            connections:
+              type: array
+              items:
+                type: object
+                required:
+                  - from_node_id
+                  - to_node_id
+                properties:
+                  from_node_id:
+                    type: string
+                    format: uuid
+                    description: Source node ID
+                  to_node_id:
+                    type: string
+                    format: uuid
+                    description: Target node ID
+                  connection_type:
+                    type: string
+                    enum: [required, optional, choice]
+                    default: "required"
+                    description: Connection requirement type
+              description: Node connections and prerequisites
+
+    SkillTreeProgress:
+      description: Character's progress in a skill tree
       type: object
       required:
-      - success
-      - activation_id
-      - cooldown_end_time
+        - character_id
+        - tree_id
+        - allocated_points
+        - available_points
       properties:
-        activation_id:
-          type: string
-          format: uuid
-          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
-        ability_id:
-          type: string
-          format: uuid
-          description: Activated ability ID
         character_id:
           type: string
           format: uuid
           description: Character ID
-        validation_token:
+        tree_id:
           type: string
-          description: Anti-cheat validation token
-        resource_cost:
-          type: object
-          properties:
-            health:
-              type: integer
-              format: int32
-            stamina:
-              type: integer
-              format: int32
-            mana:
-              type: integer
-              format: int32
-          description: Resources consumed by the ability
-        synergy_bonus:
-          type: number
-          format: float
-          description: Damage/resource multiplier from synergies
-        success:
-          type: boolean
-          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
-        cooldown_end_time:
+          format: uuid
+          description: Skill tree ID
+        allocated_points:
           type: integer
-          format: int64
-          description: Timestamp when cooldown ends
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
-        types). Expected memory savings: 30-50% for activation responses.'
-    ListAbilitiesResponse:
-      type: object
-      required:
-      - abilities
-      - total_count
-      properties:
-        pagination:
-          type: object
-          properties:
-            offset:
-              type: integer
-              format: int32
-            limit:
-              type: integer
-              format: int32
-            has_more:
-              type: boolean
-          description: Pagination information
-        abilities:
+          minimum: 0
+          description: Points already allocated
+        available_points:
+          type: integer
+          minimum: 0
+          description: Points available to allocate
+        unlocked_nodes:
           type: array
           items:
-            $ref: '#/components/schemas/Ability'
-          description: 'BACKEND NOTE: Array of ability objects, ordered for optimal
-            struct layout'
-        total_count:
-          type: integer
-          format: int32
-          description: Total number of abilities available
-      description: 'BACKEND NOTE: Response optimized for struct alignment with large
-        arrays first.'
-    AbilityCooldownResponse:
+            type: string
+            format: uuid
+          description: IDs of unlocked nodes
+        learned_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of learned abilities
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Tree completion percentage
+
+    AbilityActivationResult:
+      description: Result of ability activation
       type: object
       required:
-      - ability_id
-      - is_on_cooldown
-      - remaining_time
+        - ability_instance_id
+        - activation_time
+        - success
       properties:
-        ability_id:
+        ability_instance_id:
           type: string
           format: uuid
-          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
-        is_on_cooldown:
+          description: Activated ability instance ID
+        activation_time:
+          type: string
+          format: date-time
+          description: When ability was activated
+        success:
           type: boolean
-          description: Whether ability is currently on cooldown
-        remaining_time:
-          type: integer
-          format: int32
-          description: Remaining cooldown time in milliseconds
-        total_cooldown:
-          type: integer
-          format: int32
-          description: Total cooldown duration
-        last_used:
-          type: integer
-          format: int64
-          description: Timestamp when ability was last used
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
-        types).'
-    AbilitySynergiesResponse:
+          description: Whether activation was successful
+        cooldown_started_at:
+          type: string
+          format: date-time
+          description: When cooldown started
+        resources_consumed:
+          $ref: '#/components/schemas/ResourceAmount'
+        effects_applied:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_id:
+                type: string
+                format: uuid
+                description: Applied effect ID
+              target_id:
+                type: string
+                format: uuid
+                description: Effect target ID
+              duration_seconds:
+                type: integer
+                description: Effect duration
+          description: Effects applied by ability
+        combo_progress:
+          type: object
+          properties:
+            combo_id:
+              type: string
+              format: uuid
+              description: Current combo ID
+            sequence_position:
+              type: integer
+              description: Position in combo sequence
+            time_window_remaining_seconds:
+              type: integer
+              description: Remaining time for combo continuation
+          description: Combo progress update
+        error_message:
+          type: string
+          description: Error message if activation failed
+
+    # Supporting schemas
+    AbilityDamageConfig:
+      description: Ability damage configuration
+      type: object
+      properties:
+        base_damage:
+          type: number
+          minimum: 0
+          description: Base damage amount
+        damage_type:
+          type: string
+          enum: [physical, magical, energy, poison, fire, ice, lightning]
+          description: Type of damage dealt
+        scaling_attribute:
+          type: string
+          enum: [strength, agility, intelligence, none]
+          default: "none"
+          description: Character attribute for damage scaling
+        scaling_factor:
+          type: number
+          minimum: 0
+          default: 0
+          description: Scaling multiplier
+        crit_chance_bonus:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Critical hit chance bonus
+        crit_damage_multiplier:
+          type: number
+          minimum: 1
+          default: 2
+          description: Critical damage multiplier
+
+    AbilityTargetingConfig:
+      description: Ability targeting configuration
       type: object
       required:
-      - ability_id
-      - synergies
+        - target_type
       properties:
-        ability_id:
+        target_type:
           type: string
-          format: uuid
-          description: Ability for which synergies are being queried
-        synergies:
+          enum: [self, single_enemy, multiple_enemies, area, allies, all]
+          description: Type of targeting
+        range:
+          type: number
+          minimum: 0
+          description: Ability range in game units
+        max_targets:
+          type: integer
+          minimum: 1
+          description: Maximum number of targets
+        target_filters:
+          type: array
+          items:
+            type: string
+            enum: [enemy, ally, neutral, player, npc, boss]
+          description: Target type filters
+        line_of_sight_required:
+          type: boolean
+          default: true
+          description: Whether line of sight is required
+
+    AbilityProgressionConfig:
+      description: Ability progression and upgrade configuration
+      type: object
+      properties:
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum ability level
+        talent_point_cost:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Talent points required to learn
+        upgrade_costs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAmount'
+          description: Resource costs for each level upgrade
+        prerequisites:
           type: array
           items:
             type: object
             required:
-            - partner_ability_id
-            - synergy_type
-            - bonus_multiplier
+              - type
             properties:
-              partner_ability_id:
+              type:
+                type: string
+                enum: [ability_level, character_level, other_ability]
+                description: Prerequisite type
+              ability_id:
                 type: string
                 format: uuid
-                description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct
-                  alignment'
-              synergy_type:
-                type: string
-                enum:
-                - damage_boost
-                - cooldown_reduction
-                - resource_efficiency
-                - critical_chance
-                description: Type of synergy effect
-              bonus_multiplier:
-                type: number
-                format: float
-                description: Multiplier for the synergy bonus
-              condition:
-                type: string
-                description: Condition for synergy activation
-              is_active:
-                type: boolean
-                description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct
-                  alignment'
-            description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-              → small types).'
-          description: List of possible synergies for this ability
-        total_synergies:
+                description: Required ability ID
+              required_level:
+                type: integer
+                minimum: 1
+                description: Required level
+              character_level:
+                type: integer
+                minimum: 1
+                description: Required character level
+          description: Ability learning prerequisites
+
+    SkillTreeNode:
+      description: Individual node in skill tree
+      type: object
+      required:
+        - id
+        - ability_template_id
+        - position_x
+        - position_y
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Node unique identifier
+        ability_template_id:
+          type: string
+          format: uuid
+          description: Associated ability template
+        position_x:
           type: integer
-          format: int32
-          description: Total number of synergies available
-      description: 'BACKEND NOTE: Response optimized for struct alignment.'
-    ValidateAbilityRequest:
-      type: object
-      required:
-      - ability_id
-      - character_id
-      - activation_data
-      properties:
-        ability_id:
-          type: string
-          format: uuid
-          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
-        character_id:
-          type: string
-          format: uuid
-          description: Character ID
-        client_hash:
-          type: string
-          description: Client-side hash for anti-cheat validation
-        activation_data:
-          type: object
-          properties:
-            timestamp:
-              type: integer
-              format: int64
-            position:
-              type: object
-              required:
-              - x
-              - y
-              - z
-              properties:
-                x:
-                  type: number
-                  format: float
-                  description: X coordinate
-                y:
-                  type: number
-                  format: float
-                  description: Y coordinate
-                z:
-                  type: number
-                  format: float
-                  description: Z coordinate
-              description: 'BACKEND NOTE: 3D vector for positioning, optimized for
-                game coordinates.'
-            target:
-              type: string
-              format: uuid
-          description: Activation context data for validation
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
-        types).'
-    ValidateAbilityResponse:
-      type: object
-      required:
-      - is_valid
-      - validation_token
-      properties:
-        validation_token:
-          type: string
-          description: 'BACKEND NOTE: String - variable length, ordered first'
-        violations:
-          type: array
-          items:
-            type: string
-          description: List of validation violations found
-        confidence_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Confidence score of validation (0-1)
-        is_valid:
+          description: X coordinate in tree
+        position_y:
+          type: integer
+          description: Y coordinate in tree
+        talent_point_cost:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Talent points to unlock
+        is_starting_node:
           type: boolean
-          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
-        types).'
-    AbilityTrainingData:
+          default: false
+          description: Whether this is a starting node
+        max_unlocks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: How many times this node can be unlocked
+
+    ResourceAmount:
+      description: Resource amount specification
       type: object
-      required:
-      - character_id
-      - ability_id
-      - usage_context
-      - outcome
       properties:
-        character_id:
-          type: string
-          format: uuid
-          description: Character using the ability
-        ability_id:
-          type: string
-          format: uuid
-          description: Ability being used
-        usage_context:
+        mana:
+          type: integer
+          minimum: 0
+          description: Mana amount
+        energy:
+          type: integer
+          minimum: 0
+          description: Energy amount
+        health:
+          type: integer
+          minimum: 0
+          description: Health amount
+        custom_resources:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Custom resource amounts
+
+    CharacterAbilitySummary:
+      description: Summary of character abilities
+      type: object
+      properties:
+        total_abilities:
+          type: integer
+          description: Total learned abilities
+        active_abilities:
+          type: integer
+          description: Abilities ready for use
+        on_cooldown_count:
+          type: integer
+          description: Abilities currently on cooldown
+        total_talent_points:
+          type: integer
+          description: Total talent points earned
+        available_talent_points:
+          type: integer
+          description: Available talent points
+        abilities_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by ability type
+
+    AbilityUsageAnalytics:
+      description: Comprehensive ability usage analytics
+      type: object
+      properties:
+        time_range:
           type: object
           properties:
-            enemy_type:
+            start_date:
               type: string
-              description: Type of enemy faced
-            player_health:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Player health percentage
-            combat_phase:
+              format: date-time
+            end_date:
               type: string
-              enum:
-              - opening
-              - mid
-              - endgame
-              description: Combat phase
-          description: Context of ability usage
-        outcome:
+              format: date-time
+        total_activations:
+          type: integer
+          description: Total ability activations
+        unique_characters:
+          type: integer
+          description: Number of unique characters using abilities
+        average_activations_per_character:
+          type: number
+          description: Average activations per character
+        ability_type_distribution:
           type: object
-          properties:
-            damage_dealt:
-              type: integer
-              minimum: 0
-              description: Damage dealt with ability
-            effectiveness:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Ability effectiveness rating
-            success:
-              type: boolean
-              description: Whether ability achieved its goal
-          description: Outcome of ability usage
-        timestamp:
-          type: string
-          format: date-time
-          description: Usage timestamp
-      description: 'BACKEND NOTE: AI training data for ability optimization. Large
-        object first for struct alignment.'
-    TrainingResponse:
-      type: object
-      properties:
-        training_data_id:
-          type: string
-          format: uuid
-          description: Unique training data identifier
-        status:
-          type: string
-          enum:
-          - accepted
-          - processed
-          - rejected
-          description: Training data processing status
-        message:
-          type: string
-          description: Processing result message
-      description: 'BACKEND NOTE: Response for training data submission.'
-    AbilityRecommendations:
-      type: object
-      properties:
-        character_id:
-          type: string
-          format: uuid
-          description: Character ID
-        recommendations:
+          additionalProperties:
+            type: integer
+          description: Distribution by ability type
+        popular_templates:
           type: array
           items:
             type: object
             properties:
-              ability_id:
+              template_id:
                 type: string
                 format: uuid
-                description: Recommended ability
-              confidence:
+              activation_count:
+                type: integer
+              average_cooldown_seconds:
                 type: number
-                minimum: 0
-                maximum: 1
-                description: AI confidence in recommendation
-              reasoning:
-                type: string
-                description: AI reasoning for recommendation
-            description: Individual recommendation
-          description: List of ability recommendations
-        generated_at:
+          description: Most used ability templates
+        combo_analytics:
+          type: object
+          properties:
+            total_combos_completed:
+              type: integer
+              description: Total completed combos
+            average_combo_length:
+              type: number
+              description: Average abilities per combo
+            popular_combo_sequences:
+              type: array
+              items:
+                type: object
+                properties:
+                  sequence:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                    description: Ability sequence
+                  completion_count:
+                    type: integer
+                    description: Times completed
+                  success_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Completion success rate
+              description: Popular combo sequences
+        performance_metrics:
+          type: object
+          properties:
+            average_activation_time_ms:
+              type: number
+              description: Average activation processing time
+            failed_activation_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of failed activations
+            resource_optimization_score:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Resource usage optimization
+
+    AbilityTemplateSummary:
+      description: Ability template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        ability_type:
+          type: string
+          enum: [active, passive, ultimate, trait]
+        category:
+          type: string
+        base_cooldown_seconds:
+          type: integer
+        is_active:
+          type: boolean
+        last_updated:
           type: string
           format: date-time
-          description: Recommendation generation timestamp
-      description: 'BACKEND NOTE: AI-generated ability recommendations.'
-security:
-- BearerAuth: []
+
+    # Request/Response schemas
+    ActivateAbilityRequest:
+      description: Request payload for ability activation
+      type: object
+      required:
+        - character_id
+        - ability_template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character activating the ability
+        ability_template_id:
+          type: string
+          format: uuid
+          description: Ability template to activate
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Target entity IDs
+        target_position:
+          type: object
+          properties:
+            x:
+              type: number
+              description: Target X coordinate
+            y:
+              type: number
+              description: Target Y coordinate
+            z:
+              type: number
+              description: Target Z coordinate
+          description: Target position for area abilities
+        power_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          default: 1
+          description: Ability power multiplier
+        custom_parameters:
+          type: object
+          description: Custom ability parameters
+          additionalProperties: true
+
+    LearnAbilityRequest:
+      description: Request payload for learning an ability
+      type: object
+      required:
+        - ability_template_id
+      properties:
+        ability_template_id:
+          type: string
+          format: uuid
+          description: Ability template to learn
+        use_talent_points:
+          type: boolean
+          default: true
+          description: Whether to use talent points for learning
+        skip_requirements:
+          type: boolean
+          default: false
+          description: Skip prerequisite checks (admin only)
+
+    UpgradeAbilityRequest:
+      description: Request payload for upgrading an ability
+      type: object
+      required:
+        - ability_instance_id
+        - target_level
+      properties:
+        ability_instance_id:
+          type: string
+          format: uuid
+          description: Character ability instance ID
+        target_level:
+          type: integer
+          minimum: 2
+          maximum: 100
+          description: Desired ability level
+        use_resources:
+          type: boolean
+          default: true
+          description: Whether to consume upgrade resources
+
+    ValidateComboRequest:
+      description: Request payload for combo validation
+      type: object
+      required:
+        - character_id
+        - ability_sequence
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character performing combo
+        ability_sequence:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 10
+          description: Sequence of ability template IDs
+        time_window_seconds:
+          type: integer
+          minimum: 1
+          maximum: 60
+          default: 5
+          description: Time window for combo completion
+
+    ComboValidationResult:
+      description: Result of combo validation
+      type: object
+      required:
+        - valid
+        - sequence_length
+      properties:
+        valid:
+          type: boolean
+          description: Whether combo sequence is valid
+        sequence_length:
+          type: integer
+          description: Length of valid sequence
+        combo_id:
+          type: string
+          format: uuid
+          description: Recognized combo ID
+        bonus_multiplier:
+          type: number
+          minimum: 1
+          description: Damage/effect bonus multiplier
+        remaining_time_seconds:
+          type: integer
+          description: Time remaining to continue combo
+        error_message:
+          type: string
+          description: Error message if combo invalid
+
+    CreateAbilityTemplateRequest:
+      description: Request payload for creating ability template
+      type: object
+      required:
+        - name
+        - ability_type
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        ability_type:
+          type: string
+          enum: [active, passive, ultimate, trait]
+          description: Ability type
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Ability category
+        base_cooldown_seconds:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Base cooldown duration
+        resource_costs:
+          type: object
+          description: Resources required
+          additionalProperties:
+            type: number
+        damage_config:
+          $ref: '#/components/schemas/AbilityDamageConfig'
+        effect_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Associated effect IDs
+        targeting_config:
+          $ref: '#/components/schemas/AbilityTargetingConfig'
+        visual_config:
+          type: object
+          properties:
+            icon_id:
+              type: string
+            animation_id:
+              type: string
+        progression_config:
+          $ref: '#/components/schemas/AbilityProgressionConfig'
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'
+    ServiceAuth:
+      $ref: '../common/security/security.yaml#/ServiceAuth'
+
+# Performance and optimization notes
+x-performance:
+  p99-latency: "<30ms"
+  throughput-target: "50,000+ ability activations/second"
+  concurrent-abilities-target: "500,000+ active abilities"
+  memory-per-character-target: "<5KB for abilities"
+  database-indexes: "Composite indexes on (character_id, ability_type), (template_id, last_used_at), (tree_id, character_id)"
+
+# Monitoring and observability
+x-monitoring:
+  metrics:
+    - ability_activation_rate
+    - cooldown_management
+    - combo_completion_rate
+    - skill_tree_progression
+    - resource_consumption
+  alerts:
+    - ability_activation_time > 30ms
+    - combo_failure_rate > 10%
+    - skill_tree_unlock_errors > 1%
+
+# Ability system specifics
+x-ability-system:
+  combo-system: "Time-window based combo validation with bonus multipliers and sequence recognition"
+  skill-trees: "Hierarchical progression systems with prerequisite requirements and talent point costs"
+  cooldown-management: "Shared and individual cooldown pools with reduction mechanics"
+  resource-system: "Multi-resource consumption with regeneration mechanics and cost modifiers"
+
+# Domain inheritance documentation
+x-domain-inheritance:
+  inherits-from: "common/schemas/game-entities.yaml"
+  inherited-entities: "BaseGameEntity, CharacterEntity, AbilityEntity, CombatActionEntity"
+  additional-schemas: "Skill tree hierarchies, combo sequences, progression requirements, cooldown management"
+  no-duplication: "All common fields inherited, ability-specific activation logic and progression systems added"

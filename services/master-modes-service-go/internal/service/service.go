@@ -36,6 +36,7 @@ type Service struct {
 	modifierEngine        *DifficultyModifierEngine
 	achievementTracker    *AchievementTracker
 	rewardCalculator      *RewardCalculator
+	analyticsCollector    *AnalyticsCollector
 
 	// Мьютекс для thread-safe lazy initialization компонентов
 	componentsMu sync.RWMutex
@@ -195,6 +196,9 @@ func (s *Service) initComponents(ctx context.Context) error {
 	// Инициализация Reward Calculator
 	s.rewardCalculator = NewRewardCalculator(s, s.logger)
 
+	// Инициализация Analytics Collector
+	s.analyticsCollector = NewAnalyticsCollector(s, s.logger)
+
 	s.logger.Debug("All service components initialized")
 	return nil
 }
@@ -222,6 +226,11 @@ func (s *Service) GetAchievementTracker() *AchievementTracker {
 // GetRewardCalculator возвращает калькулятор наград
 func (s *Service) GetRewardCalculator() *RewardCalculator {
 	return s.rewardCalculator
+}
+
+// GetAnalyticsCollector возвращает сборщик аналитики
+func (s *Service) GetAnalyticsCollector() *AnalyticsCollector {
+	return s.analyticsCollector
 }
 
 // GetDB возвращает пул соединений с базой данных
@@ -253,7 +262,7 @@ func (s *Service) GetRedis() *redis.Client {
 }
 
 // GetTracer возвращает OpenTelemetry tracer
-func (s *Service) GetTracer() otel.Tracer {
+func (s *Service) GetTracer() trace.Tracer {
 	return s.tracer
 }
 
@@ -265,6 +274,11 @@ func (s *Service) GetConfig() *config.Config {
 // GetLogger возвращает логгер
 func (s *Service) GetLogger() *zap.Logger {
 	return s.logger
+}
+
+// GetMeter возвращает OpenTelemetry meter
+func (s *Service) GetMeter() metric.Meter {
+	return s.meter
 }
 
 // AcquireSession получает DifficultySession из пула для снижения аллокаций
