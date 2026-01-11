@@ -1,0 +1,1299 @@
+# Enterprise-Grade OpenAPI 3.0 - Guild War Manager Service
+# Large-scale PvP coordination with CQRS/Event Sourcing
+# Issue: #2301
+
+openapi: 3.0.3
+info:
+  title: Guild War Manager Service API
+  description: |
+    **Enterprise-grade API for Guild War Manager Service**
+
+    ## Domain Purpose
+    Large-scale PvP coordination engine managing 1000+ concurrent guild wars,
+    territory control, alliance systems, and dynamic resource economies.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per War Instance: <100MB baseline
+    - Concurrent Wars: 1000+ supported simultaneously
+    - Territory Zones: 10,000+ managed
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+    - Game-specific business entities (Guild, Player, etc.)
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+    ## Architecture Patterns
+    - Event-Sourced War Engine with CQRS
+    - Real-time synchronization (<50ms P99 target)
+    - Horizontal scaling through war-based sharding
+    - Alliance relationship graphs with dynamic updates
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/guild-war-manager
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/guild-war-manager
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/guild-war-manager
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: War Management
+    description: Core guild war operations and lifecycle
+  - name: Territory Control
+    description: Territory zone management and capture mechanics
+  - name: Alliance System
+    description: Political relationships and alliance management
+  - name: Resource Economy
+    description: Dynamic resource pricing and economic effects
+  - name: Real-time Sync
+    description: WebSocket-based real-time updates
+  - name: Event Sourcing
+    description: CQRS event store operations
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints
+  /health:
+    get:
+      operationId: guildWarManagerHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: guildWarManagerDetailedHealthCheck
+      summary: Detailed health check with war metrics
+      description: Returns comprehensive health status including concurrent war counts and performance metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  # War Management Endpoints
+  /wars:
+    get:
+      operationId: listWars
+      summary: List active guild wars with filtering
+      description: |
+        Retrieve paginated list of active guild wars with advanced filtering.
+
+        **Performance Notes:**
+        - Uses spatial indexes for territory-based filtering
+        - Implements cursor-based pagination for 1000+ concurrent wars
+        - Response cached for 10 seconds (wars update frequently)
+      tags: [War Management]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [preparing, active, paused, completed, cancelled]
+          description: Filter by war status
+        - name: territory_zone
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by territory zone ID
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by participating guild ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of wars to return
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WarSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createWar
+      summary: Create new guild war
+      description: |
+        Initialize a new guild war between participating guilds with territory stakes.
+
+        **Business Rules:**
+        - Validates guild readiness and diplomatic relations
+        - Reserves territory zones for the war duration
+        - Initializes resource economy baseline
+        - Generates war instance with unique ID
+        - Triggers alliance notifications
+      tags: [War Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWarRequest'
+      responses:
+        '201':
+          description: War created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WarInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: War creation conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /wars/{war_id}:
+    get:
+      operationId: getWar
+      summary: Get detailed war information
+      description: Retrieve comprehensive war details including participating guilds, territories, and current state
+      tags: [War Management]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '200':
+          description: War details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WarInstance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      operationId: updateWar
+      summary: Update war configuration
+      description: Update war parameters with optimistic locking
+      tags: [War Management]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWarRequest'
+      responses:
+        '200':
+          description: War updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WarInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Optimistic lock conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+    delete:
+      operationId: cancelWar
+      summary: Cancel guild war
+      description: Cancel an active war and release all resources
+      tags: [War Management]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '204':
+          description: War cancelled successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Territory Control Endpoints
+  /wars/{war_id}/territories:
+    get:
+      operationId: getWarTerritories
+      summary: Get war territory status
+      description: Retrieve current control status of all territories in the war
+      tags: [Territory Control]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '200':
+          description: Territory status retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TerritoryControl'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      operationId: captureTerritory
+      summary: Attempt territory capture
+      description: |
+        Process territory capture attempt with battle calculations and control transitions.
+
+        **Performance Requirements:**
+        - Atomic territory state updates
+        - Real-time broadcast to all war participants
+        - Resource economy adjustments on capture
+      tags: [Territory Control]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerritoryCaptureRequest'
+      responses:
+        '200':
+          description: Territory capture processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TerritoryCaptureResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Alliance System Endpoints
+  /wars/{war_id}/alliances:
+    get:
+      operationId: getWarAlliances
+      summary: Get war alliance network
+      description: Retrieve current alliance relationships and diplomatic status
+      tags: [Alliance System]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '200':
+          description: Alliance network retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AllianceRelationship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      operationId: formAlliance
+      summary: Form new alliance
+      description: Create diplomatic alliance between guilds during war
+      tags: [Alliance System]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormAllianceRequest'
+      responses:
+        '201':
+          description: Alliance formed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AllianceRelationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Alliance conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /wars/{war_id}/alliances/{alliance_id}/betrayal:
+    post:
+      operationId: betrayAlliance
+      summary: Break alliance (betrayal)
+      description: Break diplomatic alliance with reputation consequences
+      tags: [Alliance System]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Alliance relationship ID
+      responses:
+        '200':
+          description: Alliance broken
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BetrayalResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Invalid betrayal conditions
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Resource Economy Endpoints
+  /wars/{war_id}/resources:
+    get:
+      operationId: getWarResources
+      summary: Get war resource market
+      description: Retrieve current resource prices and economic status
+      tags: [Resource Economy]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '200':
+          description: Resource market data retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ResourceMarket'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      operationId: adjustResourcePrices
+      summary: Adjust resource prices
+      description: Dynamically adjust resource prices based on war events
+      tags: [Resource Economy]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourcePriceAdjustment'
+      responses:
+        '200':
+          description: Resource prices adjusted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ResourceMarket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Real-time Synchronization
+  /sync/war/{war_id}:
+    post:
+      operationId: syncWarState
+      summary: Synchronize war state (real-time)
+      description: |
+        Real-time synchronization of war state across multiple clients.
+
+        **Performance Requirements:**
+        - P99 latency <50ms
+        - Atomic state updates with conflict resolution
+        - Event-driven state propagation
+      tags: [Real-time Sync]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarStateSyncRequest'
+      responses:
+        '200':
+          description: War state synchronized
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WarStateSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Synchronization conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Event Sourcing Endpoints (CQRS Query Side)
+  /events/wars:
+    get:
+      operationId: getWarEvents
+      summary: Query war events (CQRS)
+      description: Retrieve war events from event store with filtering
+      tags: [Event Sourcing]
+      parameters:
+        - name: war_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by war ID
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by guild ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [WarStarted, TerritoryCaptured, AllianceFormed, BetrayalOccurred, WarEnded, ResourcePriceChanged]
+          description: Filter by event type
+        - name: from_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start timestamp for filtering
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: Maximum events to return
+      responses:
+        '200':
+          description: Events retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WarEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # WebSocket Endpoints for Real-time Updates
+  /ws/wars/{war_id}:
+    get:
+      operationId: warWebSocket
+      summary: WebSocket connection for war updates
+      description: |
+        Establish WebSocket connection for real-time war updates.
+
+        **Supported Events:**
+        - war_state_changed
+        - territory_captured
+        - alliance_formed
+        - betrayal_occurred
+        - resource_prices_updated
+        - war_ended
+      tags: [Real-time Sync]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: War instance ID
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+
+    # War Core Entities
+    WarInstance:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - war_type
+            - status
+            - participating_guilds
+            - territory_zones
+            - started_at
+          properties:
+            war_type:
+              type: string
+              enum: [territory_control, resource_war, alliance_conflict, total_domination]
+              description: Type of guild war
+              example: "territory_control"
+            status:
+              type: string
+              enum: [preparing, active, paused, completed, cancelled]
+              description: Current war status
+              example: "active"
+            participating_guilds:
+              type: array
+              items:
+                $ref: '#/components/schemas/WarParticipant'
+              description: Guilds participating in the war
+            territory_zones:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Territory zones contested in this war
+            resource_market:
+              $ref: '#/components/schemas/ResourceMarket'
+            alliances:
+              type: array
+              items:
+                $ref: '#/components/schemas/AllianceRelationship'
+              description: Current alliance relationships
+            started_at:
+              type: string
+              format: date-time
+              description: When war was started
+            ended_at:
+              type: string
+              format: date-time
+              description: When war ended (if applicable)
+            victory_conditions:
+              $ref: '#/components/schemas/VictoryConditions'
+            statistics:
+              $ref: '#/components/schemas/WarStatistics'
+
+    WarSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: War instance ID
+        war_type:
+          type: string
+          enum: [territory_control, resource_war, alliance_conflict, total_domination]
+        status:
+          type: string
+          enum: [preparing, active, paused, completed, cancelled]
+        participant_count:
+          type: integer
+          description: Number of participating guilds
+        territory_count:
+          type: integer
+          description: Number of contested territories
+        started_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WarParticipant:
+      type: object
+      required:
+        - guild_id
+        - joined_at
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          description: Participating guild ID
+        joined_at:
+          type: string
+          format: date-time
+          description: When guild joined the war
+        contribution_score:
+          type: integer
+          minimum: 0
+          description: Guild's contribution to war effort
+        territories_controlled:
+          type: integer
+          minimum: 0
+          description: Number of territories under guild control
+
+    TerritoryControl:
+      type: object
+      required:
+        - zone_id
+        - controlling_guild_id
+        - control_strength
+        - last_capture_time
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Territory zone ID
+        controlling_guild_id:
+          type: string
+          format: uuid
+          description: Currently controlling guild
+        control_strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Control strength (0-1, where 1 is full control)
+        last_capture_time:
+          type: string
+          format: date-time
+          description: When territory was last captured
+        capture_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/TerritoryCaptureEvent'
+          description: Recent capture events
+
+    TerritoryCaptureEvent:
+      type: object
+      required:
+        - capturing_guild_id
+        - timestamp
+        - capture_method
+      properties:
+        capturing_guild_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        capture_method:
+          type: string
+          enum: [battle, negotiation, sabotage, resource_dominance]
+        battle_intensity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Intensity of capture battle (0-1)
+
+    AllianceRelationship:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - guild_a_id
+            - guild_b_id
+            - alliance_type
+            - trust_level
+            - formed_at
+          properties:
+            guild_a_id:
+              type: string
+              format: uuid
+              description: First guild in alliance
+            guild_b_id:
+              type: string
+              format: uuid
+              description: Second guild in alliance
+            alliance_type:
+              type: string
+              enum: [military, economic, intelligence, full]
+              description: Type of alliance
+            trust_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Alliance trust level (0-1)
+            formed_at:
+              type: string
+              format: date-time
+              description: When alliance was formed
+            broken_at:
+              type: string
+              format: date-time
+              description: When alliance was broken (if applicable)
+            shared_resources:
+              type: array
+              items:
+                type: string
+                enum: [intelligence, supplies, reinforcements, territory_access]
+              description: Resources shared in alliance
+
+    ResourceMarket:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        base_prices:
+          type: object
+          properties:
+            supplies:
+              type: number
+              minimum: 0
+              description: Base price for supplies
+            reinforcements:
+              type: number
+              minimum: 0
+              description: Base price for reinforcements
+            intelligence:
+              type: number
+              minimum: 0
+              description: Base price for intelligence
+        dynamic_modifiers:
+          type: object
+          properties:
+            territory_control_bonus:
+              type: number
+              description: Price modifier based on territory control
+            scarcity_multiplier:
+              type: number
+              minimum: 0
+              description: Price multiplier due to scarcity
+            alliance_discount:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Discount for allied guilds
+        last_updated:
+          type: string
+          format: date-time
+
+    VictoryConditions:
+      type: object
+      properties:
+        territory_percentage_required:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Percentage of territories needed for victory
+        time_limit_hours:
+          type: integer
+          minimum: 1
+          description: Time limit in hours
+        resource_dominance_threshold:
+          type: number
+          minimum: 0
+          description: Resource dominance required
+        custom_conditions:
+          type: array
+          items:
+            type: string
+          description: Custom victory conditions
+
+    WarStatistics:
+      type: object
+      properties:
+        total_battles:
+          type: integer
+          minimum: 0
+        territories_captured:
+          type: integer
+          minimum: 0
+        alliances_formed:
+          type: integer
+          minimum: 0
+        betrayals_count:
+          type: integer
+          minimum: 0
+        total_casualties:
+          type: integer
+          minimum: 0
+        resource_value_traded:
+          type: number
+          minimum: 0
+
+    # Request/Response DTOs
+    CreateWarRequest:
+      type: object
+      required:
+        - war_type
+        - participating_guilds
+        - territory_zones
+        - victory_conditions
+      properties:
+        war_type:
+          type: string
+          enum: [territory_control, resource_war, alliance_conflict, total_domination]
+        participating_guilds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 10
+          description: Guild IDs to participate
+        territory_zones:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 50
+          description: Territory zone IDs for the war
+        victory_conditions:
+          $ref: '#/components/schemas/VictoryConditions'
+        custom_rules:
+          type: object
+          description: Custom war rules
+          additionalProperties: true
+
+    UpdateWarRequest:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [active, paused, cancelled]
+              description: New war status
+            victory_conditions:
+              $ref: '#/components/schemas/VictoryConditions'
+            custom_rules:
+              type: object
+              description: Updated custom rules
+
+    TerritoryCaptureRequest:
+      type: object
+      required:
+        - zone_id
+        - capturing_guild_id
+        - capture_method
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        capturing_guild_id:
+          type: string
+          format: uuid
+        capture_method:
+          type: string
+          enum: [battle, negotiation, sabotage, resource_dominance]
+        battle_force:
+          type: integer
+          minimum: 1
+          description: Battle force used in capture
+        resources_committed:
+          type: object
+          description: Resources committed to capture
+          additionalProperties:
+            type: number
+
+    TerritoryCaptureResult:
+      type: object
+      required:
+        - zone_id
+        - success
+        - new_controller_id
+        - capture_timestamp
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        new_controller_id:
+          type: string
+          format: uuid
+        previous_controller_id:
+          type: string
+          format: uuid
+        capture_timestamp:
+          type: string
+          format: date-time
+        resource_cost:
+          type: object
+          description: Resources spent on capture
+        battle_statistics:
+          type: object
+          description: Battle outcome statistics
+
+    FormAllianceRequest:
+      type: object
+      required:
+        - requesting_guild_id
+        - target_guild_id
+        - alliance_type
+      properties:
+        requesting_guild_id:
+          type: string
+          format: uuid
+        target_guild_id:
+          type: string
+          format: uuid
+        alliance_type:
+          type: string
+          enum: [military, economic, intelligence, full]
+        initial_trust_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+        shared_resources:
+          type: array
+          items:
+            type: string
+            enum: [intelligence, supplies, reinforcements, territory_access]
+
+    BetrayalResult:
+      type: object
+      required:
+        - alliance_id
+        - betraying_guild_id
+        - betrayed_guild_id
+        - betrayal_timestamp
+        - reputation_impact
+      properties:
+        alliance_id:
+          type: string
+          format: uuid
+        betraying_guild_id:
+          type: string
+          format: uuid
+        betrayed_guild_id:
+          type: string
+          format: uuid
+        betrayal_timestamp:
+          type: string
+          format: date-time
+        reputation_impact:
+          type: integer
+          description: Reputation change for betraying guild
+        diplomatic_consequences:
+          type: array
+          items:
+            type: string
+          description: Diplomatic consequences of betrayal
+
+    ResourcePriceAdjustment:
+      type: object
+      required:
+        - adjustment_reason
+        - price_modifiers
+      properties:
+        adjustment_reason:
+          type: string
+          enum: [territory_capture, resource_scarcity, alliance_formation, betrayal_penalty, market_forces]
+        price_modifiers:
+          type: object
+          description: Price adjustments by resource type
+          properties:
+            supplies:
+              type: number
+              description: Supply price modifier (+/- percentage)
+            reinforcements:
+              type: number
+              description: Reinforcement price modifier
+            intelligence:
+              type: number
+              description: Intelligence price modifier
+        duration_minutes:
+          type: integer
+          minimum: 1
+          maximum: 1440
+          description: How long adjustment lasts (minutes)
+
+    WarStateSyncRequest:
+      type: object
+      required:
+        - war_id
+        - client_version
+        - requested_updates
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        client_version:
+          type: integer
+          minimum: 1
+          description: Client state version for conflict resolution
+        requested_updates:
+          type: array
+          items:
+            type: string
+            enum: [territories, alliances, resources, statistics]
+          description: Specific state aspects to sync
+
+    WarStateSyncResponse:
+      type: object
+      required:
+        - server_version
+        - applied_updates
+      properties:
+        server_version:
+          type: integer
+          description: Server state version
+        applied_updates:
+          type: object
+          properties:
+            territories:
+              type: array
+              items:
+                $ref: '#/components/schemas/TerritoryControl'
+            alliances:
+              type: array
+              items:
+                $ref: '#/components/schemas/AllianceRelationship'
+            resources:
+              $ref: '#/components/schemas/ResourceMarket'
+            statistics:
+              $ref: '#/components/schemas/WarStatistics'
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              aspect:
+                type: string
+                enum: [territories, alliances, resources]
+              client_version:
+                type: integer
+              server_version:
+                type: integer
+              resolution:
+                type: string
+                enum: [client_wins, server_wins, merged]
+
+    WarEvent:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - event_type
+            - war_id
+            - event_data
+            - timestamp
+          properties:
+            event_type:
+              type: string
+              enum: [WarStarted, TerritoryCaptured, AllianceFormed, BetrayalOccurred, WarEnded, ResourcePriceChanged]
+              description: Type of war event
+            war_id:
+              type: string
+              format: uuid
+              description: War instance ID
+            event_data:
+              type: object
+              description: Event-specific data
+              additionalProperties: true
+            timestamp:
+              type: string
+              format: date-time
+              description: Event timestamp
+
+  # Common Response Components
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/NotFound'
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/TooManyRequests'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

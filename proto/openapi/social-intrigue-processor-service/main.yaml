@@ -1,0 +1,1492 @@
+# Enterprise-Grade OpenAPI 3.0 - Social Intrigue Processor Service
+# Relationship management and dialogue systems with CQRS/Event Sourcing
+# Issue: #2301
+
+openapi: 3.0.3
+info:
+  title: Social Intrigue Processor Service API
+  description: |
+    **Enterprise-grade API for Social Intrigue Processor Service**
+
+    ## Domain Purpose
+    Advanced social simulation engine managing complex NPC relationships,
+    branching dialogue systems, conspiracy networks, and long-term consequence tracking.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per Relationship Graph: <150MB baseline
+    - Concurrent Social Interactions: 5000+ supported
+    - Relationship Graph Nodes: 100,000+ per shard
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+    - Game-specific business entities (Character, NPC, etc.)
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+    ## Architecture Patterns
+    - Relationship Graph Engine with player-sharded storage
+    - Dialogue State Machine with branching conversations
+    - Event-Sourced social consequence tracking
+    - Real-time relationship synchronization
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/social-intrigue-processor
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/social-intrigue-processor
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/social-intrigue-processor
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Relationship Management
+    description: NPC relationship tracking and affinity management
+  - name: Dialogue Systems
+    description: Branching conversation trees and dialogue state
+  - name: Conspiracy Networks
+    description: Hidden relationship networks and secret alliances
+  - name: Consequence Engine
+    description: Long-term choice effects and social consequences
+  - name: Social Graph Analysis
+    description: Relationship graph queries and analytics
+  - name: Real-time Sync
+    description: Social state synchronization
+  - name: Event Sourcing
+    description: CQRS event store operations
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints
+  /health:
+    get:
+      operationId: socialIntrigueProcessorHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: socialIntrigueProcessorDetailedHealthCheck
+      summary: Detailed health check with relationship metrics
+      description: Returns comprehensive health status including active relationship graphs and dialogue states
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  # Relationship Management Endpoints
+  /relationships:
+    get:
+      operationId: listRelationships
+      summary: List relationships with filtering
+      description: |
+        Retrieve paginated list of NPC relationships with advanced filtering.
+
+        **Performance Notes:**
+        - Uses graph database indexes for efficient relationship queries
+        - Implements cursor-based pagination for large relationship graphs
+        - Response cached for 30 seconds (relationships update frequently)
+      tags: [Relationship Management]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: npc_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by NPC ID
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [friendship, romance, rivalry, alliance, enmity, mentorship, conspiracy]
+          description: Filter by relationship type
+        - name: affinity_level
+          in: query
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+          description: Filter by minimum affinity level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of relationships to return
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createRelationship
+      summary: Create new NPC relationship
+      description: |
+        Initialize a new relationship between player and NPC with affinity tracking.
+
+        **Business Rules:**
+        - Validates NPC existence and availability
+        - Initializes relationship with neutral affinity
+        - Sets up consequence tracking
+        - Generates relationship instance ID
+      tags: [Relationship Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationshipRequest'
+      responses:
+        '201':
+          description: Relationship created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Relationship already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /relationships/{relationship_id}:
+    get:
+      operationId: getRelationship
+      summary: Get detailed relationship information
+      description: Retrieve comprehensive relationship details including history and consequences
+      tags: [Relationship Management]
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Relationship instance ID
+      responses:
+        '200':
+          description: Relationship details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Relationship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      operationId: updateRelationship
+      summary: Update relationship affinity
+      description: Update relationship parameters with affinity changes and consequence tracking
+      tags: [Relationship Management]
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Relationship instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRelationshipRequest'
+      responses:
+        '200':
+          description: Relationship updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Optimistic lock conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+    delete:
+      operationId: endRelationship
+      summary: End NPC relationship
+      description: Terminate relationship with consequence calculation
+      tags: [Relationship Management]
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Relationship instance ID
+      responses:
+        '204':
+          description: Relationship ended successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Dialogue Systems Endpoints
+  /dialogues:
+    post:
+      operationId: startDialogue
+      summary: Start NPC dialogue interaction
+      description: |
+        Initialize dialogue session with NPC using branching conversation trees.
+
+        **Business Rules:**
+        - Validates NPC availability and relationship status
+        - Loads appropriate dialogue tree based on context
+        - Initializes dialogue state machine
+        - Applies relationship-based dialogue modifiers
+      tags: [Dialogue Systems]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartDialogueRequest'
+      responses:
+        '201':
+          description: Dialogue started successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DialogueSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: NPC unavailable for dialogue
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /dialogues/{dialogue_id}/progress:
+    post:
+      operationId: progressDialogue
+      summary: Progress through dialogue tree
+      description: |
+        Process player dialogue choice and advance conversation state.
+
+        **Performance Requirements:**
+        - Real-time dialogue state updates
+        - Atomic choice processing with consequence calculation
+        - Relationship affinity adjustments
+      tags: [Dialogue Systems]
+      parameters:
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dialogue session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DialogueChoiceRequest'
+      responses:
+        '200':
+          description: Dialogue progressed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DialogueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Invalid dialogue choice
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /dialogues/{dialogue_id}:
+    delete:
+      operationId: endDialogue
+      summary: End dialogue session
+      description: Terminate dialogue session with final consequence calculation
+      tags: [Dialogue Systems]
+      parameters:
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dialogue session ID
+      responses:
+        '204':
+          description: Dialogue ended successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Conspiracy Networks Endpoints
+  /conspiracies:
+    get:
+      operationId: listConspiracies
+      summary: List conspiracy networks
+      description: Retrieve hidden relationship networks and secret alliances
+      tags: [Conspiracy Networks]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player involvement
+        - name: conspiracy_type
+          in: query
+          schema:
+            type: string
+            enum: [political, criminal, corporate, revolutionary, personal]
+          description: Filter by conspiracy type
+        - name: visibility_level
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+          description: Filter by minimum visibility (player's knowledge)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of conspiracies to return
+      responses:
+        '200':
+          description: Conspiracy networks retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ConspiracyNetwork'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createConspiracy
+      summary: Create new conspiracy network
+      description: Initialize hidden relationship network with secret alliances
+      tags: [Conspiracy Networks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConspiracyRequest'
+      responses:
+        '201':
+          description: Conspiracy network created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ConspiracyNetwork'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /conspiracies/{conspiracy_id}/relationships:
+    post:
+      operationId: addConspiracyRelationship
+      summary: Add relationship to conspiracy
+      description: Include NPC relationship in conspiracy network
+      tags: [Conspiracy Networks]
+      parameters:
+        - name: conspiracy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Conspiracy network ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToConspiracyRequest'
+      responses:
+        '200':
+          description: Relationship added to conspiracy
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ConspiracyNetwork'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Consequence Engine Endpoints
+  /consequences:
+    get:
+      operationId: listConsequences
+      summary: List social consequences
+      description: Retrieve long-term consequences of player choices
+      tags: [Consequence Engine]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by affected player
+        - name: consequence_type
+          in: query
+          schema:
+            type: string
+            enum: [relationship_change, reputation_modifier, opportunity_unlock, penalty_applied, story_branch]
+          description: Filter by consequence type
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Return only active consequences
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of consequences to return
+      responses:
+        '200':
+          description: Consequences retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SocialConsequence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: triggerConsequence
+      summary: Trigger social consequence
+      description: |
+        Apply consequence of player choice with relationship and story effects.
+
+        **Business Rules:**
+        - Validates consequence conditions are met
+        - Applies relationship affinity changes
+        - Updates conspiracy network visibility
+        - Generates consequence event for tracking
+      tags: [Consequence Engine]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerConsequenceRequest'
+      responses:
+        '200':
+          description: Consequence triggered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ConsequenceResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Consequence conditions not met
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Social Graph Analysis Endpoints
+  /graphs/{player_id}/analysis:
+    get:
+      operationId: analyzeSocialGraph
+      summary: Analyze player's social graph
+      description: Perform analysis on player's relationship network
+      tags: [Social Graph Analysis]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID for graph analysis
+        - name: analysis_type
+          in: query
+          schema:
+            type: string
+            enum: [influence_map, conspiracy_risk, alliance_strength, social_opportunities]
+          description: Type of analysis to perform
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 2
+          description: Graph traversal depth
+      responses:
+        '200':
+          description: Social graph analysis completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SocialGraphAnalysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Real-time Synchronization
+  /sync/social/{player_id}:
+    post:
+      operationId: syncSocialState
+      summary: Synchronize social state (real-time)
+      description: |
+        Real-time synchronization of social relationships and dialogue state.
+
+        **Performance Requirements:**
+        - P99 latency <50ms
+        - Atomic relationship updates with conflict resolution
+        - Event-driven state propagation
+      tags: [Real-time Sync]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID for state sync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialStateSyncRequest'
+      responses:
+        '200':
+          description: Social state synchronized
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SocialStateSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Synchronization conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Event Sourcing Endpoints (CQRS Query Side)
+  /events/social:
+    get:
+      operationId: getSocialEvents
+      summary: Query social events (CQRS)
+      description: Retrieve social events from event store with filtering
+      tags: [Event Sourcing]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: npc_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by NPC ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [RelationshipCreated, DialogueStarted, ConspiracyFormed, ConsequenceTriggered, AffinityChanged]
+          description: Filter by event type
+        - name: from_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start timestamp for filtering
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: Maximum events to return
+      responses:
+        '200':
+          description: Events retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SocialEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # WebSocket Endpoints for Real-time Updates
+  /ws/social/{player_id}:
+    get:
+      operationId: socialWebSocket
+      summary: WebSocket connection for social updates
+      description: |
+        Establish WebSocket connection for real-time social state updates.
+
+        **Supported Events:**
+        - relationship_changed
+        - dialogue_progressed
+        - conspiracy_revealed
+        - consequence_triggered
+        - social_opportunity_available
+      tags: [Real-time Sync]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID for social updates
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+
+    # Social Core Entities
+    Relationship:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - player_id
+            - npc_id
+            - relationship_type
+            - affinity_level
+            - trust_level
+            - established_at
+          properties:
+            player_id:
+              type: string
+              format: uuid
+              description: Player in relationship
+            npc_id:
+              type: string
+              format: uuid
+              description: NPC in relationship
+            relationship_type:
+              type: string
+              enum: [friendship, romance, rivalry, alliance, enmity, mentorship, conspiracy]
+              description: Type of relationship
+            affinity_level:
+              type: number
+              minimum: -1
+              maximum: 1
+              description: Current affinity (-1 to 1, where 1 is maximum positive)
+            trust_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Trust level (0-1)
+            established_at:
+              type: string
+              format: date-time
+              description: When relationship was established
+            last_interaction:
+              type: string
+              format: date-time
+              description: Last interaction timestamp
+            interaction_count:
+              type: integer
+              minimum: 0
+              description: Total interactions
+            consequences_applied:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialConsequence'
+              description: Active consequences from this relationship
+            metadata:
+              type: object
+              description: Relationship-specific data
+              additionalProperties: true
+
+    DialogueSession:
+      type: object
+      required:
+        - dialogue_id
+        - player_id
+        - npc_id
+        - dialogue_tree_id
+        - current_node_id
+        - started_at
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        dialogue_tree_id:
+          type: string
+          format: uuid
+          description: Reference to dialogue tree template
+        current_node_id:
+          type: string
+          format: uuid
+          description: Current position in dialogue tree
+        available_choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+        conversation_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueExchange'
+          description: Previous exchanges in this session
+        started_at:
+          type: string
+          format: date-time
+        relationship_context:
+          $ref: '#/components/schemas/Relationship'
+        modifiers:
+          type: object
+          description: Dialogue modifiers based on relationship/choices
+          properties:
+            affinity_bonus:
+              type: number
+              description: Affinity-based choice bonuses
+            trust_multiplier:
+              type: number
+              description: Trust-based response quality
+
+    DialogueChoice:
+      type: object
+      required:
+        - choice_id
+        - choice_text
+        - consequence_type
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        choice_text:
+          type: string
+          description: Text shown to player
+        consequence_type:
+          type: string
+          enum: [affinity_increase, affinity_decrease, trust_increase, trust_decrease, consequence_trigger, neutral]
+        next_node_id:
+          type: string
+          format: uuid
+          description: Next dialogue node if chosen
+        requirements:
+          type: object
+          description: Requirements to show this choice
+          properties:
+            min_affinity:
+              type: number
+              minimum: -1
+              maximum: 1
+            min_trust:
+              type: number
+              minimum: 0
+              maximum: 1
+            prerequisites:
+              type: array
+              items:
+                type: string
+
+    DialogueExchange:
+      type: object
+      required:
+        - timestamp
+        - speaker
+        - dialogue_text
+        - choice_made
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        speaker:
+          type: string
+          enum: [player, npc]
+        dialogue_text:
+          type: string
+        choice_made:
+          $ref: '#/components/schemas/DialogueChoice'
+        affinity_change:
+          type: number
+          description: Affinity change from this exchange
+        trust_change:
+          type: number
+          description: Trust change from this exchange
+
+    ConspiracyNetwork:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - conspiracy_type
+            - visibility_level
+            - involved_relationships
+            - formed_at
+          properties:
+            conspiracy_type:
+              type: string
+              enum: [political, criminal, corporate, revolutionary, personal]
+              description: Type of conspiracy
+            visibility_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: How visible this conspiracy is to players (0=completely hidden)
+            involved_relationships:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Relationship IDs involved in conspiracy
+            conspiracy_leader:
+              type: string
+              format: uuid
+              description: NPC leading the conspiracy
+            formed_at:
+              type: string
+              format: date-time
+            objectives:
+              type: array
+              items:
+                type: string
+              description: Conspiracy objectives
+            risk_level:
+              type: string
+              enum: [low, medium, high, critical]
+              description: Risk of discovery
+            discovery_events:
+              type: array
+              items:
+                type: object
+                properties:
+                  discovered_by:
+                    type: string
+                    format: uuid
+                  discovery_timestamp:
+                    type: string
+                    format: date-time
+                  consequences:
+                    type: array
+                    items:
+                      type: string
+
+    SocialConsequence:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - consequence_type
+            - trigger_choice
+            - affected_player_id
+            - effect_duration
+            - triggered_at
+          properties:
+            consequence_type:
+              type: string
+              enum: [relationship_change, reputation_modifier, opportunity_unlock, penalty_applied, story_branch]
+            trigger_choice:
+              type: string
+              description: Choice or action that triggered consequence
+            affected_player_id:
+              type: string
+              format: uuid
+            effect_duration:
+              type: string
+              enum: [temporary, permanent, conditional]
+            triggered_at:
+              type: string
+              format: date-time
+            expires_at:
+              type: string
+              format: date-time
+            effects:
+              type: object
+              description: Specific effects of consequence
+              properties:
+                affinity_modifier:
+                  type: number
+                  description: Relationship affinity change
+                trust_modifier:
+                  type: number
+                  description: Trust level change
+                reputation_change:
+                  type: object
+                  description: Reputation changes by faction
+                  additionalProperties:
+                    type: number
+                unlocks:
+                  type: array
+                  items:
+                    type: string
+                  description: Content unlocks
+                penalties:
+                  type: array
+                  items:
+                    type: string
+                  description: Applied penalties
+
+    SocialGraphAnalysis:
+      type: object
+      required:
+        - analysis_type
+        - player_id
+        - analyzed_at
+        - insights
+      properties:
+        analysis_type:
+          type: string
+          enum: [influence_map, conspiracy_risk, alliance_strength, social_opportunities]
+        player_id:
+          type: string
+          format: uuid
+        analyzed_at:
+          type: string
+          format: date-time
+        insights:
+          type: object
+          description: Analysis results
+          properties:
+            influence_score:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Overall social influence
+            conspiracy_risk:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Risk of conspiracy involvement
+            alliance_strength:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Strength of alliances
+            key_relationships:
+              type: array
+              items:
+                type: object
+                properties:
+                  relationship_id:
+                    type: string
+                    format: uuid
+                  importance_score:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+            opportunities:
+              type: array
+              items:
+                type: string
+                description: Available social opportunities
+
+    # Request/Response DTOs
+    CreateRelationshipRequest:
+      type: object
+      required:
+        - player_id
+        - npc_id
+        - initial_context
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        initial_context:
+          type: string
+          enum: [first_meeting, shared_quest, betrayal, alliance_offer, personal_request]
+          description: Context of relationship establishment
+        initial_affinity:
+          type: number
+          minimum: -1
+          maximum: 1
+          default: 0
+        initial_trust:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+
+    UpdateRelationshipRequest:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock'
+        - type: object
+          properties:
+            affinity_change:
+              type: number
+              minimum: -1
+              maximum: 1
+              description: Affinity adjustment
+            trust_change:
+              type: number
+              minimum: -1
+              maximum: 1
+              description: Trust adjustment
+            interaction_type:
+              type: string
+              enum: [conversation, quest_help, betrayal, gift, favor]
+            consequence_trigger:
+              type: boolean
+              default: true
+              description: Whether to evaluate consequences
+
+    StartDialogueRequest:
+      type: object
+      required:
+        - player_id
+        - npc_id
+        - dialogue_context
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        dialogue_context:
+          type: string
+          enum: [casual_conversation, quest_related, alliance_discussion, confrontation, romance]
+        relationship_override:
+          type: object
+          description: Temporary relationship modifiers for dialogue
+
+    DialogueChoiceRequest:
+      type: object
+      required:
+        - choice_id
+      properties:
+        choice_id:
+          type: string
+          format: uuid
+        additional_context:
+          type: object
+          description: Extra context for choice evaluation
+
+    DialogueResponse:
+      type: object
+      required:
+        - dialogue_id
+        - npc_response
+        - available_choices
+        - relationship_changes
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+        npc_response:
+          type: string
+          description: NPC's dialogue response
+        available_choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+        relationship_changes:
+          type: object
+          properties:
+            affinity_change:
+              type: number
+            trust_change:
+              type: number
+        consequences_triggered:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialConsequence'
+        dialogue_ended:
+          type: boolean
+          description: Whether dialogue session ended
+
+    CreateConspiracyRequest:
+      type: object
+      required:
+        - conspiracy_type
+        - initial_members
+        - objectives
+      properties:
+        conspiracy_type:
+          type: string
+          enum: [political, criminal, corporate, revolutionary, personal]
+        initial_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          description: Initial NPC relationship IDs
+        objectives:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        initial_visibility:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0
+
+    AddToConspiracyRequest:
+      type: object
+      required:
+        - relationship_id
+        - role_in_conspiracy
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+        role_in_conspiracy:
+          type: string
+          enum: [leader, member, informant, target]
+        secrecy_requirement:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Required trust level for involvement
+
+    TriggerConsequenceRequest:
+      type: object
+      required:
+        - consequence_type
+        - trigger_event
+        - affected_player_id
+      properties:
+        consequence_type:
+          type: string
+          enum: [relationship_change, reputation_modifier, opportunity_unlock, penalty_applied, story_branch]
+        trigger_event:
+          type: string
+          description: Event that triggered consequence
+        affected_player_id:
+          type: string
+          format: uuid
+        effect_parameters:
+          type: object
+          description: Specific parameters for consequence effect
+
+    ConsequenceResult:
+      type: object
+      required:
+        - consequence_id
+        - applied_effects
+        - affected_relationships
+      properties:
+        consequence_id:
+          type: string
+          format: uuid
+        applied_effects:
+          type: object
+          description: Effects that were applied
+        affected_relationships:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Relationship IDs affected
+        triggered_events:
+          type: array
+          items:
+            type: string
+          description: Additional events triggered
+
+    SocialStateSyncRequest:
+      type: object
+      required:
+        - player_id
+        - client_version
+        - requested_updates
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        client_version:
+          type: integer
+          minimum: 1
+        requested_updates:
+          type: array
+          items:
+            type: string
+            enum: [relationships, dialogues, conspiracies, consequences]
+        active_dialogue_id:
+          type: string
+          format: uuid
+          description: Currently active dialogue session
+
+    SocialStateSyncResponse:
+      type: object
+      required:
+        - server_version
+        - applied_updates
+      properties:
+        server_version:
+          type: integer
+        applied_updates:
+          type: object
+          properties:
+            relationships:
+              type: array
+              items:
+                $ref: '#/components/schemas/Relationship'
+            dialogues:
+              type: array
+              items:
+                $ref: '#/components/schemas/DialogueSession'
+            conspiracies:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConspiracyNetwork'
+            consequences:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialConsequence'
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              aspect:
+                type: string
+                enum: [relationships, dialogues, conspiracies, consequences]
+              client_version:
+                type: integer
+              server_version:
+                type: integer
+              resolution:
+                type: string
+                enum: [client_wins, server_wins, merged]
+
+    SocialEvent:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - event_type
+            - player_id
+            - event_data
+            - timestamp
+          properties:
+            event_type:
+              type: string
+              enum: [RelationshipCreated, DialogueStarted, ConspiracyFormed, ConsequenceTriggered, AffinityChanged]
+              description: Type of social event
+            player_id:
+              type: string
+              format: uuid
+              description: Player ID
+            event_data:
+              type: object
+              description: Event-specific data
+              additionalProperties: true
+            timestamp:
+              type: string
+              format: date-time
+              description: Event timestamp
+
+  # Common Response Components
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/NotFound'
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/TooManyRequests'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
