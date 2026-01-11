@@ -1,0 +1,657 @@
+# Enterprise-Grade OpenAPI 3.0 - Interactive Object Manager Service
+# Core interactive object management with real-time synchronization
+# Issue: #2305
+
+openapi: 3.0.3
+info:
+  title: Interactive Object Manager Service API
+  description: |
+    **Enterprise-grade API for Interactive Object Manager Service**
+
+    ## Domain Purpose
+    Core interactive object management for NECPGAME. Manages doors, terminals,
+    containers, interactive NPCs, environmental objects, and player interactions.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per Object: <10MB baseline
+    - Concurrent Objects: 50,000+ active instances
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version)
+    - Game-specific business entities (InteractiveObject, etc.)
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+    ## Architecture Patterns
+    - Event-driven architecture with WebSocket updates
+    - Spatial indexing for proximity queries
+    - Real-time synchronization (<25ms P99 target)
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/interactive-object-manager
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/interactive-object-manager
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/interactive-object-manager
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Object Management
+    description: Core interactive object operations (CRUD, state management)
+  - name: Interaction Handling
+    description: Player-object interaction processing
+  - name: State Synchronization
+    description: Real-time object state sync
+  - name: Proximity Queries
+    description: Spatial proximity and object discovery
+  - name: Event Streaming
+    description: Real-time event streaming for object updates
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints
+  /health:
+    get:
+      operationId: interactiveObjectManagerHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: interactiveObjectManagerDetailedHealthCheck
+      summary: Detailed health check with metrics
+      description: Returns comprehensive health status including object processing metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthDetailedResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  # Object Management Endpoints
+  /objects:
+    get:
+      operationId: listInteractiveObjects
+      summary: List interactive objects
+      description: Get paginated list of interactive objects with filtering
+      tags: [Object Management]
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: object_type
+          in: query
+          schema:
+            type: string
+            enum: [door, terminal, container, npc, environmental, trap, switch]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, destroyed, locked]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of interactive objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractiveObjectListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/InternalServerError'
+
+    post:
+      operationId: createInteractiveObject
+      summary: Create interactive object
+      description: Create a new interactive object instance
+      tags: [Object Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInteractiveObjectRequest'
+      responses:
+        '201':
+          description: Object created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractiveObjectResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+        '409':
+          description: Object already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /objects/{objectId}:
+    get:
+      operationId: getInteractiveObject
+      summary: Get interactive object
+      description: Retrieve detailed information about a specific interactive object
+      tags: [Object Management]
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Object details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractiveObjectResponse'
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/InternalServerError'
+
+    put:
+      operationId: updateInteractiveObject
+      summary: Update interactive object
+      description: Update an existing interactive object's properties
+      tags: [Object Management]
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInteractiveObjectRequest'
+      responses:
+        '200':
+          description: Object updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractiveObjectResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/NotFound'
+        '409':
+          description: Concurrent modification conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+    delete:
+      operationId: deleteInteractiveObject
+      summary: Delete interactive object
+      description: Remove an interactive object from the game world
+      tags: [Object Management]
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Object deleted successfully
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/NotFound'
+
+  # Interaction Endpoints
+  /objects/{objectId}/interact:
+    post:
+      operationId: interactWithObject
+      summary: Interact with object
+      description: Process player interaction with an interactive object
+      tags: [Interaction Handling]
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectInteractionRequest'
+      responses:
+        '200':
+          description: Interaction processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectInteractionResponse'
+        '400':
+          description: Invalid interaction request
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+        '403':
+          description: Interaction not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Forbidden'
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/NotFound'
+
+  # Proximity Queries
+  /objects/proximity:
+    get:
+      operationId: getObjectsInProximity
+      summary: Get objects in proximity
+      description: Find interactive objects within a specified radius of a location
+      tags: [Proximity Queries]
+      parameters:
+        - name: x
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: y
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: z
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 50.0
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: object_types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [door, terminal, container, npc, environmental, trap, switch]
+      responses:
+        '200':
+          description: Objects in proximity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProximityObjectsResponse'
+        '400':
+          description: Invalid proximity query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+
+  # State Synchronization
+  /objects/{objectId}/sync:
+    post:
+      operationId: synchronizeObjectState
+      summary: Synchronize object state
+      description: Synchronize the state of an interactive object across all clients
+      tags: [State Synchronization]
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectStateSyncRequest'
+      responses:
+        '200':
+          description: State synchronized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectStateSyncResponse'
+        '404':
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/NotFound'
+
+components:
+  schemas:
+
+    # Core Object Schemas
+    InteractiveObject:
+      allOf:
+      - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+      - type: object
+        required:
+          - object_type
+          - position
+          - zone_id
+          - status
+        properties:
+          object_type:
+            type: string
+            enum: [door, terminal, container, npc, environmental, trap, switch]
+            description: Type of interactive object
+          position:
+            $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+          rotation:
+            $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+          zone_id:
+            type: string
+            format: uuid
+            description: Zone where object is located
+          status:
+            type: string
+            enum: [active, inactive, destroyed, locked]
+            description: Current object status
+          custom_properties:
+            type: object
+            description: Type-specific properties
+          interaction_radius:
+            type: number
+            format: float
+            minimum: 0
+            description: Radius for player interaction
+          last_interaction:
+            type: string
+            format: date-time
+            description: Timestamp of last interaction
+
+    # Request/Response Schemas
+    CreateInteractiveObjectRequest:
+      type: object
+      required:
+        - object_type
+        - position
+        - zone_id
+      properties:
+        object_type:
+          type: string
+          enum: [door, terminal, container, npc, environmental, trap, switch]
+        position:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        rotation:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        zone_id:
+          type: string
+          format: uuid
+        custom_properties:
+          type: object
+        interaction_radius:
+          type: number
+          format: float
+          minimum: 0
+          default: 5.0
+
+    UpdateInteractiveObjectRequest:
+      type: object
+      properties:
+        position:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        rotation:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        status:
+          type: string
+          enum: [active, inactive, destroyed, locked]
+        custom_properties:
+          type: object
+        interaction_radius:
+          type: number
+          format: float
+          minimum: 0
+
+    InteractiveObjectResponse:
+      type: object
+      required:
+        - object
+      properties:
+        object:
+          $ref: '#/components/schemas/InteractiveObject'
+
+    InteractiveObjectListResponse:
+      type: object
+      required:
+        - objects
+        - total
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractiveObject'
+        total:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+
+    # Interaction Schemas
+    ObjectInteractionRequest:
+      type: object
+      required:
+        - player_id
+        - interaction_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [activate, deactivate, open, close, hack, loot, talk, use]
+        interaction_data:
+          type: object
+          description: Additional interaction-specific data
+
+    ObjectInteractionResponse:
+      type: object
+      required:
+        - success
+        - interaction_result
+      properties:
+        success:
+          type: boolean
+        interaction_result:
+          type: object
+          description: Result of the interaction
+        state_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectStateChange'
+        rewards:
+          type: array
+          items:
+            type: object
+            description: Rewards granted by interaction
+
+    ObjectStateChange:
+      type: object
+      required:
+        - property
+        - old_value
+        - new_value
+      properties:
+        property:
+          type: string
+        old_value:
+          type: any
+        new_value:
+          type: any
+
+    # Proximity Schemas
+    ProximityObjectsResponse:
+      type: object
+      required:
+        - objects
+        - center
+        - radius
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractiveObject'
+        center:
+          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
+        radius:
+          type: number
+          format: float
+        zone_id:
+          type: string
+          format: uuid
+
+    # State Sync Schemas
+    ObjectStateSyncRequest:
+      type: object
+      required:
+        - state_data
+      properties:
+        state_data:
+          type: object
+          description: Complete state data to synchronize
+        force_sync:
+          type: boolean
+          default: false
+          description: Force synchronization even if no changes detected
+
+    ObjectStateSyncResponse:
+      type: object
+      required:
+        - synced
+        - timestamp
+      properties:
+        synced:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+        affected_clients:
+          type: integer
+          minimum: 0
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+x-domain-inheritance:
+  inherits-from: common/schemas/game-entities.yaml
+  additional-schemas: Interactive object management extensions
+  no-duplication: All common fields inherited, not redefined
+  pattern: allOf with $ref to domain entities + service-specific properties only
