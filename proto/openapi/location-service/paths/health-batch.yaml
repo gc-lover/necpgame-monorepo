@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: '**Performance optimization:** Check multiple services health in
+        single request
+
+        Reduces N HTTP calls to 1 call. Critical for orchestration.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: locationServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - auth-service
+                    - user-service
+                    - session-service
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

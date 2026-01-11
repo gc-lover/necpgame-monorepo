@@ -1,0 +1,158 @@
+openapi: 3.0.3
+paths:
+  /guilds:
+    get:
+      summary: List guilds with filtering and pagination
+      description: '**Enterprise-grade guild listing endpoint**
+
+        Retrieves guilds with advanced filtering by name, level, reputation, and activity
+        status. Supports comprehensive search and discovery.
+
+        **Performance:** <15ms P95 with database indexing
+
+        **Features:** Full-text search, location-based filtering, activity metrics
+
+        '
+      operationId: listGuilds
+      tags:
+      - Guild Management
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+      - name: level_min
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: level_max
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: reputation_min
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: member_count_min
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: activity_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - recruiting
+          - maintenance
+          - disbanding
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: Guilds retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildListResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of guilds matching criteria
+            X-Page-Count:
+              schema:
+                type: integer
+              description: Total number of pages
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=60, private
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Create new guild
+      description: '**Guild creation endpoint**
+
+        Creates a new guild with initial configuration and founder assignment. Validates
+        guild name uniqueness and founder eligibility.
+
+        **Performance:** <50ms P95 including validation and initial setup
+
+        **Validation:** Name uniqueness, founder permissions, creation limits
+
+        '
+      operationId: createGuild
+      tags:
+      - Guild Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/guild/guilds/550e8400-e29b-41d4-a716-446655440000
+        '400':
+          description: Invalid guild configuration
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '409':
+          description: Guild name already exists or creation limit reached
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

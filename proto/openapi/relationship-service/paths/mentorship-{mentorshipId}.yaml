@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /mentorship/{mentorshipId}:
+    put:
+      summary: Update mentorship
+      description: '**Update mentorship status and progress**
+
+        Modifies mentorship terms, progress, or terminates relationship.
+
+        **Performance:** <40ms with mentorship validation
+
+        '
+      operationId: updateMentorship
+      tags:
+      - Mentorship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: mentorshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMentorshipRequest'
+      responses:
+        '200':
+          description: Mentorship updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,35 @@
+openapi: 3.0.3
+paths:
+  /alerts/{alert_id}/acknowledge:
+    post:
+      summary: Acknowledge an alert
+      operationId: acknowledgeAlert
+      tags:
+      - Alert Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alert unique identifier
+      responses:
+        '200':
+          description: Alert acknowledged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

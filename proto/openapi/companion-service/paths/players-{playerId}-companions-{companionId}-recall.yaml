@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}/recall:
+    post:
+      summary: Recall companion
+      description: '**Recall an active companion**
+
+
+        Deactivates a companion, ending its active session.
+
+        Companion becomes available for storage or other operations.
+
+
+        **Performance:** <50ms P95, database update
+
+        '
+      operationId: recallCompanion
+      tags:
+      - Companion Abilities
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      responses:
+        '200':
+          description: Companion recalled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecallCompanionResponse'
+        '404':
+          description: Companion not found or not summoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

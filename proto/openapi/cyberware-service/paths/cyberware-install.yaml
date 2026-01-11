@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /cyberware/install:
+    post:
+      operationId: cyberwareServiceInstallCyberware
+      summary: Install cyberware on character
+      description: 'Install cybernetic prosthetics on a character with compatibility
+        checking.
+
+
+        **Installation Process:**
+
+        - Validate cyberware compatibility and requirements
+
+        - Check available installation slots and body parts
+
+        - Calculate cyberpsychosis risk increase
+
+        - Perform installation with calibration
+
+        - Update character stats and abilities
+
+        '
+      tags:
+      - Cyberware Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallCyberwareRequest'
+      responses:
+        '201':
+          description: Cyberware installed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/InstalledCyberware'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Cyberware incompatible or slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

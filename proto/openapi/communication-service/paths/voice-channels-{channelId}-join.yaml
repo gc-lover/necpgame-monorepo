@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /voice/channels/{channelId}/join:
+    post:
+      summary: Join voice channel
+      description: '**Join a voice channel**
+
+        Returns WebRTC connection information and channel token.
+
+        **Performance:** <25ms with capacity checks and token generation
+
+        '
+      operationId: joinVoiceChannel
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinVoiceChannelRequest'
+      responses:
+        '200':
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannelConnectionResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        '429':
+          $ref: ../common/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

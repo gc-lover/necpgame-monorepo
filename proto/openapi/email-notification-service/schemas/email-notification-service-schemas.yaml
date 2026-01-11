@@ -1,0 +1,1070 @@
+openapi: 3.0.3
+components:
+  schemas:
+    EmailDelivery:
+      description: Email delivery entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/NotificationQueueEntity
+      - type: object
+        properties:
+          recipient_email:
+            type: string
+            format: email
+            description: Recipient email address
+          sender_email:
+            type: string
+            format: email
+            description: Sender email address
+          subject:
+            type: string
+            maxLength: 200
+            description: Email subject line
+          template_id:
+            type: string
+            format: uuid
+            description: Template used for email
+          personalization_data:
+            type: object
+            description: Data for template personalization
+            additionalProperties: true
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            default: normal
+            description: Email delivery priority
+          provider:
+            type: string
+            enum:
+            - sendgrid
+            - mailgun
+            - ses
+            - smtp
+            description: Email service provider used
+          provider_message_id:
+            type: string
+            description: Provider-specific message identifier
+          delivery_status:
+            type: string
+            enum:
+            - queued
+            - sent
+            - delivered
+            - bounced
+            - complained
+            - suppressed
+            default: queued
+            description: Current delivery status
+          delivered_at:
+            type: string
+            format: date-time
+            description: When email was delivered
+          opened_at:
+            type: string
+            format: date-time
+            description: When email was opened
+          clicked_at:
+            type: string
+            format: date-time
+            description: When links were clicked
+          bounce_reason:
+            type: string
+            description: Bounce reason if applicable
+          complaint_reason:
+            type: string
+            description: Complaint reason if applicable
+          suppression_reason:
+            type: string
+            enum:
+            - unsubscribed
+            - hard_bounce
+            - spam_complaint
+            - manual_suppression
+            description: Suppression reason
+          metadata:
+            type: object
+            description: Additional delivery metadata
+            properties:
+              ip_address:
+                type: string
+                description: Sending IP address
+              user_agent:
+                type: string
+                description: User agent if opened
+              geo_location:
+                type: string
+                description: Geographic location of open/click
+    EmailTemplate:
+      description: Email template entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Template name
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Template category
+          subject_template:
+            type: string
+            minLength: 1
+            maxLength: 200
+            description: Subject line template
+          html_body:
+            type: string
+            description: HTML email body template
+          text_body:
+            type: string
+            description: Plain text email body template
+          variables:
+            type: array
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: Variable name
+                type:
+                  type: string
+                  enum:
+                  - string
+                  - number
+                  - boolean
+                  - date
+                  description: Variable data type
+                required:
+                  type: boolean
+                  default: false
+                  description: Whether variable is required
+                default_value:
+                  type: string
+                  description: Default value if not provided
+            description: Template variables
+          languages:
+            type: array
+            items:
+              type: string
+              enum:
+              - en
+              - es
+              - zh
+              - ja
+              - ru
+              - de
+              - fr
+              - pl
+              - ko
+              - pt
+            description: Supported languages
+          test_data:
+            type: object
+            description: Sample data for template testing
+            additionalProperties: true
+          ab_test_variants:
+            type: array
+            items:
+              $ref: '#/components/schemas/TemplateVariant'
+            description: A/B testing variants
+    EmailCampaign:
+      description: Email campaign entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Campaign name
+          description:
+            type: string
+            maxLength: 500
+            description: Campaign description
+          campaign_type:
+            type: string
+            enum:
+            - promotional
+            - transactional
+            - newsletter
+            - announcement
+            description: Campaign type
+          template_id:
+            type: string
+            format: uuid
+            description: Template to use for campaign
+          target_audience:
+            $ref: '#/components/schemas/CampaignTargetAudience'
+          scheduling:
+            $ref: '#/components/schemas/CampaignScheduling'
+          status:
+            type: string
+            enum:
+            - draft
+            - scheduled
+            - active
+            - completed
+            - cancelled
+            - paused
+            default: draft
+            description: Campaign status
+          performance_metrics:
+            $ref: '#/components/schemas/CampaignPerformanceMetrics'
+          ab_test_config:
+            $ref: '#/components/schemas/ABTestConfiguration'
+    UserEmailConsent:
+      description: User email consent and preferences
+      type: object
+      required:
+      - user_id
+      - marketing_consent
+      - transactional_consent
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing emails
+        transactional_consent:
+          type: boolean
+          description: Consent for transactional emails (required)
+        promotional_consent:
+          type: boolean
+          description: Consent for promotional emails
+        newsletter_consent:
+          type: boolean
+          description: Consent for newsletter emails
+        consent_sources:
+          type: array
+          items:
+            type: object
+            required:
+            - source
+            - timestamp
+            properties:
+              source:
+                type: string
+                enum:
+                - registration
+                - profile_update
+                - explicit_opt_in
+                - imported
+                description: How consent was obtained
+              timestamp:
+                type: string
+                format: date-time
+                description: When consent was given
+              ip_address:
+                type: string
+                description: IP address when consent was given
+              legal_basis:
+                type: string
+                enum:
+                - consent
+                - legitimate_interest
+                - contract
+                - legal_obligation
+                description: GDPR legal basis
+          description: History of consent changes
+        suppression_lists:
+          type: array
+          items:
+            type: string
+            enum:
+            - hard_bounce
+            - spam_complaint
+            - unsubscribed
+            - manual_suppression
+          description: Email suppression reasons
+        preferences_updated_at:
+          type: string
+          format: date-time
+          description: When preferences were last updated
+    TemplateVariant:
+      description: A/B testing template variant
+      type: object
+      required:
+      - variant_id
+      - weight
+      properties:
+        variant_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Variant identifier
+        subject_template:
+          type: string
+          maxLength: 200
+          description: Variant subject template
+        html_body:
+          type: string
+          description: Variant HTML body
+        text_body:
+          type: string
+          description: Variant text body
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Traffic distribution weight
+    CampaignTargetAudience:
+      description: Campaign target audience definition
+      type: object
+      properties:
+        user_segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: User segment IDs to target
+        email_domains:
+          type: array
+          items:
+            type: string
+          description: Email domains to target
+        geographic_filters:
+          type: array
+          items:
+            type: string
+          description: Geographic region filters
+        consent_filters:
+          type: object
+          properties:
+            marketing_consent:
+              type: boolean
+              description: Require marketing consent
+            promotional_consent:
+              type: boolean
+              description: Require promotional consent
+          description: Consent-based filtering
+        custom_filters:
+          type: object
+          description: Custom targeting filters
+          additionalProperties: true
+    CampaignScheduling:
+      description: Campaign scheduling configuration
+      type: object
+      properties:
+        scheduled_at:
+          type: string
+          format: date-time
+          description: Campaign scheduled time
+        timezone:
+          type: string
+          default: UTC
+          description: Scheduling timezone
+        send_rate:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          description: Emails per hour rate limit
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Batch size for processing
+    CampaignPerformanceMetrics:
+      description: Campaign performance tracking
+      type: object
+      properties:
+        target_count:
+          type: integer
+          description: Total target recipients
+        sent_count:
+          type: integer
+          description: Emails successfully sent
+        delivered_count:
+          type: integer
+          description: Emails delivered to inbox
+        opened_count:
+          type: integer
+          description: Emails opened by recipients
+        clicked_count:
+          type: integer
+          description: Link clicks in emails
+        bounced_count:
+          type: integer
+          description: Hard bounces
+        complained_count:
+          type: integer
+          description: Spam complaints
+        unsubscribed_count:
+          type: integer
+          description: Unsubscribes during campaign
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery success rate
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Email open rate
+        click_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Email click rate
+    ABTestConfiguration:
+      description: A/B testing configuration for campaign
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether A/B testing is enabled
+        winner_criteria:
+          type: string
+          enum:
+          - open_rate
+          - click_rate
+          - delivery_rate
+          default: open_rate
+          description: Criteria for selecting winner
+        test_duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+          description: Test duration before winner selection
+        winner_distribution:
+          type: integer
+          minimum: 50
+          maximum: 100
+          default: 100
+          description: Percentage of traffic to winner variant
+    DeliveryAnalytics:
+      description: Comprehensive delivery analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_sent:
+          type: integer
+          description: Total emails sent
+        total_delivered:
+          type: integer
+          description: Total emails delivered
+        total_opened:
+          type: integer
+          description: Total emails opened
+        total_clicked:
+          type: integer
+          description: Total link clicks
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall delivery rate
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall open rate
+        click_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall click rate
+        bounce_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Bounce rate
+        complaint_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Spam complaint rate
+        provider_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProviderDeliveryMetrics'
+          description: Metrics by email provider
+        geographic_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeographicDeliveryMetrics'
+          description: Delivery metrics by geography
+    ProviderDeliveryMetrics:
+      description: Delivery metrics for specific email provider
+      type: object
+      properties:
+        sent:
+          type: integer
+          description: Emails sent via provider
+        delivered:
+          type: integer
+          description: Emails delivered by provider
+        bounced:
+          type: integer
+          description: Bounces from provider
+        complained:
+          type: integer
+          description: Complaints from provider
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Provider delivery rate
+        average_delivery_time:
+          type: number
+          description: Average delivery time in seconds
+    GeographicDeliveryMetrics:
+      description: Delivery metrics by geographic region
+      type: object
+      properties:
+        region:
+          type: string
+          description: Geographic region
+        sent_count:
+          type: integer
+          description: Emails sent to region
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Regional delivery rate
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Regional open rate
+        average_delivery_time:
+          type: number
+          description: Regional average delivery time
+    EmailDeliveryStatus:
+      description: Detailed email delivery status
+      type: object
+      required:
+      - email_id
+      - status
+      - recipient_email
+      - sent_at
+      properties:
+        email_id:
+          type: string
+          format: uuid
+          description: Email unique identifier
+        status:
+          type: string
+          enum:
+          - queued
+          - sent
+          - delivered
+          - bounced
+          - complained
+          - suppressed
+          description: Current delivery status
+        recipient_email:
+          type: string
+          format: email
+          description: Recipient email address
+        sent_at:
+          type: string
+          format: date-time
+          description: When email was sent
+        delivered_at:
+          type: string
+          format: date-time
+          description: When email was delivered
+        opened_at:
+          type: string
+          format: date-time
+          description: When email was opened
+        clicked_at:
+          type: string
+          format: date-time
+          description: When links were clicked
+        bounced_at:
+          type: string
+          format: date-time
+          description: When bounce occurred
+        bounce_reason:
+          type: string
+          description: Bounce reason
+        complaint_at:
+          type: string
+          format: date-time
+          description: When complaint was received
+        suppression_reason:
+          type: string
+          enum:
+          - unsubscribed
+          - hard_bounce
+          - spam_complaint
+          - manual_suppression
+          description: Suppression reason
+        retry_count:
+          type: integer
+          minimum: 0
+          description: Number of delivery retries
+        provider:
+          type: string
+          enum:
+          - sendgrid
+          - mailgun
+          - ses
+          - smtp
+          description: Email provider used
+    TemplateSummary:
+      description: Template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+        name:
+          type: string
+          description: Template name
+        category:
+          type: string
+          description: Template category
+        languages:
+          type: array
+          items:
+            type: string
+          description: Supported languages
+        is_active:
+          type: boolean
+          description: Template active status
+        last_updated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    CampaignSummary:
+      description: Campaign summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Campaign ID
+        name:
+          type: string
+          description: Campaign name
+        campaign_type:
+          type: string
+          enum:
+          - promotional
+          - transactional
+          - newsletter
+          - announcement
+          description: Campaign type
+        status:
+          type: string
+          enum:
+          - draft
+          - scheduled
+          - active
+          - completed
+          - cancelled
+          - paused
+          description: Campaign status
+        target_count:
+          type: integer
+          description: Number of target recipients
+        sent_count:
+          type: integer
+          description: Emails sent
+        delivered_count:
+          type: integer
+          description: Emails delivered
+        open_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Email open rate
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Campaign scheduled time
+    SendEmailRequest:
+      description: Request payload for sending email
+      type: object
+      required:
+      - to
+      - template_id
+      properties:
+        to:
+          oneOf:
+          - type: string
+            format: email
+            description: Single recipient email
+          - type: array
+            items:
+              type: string
+              format: email
+            minItems: 1
+            maxItems: 100
+            description: Multiple recipient emails
+          description: Email recipient(s)
+        template_id:
+          type: string
+          format: uuid
+          description: Template to use for email
+        personalization_data:
+          type: object
+          description: Data for template personalization
+          additionalProperties: true
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+          description: Email delivery priority
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Schedule email for future delivery
+        tracking:
+          type: object
+          properties:
+            enable_opens:
+              type: boolean
+              default: true
+              description: Track email opens
+            enable_clicks:
+              type: boolean
+              default: true
+              description: Track link clicks
+            custom_tracking_id:
+              type: string
+              maxLength: 100
+              description: Custom tracking identifier
+          description: Email tracking configuration
+    SendBatchEmailsRequest:
+      description: Request payload for batch email sending
+      type: object
+      required:
+      - emails
+      properties:
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SendEmailRequest'
+          minItems: 1
+          maxItems: 1000
+          description: Individual email requests
+        batch_config:
+          type: object
+          properties:
+            priority:
+              type: string
+              enum:
+              - low
+              - normal
+              - high
+              - critical
+              default: normal
+              description: Batch priority
+            deduplicate:
+              type: boolean
+              default: true
+              description: Remove duplicate recipients
+            rate_limit:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Emails per minute rate limit
+          description: Batch processing configuration
+    BatchEmailResult:
+      description: Result of batch email operation
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch operation identifier
+        total_requested:
+          type: integer
+          description: Total emails requested
+        queued_count:
+          type: integer
+          description: Emails successfully queued
+        duplicate_count:
+          type: integer
+          description: Duplicate emails removed
+        error_count:
+          type: integer
+          description: Emails with errors
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: Expected completion time
+        email_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Individual email IDs created
+    CreateTemplateRequest:
+      description: Request payload for creating email template
+      type: object
+      required:
+      - name
+      - category
+      - subject_template
+      - html_body
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Template category
+        subject_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Subject line template
+        html_body:
+          type: string
+          minLength: 1
+          description: HTML email body template
+        text_body:
+          type: string
+          description: Plain text email body template
+        variables:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Variable name
+              type:
+                type: string
+                enum:
+                - string
+                - number
+                - boolean
+                - date
+                description: Variable data type
+              required:
+                type: boolean
+                default: false
+                description: Whether variable is required
+              default_value:
+                type: string
+                description: Default value if not provided
+          description: Template variables
+        languages:
+          type: array
+          items:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+          default:
+          - en
+          description: Supported languages
+        test_data:
+          type: object
+          description: Sample data for template testing
+          additionalProperties: true
+    UpdateTemplateRequest:
+      description: Request payload for updating email template
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Template category
+        subject_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Subject line template
+        html_body:
+          type: string
+          minLength: 1
+          description: HTML email body template
+        text_body:
+          type: string
+          description: Plain text email body template
+        variables:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Variable name
+              type:
+                type: string
+                enum:
+                - string
+                - number
+                - boolean
+                - date
+                description: Variable data type
+              required:
+                type: boolean
+                description: Whether variable is required
+              default_value:
+                type: string
+                description: Default value if not provided
+          description: Template variables
+        languages:
+          type: array
+          items:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+          description: Supported languages
+        test_data:
+          type: object
+          description: Sample data for template testing
+          additionalProperties: true
+    CreateCampaignRequest:
+      description: Request payload for creating email campaign
+      type: object
+      required:
+      - name
+      - template_id
+      - target_audience
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Campaign name
+        description:
+          type: string
+          maxLength: 500
+          description: Campaign description
+        campaign_type:
+          type: string
+          enum:
+          - promotional
+          - transactional
+          - newsletter
+          - announcement
+          default: promotional
+          description: Campaign type
+        template_id:
+          type: string
+          format: uuid
+          description: Template to use for campaign
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+        ab_test_config:
+          $ref: '#/components/schemas/ABTestConfiguration'
+    UpdateCampaignRequest:
+      description: Request payload for updating campaign
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Campaign name
+        description:
+          type: string
+          maxLength: 500
+          description: Campaign description
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+        ab_test_config:
+          $ref: '#/components/schemas/ABTestConfiguration'
+    UpdateUserConsentRequest:
+      description: Request payload for updating user email consent
+      type: object
+      properties:
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing emails
+        transactional_consent:
+          type: boolean
+          description: Consent for transactional emails
+        promotional_consent:
+          type: boolean
+          description: Consent for promotional emails
+        newsletter_consent:
+          type: boolean
+          description: Consent for newsletter emails
+        consent_source:
+          type: string
+          enum:
+          - profile_update
+          - explicit_opt_in
+          - withdrawal
+          default: profile_update
+          description: Source of consent change
+        legal_basis:
+          type: string
+          enum:
+          - consent
+          - legitimate_interest
+          - contract
+          - legal_obligation
+          description: GDPR legal basis for processing

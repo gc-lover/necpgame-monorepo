@@ -1,0 +1,69 @@
+openapi: 3.0.3
+paths:
+  /api/v1/inventory/{playerId}/equipment/{itemId}:
+    put:
+      operationId: EquipItem
+      summary: Equip item
+      description: '**Equip Item**
+
+
+        Equips an item from inventory to specified equipment slot.
+
+        Handles equipment conflicts and stat calculations.
+
+
+        **BACKEND NOTE:** Update equipment hash for cache invalidation.
+
+        **Performance:** P99 <25ms for equipment swaps
+
+        **Validation:** Equipment compatibility and level requirements
+
+        '
+      tags:
+      - Equipment Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Item UUID to equip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipItemRequest'
+      responses:
+        '200':
+          description: Item equipped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipItemResponse'
+        '400':
+          description: Invalid equipment slot or item incompatible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player or item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

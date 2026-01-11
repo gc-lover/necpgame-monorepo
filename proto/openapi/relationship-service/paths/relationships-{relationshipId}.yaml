@@ -1,0 +1,116 @@
+openapi: 3.0.3
+paths:
+  /relationships/{relationshipId}:
+    get:
+      summary: Get relationship details
+      description: '**Retrieve detailed information about a specific relationship**
+
+        Includes full history, events, and current status.
+
+        **Performance:** <35ms with relationship-specific caching
+
+        '
+      operationId: getRelationship
+      tags:
+      - Relationships
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: relationshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Relationship details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipDetailResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update relationship
+      description: '**Update relationship properties and level**
+
+        Modifies relationship intensity, description, and flags.
+
+        **Performance:** <45ms with consistency checks
+
+        '
+      operationId: updateRelationship
+      tags:
+      - Relationships
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: relationshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRelationshipRequest'
+      responses:
+        '200':
+          description: Relationship updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Terminate relationship
+      description: '**Terminate/end a relationship**
+
+        Sets relationship as terminated with reason and cleanup.
+
+        **Performance:** <40ms with relationship cleanup
+
+        '
+      operationId: terminateRelationship
+      tags:
+      - Relationships
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: relationshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      - name: reason
+        in: query
+        schema:
+          type: string
+          maxLength: 200
+        description: Reason for termination
+      responses:
+        '204':
+          description: Relationship terminated successfully
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

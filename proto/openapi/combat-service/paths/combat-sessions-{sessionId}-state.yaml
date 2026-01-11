@@ -1,0 +1,42 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions/{sessionId}/state:
+    get:
+      summary: Get combat session state
+      description: '**Combat session state endpoint**
+
+        Returns real-time state of combat session including participant status, effects,
+        and current turn information.
+
+        **Performance:** <10ms P95, real-time updates required
+
+        '
+      operationId: combatServiceGetSessionState
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Combat session state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionState'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

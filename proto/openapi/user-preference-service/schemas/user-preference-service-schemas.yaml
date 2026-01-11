@@ -1,0 +1,478 @@
+openapi: 3.0.3
+components:
+  schemas:
+    UserPreferences:
+      description: Complete user preferences entity with infrastructure domain inheritance
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+        categories:
+          type: object
+          description: Preference categories
+          properties:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+        metadata:
+          type: object
+          description: Preference metadata
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Preferences version for optimistic locking
+            last_updated:
+              type: string
+              format: date-time
+              description: Last update timestamp
+            last_updated_by:
+              type: string
+              format: uuid
+              description: User/system that last updated preferences
+    PreferenceCategory:
+      description: Individual preference category
+      type: object
+      properties:
+        category:
+          type: string
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+          description: Category identifier
+        preferences:
+          type: object
+          description: Category-specific preferences
+          additionalProperties: true
+        metadata:
+          type: object
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Category version
+            last_updated:
+              type: string
+              format: date-time
+              description: Category last update timestamp
+    PreferenceCategoryInfo:
+      description: Preference category metadata
+      type: object
+      required:
+      - category
+      - name
+      - description
+      properties:
+        category:
+          type: string
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+          description: Category identifier
+        name:
+          type: string
+          description: Human-readable category name
+        description:
+          type: string
+          description: Category description
+        icon:
+          type: string
+          description: Category icon identifier
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Display priority (higher = more important)
+    PreferenceCategorySchema:
+      description: JSON schema for preference category validation
+      type: object
+      properties:
+        $schema:
+          type: string
+          description: JSON Schema version
+        type:
+          type: string
+          enum:
+          - object
+        properties:
+          type: object
+          description: Schema properties
+          additionalProperties: true
+        required:
+          type: array
+          items:
+            type: string
+          description: Required properties
+    PreferenceAuditEntry:
+      description: Audit entry for preference operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: Associated user ID
+          category:
+            type: string
+            enum:
+            - appearance
+            - notifications
+            - gameplay
+            - privacy
+            - accessibility
+            - performance
+            description: Affected preference category
+          operation_type:
+            type: string
+            enum:
+            - create
+            - update
+            - reset
+            - sync
+            - category_update
+            description: Type of preference operation
+          old_values:
+            type: object
+            description: Previous preference values
+          new_values:
+            type: object
+            description: New preference values
+    AppearancePreferences:
+      description: User interface appearance preferences
+      type: object
+      properties:
+        theme:
+          type: string
+          enum:
+          - light
+          - dark
+          - auto
+          - cyberpunk
+          - neon
+          default: auto
+          description: UI theme preference
+        accent_color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+          default: '#00FF88'
+          description: Accent color in hex format
+        font_size:
+          type: string
+          enum:
+          - small
+          - medium
+          - large
+          - extra_large
+          default: medium
+          description: Interface font size
+        language:
+          type: string
+          enum:
+          - en
+          - es
+          - zh
+          - ja
+          - ru
+          - de
+          - fr
+          - pl
+          - ko
+          - pt
+          default: en
+          description: Interface language
+    NotificationPreferences:
+      description: Notification and communication preferences
+      type: object
+      properties:
+        email_notifications:
+          type: boolean
+          default: true
+          description: Enable email notifications
+        push_notifications:
+          type: boolean
+          default: true
+          description: Enable push notifications
+        in_game_notifications:
+          type: boolean
+          default: true
+          description: Enable in-game notifications
+        quiet_hours_start:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          default: '22:00'
+          description: Quiet hours start time (HH:MM)
+        quiet_hours_end:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          default: 08:00
+          description: Quiet hours end time (HH:MM)
+        notification_frequency:
+          type: string
+          enum:
+          - immediate
+          - hourly
+          - daily
+          - weekly
+          - never
+          default: immediate
+          description: Default notification frequency
+    GameplayPreferences:
+      description: Game-specific preferences
+      type: object
+      properties:
+        difficulty_preference:
+          type: string
+          enum:
+          - easy
+          - normal
+          - hard
+          - expert
+          default: normal
+          description: Preferred game difficulty
+        auto_save:
+          type: boolean
+          default: true
+          description: Enable auto-save
+        control_scheme:
+          type: string
+          enum:
+          - classic
+          - modern
+          - custom
+          default: modern
+          description: Control scheme preference
+        music_volume:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 70
+          description: Music volume percentage
+        sfx_volume:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 80
+          description: Sound effects volume percentage
+    PrivacyPreferences:
+      description: Privacy and data sharing preferences
+      type: object
+      properties:
+        profile_visibility:
+          type: string
+          enum:
+          - public
+          - friends_only
+          - private
+          default: friends_only
+          description: Profile visibility setting
+        show_online_status:
+          type: boolean
+          default: true
+          description: Show online status to others
+        allow_friend_requests:
+          type: boolean
+          default: true
+          description: Allow others to send friend requests
+        data_collection_consent:
+          type: boolean
+          default: false
+          description: Consent for analytics data collection
+        marketing_emails:
+          type: boolean
+          default: false
+          description: Allow marketing email communications
+    AccessibilityPreferences:
+      description: Accessibility and usability preferences
+      type: object
+      properties:
+        high_contrast:
+          type: boolean
+          default: false
+          description: Enable high contrast mode
+        large_text:
+          type: boolean
+          default: false
+          description: Enable large text mode
+        reduce_motion:
+          type: boolean
+          default: false
+          description: Reduce animations and motion
+        screen_reader_support:
+          type: boolean
+          default: false
+          description: Enable screen reader optimizations
+        color_blind_mode:
+          type: string
+          enum:
+          - none
+          - deuteranopia
+          - protanopia
+          - tritanopia
+          default: none
+          description: Color blindness accommodation
+    PerformancePreferences:
+      description: Performance and quality preferences
+      type: object
+      properties:
+        graphics_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+          default: high
+          description: Graphics quality setting
+        frame_rate_limit:
+          type: integer
+          enum:
+          - 30
+          - 60
+          - 120
+          - 144
+          - unlimited
+          default: 60
+          description: Frame rate limit
+        vsync:
+          type: boolean
+          default: true
+          description: Enable vertical sync
+        texture_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          default: high
+          description: Texture quality setting
+        shadow_quality:
+          type: string
+          enum:
+          - false
+          - low
+          - medium
+          - high
+          default: medium
+          description: Shadow quality setting
+    UpdatePreferencesRequest:
+      description: Request payload for updating user preferences
+      type: object
+      required:
+      - categories
+      properties:
+        categories:
+          type: object
+          description: Updated preference categories
+          properties:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+        version:
+          type: integer
+          minimum: 1
+          description: Current preferences version for optimistic locking
+    PatchPreferencesRequest:
+      description: Request payload for partial preference updates
+      type: object
+      required:
+      - categories
+      properties:
+        categories:
+          type: object
+          description: Categories to update (partial)
+          properties:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+    UpdateCategoryRequest:
+      description: Request payload for updating specific category
+      type: object
+      required:
+      - preferences
+      properties:
+        preferences:
+          type: object
+          description: Category-specific preferences
+          additionalProperties: true
+        version:
+          type: integer
+          minimum: 1
+          description: Category version for optimistic locking
+    ResetPreferencesRequest:
+      description: Request payload for resetting preferences
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+            enum:
+            - appearance
+            - notifications
+            - gameplay
+            - privacy
+            - accessibility
+            - performance
+          description: Specific categories to reset (empty = all categories)
+        preserve_custom:
+          type: boolean
+          default: false
+          description: Preserve user-customized preferences
+    SyncPreferencesRequest:
+      description: Request payload for preference synchronization
+      type: object
+      properties:
+        device_id:
+          type: string
+          format: uuid
+          description: Specific device to sync to
+        force_full_sync:
+          type: boolean
+          default: false
+          description: Force complete synchronization
+        conflict_resolution:
+          type: string
+          enum:
+          - server_wins
+          - client_wins
+          - manual
+          default: server_wins
+          description: How to resolve sync conflicts

@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the analytics dashboard service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds '
+      operationId: analyticsServiceHealthCheck
+      parameters:
+      - in: header
+        name: Accept-Encoding
+        schema:
+          enum:
+          - gzip
+          - deflate
+          - br
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, s-maxage=60
+                type: string
+            Content-Encoding:
+              schema:
+                enum:
+                - gzip
+                - deflate
+                - br
+                type: string
+            ETag:
+              schema:
+                example: '"analytics-health-v1.0"'
+                type: string
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                example: 60
+                type: integer
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is unhealthy
+      summary: Analytics service health check
+      tags:
+      - Technical Performance

@@ -1,0 +1,255 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    SeasonalChallenge:
+      type: object
+      description: Seasonal challenge definition and progress tracking
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique challenge identifier
+        name:
+          type: string
+          description: Challenge display name
+        description:
+          type: string
+          description: Challenge description and objectives
+        seasonId:
+          type: string
+          format: uuid
+          description: Associated season identifier
+        type:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - seasonal
+          description: Challenge frequency type
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengeObjective'
+          description: Challenge completion objectives
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengeReward'
+          description: Available rewards upon completion
+        startDate:
+          type: string
+          format: date-time
+          description: Challenge activation date
+        endDate:
+          type: string
+          format: date-time
+          description: Challenge expiration date
+        isActive:
+          type: boolean
+          description: Whether challenge is currently available
+        progress:
+          type: object
+          description: Player progress tracking
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            completed:
+              type: boolean
+            currentProgress:
+              type: number
+            maxProgress:
+              type: number
+            lastUpdated:
+              type: string
+              format: date-time
+      required:
+      - id
+      - name
+      - seasonId
+      - type
+      - objectives
+      - startDate
+      - endDate
+    ChallengeObjective:
+      type: object
+      description: Individual challenge objective
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - achieve
+          - compete
+        target:
+          type: string
+          description: Objective target (enemy type, item, location, etc.)
+        count:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+      required:
+      - id
+      - type
+      - target
+      - count
+    ChallengeReward:
+      type: object
+      description: Challenge completion reward
+      properties:
+        type:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - title
+          - achievement
+        value:
+          oneOf:
+          - type: integer
+          - type: string
+          description: Reward value or identifier
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      required:
+      - type
+      - value
+    TimeTrial:
+      type: object
+      description: Time trial challenge definition
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        courseId:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum:
+          - speed
+          - combat
+          - exploration
+          - mixed
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - expert
+        targetTime:
+          type: integer
+          description: Target completion time in seconds
+        recordTime:
+          type: integer
+          description: Current record time in seconds
+        recordHolder:
+          type: string
+          format: uuid
+          description: Character ID of record holder
+        isActive:
+          type: boolean
+      required:
+      - id
+      - name
+      - courseId
+      - category
+      - difficulty
+      - targetTime
+    RealtimeSession:
+      type: object
+      description: Real-time gameplay session state
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        characterId:
+          type: string
+          format: uuid
+        connectionState:
+          type: string
+          enum:
+          - connecting
+          - connected
+          - disconnected
+          - error
+        lastHeartbeat:
+          type: string
+          format: date-time
+        protocolVersion:
+          type: string
+        performanceProfile:
+          type: object
+          properties:
+            latency:
+              type: integer
+              description: Current latency in ms
+            packetLoss:
+              type: number
+              format: float
+              description: Packet loss percentage
+            bandwidth:
+              type: integer
+              description: Bandwidth usage in KB/s
+      required:
+      - sessionId
+      - characterId
+      - connectionState
+    CombatState:
+      type: object
+      description: Real-time combat session state
+      properties:
+        combatId:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs in combat
+        state:
+          type: string
+          enum:
+          - initializing
+          - active
+          - paused
+          - completed
+          - terminated
+        startTime:
+          type: string
+          format: date-time
+        currentTurn:
+          type: integer
+          minimum: 1
+        turnTimeout:
+          type: integer
+          description: Turn timeout in seconds
+        lastActivity:
+          type: string
+          format: date-time
+      required:
+      - combatId
+      - participants
+      - state

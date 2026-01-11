@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /analytics/combat/{session_id}:
+    get:
+      summary: Get combat analytics for session
+      description: '**Combat analytics**
+
+        Retrieves detailed combat analytics and statistics for performance analysis
+        and balance testing.
+
+        **BACKEND NOTE:** Aggregates real-time data for analytics with resource-intensive
+        heatmaps.
+
+        '
+      operationId: getCombatAnalytics
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      - name: include_heatmaps
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include position heatmaps (resource intensive)
+      - name: include_player_paths
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include player movement paths
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - full_session
+          - last_5_minutes
+          - last_1_minute
+          default: full_session
+        description: Time range for analytics
+      responses:
+        '200':
+          description: Combat analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalyticsResponse'

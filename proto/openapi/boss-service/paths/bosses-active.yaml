@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /bosses/active:
+    get:
+      summary: Get active world bosses
+      description: '**Get currently active world bosses**
+
+        Returns list of bosses currently available for encounters, including elite
+        champions and special variants.
+
+        **Performance:** <25ms response time, cached for 10 seconds '
+      operationId: getActiveBosses
+      tags:
+      - World Bosses
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability filtering
+      - name: league
+        in: query
+        schema:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - mythic
+        description: Filter by difficulty league
+      - name: include_elite
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include elite champion variants
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific zone
+      responses:
+        '200':
+          description: Active bosses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldBoss'
+        '400':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

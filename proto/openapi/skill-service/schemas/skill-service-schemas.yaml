@@ -1,0 +1,765 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    SkillEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - description
+        - category
+        - maxLevel
+        properties:
+          name:
+            type: string
+            description: null
+            maxLength: 100
+            example: null
+          description:
+            type: string
+            description: null
+            maxLength: 500
+            example: null
+          category:
+            type: string
+            description: null
+            enum:
+            - combat
+            - crafting
+            - social
+            - exploration
+            example: combat
+          treeId:
+            type: string
+            description: ID
+            format: uuid
+          iconUrl:
+            type: string
+            description: URL
+            format: uri
+            example: https://cdn.necpgame.com/skills/sword-mastery.png
+          maxLevel:
+            type: integer
+            description: null
+            minimum: 1
+            maximum: 100
+            example: 50
+          prerequisites:
+            type: array
+            description: null
+            items:
+              type: object
+              properties:
+                skillId:
+                  type: string
+                  format: uuid
+                requiredLevel:
+                  type: integer
+                  minimum: 1
+                type:
+                  type: string
+                  enum:
+                  - skill
+                  - level
+                  - item
+          effects:
+            type: array
+            description: null
+            items:
+              type: object
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                effectType:
+                  type: string
+                  enum:
+                  - damage_bonus
+                  - accuracy_bonus
+                  - craft_quality
+                  - social_bonus
+                value:
+                  type: number
+                description:
+                  type: string
+                  maxLength: 200
+          costFormula:
+            type: string
+            description: null
+            example: level * 100 + level^2 * 10
+          isActive:
+            type: boolean
+            description: Is skill active
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    SkillTreeEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - category
+        - rootSkillId
+        properties:
+          name:
+            type: string
+            description: null
+            maxLength: 100
+            example: null
+          description:
+            type: string
+            description: null
+            maxLength: 500
+          category:
+            type: string
+            description: null
+            enum:
+            - combat
+            - crafting
+            - social
+            - exploration
+            example: combat
+          rootSkillId:
+            type: string
+            description: ID
+            format: uuid
+          specializations:
+            type: array
+            description: null
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 200
+                requiredSkills:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                bonuses:
+                  type: object
+                  additionalProperties:
+                    type: number
+          isActive:
+            type: boolean
+            description: null
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    PlayerSkillEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - skillId
+        - level
+        - experience
+        properties:
+          playerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          skillId:
+            type: string
+            description: ID
+            format: uuid
+            example: 456e7890-e89b-12d3-a456-426614174001
+          level:
+            type: integer
+            description: null
+            minimum: 0
+            example: 15
+          experience:
+            type: integer
+            description: null
+            minimum: 0
+            example: 2500
+          experienceToNext:
+            type: integer
+            description: null
+            minimum: 0
+            example: 500
+          learnedAt:
+            type: string
+            description: null
+            format: date-time
+          lastUsedAt:
+            type: string
+            description: null
+            format: date-time
+          specializationBonus:
+            type: number
+            description: null
+            default: 1.0
+          $ref: '#/components/schemas/OptimisticLock'
+    PlayerSpecializationEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - treeId
+        - specializationName
+        properties:
+          playerId:
+            type: string
+            description: ID
+            format: uuid
+          treeId:
+            type: string
+            description: ID
+            format: uuid
+          specializationName:
+            type: string
+            description: null
+            maxLength: 50
+            example: null
+          chosenAt:
+            type: string
+            description: null
+            format: date-time
+          bonuses:
+            type: object
+            description: null
+            additionalProperties:
+              type: number
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateSkillRequest:
+      type: object
+      required:
+      - name
+      - description
+      - category
+      - maxLevel
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - crafting
+          - social
+          - exploration
+        treeId:
+          type: string
+          format: uuid
+        iconUrl:
+          type: string
+          format: uri
+        maxLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+        prerequisites:
+          type: array
+          items:
+            type: object
+            properties:
+              skillId:
+                type: string
+                format: uuid
+              requiredLevel:
+                type: integer
+                minimum: 1
+              type:
+                type: string
+                enum:
+                - skill
+                - level
+                - item
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+                minimum: 1
+              effectType:
+                type: string
+                enum:
+                - damage_bonus
+                - accuracy_bonus
+                - craft_quality
+                - social_bonus
+              value:
+                type: number
+              description:
+                type: string
+                maxLength: 200
+        costFormula:
+          type: string
+    UpdateSkillRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - crafting
+          - social
+          - exploration
+        treeId:
+          type: string
+          format: uuid
+        iconUrl:
+          type: string
+          format: uri
+        maxLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+        prerequisites:
+          type: array
+          items:
+            type: object
+            properties:
+              skillId:
+                type: string
+                format: uuid
+              requiredLevel:
+                type: integer
+                minimum: 1
+              type:
+                type: string
+                enum:
+                - skill
+                - level
+                - item
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+                minimum: 1
+              effectType:
+                type: string
+                enum:
+                - damage_bonus
+                - accuracy_bonus
+                - craft_quality
+                - social_bonus
+              value:
+                type: number
+              description:
+                type: string
+                maxLength: 200
+        costFormula:
+          type: string
+        isActive:
+          type: boolean
+    SkillResponse:
+      type: object
+      properties:
+        skill:
+          $ref: '#/components/schemas/SkillEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    SkillListResponse:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    CreateSkillTreeRequest:
+      type: object
+      required:
+      - name
+      - category
+      - rootSkillId
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - crafting
+          - social
+          - exploration
+        rootSkillId:
+          type: string
+          format: uuid
+        specializations:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                maxLength: 50
+              description:
+                type: string
+                maxLength: 200
+              requiredSkills:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              bonuses:
+                type: object
+                additionalProperties:
+                  type: number
+    UpdateSkillTreeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - crafting
+          - social
+          - exploration
+        specializations:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                maxLength: 50
+              description:
+                type: string
+                maxLength: 200
+              requiredSkills:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              bonuses:
+                type: object
+                additionalProperties:
+                  type: number
+        isActive:
+          type: boolean
+    SkillTreeResponse:
+      type: object
+      properties:
+        skillTree:
+          $ref: '#/components/schemas/SkillTreeEntity'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    SkillTreeListResponse:
+      type: object
+      properties:
+        skillTrees:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillTreeEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 50
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    PlayerSkillListResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSkillEntity'
+        totalLearned:
+          type: integer
+          minimum: 0
+        totalPointsSpent:
+          type: integer
+          minimum: 0
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    LearnSkillRequest:
+      type: object
+      required:
+      - skillId
+      properties:
+        skillId:
+          type: string
+          format: uuid
+    LearnSkillResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill:
+          $ref: '#/components/schemas/PlayerSkillEntity'
+        learnedAt:
+          type: string
+          format: date-time
+        costPaid:
+          type: integer
+          minimum: 0
+    UpgradeSkillRequest:
+      type: object
+      required:
+      - levels
+      properties:
+        levels:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 10
+          default: 1
+    UpgradeSkillResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill:
+          $ref: '#/components/schemas/PlayerSkillEntity'
+        levelsGained:
+          type: integer
+          minimum: 1
+        experienceGained:
+          type: integer
+          minimum: 0
+        costPaid:
+          type: integer
+          minimum: 0
+        upgradedAt:
+          type: string
+          format: date-time
+    PlayerSpecializationResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        specializations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSpecializationEntity'
+        availableSpecializations:
+          type: array
+          items:
+            type: object
+            properties:
+              treeId:
+                type: string
+                format: uuid
+              treeName:
+                type: string
+              specializations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    canChoose:
+                      type: boolean
+                    requirements:
+                      type: array
+                      items:
+                        type: string
+    ChooseSpecializationRequest:
+      type: object
+      required:
+      - treeId
+      - specializationName
+      properties:
+        treeId:
+          type: string
+          format: uuid
+        specializationName:
+          type: string
+          maxLength: 50
+    ChooseSpecializationResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        specialization:
+          $ref: '#/components/schemas/PlayerSpecializationEntity'
+        bonusesApplied:
+          type: object
+          description: null
+          additionalProperties:
+            type: number
+        chosenAt:
+          type: string
+          format: date-time
+    SkillMasteryResponse:
+      type: object
+      properties:
+        skillId:
+          type: string
+          format: uuid
+        skillName:
+          type: string
+        totalPlayersLearned:
+          type: integer
+          minimum: 0
+        averageLevel:
+          type: number
+          minimum: 0
+        maxLevelAchieved:
+          type: integer
+          minimum: 0
+        masteryDistribution:
+          type: object
+          properties:
+            novice:
+              type: integer
+              minimum: 0
+              description: 1-10
+            intermediate:
+              type: integer
+              minimum: 0
+              description: 11-25
+            advanced:
+              type: integer
+              minimum: 0
+              description: 26-40
+            expert:
+              type: integer
+              minimum: 0
+              description: 41-50
+            master:
+              type: integer
+              minimum: 0
+              description: 50+
+    PopularSkillsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skillId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              category:
+                type: string
+              learnedCount:
+                type: integer
+                minimum: 0
+              levelIncreaseCount:
+                type: integer
+                minimum: 0
+              popularityRank:
+                type: integer
+                minimum: 1

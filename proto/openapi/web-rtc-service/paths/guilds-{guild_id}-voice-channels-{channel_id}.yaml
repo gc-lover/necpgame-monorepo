@@ -1,0 +1,69 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/voice-channels/{channel_id}:
+    put:
+      summary: Update guild voice channel
+      description: '**Guild System Integration: Update guild voice channel settings**
+
+        Modifies voice channel configuration including permissions, user limits, and
+        moderation settings. Requires appropriate guild permissions.
+
+        **Permission Checks:** - Channel owner or guild leader/officer - Validates
+        permission hierarchy
+
+        **Performance:** <30ms update with permission validation '
+      operationId: updateGuildVoiceChannel
+      tags:
+      - Guild Voice Channels
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildVoiceChannelUpdateRequest'
+      responses:
+        '200':
+          description: Guild voice channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannelResponse'
+        '400':
+          description: Invalid update request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions to update channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild or channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

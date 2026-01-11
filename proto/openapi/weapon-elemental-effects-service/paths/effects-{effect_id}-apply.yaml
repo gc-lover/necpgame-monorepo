@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /effects/{effect_id}/apply:
+    post:
+      summary: Apply effect to weapon
+      operationId: weaponEffectsApplyEffect
+      description: 'Apply elemental effect to a weapon configuration.
+
+        **BACKEND NOTE:** Validates effect compatibility and weapon constraints. '
+      tags:
+      - Elemental Effects
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectRequest'
+      responses:
+        '200':
+          description: Effect applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyEffectResponse'
+        '400':
+          description: Effect incompatible or weapon constraints violated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Effect or weapon not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

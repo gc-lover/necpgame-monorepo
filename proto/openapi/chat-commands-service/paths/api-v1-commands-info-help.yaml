@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/info/help:
+    get:
+      summary: Get command help information
+      description: '**Enterprise-grade informational help command**
+
+        Returns help information for available chat commands.
+
+        Available to all authenticated players.
+
+        **Performance:** <50ms response time, cached for 5 minutes
+
+        **Security:** Requires valid JWT token
+
+        '
+      operationId: getCommandHelp
+      tags:
+      - Informational Commands
+      parameters:
+      - name: command
+        in: query
+        description: Specific command to get help for (optional)
+        schema:
+          type: string
+          example: /kick
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Help information retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"command-help-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandHelpResponse'
+        '404':
+          description: Command not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

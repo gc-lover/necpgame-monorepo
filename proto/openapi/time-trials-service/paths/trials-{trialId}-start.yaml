@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /trials/{trialId}/start:
+    post:
+      operationId: startTrialSession
+      summary: Start time trial session
+      description: Initialize a new time trial session for the authenticated player
+      tags:
+      - Timer Engine
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                party_id:
+                  type: string
+                  format: uuid
+                  description: Party identifier for group trials
+                custom_settings:
+                  type: object
+                  description: Custom trial settings
+      responses:
+        '201':
+          description: Trial session started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - session
+                - server_time
+                properties:
+                  session:
+                    $ref: '#/components/schemas/TrialSession'
+                  server_time:
+                    type: string
+                    format: date-time
+                    description: Server timestamp for synchronization
+        '400':
+          description: Cannot start trial (already active, invalid party, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

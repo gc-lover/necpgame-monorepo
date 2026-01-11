@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /tickets/queue:
+    get:
+      summary: Get ticket queue
+      description: Retrieve the current queue of tickets waiting for agent assignment
+      operationId: getTicketQueue
+      tags:
+      - Agent Queue
+      parameters:
+      - name: priority
+        in: query
+        schema:
+          $ref: '#/components/schemas/TicketPriority'
+        description: Filter by priority
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by category
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Items per page
+      responses:
+        '200':
+          description: Ticket queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketQueueResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'

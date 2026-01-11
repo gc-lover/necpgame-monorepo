@@ -1,0 +1,99 @@
+openapi: 3.0.3
+paths:
+  /chat/messages:
+    get:
+      summary: Get chat messages
+      description: Retrieve chat messages with filtering and pagination
+      operationId: getChatMessages
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channel_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - GLOBAL
+          - TRADE
+          - NEWBIE
+          - LOCAL
+          - PARTY
+          - RAID
+          - GUILD
+          - GUILD_OFFICER
+          - WHISPER
+          - SYSTEM
+          - COMBAT_LOG
+          - RP_EMOTE
+        description: Filter by channel type
+      - name: channel_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Specific channel ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of messages to retrieve
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Send chat message
+      description: Send a new chat message
+      operationId: sendChatMessage
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,104 @@
+openapi: 3.0.3
+paths:
+  /difficulty/rate:
+    post:
+      summary: Calculate difficulty rating
+      description: '**Calculate adaptive difficulty rating**
+
+        Analyzes context and player metrics to determine optimal difficulty scaling.
+
+        **Performance:** <100ms response time for rating calculation '
+      operationId: calculateDifficultyRating
+      tags:
+      - Difficulty Rating
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contextId:
+                  type: string
+                  format: uuid
+                  description: Context identifier (encounter, area, challenge)
+                contextType:
+                  type: string
+                  enum:
+                  - encounter
+                  - area
+                  - challenge
+                  - event
+                playerMetrics:
+                  type: object
+                  properties:
+                    count:
+                      type: integer
+                      minimum: 1
+                    averageLevel:
+                      type: integer
+                      minimum: 1
+                    performanceHistory:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          contextId:
+                            type: string
+                            format: uuid
+                          completionTime:
+                            type: integer
+                            description: Time in seconds
+                          success:
+                            type: boolean
+                          difficulty:
+                            type: string
+                            enum:
+                            - very_easy
+                            - easy
+                            - normal
+                            - hard
+                            - very_hard
+                            - impossible
+                  required:
+                  - count
+                  - averageLevel
+                baseDifficulty:
+                  type: string
+                  enum:
+                  - very_easy
+                  - easy
+                  - normal
+                  - hard
+                  - very_hard
+                  - impossible
+                  description: Requested base difficulty
+              required:
+              - contextId
+              - contextType
+              - playerMetrics
+      responses:
+        '200':
+          description: Difficulty rating calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DifficultyRating'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /api/v1/gameplay/difficulty-rating/recommendations/{playerId}:
+    get:
+      summary: Get difficulty recommendations for player
+      description: Returns recommended difficulty levels and content suggestions based
+        on player's skill rating
+      tags:
+      - Difficulty Rating
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      - name: contentType
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - dungeon
+          - raid
+          - mission
+          - pvp
+        description: Filter recommendations by content type
+      responses:
+        '200':
+          description: Difficulty recommendations for the player
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyRecommendationsResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

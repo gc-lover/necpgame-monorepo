@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /analytics/achievements:
+    get:
+      operationId: getAchievementAnalytics
+      summary: Get achievement analytics
+      description: Retrieve analytics data for achievements and player engagement
+      tags:
+      - Analytics
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          default: month
+        description: Analytics period
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - progress
+          - milestone
+          - challenge
+          - seasonal
+        description: Achievement category filter
+      responses:
+        '200':
+          description: Achievement analytics
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AchievementAnalytics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

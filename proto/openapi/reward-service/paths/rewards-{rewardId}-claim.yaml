@@ -1,0 +1,81 @@
+openapi: 3.0.3
+paths:
+  /rewards/{rewardId}/claim:
+    post:
+      summary: Claim reward
+      description: '**Enterprise-grade reward claiming endpoint**
+
+        Processes reward claims with validation of requirements and anti-cheat measures.
+
+        Ensures fair distribution and prevents exploitation.
+
+        **Performance:** <50ms P95, includes validation and distribution
+
+        '
+      operationId: claimReward
+      tags:
+      - Reward Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: rewardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Reward unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardRequest'
+      responses:
+        '200':
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardResponse'
+        '400':
+          description: Invalid request - claim requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - reward not available to this player
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Reward not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - reward already claimed or expired
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - claim rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

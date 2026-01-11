@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /clan-wars/{warId}/negotiate:
+    post:
+      summary: Propose war negotiation
+      description: '**Enterprise-grade war negotiation endpoint**
+
+        Initiates diplomatic negotiations including ceasefire proposals, peace treaties,
+        and surrender terms during active warfare.
+
+        **Performance:** <60ms P95, includes diplomatic validation
+
+        '
+      operationId: proposeWarNegotiation
+      tags:
+      - Clan Warfare
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarNegotiationRequest'
+      responses:
+        '201':
+          description: Negotiation proposal submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NegotiationResponse'
+        '400':
+          description: Invalid proposal - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient diplomatic authority
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - existing negotiation in progress
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

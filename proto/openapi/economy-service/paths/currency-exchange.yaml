@@ -1,0 +1,55 @@
+openapi: 3.0.3
+paths:
+  /currency/exchange:
+    post:
+      summary: Currency exchange
+      description: '**Currency exchange endpoint**
+
+        Exchanges between different in-game currencies with real-time rates. Supports
+        multiple currency pairs and exchange limits.
+
+        **Performance:** <15ms P95 with rate caching
+
+        **Validation:** Exchange limits, rate validation, balance checks
+
+        '
+      operationId: exchangeCurrency
+      tags:
+      - Currency
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyExchangeRequest'
+      responses:
+        '200':
+          description: Currency exchange completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyExchangeResponse'
+        '400':
+          description: Invalid exchange parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '409':
+          description: Insufficient funds or exchange rate changed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

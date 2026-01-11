@@ -1,0 +1,753 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: '#/components/schemas/BaseEntity'
+    BaseEntity:
+      $ref: '#/components/schemas/BaseEntity'
+    OptimisticLock:
+      $ref: '#/components/schemas/OptimisticLock'
+    ErrorResponse:
+      $ref: '#/components/schemas/ErrorResponse'
+    HealthResponse:
+      $ref: '#/components/schemas/HealthResponse'
+    HealthBatchRequest:
+      $ref: '#/components/schemas/HealthBatchRequest'
+    HealthBatchResponse:
+      $ref: '#/components/schemas/HealthBatchResponse'
+    WalletEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - ownerId
+        - type
+        - currency
+        properties:
+          ownerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          type:
+            type: string
+            description: null
+            enum:
+            - primary
+            - currency
+            - bonus
+            - savings
+            - investment
+            example: primary
+          currency:
+            type: string
+            description: null
+            enum:
+            - eddies
+            - eurobucks
+            - credits
+            example: eddies
+          balance:
+            type: number
+            description: null
+            minimum: 0
+            example: 50000.5
+          availableBalance:
+            type: number
+            description: Available balance
+            minimum: 0
+            example: 49500.5
+          status:
+            type: string
+            description: Wallet status
+            enum:
+            - active
+            - frozen
+            - closed
+            example: active
+          linkedWallets:
+            type: array
+            description: null
+            items:
+              type: string
+              format: uuid
+          autoConversionEnabled:
+            type: boolean
+            description: ''
+            default: false
+          autoConversionSettings:
+            type: object
+            description: ''
+            properties:
+              targetCurrency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+              threshold:
+                type: number
+                minimum: 0
+              convertAbove:
+                type: boolean
+                default: true
+          securityLevel:
+            type: string
+            description: null
+            enum:
+            - standard
+            - enhanced
+            - maximum
+            example: standard
+          dailyLimits:
+            type: object
+            description: null
+            properties:
+              withdrawal:
+                type: number
+                minimum: 0
+                example: 10000
+              transfer:
+                type: number
+                minimum: 0
+                example: 50000
+          lastActivity:
+            type: string
+            description: Last activity timestamp
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    WalletTransactionEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - walletId
+        - type
+        - amount
+        - currency
+        properties:
+          walletId:
+            type: string
+            description: ID
+            format: uuid
+          type:
+            type: string
+            description: null
+            enum:
+            - deposit
+            - withdraw
+            - transfer
+            - conversion
+            - fee
+            - bonus
+            - purchase
+            example: deposit
+          amount:
+            type: number
+            description: null
+            example: 1000.0
+          currency:
+            type: string
+            description: null
+            enum:
+            - eddies
+            - eurobucks
+            - credits
+            example: eddies
+          balanceBefore:
+            type: number
+            description: null
+            minimum: 0
+          balanceAfter:
+            type: number
+            description: null
+            minimum: 0
+          description:
+            type: string
+            description: null
+            maxLength: 255
+            example: Purchase of cyberware upgrade
+          referenceId:
+            type: string
+            description: ID ( )
+            format: uuid
+          category:
+            type: string
+            description: null
+            enum:
+            - weapons
+            - armor
+            - cyberware
+            - consumables
+            - services
+            - transfers
+            - misc
+            example: cyberware
+          location:
+            type: string
+            description: null
+            maxLength: 100
+          processedAt:
+            type: string
+            description: null
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateWalletRequest:
+      type: object
+      required:
+      - ownerId
+      - type
+      - currency
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - primary
+          - currency
+          - bonus
+          - savings
+          - investment
+        currency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        initialBalance:
+          type: number
+          minimum: 0
+          default: 0
+        autoConversionEnabled:
+          type: boolean
+          default: false
+        securityLevel:
+          type: string
+          enum:
+          - standard
+          - enhanced
+          - maximum
+          default: standard
+    UpdateWalletRequest:
+      type: object
+      properties:
+        autoConversionEnabled:
+          type: boolean
+        autoConversionSettings:
+          type: object
+          properties:
+            targetCurrency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            threshold:
+              type: number
+              minimum: 0
+            convertAbove:
+              type: boolean
+        securityLevel:
+          type: string
+          enum:
+          - standard
+          - enhanced
+          - maximum
+        dailyLimits:
+          type: object
+          properties:
+            withdrawal:
+              type: number
+              minimum: 0
+            transfer:
+              type: number
+              minimum: 0
+    WalletResponse:
+      type: object
+      properties:
+        wallet:
+          $ref: '#/components/schemas/WalletEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            lastTransaction:
+              type: string
+              format: date-time
+    WalletListResponse:
+      type: object
+      properties:
+        wallets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletEntity'
+        summary:
+          type: object
+          properties:
+            totalWallets:
+              type: integer
+              minimum: 0
+            totalBalance:
+              type: number
+              minimum: 0
+            currencies:
+              type: object
+              additionalProperties:
+                type: number
+                minimum: 0
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 50
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    WalletBalanceResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          minimum: 0
+        availableBalance:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+        pendingTransactions:
+          type: integer
+          minimum: 0
+        lastUpdated:
+          type: string
+          format: date-time
+    DepositRequest:
+      type: object
+      required:
+      - amount
+      - source
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+        source:
+          type: string
+          enum:
+          - game_earnings
+          - marketplace_sale
+          - quest_reward
+          - achievement_bonus
+          - admin_credit
+          - external_deposit
+        description:
+          type: string
+          maxLength: 255
+        referenceId:
+          type: string
+          format: uuid
+    DepositResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        depositedAmount:
+          type: number
+        newBalance:
+          type: number
+        transactionId:
+          type: string
+          format: uuid
+        processedAt:
+          type: string
+          format: date-time
+    WithdrawRequest:
+      type: object
+      required:
+      - amount
+      - destination
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+        destination:
+          type: string
+          enum:
+          - game_purchase
+          - marketplace_buy
+          - item_upgrade
+          - service_payment
+          - external_withdrawal
+        description:
+          type: string
+          maxLength: 255
+    WithdrawResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        withdrawnAmount:
+          type: number
+        fee:
+          type: number
+          minimum: 0
+        newBalance:
+          type: number
+        transactionId:
+          type: string
+          format: uuid
+        processedAt:
+          type: string
+          format: date-time
+    TransferRequest:
+      type: object
+      required:
+      - toWalletId
+      - amount
+      properties:
+        toWalletId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+        description:
+          type: string
+          maxLength: 255
+    TransferResponse:
+      type: object
+      properties:
+        fromWalletId:
+          type: string
+          format: uuid
+        toWalletId:
+          type: string
+          format: uuid
+        transferredAmount:
+          type: number
+        fee:
+          type: number
+          minimum: 0
+        transactionId:
+          type: string
+          format: uuid
+        processedAt:
+          type: string
+          format: date-time
+    WalletTransactionHistoryResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransactionEntity'
+        summary:
+          type: object
+          properties:
+            totalTransactions:
+              type: integer
+              minimum: 0
+            totalDeposits:
+              type: number
+              minimum: 0
+            totalWithdrawals:
+              type: number
+              minimum: 0
+            netChange:
+              type: number
+            periodStart:
+              type: string
+              format: date
+            periodEnd:
+              type: string
+              format: date
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    ConversionRequest:
+      type: object
+      required:
+      - fromWalletId
+      - toWalletId
+      - amount
+      properties:
+        fromWalletId:
+          type: string
+          format: uuid
+        toWalletId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+    ConversionResponse:
+      type: object
+      properties:
+        fromWalletId:
+          type: string
+          format: uuid
+        toWalletId:
+          type: string
+          format: uuid
+        convertedAmount:
+          type: number
+        receivedAmount:
+          type: number
+        exchangeRate:
+          type: number
+        fee:
+          type: number
+          minimum: 0
+        transactionId:
+          type: string
+          format: uuid
+        processedAt:
+          type: string
+          format: date-time
+    AutoConversionRequest:
+      type: object
+      required:
+      - walletId
+      - targetCurrency
+      - threshold
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        targetCurrency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        threshold:
+          type: number
+          minimum: 0
+        convertAbove:
+          type: boolean
+          default: true
+    AutoConversionResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        autoConversionEnabled:
+          type: boolean
+        settings:
+          type: object
+          properties:
+            targetCurrency:
+              type: string
+            threshold:
+              type: number
+            convertAbove:
+              type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+    LinkWalletsRequest:
+      type: object
+      required:
+      - linkedWalletId
+      - linkType
+      properties:
+        linkedWalletId:
+          type: string
+          format: uuid
+        linkType:
+          type: string
+          enum:
+          - transfer
+          - conversion
+          - backup
+          default: transfer
+    LinkWalletsResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        linkedWalletId:
+          type: string
+          format: uuid
+        linkType:
+          type: string
+        linkedAt:
+          type: string
+          format: date-time
+    WalletSecurityResponse:
+      type: object
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        securityLevel:
+          type: string
+          enum:
+          - standard
+          - enhanced
+          - maximum
+        twoFactorEnabled:
+          type: boolean
+        dailyLimits:
+          type: object
+          properties:
+            withdrawal:
+              type: number
+            transfer:
+              type: number
+        recentSecurityEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              eventType:
+                type: string
+                enum:
+                - login
+                - failed_login
+                - limit_exceeded
+                - suspicious_activity
+              timestamp:
+                type: string
+                format: date-time
+              details:
+                type: string
+    UpdateSecurityRequest:
+      type: object
+      properties:
+        securityLevel:
+          type: string
+          enum:
+          - standard
+          - enhanced
+          - maximum
+        twoFactorEnabled:
+          type: boolean
+        dailyLimits:
+          type: object
+          properties:
+            withdrawal:
+              type: number
+              minimum: 0
+            transfer:
+              type: number
+              minimum: 0
+    PlayerWalletsSummaryResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        wallets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletEntity'
+        totalBalance:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+        recentTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransactionEntity'
+          maxItems: 10
+        walletStats:
+          type: object
+          properties:
+            totalWallets:
+              type: integer
+              minimum: 0
+            activeWallets:
+              type: integer
+              minimum: 0
+            frozenWallets:
+              type: integer
+              minimum: 0
+    SpendingAnalyticsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - yearly
+        totalSpent:
+          type: number
+          minimum: 0
+        totalEarned:
+          type: number
+          minimum: 0
+        netChange:
+          type: number
+        spendingByCategory:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+        topSpendingCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              amount:
+                type: number
+              percentage:
+                type: number
+                minimum: 0
+                maximum: 100
+        trends:
+          type: object
+          properties:
+            spendingTrend:
+              type: string
+              enum:
+              - increasing
+              - decreasing
+              - stable
+            averageDailySpending:
+              type: number
+            comparisonToLastPeriod:
+              type: number

@@ -1,0 +1,81 @@
+openapi: 3.0.3
+paths:
+  /roles/{roleId}/permissions:
+    get:
+      operationId: roleServiceGetRolePermissions
+      summary: Get role permissions
+      description: Retrieve all permissions assigned to a role
+      tags:
+      - Permission Management
+      parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role unique identifier
+      - name: effective
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include inherited permissions
+      responses:
+        '200':
+          description: Role permissions retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Permission'
+    put:
+      operationId: roleServiceUpdateRolePermissions
+      summary: Update role permissions
+      description: 'Update permissions assigned to a role.
+
+
+        **Security Notes:**
+
+        - Validates permission consistency
+
+        - Prevents privilege escalation
+
+        - Creates detailed audit trail
+
+        - Immediate cache invalidation
+
+        '
+      tags:
+      - Permission Management
+      parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRolePermissionsRequest'
+      responses:
+        '200':
+          description: Role permissions updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/OK'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

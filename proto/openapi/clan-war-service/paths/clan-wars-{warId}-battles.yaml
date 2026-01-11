@@ -1,0 +1,130 @@
+openapi: 3.0.3
+paths:
+  /clan-wars/{warId}/battles:
+    get:
+      summary: Get war battle history
+      description: '**Enterprise-grade battle history endpoint**
+
+        Retrieves complete battle log for the war including outcomes, casualties,
+        strategic movements, and performance statistics.
+
+        Critical for war analysis and strategic planning.
+
+        **Performance:** <20ms P95, cached with 5-minute TTL
+
+        '
+      operationId: getWarBattles
+      tags:
+      - War Management
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: battle_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - skirmish
+          - major_battle
+          - siege
+          - naval
+          - aerial
+          - all
+          default: all
+        description: Filter by battle type
+      - name: outcome
+        in: query
+        schema:
+          type: string
+          enum:
+          - victory
+          - defeat
+          - draw
+          - ongoing
+          - all
+          default: all
+        description: Filter by battle outcome
+      responses:
+        '200':
+          description: Battle history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleHistoryResponse'
+        '404':
+          description: Clan war not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Report battle results
+      description: '**Enterprise-grade battle reporting endpoint**
+
+        Submits verified battle results with casualty reports, strategic analysis,
+        and performance metrics for official war record.
+
+        **Performance:** <50ms P95, includes validation and statistics update
+
+        '
+      operationId: reportBattle
+      tags:
+      - War Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BattleReportRequest'
+      responses:
+        '201':
+          description: Battle report submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleReportResponse'
+        '400':
+          description: Invalid report - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient reporting authority
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - duplicate or conflicting report
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

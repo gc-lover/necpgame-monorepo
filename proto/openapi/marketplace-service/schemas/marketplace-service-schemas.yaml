@@ -1,0 +1,775 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    ListingEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - sellerId
+        - item
+        - price
+        - status
+        properties:
+          sellerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          item:
+            $ref: '#/components/schemas/ListedItemEntity'
+          price:
+            type: object
+            description: null
+            required:
+            - amount
+            - currency
+            properties:
+              amount:
+                type: integer
+                description: null
+                minimum: 1
+                example: 5000
+              currency:
+                type: string
+                description: null
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+          status:
+            type: string
+            description: null
+            enum:
+            - active
+            - sold
+            - expired
+            - cancelled
+            - pending
+            example: active
+          listingType:
+            type: string
+            description: null
+            enum:
+            - fixed_price
+            - negotiable
+            - bulk
+            - premium
+            example: fixed_price
+          views:
+            type: integer
+            description: null
+            minimum: 0
+            example: 150
+          favorites:
+            type: integer
+            description: null
+            minimum: 0
+            example: 25
+          negotiable:
+            type: boolean
+            description: null
+            default: false
+          expiresAt:
+            type: string
+            description: null
+            format: date-time
+          buyerId:
+            type: string
+            description: ID  ( )
+            format: uuid
+          soldAt:
+            type: string
+            description: null
+            format: date-time
+          transactionId:
+            type: string
+            description: ID
+            format: uuid
+          isPremium:
+            type: boolean
+            description: Premium listing
+            default: false
+          $ref: '#/components/schemas/OptimisticLock'
+    ListedItemEntity:
+      type: object
+      description: null
+      required:
+      - itemId
+      - quantity
+      properties:
+        itemId:
+          type: string
+          description: ID
+          format: uuid
+          example: 456e7890-e89b-12d3-a456-426614174001
+        quantity:
+          type: integer
+          description: null
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: null
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        itemType:
+          type: string
+          description: null
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - misc
+          example: weapon
+        rarity:
+          type: string
+          description: null
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        level:
+          type: integer
+          description: null
+          minimum: 1
+          example: 15
+        description:
+          type: string
+          description: null
+          maxLength: 500
+        attributes:
+          type: object
+          description: null
+          additionalProperties: true
+        images:
+          type: array
+          description: null
+          items:
+            type: string
+            format: uri
+        estimatedValue:
+          type: integer
+          description: null
+          minimum: 0
+    SellerRatingEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - sellerId
+        properties:
+          sellerId:
+            type: string
+            description: ID
+            format: uuid
+          overallRating:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 5
+            example: 4.7
+          totalRatings:
+            type: integer
+            description: null
+            minimum: 0
+            example: 150
+          totalSales:
+            type: integer
+            description: null
+            minimum: 0
+            example: 120
+          successfulTransactions:
+            type: integer
+            description: null
+            minimum: 0
+            example: 118
+          disputeRate:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.02
+          averageResponseTime:
+            type: integer
+            description: null
+            minimum: 0
+            example: 30
+          badges:
+            type: array
+            description: null
+            items:
+              type: string
+              enum:
+              - trusted_seller
+              - fast_shipper
+              - top_rated
+              - veteran
+          $ref: '#/components/schemas/OptimisticLock'
+    ListingWatchEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - listingId
+        - watcherId
+        properties:
+          listingId:
+            type: string
+            description: ID
+            format: uuid
+          watcherId:
+            type: string
+            description: ID
+            format: uuid
+          watchStarted:
+            type: string
+            description: null
+            format: date-time
+          notificationsEnabled:
+            type: boolean
+            description: null
+            default: true
+          priceThreshold:
+            type: integer
+            description: null
+            minimum: 0
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateListingRequest:
+      type: object
+      required:
+      - item
+      - price
+      properties:
+        item:
+          $ref: '#/components/schemas/ListedItemEntity'
+        price:
+          type: object
+          required:
+          - amount
+          - currency
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        listingType:
+          type: string
+          enum:
+          - fixed_price
+          - negotiable
+          - bulk
+          - premium
+          default: fixed_price
+        negotiable:
+          type: boolean
+          default: false
+        duration:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 720
+          default: 24
+        isPremium:
+          type: boolean
+          default: false
+    UpdateListingRequest:
+      type: object
+      properties:
+        price:
+          type: object
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        negotiable:
+          type: boolean
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 720
+    ListingResponse:
+      type: object
+      properties:
+        listing:
+          $ref: '#/components/schemas/ListingEntity'
+        sellerRating:
+          $ref: '#/components/schemas/SellerRatingEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: null
+    ListingListResponse:
+      type: object
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+        filters:
+          type: object
+          properties:
+            appliedFilters:
+              type: object
+              additionalProperties: true
+            totalMatching:
+              type: integer
+              minimum: 0
+    SearchResultsResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        totalResults:
+          type: integer
+          minimum: 0
+        searchTime:
+          type: integer
+          description: null
+        suggestions:
+          type: array
+          items:
+            type: string
+        pagination:
+          type: object
+          properties:
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    PurchaseRequest:
+      type: object
+      required:
+      - buyerId
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+        negotiatedPrice:
+          type: object
+          description: ( negotiable )
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+    PurchaseResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        item:
+          $ref: '#/components/schemas/ListedItemEntity'
+        price:
+          type: object
+          properties:
+            amount:
+              type: integer
+            currency:
+              type: string
+        transactionId:
+          type: string
+          format: uuid
+        purchasedAt:
+          type: string
+          format: date-time
+    NegotiateRequest:
+      type: object
+      required:
+      - buyerId
+      - offeredPrice
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+        offeredPrice:
+          type: object
+          required:
+          - amount
+          - currency
+          properties:
+            amount:
+              type: integer
+              minimum: 1
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+        message:
+          type: string
+          description: null
+          maxLength: 500
+    NegotiateResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        offeredPrice:
+          type: object
+          properties:
+            amount:
+              type: integer
+            currency:
+              type: string
+        message:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+    SellerListingsResponse:
+      type: object
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingEntity'
+        statistics:
+          type: object
+          properties:
+            totalListings:
+              type: integer
+              minimum: 0
+            activeListings:
+              type: integer
+              minimum: 0
+            soldListings:
+              type: integer
+              minimum: 0
+            totalRevenue:
+              type: integer
+              minimum: 0
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    SellerRatingResponse:
+      type: object
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        rating:
+          $ref: '#/components/schemas/SellerRatingEntity'
+        recentReviews:
+          type: array
+          items:
+            type: object
+            properties:
+              buyerId:
+                type: string
+                format: uuid
+              rating:
+                type: integer
+                minimum: 1
+                maximum: 5
+              comment:
+                type: string
+                maxLength: 500
+              createdAt:
+                type: string
+                format: date-time
+        ratingBreakdown:
+          type: object
+          properties:
+            5_stars:
+              type: integer
+              minimum: 0
+            4_stars:
+              type: integer
+              minimum: 0
+            3_stars:
+              type: integer
+              minimum: 0
+            2_stars:
+              type: integer
+              minimum: 0
+            1_star:
+              type: integer
+              minimum: 0
+    WatchListingRequest:
+      type: object
+      required:
+      - watcherId
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+        priceThreshold:
+          type: integer
+          minimum: 0
+        notificationsEnabled:
+          type: boolean
+          default: true
+    WatchResponse:
+      type: object
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        watcherId:
+          type: string
+          format: uuid
+        isWatching:
+          type: boolean
+        watchersCount:
+          type: integer
+    MarketAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        category:
+          type: string
+        totalListings:
+          type: integer
+          minimum: 0
+        activeListings:
+          type: integer
+          minimum: 0
+        totalValue:
+          type: integer
+          minimum: 0
+        averagePrice:
+          type: number
+        medianPrice:
+          type: number
+        priceRange:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+        salesVolume:
+          type: integer
+          minimum: 0
+        topSellingItems:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName:
+                type: string
+              salesCount:
+                type: integer
+                minimum: 0
+              averagePrice:
+                type: number
+        categoryBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+    MarketTrendsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              trend:
+                type: string
+                enum:
+                - rising
+                - falling
+                - stable
+              changePercent:
+                type: number
+              averagePrice:
+                type: number
+              volume:
+                type: integer
+                minimum: 0
+    PlayerInventoryResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              itemName:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+              rarity:
+                type: string
+                enum:
+                - common
+                - uncommon
+                - rare
+                - epic
+                - legendary
+              estimatedValue:
+                type: integer
+                minimum: 0
+              canBeListed:
+                type: boolean
+              listingFee:
+                type: integer
+                minimum: 0
+        totalItems:
+          type: integer
+          minimum: 0
+    PriceGuideResponse:
+      type: object
+      properties:
+        itemType:
+          type: string
+        rarity:
+          type: string
+        priceGuide:
+          type: object
+          properties:
+            marketAverage:
+              type: number
+            suggestedPrice:
+              type: object
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+                recommended:
+                  type: number
+            recentSales:
+              type: array
+              items:
+                type: object
+                properties:
+                  price:
+                    type: number
+                  soldAt:
+                    type: string
+                    format: date-time
+            priceHistory:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  averagePrice:
+                    type: number
+                  volume:
+                    type: integer
+                    minimum: 0

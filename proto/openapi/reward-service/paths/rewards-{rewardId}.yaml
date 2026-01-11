@@ -1,0 +1,129 @@
+openapi: 3.0.3
+paths:
+  /rewards/{rewardId}:
+    get:
+      summary: Get reward details
+      description: '**Enterprise-grade reward retrieval endpoint**
+
+        Retrieves complete reward information including conditions, requirements,
+        and claiming status for the authenticated player.
+
+        Optimized with caching and conditional requests.
+
+        **Performance:** <15ms P95 with Redis caching
+
+        '
+      operationId: getReward
+      tags:
+      - Reward Management
+      parameters:
+      - name: rewardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Reward unique identifier
+      - name: include_claim_status
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include claim status for current player
+      responses:
+        '200':
+          description: Reward retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardResponse'
+        '404':
+          description: Reward not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update reward
+      description: '**Enterprise-grade reward update endpoint**
+
+        Supports partial updates with validation of impact on existing claims.
+
+        Ensures reward integrity and fair play for all players.
+
+        **Performance:** <60ms P95, includes impact assessment
+
+        '
+      operationId: updateReward
+      tags:
+      - Reward Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: rewardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Reward unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRewardRequest'
+      responses:
+        '200':
+          description: Reward updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Reward not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - update would affect existing claims
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

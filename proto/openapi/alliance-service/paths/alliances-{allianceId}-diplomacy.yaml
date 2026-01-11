@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}/diplomacy:
+    get:
+      summary: Get diplomatic relations
+      description: '**Enterprise-grade diplomatic relations endpoint**
+
+        Retrieves complete diplomatic matrix for alliance including relationships
+        with other alliances, factions, and political entities.
+
+        Essential for strategic decision making and political navigation.
+
+        **Performance:** <25ms P95, cached with 5-minute TTL
+
+        '
+      operationId: getAllianceDiplomacy
+      tags:
+      - Diplomatic Relations
+      parameters:
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      - name: relation_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - allied
+          - neutral
+          - hostile
+          - at_war
+          - all
+          default: all
+        description: Filter by relationship type
+      responses:
+        '200':
+          description: Diplomatic relations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiplomacyResponse'
+        '404':
+          description: Alliance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

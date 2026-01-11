@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /websocket/connect:
+    get:
+      operationId: inGameNotificationServiceWebSocketConnect
+      summary: Establish WebSocket connection
+      description: 'Establish persistent WebSocket connection for real-time notifications.
+
+
+        **Connection Features:**
+
+        - JWT-based authentication
+
+        - Heartbeat and keep-alive
+
+        - Automatic reconnection handling
+
+        - Message compression support
+
+        - Connection pooling and load balancing
+
+        '
+      tags:
+      - WebSocket Management
+      parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT authentication token
+      - name: protocol
+        in: query
+        schema:
+          type: string
+          enum:
+          - json
+          - msgpack
+          default: json
+          description: Message serialization protocol
+      - name: compress
+        in: query
+        schema:
+          type: boolean
+          default: false
+          description: Enable message compression
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '400':
+          description: Invalid connection parameters
+        '401':
+          description: Authentication failed

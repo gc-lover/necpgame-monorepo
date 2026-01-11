@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /network/analysis/routes:
+    get:
+      summary: Get routing analysis
+      description: Analyze message routing efficiency and performance
+      operationId: getRoutingAnalysis
+      tags:
+      - Network Analysis
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: route_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - websocket
+          - http
+          - internal
+          - all
+          default: all
+        description: Route type filter
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          default: 1h
+        description: Analysis timeframe
+      responses:
+        '200':
+          description: Routing analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutingAnalysis'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

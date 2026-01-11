@@ -1,0 +1,60 @@
+openapi: 3.0.3
+paths:
+  /metrics/{service_name}:
+    get:
+      summary: Get performance metrics for a specific service
+      operationId: getServiceMetrics
+      tags:
+      - Metrics Collection
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: service_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Name of the service to get metrics for
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 1h
+        description: Time range for metrics
+      - name: metric_types
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - response_time
+            - throughput
+            - error_rate
+            - cpu_usage
+            - memory_usage
+            - disk_usage
+        description: Types of metrics to retrieve
+      responses:
+        '200':
+          description: Service metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceMetricsResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

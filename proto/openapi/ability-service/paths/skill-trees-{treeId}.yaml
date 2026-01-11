@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /skill-trees/{treeId}:
+    get:
+      operationId: abilityServiceGetSkillTree
+      summary: Get skill tree configuration
+      description: 'Retrieve detailed skill tree configuration and progression.
+
+
+        **Tree Structure:**
+
+        - Hierarchical ability organization
+
+        - Prerequisite requirements
+
+        - Talent point costs
+
+        - Unlock progression paths
+
+        '
+      tags:
+      - Skill Trees
+      parameters:
+      - name: treeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Skill tree unique identifier
+      - name: character_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for progress overlay
+      responses:
+        '200':
+          description: Skill tree retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillTree'
+        '404':
+          $ref: '#/components/responses/NotFound'

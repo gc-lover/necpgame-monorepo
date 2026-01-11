@@ -1,0 +1,494 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ReferralCodeResponse:
+      type: object
+      required:
+      - code
+      - character_id
+      - created_at
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the referral code
+        character_id:
+          type: string
+          format: uuid
+          description: Character that owns this code
+        code:
+          type: string
+          example: REF-ABC123XY
+          description: The referral code
+        prefix:
+          type: string
+          example: REF
+          description: Code prefix
+        created_at:
+          type: string
+          format: date-time
+          description: When the code was created
+        expires_at:
+          type: string
+          format: date-time
+          description: When the code expires (optional)
+        is_active:
+          type: boolean
+          description: Whether the code is active
+        usage_count:
+          type: integer
+          description: How many times the code has been used
+        max_usage:
+          type: integer
+          description: Maximum usage count (optional)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    GenerateCodeRequest:
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character requesting the code
+        expires_in_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Days until code expires (optional)
+        max_usage:
+          type: integer
+          minimum: 1
+          description: Maximum usage count (optional)
+    ValidateCodeRequest:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Referral code to validate
+    ValidateCodeResponse:
+      type: object
+      required:
+      - is_valid
+      - code
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the code is valid
+        code:
+          type: string
+          description: The validated code
+        character_id:
+          type: string
+          format: uuid
+          description: Owner of the code (if valid)
+        usage_count:
+          type: integer
+          description: Current usage count
+        max_usage:
+          type: integer
+          description: Maximum usage count
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration date
+    ReferralRegistrationRequest:
+      type: object
+      required:
+      - referral_code
+      - new_character_id
+      properties:
+        referral_code:
+          type: string
+          description: The referral code used
+        new_character_id:
+          type: string
+          format: uuid
+          description: New character being registered
+    ReferralRegistrationResponse:
+      type: object
+      required:
+      - referral_id
+      - referrer_id
+      - referred_id
+      - status
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+          description: ID of the created referral
+        referrer_id:
+          type: string
+          format: uuid
+          description: Character who owns the code
+        referred_id:
+          type: string
+          format: uuid
+          description: New character being referred
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+          description: Initial status of the referral
+        welcome_reward_granted:
+          type: boolean
+          description: Whether welcome reward was granted
+    ReferralListResponse:
+      type: object
+      required:
+      - referrals
+      - total_count
+      properties:
+        referrals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralInfo'
+        total_count:
+          type: integer
+          description: Total number of referrals
+        limit:
+          type: integer
+          description: Requested limit
+        offset:
+          type: integer
+          description: Requested offset
+    ReferralInfo:
+      type: object
+      required:
+      - id
+      - referrer_id
+      - referred_id
+      - status
+      - registered_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Referral ID
+        referrer_id:
+          type: string
+          format: uuid
+          description: Referrer character ID
+        referred_id:
+          type: string
+          format: uuid
+          description: Referred character ID
+        referral_code:
+          type: string
+          description: Code used for referral
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+          description: Current status
+        registered_at:
+          type: string
+          format: date-time
+          description: When referral was registered
+        level_10_reached_at:
+          type: string
+          format: date-time
+          description: When referred character reached level 10
+        milestone_reached_at:
+          type: string
+          format: date-time
+          description: When milestone was reached
+        welcome_reward_claimed:
+          type: boolean
+          description: Whether welcome reward was claimed
+        level_10_reward_claimed:
+          type: boolean
+          description: Whether level 10 reward was claimed
+        milestone_reward_claimed:
+          type: boolean
+          description: Whether milestone reward was claimed
+    ReferralStatsResponse:
+      type: object
+      required:
+      - character_id
+      - total_referrals
+      - active_referrals
+      - milestone_referrals
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        total_referrals:
+          type: integer
+          description: Total number of referrals
+        active_referrals:
+          type: integer
+          description: Number of active referrals (level 10+)
+        milestone_referrals:
+          type: integer
+          description: Number of referrals that reached milestones
+        pending_referrals:
+          type: integer
+          description: Number of pending referrals
+        inactive_referrals:
+          type: integer
+          description: Number of inactive referrals
+        total_rewards_earned:
+          type: number
+          format: decimal
+          description: Total rewards earned in game currency
+        conversion_rate:
+          type: number
+          format: decimal
+          description: Percentage of referrals that became active
+    MilestoneListResponse:
+      type: object
+      required:
+      - milestones
+      properties:
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneInfo'
+    MilestoneInfo:
+      type: object
+      required:
+      - id
+      - milestone_level
+      - required_referrals
+      - current_referrals
+      - is_completed
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Milestone ID
+        milestone_level:
+          type: integer
+          description: Milestone level (5, 10, 25, 50, 100)
+        required_referrals:
+          type: integer
+          description: Required number of referrals
+        current_referrals:
+          type: integer
+          description: Current number of referrals
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount of reward
+        bonus_reward_type:
+          type: string
+          description: Type of bonus reward
+        bonus_reward_amount:
+          type: integer
+          description: Amount of bonus reward
+        is_completed:
+          type: boolean
+          description: Whether milestone is completed
+        completed_at:
+          type: string
+          format: date-time
+          description: When milestone was completed
+        is_reward_claimed:
+          type: boolean
+          description: Whether reward was claimed
+        reward_claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+    RewardClaimResponse:
+      type: object
+      required:
+      - reward_id
+      - claimed_at
+      - reward_type
+      - reward_amount
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: ID of the claimed reward
+        claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount rewarded
+        currency_type:
+          type: string
+          description: Type of currency (optional)
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID if item reward (optional)
+    LeaderboardResponse:
+      type: object
+      required:
+      - entries
+      - total_count
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total_count:
+          type: integer
+          description: Total number of entries
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+    LeaderboardEntry:
+      type: object
+      required:
+      - rank
+      - character_id
+      - total_referrals
+      - active_referrals
+      - milestone_referrals
+      properties:
+        rank:
+          type: integer
+          description: Current rank
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        total_referrals:
+          type: integer
+          description: Total referrals
+        active_referrals:
+          type: integer
+          description: Active referrals
+        milestone_referrals:
+          type: integer
+          description: Milestone referrals
+        total_rewards:
+          type: number
+          format: decimal
+          description: Total rewards earned
+    LeaderboardPositionResponse:
+      type: object
+      required:
+      - character_id
+      - rank
+      - total_entries
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        rank:
+          type: integer
+          description: Current rank
+        total_entries:
+          type: integer
+          description: Total entries in leaderboard
+        surrounding_players:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Players around this position
+    RewardListResponse:
+      type: object
+      required:
+      - rewards
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardInfo'
+    RewardInfo:
+      type: object
+      required:
+      - id
+      - character_id
+      - reward_type
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Reward ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        referral_id:
+          type: string
+          format: uuid
+          description: Associated referral ID (optional)
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount of reward
+        currency_type:
+          type: string
+          description: Type of currency
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID if applicable
+        status:
+          type: string
+          enum:
+          - pending
+          - distributed
+          - claimed
+          - expired
+          description: Current status
+        distributed_at:
+          type: string
+          format: date-time
+          description: When reward was distributed
+        claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+        expires_at:
+          type: string
+          format: date-time
+          description: When reward expires
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

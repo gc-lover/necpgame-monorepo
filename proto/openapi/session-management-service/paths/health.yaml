@@ -1,0 +1,49 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: Session service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the session management service.
+
+        Critical for service discovery, load balancing, and monitoring.'
+      operationId: getHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

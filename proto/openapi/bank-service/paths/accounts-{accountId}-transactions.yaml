@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /accounts/{accountId}/transactions:
+    get:
+      summary: null
+      operationId: getAccountTransactions
+      tags:
+      - Transaction Processing
+      parameters:
+      - name: accountId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - transfer
+          - deposit
+          - withdraw
+          - fee
+          - interest
+          - all
+          default: all
+      - name: startDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: endDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionHistoryResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

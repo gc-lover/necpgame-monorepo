@@ -1,0 +1,421 @@
+openapi: 3.0.3
+components:
+  schemas:
+    ConnectionDetails:
+      type: object
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - connecting
+          - connected
+          - disconnected
+          - error
+        protocol:
+          type: string
+          enum:
+          - game-events
+          - chat
+          - voice
+          - system
+        connected_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        subscriptions:
+          type: array
+          items:
+            type: string
+          description: Active topic subscriptions
+        metrics:
+          $ref: '#/components/schemas/ConnectionMetrics'
+      required:
+      - connection_id
+      - user_id
+      - status
+      - protocol
+      - connected_at
+    ConnectionListResponse:
+      type: object
+      properties:
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionDetails'
+        total_count:
+          type: integer
+        active_count:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+    ConnectionMetrics:
+      type: object
+      properties:
+        messages_sent:
+          type: integer
+          minimum: 0
+        messages_received:
+          type: integer
+          minimum: 0
+        bytes_sent:
+          type: integer
+          minimum: 0
+        bytes_received:
+          type: integer
+          minimum: 0
+        average_latency_ms:
+          type: number
+          minimum: 0
+        uptime_seconds:
+          type: integer
+          minimum: 0
+    SubscriptionRequest:
+      type: object
+      required:
+      - topics
+      properties:
+        topics:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Topics to subscribe to
+        filters:
+          type: object
+          additionalProperties: true
+          description: Optional subscription filters
+    SubscriptionResponse:
+      type: object
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        subscribed_topics:
+          type: array
+          items:
+            type: string
+        subscription_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+    UnsubscriptionRequest:
+      type: object
+      required:
+      - topics
+      properties:
+        topics:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Topics to unsubscribe from
+    CreateAudioStreamRequest:
+      type: object
+      required:
+      - type
+      - quality
+      properties:
+        type:
+          type: string
+          enum:
+          - voice
+          - game
+          - music
+          description: Audio stream type
+        quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+          default: medium
+          description: Audio quality setting
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum number of participants
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 512000
+          description: Audio bitrate in bps
+        channels:
+          type: integer
+          enum:
+          - 1
+          - 2
+          default: 2
+          description: Audio channels (mono/stereo)
+        name:
+          type: string
+          maxLength: 100
+          description: Optional stream name
+    AudioStream:
+      type: object
+      properties:
+        stream_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - voice
+          - game
+          - music
+        status:
+          type: string
+          enum:
+          - creating
+          - active
+          - paused
+          - ended
+          - error
+        quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+        created_at:
+          type: string
+          format: date-time
+        participant_count:
+          type: integer
+          minimum: 0
+        max_participants:
+          type: integer
+          minimum: 1
+        bitrate:
+          type: integer
+        channels:
+          type: integer
+        host_user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - stream_id
+      - type
+      - status
+      - quality
+      - created_at
+    AudioStreamListResponse:
+      type: object
+      properties:
+        streams:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioStream'
+        total_count:
+          type: integer
+        active_count:
+          type: integer
+    AddParticipantRequest:
+      type: object
+      required:
+      - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to add as participant
+        permissions:
+          type: string
+          enum:
+          - speak
+          - listen
+          - moderate
+          default: speak
+          description: Participant permissions
+    StreamParticipant:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        joined_at:
+          type: string
+          format: date-time
+        permissions:
+          type: string
+          enum:
+          - speak
+          - listen
+          - moderate
+        is_muted:
+          type: boolean
+          default: false
+        is_deafened:
+          type: boolean
+          default: false
+        quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+      required:
+      - user_id
+      - joined_at
+    ParticipantListResponse:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/StreamParticipant'
+        stream_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+    NetworkTrafficAnalysis:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        granularity:
+          type: string
+        metrics:
+          type: object
+          properties:
+            total_bandwidth_mb:
+              type: number
+            peak_bandwidth_mbps:
+              type: number
+            average_latency_ms:
+              type: number
+            packet_loss_percent:
+              type: number
+            active_connections:
+              type: integer
+            messages_per_second:
+              type: number
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              bandwidth_mbps:
+                type: number
+              latency_ms:
+                type: number
+              packet_loss:
+                type: number
+              connections:
+                type: integer
+        regions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RegionalMetrics'
+      required:
+      - timeframe
+      - granularity
+      - metrics
+    RegionalMetrics:
+      type: object
+      properties:
+        bandwidth_mbps:
+          type: number
+        latency_ms:
+          type: number
+        packet_loss_percent:
+          type: number
+        active_connections:
+          type: integer
+        server_count:
+          type: integer
+    ConnectionAnalysis:
+      type: object
+      properties:
+        total_connections:
+          type: integer
+        active_connections:
+          type: integer
+        connections_by_protocol:
+          type: object
+          additionalProperties:
+            type: integer
+        connections_by_region:
+          type: object
+          additionalProperties:
+            type: integer
+        average_connection_duration_seconds:
+          type: number
+        connection_success_rate:
+          type: number
+        peak_concurrent_connections:
+          type: integer
+        connection_errors:
+          type: object
+          properties:
+            total:
+              type: integer
+            by_type:
+              type: object
+              additionalProperties:
+                type: integer
+      required:
+      - total_connections
+      - active_connections
+    RoutingAnalysis:
+      type: object
+      properties:
+        route_type:
+          type: string
+        timeframe:
+          type: string
+        total_messages_routed:
+          type: integer
+        average_routing_latency_ms:
+          type: number
+        routing_success_rate:
+          type: number
+        routes_by_type:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RouteMetrics'
+        failed_routes:
+          type: integer
+        route_errors:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - route_type
+      - timeframe
+    RouteMetrics:
+      type: object
+      properties:
+        message_count:
+          type: integer
+        average_latency_ms:
+          type: number
+        success_rate:
+          type: number
+        error_count:
+          type: integer

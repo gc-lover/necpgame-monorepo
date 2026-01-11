@@ -1,0 +1,396 @@
+openapi: 3.0.3
+components:
+  schemas:
+    FeedbackType:
+      type: string
+      enum:
+      - feature_request
+      - bug_report
+      - wishlist
+      - feedback
+      description: Type of feedback submission
+      example: feature_request
+    FeedbackCategory:
+      type: string
+      enum:
+      - gameplay
+      - balance
+      - content
+      - technical
+      - lore
+      - ui
+      - other
+      description: Category of feedback submission
+      example: gameplay
+    FeedbackStatus:
+      type: string
+      enum:
+      - pending_moderation
+      - pending
+      - in_review
+      - assigned
+      - in_progress
+      - resolved
+      - rejected
+      - duplicate
+      - merged
+      description: Status of feedback submission
+      example: pending
+    FeedbackPriority:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+      description: Priority level of feedback submission
+      example: medium
+    GameContext:
+      type: object
+      description: Game context information captured at submission time
+      properties:
+        version:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Game version
+          example: 1.2.3
+        location:
+          type: string
+          maxLength: 200
+          description: Player location in game
+          example: Night City, Downtown
+        character_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Character level
+          example: 45
+        active_quests:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 10
+          description: List of active quest IDs
+          example:
+          - quest_123
+          - quest_456
+        playtime_hours:
+          type: integer
+          minimum: 0
+          description: Total playtime in hours
+          example: 120
+    SubmitFeedbackRequest:
+      type: object
+      required:
+      - type
+      - category
+      - title
+      - description
+      properties:
+        type:
+          $ref: '#/components/schemas/FeedbackType'
+        category:
+          $ref: '#/components/schemas/FeedbackCategory'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Feedback title
+          example: Add new weapon customization system
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Detailed feedback description
+          example: I would like to see more weapon customization options...
+        priority:
+          $ref: '#/components/schemas/FeedbackPriority'
+        screenshots:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 3
+          description: Array of screenshot URLs
+          example: []
+        game_context:
+          $ref: '#/components/schemas/GameContext'
+    Feedback:
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/InfrastructureEntity
+      - type: object
+        required:
+        - player_id
+        - type
+        - category
+        - title
+        - description
+        - status
+        - votes_count
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player who submitted feedback
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          title:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Feedback title
+            example: Add new weapon customization system
+          description:
+            type: string
+            minLength: 1
+            maxLength: 2000
+            description: Detailed feedback description
+            example: I would like to see more weapon customization options...
+          github_issue_url:
+            type: string
+            format: uri
+            description: GitHub Issue URL
+            example: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+          screenshots:
+            type: array
+            items:
+              type: string
+              format: uri
+            maxItems: 3
+            description: Array of screenshot URLs
+            example: []
+          game_context:
+            $ref: '#/components/schemas/GameContext'
+          merged_into:
+            type: string
+            format: uuid
+            description: ID of feedback this was merged into
+            example: null
+          moderation_reason:
+            type: string
+            maxLength: 500
+            description: Reason for moderation action
+            example: null
+          github_issue_number:
+            type: integer
+            format: int64
+            minimum: 1
+            description: GitHub Issue number
+            example: 1335
+          type:
+            $ref: '#/components/schemas/FeedbackType'
+          category:
+            $ref: '#/components/schemas/FeedbackCategory'
+          status:
+            $ref: '#/components/schemas/FeedbackStatus'
+          priority:
+            $ref: '#/components/schemas/FeedbackPriority'
+          moderation_status:
+            type: string
+            enum:
+            - pending
+            - approved
+            - rejected
+            description: Moderation status
+            example: approved
+          votes_count:
+            type: integer
+            format: int32
+            minimum: 0
+            description: Number of votes
+            example: 42
+    FeedbackSubmissionResponse:
+      type: object
+      required:
+      - success
+      - message
+      - id
+      - github_issue_number
+      - github_issue_url
+      - status
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Feedback submitted successfully
+        id:
+          type: string
+          format: uuid
+          description: Feedback submission ID
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        github_issue_number:
+          type: integer
+          format: int64
+          description: Created GitHub Issue number
+          example: 1335
+        github_issue_url:
+          type: string
+          format: uri
+          description: GitHub Issue URL
+          example: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+        status:
+          $ref: '#/components/schemas/FeedbackStatus'
+    FeedbackResponse:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Feedback'
+    PlayerFeedbackListResponse:
+      type: object
+      required:
+      - success
+      - data
+      - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
+        pagination:
+          $ref: ../common/schemas/pagination.yaml#/components/schemas/PaginationResponse
+    UpdateStatusRequest:
+      type: object
+      required:
+      - status
+      - version
+      properties:
+        status:
+          $ref: '#/components/schemas/FeedbackStatus'
+        comment:
+          type: string
+          maxLength: 500
+          description: Optional comment about status change
+          example: Assigned to backend team for implementation
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+    IdeasBoardResponse:
+      type: object
+      required:
+      - success
+      - data
+      - pagination
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
+        pagination:
+          $ref: ../common/schemas/pagination.yaml#/components/schemas/PaginationResponse
+    VoteResponse:
+      type: object
+      required:
+      - success
+      - votes_count
+      properties:
+        success:
+          type: boolean
+          example: true
+        votes_count:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Updated vote count
+          example: 43
+        message:
+          type: string
+          example: Vote added successfully
+    FeedbackStatsResponse:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required:
+          - total_submissions
+          - by_type
+          - by_category
+          - by_status
+          - top_voted
+          properties:
+            total_submissions:
+              type: integer
+              format: int64
+              minimum: 0
+              description: Total number of submissions
+              example: 1250
+            by_type:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int64
+              description: Count by feedback type
+              example:
+                feature_request: 800
+                bug_report: 300
+                wishlist: 100
+                feedback: 50
+            by_category:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int64
+              description: Count by category
+              example:
+                gameplay: 500
+                balance: 300
+                content: 250
+                technical: 100
+                lore: 50
+                ui: 30
+                other: 20
+            by_status:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int64
+              description: Count by status
+              example:
+                pending: 200
+                in_review: 150
+                in_progress: 100
+                resolved: 700
+                rejected: 50
+                duplicate: 50
+            top_voted:
+              type: array
+              items:
+                type: object
+                required:
+                - id
+                - title
+                - votes_count
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  votes_count:
+                    type: integer
+                    format: int32
+              maxItems: 10
+              description: Top 10 most voted submissions
+              example: []

@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /ws/connections/{connection_id}:
+    get:
+      summary: Get connection details
+      description: Retrieve detailed information about a specific WebSocket connection
+      operationId: getConnection
+      tags:
+      - WebSocket Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: connection_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Connection unique identifier
+      responses:
+        '200':
+          description: Connection details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionDetails'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Close WebSocket connection
+      description: Forcefully close a WebSocket connection
+      operationId: closeConnection
+      tags:
+      - WebSocket Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: connection_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Connection unique identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for closing the connection
+                code:
+                  type: integer
+                  minimum: 1000
+                  maximum: 4999
+                  default: 1000
+                  description: WebSocket close code
+      responses:
+        '200':
+          description: Connection closed successfully
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

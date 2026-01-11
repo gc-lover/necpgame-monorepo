@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /notifications/settings:
+    get:
+      summary: Get notification settings
+      description: '**Retrieve user''s notification preferences**
+
+        Includes settings for each notification type and delivery method.
+
+        **Performance:** <20ms with user-specific caching
+
+        '
+      operationId: getNotificationSettings
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Notification settings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSettingsResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update notification settings
+      description: '**Update user''s notification preferences**
+
+        Supports granular control over notification types and channels.
+
+        **Performance:** <30ms with validation
+
+        '
+      operationId: updateNotificationSettings
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationSettingsRequest'
+      responses:
+        '200':
+          description: Notification settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSettingsResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

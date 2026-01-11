@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /voice-channels/{channel_id}/join:
+    post:
+      summary: Join voice channel with WebRTC signaling
+      description: '**Real-time voice channel join with WebRTC handshake**
+
+
+        Initiates WebRTC peer connection establishment with signaling protocol.
+
+        Returns STUN/TURN server credentials and channel participant list.
+
+
+        **Performance:** <100ms average connection establishment
+
+        '
+      operationId: joinVoiceChannel
+      tags:
+      - Voice Signaling
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinChannelRequest'
+      responses:
+        '200':
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinChannelResponse'
+        '400':
+          description: Invalid join request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,88 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/purchase:
+    post:
+      summary: Purchase companion
+      description: '**Purchase a new companion**
+
+
+        Allows player to purchase a companion of specified type.
+
+        Validates player balance and companion availability.
+
+
+        **Performance:** <100ms P95, includes validation and balance check
+
+        **Security:** Requires confirmation token for purchase operations
+
+        '
+      operationId: purchaseCompanion
+      tags:
+      - Companion Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                companionTypeId:
+                  type: string
+                  format: uuid
+                  description: Type of companion to purchase
+                currencyAmount:
+                  type: integer
+                  minimum: 0
+                  description: Amount of currency to spend
+                confirmationToken:
+                  type: string
+                  description: Purchase confirmation token
+              required:
+              - companionTypeId
+              - currencyAmount
+              - confirmationToken
+      responses:
+        '200':
+          description: Companion purchased successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseCompanionResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Companion type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '402':
+          description: Insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

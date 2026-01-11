@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /analytics/performance:
+    get:
+      summary: Get performance analytics and trends
+      operationId: getPerformanceAnalytics
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: service_name
+        in: query
+        schema:
+          type: string
+        description: Filter by specific service
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          default: 7d
+        description: Time range for analytics
+      - name: metric_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - latency
+          - throughput
+          - error_rate
+          - resource_usage
+          - availability
+        description: Type of performance metric to analyze
+      responses:
+        '200':
+          description: Performance analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceAnalyticsResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

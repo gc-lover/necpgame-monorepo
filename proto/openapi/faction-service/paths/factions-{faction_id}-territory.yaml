@@ -1,0 +1,117 @@
+openapi: 3.0.3
+paths:
+  /factions/{faction_id}/territory:
+    get:
+      summary: Get faction territory and influence zones
+      description: '**Territory control endpoint**
+
+        Retrieves faction-controlled territories, influence zones, and border dispute
+        information.
+
+        **Performance:** <18ms P95 with spatial indexing
+
+        **Features:** Geographic boundaries, influence gradients
+
+        '
+      operationId: getFactionTerritory
+      tags:
+      - Territory Control
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Territory information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionTerritoryResponse'
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Claim territory for faction
+      description: '**Territory claim endpoint**
+
+        Initiates territory claim process with influence expansion and potential border
+        disputes.
+
+        **Performance:** <35ms P95 including dispute resolution
+
+        **Validation:** Territory availability, influence requirements
+
+        '
+      operationId: claimTerritory
+      tags:
+      - Territory Control
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerritoryClaimRequest'
+      responses:
+        '201':
+          description: Territory claim initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryClaimResponse'
+        '400':
+          description: Invalid territory claim parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions or influence to claim territory
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Territory already claimed or in dispute
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

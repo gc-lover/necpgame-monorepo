@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /api/v1/sla/alerts/active:
+    get:
+      summary: Get active SLA alerts
+      description: '**Enterprise-grade SLA alerts endpoint**
+
+        Retrieves all currently active SLA breach alerts and warnings.
+
+        Critical for real-time SLA monitoring and incident response.
+
+        **Performance:** <50ms response time, no caching for real-time alerts
+
+        **Security:** Requires support agent permissions
+
+        '
+      operationId: getActiveSLAAlerts
+      tags:
+      - SLA Alerts
+      parameters:
+      - name: priority
+        in: query
+        description: Filter alerts by priority level
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Active SLA alerts retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache, no-store, must-revalidate
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAActiveAlertsResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,49 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/leaderboard:
+    get:
+      summary: Get session leaderboard
+      description: '**Session real-time leaderboard**
+
+        Retrieves real-time leaderboard for a combat session with performance optimizations.
+
+        **BACKEND NOTE:** Returns current rankings optimized for frequent polling.
+
+        '
+      operationId: getSessionLeaderboard
+      tags:
+      - Leaderboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      - name: include_spectators
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include spectator statistics
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - score
+          - kills
+          - accuracy
+          - rank
+          default: score
+        description: Sort leaderboard by this metric
+      responses:
+        '200':
+          description: Session leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionLeaderboardResponse'

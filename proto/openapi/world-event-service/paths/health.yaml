@@ -1,0 +1,43 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: World Event service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the world event service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: worldEventServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          $ref: '#/components/responses/InternalServerError'

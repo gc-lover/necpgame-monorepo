@@ -1,0 +1,94 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: Component service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the component microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: componentHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                  version:
+                    type: string
+                    example: 1.0.0
+                  uptime:
+                    type: integer
+                    description: Uptime in seconds
+                    example: 3600
+                  memory:
+                    type: object
+                    properties:
+                      used:
+                        type: integer
+                        description: Memory used in MB
+                        example: 128
+                      total:
+                        type: integer
+                        description: Total memory in MB
+                        example: 512
+                      percentage:
+                        type: number
+                        format: float
+                        example: 25.0
+                required:
+                - status
+                - timestamp
+                - version
+        '503':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

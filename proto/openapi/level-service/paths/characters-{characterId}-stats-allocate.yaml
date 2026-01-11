@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/stats/allocate:
+    post:
+      operationId: levelServiceAllocateStatPoints
+      summary: Allocate stat points to character
+      description: 'Allocate available stat points to character attributes.
+
+
+        **Stat Allocation:**
+
+        - Validate available stat points
+
+        - Apply stat increases
+
+        - Update character stats
+
+        - Trigger stat change events
+
+        '
+      tags:
+      - Character Progression
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocateStatPointsRequest'
+      responses:
+        '200':
+          description: Stat points allocated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        allocated_points:
+                          type: object
+                          description: Points allocated by stat
+                          additionalProperties:
+                            type: integer
+                        remaining_points:
+                          type: integer
+                          description: Remaining unallocated points
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Insufficient stat points
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

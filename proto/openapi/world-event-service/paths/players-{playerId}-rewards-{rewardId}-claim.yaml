@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/rewards/{rewardId}/claim:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    - name: rewardId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique reward identifier
+    post:
+      summary: Claim event reward
+      description: '**Enterprise-grade reward claiming with atomic operations**
+
+        Claims specific event reward with validation and anti-cheat protection.
+
+        **Performance:** <15ms P99, atomic claim operations **Security:** Fraud prevention
+        and claim validation
+
+        '
+      operationId: claimReward
+      tags:
+      - Event Participation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardRequest'
+      responses:
+        '200':
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardClaimResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

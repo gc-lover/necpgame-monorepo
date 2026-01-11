@@ -1,0 +1,72 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/effects/clear:
+    post:
+      operationId: effectServiceClearCharacterEffects
+      summary: Clear all character effects
+      description: 'Remove all active effects from a character.
+
+
+        **Effect Clearing:**
+
+        - Remove all effects of specified types
+
+        - Restore character to base stats
+
+        - Trigger cleanup events
+
+        - Performance-optimized bulk removal
+
+        '
+      tags:
+      - Character Effects
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                effect_types:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - buff
+                    - debuff
+                    - crowd_control
+                    - healing
+                    - damage_over_time
+                  description: Effect types to clear (empty = all types)
+                preserve_permanent:
+                  type: boolean
+                  default: true
+                  description: Preserve permanent effects
+      responses:
+        '200':
+          description: Character effects cleared
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        removed_count:
+                          type: integer
+                          description: Number of effects removed
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/calculate:
+    post:
+      summary: Calculate combat damage
+      description: '**Enterprise-grade damage calculation endpoint**
+
+        Calculates final damage based on attacker stats, weapon properties, target
+        defenses, and active modifiers/effects.
+
+        Essential for fair combat mechanics and anti-cheat validation.
+
+        **Performance:** <5ms P95, synchronous calculation required
+
+        **Security:** Server-side only, validates all input parameters
+
+        '
+      operationId: combatServiceCalculateDamage
+      tags:
+      - Damage Calculation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResult'
+        '400':
+          description: Invalid calculation request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '500':
+          description: Internal calculation error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+      default:
+        description: Unexpected error
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

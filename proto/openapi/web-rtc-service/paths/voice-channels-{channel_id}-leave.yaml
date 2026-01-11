@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /voice-channels/{channel_id}/leave:
+    post:
+      summary: Leave voice channel
+      description: '**Clean voice channel disconnection**
+
+
+        Removes participant from voice channel and cleans up signaling state.
+
+        Updates channel participant count and notifies remaining peers.
+
+
+        **Performance:** <25ms disconnection processing
+
+        '
+      operationId: leaveVoiceChannel
+      tags:
+      - Voice Channels
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      responses:
+        '200':
+          description: Successfully left voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveChannelResponse'
+        '404':
+          description: Channel not found or already left
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

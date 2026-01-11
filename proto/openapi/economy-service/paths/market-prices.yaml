@@ -1,0 +1,94 @@
+openapi: 3.0.3
+paths:
+  /market/prices:
+    get:
+      summary: Get real-time market prices
+      description: '**Real-time market data endpoint**
+
+        Retrieves current market prices for all tradeable items and resources. Supports
+        filtering by category, tier, and region for optimized queries.
+
+        **Performance:** <10ms P95 with Redis caching
+
+        **Caching:** Prices cached for 30 seconds, invalidated on trades
+
+        **Updates:** Real-time via WebSocket for active traders
+
+        '
+      operationId: getMarketPrices
+      tags:
+      - Market Data
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - materials
+      - name: region
+        in: query
+        schema:
+          type: string
+          description: Market region filter
+      - name: min_price
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: max_price
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Market prices retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketPricesResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of items
+            X-Page-Count:
+              schema:
+                type: integer
+              description: Total number of pages
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

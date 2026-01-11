@@ -1,0 +1,72 @@
+openapi: 3.0.3
+paths:
+  /ws:
+    get:
+      summary: Establish WebSocket connection
+      description: '**Real-time communication endpoint**
+
+        Establishes persistent WebSocket connection for real-time messaging, game
+        events, and live updates. Supports connection clustering and automatic failover.
+
+        **Features:** - Connection pooling and load balancing - Automatic reconnection
+        with exponential backoff - Message compression and batching - Heartbeat monitoring
+        (30s intervals) - Per-connection rate limiting'
+      operationId: establishWebSocket
+      tags:
+      - WebSocket Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: protocol
+        in: query
+        schema:
+          type: string
+          enum:
+          - game-events
+          - chat
+          - voice
+          - system
+          default: game-events
+        description: Communication protocol type
+      - name: compression
+        in: query
+        schema:
+          type: string
+          enum:
+          - none
+          - gzip
+          - deflate
+          default: gzip
+        description: Message compression method
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Protocol:
+              schema:
+                type: string
+                example: game-events
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Connection limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,55 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/players/behavior:
+    get:
+      description: '**Advanced player behavior analytics**
+
+        Comprehensive analysis of player engagement patterns, session durations, progression
+        rates, and behavioral segmentation.
+
+        **Includes:** Session analytics, progression tracking, behavioral clusters
+        **Performance:** <100ms P95 with cached aggregations '
+      operationId: getPlayerBehaviorAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 7d
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          type: string
+      - in: query
+        name: segment
+        schema:
+          default: all
+          enum:
+          - all
+          - new_players
+          - returning
+          - high_value
+          - at_risk
+          type: string
+      - description: Specific cohort date for analysis
+        in: query
+        name: cohort
+        schema:
+          example: '2024-01-01'
+          format: date
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+          description: Player behavior analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get detailed player behavior analytics
+      tags:
+      - Player Analytics

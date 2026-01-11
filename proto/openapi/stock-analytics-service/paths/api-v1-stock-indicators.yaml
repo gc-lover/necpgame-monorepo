@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /api/v1/stock/indicators:
+    get:
+      summary: Get technical indicators
+      description: Calculate and return technical indicators for a stock symbol
+      operationId: getStockIndicators
+      parameters:
+      - name: symbol
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 10
+        description: Stock symbol
+      - name: indicators
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - rsi
+            - macd
+            - bollinger
+            - sma
+            - ema
+            - stochastic
+          minItems: 1
+        description: List of indicators to calculate
+        style: form
+        explode: false
+      responses:
+        '200':
+          description: Technical indicators calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockIndicators'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

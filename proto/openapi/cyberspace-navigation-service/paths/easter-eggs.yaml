@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /easter-eggs:
+    get:
+      summary: Get available easter eggs for player
+      description: 'Retrieve easter eggs available for discovery by the authenticated
+        player.
+
+        Filters out already discovered eggs and applies level/location restrictions.
+
+        '
+      operationId: getAvailableEasterEggs
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - technology
+          - cultural
+          - historical
+          - humorous
+        description: Filter by easter egg category
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+        description: Filter by discovery difficulty
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of easter eggs to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Successful response with available easter eggs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasterEggListResponse'
+              example:
+                easter_eggs:
+                - id: easter-egg-turing-ghost
+                  name: null
+                  category: technology
+                  difficulty: medium
+                  description: null
+                  hints_available: 1
+                total_count: 25
+                has_more: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

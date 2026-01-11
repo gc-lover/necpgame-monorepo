@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /rewards/{player_id}/claim:
+    post:
+      operationId: claimSeasonRewards
+      summary: Claim seasonal rewards
+      description: Claim earned seasonal rewards with validation and inventory checks
+      tags:
+      - Rewards
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardsRequest'
+      responses:
+        '200':
+          description: Rewards claimed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/components/responses/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ClaimedRewards'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'

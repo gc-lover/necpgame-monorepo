@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /cyberware/remove:
+    post:
+      operationId: cyberwareServiceRemoveCyberware
+      summary: Remove cyberware from character
+      description: 'Remove installed cyberware from a character.
+
+
+        **Removal Process:**
+
+        - Validate removal safety and requirements
+
+        - Calculate cyberpsychosis risk decrease
+
+        - Remove cyberware effects and bonuses
+
+        - Handle withdrawal symptoms and side effects
+
+        - Update character stats and abilities
+
+        '
+      tags:
+      - Cyberware Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveCyberwareRequest'
+      responses:
+        '200':
+          description: Cyberware removed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        removed_cyberware_id:
+                          type: string
+                          format: uuid
+                          description: ID of removed cyberware
+                        withdrawal_effects:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/SideEffect'
+                          description: Withdrawal side effects
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

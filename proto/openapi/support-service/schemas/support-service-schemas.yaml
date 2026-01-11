@@ -1,0 +1,507 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: string
+          description: Service uptime duration
+          example: 7d 12h 30m
+        version:
+          type: string
+          example: 1.0.0
+      required:
+      - status
+      - timestamp
+    TicketStatus:
+      type: string
+      enum:
+      - open
+      - assigned
+      - in_progress
+      - pending_customer
+      - resolved
+      - closed
+      - cancelled
+      description: Current status of the support ticket
+      example: open
+    TicketPriority:
+      type: string
+      enum:
+      - low
+      - normal
+      - high
+      - urgent
+      - critical
+      description: Priority level of the ticket
+      example: normal
+    TicketCategory:
+      type: string
+      enum:
+      - technical_issue
+      - billing
+      - gameplay
+      - account
+      - bug_report
+      - feature_request
+      - other
+      description: Category of the support ticket
+      example: technical_issue
+    CreateTicketRequest:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID of the character creating the ticket
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+          description: Ticket title
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+          description: Detailed description of the issue
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+          description: Optional tags for better categorization
+      required:
+      - character_id
+      - title
+      - description
+    UpdateTicketRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+    TicketResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Ticket unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character who created the ticket
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        agent_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Assigned agent ID
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        sla_deadline:
+          type: string
+          format: date-time
+          nullable: true
+        response_count:
+          type: integer
+          minimum: 0
+      required:
+      - id
+      - character_id
+      - title
+      - description
+      - category
+      - priority
+      - status
+      - created_at
+      - updated_at
+    TicketListResponse:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponse'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+            total:
+              type: integer
+              minimum: 0
+            total_pages:
+              type: integer
+              minimum: 0
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+      required:
+      - tickets
+      - pagination
+    TicketQueueResponse:
+      type: object
+      properties:
+        queue:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponse'
+        queue_stats:
+          type: object
+          properties:
+            total_waiting:
+              type: integer
+              minimum: 0
+            urgent_count:
+              type: integer
+              minimum: 0
+            high_count:
+              type: integer
+              minimum: 0
+            normal_count:
+              type: integer
+              minimum: 0
+            low_count:
+              type: integer
+              minimum: 0
+          required:
+          - total_waiting
+          - urgent_count
+          - high_count
+          - normal_count
+          - low_count
+      required:
+      - queue
+      - queue_stats
+    AssignAgentRequest:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          description: Agent to assign to the ticket
+      required:
+      - agent_id
+    UpdateStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        comment:
+          type: string
+          maxLength: 1000
+          description: Optional comment for status change
+      required:
+      - status
+    UpdatePriorityRequest:
+      type: object
+      properties:
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for priority change
+      required:
+      - priority
+    AddResponseRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: Response content
+        is_internal:
+          type: boolean
+          default: false
+          description: Whether this response is internal (not visible to customer)
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+              content_type:
+                type: string
+              data:
+                type: string
+                format: byte
+                description: Base64 encoded file data
+            required:
+            - filename
+            - content_type
+            - data
+          maxItems: 5
+      required:
+      - content
+    TicketResponseItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        author_type:
+          type: string
+          enum:
+          - customer
+          - agent
+        content:
+          type: string
+        is_internal:
+          type: boolean
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              filename:
+                type: string
+              content_type:
+                type: string
+              size:
+                type: integer
+              url:
+                type: string
+                format: uri
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - ticket_id
+      - author_id
+      - author_type
+      - content
+      - is_internal
+      - created_at
+    TicketResponseListResponse:
+      type: object
+      properties:
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponseItem'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+            total:
+              type: integer
+              minimum: 0
+            total_pages:
+              type: integer
+              minimum: 0
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+      required:
+      - responses
+      - pagination
+    RateTicketRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Rating from 1 to 5
+        comment:
+          type: string
+          maxLength: 1000
+          description: Optional feedback comment
+      required:
+      - rating
+    TicketSLAInfo:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        created_at:
+          type: string
+          format: date-time
+        sla_deadline:
+          type: string
+          format: date-time
+        response_deadline:
+          type: string
+          format: date-time
+        resolution_deadline:
+          type: string
+          format: date-time
+        first_response_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        sla_status:
+          type: string
+          enum:
+          - compliant
+          - warning
+          - breached
+        time_to_first_response:
+          type: string
+          nullable: true
+          description: ISO 8601 duration
+        time_to_resolution:
+          type: string
+          nullable: true
+          description: ISO 8601 duration
+      required:
+      - ticket_id
+      - priority
+      - created_at
+      - sla_deadline
+      - response_deadline
+      - resolution_deadline
+      - sla_status
+    SupportStatsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - quarter
+          - year
+        total_tickets:
+          type: integer
+          minimum: 0
+        resolved_tickets:
+          type: integer
+          minimum: 0
+        average_resolution_time:
+          type: string
+          description: ISO 8601 duration
+        average_first_response_time:
+          type: string
+          description: ISO 8601 duration
+        sla_compliance_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        tickets_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        tickets_by_priority:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        tickets_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        agent_performance:
+          type: array
+          items:
+            type: object
+            properties:
+              agent_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              resolved_count:
+                type: integer
+                minimum: 0
+              average_resolution_time:
+                type: string
+                description: ISO 8601 duration
+              sla_compliance_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+            required:
+            - agent_id
+            - resolved_count
+      required:
+      - period
+      - total_tickets
+      - resolved_tickets

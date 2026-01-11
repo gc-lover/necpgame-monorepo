@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /performance/metrics:
+    get:
+      operationId: gameMechanicServiceGetPerformanceMetrics
+      summary: Get performance metrics
+      description: 'Retrieve real-time performance metrics for game mechanics.
+
+
+        **Performance Metrics:**
+
+        - Operation latency distributions
+
+        - Throughput and utilization rates
+
+        - Error rates and failure patterns
+
+        - Resource consumption trends
+
+        - Bottleneck identification
+
+        '
+      tags:
+      - Performance Monitoring
+      parameters:
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 24h
+          default: 5m
+        description: Time range for metrics
+      - name: metric_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - latency
+          - throughput
+          - errors
+          - resources
+        description: Type of metrics to retrieve
+      responses:
+        '200':
+          description: Performance metrics retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PerformanceMetrics'

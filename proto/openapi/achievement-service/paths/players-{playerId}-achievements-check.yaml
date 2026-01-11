@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/achievements/check:
+    post:
+      operationId: checkPlayerAchievements
+      summary: Check and update achievement progress
+      description: 'Check player''s progress against all active achievements and update
+        progress.
+
+        This is called when player performs actions that may unlock achievements.
+
+        '
+      tags:
+      - Progress Tracking
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAchievementsRequest'
+      responses:
+        '200':
+          description: Achievement check completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        unlocked:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/AchievementUnlock'
+                        progress_updated:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/AchievementProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

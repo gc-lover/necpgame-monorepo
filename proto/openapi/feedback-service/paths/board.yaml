@@ -1,0 +1,76 @@
+openapi: 3.0.3
+paths:
+  /board:
+    get:
+      summary: Get public ideas board
+      description: 'Retrieve paginated list of public feature suggestions (ideas board).
+
+
+        **Access Control:** Public endpoint, no authentication required.
+
+
+        **BACKEND NOTE:** Response optimized for public access. Fields ordered for
+        struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: getIdeasBoard
+      tags:
+      - Ideas Board
+      security: []
+      parameters:
+      - name: category
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackCategory'
+        description: Filter by feedback category
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackStatus'
+        description: Filter by feedback status
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - votes_desc
+          - votes_asc
+          - created_desc
+          - created_asc
+          default: votes_desc
+        description: Sort order
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+      - name: search
+        in: query
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description: Search query for title and description
+      responses:
+        '200':
+          description: Ideas board retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdeasBoardResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

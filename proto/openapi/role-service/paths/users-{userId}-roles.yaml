@@ -1,0 +1,127 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/roles:
+    get:
+      operationId: roleServiceGetUserRoles
+      summary: Get user roles
+      description: Retrieve all roles assigned to a user
+      tags:
+      - Access Control
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: organization_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by organization
+      responses:
+        '200':
+          description: User roles retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/UserRoleAssignment'
+    post:
+      operationId: roleServiceAssignUserRole
+      summary: Assign role to user
+      description: 'Assign a role to a user with optional constraints.
+
+
+        **Business Rules:**
+
+        - Validates role compatibility
+
+        - Checks for conflicting roles
+
+        - Creates audit trail
+
+        - Supports conditional assignments
+
+        '
+      tags:
+      - Access Control
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+      responses:
+        '200':
+          description: Role assigned successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserRoleAssignment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: roleServiceRevokeUserRole
+      summary: Revoke user role
+      description: 'Revoke a role assignment from a user.
+
+
+        **Security Notes:**
+
+        - Validates revocation permissions
+
+        - Creates audit trail
+
+        - Handles role dependencies
+
+        - Immediate permission cache invalidation
+
+        '
+      tags:
+      - Access Control
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: role_assignment_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role assignment unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

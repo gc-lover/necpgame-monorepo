@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/abilities/learn:
+    post:
+      operationId: abilityServiceLearnAbility
+      summary: Learn new ability
+      description: 'Learn a new ability for a character using talent points or requirements.
+
+
+        **Learning Process:**
+
+        - Validate learning requirements
+
+        - Check available talent points
+
+        - Deduct learning costs
+
+        - Add ability to character repertoire
+
+        - Update skill tree progression
+
+        '
+      tags:
+      - Character Abilities
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LearnAbilityRequest'
+      responses:
+        '201':
+          description: Ability learned successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Forbidden

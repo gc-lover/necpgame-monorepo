@@ -1,0 +1,42 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions:
+    post:
+      summary: Create new combat session
+      description: '**Combat session creation endpoint**
+
+        Initializes a new combat session with participants, rules, and environment.
+
+        **Performance:** <50ms P95, includes validation and setup
+
+        '
+      operationId: combatServiceCreateSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCombatSessionRequest'
+      responses:
+        '201':
+          description: Combat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '429':
+          $ref: ../common/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

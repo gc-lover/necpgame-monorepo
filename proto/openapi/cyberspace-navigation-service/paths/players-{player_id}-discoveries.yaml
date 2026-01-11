@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /players/{player_id}/discoveries:
+    get:
+      summary: Get player's easter egg discoveries
+      description: Retrieve all easter eggs discovered by a specific player
+      operationId: getPlayerDiscoveries
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: include_rewards
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include reward details in response
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of discoveries to return
+      responses:
+        '200':
+          description: Successful response with player discoveries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerDiscoveriesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

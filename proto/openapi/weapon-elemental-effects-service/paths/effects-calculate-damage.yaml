@@ -1,0 +1,34 @@
+openapi: 3.0.3
+paths:
+  /effects/calculate/damage:
+    post:
+      summary: Calculate elemental damage
+      operationId: weaponEffectsCalculateDamage
+      description: 'Calculate damage from elemental effects with synergies.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
+      tags:
+      - Damage Calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateDamageRequest'
+      responses:
+        '200':
+          description: Damage calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateDamageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

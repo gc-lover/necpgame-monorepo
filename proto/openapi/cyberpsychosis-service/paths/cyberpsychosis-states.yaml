@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /cyberpsychosis/states:
+    post:
+      summary: Create Cyberpsychosis State
+      description: '**Create a new cyberpsychosis state for a player**
+
+        Triggers the specified cyberpsychosis state with appropriate parameters and
+        creates audit trail for state transitions.
+
+        **Performance:** <30ms average response time'
+      operationId: createCyberpsychosisState
+      tags:
+      - Cyberpsychosis States
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - player_id
+              - state_type
+              - trigger_reason
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                  example: 550e8400-e29b-41d4-a716-446655440000
+                state_type:
+                  type: integer
+                  format: int32
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                  description: '1=Berserk, 2=Adrenal Overload, 3=Neural Overload,
+                    4=System Shock, 5=Cyberpsychosis
+
+                    '
+                  example: 1
+                trigger_reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                  description: Reason for state trigger
+                  example: combat_damage_threshold_exceeded
+      responses:
+        '201':
+          description: Cyberpsychosis state created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

@@ -1,0 +1,73 @@
+openapi: 3.0.3
+paths:
+  /analytics/delivery:
+    get:
+      operationId: emailNotificationServiceGetDeliveryAnalytics
+      summary: Get delivery analytics
+      description: 'Retrieve comprehensive email delivery analytics and metrics.
+
+
+        **Analytics Coverage:**
+
+        - Delivery success rates by provider
+
+        - Geographic delivery performance
+
+        - Time-based sending patterns
+
+        - Bounce and complaint analysis
+
+        - User engagement metrics
+
+        - Template performance comparison
+
+        '
+      tags:
+      - Analytics & Reporting
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for analytics
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: End date for analytics
+      - name: campaign_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific campaign
+      - name: template_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by template
+      - name: provider
+        in: query
+        schema:
+          type: string
+          enum:
+          - sendgrid
+          - mailgun
+          - ses
+          - smtp
+        description: Filter by email provider
+      responses:
+        '200':
+          description: Delivery analytics retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DeliveryAnalytics'

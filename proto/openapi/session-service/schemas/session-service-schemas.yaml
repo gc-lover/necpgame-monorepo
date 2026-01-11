@@ -1,0 +1,222 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Session:
+      description: Complete session entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/SessionEntity
+      - type: object
+        properties:
+          device_fingerprint_hash:
+            type: string
+            description: Hashed device fingerprint for security tracking
+          geographic_location:
+            type: object
+            properties:
+              country:
+                type: string
+                description: Country code
+              region:
+                type: string
+                description: Region/state
+              city:
+                type: string
+                description: City name
+              coordinates:
+                type: object
+                properties:
+                  latitude:
+                    type: number
+                    minimum: -90
+                    maximum: 90
+                  longitude:
+                    type: number
+                    minimum: -180
+                    maximum: 180
+          security_events:
+            type: array
+            items:
+              $ref: '#/components/schemas/SecurityEvent'
+            description: Security events associated with this session
+    SessionSummary:
+      description: Summary session for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Session ID
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+        ip_address:
+          type: string
+          description: Client IP address
+        user_agent:
+          type: string
+          description: Client user agent
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation time
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration time
+        is_active:
+          type: boolean
+          description: Whether session is active
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+    SecurityEvent:
+      type: object
+      required:
+      - event_type
+      - timestamp
+      - severity
+      properties:
+        event_type:
+          type: string
+          enum:
+          - suspicious_location
+          - device_change
+          - unusual_activity
+          - failed_validation
+          description: Type of security event
+        timestamp:
+          type: string
+          format: date-time
+          description: When event occurred
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Security severity level
+        description:
+          type: string
+          maxLength: 500
+          description: Event description
+        metadata:
+          type: object
+          description: Additional event data
+    CreateSessionRequest:
+      description: Request payload for creating a session
+      type: object
+      required:
+      - user_id
+      - ip_address
+      - user_agent
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to create session for
+        ip_address:
+          type: string
+          description: Client IP address
+        user_agent:
+          type: string
+          description: Client user agent string
+        device_fingerprint:
+          type: string
+          description: Unique device identifier
+        session_metadata:
+          type: object
+          description: Additional session metadata
+        expires_in_seconds:
+          type: integer
+          minimum: 300
+          maximum: 2592000
+          default: 3600
+          description: Session duration in seconds
+    UpdateSessionRequest:
+      description: Request payload for updating a session
+      type: object
+      properties:
+        expires_at:
+          type: string
+          format: date-time
+          description: New expiration time
+        metadata:
+          type: object
+          description: Updated metadata
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+    ExtendSessionRequest:
+      description: Request payload for extending session
+      type: object
+      properties:
+        additional_seconds:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          default: 3600
+          description: Seconds to add to session duration
+    ValidateSessionRequest:
+      description: Request payload for session validation
+      type: object
+      required:
+      - session_token
+      properties:
+        session_token:
+          type: string
+          description: Session token to validate
+        update_activity:
+          type: boolean
+          default: true
+          description: Whether to update last activity timestamp
+    SessionValidationResult:
+      description: Result of session validation
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Validated session ID
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+        is_valid:
+          type: boolean
+          description: Whether session is valid
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration time
+        time_remaining_seconds:
+          type: integer
+          description: Seconds until expiration
+        security_warnings:
+          type: array
+          items:
+            type: string
+          description: Any security warnings for this session
+    SessionAuditLog:
+      description: Audit trail for session operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          session_id:
+            type: string
+            format: uuid
+            description: Associated session ID
+          operation_type:
+            type: string
+            enum:
+            - create
+            - validate
+            - extend
+            - revoke
+            - delete
+            - security_event
+            description: Type of session operation performed

@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /sessions:
+    post:
+      summary: Create new combat session
+      description: '**Create new real-time combat session**
+
+        Creates a new real-time combat session with WebSocket support and enterprise-grade
+        performance optimizations.
+
+        **BACKEND NOTE:** Initializes Redis cache, Kafka topics, WebSocket room with
+        connection pooling. Session supports 2-50 players with configurable rules
+        and anti-cheat validation.
+
+        '
+      operationId: createCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Combat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          description: Invalid session parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '429':
+          description: Session creation rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

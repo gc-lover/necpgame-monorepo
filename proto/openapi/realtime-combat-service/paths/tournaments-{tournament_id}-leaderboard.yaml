@@ -1,0 +1,49 @@
+openapi: 3.0.3
+paths:
+  /tournaments/{tournament_id}/leaderboard:
+    get:
+      summary: Get tournament leaderboard
+      description: '**Tournament leaderboard**
+
+        Retrieves current tournament leaderboard with real-time updates across all
+        matches.
+
+        **BACKEND NOTE:** Aggregates scores across all tournament matches with performance
+        optimizations.
+
+        '
+      operationId: getTournamentLeaderboard
+      tags:
+      - Tournament
+      - Leaderboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament identifier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of entries to return
+      - name: include_stats
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include detailed statistics
+      responses:
+        '200':
+          description: Tournament leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentLeaderboardResponse'

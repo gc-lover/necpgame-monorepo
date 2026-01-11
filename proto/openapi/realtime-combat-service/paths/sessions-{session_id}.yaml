@@ -1,0 +1,120 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}:
+    get:
+      summary: Get combat session details
+      description: Retrieves current state and metadata of a combat session with cached
+        performance optimizations.
+      operationId: getCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/NotFound
+    put:
+      summary: Update combat session
+      description: '**Update combat session parameters**
+
+        Updates combat session parameters with optimistic locking and real-time notification.
+
+        **BACKEND NOTE:** Validates session state before update, triggers cache invalidation
+        and WebSocket broadcasts.
+
+        '
+      operationId: updateCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '409':
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/Conflict
+    delete:
+      summary: End combat session
+      description: '**Terminate combat session**
+
+        Terminates a combat session and cleans up resources with enterprise-grade
+        cleanup procedures.
+
+        **BACKEND NOTE:** Closes all WebSocket connections, archives session data
+        to event store, publishes final statistics.
+
+        '
+      operationId: endCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      responses:
+        '204':
+          description: Session ended successfully (No Content)
+        '403':
+          description: Not authorized to end session
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/NotFound

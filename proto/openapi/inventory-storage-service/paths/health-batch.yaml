@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: inventoryStorageBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - inventory-storage
+                    - item-service
+                    - equipment-service
+                    - crafting-service
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

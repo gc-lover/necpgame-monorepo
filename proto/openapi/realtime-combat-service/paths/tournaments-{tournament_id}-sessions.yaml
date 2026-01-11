@@ -1,0 +1,48 @@
+openapi: 3.0.3
+paths:
+  /tournaments/{tournament_id}/sessions:
+    get:
+      summary: Get tournament combat sessions
+      description: '**Tournament combat sessions**
+
+        Retrieves all combat sessions for a specific tournament with bracket information.
+
+        **BACKEND NOTE:** Used for tournament brackets, scheduling, and spectator
+        navigation.
+
+        '
+      operationId: getTournamentSessions
+      tags:
+      - Tournament
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - scheduled
+          - in_progress
+          - completed
+          - cancelled
+        description: Filter by session status
+      - name: bracket_round
+        in: query
+        schema:
+          type: string
+          description: Filter by bracket round (e.g., "quarterfinal", "semifinal")
+      responses:
+        '200':
+          description: Tournament sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSessionsResponse'

@@ -24,6 +24,9 @@
 
 ТЫ ДОЛЖЕН ДОВЕСТИ КАЖДУЮ ЗАДАЧУ ДО СОСТОЯНИЯ DONE!
 
+КРИТИЧНО: После завершения работы над задачей ОБЯЗАТЕЛЬНО делать коммит! Одна задача = один коммит!
+Формат коммита: [agent] {type}: {desc}\n\nRelated Issue: #{number}
+
 Все роли агентов: @.cursor/rules/agent-api-designer.mdc @.cursor/rules/agent-architect.mdc @.cursor/rules/agent-autonomy.mdc @.cursor/rules/agent-backend.mdc @.cursor/rules/agent-content-writer.mdc @.cursor/rules/agent-database.mdc @.cursor/rules/agent-devops.mdc @.cursor/rules/agent-game-balance.mdc @.cursor/rules/agent-idea-writer.mdc @.cursor/rules/agent-network.mdc @.cursor/rules/agent-performance.mdc @.cursor/rules/agent-qa.mdc @.cursor/rules/agent-release.mdc @.cursor/rules/agent-security.mdc @.cursor/rules/agent-ue5.mdc @.cursor/rules/agent-ui-ux-designer.mdc @.cursor/rules/always.mdc @.cursor/rules/linter-emoji-ban.mdc
 
 Базовый сценарий: @.cursor/AGENT_QUICK_START.md
@@ -339,8 +342,23 @@ await mcp_github_update_project_item({
 
 #### 4.1. Передача следующему агенту
 Если задача требует работы следующего агента:
+
+**КРИТИЧНО: ОБЯЗАТЕЛЬНО сделать коммит перед передачей задачи!**
+
+```bash
+# 1. Сделать коммит с изменениями (ОБЯЗАТЕЛЬНО!)
+git add .
+git commit -m "[agent] {type}: {desc}
+
+Related Issue: #{number}"
+
+# Примеры:
+# git commit -m "[API] feat: Add OpenAPI specification for auth service\n\nRelated Issue: #1234"
+# git commit -m "[Backend] refactor: Optimize database queries\n\nRelated Issue: #5678"
+```
+
 ```javascript
-// Передача следующему агенту
+// 2. Передача следующему агенту (после коммита!)
 await mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
@@ -358,7 +376,7 @@ await mcp_github_update_project_item({
   ]
 });
 
-// Комментарий о передаче
+// 3. Комментарий о передаче
 await mcp_github_add_issue_comment({
   owner: 'gc-lover',
   repo: 'necpgame-monorepo',
@@ -367,10 +385,28 @@ await mcp_github_add_issue_comment({
 });
 ```
 
+**Правило:** Одна задача = один коммит. Все изменения задачи должны быть в одном коммите перед передачей следующему агенту.
+
 #### 4.2. Завершение задачи (Done)
 Если задача полностью выполнена и не требует работы других агентов:
+
+**КРИТИЧНО: ОБЯЗАТЕЛЬНО сделать коммит перед обновлением статуса на Done!**
+
+```bash
+# 1. Сделать коммит с изменениями (ОБЯЗАТЕЛЬНО!)
+git add .
+git commit -m "[agent] {type}: {desc}
+
+Related Issue: #{number}"
+
+# Примеры:
+# git commit -m "[Backend] feat: Add user authentication service\n\nRelated Issue: #1234"
+# git commit -m "[API] docs: Update OpenAPI specification\n\nRelated Issue: #5678"
+# git commit -m "[Database] fix: Correct migration timestamp\n\nRelated Issue: #9012"
+```
+
 ```javascript
-// Завершение задачи
+// 2. Завершение задачи (после коммита!)
 await mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
@@ -382,7 +418,7 @@ await mcp_github_update_project_item({
   }
 });
 
-// Закрыть Issue
+// 3. Закрыть Issue
 await mcp_github_issue_write({
   method: 'update',
   owner: 'gc-lover',
@@ -392,7 +428,7 @@ await mcp_github_issue_write({
   state_reason: 'completed'
 });
 
-// Комментарий о завершении
+// 4. Комментарий о завершении
 await mcp_github_add_issue_comment({
   owner: 'gc-lover',
   repo: 'necpgame-monorepo',
@@ -400,6 +436,8 @@ await mcp_github_add_issue_comment({
   body: '[OK] Task completed. Status: Done. Issue: #{number}'
 });
 ```
+
+**Правило:** Одна задача = один коммит. Все изменения задачи должны быть в одном коммите перед обновлением статуса на Done.
 
 ## Правила качества
 
@@ -410,6 +448,7 @@ await mcp_github_add_issue_comment({
 - Смена статуса TODO → In Progress при взятии
 - Выбор правильной роли агента
 - Качественное выполнение требований
+- **ОБЯЗАТЕЛЬНЫЙ коммит после завершения работы над задачей (одна задача = один коммит)**
 - Передача следующему агенту с комментарием
 
 ### ❌ ЗАПРЕЩЕНО
@@ -418,12 +457,15 @@ await mcp_github_add_issue_comment({
 - Работа без смены статуса на In Progress
 - Оставление задач без передачи следующему агенту
 - Нарушение правил размещения файлов
+- Обновление статуса задачи на Done/Todo без коммита изменений
+- Объединение изменений нескольких задач в один коммит
 
 ## Лимиты и ограничения
 
 - **Максимум задач за раз:** 5
 - **Файлы:** Только необходимые для реализации
-- **Коммиты:** Формат `[agent] {type}: {desc}`
+- **Коммиты:** Формат `[agent] {type}: {desc}\n\nRelated Issue: #{number}`
+- **Правило коммитов:** Одна задача = один коммит. Коммит ОБЯЗАТЕЛЕН перед обновлением статуса на Done/Todo
 - **Валидация:** Обязательна перед передачей
 
 ## Команды валидации

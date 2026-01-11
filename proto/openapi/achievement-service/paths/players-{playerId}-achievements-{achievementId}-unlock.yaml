@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/achievements/{achievementId}/unlock:
+    post:
+      operationId: unlockPlayerAchievement
+      summary: Manually unlock achievement for player
+      description: 'Manually unlock an achievement for a player (admin operation).
+
+        Used for testing, events, or special promotions.
+
+        '
+      tags:
+      - Progress Tracking
+      - Administration
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockAchievementRequest'
+      responses:
+        '200':
+          description: Achievement unlocked successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AchievementUnlock'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

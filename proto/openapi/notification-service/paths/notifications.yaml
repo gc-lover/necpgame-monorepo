@@ -1,0 +1,86 @@
+openapi: 3.0.3
+paths:
+  /notifications:
+    get:
+      summary: Get notifications
+      description: Retrieve user notifications
+      operationId: getNotifications
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - unread
+          - read
+          - all
+          default: unread
+        description: Filter by notification status
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - achievement
+          description: Filter by notification type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of notifications to retrieve
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Send notification
+      description: Send a notification to a user
+      operationId: sendNotification
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '200':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,133 @@
+openapi: 3.0.3
+paths:
+  /alliances:
+    get:
+      description: '**Enterprise-grade alliance listing endpoint**
+
+        Supports complex filtering by type, member count, influence, and relationships.
+        Optimized for high-throughput scenarios with proper indexing.
+
+        **Performance:** <15ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listAlliances
+      parameters:
+      - description: Page number for pagination
+        in: query
+        name: page
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - description: Filter by alliance type
+        in: query
+        name: alliance_type
+        schema:
+          default: all
+          enum:
+          - military
+          - trade
+          - political
+          - research
+          - criminal
+          - all
+          type: string
+      - description: Filter by influence level
+        in: query
+        name: influence_level
+        schema:
+          default: all
+          enum:
+          - dominant
+          - major
+          - minor
+          - emerging
+          - all
+          type: string
+      - description: Minimum member count filter
+        in: query
+        name: member_count_min
+        schema:
+          minimum: 2
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceListResponse'
+          description: Alliances retrieved successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request - malformed query parameters
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                example: 60
+                type: integer
+      summary: List alliances with filtering and pagination
+      tags:
+      - Alliance Management
+    post:
+      description: '**Enterprise-grade alliance creation endpoint**
+
+        Validates alliance uniqueness, political landscape impact, and business rules.
+        Supports alliance-specific initialization and member invitations.
+
+        **Performance:** <75ms P95, includes validation and political impact calculation
+
+        '
+      operationId: createAlliance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAllianceRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+          description: Alliance created successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request - validation failed
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Conflict - alliance name already exists
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unprocessable entity - political landscape constraints
+      security:
+      - BearerAuth: []
+      summary: Create new alliance
+      tags:
+      - Alliance Management

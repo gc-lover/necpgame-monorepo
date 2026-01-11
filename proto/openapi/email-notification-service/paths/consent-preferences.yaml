@@ -1,0 +1,93 @@
+openapi: 3.0.3
+paths:
+  /consent/preferences:
+    get:
+      operationId: emailNotificationServiceGetUserConsent
+      summary: Get user email consent preferences
+      description: 'Retrieve user''s email consent and preference settings.
+
+
+        **GDPR Compliance:**
+
+        - Granular consent tracking
+
+        - Consent history maintenance
+
+        - Legal basis documentation
+
+        - Withdrawal handling
+
+        '
+      tags:
+      - Compliance & Consent
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      responses:
+        '200':
+          description: User consent preferences retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserEmailConsent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: emailNotificationServiceUpdateUserConsent
+      summary: Update user email consent
+      description: 'Update user''s email consent preferences and marketing opt-ins.
+
+
+        **Consent Management:**
+
+        - Validate consent changes
+
+        - Update suppression lists
+
+        - Maintain consent history
+
+        - Trigger preference sync
+
+        '
+      tags:
+      - Compliance & Consent
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserConsentRequest'
+      responses:
+        '200':
+          description: User consent updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserEmailConsent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

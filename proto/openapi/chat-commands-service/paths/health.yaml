@@ -1,0 +1,68 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: Chat commands service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the chat commands service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        Includes command processing status and system health metrics.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: chatCommandsServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"chat-commands-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

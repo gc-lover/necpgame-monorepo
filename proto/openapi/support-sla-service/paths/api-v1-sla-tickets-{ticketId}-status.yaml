@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /api/v1/sla/tickets/{ticketId}/status:
+    get:
+      summary: Get SLA status for ticket
+      description: '**Enterprise-grade SLA status endpoint**
+
+        Retrieves current SLA status for a specific support ticket.
+
+        Includes response time tracking, breach warnings, and SLA metrics.
+
+        **Performance:** <25ms response time, cached for 5 minutes
+
+        **Security:** Requires valid JWT token with support agent permissions
+
+        '
+      operationId: getTicketSLAStatus
+      tags:
+      - SLA Monitoring
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        description: Unique ticket identifier (UUID format)
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: SLA status retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"sla-status-123e4567"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSLAStatus'
+        '404':
+          description: Ticket not found or SLA data unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

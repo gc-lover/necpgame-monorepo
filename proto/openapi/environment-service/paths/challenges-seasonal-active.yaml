@@ -1,0 +1,91 @@
+openapi: 3.0.3
+paths:
+  /challenges/seasonal/active:
+    get:
+      summary: Get active seasonal challenges
+      description: '**Get active seasonal challenges for character**
+
+        Returns list of currently available seasonal challenges with progress tracking.
+
+        **Performance:** <10ms response time, cached for 5 minutes
+
+        **Rate Limit:** 100 requests per minute per character '
+      operationId: getActiveSeasonalChallenges
+      tags:
+      - Seasonal Challenges
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier
+      - name: season_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Optional season filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of challenges to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Active seasonal challenges retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      challenges:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SeasonalChallenge'
+                      total:
+                        type: integer
+                        description: Total number of challenges
+                      pagination:
+                        type: object
+                        properties:
+                          limit:
+                            type: integer
+                          offset:
+                            type: integer
+                          hasMore:
+                            type: boolean
+                    required:
+                    - challenges
+                    - total
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

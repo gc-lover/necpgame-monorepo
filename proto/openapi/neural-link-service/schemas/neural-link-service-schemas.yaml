@@ -1,0 +1,1054 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    NeuralLinkEntity:
+      type: object
+      description: '  '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - model
+        - manufacturer
+        - type
+        - firmwareVersion
+        properties:
+          model:
+            type: string
+            description: '  '
+            maxLength: 50
+            example: Arasaka Mk.4
+          manufacturer:
+            type: string
+            description: ''
+            enum:
+            - arasaka
+            - militech
+            - biotechnica
+            - trauma_team
+            - black_market
+            example: arasaka
+          type:
+            type: string
+            description: '  '
+            enum:
+            - basic
+            - advanced
+            - military
+            - prototype
+            example: advanced
+          firmwareVersion:
+            type: string
+            description: ' '
+            pattern: ^\d+\.\d+\.\d+$
+            example: 2.1.3
+          hardwareSpecs:
+            type: object
+            description: ' '
+            properties:
+              bandwidth:
+                type: integer
+                description: '  (Mbps)'
+                minimum: 1
+                example: 1000
+              latency:
+                type: integer
+                description: ' (ms)'
+                minimum: 1
+                example: 5
+              powerConsumption:
+                type: integer
+                description: '  (W)'
+                minimum: 1
+                example: 25
+          supportedImplants:
+            type: array
+            description: ' '
+            items:
+              type: string
+              maxLength: 50
+          maxImplants:
+            type: integer
+            description: '  '
+            minimum: 1
+            maximum: 20
+            example: 8
+          cyberpsychosisResistance:
+            type: integer
+            description: ' '
+            minimum: 0
+            maximum: 100
+            example: 75
+          price:
+            type: integer
+            description: '  eddies'
+            minimum: 0
+            example: 50000
+          isActive:
+            type: boolean
+            description: '  '
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    ImplantEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - category
+        - rarity
+        - effects
+        properties:
+          name:
+            type: string
+            description: ' '
+            maxLength: 100
+            example: Kerenzikov Boost System
+          description:
+            type: string
+            description: ' '
+            maxLength: 500
+          category:
+            type: string
+            description: ' '
+            enum:
+            - neural
+            - cybernetic
+            - optic
+            - sensory
+            - muscle
+            example: muscle
+          rarity:
+            type: string
+            description: ' '
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            example: rare
+          effects:
+            type: array
+            description: ' '
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - stat_boost
+                  - ability_unlock
+                  - damage_resistance
+                  - stealth_bonus
+                value:
+                  type: number
+                duration:
+                  type: integer
+                  description: '  '
+                cooldown:
+                  type: integer
+                  description: '  '
+          requirements:
+            type: object
+            description: '  '
+            properties:
+              neuralLinkType:
+                type: string
+                enum:
+                - basic
+                - advanced
+                - military
+                - prototype
+              minNeuralLinkLevel:
+                type: integer
+                minimum: 1
+              incompatibleImplants:
+                type: array
+                items:
+                  type: string
+                  maxLength: 50
+          cyberpsychosisRisk:
+            type: integer
+            description: ' '
+            minimum: 0
+            maximum: 100
+            example: 15
+          installationTime:
+            type: integer
+            description: '   '
+            minimum: 1
+            example: 30
+          price:
+            type: integer
+            description: '  eddies'
+            minimum: 0
+            example: 25000
+          isActive:
+            type: boolean
+            description: '  '
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    PlayerNeuralLinkEntity:
+      type: object
+      description: '  '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - neuralLinkId
+        - installationDate
+        properties:
+          playerId:
+            type: string
+            description: 'ID '
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          neuralLinkId:
+            type: string
+            description: 'ID  '
+            format: uuid
+            example: 456e7890-e89b-12d3-a456-426614174001
+          installationDate:
+            type: string
+            description: ' '
+            format: date-time
+          firmwareVersion:
+            type: string
+            description: '  '
+            pattern: ^\d+\.\d+\.\d+$
+          signalQuality:
+            type: number
+            description: ' '
+            minimum: 0
+            maximum: 1
+            example: 0.95
+          bandwidthUsage:
+            type: number
+            description: '  '
+            minimum: 0
+            maximum: 1
+            example: 0.3
+          activeImplants:
+            type: array
+            description: ' '
+            items:
+              type: string
+              format: uuid
+          cyberpsychosisLevel:
+            type: number
+            description: ' '
+            minimum: 0
+            maximum: 1
+            example: 0.05
+          lastCalibration:
+            type: string
+            description: ' '
+            format: date-time
+          emergencyShutdowns:
+            type: integer
+            description: '  '
+            minimum: 0
+          isActive:
+            type: boolean
+            description: '  '
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    PlayerImplantEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - implantId
+        - status
+        properties:
+          playerId:
+            type: string
+            description: 'ID '
+            format: uuid
+          implantId:
+            type: string
+            description: 'ID '
+            format: uuid
+          status:
+            type: string
+            description: ' '
+            enum:
+            - installed
+            - installing
+            - malfunctioning
+            - removed
+            example: installed
+          installationDate:
+            type: string
+            description: ' '
+            format: date-time
+          malfunctionDate:
+            type: string
+            description: ' '
+            format: date-time
+          repairCost:
+            type: integer
+            description: ' '
+            minimum: 0
+          isActive:
+            type: boolean
+            description: '  '
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateNeuralLinkRequest:
+      type: object
+      required:
+      - model
+      - manufacturer
+      - type
+      - firmwareVersion
+      properties:
+        model:
+          type: string
+          maxLength: 50
+        manufacturer:
+          type: string
+          enum:
+          - arasaka
+          - militech
+          - biotechnica
+          - trauma_team
+          - black_market
+        type:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - military
+          - prototype
+        firmwareVersion:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        hardwareSpecs:
+          type: object
+          properties:
+            bandwidth:
+              type: integer
+              minimum: 1
+            latency:
+              type: integer
+              minimum: 1
+            powerConsumption:
+              type: integer
+              minimum: 1
+        supportedImplants:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        maxImplants:
+          type: integer
+          minimum: 1
+          maximum: 20
+        cyberpsychosisResistance:
+          type: integer
+          minimum: 0
+          maximum: 100
+        price:
+          type: integer
+          minimum: 0
+    UpdateNeuralLinkRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          maxLength: 50
+        manufacturer:
+          type: string
+          enum:
+          - arasaka
+          - militech
+          - biotechnica
+          - trauma_team
+          - black_market
+        type:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - military
+          - prototype
+        firmwareVersion:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        hardwareSpecs:
+          type: object
+          properties:
+            bandwidth:
+              type: integer
+              minimum: 1
+            latency:
+              type: integer
+              minimum: 1
+            powerConsumption:
+              type: integer
+              minimum: 1
+        supportedImplants:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        maxImplants:
+          type: integer
+          minimum: 1
+          maximum: 20
+        cyberpsychosisResistance:
+          type: integer
+          minimum: 0
+          maximum: 100
+        price:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+    NeuralLinkResponse:
+      type: object
+      properties:
+        neuralLink:
+          $ref: '#/components/schemas/NeuralLinkEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    NeuralLinkListResponse:
+      type: object
+      properties:
+        neuralLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/NeuralLinkEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    InstallNeuralLinkRequest:
+      type: object
+      required:
+      - neuralLinkId
+      properties:
+        neuralLinkId:
+          type: string
+          format: uuid
+    InstallNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLink:
+          $ref: '#/components/schemas/NeuralLinkEntity'
+        installationDate:
+          type: string
+          format: date-time
+        initialCalibration:
+          type: object
+          properties:
+            signalQuality:
+              type: number
+              minimum: 0
+              maximum: 1
+            success:
+              type: boolean
+    UninstallNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLinkId:
+          type: string
+          format: uuid
+        uninstallDate:
+          type: string
+          format: date-time
+        finalStats:
+          type: object
+          properties:
+            totalUsageTime:
+              type: integer
+              description: '    '
+            implantsInstalled:
+              type: integer
+            cyberpsychosisIncidents:
+              type: integer
+    PlayerNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLink:
+          $ref: '#/components/schemas/PlayerNeuralLinkEntity'
+        activeImplants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerImplantEntity'
+        healthStatus:
+          type: object
+          properties:
+            signalQuality:
+              type: number
+              minimum: 0
+              maximum: 1
+            cyberpsychosisRisk:
+              type: string
+              enum:
+              - low
+              - medium
+              - high
+              - critical
+            warnings:
+              type: array
+              items:
+                type: string
+    CalibrateNeuralLinkRequest:
+      type: object
+      required:
+      - calibrationType
+      properties:
+        calibrationType:
+          type: string
+          enum:
+          - quick
+          - full
+          - emergency
+          default: quick
+        targetSignalQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.95
+    CalibrateNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        calibrationType:
+          type: string
+          enum:
+          - quick
+          - full
+          - emergency
+        success:
+          type: boolean
+        signalQualityBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        signalQualityAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrationTime:
+          type: integer
+          description: '   '
+        recommendations:
+          type: array
+          items:
+            type: string
+    EmergencyShutdownRequest:
+      type: object
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          enum:
+          - cyberpsychosis
+          - signal_failure
+          - overheat
+          - user_request
+        force:
+          type: boolean
+          description: ' '
+          default: false
+    EmergencyShutdownResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        shutdownReason:
+          type: string
+        success:
+          type: boolean
+        shutdownTime:
+          type: string
+          format: date-time
+        recoveryTime:
+          type: integer
+          description: '   '
+        dataLoss:
+          type: boolean
+          description: '   '
+    CreateImplantRequest:
+      type: object
+      required:
+      - name
+      - category
+      - rarity
+      - effects
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - neural
+          - cybernetic
+          - optic
+          - sensory
+          - muscle
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - stat_boost
+                - ability_unlock
+                - damage_resistance
+                - stealth_bonus
+              value:
+                type: number
+              duration:
+                type: integer
+              cooldown:
+                type: integer
+        requirements:
+          type: object
+          properties:
+            neuralLinkType:
+              type: string
+              enum:
+              - basic
+              - advanced
+              - military
+              - prototype
+            minNeuralLinkLevel:
+              type: integer
+              minimum: 1
+            incompatibleImplants:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+        cyberpsychosisRisk:
+          type: integer
+          minimum: 0
+          maximum: 100
+        installationTime:
+          type: integer
+          minimum: 1
+        price:
+          type: integer
+          minimum: 0
+    ImplantResponse:
+      type: object
+      properties:
+        implant:
+          $ref: '#/components/schemas/ImplantEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    ImplantListResponse:
+      type: object
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    CheckCompatibilityRequest:
+      type: object
+      required:
+      - neuralLinkId
+      - implantIds
+      properties:
+        neuralLinkId:
+          type: string
+          format: uuid
+        implantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 10
+    CheckCompatibilityResponse:
+      type: object
+      properties:
+        neuralLinkId:
+          type: string
+          format: uuid
+        implantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        compatibilityResults:
+          type: array
+          items:
+            type: object
+            properties:
+              implantId:
+                type: string
+                format: uuid
+              compatible:
+                type: boolean
+              issues:
+                type: array
+                items:
+                  type: string
+                description: ' '
+              cyberpsychosisIncrease:
+                type: number
+                minimum: 0
+                maximum: 1
+        overallCompatibility:
+          type: boolean
+        totalCyberpsychosisRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+    PlayerImplantsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerImplantEntity'
+        maxImplants:
+          type: integer
+        cyberpsychosisLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+    InstallImplantRequest:
+      type: object
+      required:
+      - implantId
+      properties:
+        implantId:
+          type: string
+          format: uuid
+        skipCompatibilityCheck:
+          type: boolean
+          default: false
+    InstallImplantResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        implant:
+          $ref: '#/components/schemas/PlayerImplantEntity'
+        installationTime:
+          type: integer
+          description: '   '
+        cyberpsychosisIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        warnings:
+          type: array
+          items:
+            type: string
+    CyberpsychosisStatusResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        currentLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        riskLevel:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        symptoms:
+          type: array
+          items:
+            type: string
+            enum:
+            - hallucinations
+            - paranoia
+            - memory_loss
+            - aggression
+            - dissociation
+        triggers:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - implant_overload
+                - signal_interference
+                - combat_stress
+                - extended_use
+              severity:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+              timestamp:
+                type: string
+                format: date-time
+        treatmentHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              treatmentType:
+                type: string
+                enum:
+                - medication
+                - neural_recalibration
+                - implant_removal
+                - therapy
+              date:
+                type: string
+                format: date-time
+              effectiveness:
+                type: number
+                minimum: 0
+                maximum: 1
+    TreatCyberpsychosisRequest:
+      type: object
+      required:
+      - treatmentType
+      properties:
+        treatmentType:
+          type: string
+          enum:
+          - medication
+          - neural_recalibration
+          - implant_removal
+          - therapy
+        targetImplantId:
+          type: string
+          format: uuid
+          description: ID    ( treatmentType = implant_removal)
+    TreatCyberpsychosisResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        treatmentType:
+          type: string
+        success:
+          type: boolean
+        levelBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        levelAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        treatmentCost:
+          type: integer
+          minimum: 0
+        recoveryTime:
+          type: integer
+          description: '   '
+        sideEffects:
+          type: array
+          items:
+            type: string
+    ProcessSignalsRequest:
+      type: object
+      required:
+      - playerId
+      - signals
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        signals:
+          type: array
+          items:
+            type: object
+            required:
+            - type
+            - data
+            properties:
+              type:
+                type: string
+                enum:
+                - neural_activity
+                - implant_feedback
+                - environmental_input
+                - emotional_state
+              data:
+                type: object
+                additionalProperties: true
+              timestamp:
+                type: string
+                format: date-time
+    ProcessSignalsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        processedSignals:
+          type: integer
+          minimum: 0
+        anomaliesDetected:
+          type: integer
+          minimum: 0
+        recommendations:
+          type: array
+          items:
+            type: string
+            enum:
+            - calibration_needed
+            - implant_check
+            - cyberpsychosis_monitoring
+            - signal_booster
+        processedData:
+          type: object
+          additionalProperties: true
+          description: '  '
+    NeuralActivityAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        totalActiveLinks:
+          type: integer
+          minimum: 0
+        averageSignalQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+        cyberpsychosisIncidents:
+          type: integer
+          minimum: 0
+        implantFailures:
+          type: integer
+          minimum: 0
+        calibrationSuccessRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        popularImplants:
+          type: array
+          items:
+            type: object
+            properties:
+              implantId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              installationCount:
+                type: integer
+                minimum: 0
+        manufacturerStats:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              activeLinks:
+                type: integer
+                minimum: 0
+              averageQuality:
+                type: number
+                minimum: 0
+                maximum: 1

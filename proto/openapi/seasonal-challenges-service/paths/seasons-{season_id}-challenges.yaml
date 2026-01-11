@@ -1,0 +1,39 @@
+openapi: 3.0.3
+paths:
+  /seasons/{season_id}/challenges:
+    get:
+      operationId: listSeasonChallenges
+      summary: List challenges for a season
+      description: Retrieve challenges for a specific season with progress tracking
+      tags:
+      - Seasonal Challenges
+      parameters:
+      - name: season_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Season unique identifier
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player progress (optional)
+      responses:
+        '200':
+          description: Challenges retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/components/responses/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ChallengeWithProgress'
+        '404':
+          $ref: '#/components/responses/NotFound'

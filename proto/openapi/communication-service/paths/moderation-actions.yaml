@@ -1,0 +1,40 @@
+openapi: 3.0.3
+paths:
+  /moderation/actions:
+    post:
+      summary: Execute moderation action
+      description: '**Execute moderation action on reported content**
+
+        Supports warnings, mutes, bans, and content removal.
+
+        **Performance:** <45ms with immediate enforcement
+
+        '
+      operationId: executeModerationAction
+      tags:
+      - Moderation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteModerationActionRequest'
+      responses:
+        '200':
+          description: Moderation action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationActionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

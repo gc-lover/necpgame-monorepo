@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /auth/refresh:
+    post:
+      operationId: authServiceRefreshToken
+      summary: Refresh access token
+      description: 'Exchange refresh token for new access token pair.
+
+
+        **Security Notes:**
+
+        - Validates refresh token integrity
+
+        - Issues new token pair with updated expiration
+
+        - Maintains session continuity
+
+        - Single-use refresh tokens
+
+        '
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        access_token:
+                          type: string
+                          description: New JWT access token
+                        refresh_token:
+                          type: string
+                          description: New JWT refresh token
+                        token_type:
+                          type: string
+                          enum:
+                          - Bearer
+                          example: Bearer
+                        expires_in:
+                          type: integer
+                          description: Access token expiration in seconds
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'

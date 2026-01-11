@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /analytics/ab-tests/{test_id}/assign/{player_id}:
+    post:
+      summary: Assign A/B Test Variant
+      description: '**Assign a test variant to a player**
+
+        Uses statistical sampling to assign player to appropriate test variant based
+        on weights and current distribution.
+
+        **Performance:** <10ms assignment time'
+      operationId: assignABTestVariant
+      tags:
+      - A/B Testing
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: A/B test UUID
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      responses:
+        '200':
+          description: Test variant assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - test_id
+                - player_id
+                - variant
+                - assigned_at
+                properties:
+                  test_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440001
+                  player_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  variant:
+                    type: string
+                    example: blue_button
+                  assigned_at:
+                    type: string
+                    format: date-time
+                    example: '2024-01-11T12:00:00Z'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

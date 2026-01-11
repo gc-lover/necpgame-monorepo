@@ -1,0 +1,37 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/mitigation:
+    post:
+      summary: Calculate damage mitigation
+      operationId: combatDamageCalculateMitigation
+      description: 'Calculate total damage reduction from armor, shields, resistances,
+        and temporary effects.
+
+        **BACKEND NOTE:** Optimized for armor stacking calculations. SIMD operations
+        for parallel resistance calculations. Memory: compact struct layout for mitigation
+        data.'
+      tags:
+      - Damage Mitigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageMitigationRequest'
+      responses:
+        '200':
+          description: Damage mitigation calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageMitigationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

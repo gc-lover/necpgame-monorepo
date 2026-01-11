@@ -1,0 +1,96 @@
+openapi: 3.0.3
+paths:
+  /regions:
+    get:
+      summary: Get all world regions
+      description: '**Enterprise-grade world regions listing**
+
+
+        Returns comprehensive list of all game world regions with timeline data.
+
+        Supports filtering by status, continent, and development level.
+
+
+        **Performance:** <50ms P95, supports 1000+ regions
+
+        **Memory:** <50KB per region instance
+
+        '
+      operationId: getWorldRegions
+      tags:
+      - World Regions
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - ready_for_backend
+          - approved
+          - published
+        description: Filter by region status
+      - name: continent
+        in: query
+        schema:
+          type: string
+          enum:
+          - africa
+          - america
+          - asia
+          - europe
+          - oceania
+          - antarctica
+          - arctic
+          - cis
+          - middle-east
+        description: Filter by continent
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of regions to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of regions to skip
+      responses:
+        '200':
+          description: List of world regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldRegion'
+                  total:
+                    type: integer
+                    format: int64
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                required:
+                - regions
+                - total
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

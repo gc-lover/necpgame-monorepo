@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /api/v1/easter-eggs/difficulty/{difficulty}:
+    get:
+      summary: Get easter eggs by difficulty
+      description: Retrieve easter eggs filtered by difficulty level
+      operationId: getEasterEggsByDifficulty
+      parameters:
+      - name: difficulty
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Easter eggs by difficulty
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  easter_eggs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EasterEgg'
+                  total:
+                    type: integer
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

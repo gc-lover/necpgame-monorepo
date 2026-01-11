@@ -1,0 +1,442 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    CompanionType:
+      type: object
+      properties:
+        typeId:
+          type: string
+          format: uuid
+          description: Unique companion type identifier
+        name:
+          type: string
+          example: Fire Elemental
+        description:
+          type: string
+          example: A companion made of living flame
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        baseStats:
+          $ref: '#/components/schemas/CompanionStats'
+        availableAbilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+        unlockRequirements:
+          $ref: '#/components/schemas/CompanionRequirements'
+      required:
+      - typeId
+      - name
+      - rarity
+      - baseStats
+    CompanionTypeDetailed:
+      allOf:
+      - $ref: '#/components/schemas/CompanionType'
+      - type: object
+        properties:
+          detailedDescription:
+            type: string
+          abilityDetails:
+            type: array
+            items:
+              $ref: '#/components/schemas/AbilityDetail'
+          evolutionPath:
+            type: array
+            items:
+              type: string
+              format: uuid
+    CompanionStats:
+      type: object
+      properties:
+        health:
+          type: integer
+          minimum: 1
+        attack:
+          type: integer
+          minimum: 0
+        defense:
+          type: integer
+          minimum: 0
+        speed:
+          type: integer
+          minimum: 0
+        specialAttack:
+          type: integer
+          minimum: 0
+        specialDefense:
+          type: integer
+          minimum: 0
+      required:
+      - health
+      - attack
+      - defense
+      - speed
+      - specialAttack
+      - specialDefense
+    CompanionRequirements:
+      type: object
+      properties:
+        playerLevel:
+          type: integer
+          minimum: 1
+        currencyCost:
+          type: integer
+          minimum: 0
+        itemRequirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequirement'
+        questPrerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+    ItemRequirement:
+      type: object
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+      required:
+      - itemId
+      - quantity
+    AbilityDetail:
+      type: object
+      properties:
+        abilityId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        cooldownSeconds:
+          type: integer
+          minimum: 0
+        resourceCost:
+          type: integer
+          minimum: 0
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+      required:
+      - abilityId
+      - name
+      - cooldownSeconds
+      - resourceCost
+    AbilityEffect:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - damage
+          - heal
+          - buff
+          - debuff
+          - summon
+          - teleport
+        value:
+          type: integer
+        duration:
+          type: integer
+          description: Effect duration in seconds, 0 for instant effects
+        target:
+          type: string
+          enum:
+          - self
+          - ally
+          - enemy
+          - area
+    PlayerCompanion:
+      type: object
+      properties:
+        companionId:
+          type: string
+          format: uuid
+        typeId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        currentStats:
+          $ref: '#/components/schemas/CompanionStats'
+        status:
+          type: string
+          enum:
+          - stored
+          - summoned
+          - training
+          - unavailable
+        summonedAt:
+          type: string
+          format: date-time
+        acquiredAt:
+          type: string
+          format: date-time
+      required:
+      - companionId
+      - typeId
+      - name
+      - level
+      - experience
+      - currentStats
+      - status
+      - acquiredAt
+    CompanionDetailed:
+      allOf:
+      - $ref: '#/components/schemas/PlayerCompanion'
+      - type: object
+        properties:
+          abilities:
+            type: array
+            items:
+              $ref: '#/components/schemas/CompanionAbility'
+          inventory:
+            type: array
+            items:
+              $ref: '#/components/schemas/CompanionItem'
+          relationshipLevel:
+            type: integer
+            minimum: 0
+            maximum: 100
+          personality:
+            $ref: '#/components/schemas/CompanionPersonality'
+    CompanionAbility:
+      type: object
+      properties:
+        abilityId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        cooldownRemaining:
+          type: integer
+          minimum: 0
+        lastUsed:
+          type: string
+          format: date-time
+      required:
+      - abilityId
+      - name
+      - level
+    CompanionItem:
+      type: object
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - accessory
+          - consumable
+        equipped:
+          type: boolean
+      required:
+      - itemId
+      - name
+      - type
+    CompanionPersonality:
+      type: object
+      properties:
+        traits:
+          type: array
+          items:
+            type: string
+        likes:
+          type: array
+          items:
+            type: string
+        dislikes:
+          type: array
+          items:
+            type: string
+        mood:
+          type: string
+          enum:
+          - happy
+          - neutral
+          - sad
+          - angry
+          - excited
+    PurchaseCompanionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        purchaseId:
+          type: string
+          format: uuid
+        companionId:
+          type: string
+          format: uuid
+        newBalance:
+          type: integer
+          format: int64
+        ownershipGranted:
+          type: boolean
+        purchaseTime:
+          type: string
+          format: date-time
+      required:
+      - success
+      - purchaseId
+      - companionId
+      - newBalance
+      - ownershipGranted
+      - purchaseTime
+    SummonCompanionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        companionId:
+          type: string
+          format: uuid
+        summonTime:
+          type: string
+          format: date-time
+        activeAbilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - success
+      - companionId
+      - summonTime
+    RecallCompanionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        companionId:
+          type: string
+          format: uuid
+        recallTime:
+          type: string
+          format: date-time
+        totalActiveTime:
+          type: integer
+          description: Total time companion was active in seconds
+      required:
+      - success
+      - companionId
+      - recallTime
+    RenameCompanionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        companionId:
+          type: string
+          format: uuid
+        oldName:
+          type: string
+        newName:
+          type: string
+        renameTime:
+          type: string
+          format: date-time
+      required:
+      - success
+      - companionId
+      - oldName
+      - newName
+      - renameTime
+    AddExperienceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        companionId:
+          type: string
+          format: uuid
+        experienceAdded:
+          type: integer
+        previousLevel:
+          type: integer
+        newLevel:
+          type: integer
+        leveledUp:
+          type: boolean
+        experienceTime:
+          type: string
+          format: date-time
+      required:
+      - success
+      - companionId
+      - experienceAdded
+      - previousLevel
+      - newLevel
+      - leveledUp
+      - experienceTime
+    UseAbilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        companionId:
+          type: string
+          format: uuid
+        abilityId:
+          type: string
+          format: uuid
+        abilityName:
+          type: string
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+        cooldownEndsAt:
+          type: string
+          format: date-time
+        useTime:
+          type: string
+          format: date-time
+      required:
+      - success
+      - companionId
+      - abilityId
+      - abilityName
+      - useTime
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

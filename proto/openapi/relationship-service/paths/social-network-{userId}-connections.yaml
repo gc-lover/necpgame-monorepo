@@ -1,0 +1,68 @@
+openapi: 3.0.3
+paths:
+  /social-network/{userId}/connections:
+    get:
+      summary: Get social connections
+      description: '**Retrieve user''s social network connections**
+
+        Returns graph of relationships up to specified depth.
+
+        **Performance:** <80ms with graph traversal limits
+
+        '
+      operationId: getSocialConnections
+      tags:
+      - Social Network
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      - name: depth
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 2
+        description: Connection depth to traverse
+      - name: relationship_types
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - friendship
+            - romance
+            - rivalry
+            - mentorship
+            - business
+            - enmity
+        description: Types of relationships to include
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
+        description: Maximum connections to return
+      responses:
+        '200':
+          description: Social connections retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialNetworkResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

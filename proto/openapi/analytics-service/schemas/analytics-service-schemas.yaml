@@ -1,0 +1,596 @@
+openapi: 3.0.3
+components:
+  schemas:
+    PlayerBehavior:
+      type: object
+      required:
+      - player_id
+      - total_sessions
+      - level
+      - days_since_first
+      - days_since_last
+      - is_active
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        session_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSessionEvent'
+          description: Recent session events
+        game_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          description: Recent game events
+        session_duration:
+          type: number
+          format: float
+          description: Total session duration in hours
+          example: 45.5
+        average_session_time:
+          type: number
+          format: float
+          description: Average session time in hours
+          example: 2.3
+        play_frequency:
+          type: number
+          format: float
+          description: Play frequency per week
+          example: 4.2
+        retention_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Retention rate (0.0-1.0)
+          example: 0.85
+        churn_probability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Churn probability (0.0-1.0)
+          example: 0.12
+        engagement_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Engagement score (0.0-1.0)
+          example: 0.78
+        total_sessions:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of sessions
+          example: 156
+        total_play_time:
+          type: integer
+          format: int32
+          description: Total play time in hours
+          example: 234
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Current player level
+          example: 25
+        days_since_first:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Days since first session
+          example: 45
+        days_since_last:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Days since last session
+          example: 2
+        is_active:
+          type: boolean
+          description: Whether player is currently active
+          example: true
+        is_churned:
+          type: boolean
+          description: Whether player has churned
+          example: false
+    PlayerSessionEvent:
+      type: object
+      required:
+      - event_id
+      - event_type
+      - timestamp
+      - duration_minutes
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        event_type:
+          type: string
+          enum:
+          - session_start
+          - session_end
+          - level_up
+          - achievement
+          description: Type of session event
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        duration_minutes:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Session duration in minutes
+        level_start:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Level at session start
+        level_end:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Level at session end
+        xp_start:
+          type: integer
+          format: int32
+          minimum: 0
+          description: XP at session start
+        xp_end:
+          type: integer
+          format: int32
+          minimum: 0
+          description: XP at session end
+    GameEvent:
+      type: object
+      required:
+      - event_id
+      - event_type
+      - player_id
+      - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        event_type:
+          type: string
+          description: Type of game event
+          example: enemy_defeated
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        data:
+          type: object
+          additionalProperties: true
+          description: Event-specific data
+          example:
+            enemy_type: boss
+            damage_dealt: 1250
+    RetentionMetrics:
+      type: object
+      required:
+      - date_range
+      - cohort_metrics
+      - total_players
+      - active_players
+      properties:
+        date_range:
+          $ref: '#/components/schemas/DateRange'
+        cohort_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/CohortMetric'
+          description: Metrics for each cohort
+        overall_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Overall retention rate
+          example: 0.65
+        day1_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 1 retention rate
+          example: 0.78
+        day7_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 7 retention rate
+          example: 0.65
+        day30_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 30 retention rate
+          example: 0.45
+        day90_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 90 retention rate
+          example: 0.32
+        total_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total players in analysis
+          example: 10000
+        active_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Currently active players
+          example: 6500
+        new_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: New players in period
+          example: 2500
+        returning_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Returning players
+          example: 4000
+    CohortMetric:
+      type: object
+      required:
+      - cohort_date
+      - cohort_size
+      - day1_retention
+      - day7_retention
+      - day30_retention
+      - day90_retention
+      properties:
+        cohort_date:
+          type: string
+          format: date
+          description: Cohort date
+          example: '2024-01-01'
+        cohort_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Size of cohort
+          example: 1000
+        day1_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 1 retention for cohort
+          example: 0.85
+        day7_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 7 retention for cohort
+          example: 0.72
+        day30_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 30 retention for cohort
+          example: 0.58
+        day90_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 90 retention for cohort
+          example: 0.45
+    ABTest:
+      type: object
+      required:
+      - test_id
+      - test_name
+      - variants
+      - confidence_level
+      - status
+      properties:
+        test_id:
+          type: string
+          format: uuid
+          description: Test identifier
+        test_name:
+          type: string
+          description: Test name
+        description:
+          type: string
+          description: Test description
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ABTestVariant'
+        target_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ABTestMetric'
+        confidence_level:
+          type: number
+          format: float
+          minimum: 0.8
+          maximum: 0.99
+          description: Statistical confidence level
+          example: 0.95
+        statistical_power:
+          type: number
+          format: float
+          minimum: 0.8
+          maximum: 0.99
+          description: Statistical power
+          example: 0.8
+        min_sample_size:
+          type: integer
+          format: int32
+          minimum: 100
+          description: Minimum sample size required
+          example: 1000
+        current_sample_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current sample size
+          example: 2500
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          description: Test status (0=Draft, 1=Running, 2=Completed, 3=Stopped)
+          example: 1
+        is_active:
+          type: boolean
+          description: Whether test is active
+          example: true
+        start_date:
+          type: string
+          format: date-time
+          description: Test start date
+        end_date:
+          type: string
+          format: date-time
+          description: Test end date (null if ongoing)
+    ABTestVariant:
+      type: object
+      required:
+      - variant_id
+      - variant_name
+      - weight
+      - sample_size
+      - conversion
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+          description: Variant identifier
+        variant_name:
+          type: string
+          description: Variant name
+        weight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Traffic weight (0.0-1.0)
+          example: 0.33
+        config:
+          type: object
+          additionalProperties: true
+          description: Variant configuration
+        sample_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current sample size for variant
+          example: 833
+        conversion:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Conversion rate
+          example: 0.125
+    ABTestMetric:
+      type: object
+      required:
+      - metric_name
+      - metric_type
+      - baseline
+      - improvement
+      - p_value
+      properties:
+        metric_name:
+          type: string
+          description: Metric name
+          example: conversion_rate
+        metric_type:
+          type: string
+          enum:
+          - percentage
+          - count
+          - score
+          description: Type of metric
+          example: percentage
+        baseline:
+          type: number
+          format: float
+          description: Baseline value
+          example: 0.1
+        improvement:
+          type: number
+          format: float
+          description: Improvement over baseline
+          example: 0.025
+        p_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Statistical significance p-value
+          example: 0.03
+    DateRange:
+      type: object
+      required:
+      - start_date
+      - end_date
+      properties:
+        start_date:
+          type: string
+          format: date
+          description: Start date
+          example: '2024-01-01'
+        end_date:
+          type: string
+          format: date
+          description: End date
+          example: '2024-01-11'
+    AnalyticsReport:
+      type: object
+      required:
+      - report_id
+      - report_type
+      - date_range
+      - generated_at
+      - metrics
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: Report identifier
+        report_type:
+          type: string
+          enum:
+          - retention
+          - behavior
+          - ab_test
+          - performance
+          description: Type of report
+        date_range:
+          $ref: '#/components/schemas/DateRange'
+        generated_at:
+          type: string
+          format: date-time
+          description: Report generation timestamp
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Report metrics
+        charts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartData'
+          description: Charts for visualization
+        insights:
+          type: array
+          items:
+            type: string
+          description: AI-generated insights
+          example:
+          - Day 1 retention improved by 5%
+          - Churn rate decreased in high-level players
+    ChartData:
+      type: object
+      required:
+      - chart_id
+      - chart_type
+      - title
+      - data
+      properties:
+        chart_id:
+          type: string
+          description: Chart identifier
+        chart_type:
+          type: string
+          enum:
+          - line
+          - bar
+          - pie
+          - scatter
+          description: Type of chart
+        title:
+          type: string
+          description: Chart title
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Chart data points
+    SystemHealth:
+      type: object
+      required:
+      - total_events
+      - processed_events
+      - failed_events
+      - active_tests
+      - last_health_check
+      properties:
+        total_events:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total events processed
+          example: 1000000
+        processed_events:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Successfully processed events
+          example: 999500
+        failed_events:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Failed events
+          example: 500
+        active_tests:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Active A/B tests
+          example: 3
+        response_time:
+          type: integer
+          format: int64
+          description: Average response time in milliseconds
+          example: 15
+        error_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Error rate (0.0-1.0)
+          example: 0.0005
+        last_health_check:
+          type: string
+          format: date-time
+          description: Last health check timestamp

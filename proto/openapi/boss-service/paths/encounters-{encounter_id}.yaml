@@ -1,0 +1,73 @@
+openapi: 3.0.3
+paths:
+  /encounters/{encounter_id}:
+    get:
+      summary: Get boss encounter details
+      description: '**Get detailed boss encounter information**
+
+        Returns current encounter state, participants, and real-time telemetry.
+
+        **Performance:** <10ms response time for cached encounter data '
+      operationId: getBossEncounter
+      tags:
+      - World Bosses
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      - name: include_telemetry
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed telemetry data
+      responses:
+        '200':
+          description: Encounter details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/BossEncounter'
+                    - type: object
+                      properties:
+                        telemetry:
+                          type: object
+                          description: Real-time encounter telemetry (if requested)
+                          properties:
+                            damagePerSecond:
+                              type: number
+                              format: float
+                            healingPerSecond:
+                              type: number
+                              format: float
+                            participantCount:
+                              type: integer
+                            phaseProgress:
+                              type: number
+                              format: float
+                              description: Current phase progress (0-1)
+        '404':
+          description: Encounter not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

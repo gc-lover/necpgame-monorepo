@@ -1,0 +1,97 @@
+openapi: 3.0.3
+paths:
+  /state/{aggregateType}/{aggregateId}:
+    get:
+      summary: Get current state for aggregate
+      description: Retrieve current state for specific aggregate with optional version
+      operationId: getAggregateState
+      tags:
+      - State Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: aggregateType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+      - name: aggregateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: version
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: includeEvents
+        in: query
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: State retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregateState'
+        '404':
+          description: State not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update aggregate state
+      description: Update state for specific aggregate with optimistic locking
+      operationId: updateAggregateState
+      tags:
+      - State Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: aggregateType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+      - name: aggregateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateUpdateRequest'
+      responses:
+        '200':
+          description: State updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateUpdateResponse'
+        '409':
+          description: Version conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,94 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/voice-channels:
+    post:
+      summary: Create guild voice channel
+      description: '**Guild System Integration: Create voice channel for guild**
+
+        Creates a new voice channel specifically for guild communication. Integrates
+        with guild permission system and member management.
+
+        **Guild Integration:** - Validates guild membership and permissions - Applies
+        guild-specific voice channel settings - Supports role-based access control
+
+        **Performance:** <50ms channel creation with permission validation '
+      operationId: createGuildVoiceChannel
+      tags:
+      - Guild Voice Channels
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildVoiceChannelRequest'
+      responses:
+        '201':
+          description: Guild voice channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannelResponse'
+        '400':
+          description: Invalid request or guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions to create guild channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List guild voice channels
+      description: '**Guild System Integration: List all voice channels for guild**
+
+        Retrieves all active voice channels belonging to a specific guild. Includes
+        channel status, participant counts, and permissions.
+
+        **Performance:** <20ms query with Redis caching for active channels '
+      operationId: listGuildVoiceChannels
+      tags:
+      - Guild Voice Channels
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      responses:
+        '200':
+          description: Guild voice channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannelListResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

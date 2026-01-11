@@ -1,0 +1,68 @@
+openapi: 3.0.3
+paths:
+  /regions/import:
+    post:
+      summary: Import regions from YAML files
+      description: '**Enterprise-grade data import operation**
+
+
+        Imports world region data from YAML knowledge base files.
+
+        Used for initial data population and updates from lore system.
+
+
+        **Performance:** <500ms per region, batch processing supported
+
+        '
+      operationId: importWorldRegions
+      tags:
+      - World Regions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source_paths:
+                  type: array
+                  items:
+                    type: string
+                  description: Paths to YAML files to import
+                overwrite_existing:
+                  type: boolean
+                  default: false
+                  description: Whether to overwrite existing regions
+              required:
+              - source_paths
+      responses:
+        '200':
+          description: Import completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported_count:
+                    type: integer
+                  updated_count:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                required:
+                - imported_count
+                - updated_count
+        '400':
+          description: Import failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

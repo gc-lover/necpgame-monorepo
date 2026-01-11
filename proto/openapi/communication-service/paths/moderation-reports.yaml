@@ -1,0 +1,110 @@
+openapi: 3.0.3
+paths:
+  /moderation/reports:
+    get:
+      summary: Get moderation reports
+      description: '**Retrieve moderation reports with filtering**
+
+        Supports status filtering and priority sorting.
+
+        **Performance:** <40ms with pagination support
+
+        '
+      operationId: getModerationReports
+      tags:
+      - Moderation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - investigating
+          - resolved
+          - dismissed
+        description: Filter by report status
+      - name: priority
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Filter by priority level
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Number of reports to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Moderation reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ModerationReportResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create moderation report
+      description: '**Submit a new moderation report**
+
+        Supports reporting chat messages, users, and channels.
+
+        **Performance:** <30ms with automatic duplicate detection
+
+        '
+      operationId: createModerationReport
+      tags:
+      - Moderation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModerationReportRequest'
+      responses:
+        '201':
+          description: Moderation report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

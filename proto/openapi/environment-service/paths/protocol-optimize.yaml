@@ -1,0 +1,102 @@
+openapi: 3.0.3
+paths:
+  /protocol/optimize:
+    post:
+      summary: Optimize realtime protocol
+      description: '**Optimize realtime communication protocol**
+
+        Dynamically adjusts protocol parameters based on current network conditions
+        and performance metrics for optimal gameplay experience.
+
+        **Performance:** <50ms optimization time, applied within 1 second '
+      operationId: optimizeRealtimeProtocol
+      tags:
+      - Realtime Protocol
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+                  description: Session to optimize
+                metrics:
+                  type: object
+                  properties:
+                    latency:
+                      type: integer
+                      description: Current latency in ms
+                    packetLoss:
+                      type: number
+                      format: float
+                      description: Packet loss percentage
+                    bandwidth:
+                      type: integer
+                      description: Available bandwidth in KB/s
+                  required:
+                  - latency
+                  - packetLoss
+                  - bandwidth
+                optimizationType:
+                  type: string
+                  enum:
+                  - latency
+                  - bandwidth
+                  - reliability
+                  - balanced
+                  default: balanced
+                  description: Type of optimization to apply
+              required:
+              - sessionId
+              - metrics
+      responses:
+        '200':
+          description: Protocol optimization applied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      optimizationId:
+                        type: string
+                        format: uuid
+                      appliedOptimizations:
+                        type: array
+                        items:
+                          type: string
+                        description: List of applied optimizations
+                      estimatedImprovement:
+                        type: object
+                        properties:
+                          latencyReduction:
+                            type: integer
+                            description: Expected latency reduction in ms
+                          bandwidthEfficiency:
+                            type: number
+                            format: float
+                            description: Bandwidth efficiency improvement
+                          reliabilityIncrease:
+                            type: number
+                            format: float
+                            description: Reliability improvement percentage
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

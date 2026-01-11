@@ -1,0 +1,66 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/refresh:
+    post:
+      operationId: oauthServiceRefreshToken
+      summary: Refresh OAuth tokens
+      description: 'Refresh expired OAuth access tokens using refresh token.
+
+
+        **Security Notes:**
+
+        - Validates refresh token integrity
+
+        - Issues new token pair with updated expiration
+
+        - Single-use refresh tokens (optional)
+
+        - Automatic cleanup of expired tokens
+
+        '
+      tags:
+      - Token Management
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+      responses:
+        '200':
+          description: Tokens refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        access_token:
+                          type: string
+                          description: New access token
+                        refresh_token:
+                          type: string
+                          description: New refresh token (if rotated)
+                        expires_in:
+                          type: integer
+                          description: Expiration time in seconds
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'

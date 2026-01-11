@@ -1,0 +1,96 @@
+openapi: 3.0.3
+paths:
+  /profiles:
+    post:
+      operationId: userProfileServiceCreateProfile
+      summary: Create user profile
+      description: 'Create a new user profile with default settings.
+
+
+        **Business Rules:**
+
+        - Validates display name uniqueness
+
+        - Sets default privacy settings
+
+        - Creates profile statistics
+
+        - Generates profile URL slug
+
+        '
+      tags:
+      - Profile Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+      responses:
+        '201':
+          description: Profile created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      operationId: userProfileServiceListProfiles
+      summary: List profiles with filtering
+      description: 'Retrieve paginated list of public profiles with search and filtering.
+
+
+        **Performance Notes:**
+
+        - Uses database indexes for search
+
+        - Implements cursor-based pagination
+
+        - Respects privacy settings
+
+        '
+      tags:
+      - Social Features
+      parameters:
+      - name: search
+        in: query
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 50
+        description: Search by display name or username
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Filter by location
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Number of profiles to return
+      responses:
+        '200':
+          description: Profiles retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PublicProfileSummary'

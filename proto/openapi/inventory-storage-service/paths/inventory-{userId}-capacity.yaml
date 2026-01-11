@@ -1,0 +1,101 @@
+openapi: 3.0.3
+paths:
+  /inventory/{userId}/capacity:
+    get:
+      summary: Get inventory capacity information
+      description: '**Enterprise-grade capacity check endpoint**
+
+        Returns current inventory capacity, usage statistics, and expansion options.
+
+        Critical for UI capacity indicators and expansion planning.
+
+        **Performance:** <5ms P95, cached for 30 seconds
+
+        '
+      operationId: getInventoryCapacity
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      responses:
+        '200':
+          description: Capacity information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCapacityResponse'
+        '404':
+          description: User inventory not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Expand inventory capacity
+      description: '**Enterprise-grade capacity expansion endpoint**
+
+        Increases inventory capacity using various expansion methods.
+
+        Validates costs, availability, and applies changes atomically.
+
+        **Performance:** <50ms P95, includes payment processing
+
+        '
+      operationId: expandInventoryCapacity
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpandCapacityRequest'
+      responses:
+        '200':
+          description: Capacity expanded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpandCapacityResponse'
+        '400':
+          description: Invalid expansion method or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '402':
+          description: Payment required - insufficient currency
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

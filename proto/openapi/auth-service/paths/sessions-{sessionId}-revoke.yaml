@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /sessions/{sessionId}/revoke:
+    post:
+      operationId: authServiceRevokeSession
+      summary: Revoke specific session
+      description: 'Revoke a specific user session (logout from specific device).
+
+
+        **Security Notes:**
+
+        - Users can only revoke their own sessions
+
+        - Immediate token invalidation
+
+        - Audit trail maintained
+
+        '
+      tags:
+      - Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      responses:
+        '200':
+          description: Session revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/OK'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -1,0 +1,1271 @@
+openapi: 3.0.3
+components:
+  schemas:
+    InstalledCyberware:
+      description: Character's installed cyberware instance with game domain inheritance
+      type: object
+      required:
+      - id
+      - character_id
+      - template_id
+      - body_part
+      - installed_at
+      - current_tier
+      - condition
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Cyberware instance unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character this cyberware is installed in
+        template_id:
+          type: string
+          format: uuid
+          description: Cyberware template used
+        body_part:
+          type: string
+          enum:
+          - left_arm
+          - right_arm
+          - left_leg
+          - right_leg
+          - head
+          - torso
+          - spine
+          - brain
+          - eyes
+          - ears
+          - heart
+          - lungs
+          - liver
+          - kidneys
+          description: Body part where cyberware is installed
+        current_tier:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Current cyberware tier/quality level
+        installed_at:
+          type: string
+          format: date-time
+          description: When cyberware was installed
+        condition:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberware condition (1 = perfect, 0 = broken)
+        degradation_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Daily degradation rate
+        last_maintenance_at:
+          type: string
+          format: date-time
+          description: Last maintenance date
+        next_maintenance_due:
+          type: string
+          format: date-time
+          description: Next maintenance due date
+        performance_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 2
+          default: 1
+          description: Current performance modifier
+        stat_modifiers:
+          type: object
+          description: Active stat modifications
+          additionalProperties:
+            type: number
+          example:
+            strength: 15
+            agility: 10
+            cyberpsychosis_risk: 0.03
+        active_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of active cyberware effects
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current compatibility with other cyberware
+        cyberpsychosis_contribution:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberpsychosis risk contribution
+        calibration_data:
+          type: object
+          description: Current calibration settings
+          additionalProperties: true
+        custom_modifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberwareModification'
+          description: Applied custom modifications
+    CyberwareTemplate:
+      description: Cyberware template configuration with game domain inheritance
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Cyberware template name
+          description:
+            type: string
+            maxLength: 500
+            description: Cyberware description
+          cyberware_type:
+            type: string
+            enum:
+            - arm_prosthetic
+            - leg_prosthetic
+            - neural_implant
+            - sensory_enhancement
+            - internal_organ
+            description: Primary cyberware type
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Cyberware category for organization
+          rarity:
+            type: string
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            default: common
+            description: Cyberware rarity level
+          base_installation_cost:
+            type: integer
+            minimum: 0
+            description: Base eddies cost for installation
+          body_part_requirements:
+            type: array
+            items:
+              type: string
+              enum:
+              - left_arm
+              - right_arm
+              - left_leg
+              - right_leg
+              - head
+              - torso
+              - spine
+              - brain
+              - eyes
+              - ears
+              - heart
+              - lungs
+              - liver
+              - kidneys
+            description: Required body parts for installation
+          slot_requirements:
+            type: integer
+            minimum: 1
+            description: Number of cyberware slots required
+          stat_modifiers:
+            type: object
+            description: Base stat modifications
+            additionalProperties:
+              type: number
+            example:
+              strength: '+20'
+              agility: '+15'
+              cyberpsychosis_risk: '+0.02'
+          effect_ids:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Associated effect IDs
+          compatibility_rules:
+            $ref: '#/components/schemas/CyberwareCompatibilityRules'
+          upgrade_path:
+            type: array
+            items:
+              $ref: '#/components/schemas/UpgradeTier'
+            description: Available upgrade tiers
+          maintenance_requirements:
+            $ref: '#/components/schemas/CyberwareMaintenanceRequirements'
+          risk_factors:
+            $ref: '#/components/schemas/CyberwareRiskFactors'
+          performance_config:
+            type: object
+            properties:
+              base_performance:
+                type: number
+                minimum: 0
+                maximum: 100
+                description: Base performance rating
+              calibration_required:
+                type: boolean
+                default: true
+                description: Whether calibration is required
+              neural_load:
+                type: number
+                minimum: 0
+                maximum: 100
+                description: Neural interface load percentage
+            description: Performance configuration
+          is_active:
+            type: boolean
+            default: true
+            description: Whether template is active
+    CyberwareCompatibilityRules:
+      description: Cyberware compatibility rules
+      type: object
+      properties:
+        required_body_parts:
+          type: array
+          items:
+            type: string
+            enum:
+            - left_arm
+            - right_arm
+            - left_leg
+            - right_leg
+            - head
+            - torso
+            - spine
+            - brain
+            - eyes
+            - ears
+            - heart
+            - lungs
+            - liver
+            - kidneys
+          description: Body parts required for this cyberware
+        conflicting_cyberware:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Cyberware templates that conflict with this one
+        synergy_bonuses:
+          type: array
+          items:
+            type: object
+            required:
+            - partner_type
+            - bonus_type
+            - bonus_value
+            properties:
+              partner_type:
+                type: string
+                enum:
+                - arm_prosthetic
+                - leg_prosthetic
+                - neural_implant
+                - sensory_enhancement
+                - internal_organ
+                description: Compatible cyberware type
+              bonus_type:
+                type: string
+                enum:
+                - stat_multiplier
+                - effect_amplifier
+                - risk_reducer
+                - performance_booster
+                description: Type of synergy bonus
+              bonus_value:
+                type: number
+                description: Bonus magnitude
+          description: Synergy bonuses with other cyberware
+        max_per_body_part:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+          description: Maximum instances per body part
+    CyberwareMaintenanceRequirements:
+      description: Cyberware maintenance requirements
+      type: object
+      properties:
+        maintenance_interval_days:
+          type: integer
+          minimum: 1
+          default: 30
+          description: Days between maintenance
+        maintenance_cost_eddies:
+          type: integer
+          minimum: 0
+          description: Eddies cost per maintenance
+        required_components:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required components and quantities
+        calibration_required:
+          type: boolean
+          default: true
+          description: Whether calibration is required during maintenance
+        risk_reduction:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberpsychosis risk reduction from maintenance
+    CyberwareRiskFactors:
+      description: Cyberware risk factors
+      type: object
+      properties:
+        base_cyberpsychosis_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Base cyberpsychosis risk contribution
+        stability_rating:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberware stability (higher = more stable)
+        failure_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of catastrophic failure
+        side_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SideEffect'
+          description: Possible side effects
+        withdrawal_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SideEffect'
+          description: Effects when removed
+    UpgradeTier:
+      description: Cyberware upgrade tier configuration
+      type: object
+      required:
+      - tier
+      - upgrade_cost_eddies
+      properties:
+        tier:
+          type: integer
+          minimum: 2
+          maximum: 10
+          description: Upgrade tier level
+        upgrade_cost_eddies:
+          type: integer
+          minimum: 0
+          description: Eddies cost for upgrade
+        required_components:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required components for upgrade
+        stat_improvements:
+          type: object
+          additionalProperties:
+            type: number
+          description: Additional stat improvements
+        new_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: New effect IDs unlocked
+        risk_reduction:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberpsychosis risk reduction
+    SideEffect:
+      description: Cyberware side effect
+      type: object
+      required:
+      - effect_type
+      - severity
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - stat_penalty
+          - hallucination
+          - pain
+          - system_overload
+          - mental_instability
+          - neural_feedback
+          - phantom_limb
+          - compatibility_conflict
+          description: Type of side effect
+        severity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Effect severity (0-1)
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Effect duration (0 = permanent)
+        trigger_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of effect triggering
+        description:
+          type: string
+          maxLength: 200
+          description: Human-readable effect description
+    CyberwareModification:
+      description: Custom cyberware modification
+      type: object
+      required:
+      - modification_type
+      - applied_at
+      properties:
+        modification_type:
+          type: string
+          enum:
+          - performance_tune
+          - risk_reduction
+          - effect_enhancement
+          - cosmetic_change
+          - compatibility_improvement
+          description: Type of modification
+        applied_at:
+          type: string
+          format: date-time
+          description: When modification was applied
+        cost_eddies:
+          type: integer
+          minimum: 0
+          description: Eddies paid for modification
+        stat_changes:
+          type: object
+          additionalProperties:
+            type: number
+          description: Stat changes from modification
+        risk_changes:
+          type: object
+          additionalProperties:
+            type: number
+          description: Risk changes from modification
+        performance_changes:
+          type: object
+          additionalProperties:
+            type: number
+          description: Performance changes from modification
+    CharacterCyberwareSummary:
+      description: Summary of character cyberware
+      type: object
+      properties:
+        total_cyberware:
+          type: integer
+          description: Total installed cyberware
+        active_cyberware:
+          type: integer
+          description: Cyberware in good condition
+        degraded_cyberware:
+          type: integer
+          description: Cyberware needing maintenance
+        cyberpsychosis_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Total cyberpsychosis risk
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall cyberware compatibility
+        neural_load_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Total neural interface load
+        cyberware_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by cyberware type
+    CompatibilityResult:
+      description: Result of cyberware compatibility check
+      type: object
+      required:
+      - compatible
+      - compatibility_score
+      properties:
+        compatible:
+          type: boolean
+          description: Whether cyberware is compatible
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Compatibility score (0 = incompatible, 1 = perfect)
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              conflicting_cyberware_id:
+                type: string
+                format: uuid
+                description: ID of conflicting cyberware
+              conflict_type:
+                type: string
+                enum:
+                - slot_conflict
+                - body_part_conflict
+                - neural_conflict
+                - synergy_conflict
+                description: Type of conflict
+              severity:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Conflict severity
+              description:
+                type: string
+                description: Human-readable conflict description
+            description: Identified conflicts
+        synergy_bonuses:
+          type: array
+          items:
+            type: object
+            properties:
+              bonus_type:
+                type: string
+                description: Type of synergy bonus
+              bonus_value:
+                type: number
+                description: Bonus magnitude
+              description:
+                type: string
+                description: Human-readable bonus description
+            description: Available synergy bonuses
+        recommended_actions:
+          type: array
+          items:
+            type: string
+          description: Recommended actions to improve compatibility
+    CalibrationResult:
+      description: Result of cyberware calibration
+      type: object
+      required:
+      - success
+      - performance_improvement
+      properties:
+        success:
+          type: boolean
+          description: Whether calibration was successful
+        performance_improvement:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Performance improvement achieved
+        new_performance_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 2
+          description: New performance modifier
+        calibration_settings:
+          type: object
+          description: Applied calibration settings
+          additionalProperties: true
+        recommended_next_calibration:
+          type: string
+          format: date-time
+          description: When next calibration is recommended
+        issues_found:
+          type: array
+          items:
+            type: string
+          description: Issues found during calibration
+    CyberpsychosisAssessment:
+      description: Cyberpsychosis risk assessment
+      type: object
+      required:
+      - total_risk
+      - risk_level
+      properties:
+        total_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Total cyberpsychosis risk (0-1)
+        risk_level:
+          type: string
+          enum:
+          - low
+          - moderate
+          - high
+          - critical
+          - imminent
+          description: Risk level category
+        risk_contributors:
+          type: array
+          items:
+            type: object
+            properties:
+              cyberware_id:
+                type: string
+                format: uuid
+                description: Contributing cyberware ID
+              risk_contribution:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Risk contribution from this cyberware
+              risk_factors:
+                type: array
+                items:
+                  type: string
+                description: Specific risk factors
+            description: Breakdown of risk contributors
+        mitigation_strategies:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy_type:
+                type: string
+                enum:
+                - maintenance
+                - removal
+                - therapy
+                - lifestyle_change
+                description: Type of mitigation strategy
+              priority:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - urgent
+                description: Strategy priority
+              effectiveness:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Expected effectiveness
+              description:
+                type: string
+                description: Strategy description
+            description: Recommended mitigation strategies
+        predicted_risk_progression:
+          type: array
+          items:
+            type: object
+            properties:
+              time_point:
+                type: string
+                format: date-time
+                description: Future time point
+              predicted_risk:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Predicted risk at this time
+              confidence_level:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Prediction confidence
+            description: Risk prediction over time
+    MaintenanceSchedule:
+      description: Scheduled cyberware maintenance
+      type: object
+      required:
+      - cyberware_id
+      - scheduled_for
+      - maintenance_type
+      properties:
+        cyberware_id:
+          type: string
+          format: uuid
+          description: Cyberware requiring maintenance
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Scheduled maintenance time
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Type of maintenance
+        estimated_cost_eddies:
+          type: integer
+          minimum: 0
+          description: Estimated eddies cost
+        estimated_duration_minutes:
+          type: integer
+          minimum: 1
+          description: Estimated duration in minutes
+        required_components:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required components and quantities
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          description: Maintenance priority
+    MaintenanceResult:
+      description: Result of maintenance operation
+      type: object
+      required:
+      - cyberware_id
+      - maintenance_type
+      - success
+      properties:
+        cyberware_id:
+          type: string
+          format: uuid
+          description: Maintained cyberware ID
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Maintenance performed
+        success:
+          type: boolean
+          description: Whether maintenance was successful
+        condition_improvement:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Condition improvement achieved
+        performance_improvement:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Performance improvement achieved
+        calibration_performed:
+          type: boolean
+          description: Whether calibration was performed
+        components_used:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Components actually used
+        next_maintenance_due:
+          type: string
+          format: date-time
+          description: Next maintenance due date
+    StatChanges:
+      description: Summary of stat changes from cyberware operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        vitality:
+          type: number
+          description: Vitality change
+        perception:
+          type: number
+          description: Perception change
+        charisma:
+          type: number
+          description: Charisma change
+        cyberpsychosis_risk:
+          type: number
+          description: Cyberpsychosis risk change
+    CyberwareUsageAnalytics:
+      description: Comprehensive cyberware usage analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_installations:
+          type: integer
+          description: Total cyberware installations
+        unique_characters:
+          type: integer
+          description: Number of unique characters with cyberware
+        average_cyberware_per_character:
+          type: number
+          description: Average cyberware per character
+        cyberware_type_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Distribution by cyberware type
+        popular_templates:
+          type: array
+          items:
+            type: object
+            properties:
+              template_id:
+                type: string
+                format: uuid
+              installation_count:
+                type: integer
+              average_tier:
+                type: number
+              failure_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+          description: Most installed cyberware templates
+        risk_analytics:
+          type: object
+          properties:
+            average_cyberpsychosis_risk:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Average cyberpsychosis risk
+            risk_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Characters by risk level
+            cyberpsychosis_incidents:
+              type: integer
+              description: Number of cyberpsychosis incidents
+            risk_mitigation_effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Effectiveness of risk mitigation
+        maintenance_analytics:
+          type: object
+          properties:
+            average_maintenance_cost:
+              type: integer
+              description: Average cost per maintenance
+            maintenance_compliance_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of timely maintenance
+            failure_prevention_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of failures prevented by maintenance
+            calibration_effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Effectiveness of calibration procedures
+        performance_analytics:
+          type: object
+          properties:
+            average_performance_modifier:
+              type: number
+              description: Average performance modifier across all cyberware
+            performance_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Cyberware count by performance rating
+            degradation_trends:
+              type: array
+              items:
+                type: object
+                properties:
+                  days_since_installation:
+                    type: integer
+                    description: Days since installation
+                  average_condition:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Average condition at this age
+                description: Performance degradation over time
+    CyberwareTemplateSummary:
+      description: Cyberware template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        cyberware_type:
+          type: string
+          enum:
+          - arm_prosthetic
+          - leg_prosthetic
+          - neural_implant
+          - sensory_enhancement
+          - internal_organ
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        base_installation_cost:
+          type: integer
+        is_active:
+          type: boolean
+        last_updated:
+          type: string
+          format: date-time
+    InstallCyberwareRequest:
+      description: Request payload for cyberware installation
+      type: object
+      required:
+      - character_id
+      - template_id
+      - body_part
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to install cyberware on
+        template_id:
+          type: string
+          format: uuid
+          description: Cyberware template to install
+        body_part:
+          type: string
+          enum:
+          - left_arm
+          - right_arm
+          - left_leg
+          - right_leg
+          - head
+          - torso
+          - spine
+          - brain
+          - eyes
+          - ears
+          - heart
+          - lungs
+          - liver
+          - kidneys
+          description: Body part for installation
+        installation_quality:
+          type: string
+          enum:
+          - standard
+          - premium
+          - black_market
+          default: standard
+          description: Installation quality affecting risk
+        override_compatibility:
+          type: boolean
+          default: false
+          description: Override compatibility warnings
+        initial_calibration:
+          type: boolean
+          default: true
+          description: Perform initial calibration after installation
+    RemoveCyberwareRequest:
+      description: Request payload for cyberware removal
+      type: object
+      required:
+      - cyberware_instance_id
+      properties:
+        cyberware_instance_id:
+          type: string
+          format: uuid
+          description: Cyberware instance to remove
+        removal_method:
+          type: string
+          enum:
+          - surgical
+          - emergency
+          - self_removal
+          default: surgical
+          description: Removal method affecting side effects
+        preserve_upgrades:
+          type: boolean
+          default: false
+          description: Attempt to preserve upgrade investments
+    CalibrateCyberwareRequest:
+      description: Request payload for cyberware calibration
+      type: object
+      required:
+      - cyberware_instance_id
+      properties:
+        cyberware_instance_id:
+          type: string
+          format: uuid
+          description: Cyberware to calibrate
+        calibration_type:
+          type: string
+          enum:
+          - full_calibration
+          - performance_tune
+          - neural_optimization
+          default: full_calibration
+          description: Type of calibration to perform
+        thorough_scan:
+          type: boolean
+          default: true
+          description: Perform thorough diagnostic scan
+    CompatibilityCheckRequest:
+      description: Request payload for compatibility check
+      type: object
+      required:
+      - character_id
+      - cyberware_template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to check compatibility for
+        cyberware_template_id:
+          type: string
+          format: uuid
+          description: Cyberware template to check
+        target_body_part:
+          type: string
+          enum:
+          - left_arm
+          - right_arm
+          - left_leg
+          - right_leg
+          - head
+          - torso
+          - spine
+          - brain
+          - eyes
+          - ears
+          - heart
+          - lungs
+          - liver
+          - kidneys
+          description: Target installation location
+        include_synergy_analysis:
+          type: boolean
+          default: true
+          description: Include synergy bonus analysis
+    MaintenanceScheduleRequest:
+      description: Request payload for maintenance scheduling
+      type: object
+      required:
+      - cyberware_instance_id
+      - maintenance_type
+      properties:
+        cyberware_instance_id:
+          type: string
+          format: uuid
+          description: Cyberware requiring maintenance
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Type of maintenance needed
+        preferred_schedule:
+          type: string
+          format: date-time
+          description: Preferred maintenance time
+        priority_override:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          description: Override default priority
+    PerformMaintenanceRequest:
+      description: Request payload for performing maintenance
+      type: object
+      required:
+      - cyberware_instance_id
+      - maintenance_type
+      properties:
+        cyberware_instance_id:
+          type: string
+          format: uuid
+          description: Cyberware to maintain
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Maintenance to perform
+        use_premium_components:
+          type: boolean
+          default: false
+          description: Use premium components for better results
+    UpgradeCyberwareRequest:
+      description: Request payload for cyberware upgrade
+      type: object
+      required:
+      - cyberware_instance_id
+      - target_tier
+      properties:
+        cyberware_instance_id:
+          type: string
+          format: uuid
+          description: Cyberware instance to upgrade
+        target_tier:
+          type: integer
+          minimum: 2
+          maximum: 10
+          description: Desired tier level
+        upgrade_quality:
+          type: string
+          enum:
+          - standard
+          - premium
+          - experimental
+          default: standard
+          description: Upgrade quality affecting success rate
+    CyberpsychosisAssessmentRequest:
+      description: Request payload for cyberpsychosis assessment
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to assess risk for
+        include_future_predictions:
+          type: boolean
+          default: true
+          description: Include risk predictions over time
+        assessment_scope:
+          type: string
+          enum:
+          - current
+          - with_planned_cyberware
+          - hypothetical
+          default: current
+          description: Scope of risk assessment
+        hypothetical_cyberware:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Hypothetical cyberware to include in assessment
+    CreateCyberwareTemplateRequest:
+      description: Request payload for creating cyberware template
+      type: object
+      required:
+      - name
+      - cyberware_type
+      - category
+      - body_part_requirements
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        cyberware_type:
+          type: string
+          enum:
+          - arm_prosthetic
+          - leg_prosthetic
+          - neural_implant
+          - sensory_enhancement
+          - internal_organ
+          description: Cyberware type
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Cyberware category
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          default: common
+          description: Cyberware rarity
+        base_installation_cost:
+          type: integer
+          minimum: 0
+          description: Base installation cost
+        body_part_requirements:
+          type: array
+          items:
+            type: string
+            enum:
+            - left_arm
+            - right_arm
+            - left_leg
+            - right_leg
+            - head
+            - torso
+            - spine
+            - brain
+            - eyes
+            - ears
+            - heart
+            - lungs
+            - liver
+            - kidneys
+          description: Required body parts
+        slot_requirements:
+          type: integer
+          minimum: 1
+          description: Required cyberware slots
+        stat_modifiers:
+          type: object
+          description: Stat modifications
+          additionalProperties:
+            type: number
+        effect_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Associated effect IDs
+        compatibility_rules:
+          $ref: '#/components/schemas/CyberwareCompatibilityRules'
+        upgrade_path:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpgradeTier'
+          description: Upgrade tiers
+        maintenance_requirements:
+          $ref: '#/components/schemas/CyberwareMaintenanceRequirements'
+        risk_factors:
+          $ref: '#/components/schemas/CyberwareRiskFactors'

@@ -1,0 +1,93 @@
+openapi: 3.0.3
+paths:
+  /templates:
+    post:
+      operationId: inGameNotificationServiceCreateTemplate
+      summary: Create notification template
+      description: 'Create reusable notification template with dynamic content.
+
+
+        **Template Features:**
+
+        - Multi-language support with i18n
+
+        - Dynamic content with variables
+
+        - Platform-specific formatting
+
+        - A/B testing variants
+
+        - Real-time validation
+
+        '
+      tags:
+      - Template Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NotificationTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: inGameNotificationServiceListTemplates
+      summary: List notification templates
+      description: Retrieve paginated list of notification templates
+      tags:
+      - Template Management
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - commerce
+          - security
+          description: Filter by template category
+      - name: platform
+        in: query
+        schema:
+          type: string
+          enum:
+          - web
+          - mobile
+          - desktop
+          description: Filter by platform
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of templates to return
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TemplateSummary'

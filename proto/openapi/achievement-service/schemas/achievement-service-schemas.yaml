@@ -1,0 +1,495 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Achievement:
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseEntity
+      - type: object
+        required:
+        - name
+        - description
+        - category
+        - requirements
+        - rewards
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Achievement display name
+          description:
+            type: string
+            minLength: 1
+            maxLength: 500
+            description: Achievement description
+          category:
+            type: string
+            enum:
+            - progress
+            - milestone
+            - challenge
+            - seasonal
+            description: Achievement category
+          requirements:
+            type: object
+            description: Achievement completion requirements
+            properties:
+              type:
+                type: string
+                enum:
+                - count
+                - threshold
+                - combination
+                - time_based
+              target_value:
+                type: number
+                minimum: 1
+              conditions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AchievementCondition'
+          rewards:
+            type: array
+            items:
+              $ref: '#/components/schemas/AchievementReward'
+            description: Rewards for completing achievement
+          status:
+            type: string
+            enum:
+            - active
+            - inactive
+            - deprecated
+            default: active
+            description: Achievement status
+          max_progress:
+            type: integer
+            minimum: 1
+            description: Maximum progress value for progress-based achievements
+          is_hidden:
+            type: boolean
+            default: false
+            description: Whether achievement is hidden until unlocked
+          prerequisites:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: IDs of prerequisite achievements
+    AchievementSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+          - progress
+          - milestone
+          - challenge
+          - seasonal
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deprecated
+        is_hidden:
+          type: boolean
+        max_progress:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    AchievementCondition:
+      type: object
+      required:
+      - type
+      - target
+      properties:
+        type:
+          type: string
+          enum:
+          - kill_count
+          - score_threshold
+          - item_collect
+          - quest_complete
+          - time_played
+          - level_reached
+        target:
+          type: string
+          description: Target entity (enemy type, item id, quest id, etc.)
+        value:
+          type: number
+          minimum: 0
+        operator:
+          type: string
+          enum:
+          - equals
+          - greater_than
+          - less_than
+          - greater_equal
+          - less_equal
+          default: greater_equal
+    AchievementReward:
+      type: object
+      required:
+      - type
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - currency
+          - item
+          - title
+          - cosmetic
+          - experience
+          - reputation
+        value:
+          oneOf:
+          - type: number
+          - type: string
+          description: Reward value (amount or item ID)
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          description: Reward rarity (for display purposes)
+    PlayerAchievement:
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseEntity
+      - type: object
+        required:
+        - player_id
+        - achievement_id
+        - status
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player unique identifier
+          achievement_id:
+            type: string
+            format: uuid
+            description: Achievement unique identifier
+          status:
+            type: string
+            enum:
+            - locked
+            - in_progress
+            - completed
+            description: Achievement progress status
+          current_progress:
+            type: integer
+            minimum: 0
+            default: 0
+            description: Current progress value
+          completed_at:
+            type: string
+            format: date-time
+            description: Completion timestamp
+          unlocked_at:
+            type: string
+            format: date-time
+            description: Unlock timestamp
+          last_updated:
+            type: string
+            format: date-time
+            description: Last progress update timestamp
+    AchievementProgress:
+      type: object
+      required:
+      - achievement_id
+      - previous_progress
+      - new_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        previous_progress:
+          type: integer
+          minimum: 0
+        new_progress:
+          type: integer
+          minimum: 0
+        completed:
+          type: boolean
+          description: Whether achievement was completed in this update
+    AchievementUnlock:
+      allOf:
+      - $ref: '#/components/schemas/AchievementProgress'
+      - type: object
+        properties:
+          unlocked_at:
+            type: string
+            format: date-time
+          rewards_claimed:
+            type: boolean
+            default: false
+    CreateAchievementRequest:
+      type: object
+      required:
+      - name
+      - description
+      - category
+      - requirements
+      - rewards
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - progress
+          - milestone
+          - challenge
+          - seasonal
+        requirements:
+          $ref: '#/components/schemas/AchievementRequirements'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        max_progress:
+          type: integer
+          minimum: 1
+        is_hidden:
+          type: boolean
+          default: false
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+        requirements:
+          $ref: '#/components/schemas/AchievementRequirements'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deprecated
+        max_progress:
+          type: integer
+          minimum: 1
+        is_hidden:
+          type: boolean
+    AchievementRequirements:
+      type: object
+      required:
+      - type
+      - target_value
+      properties:
+        type:
+          type: string
+          enum:
+          - count
+          - threshold
+          - combination
+          - time_based
+        target_value:
+          type: number
+          minimum: 1
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementCondition'
+    CheckAchievementsRequest:
+      type: object
+      required:
+      - player_id
+      - actions
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerAction'
+          description: Player actions that may trigger achievement progress
+    PlayerAction:
+      type: object
+      required:
+      - type
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+          - kill_enemy
+          - collect_item
+          - complete_quest
+          - reach_level
+          - play_time
+          - score_points
+        target:
+          type: string
+          description: Action target (enemy type, item id, quest id, etc.)
+        value:
+          type: number
+          minimum: 0
+          description: Action value (kill count, score, etc.)
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          description: Additional action metadata
+    UnlockAchievementRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum:
+          - admin_override
+          - event_bonus
+          - testing
+          - promotion
+          default: admin_override
+        admin_notes:
+          type: string
+          maxLength: 500
+        skip_prerequisites:
+          type: boolean
+          default: false
+    ClaimRewardsRequest:
+      type: object
+      required:
+      - player_id
+      - achievement_ids
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievement_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: IDs of achievements to claim rewards for
+    RewardClaim:
+      type: object
+      required:
+      - achievement_id
+      - rewards
+      - claimed_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        claimed_at:
+          type: string
+          format: date-time
+    DistributionResult:
+      type: object
+      required:
+      - reward_type
+      - success
+      properties:
+        reward_type:
+          type: string
+          enum:
+          - currency
+          - item
+          - title
+          - cosmetic
+          - experience
+          - reputation
+        success:
+          type: boolean
+        distributed_to:
+          type: string
+          description: Target service/system where reward was distributed
+        amount:
+          type: number
+          description: Amount distributed
+        error_message:
+          type: string
+          description: Error message if distribution failed
+    AchievementAnalytics:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+        total_achievements:
+          type: integer
+        active_achievements:
+          type: integer
+        completion_stats:
+          type: object
+          properties:
+            total_completions:
+              type: integer
+            unique_players:
+              type: integer
+            average_completion_time:
+              type: string
+              description: Average time to complete achievements
+        category_breakdown:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total:
+                type: integer
+              completions:
+                type: integer
+              completion_rate:
+                type: number
+                format: float
+        top_achievements:
+          type: array
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              completions:
+                type: integer
+              completion_rate:
+                type: number
+                format: float

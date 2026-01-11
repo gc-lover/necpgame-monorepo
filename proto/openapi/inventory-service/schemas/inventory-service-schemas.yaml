@@ -1,0 +1,287 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - version
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - down
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          description: Uptime in seconds
+          example: 3600
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      - timestamp
+      properties:
+        error:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        details:
+          type: object
+          description: Additional error details
+    ItemType:
+      type: string
+      enum:
+      - weapon
+      - armor
+      - consumable
+      - material
+      - quest
+      example: weapon
+    ItemRarity:
+      type: string
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      example: rare
+    InventoryItem:
+      type: object
+      required:
+      - id
+      - item_id
+      - quantity
+      - item_type
+      - item_rarity
+      - is_equipped
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Inventory item ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+          example: 550e8400-e29b-41d4-a716-446655440001
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+          example: 550e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          minimum: 1
+          description: Item quantity in stack
+          example: 1
+        stack_count:
+          type: integer
+          minimum: 1
+          description: Maximum stack size for this item type
+          example: 64
+        item_type:
+          $ref: '#/components/schemas/ItemType'
+        item_rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        is_equipped:
+          type: boolean
+          description: Whether item is currently equipped
+          example: false
+        slot_id:
+          type: string
+          description: Equipment slot ID if equipped
+          example: weapon_primary
+          nullable: true
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Item durability percentage
+          example: 85
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      description: '**BACKEND NOTE:** Struct alignment optimized for memory efficiency.
+
+        Order fields by size descending: pointers, int64, int32, int16, byte.
+
+        Total struct size: ~120 bytes with proper alignment.
+
+        '
+    AddItemRequest:
+      type: object
+      required:
+      - item_id
+      - stack_count
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID to add
+          example: 550e8400-e29b-41d4-a716-446655440002
+        stack_count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Quantity to add (fixed field name for ogen compatibility)
+          example: 1
+      description: '**BACKEND NOTE:** Uses stack_count instead of quantity for ogen
+        type compatibility.
+
+        Validates against inventory capacity and item legitimacy.
+
+        '
+    AddItemResponse:
+      type: object
+      required:
+      - success
+      - item_id
+      - quantity
+      - stack_count
+      properties:
+        success:
+          type: boolean
+          example: true
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          minimum: 0
+          example: 1
+        stack_count:
+          type: integer
+          minimum: 0
+          example: 64
+        message:
+          type: string
+          example: Item added successfully
+      description: '**BACKEND NOTE:** Implements AddItemRes interface required by
+        ogen.
+
+        Provides detailed response for inventory operations.
+
+        '
+    EquipmentSlot:
+      type: string
+      enum:
+      - weapon_primary
+      - weapon_secondary
+      - armor_head
+      - armor_chest
+      - armor_legs
+      - armor_feet
+      - implant_neural
+      - implant_cybernetic
+      example: weapon_primary
+    EquipItemRequest:
+      type: object
+      required:
+      - slot_id
+      properties:
+        slot_id:
+          $ref: '#/components/schemas/EquipmentSlot'
+      description: '**BACKEND NOTE:** ItemID comes from URL path parameter for ogen
+        compatibility.
+
+        Slot validation ensures equipment compatibility.
+
+        '
+    EquipItemResponse:
+      type: object
+      required:
+      - success
+      - item_id
+      - slot_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        slot_id:
+          $ref: '#/components/schemas/EquipmentSlot'
+        message:
+          type: string
+          example: Item equipped successfully
+    InventoryResponse:
+      type: object
+      required:
+      - items
+      - total_count
+      - page
+      - limit
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+        total_count:
+          type: integer
+          minimum: 0
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 50
+        has_more:
+          type: boolean
+          example: true
+      description: '**BACKEND NOTE:** Paginated response with memory-efficient item
+        array.
+
+        Supports filtering and sorting for large inventories.
+
+        '
+    EquipmentResponse:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          description: Currently equipped items
+      description: '**BACKEND NOTE:** Fixed structure mismatch - items field contains
+        equipped InventoryItem objects.
+
+        Used for character display and combat calculations.
+
+        '

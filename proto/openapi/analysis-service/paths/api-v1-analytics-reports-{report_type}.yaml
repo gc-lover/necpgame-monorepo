@@ -1,0 +1,71 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/reports/{report_type}:
+    get:
+      summary: Generate custom analytics report
+      description: '**Custom analytics report generation**
+
+        Generate detailed reports for specific analytics categories with customizable
+        parameters and export options.
+
+        **Supported Reports:** player-retention, economic-health, combat-balance,
+        revenue-analysis '
+      operationId: generateAnalyticsReport
+      tags:
+      - Game Analytics Dashboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: report_type
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - player-retention
+          - economic-health
+          - combat-balance
+          - revenue-analysis
+          - social-network
+          - performance-summary
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date
+          example: '2024-01-01'
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date
+          example: '2024-01-31'
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - json
+          - csv
+          - pdf
+          default: json
+      responses:
+        '200':
+          description: Analytics report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+            text/csv:
+              schema:
+                type: string
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

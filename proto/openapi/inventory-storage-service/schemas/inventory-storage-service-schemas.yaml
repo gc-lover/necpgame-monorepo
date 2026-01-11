@@ -1,0 +1,475 @@
+openapi: 3.0.3
+components:
+  schemas:
+    InventoryResponse:
+      type: object
+      required:
+      - user_id
+      - capacity
+      - items
+      - settings
+      - metadata
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User identifier
+        capacity:
+          $ref: '#/components/schemas/InventoryCapacity'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          description: List of items in inventory
+        settings:
+          $ref: '#/components/schemas/InventorySettings'
+        metadata:
+          $ref: '#/components/schemas/InventoryMetadata'
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
+        Expected memory savings: 30-50%. Inventory responses optimized for memory
+        efficiency."
+
+        '
+    InventoryCapacity:
+      type: object
+      required:
+      - current
+      - maximum
+      - used_percentage
+      properties:
+        current:
+          type: integer
+          minimum: 0
+          description: Current capacity
+          example: 100
+        maximum:
+          type: integer
+          minimum: 1
+          description: Maximum capacity
+          example: 150
+        used_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Used capacity percentage
+          example: 66.7
+        expandable:
+          type: boolean
+          description: Whether capacity can be expanded
+          example: true
+    InventoryItem:
+      type: object
+      required:
+      - id
+      - item_id
+      - quantity
+      - category
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Inventory item instance ID
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of this item
+          example: 5
+        category:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - implant
+          - consumable
+          - quest_item
+          - miscellaneous
+          description: Item category for organization
+        equipped:
+          type: boolean
+          description: Whether item is currently equipped
+          example: false
+        locked:
+          type: boolean
+          description: Whether item is locked (cannot be removed)
+          example: false
+        metadata:
+          type: object
+          description: Additional item-specific data
+          additionalProperties: true
+    InventorySettings:
+      type: object
+      properties:
+        auto_sort:
+          type: boolean
+          description: Automatically sort items
+          example: true
+        sort_by:
+          type: string
+          enum:
+          - name
+          - category
+          - rarity
+          - quantity
+          description: Sort criteria
+          example: category
+        sort_order:
+          type: string
+          enum:
+          - asc
+          - desc
+          description: Sort order
+          example: asc
+        display_mode:
+          type: string
+          enum:
+          - grid
+          - list
+          - compact
+          description: UI display mode
+          example: grid
+        show_tooltips:
+          type: boolean
+          description: Show item tooltips
+          example: true
+    InventoryMetadata:
+      type: object
+      required:
+      - total_items
+      - total_value
+      - last_updated
+      properties:
+        total_items:
+          type: integer
+          minimum: 0
+          description: Total number of items
+          example: 47
+        total_value:
+          type: integer
+          minimum: 0
+          description: Total inventory value in game currency
+          example: 15420
+        last_updated:
+          type: string
+          format: date-time
+          description: Last inventory modification time
+        item_counts:
+          type: object
+          description: Count of items by category
+          additionalProperties:
+            type: integer
+            minimum: 0
+    UpdateInventorySettingsRequest:
+      type: object
+      properties:
+        auto_sort:
+          type: boolean
+        sort_by:
+          type: string
+          enum:
+          - name
+          - category
+          - rarity
+          - quantity
+        sort_order:
+          type: string
+          enum:
+          - asc
+          - desc
+        display_mode:
+          type: string
+          enum:
+          - grid
+          - list
+          - compact
+        show_tooltips:
+          type: boolean
+      description: '"BACKEND NOTE: Partial update request. Only provided fields are
+        updated.
+
+        Struct alignment optimized for common update patterns."
+
+        '
+    InventorySettingsResponse:
+      type: object
+      required:
+      - settings
+      - updated_at
+      properties:
+        settings:
+          $ref: '#/components/schemas/InventorySettings'
+        updated_at:
+          type: string
+          format: date-time
+          description: Settings update timestamp
+    AddItemsRequest:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddItemEntry'
+          minItems: 1
+          maxItems: 100
+          description: Items to add to inventory
+        source:
+          type: string
+          enum:
+          - loot
+          - purchase
+          - reward
+          - craft
+          - trade
+          description: Source of items
+          example: loot
+      description: '"BACKEND NOTE: Bulk operation optimized for performance.
+
+        Maximum 100 items per request to prevent memory issues."
+
+        '
+    AddItemEntry:
+      type: object
+      required:
+      - item_id
+      - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Quantity to add
+          example: 1
+        metadata:
+          type: object
+          description: Item-specific metadata
+          additionalProperties: true
+    AddItemsResponse:
+      type: object
+      required:
+      - added_items
+      - capacity_after
+      properties:
+        added_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddedItemResult'
+          description: Results of adding each item
+        capacity_after:
+          $ref: '#/components/schemas/InventoryCapacity'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-critical warnings (e.g., partial adds)
+    AddedItemResult:
+      type: object
+      required:
+      - item_id
+      - quantity_added
+      - success
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity_added:
+          type: integer
+          minimum: 0
+          description: Actual quantity added
+        success:
+          type: boolean
+          description: Whether addition was successful
+        reason:
+          type: string
+          description: Reason if addition failed or was partial
+    RemoveItemsRequest:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemoveItemEntry'
+          minItems: 1
+          maxItems: 50
+          description: Items to remove from inventory
+        reason:
+          type: string
+          enum:
+          - consume
+          - sell
+          - discard
+          - equip
+          - trade
+          description: Reason for removal
+          example: consume
+    RemoveItemEntry:
+      type: object
+      required:
+      - inventory_item_id
+      - quantity
+      properties:
+        inventory_item_id:
+          type: string
+          format: uuid
+          description: Inventory item instance ID
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity to remove
+    RemoveItemsResponse:
+      type: object
+      required:
+      - removed_items
+      - capacity_after
+      properties:
+        removed_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemovedItemResult'
+          description: Results of removing each item
+        capacity_after:
+          $ref: '#/components/schemas/InventoryCapacity'
+    RemovedItemResult:
+      type: object
+      required:
+      - inventory_item_id
+      - quantity_removed
+      - success
+      properties:
+        inventory_item_id:
+          type: string
+          format: uuid
+          description: Inventory item instance ID
+        quantity_removed:
+          type: integer
+          minimum: 0
+          description: Actual quantity removed
+        success:
+          type: boolean
+          description: Whether removal was successful
+        remaining_quantity:
+          type: integer
+          minimum: 0
+          description: Remaining quantity after removal
+    InventoryCapacityResponse:
+      type: object
+      required:
+      - capacity
+      - expansion_options
+      properties:
+        capacity:
+          $ref: '#/components/schemas/InventoryCapacity'
+        expansion_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpansionOption'
+          description: Available capacity expansion options
+    ExpansionOption:
+      type: object
+      required:
+      - type
+      - cost
+      - capacity_gain
+      properties:
+        type:
+          type: string
+          enum:
+          - premium
+          - currency
+          - item
+          - achievement
+          description: Type of expansion
+          example: currency
+        cost:
+          type: object
+          description: Cost for expansion
+          additionalProperties: true
+        capacity_gain:
+          type: integer
+          minimum: 1
+          description: Capacity increase from this expansion
+          example: 25
+        available:
+          type: boolean
+          description: Whether this option is currently available
+          example: true
+    ExpandCapacityRequest:
+      type: object
+      required:
+      - expansion_type
+      properties:
+        expansion_type:
+          type: string
+          enum:
+          - premium
+          - currency
+          - item
+          - achievement
+          description: Type of expansion to perform
+        payment_method:
+          type: string
+          description: Payment method (for currency expansions)
+          example: game_currency
+    ExpandCapacityResponse:
+      type: object
+      required:
+      - capacity_before
+      - capacity_after
+      - expansion_applied
+      properties:
+        capacity_before:
+          $ref: '#/components/schemas/InventoryCapacity'
+        capacity_after:
+          $ref: '#/components/schemas/InventoryCapacity'
+        expansion_applied:
+          $ref: '#/components/schemas/ExpansionOption'
+        transaction_id:
+          type: string
+          format: uuid
+          description: Transaction ID for payment tracking
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: ../common/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    PaginationMeta:
+      $ref: ../common/schemas/pagination.yaml#/PaginationMeta

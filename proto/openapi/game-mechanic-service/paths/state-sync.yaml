@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /state/sync:
+    post:
+      operationId: gameMechanicServiceSyncState
+      summary: Synchronize game state
+      description: 'Synchronize game state across clients and servers with conflict
+        resolution.
+
+
+        **Synchronization Process:**
+
+        - State delta calculation and compression
+
+        - Conflict detection and resolution
+
+        - Priority-based update application
+
+        - Real-time broadcast to affected clients
+
+        - Audit trail maintenance
+
+        '
+      tags:
+      - State Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncStateRequest'
+      responses:
+        '200':
+          description: State synchronization completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/StateSyncResult'
+        '409':
+          $ref: '#/components/responses/Conflict'

@@ -1,0 +1,123 @@
+openapi: 3.0.3
+paths:
+  /achievements/{achievementId}/progress:
+    get:
+      summary: Get achievement progress
+      description: '**Enterprise-grade achievement progress endpoint**
+
+        Retrieves detailed progress information for specific achievement.
+
+        Critical for achievement tracking and UI updates.
+
+        **Performance:** <10ms P95, cached per player
+
+        '
+      operationId: getAchievementProgress
+      tags:
+      - Achievement System
+      parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
+      responses:
+        '200':
+          description: Achievement progress retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementProgressResponse'
+        '404':
+          description: Achievement or player not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Update achievement progress
+      description: '**Enterprise-grade achievement progress update endpoint**
+
+        Processes progress updates from game events and player actions.
+
+        Validates progress logic and handles achievement unlocking.
+
+        **Performance:** <20ms P95, includes achievement checking
+
+        '
+      operationId: updateAchievementProgress
+      tags:
+      - Achievement System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementProgressRequest'
+      responses:
+        '200':
+          description: Achievement progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAchievementProgressResponse'
+        '400':
+          description: Invalid request - progress validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - achievement already completed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

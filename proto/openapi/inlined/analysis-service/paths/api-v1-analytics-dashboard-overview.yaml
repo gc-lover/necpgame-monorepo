@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/dashboard/overview:
+    get:
+      description: '**Real-time game analytics overview dashboard**
+
+        Provides comprehensive overview of all critical game metrics including player
+        activity, economic health, combat statistics, and system performance.
+
+        **Performance:** <50ms P95, optimized for dashboard rendering **Refresh Rate:**
+        Real-time updates every 30 seconds '
+      operationId: getGameAnalyticsOverview
+      parameters:
+      - description: Time period for analytics data
+        in: query
+        name: period
+        schema:
+          default: 24h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      - description: Conditional request - return 304 if dashboard hasn't changed
+        in: header
+        name: If-None-Match
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameAnalyticsOverview'
+          description: Analytics overview dashboard data retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, private
+                type: string
+            ETag:
+              schema:
+                example: '"dashboard-overview-2024-01-15-14-30"'
+                type: string
+            X-Data-Freshness:
+              schema:
+                description: Data freshness in seconds
+                example: 5
+                type: integer
+        '304':
+          description: Dashboard data has not changed
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '429':
+          description: Too many requests - rate limit exceeded
+      security:
+      - BearerAuth: []
+      summary: Get comprehensive game analytics overview dashboard
+      tags:
+      - Game Analytics Dashboard

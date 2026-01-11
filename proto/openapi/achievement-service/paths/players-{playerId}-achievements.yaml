@@ -1,0 +1,60 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/achievements:
+    get:
+      operationId: getPlayerAchievements
+      summary: Get player's achievements
+      description: Retrieve all achievements for a specific player with progress
+      tags:
+      - Progress Tracking
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - locked
+          - in_progress
+          - completed
+        description: Achievement progress status filter
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - progress
+          - milestone
+          - challenge
+          - seasonal
+        description: Achievement category filter
+      responses:
+        '200':
+          description: Player achievements
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PlayerAchievement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

@@ -1,0 +1,93 @@
+openapi: 3.0.3
+paths:
+  /mail/{mail_id}:
+    get:
+      summary: Get mail details
+      operationId: mailGetMail
+      description: Get detailed information about a specific mail.
+      tags:
+      - Mail Management
+      parameters:
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail ID
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID (for access control)
+      - name: mark_as_read
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Mark mail as read when retrieving
+      responses:
+        '200':
+          description: Mail details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailResponse'
+        '404':
+          description: Mail not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete mail
+      operationId: mailDeleteMail
+      description: 'Move mail to deleted folder or permanently delete.
+
+        **BACKEND NOTE:** Soft delete with retention policy. '
+      tags:
+      - Mail Management
+      parameters:
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail ID
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      - name: permanent
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Permanently delete instead of moving to deleted folder
+      responses:
+        '204':
+          description: Mail deleted successfully
+        '404':
+          description: Mail not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,111 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}:
+    get:
+      description: '**Enterprise-grade alliance retrieval endpoint**
+
+        Retrieves complete alliance information including members, treaties, diplomatic
+        relations, and political standing.
+
+        Optimized with caching and conditional requests.
+
+        **Performance:** <10ms P95 with Redis caching
+
+        '
+      operationId: getAlliance
+      parameters:
+      - description: Alliance unique identifier
+        in: path
+        name: allianceId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: Include alliance member details
+        in: query
+        name: include_members
+        schema:
+          default: false
+          type: boolean
+      - description: Include active treaties
+        in: query
+        name: include_treaties
+        schema:
+          default: true
+          type: boolean
+      - description: Include diplomatic relationships
+        in: query
+        name: include_relations
+        schema:
+          default: true
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+          description: Alliance retrieved successfully
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Alliance not found
+      summary: Get alliance details
+      tags:
+      - Alliance Management
+    put:
+      description: '**Enterprise-grade alliance update endpoint**
+
+        Supports partial updates with political impact assessment and validation.
+        Ensures alliance integrity and political balance maintenance.
+
+        **Performance:** <40ms P95, includes political impact calculation
+
+        '
+      operationId: updateAlliance
+      parameters:
+      - description: Alliance unique identifier
+        in: path
+        name: allianceId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAllianceRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+          description: Alliance updated successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request - validation failed
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Alliance not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Conflict - political constraints violation
+      security:
+      - BearerAuth: []
+      summary: Update alliance
+      tags:
+      - Alliance Management

@@ -1,0 +1,42 @@
+openapi: 3.0.3
+paths:
+  /cyberpsychosis/triggers/berserk:
+    post:
+      summary: Trigger Berserk State
+      description: '**Trigger berserk cyberpsychosis state**
+
+        Activates berserk mode with increased damage and speed but reduced control.
+
+        **Performance:** <35ms average response time'
+      operationId: triggerBerserk
+      tags:
+      - State Triggers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                reason:
+                  type: string
+                  maxLength: 256
+                  description: Trigger reason
+                  example: critical_damage_received
+      responses:
+        '201':
+          description: Berserk state triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

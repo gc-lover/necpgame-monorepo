@@ -1,0 +1,99 @@
+openapi: 3.0.3
+paths:
+  /cyberware/templates:
+    post:
+      operationId: cyberwareServiceCreateTemplate
+      summary: Create cyberware template
+      description: 'Create a new cyberware template with comprehensive configuration.
+
+
+        **Template Creation:**
+
+        - Define cyberware properties and effects
+
+        - Configure compatibility rules and requirements
+
+        - Set risk factors and maintenance needs
+
+        - Define upgrade paths and synergies
+
+        '
+      tags:
+      - Cyberware Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCyberwareTemplateRequest'
+      responses:
+        '201':
+          description: Cyberware template created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CyberwareTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: cyberwareServiceListTemplates
+      summary: List cyberware templates
+      description: Retrieve paginated list of cyberware templates
+      tags:
+      - Cyberware Management
+      parameters:
+      - name: cyberware_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - arm_prosthetic
+          - leg_prosthetic
+          - neural_implant
+          - sensory_enhancement
+          - internal_organ
+        description: Filter by cyberware type
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        description: Filter by rarity
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include only active templates
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of templates to return
+      responses:
+        '200':
+          description: Cyberware templates retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CyberwareTemplateSummary'

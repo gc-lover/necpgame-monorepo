@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/execute:
+    post:
+      summary: Execute chat command
+      description: '**Enterprise-grade command execution endpoint**
+
+        Processes and executes chat commands from players.
+
+        Validates command syntax, permissions, and executes appropriate actions.
+
+        **Performance:** <50ms for validation, <200ms for execution with DB operations
+
+        **Security:** Requires valid JWT token with appropriate command permissions
+
+        '
+      operationId: executeChatCommand
+      tags:
+      - Command Processing
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandExecutionRequest'
+      responses:
+        '200':
+          description: Command executed successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache, no-store, must-revalidate
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandExecutionResponse'
+        '400':
+          description: Invalid command syntax or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions for command
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions/{sessionId}:
+    get:
+      summary: Get combat session details
+      description: '**Combat session retrieval endpoint**
+
+        Returns current state and details of a combat session.
+
+        **Performance:** <25ms P95, cached for active sessions
+
+        '
+      operationId: combatServiceGetSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Combat session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

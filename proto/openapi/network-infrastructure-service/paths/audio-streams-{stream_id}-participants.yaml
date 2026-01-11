@@ -1,0 +1,77 @@
+openapi: 3.0.3
+paths:
+  /audio/streams/{stream_id}/participants:
+    post:
+      summary: Add participant to audio stream
+      description: Add a user as a participant in an audio stream
+      operationId: addStreamParticipant
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: stream_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Audio stream unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddParticipantRequest'
+      responses:
+        '200':
+          description: Participant added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamParticipant'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List stream participants
+      description: Get list of participants in an audio stream
+      operationId: listStreamParticipants
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: stream_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Audio stream unique identifier
+      responses:
+        '200':
+          description: Participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantListResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

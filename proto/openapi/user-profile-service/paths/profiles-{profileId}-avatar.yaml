@@ -1,0 +1,83 @@
+openapi: 3.0.3
+paths:
+  /profiles/{profileId}/avatar:
+    post:
+      operationId: userProfileServiceUploadAvatar
+      summary: Upload profile avatar
+      description: 'Upload and process profile avatar image.
+
+
+        **Technical Notes:**
+
+        - Supports JPEG, PNG formats
+
+        - Automatic resizing and optimization
+
+        - CDN distribution
+
+        - Backup storage
+
+        '
+      tags:
+      - Media Management
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Avatar image file
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        avatar_url:
+                          type: string
+                          format: uri
+                          description: CDN URL of uploaded avatar
+                        thumbnail_url:
+                          type: string
+                          format: uri
+                          description: Thumbnail URL
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      operationId: userProfileServiceDeleteAvatar
+      summary: Delete profile avatar
+      description: Remove profile avatar and revert to default
+      tags:
+      - Media Management
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

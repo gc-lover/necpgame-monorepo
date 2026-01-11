@@ -1,0 +1,123 @@
+openapi: 3.0.3
+paths:
+  /clan-wars/{warId}:
+    get:
+      summary: Get clan war details
+      description: '**Enterprise-grade clan war retrieval endpoint**
+
+        Retrieves complete war information including participants, battles, casualties,
+        and current status with real-time updates.
+
+        Optimized with caching and conditional requests.
+
+        **Performance:** <10ms P95 with Redis caching
+
+        '
+      operationId: getClanWar
+      tags:
+      - Clan Warfare
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: include_battles
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include battle history and details
+      - name: include_participants
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include participant clan details
+      responses:
+        '200':
+          description: Clan war retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWarResponse'
+        '404':
+          description: Clan war not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update clan war
+      description: '**Enterprise-grade clan war update endpoint**
+
+        Supports status updates, treaty negotiations, and ceasefire agreements. Ensures
+        war integrity and participant consent for major changes.
+
+        **Performance:** <40ms P95, includes diplomatic impact calculation
+
+        '
+      operationId: updateClanWar
+      tags:
+      - Clan Warfare
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarUpdateRequest'
+      responses:
+        '200':
+          description: Clan war updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWarResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient authority
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Clan war not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - treaty or ceasefire violations
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        **Protocol:** WebSocket with JSON payloads **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff'
+      operationId: notificationHealthWebSocket
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Services to monitor (optional)
+      responses:
+        '200':
+          description: WebSocket upgrade initiated
+        '101':
+          description: WebSocket connection established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

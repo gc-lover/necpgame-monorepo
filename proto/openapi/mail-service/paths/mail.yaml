@@ -1,0 +1,114 @@
+openapi: 3.0.3
+paths:
+  /mail:
+    post:
+      summary: Send mail
+      operationId: mailSendMail
+      description: 'Send mail to one or multiple recipients with optional attachments.
+
+        **BACKEND NOTE:** Transactional operation with inventory integration. '
+      tags:
+      - Mail Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMailRequest'
+      responses:
+        '201':
+          description: Mail sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
+          description: Insufficient funds for mail cost
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List mail
+      operationId: mailListMail
+      description: Get list of mail for a character with filtering and pagination.
+      tags:
+      - Mail Management
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      - name: mailbox_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - inbox
+          - sent
+          - archive
+          - deleted
+          default: inbox
+        description: Mailbox type to list
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - unread
+          - read
+          - all
+          default: all
+        description: Mail status filter
+      - name: has_attachments
+        in: query
+        schema:
+          type: boolean
+        description: Filter by presence of attachments
+      - name: sender_filter
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific sender
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of mails to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of mails to skip
+      responses:
+        '200':
+          description: List of mail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMailResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

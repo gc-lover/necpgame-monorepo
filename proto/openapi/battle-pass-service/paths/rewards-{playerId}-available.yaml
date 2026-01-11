@@ -1,0 +1,42 @@
+openapi: 3.0.0
+paths:
+  /rewards/{playerId}/available:
+    get:
+      tags:
+      - Rewards
+      summary: Get available rewards
+      description: Retrieves all rewards available for claiming by the player
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
+      - name: seasonId
+        in: query
+        schema:
+          type: string
+        description: Season ID (defaults to current)
+      responses:
+        '200':
+          description: Available rewards list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AvailableReward'
+                  totalCount:
+                    type: integer
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

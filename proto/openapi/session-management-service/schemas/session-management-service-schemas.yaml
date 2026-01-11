@@ -1,0 +1,415 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CreateSessionRequest:
+      type: object
+      required:
+      - type
+      - player_id
+      properties:
+        type:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - custom
+          description: Type of session to create
+        player_id:
+          type: string
+          format: uuid
+          description: Player initiating the session
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Session-specific metadata
+        settings:
+          type: object
+          additionalProperties: true
+          description: Session configuration settings
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - custom
+        player_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+      - session_id
+      - type
+      - player_id
+      - status
+      - created_at
+    SessionListResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - sessions
+      - total_count
+    SessionDetails:
+      allOf:
+      - $ref: '#/components/schemas/Session'
+      - type: object
+        properties:
+          logs:
+            type: array
+            items:
+              $ref: '#/components/schemas/SessionLogEntry'
+          stats:
+            $ref: '#/components/schemas/SessionStats'
+    UpdateSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+        metadata:
+          type: object
+          additionalProperties: true
+        settings:
+          type: object
+          additionalProperties: true
+    SessionLogEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+      required:
+      - timestamp
+      - event_type
+    SessionStats:
+      type: object
+      properties:
+        duration_seconds:
+          type: integer
+        events_count:
+          type: integer
+        errors_count:
+          type: integer
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    CreateCombatSessionRequest:
+      type: object
+      required:
+      - mode
+      - participants
+      properties:
+        mode:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - arena
+          - tournament
+          description: Combat session mode
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: Player IDs participating in combat
+        settings:
+          type: object
+          properties:
+            max_duration:
+              type: integer
+              minimum: 60
+              maximum: 3600
+              description: Maximum session duration in seconds
+            difficulty:
+              type: string
+              enum:
+              - easy
+              - normal
+              - hard
+              - expert
+            rules:
+              type: object
+              additionalProperties: true
+          description: Combat session configuration
+    CombatSession:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - arena
+          - tournament
+        status:
+          type: string
+          enum:
+          - initializing
+          - active
+          - paused
+          - completed
+          - terminated
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        settings:
+          type: object
+          additionalProperties: true
+        stats:
+          $ref: '#/components/schemas/CombatSessionStats'
+      required:
+      - session_id
+      - mode
+      - status
+      - participants
+      - created_at
+    CombatParticipant:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        joined_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - active
+          - eliminated
+          - disconnected
+        score:
+          type: integer
+          minimum: 0
+      required:
+      - player_id
+      - joined_at
+      - status
+    CombatSessionListResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatSession'
+        total_count:
+          type: integer
+      required:
+      - sessions
+      - total_count
+    CombatActionRequest:
+      type: object
+      required:
+      - action_type
+      - player_id
+      properties:
+        action_type:
+          type: string
+          enum:
+          - attack
+          - defend
+          - ability
+          - move
+          - item_use
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+    CombatActionResult:
+      type: object
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        damage_dealt:
+          type: integer
+          minimum: 0
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: number
+              duration:
+                type: integer
+        new_state:
+          $ref: '#/components/schemas/CombatSessionState'
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - action_id
+      - success
+      - timestamp
+    CombatSessionState:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum:
+          - preparation
+          - active
+          - cooldown
+          - finished
+        time_remaining:
+          type: integer
+          minimum: 0
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+        environment:
+          type: object
+          additionalProperties: true
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              data:
+                type: object
+                additionalProperties: true
+      required:
+      - session_id
+      - phase
+    CombatSessionStats:
+      type: object
+      properties:
+        duration_seconds:
+          type: integer
+        total_actions:
+          type: integer
+        total_damage:
+          type: integer
+        eliminations:
+          type: integer
+        winner:
+          type: string
+          format: uuid
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    SessionAnalytics:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        total_sessions:
+          type: integer
+        active_sessions:
+          type: integer
+        average_duration_seconds:
+          type: number
+        sessions_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        sessions_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        error_rate:
+          type: number
+        performance_metrics:
+          type: object
+          properties:
+            average_response_time_ms:
+              type: number
+            p95_response_time_ms:
+              type: number
+            throughput_per_second:
+              type: number
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              sessions_created:
+                type: integer
+              sessions_completed:
+                type: integer
+              average_duration:
+                type: number
+      required:
+      - timeframe
+      - total_sessions

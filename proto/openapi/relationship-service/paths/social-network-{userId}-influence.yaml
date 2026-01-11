@@ -1,0 +1,38 @@
+openapi: 3.0.3
+paths:
+  /social-network/{userId}/influence:
+    get:
+      summary: Calculate social influence
+      description: '**Calculate user''s social influence score**
+
+        Based on relationship network, reputation, and community standing.
+
+        **Performance:** <60ms with cached calculations
+
+        '
+      operationId: getSocialInfluence
+      tags:
+      - Social Network
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Social influence calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialInfluenceResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

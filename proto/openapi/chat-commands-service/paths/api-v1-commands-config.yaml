@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/config:
+    get:
+      summary: Get command configuration
+      description: '**Enterprise-grade command configuration endpoint**
+
+        Returns current command configuration and permissions.
+
+        Used for client-side command validation and UI updates.
+
+        **Performance:** <100ms response time, cached for 15 minutes
+
+        **Security:** Requires valid JWT token
+
+        '
+      operationId: getCommandConfiguration
+      tags:
+      - Command Management
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Command configuration retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=900, s-maxage=1800
+            ETag:
+              schema:
+                type: string
+                example: '"command-config-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandConfigurationResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

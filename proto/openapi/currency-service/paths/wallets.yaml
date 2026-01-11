@@ -1,0 +1,48 @@
+openapi: 3.0.3
+paths:
+  /wallets:
+    post:
+      operationId: currencyServiceCreateWallet
+      summary: Create new wallet
+      description: 'Create a new wallet for a user with initial balance configuration.
+
+
+        **Wallet Creation:**
+
+        - Validate user identity and permissions
+
+        - Create wallet with default currency balances
+
+        - Initialize security settings and limits
+
+        - Set up transaction monitoring
+
+        '
+      tags:
+      - Wallet Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Wallet'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Wallet already exists for user
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

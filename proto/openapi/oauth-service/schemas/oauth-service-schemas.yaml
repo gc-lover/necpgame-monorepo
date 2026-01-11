@@ -1,0 +1,328 @@
+openapi: 3.0.3
+components:
+  schemas:
+    OAuthAccountLink:
+      description: OAuth account link entity
+      type: object
+      required:
+      - id
+      - user_id
+      - provider
+      - provider_user_id
+      - linked_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Link unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: Linked NECPGAME user ID
+        provider:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+          description: OAuth provider
+        provider_user_id:
+          type: string
+          description: User ID from OAuth provider
+        provider_username:
+          type: string
+          description: Username from OAuth provider
+        provider_email:
+          type: string
+          format: email
+          description: Email from OAuth provider
+        access_token_hash:
+          type: string
+          description: Hashed OAuth access token
+        refresh_token_hash:
+          type: string
+          description: Hashed OAuth refresh token
+        token_expires_at:
+          type: string
+          format: date-time
+          description: When OAuth tokens expire
+        linked_at:
+          type: string
+          format: date-time
+          description: When accounts were linked
+        last_sync_at:
+          type: string
+          format: date-time
+          description: Last profile synchronization
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Granted OAuth scopes
+        metadata:
+          type: object
+          description: Provider-specific metadata
+          properties:
+            avatar_url:
+              type: string
+              format: uri
+              description: Avatar URL from provider
+            profile_url:
+              type: string
+              format: uri
+              description: Profile URL from provider
+    OAuthProvider:
+      description: OAuth provider information
+      type: object
+      required:
+      - provider
+      - name
+      - is_active
+      properties:
+        provider:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+          description: Provider identifier
+        name:
+          type: string
+          description: Human-readable provider name
+        description:
+          type: string
+          description: Provider description
+        icon_url:
+          type: string
+          format: uri
+          description: Provider icon URL
+        is_active:
+          type: boolean
+          description: Whether provider is enabled
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Default scopes requested
+        website_url:
+          type: string
+          format: uri
+          description: Provider website
+    OAuthProviderConfig:
+      description: OAuth provider configuration
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          provider:
+            type: string
+            enum:
+            - google
+            - discord
+            - steam
+            - github
+            description: Provider identifier
+          client_id:
+            type: string
+            description: OAuth client ID
+          client_secret_hash:
+            type: string
+            description: Hashed OAuth client secret
+          authorization_url:
+            type: string
+            format: uri
+            description: Provider authorization endpoint
+          token_url:
+            type: string
+            format: uri
+            description: Provider token endpoint
+          user_info_url:
+            type: string
+            format: uri
+            description: Provider user info endpoint
+          scopes_supported:
+            type: array
+            items:
+              type: string
+            description: Supported OAuth scopes
+          pkce_required:
+            type: boolean
+            description: Whether PKCE is required
+          token_rotation_enabled:
+            type: boolean
+            description: Whether token rotation is enabled
+    OAuthAuditEntry:
+      description: Audit entry for OAuth operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          provider:
+            type: string
+            enum:
+            - google
+            - discord
+            - steam
+            - github
+            description: OAuth provider involved
+          operation_type:
+            type: string
+            enum:
+            - authorize
+            - callback
+            - token_exchange
+            - refresh
+            - link
+            - unlink
+            - sync
+            description: Type of OAuth operation
+          user_id:
+            type: string
+            format: uuid
+            description: Associated user ID
+          provider_user_id:
+            type: string
+            description: User ID from OAuth provider
+          ip_address:
+            type: string
+            description: Client IP address
+          success:
+            type: boolean
+            description: Whether operation succeeded
+    UserAccountSummary:
+      description: Summary user account for OAuth responses
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User account ID
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          format: email
+          description: Email address
+        account_status:
+          type: string
+          enum:
+          - active
+          - suspended
+          - banned
+          - pending_verification
+          description: Account status
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+    OAuthCallbackRequest:
+      description: Request payload for OAuth callback processing
+      type: object
+      required:
+      - code
+      - state
+      properties:
+        code:
+          type: string
+          description: Authorization code from provider
+        state:
+          type: string
+          description: State parameter for validation
+        code_verifier:
+          type: string
+          description: PKCE code verifier
+        redirect_uri:
+          type: string
+          format: uri
+          description: Redirect URI used in authorization
+    OAuthResult:
+      description: Result of OAuth authentication flow
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Platform JWT access token
+        refresh_token:
+          type: string
+          description: Platform JWT refresh token
+        token_type:
+          type: string
+          enum:
+          - Bearer
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Access token expiration in seconds
+        user_linked:
+          type: boolean
+          description: Whether OAuth account was linked to existing user
+        user_created:
+          type: boolean
+          description: Whether new user account was created
+        account_link:
+          $ref: '#/components/schemas/OAuthAccountLink'
+        user:
+          $ref: '#/components/schemas/UserAccountSummary'
+    TokenExchangeRequest:
+      description: Request payload for token exchange
+      type: object
+      required:
+      - code
+      - redirect_uri
+      properties:
+        code:
+          type: string
+          description: Authorization code to exchange
+        redirect_uri:
+          type: string
+          format: uri
+          description: Redirect URI used in authorization
+        code_verifier:
+          type: string
+          description: PKCE code verifier
+        link_to_user:
+          type: string
+          format: uuid
+          description: Existing user ID to link OAuth account to
+    TokenRefreshRequest:
+      description: Request payload for token refresh
+      type: object
+      required:
+      - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: OAuth refresh token
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Requested scopes for new token
+    LinkOAuthAccountRequest:
+      description: Request payload for linking OAuth account
+      type: object
+      required:
+      - provider
+      - authorization_code
+      properties:
+        provider:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+          description: OAuth provider
+        authorization_code:
+          type: string
+          description: OAuth authorization code
+        redirect_uri:
+          type: string
+          format: uri
+          description: Redirect URI used
+        code_verifier:
+          type: string
+          description: PKCE code verifier (if used)

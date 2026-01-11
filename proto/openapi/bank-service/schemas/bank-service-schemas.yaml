@@ -1,0 +1,865 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    BankAccountEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - ownerId
+        - accountNumber
+        - type
+        - currency
+        properties:
+          ownerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          accountNumber:
+            type: string
+            description: null
+            pattern: ^[A-Z0-9]{16}$
+            example: NECP123456789012
+          type:
+            type: string
+            description: null
+            enum:
+            - personal
+            - business
+            - savings
+            - investment
+            example: personal
+          currency:
+            type: string
+            description: null
+            enum:
+            - eddies
+            - eurobucks
+            - credits
+            example: eddies
+          balance:
+            type: number
+            description: null
+            minimum: 0
+            example: 50000.5
+          availableBalance:
+            type: number
+            description: Available balance
+            minimum: 0
+            example: 49500.5
+          status:
+            type: string
+            description: null
+            enum:
+            - active
+            - frozen
+            - closed
+            example: active
+          interestRate:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.025
+          overdraftLimit:
+            type: number
+            description: null
+            minimum: 0
+            example: 1000.0
+          monthlyFee:
+            type: number
+            description: null
+            minimum: 0
+            example: 5.0
+          lastActivity:
+            type: string
+            description: null
+            format: date-time
+          securitySettings:
+            type: object
+            description: null
+            properties:
+              twoFactorEnabled:
+                type: boolean
+                default: true
+              transactionLimits:
+                type: object
+                properties:
+                  daily:
+                    type: number
+                    minimum: 0
+                  monthly:
+                    type: number
+                    minimum: 0
+          $ref: '#/components/schemas/OptimisticLock'
+    TransactionEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - type
+        - amount
+        - currency
+        - status
+        properties:
+          type:
+            type: string
+            description: null
+            enum:
+            - transfer
+            - deposit
+            - withdraw
+            - fee
+            - interest
+            - exchange
+            - loan_payment
+            example: transfer
+          amount:
+            type: number
+            description: null
+            example: 1000.0
+          currency:
+            type: string
+            description: null
+            enum:
+            - eddies
+            - eurobucks
+            - credits
+            example: eddies
+          status:
+            type: string
+            description: null
+            enum:
+            - pending
+            - completed
+            - failed
+            - cancelled
+            example: completed
+          fromAccountId:
+            type: string
+            description: ID
+            format: uuid
+          toAccountId:
+            type: string
+            description: ID
+            format: uuid
+          description:
+            type: string
+            description: null
+            maxLength: 255
+            example: Payment for cyberware upgrade
+          referenceNumber:
+            type: string
+            description: null
+            pattern: ^[A-Z0-9]{12}$
+            example: TXN123456789
+          fee:
+            type: number
+            description: null
+            minimum: 0
+            example: 2.5
+          exchangeRate:
+            type: number
+            description: (  )
+            minimum: 0
+          processedAt:
+            type: string
+            description: null
+            format: date-time
+          failureReason:
+            type: string
+            description: null
+            maxLength: 255
+          $ref: '#/components/schemas/OptimisticLock'
+    LoanEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - borrowerId
+        - accountId
+        - principalAmount
+        - interestRate
+        - termMonths
+        properties:
+          borrowerId:
+            type: string
+            description: ID
+            format: uuid
+          accountId:
+            type: string
+            description: ID
+            format: uuid
+          principalAmount:
+            type: number
+            description: null
+            minimum: 1
+            example: 50000.0
+          interestRate:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.15
+          termMonths:
+            type: integer
+            description: null
+            minimum: 1
+            maximum: 120
+            example: 12
+          monthlyPayment:
+            type: number
+            description: null
+            minimum: 0
+            example: 4500.0
+          remainingBalance:
+            type: number
+            description: null
+            minimum: 0
+            example: 50000.0
+          status:
+            type: string
+            description: null
+            enum:
+            - pending
+            - active
+            - paid
+            - defaulted
+            - cancelled
+            example: active
+          startDate:
+            type: string
+            description: null
+            format: date
+          endDate:
+            type: string
+            description: null
+            format: date
+          nextPaymentDate:
+            type: string
+            description: null
+            format: date
+          lateFees:
+            type: number
+            description: null
+            minimum: 0
+            example: 0.0
+          collateral:
+            type: string
+            description: (ID )
+            format: uuid
+          creditScore:
+            type: integer
+            description: null
+            minimum: 0
+            maximum: 1000
+            example: 750
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateAccountRequest:
+      type: object
+      required:
+      - ownerId
+      - type
+      - currency
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - personal
+          - business
+          - savings
+          - investment
+        currency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        initialDeposit:
+          type: number
+          minimum: 0
+          default: 0
+    UpdateAccountRequest:
+      type: object
+      properties:
+        overdraftLimit:
+          type: number
+          minimum: 0
+        monthlyFee:
+          type: number
+          minimum: 0
+        securitySettings:
+          type: object
+          properties:
+            twoFactorEnabled:
+              type: boolean
+            transactionLimits:
+              type: object
+              properties:
+                daily:
+                  type: number
+                  minimum: 0
+                monthly:
+                  type: number
+                  minimum: 0
+    AccountResponse:
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/BankAccountEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            lastTransaction:
+              type: string
+              format: date-time
+    AccountListResponse:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankAccountEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 50
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    AccountBalanceResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          minimum: 0
+        availableBalance:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+        pendingTransactions:
+          type: integer
+          minimum: 0
+        lastUpdated:
+          type: string
+          format: date-time
+    TransferRequest:
+      type: object
+      required:
+      - fromAccountId
+      - toAccountId
+      - amount
+      - currency
+      properties:
+        fromAccountId:
+          type: string
+          format: uuid
+        toAccountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        description:
+          type: string
+          maxLength: 255
+        scheduledDate:
+          type: string
+          format: date-time
+    TransferResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        fromAccountId:
+          type: string
+          format: uuid
+        toAccountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        fee:
+          type: number
+        status:
+          type: string
+          enum:
+          - completed
+          - pending
+          - scheduled
+        processedAt:
+          type: string
+          format: date-time
+    DepositRequest:
+      type: object
+      required:
+      - accountId
+      - amount
+      - currency
+      - source
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        source:
+          type: string
+          enum:
+          - game_earnings
+          - marketplace_sale
+          - external_deposit
+          - admin_credit
+        description:
+          type: string
+          maxLength: 255
+    DepositResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        newBalance:
+          type: number
+        processedAt:
+          type: string
+          format: date-time
+    WithdrawRequest:
+      type: object
+      required:
+      - accountId
+      - amount
+      - currency
+      - destination
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        destination:
+          type: string
+          enum:
+          - game_purchase
+          - marketplace_buy
+          - external_withdrawal
+          - fee_payment
+        description:
+          type: string
+          maxLength: 255
+    WithdrawResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        fee:
+          type: number
+        newBalance:
+          type: number
+        processedAt:
+          type: string
+          format: date-time
+    TransactionHistoryResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionEntity'
+        summary:
+          type: object
+          properties:
+            totalTransactions:
+              type: integer
+              minimum: 0
+            totalCredits:
+              type: number
+              minimum: 0
+            totalDebits:
+              type: number
+              minimum: 0
+            periodStart:
+              type: string
+              format: date
+            periodEnd:
+              type: string
+              format: date
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    ExchangeRequest:
+      type: object
+      required:
+      - fromAccountId
+      - toAccountId
+      - fromAmount
+      - fromCurrency
+      - toCurrency
+      properties:
+        fromAccountId:
+          type: string
+          format: uuid
+        toAccountId:
+          type: string
+          format: uuid
+        fromAmount:
+          type: number
+          minimum: 0.01
+        fromCurrency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+        toCurrency:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+    ExchangeResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        fromAccountId:
+          type: string
+          format: uuid
+        toAccountId:
+          type: string
+          format: uuid
+        fromAmount:
+          type: number
+        fromCurrency:
+          type: string
+        toAmount:
+          type: number
+        toCurrency:
+          type: string
+        exchangeRate:
+          type: number
+        fee:
+          type: number
+        processedAt:
+          type: string
+          format: date-time
+    ExchangeRatesResponse:
+      type: object
+      properties:
+        baseCurrency:
+          type: string
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+          example:
+            eurobucks: 0.85
+            credits: 1.2
+        lastUpdated:
+          type: string
+          format: date-time
+        nextUpdate:
+          type: string
+          format: date-time
+    CreateLoanRequest:
+      type: object
+      required:
+      - borrowerId
+      - accountId
+      - principalAmount
+      - termMonths
+      properties:
+        borrowerId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        principalAmount:
+          type: number
+          minimum: 100
+          maximum: 1000000
+        termMonths:
+          type: integer
+          minimum: 1
+          maximum: 120
+        collateral:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          enum:
+          - business
+          - personal
+          - investment
+          - emergency
+          default: personal
+    LoanResponse:
+      type: object
+      properties:
+        loan:
+          $ref: '#/components/schemas/LoanEntity'
+        approvalDetails:
+          type: object
+          properties:
+            approved:
+              type: boolean
+            creditScore:
+              type: integer
+            interestRate:
+              type: number
+            approvedAt:
+              type: string
+              format: date-time
+    LoanListResponse:
+      type: object
+      properties:
+        loans:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoanEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 50
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    LoanPaymentRequest:
+      type: object
+      required:
+      - amount
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+        accountId:
+          type: string
+          format: uuid
+          description: ()
+    LoanPaymentResponse:
+      type: object
+      properties:
+        loanId:
+          type: string
+          format: uuid
+        paymentAmount:
+          type: number
+        principalPaid:
+          type: number
+        interestPaid:
+          type: number
+        remainingBalance:
+          type: number
+        nextPaymentDate:
+          type: string
+          format: date
+        transactionId:
+          type: string
+          format: uuid
+    FinancialAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - yearly
+        metrics:
+          type: object
+          properties:
+            totalAccounts:
+              type: integer
+              minimum: 0
+            totalBalance:
+              type: number
+              minimum: 0
+            transactionVolume:
+              type: integer
+              minimum: 0
+            transactionValue:
+              type: number
+              minimum: 0
+            loanPortfolio:
+              type: number
+              minimum: 0
+            defaultRate:
+              type: number
+              minimum: 0
+              maximum: 1
+        trends:
+          type: object
+          additionalProperties:
+            type: number
+    FraudCheckRequest:
+      type: object
+      required:
+      - transaction
+      properties:
+        transaction:
+          $ref: '#/components/schemas/TransactionEntity'
+    FraudCheckResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        fraudRisk:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        flags:
+          type: array
+          items:
+            type: string
+            enum:
+            - unusual_amount
+            - unusual_location
+            - velocity_check
+            - blacklist_match
+        recommendedAction:
+          type: string
+          enum:
+          - approve
+          - review
+          - block
+          - escalate
+    FreezeAccountRequest:
+      type: object
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          enum:
+          - fraud_suspected
+          - security_concern
+          - legal_request
+          - account_compromised
+        duration:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 720
+    UnfreezeAccountRequest:
+      type: object
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          enum:
+          - investigation_complete
+          - false_positive
+          - user_request
+          - legal_clearance

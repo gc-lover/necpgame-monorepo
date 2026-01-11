@@ -1,0 +1,107 @@
+openapi: 3.0.3
+paths:
+  /trading/orders/{order_id}:
+    get:
+      summary: Get trading order details
+      description: '**Order details retrieval endpoint**
+
+        Retrieves detailed information about a specific trading order. Includes order
+        history, matches, and current status.
+
+        **Performance:** <5ms P95 with caching
+
+        '
+      operationId: getTradingOrder
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Order details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingOrderResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Forbidden - order not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    delete:
+      summary: Cancel trading order
+      description: '**Order cancellation endpoint**
+
+        Cancels an active trading order, refunding held funds/items. Validates order
+        ownership and cancellation permissions.
+
+        **Performance:** <15ms P95 including refund processing
+
+        '
+      operationId: cancelTradingOrder
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Order cancelled successfully
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Forbidden - order not owned by user or not cancellable
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Order cannot be cancelled (already filled/expired)
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

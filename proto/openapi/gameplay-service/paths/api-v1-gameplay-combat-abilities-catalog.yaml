@@ -1,0 +1,83 @@
+openapi: 3.0.3
+paths:
+  /api/v1/gameplay/combat/abilities/catalog:
+    get:
+      operationId: getAbilityCatalog
+      summary: Get ability catalog
+      description: Returns the complete catalog of available combat abilities with
+        filtering and pagination
+      tags:
+      - Combat Abilities
+      - Ability Catalog
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - cyberware
+          - weapon
+          - support
+        description: Filter by ability category
+      - name: source
+        in: query
+        schema:
+          type: string
+          enum:
+          - equipment
+          - implants
+          - progression
+          - cyberdeck
+          - purchased
+        description: Filter by ability source
+      - name: min_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Minimum player level requirement
+      - name: max_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Maximum player level requirement
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      responses:
+        '200':
+          description: Ability catalog response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityCatalogResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

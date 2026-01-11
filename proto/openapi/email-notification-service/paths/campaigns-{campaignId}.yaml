@@ -1,0 +1,112 @@
+openapi: 3.0.3
+paths:
+  /campaigns/{campaignId}:
+    get:
+      operationId: emailNotificationServiceGetCampaign
+      summary: Get campaign details
+      description: Retrieve detailed campaign information with real-time metrics
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      responses:
+        '200':
+          description: Campaign details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailCampaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: emailNotificationServiceUpdateCampaign
+      summary: Update campaign
+      description: 'Update campaign settings, targeting, or content.
+
+
+        **Update Constraints:**
+
+        - Cannot modify active campaigns
+
+        - Validate targeting criteria
+
+        - Update scheduling if needed
+
+        - Maintain campaign integrity
+
+        '
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCampaignRequest'
+      responses:
+        '200':
+          description: Campaign updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailCampaign'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: emailNotificationServiceCancelCampaign
+      summary: Cancel campaign
+      description: 'Cancel scheduled or active campaign.
+
+
+        **Cancellation Process:**
+
+        - Stop further email delivery
+
+        - Update campaign status
+
+        - Generate cancellation report
+
+        - Process refunds if applicable
+
+        '
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

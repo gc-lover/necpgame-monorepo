@@ -1,0 +1,128 @@
+openapi: 3.0.3
+paths:
+  /inventory/{userId}:
+    get:
+      summary: Get user inventory
+      description: '**Enterprise-grade inventory retrieval endpoint**
+
+        Retrieves complete inventory information for a user including all items, storage
+        capacity, organization settings, and metadata.
+
+        Optimized for high-throughput scenarios with proper caching.
+
+        **Performance:** <15ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: getUserInventory
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      - name: include_metadata
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include item metadata and statistics
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - consumables
+          - quest_items
+          - all
+          default: all
+        description: Filter by item category
+      responses:
+        '200':
+          description: Inventory retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '400':
+          description: Invalid request - malformed parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: User not found or inventory unavailable
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update inventory settings
+      description: '**Enterprise-grade inventory configuration endpoint**
+
+        Updates inventory organization settings, capacity preferences, and display
+        options.
+
+        Supports partial updates with optimistic locking.
+
+        **Performance:** <25ms P95, includes validation and persistence
+
+        '
+      operationId: updateInventorySettings
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInventorySettingsRequest'
+      responses:
+        '200':
+          description: Inventory settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySettingsResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - concurrent modification detected
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

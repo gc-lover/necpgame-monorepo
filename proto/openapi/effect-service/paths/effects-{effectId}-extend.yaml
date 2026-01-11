@@ -1,0 +1,60 @@
+openapi: 3.0.3
+paths:
+  /effects/{effectId}/extend:
+    post:
+      operationId: effectServiceExtendEffect
+      summary: Extend effect duration
+      description: 'Extend the duration of an active effect.
+
+
+        **Duration Extension:**
+
+        - Add time to existing effect
+
+        - Maintain effect strength and properties
+
+        - Handle maximum duration limits
+
+        - Real-time synchronization
+
+        '
+      tags:
+      - Effect Management
+      parameters:
+      - name: effectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - additional_duration_seconds
+              properties:
+                additional_duration_seconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 86400
+                  description: Additional duration in seconds
+      responses:
+        '200':
+          description: Effect duration extended
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AppliedEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

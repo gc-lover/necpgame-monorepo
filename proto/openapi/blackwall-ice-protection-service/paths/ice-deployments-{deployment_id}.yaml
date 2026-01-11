@@ -1,0 +1,94 @@
+openapi: 3.0.0
+paths:
+  /ice/deployments/{deployment_id}:
+    get:
+      tags:
+      - ice-management
+      summary: Get ICE deployment details
+      description: Retrieve detailed information about specific ICE deployment
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: ICE deployment details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentDetailsResponse'
+        '404':
+          description: ICE deployment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      tags:
+      - ice-management
+      summary: Update ICE deployment configuration
+      description: Modify configuration of existing ICE deployment
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEUpdateRequest'
+      responses:
+        '200':
+          description: ICE deployment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      tags:
+      - ice-management
+      summary: Decommission ICE deployment
+      description: Safely decommission and remove ICE deployment
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: deployment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: ICE deployment successfully decommissioned
+        '404':
+          description: ICE deployment not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

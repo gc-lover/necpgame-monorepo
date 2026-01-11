@@ -1,0 +1,42 @@
+openapi: 3.0.3
+paths:
+  /sessions/user/{userId}/active:
+    get:
+      operationId: sessionServiceGetUserActiveSessions
+      summary: Get user's active sessions
+      description: 'Retrieve all active sessions for a specific user.
+
+
+        **Privacy Notes:**
+
+        - Users can only view their own sessions
+
+        - Admins can view any user''s sessions
+
+        - Includes device and location information
+
+        '
+      tags:
+      - Session Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      responses:
+        '200':
+          description: Active sessions retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SessionSummary'

@@ -1,0 +1,77 @@
+openapi: 3.0.3
+paths:
+  /hacking/{sessionId}/disconnect:
+    post:
+      operationId: hackingServiceDisconnect
+      summary: Disconnect from hacking session
+      description: 'Safely disconnect from an active hacking session.
+
+
+        **Disconnection Process:**
+
+        - Clean up session resources and connections
+
+        - Save session progress and statistics
+
+        - Execute disconnection protocols
+
+        - Update hacking reputation and statistics
+
+        '
+      tags:
+      - Hacking Sessions
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergency_disconnect:
+                  type: boolean
+                  default: false
+                  description: Force emergency disconnection
+                save_progress:
+                  type: boolean
+                  default: true
+                  description: Save session progress
+      responses:
+        '200':
+          description: Disconnected successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        session_duration_seconds:
+                          type: integer
+                          description: Total session duration
+                        data_extracted_gb:
+                          type: number
+                          description: Data extracted in GB
+                        ice_broken_count:
+                          type: integer
+                          description: Number of ICE systems broken
+                        trace_level_reached:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                          description: Maximum trace level reached
+                        reputation_change:
+                          type: integer
+                          description: Hacking reputation change
+        '404':
+          $ref: '#/components/responses/NotFound'

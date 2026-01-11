@@ -1,0 +1,103 @@
+openapi: 3.0.3
+paths:
+  /trials/{trialId}/complete:
+    post:
+      operationId: completeTrialSession
+      summary: Complete time trial session
+      description: Submit completion data for an active time trial session
+      tags:
+      - Timer Engine
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - completion_time
+              - progress_percentage
+              properties:
+                completion_time:
+                  type: integer
+                  minimum: 0
+                  description: Total completion time in seconds
+                progress_percentage:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  description: Completion percentage
+                telemetry_data:
+                  type: object
+                  description: Additional telemetry and validation data
+                party_members:
+                  type: array
+                  items:
+                    type: string
+                  description: List of party member IDs
+      responses:
+        '200':
+          description: Trial completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - session
+                - rewards
+                - leaderboard_rank
+                properties:
+                  session:
+                    $ref: '#/components/schemas/TrialSession'
+                  rewards:
+                    $ref: '#/components/schemas/RewardTiers'
+                  leaderboard_rank:
+                    type: integer
+                    minimum: 0
+                    description: New leaderboard rank (0 = not ranked)
+                  validation_status:
+                    type: string
+                    enum:
+                    - pending
+                    - valid
+                    - invalid
+                    description: Initial validation status
+        '400':
+          description: Invalid completion data or session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - session already completed or invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

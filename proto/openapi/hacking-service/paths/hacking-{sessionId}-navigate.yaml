@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /hacking/{sessionId}/navigate:
+    post:
+      operationId: hackingServiceNavigateNetwork
+      summary: Navigate to network node
+      description: 'Navigate to a specific network node within the hacking session.
+
+
+        **Network Navigation:**
+
+        - Validate navigation path and permissions
+
+        - Check for ICE activation and countermeasures
+
+        - Update session position and visibility
+
+        - Generate navigation events and traces
+
+        '
+      tags:
+      - Network Navigation
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NavigateNetworkRequest'
+      responses:
+        '200':
+          description: Navigation successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NavigationResult'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

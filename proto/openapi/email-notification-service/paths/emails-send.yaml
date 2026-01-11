@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /emails/send:
+    post:
+      operationId: emailNotificationServiceSendEmail
+      summary: Send email notification
+      description: 'Send email notification to specified recipients with personalization.
+
+
+        **Delivery Process:**
+
+        - Template rendering with personalization
+
+        - Queue placement for async processing
+
+        - Provider selection based on routing rules
+
+        - Real-time delivery tracking
+
+        '
+      tags:
+      - Email Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+      responses:
+        '202':
+          description: Email queued for delivery
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Accepted
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        email_id:
+                          type: string
+                          format: uuid
+                          description: Email tracking ID
+                        estimated_delivery_time:
+                          type: string
+                          format: date-time
+                          description: Expected delivery time
+                        recipient_count:
+                          type: integer
+                          description: Number of recipients
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'

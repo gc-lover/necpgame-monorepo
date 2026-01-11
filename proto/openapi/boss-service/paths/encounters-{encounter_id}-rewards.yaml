@@ -1,0 +1,84 @@
+openapi: 3.0.3
+paths:
+  /encounters/{encounter_id}/rewards:
+    get:
+      summary: Get encounter rewards
+      description: '**Get available rewards for completed encounter**
+
+        Returns loot table and achievements available based on participation and performance
+        in the boss encounter.
+
+        **Performance:** <25ms response time, cached for 5 minutes '
+      operationId: getEncounterRewards
+      tags:
+      - World Bosses
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for personalization
+      responses:
+        '200':
+          description: Encounter rewards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      availableRewards:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BossReward'
+                      claimedRewards:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            reward:
+                              $ref: '#/components/schemas/BossReward'
+                            claimedAt:
+                              type: string
+                              format: date-time
+                      participation:
+                        type: object
+                        properties:
+                          damageDealt:
+                            type: integer
+                          healingDone:
+                            type: integer
+                          timeParticipated:
+                            type: integer
+                            description: Time in seconds
+                          rank:
+                            type: integer
+                            description: Participation ranking
+        '404':
+          description: Encounter or character not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

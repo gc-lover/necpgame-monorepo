@@ -1,0 +1,243 @@
+openapi: 3.0.3
+paths:
+  /crafting/{crafting_id}:
+    get:
+      summary: Get specific example by ID
+      description: '**Enterprise-grade retrieval endpoint**
+
+
+        Optimized with proper caching strategies and database indexing.
+
+        Supports conditional requests.
+
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getCraftingStatus
+      tags:
+      - Example Domain
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleRetrieved'
+        '304':
+          description: Not modified - resource has not changed
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update existing example
+      description: '**Enterprise-grade update endpoint**
+
+
+        Supports partial updates, optimistic locking, and audit trails.
+
+        Ensures data consistency with event sourcing patterns.
+
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateCraftingProgress
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: Optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this
+          time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExampleRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleUpdated'
+        '400':
+          description: Invalid request - malformed data or example ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - version conflict (optimistic locking) or precondition
+            failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '412':
+          description: Precondition failed - If-Match or If-Unmodified-Since condition
+            not met
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete example
+      description: '**Enterprise-grade deletion endpoint**
+
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+
+        Ensures referential integrity and cascading deletes.
+
+
+        **Performance:** <15ms P95, includes cleanup operations
+
+        '
+      operationId: cancelCrafting
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: crafting_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/ExampleDeleted'
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - example cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

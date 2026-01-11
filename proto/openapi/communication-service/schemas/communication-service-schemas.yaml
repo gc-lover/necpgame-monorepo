@@ -1,0 +1,778 @@
+openapi: 3.0.3
+components:
+  schemas:
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+    ChatChannelResponse:
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/ChatChannelEntity
+      - type: object
+        properties:
+          current_members:
+            type: integer
+            description: Current number of online members
+            example: 23
+          is_joined:
+            type: boolean
+            description: Whether current user is joined
+            example: true
+    CreateChatChannelRequest:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Channel name
+          example: General Chat
+        type:
+          type: string
+          enum:
+          - guild
+          - party
+          - private
+          description: Channel type
+          example: guild
+        description:
+          type: string
+          maxLength: 200
+          description: Channel description
+        guild_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        max_members:
+          type: integer
+          minimum: 2
+          maximum: 1000
+          description: Maximum members allowed
+        is_temporary:
+          type: boolean
+          description: Whether channel is temporary
+          default: false
+    UpdateChatChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Channel name
+        description:
+          type: string
+          maxLength: 200
+          description: Channel description
+        max_members:
+          type: integer
+          minimum: 2
+          maximum: 1000
+          description: Maximum members allowed
+    ChatMessageResponse:
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/ChatMessageEntity
+      - type: object
+        properties:
+          author:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+          channel_name:
+            type: string
+            description: Channel display name
+            example: General Chat
+    SendChatMessageRequest:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Message content
+          example: Anyone up for a gig tonight?
+        reply_to:
+          $ref: ../common/schemas/common.yaml#/UUID
+        attachments:
+          type: array
+          items:
+            type: object
+            required:
+            - type
+            - url
+            properties:
+              type:
+                type: string
+                enum:
+                - image
+                - link
+                - item
+                - location
+              url:
+                type: string
+                format: uri
+              metadata:
+                type: object
+    EditChatMessageRequest:
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Updated message content
+    AddReactionRequest:
+      type: object
+      required:
+      - emoji
+      properties:
+        emoji:
+          type: string
+          maxLength: 10
+          description: Emoji reaction
+          example: 👍
+    MessageReactionResponse:
+      type: object
+      properties:
+        message_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        emoji:
+          type: string
+          example: 👍
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        reacted_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+    NotificationResponse:
+      type: object
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
+      - type: object
+        required:
+        - user_id
+        - type
+        - title
+        - content
+        - read
+        properties:
+          user_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          type:
+            type: string
+            enum:
+            - system
+            - social
+            - achievement
+            - commerce
+            - combat
+            - guild
+            description: Notification type
+            example: achievement
+          title:
+            type: string
+            maxLength: 100
+            description: Notification title
+            example: Achievement Unlocked!
+          content:
+            type: string
+            maxLength: 1000
+            description: Notification content
+            example: You've earned the 'Night Runner' achievement!
+          read:
+            type: boolean
+            description: Whether notification has been read
+            example: false
+          read_at:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          actions:
+            type: array
+            items:
+              type: object
+              properties:
+                label:
+                  type: string
+                  maxLength: 50
+                action:
+                  type: string
+                  maxLength: 200
+          expires_at:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+    SendNotificationRequest:
+      type: object
+      required:
+      - recipients
+      - type
+      - title
+      - content
+      properties:
+        recipients:
+          oneOf:
+          - type: array
+            items:
+              $ref: ../common/schemas/common.yaml#/UUID
+          - type: string
+            enum:
+            - all
+            - online
+            - guild_members
+        type:
+          type: string
+          enum:
+          - system
+          - social
+          - achievement
+          - commerce
+          - combat
+          - guild
+          description: Notification type
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Notification title
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Notification content
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+        actions:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            required:
+            - label
+            - action
+            properties:
+              label:
+                type: string
+                minLength: 1
+                maxLength: 50
+              action:
+                type: string
+                minLength: 1
+                maxLength: 200
+        expires_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        scheduled_for:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+    NotificationQueuedResponse:
+      type: object
+      properties:
+        notification_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        queued_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        estimated_delivery:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        recipient_count:
+          type: integer
+          description: Number of recipients
+          example: 1500
+    BulkMarkReadRequest:
+      type: object
+      required:
+      - notification_ids
+      properties:
+        notification_ids:
+          type: array
+          items:
+            $ref: ../common/schemas/common.yaml#/UUID
+          minItems: 1
+          maxItems: 100
+          description: IDs of notifications to mark as read
+    BulkOperationResponse:
+      type: object
+      properties:
+        success_count:
+          type: integer
+          description: Number of successful operations
+          example: 95
+        failure_count:
+          type: integer
+          description: Number of failed operations
+          example: 5
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                $ref: ../common/schemas/common.yaml#/UUID
+              error:
+                type: string
+                description: Error message
+    NotificationSettingsResponse:
+      type: object
+      properties:
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        settings:
+          type: object
+          properties:
+            system_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+            social_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+            achievement_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+            commerce_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+            combat_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+            guild_notifications:
+              $ref: '#/components/schemas/NotificationTypeSettings'
+        channels:
+          type: object
+          properties:
+            in_game:
+              type: boolean
+              description: Enable in-game notifications
+              example: true
+            push:
+              type: boolean
+              description: Enable push notifications
+              example: true
+            email:
+              type: boolean
+              description: Enable email notifications
+              example: false
+    NotificationTypeSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether this notification type is enabled
+          example: true
+        priority_filter:
+          type: string
+          enum:
+          - all
+          - normal_and_above
+          - high_and_above
+          - critical_only
+          description: Minimum priority level to show
+          example: normal_and_above
+    UpdateNotificationSettingsRequest:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/NotificationSettingsResponse/properties/settings'
+        channels:
+          $ref: '#/components/schemas/NotificationSettingsResponse/properties/channels'
+    VoiceChannelResponse:
+      type: object
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
+      - type: object
+        required:
+        - name
+        - type
+        - max_participants
+        properties:
+          name:
+            type: string
+            maxLength: 50
+            description: Channel name
+            example: Guild Voice
+          type:
+            type: string
+            enum:
+            - lobby
+            - guild
+            - party
+            - private
+            description: Channel type
+            example: guild
+          description:
+            type: string
+            maxLength: 200
+            description: Channel description
+          guild_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          owner_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          max_participants:
+            type: integer
+            minimum: 2
+            maximum: 100
+            description: Maximum participants
+            example: 10
+          current_participants:
+            type: integer
+            description: Current participant count
+            example: 3
+          is_temporary:
+            type: boolean
+            description: Whether channel is temporary
+            example: false
+          bitrate:
+            type: integer
+            minimum: 8000
+            maximum: 128000
+            description: Audio bitrate in bps
+            example: 64000
+          region:
+            type: string
+            description: Geographic region for latency optimization
+            example: us-east
+          participants:
+            type: array
+            items:
+              $ref: '#/components/schemas/VoiceParticipantResponse'
+    CreateVoiceChannelRequest:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Channel name
+        type:
+          type: string
+          enum:
+          - guild
+          - party
+          - private
+          description: Channel type
+        description:
+          type: string
+          maxLength: 200
+          description: Channel description
+        guild_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          default: 10
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+        is_temporary:
+          type: boolean
+          default: false
+    UpdateVoiceChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+    JoinVoiceChannelRequest:
+      type: object
+      properties:
+        mute_on_join:
+          type: boolean
+          description: Whether to join muted
+          default: false
+        deafen_on_join:
+          type: boolean
+          description: Whether to join deafened
+          default: false
+    VoiceChannelConnectionResponse:
+      type: object
+      properties:
+        channel_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        token:
+          type: string
+          description: Connection token for WebRTC
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        rtc_configuration:
+          type: object
+          description: WebRTC configuration
+          properties:
+            ice_servers:
+              type: array
+              items:
+                type: object
+                properties:
+                  urls:
+                    type: array
+                    items:
+                      type: string
+                  username:
+                    type: string
+                  credential:
+                    type: string
+        region:
+          type: string
+          description: Optimal region for connection
+          example: us-east
+    VoiceParticipantResponse:
+      type: object
+      properties:
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        username:
+          type: string
+          description: Display name
+          example: Night Runner
+        joined_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        is_muted:
+          type: boolean
+          description: Whether participant is muted
+          example: false
+        is_deafened:
+          type: boolean
+          description: Whether participant is deafened
+          example: false
+        is_speaking:
+          type: boolean
+          description: Whether participant is currently speaking
+          example: true
+        volume_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Participant volume level
+          example: 0.8
+    ModerationReportResponse:
+      type: object
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
+      - type: object
+        required:
+        - reporter_id
+        - reported_content_type
+        - reported_content_id
+        - reason
+        - status
+        properties:
+          reporter_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          reported_user_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          reported_content_type:
+            type: string
+            enum:
+            - user
+            - message
+            - channel
+            - guild
+            description: Type of reported content
+            example: message
+          reported_content_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          reason:
+            type: string
+            enum:
+            - harassment
+            - spam
+            - inappropriate_content
+            - cheating
+            - griefing
+            - other
+            description: Report reason
+            example: harassment
+          description:
+            type: string
+            maxLength: 1000
+            description: Detailed description of the issue
+          status:
+            type: string
+            enum:
+            - pending
+            - investigating
+            - resolved
+            - dismissed
+            description: Report status
+            example: pending
+          priority:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Report priority
+            example: medium
+          assigned_moderator_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          resolution:
+            type: string
+            maxLength: 500
+            description: Resolution notes
+          resolved_at:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+          evidence_urls:
+            type: array
+            items:
+              type: string
+              format: uri
+            description: URLs to evidence screenshots/logs
+    CreateModerationReportRequest:
+      type: object
+      required:
+      - reported_content_type
+      - reported_content_id
+      - reason
+      properties:
+        reported_user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        reported_content_type:
+          type: string
+          enum:
+          - user
+          - message
+          - channel
+          - guild
+          description: Type of reported content
+        reported_content_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        reason:
+          type: string
+          enum:
+          - harassment
+          - spam
+          - inappropriate_content
+          - cheating
+          - griefing
+          - other
+          description: Report reason
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          description: Detailed description
+        evidence_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 5
+          description: URLs to evidence
+    UpdateModerationReportRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - investigating
+          - resolved
+          - dismissed
+        priority:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        assigned_moderator_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        resolution:
+          type: string
+          maxLength: 500
+          description: Resolution notes
+    ExecuteModerationActionRequest:
+      type: object
+      required:
+      - report_id
+      - action_type
+      properties:
+        report_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        action_type:
+          type: string
+          enum:
+          - warn
+          - mute
+          - ban
+          - delete_content
+          - suspend_account
+          description: Type of moderation action
+        duration:
+          type: integer
+          description: Duration in minutes (for temporary actions)
+          minimum: 1
+          maximum: 525600
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Reason for the action
+    ModerationActionResponse:
+      type: object
+      properties:
+        action_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        report_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        action_type:
+          type: string
+          enum:
+          - warn
+          - mute
+          - ban
+          - delete_content
+          - suspend_account
+        target_user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        executed_by:
+          $ref: ../common/schemas/common.yaml#/UUID
+        executed_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        duration:
+          type: integer
+          description: Duration in minutes
+        expires_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp

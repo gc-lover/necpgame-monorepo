@@ -1,0 +1,68 @@
+openapi: 3.0.3
+paths:
+  /chat/channels:
+    post:
+      summary: Create chat channel
+      description: Create a new chat channel
+      operationId: createChatChannel
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List chat channels
+      description: Get list of available chat channels
+      operationId: listChatChannels
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - PUBLIC
+          - PRIVATE
+          - GROUP
+          - SYSTEM
+        description: Filter by channel type
+      responses:
+        '200':
+          description: Channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

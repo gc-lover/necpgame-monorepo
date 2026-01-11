@@ -1,0 +1,83 @@
+openapi: 3.0.3
+paths:
+  /permissions:
+    post:
+      operationId: roleServiceCreatePermission
+      summary: Create new permission
+      description: 'Create a new permission definition.
+
+
+        **Business Rules:**
+
+        - Permission names must be unique
+
+        - Validates resource and action format
+
+        - Creates audit trail
+
+        - Supports conditional permissions
+
+        '
+      tags:
+      - Permission Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionRequest'
+      responses:
+        '201':
+          description: Permission created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Permission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      operationId: roleServiceListPermissions
+      summary: List permissions
+      description: Retrieve paginated list of permissions
+      tags:
+      - Permission Management
+      parameters:
+      - name: resource_type
+        in: query
+        schema:
+          type: string
+        description: Filter by resource type
+      - name: action
+        in: query
+        schema:
+          type: string
+        description: Filter by action
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of permissions to return
+      responses:
+        '200':
+          description: Permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PermissionSummary'

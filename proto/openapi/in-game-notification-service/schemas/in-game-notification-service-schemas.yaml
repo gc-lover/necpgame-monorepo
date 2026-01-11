@@ -1,0 +1,1166 @@
+openapi: 3.0.3
+components:
+  schemas:
+    NotificationDelivery:
+      description: Notification delivery entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/NotificationQueueEntity
+      - type: object
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - system
+            - social
+            - game
+            - commerce
+            - security
+            description: Type of notification
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            - emergency
+            default: normal
+            description: Notification delivery priority
+          delivery_channels:
+            type: array
+            items:
+              type: string
+              enum:
+              - websocket
+              - push
+              - email_fallback
+            description: Delivery channels used
+          websocket_delivered_at:
+            type: string
+            format: date-time
+            description: When delivered via WebSocket
+          push_delivered_at:
+            type: string
+            format: date-time
+            description: When delivered via push notification
+          user_interaction_at:
+            type: string
+            format: date-time
+            description: When user interacted with notification
+          interaction_type:
+            type: string
+            enum:
+            - viewed
+            - clicked
+            - dismissed
+            - acted_upon
+            description: Type of user interaction
+          geographic_data:
+            type: object
+            properties:
+              country:
+                type: string
+                description: User country
+              region:
+                type: string
+                description: User region
+              timezone:
+                type: string
+                description: User timezone
+            description: Geographic delivery context
+    NotificationTemplate:
+      description: Notification template entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Template name
+          category:
+            type: string
+            enum:
+            - system
+            - social
+            - game
+            - commerce
+            - security
+            description: Template category
+          title_template:
+            type: string
+            minLength: 1
+            maxLength: 200
+            description: Notification title template
+          body_template:
+            type: string
+            minLength: 1
+            maxLength: 1000
+            description: Notification body template
+          action_template:
+            type: object
+            description: Action buttons template
+            properties:
+              primary_action:
+                $ref: '#/components/schemas/NotificationAction'
+              secondary_actions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationAction'
+                maxItems: 2
+          variables:
+            type: array
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: Variable name
+                type:
+                  type: string
+                  enum:
+                  - string
+                  - number
+                  - boolean
+                  - date
+                  - object
+                  description: Variable data type
+                required:
+                  type: boolean
+                  default: false
+                  description: Whether variable is required
+                default_value:
+                  type: string
+                  description: Default value if not provided
+          platforms:
+            type: array
+            items:
+              type: string
+              enum:
+              - web
+              - mobile
+              - desktop
+            description: Supported platforms
+          languages:
+            type: array
+            items:
+              type: string
+              enum:
+              - en
+              - es
+              - zh
+              - ja
+              - ru
+              - de
+              - fr
+              - pl
+              - ko
+              - pt
+            description: Supported languages
+          ab_test_variants:
+            type: array
+            items:
+              $ref: '#/components/schemas/NotificationVariant'
+            description: A/B testing variants
+    UserNotification:
+      description: User notification entity
+      type: object
+      required:
+      - id
+      - user_id
+      - notification_id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User notification unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: Target user ID
+        notification_id:
+          type: string
+          format: uuid
+          description: Original notification ID
+        title:
+          type: string
+          maxLength: 200
+          description: Notification title
+        body:
+          type: string
+          maxLength: 1000
+          description: Notification body
+        category:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - commerce
+          - security
+          description: Notification category
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          - emergency
+          description: Notification priority
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationAction'
+          description: Available actions
+        data:
+          type: object
+          description: Additional notification data
+          additionalProperties: true
+        status:
+          type: string
+          enum:
+          - unread
+          - read
+          - dismissed
+          - acted_upon
+          default: unread
+          description: User interaction status
+        delivered_at:
+          type: string
+          format: date-time
+          description: When notification was delivered
+        read_at:
+          type: string
+          format: date-time
+          description: When notification was read
+        interacted_at:
+          type: string
+          format: date-time
+          description: When user interacted with notification
+        expires_at:
+          type: string
+          format: date-time
+          description: When notification expires
+        created_at:
+          type: string
+          format: date-time
+          description: When notification was created
+    UserNotificationPreferences:
+      description: User notification preferences and filtering rules
+      type: object
+      required:
+      - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        enabled_channels:
+          type: object
+          properties:
+            websocket:
+              type: boolean
+              default: true
+              description: Enable WebSocket notifications
+            push:
+              type: boolean
+              default: true
+              description: Enable push notifications
+            email_fallback:
+              type: boolean
+              default: false
+              description: Enable email fallback
+          description: Enabled notification channels
+        category_preferences:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryPreference'
+          description: Preferences by notification category
+        quiet_hours:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: false
+              description: Enable quiet hours
+            start_time:
+              type: string
+              pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+              default: '22:00'
+              description: Quiet hours start time (HH:MM)
+            end_time:
+              type: string
+              pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+              default: 08:00
+              description: Quiet hours end time (HH:MM)
+            timezone:
+              type: string
+              default: UTC
+              description: Timezone for quiet hours
+          description: Quiet hours configuration
+        frequency_limits:
+          type: object
+          properties:
+            max_per_hour:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              default: 100
+              description: Maximum notifications per hour
+            max_per_minute:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 10
+              description: Maximum notifications per minute
+          description: Frequency limiting rules
+        blocked_senders:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Blocked sender user IDs
+        last_updated:
+          type: string
+          format: date-time
+          description: When preferences were last updated
+    NotificationAction:
+      description: Notification action definition
+      type: object
+      required:
+      - action
+      - title
+      properties:
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action identifier
+        title:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action display title
+        icon:
+          type: string
+          description: Action icon identifier
+        url:
+          type: string
+          format: uri
+          description: Action URL (for web actions)
+        data:
+          type: object
+          description: Additional action data
+          additionalProperties: true
+    NotificationVariant:
+      description: A/B testing notification variant
+      type: object
+      required:
+      - variant_id
+      - weight
+      properties:
+        variant_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Variant identifier
+        title_template:
+          type: string
+          maxLength: 200
+          description: Variant title template
+        body_template:
+          type: string
+          maxLength: 1000
+          description: Variant body template
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationAction'
+          description: Variant actions
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Traffic distribution weight
+    CategoryPreference:
+      description: Notification preferences for specific category
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: Enable notifications for this category
+        priority_threshold:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          - emergency
+          default: low
+          description: Minimum priority level to deliver
+        channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - websocket
+            - push
+            - email_fallback
+          description: Allowed delivery channels for this category
+    WebSocketQualityMetrics:
+      description: WebSocket connection quality metrics
+      type: object
+      properties:
+        average_latency_ms:
+          type: number
+          description: Average message latency
+        packet_loss_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Packet loss percentage
+        reconnection_rate:
+          type: number
+          description: Reconnections per minute
+        message_throughput:
+          type: number
+          description: Messages per second
+        compression_ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Message compression effectiveness
+    NotificationDeliveryStatus:
+      description: Comprehensive notification delivery status
+      type: object
+      required:
+      - notification_id
+      - status
+      - created_at
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+          description: Notification unique identifier
+        status:
+          type: string
+          enum:
+          - queued
+          - delivering
+          - delivered
+          - failed
+          - expired
+          description: Overall delivery status
+        created_at:
+          type: string
+          format: date-time
+          description: Notification creation time
+        delivery_started_at:
+          type: string
+          format: date-time
+          description: When delivery began
+        delivered_at:
+          type: string
+          format: date-time
+          description: When fully delivered
+        target_count:
+          type: integer
+          description: Total target users
+        delivered_count:
+          type: integer
+          description: Successfully delivered count
+        failed_count:
+          type: integer
+          description: Delivery failures count
+        channel_breakdown:
+          type: object
+          properties:
+            websocket_delivered:
+              type: integer
+              description: Delivered via WebSocket
+            push_delivered:
+              type: integer
+              description: Delivered via push
+            email_fallback_delivered:
+              type: integer
+              description: Delivered via email fallback
+          description: Delivery count by channel
+        geographic_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              region:
+                type: string
+                description: Geographic region
+              delivered_count:
+                type: integer
+                description: Delivered in region
+              average_delivery_time_ms:
+                type: number
+                description: Average delivery time in region
+          description: Delivery statistics by geography
+        engagement_metrics:
+          type: object
+          properties:
+            viewed_count:
+              type: integer
+              description: Notifications viewed
+            interacted_count:
+              type: integer
+              description: Notifications with user interaction
+            dismissed_count:
+              type: integer
+              description: Notifications dismissed
+            engagement_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: User engagement rate
+          description: User engagement statistics
+    NotificationPagination:
+      description: Pagination information for notifications
+      type: object
+      properties:
+        has_more:
+          type: boolean
+          description: Whether more notifications are available
+        oldest_timestamp:
+          type: string
+          format: date-time
+          description: Oldest notification timestamp for pagination
+        newest_timestamp:
+          type: string
+          format: date-time
+          description: Newest notification timestamp for pagination
+        total_count:
+          type: integer
+          description: Total notifications available
+    NotificationEngagementAnalytics:
+      description: Comprehensive notification engagement analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_notifications:
+          type: integer
+          description: Total notifications sent
+        total_delivered:
+          type: integer
+          description: Total notifications delivered
+        total_viewed:
+          type: integer
+          description: Total notifications viewed
+        total_interacted:
+          type: integer
+          description: Total notifications with user interaction
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall delivery rate
+        view_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Notification view rate
+        interaction_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: User interaction rate
+        category_breakdown:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryEngagementMetrics'
+          description: Engagement metrics by category
+        platform_breakdown:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformEngagementMetrics'
+          description: Engagement metrics by platform
+        time_based_trends:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              delivery_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+              interaction_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+          description: Engagement trends over time
+    RealTimeNotificationAnalytics:
+      description: Real-time notification delivery and engagement metrics
+      type: object
+      properties:
+        active_websocket_connections:
+          type: integer
+          description: Currently active WebSocket connections
+        queued_notifications:
+          type: integer
+          description: Notifications currently queued
+        processing_rate_per_second:
+          type: number
+          description: Current notification processing rate
+        average_delivery_latency_ms:
+          type: number
+          description: Current average delivery latency
+        channel_utilization:
+          type: object
+          properties:
+            websocket_utilization:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: WebSocket channel utilization
+            push_utilization:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Push notification utilization
+            email_fallback_utilization:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Email fallback utilization
+          description: Current channel utilization rates
+        geographic_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Active connections by geographic region
+        error_rates:
+          type: object
+          properties:
+            websocket_errors_per_minute:
+              type: number
+              description: WebSocket connection errors
+            delivery_failures_per_minute:
+              type: number
+              description: Notification delivery failures
+          description: Current error rates
+    CategoryEngagementMetrics:
+      description: Engagement metrics for specific notification category
+      type: object
+      properties:
+        sent_count:
+          type: integer
+          description: Notifications sent in category
+        delivered_count:
+          type: integer
+          description: Notifications delivered in category
+        viewed_count:
+          type: integer
+          description: Notifications viewed in category
+        interacted_count:
+          type: integer
+          description: Notifications with interaction in category
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery rate for category
+        view_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: View rate for category
+        interaction_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Interaction rate for category
+    PlatformEngagementMetrics:
+      description: Engagement metrics for specific platform
+      type: object
+      properties:
+        sent_count:
+          type: integer
+          description: Notifications sent to platform
+        delivered_count:
+          type: integer
+          description: Notifications delivered to platform
+        viewed_count:
+          type: integer
+          description: Notifications viewed on platform
+        interacted_count:
+          type: integer
+          description: Notifications with interaction on platform
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery rate for platform
+        average_delivery_time_ms:
+          type: number
+          description: Average delivery time for platform
+    TemplateSummary:
+      description: Template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+        name:
+          type: string
+          description: Template name
+        category:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - commerce
+          - security
+          description: Template category
+        platforms:
+          type: array
+          items:
+            type: string
+            enum:
+            - web
+            - mobile
+            - desktop
+          description: Supported platforms
+        is_active:
+          type: boolean
+          description: Template active status
+        last_updated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    SendNotificationRequest:
+      description: Request payload for sending notification
+      type: object
+      required:
+      - targets
+      - content
+      properties:
+        targets:
+          type: object
+          properties:
+            user_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target user IDs
+            user_segments:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target user segments
+            exclude_user_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: User IDs to exclude
+          description: Notification targets
+        content:
+          type: object
+          required:
+          - title
+          - body
+          properties:
+            template_id:
+              type: string
+              format: uuid
+              description: Template to use for notification
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Notification title
+            body:
+              type: string
+              minLength: 1
+              maxLength: 1000
+              description: Notification body
+            category:
+              type: string
+              enum:
+              - system
+              - social
+              - game
+              - commerce
+              - security
+              default: system
+              description: Notification category
+            actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationAction'
+              description: Notification actions
+            data:
+              type: object
+              description: Additional notification data
+              additionalProperties: true
+          description: Notification content
+        delivery_options:
+          type: object
+          properties:
+            priority:
+              type: string
+              enum:
+              - low
+              - normal
+              - high
+              - critical
+              - emergency
+              default: normal
+              description: Delivery priority
+            channels:
+              type: array
+              items:
+                type: string
+                enum:
+                - websocket
+                - push
+                - email_fallback
+              default:
+              - websocket
+              - push
+              description: Delivery channels to use
+            expires_in_seconds:
+              type: integer
+              minimum: 30
+              maximum: 604800
+              default: 3600
+              description: Notification expiration time
+            respect_user_preferences:
+              type: boolean
+              default: true
+              description: Respect user notification preferences
+          description: Delivery configuration options
+    BroadcastNotificationRequest:
+      description: Request payload for broadcast notification
+      type: object
+      required:
+      - content
+      properties:
+        content:
+          type: object
+          required:
+          - title
+          - body
+          properties:
+            template_id:
+              type: string
+              format: uuid
+              description: Template to use for broadcast
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Broadcast title
+            body:
+              type: string
+              minLength: 1
+              maxLength: 1000
+              description: Broadcast body
+            category:
+              type: string
+              enum:
+              - system
+              - social
+              - game
+              - commerce
+              - security
+              default: system
+              description: Broadcast category
+            actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationAction'
+              description: Broadcast actions
+            data:
+              type: object
+              description: Additional broadcast data
+              additionalProperties: true
+          description: Broadcast content
+        targeting:
+          type: object
+          properties:
+            geographic_regions:
+              type: array
+              items:
+                type: string
+              description: Target specific geographic regions
+            platforms:
+              type: array
+              items:
+                type: string
+                enum:
+                - web
+                - mobile
+                - desktop
+              description: Target specific platforms
+            exclude_offline_users:
+              type: boolean
+              default: false
+              description: Only send to currently online users
+          description: Broadcast targeting options
+        delivery_options:
+          type: object
+          properties:
+            priority:
+              type: string
+              enum:
+              - low
+              - normal
+              - high
+              - critical
+              - emergency
+              default: high
+              description: Broadcast delivery priority
+            rate_limit_per_second:
+              type: integer
+              minimum: 10
+              maximum: 10000
+              default: 1000
+              description: Maximum delivery rate per second
+            respect_quiet_hours:
+              type: boolean
+              default: false
+              description: Override user quiet hours for broadcast
+          description: Broadcast delivery options
+    BulkUpdateNotificationsRequest:
+      description: Request payload for bulk notification updates
+      type: object
+      required:
+      - operation
+      properties:
+        operation:
+          type: string
+          enum:
+          - mark_read
+          - mark_unread
+          - delete
+          - archive
+          description: Bulk operation to perform
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific notification IDs (if empty, applies to filtered notifications)
+        filters:
+          type: object
+          properties:
+            category:
+              type: string
+              enum:
+              - system
+              - social
+              - game
+              - commerce
+              - security
+              description: Filter by category
+            status:
+              type: string
+              enum:
+              - unread
+              - read
+              description: Filter by status
+            before_date:
+              type: string
+              format: date-time
+              description: Filter notifications before date
+            after_date:
+              type: string
+              format: date-time
+              description: Filter notifications after date
+          description: Filters for bulk operation (ignored if notification_ids provided)
+    UpdateNotificationPreferencesRequest:
+      description: Request payload for updating notification preferences
+      type: object
+      properties:
+        enabled_channels:
+          type: object
+          properties:
+            websocket:
+              type: boolean
+              description: Enable WebSocket notifications
+            push:
+              type: boolean
+              description: Enable push notifications
+            email_fallback:
+              type: boolean
+              description: Enable email fallback
+          description: Enabled notification channels
+        category_preferences:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryPreference'
+          description: Preferences by notification category
+        quiet_hours:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              description: Enable quiet hours
+            start_time:
+              type: string
+              pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+              description: Quiet hours start time (HH:MM)
+            end_time:
+              type: string
+              pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+              description: Quiet hours end time (HH:MM)
+            timezone:
+              type: string
+              description: Timezone for quiet hours
+          description: Quiet hours configuration
+        frequency_limits:
+          type: object
+          properties:
+            max_per_hour:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Maximum notifications per hour
+            max_per_minute:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Maximum notifications per minute
+          description: Frequency limiting rules
+        blocked_senders:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Blocked sender user IDs
+    CreateNotificationTemplateRequest:
+      description: Request payload for creating notification template
+      type: object
+      required:
+      - name
+      - category
+      - title_template
+      - body_template
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - commerce
+          - security
+          description: Template category
+        title_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Title template with variables
+        body_template:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Body template with variables
+        action_template:
+          type: object
+          properties:
+            primary_action:
+              $ref: '#/components/schemas/NotificationAction'
+            secondary_actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationAction'
+              maxItems: 2
+          description: Action buttons template
+        variables:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Variable name
+              type:
+                type: string
+                enum:
+                - string
+                - number
+                - boolean
+                - date
+                - object
+                description: Variable data type
+              required:
+                type: boolean
+                default: false
+                description: Whether variable is required
+              default_value:
+                type: string
+                description: Default value if not provided
+          description: Template variables
+        platforms:
+          type: array
+          items:
+            type: string
+            enum:
+            - web
+            - mobile
+            - desktop
+          default:
+          - web
+          - mobile
+          - desktop
+          description: Supported platforms
+        languages:
+          type: array
+          items:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+          default:
+          - en
+          description: Supported languages

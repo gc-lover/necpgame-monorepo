@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,94 @@
+openapi: 3.0.3
+paths:
+  /events/{eventId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    get:
+      summary: Get event details
+      description: '**Enterprise-grade event retrieval with caching**
+
+        Retrieves detailed information about a specific world event.
+
+        **Performance:** <10ms P99 with Redis caching **Memory:** <25KB per cached
+        event
+
+        '
+      operationId: getEvent
+      tags:
+      - Event Management
+      responses:
+        '200':
+          description: Event details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update event
+      description: '**Enterprise-grade event updates with optimistic locking**
+
+        Updates existing world event with conflict resolution.
+
+        **Performance:** <20ms P99, optimistic locking prevents conflicts **Safety:**
+        Version-based conflict detection
+
+        '
+      operationId: updateEvent
+      tags:
+      - Event Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Cancel event
+      description: '**Enterprise-grade event cancellation with participant notification**
+
+        Cancels active world event and notifies all participants.
+
+        **Performance:** <30ms P99, includes bulk notification **Reliability:** Guaranteed
+        participant notification
+
+        '
+      operationId: cancelEvent
+      tags:
+      - Event Management
+      responses:
+        '200':
+          description: Event cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

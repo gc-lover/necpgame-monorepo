@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /audio/streams/{stream_id}:
+    get:
+      summary: Get audio stream details
+      description: Retrieve detailed information about an audio stream
+      operationId: getAudioStream
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: stream_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Audio stream unique identifier
+      responses:
+        '200':
+          description: Audio stream details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioStream'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Close audio stream
+      description: Close an active audio streaming session
+      operationId: closeAudioStream
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: stream_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Audio stream unique identifier
+      responses:
+        '200':
+          description: Audio stream closed successfully
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

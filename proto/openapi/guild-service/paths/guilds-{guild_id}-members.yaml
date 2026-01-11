@@ -1,0 +1,151 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/members:
+    get:
+      summary: List guild members
+      description: '**Guild member listing endpoint**
+
+        Retrieves guild member roster with roles, activity, and permissions. Supports
+        filtering by role, activity level, and online status.
+
+        **Performance:** <20ms P95 with member indexing
+
+        '
+      operationId: listGuildMembers
+      tags:
+      - Member Management
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - leader
+          - officer
+          - veteran
+          - member
+          - recruit
+      - name: online_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - online
+          - offline
+          - away
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Guild members retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMembersResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of members
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Invite player to guild
+      description: '**Guild invitation endpoint**
+
+        Sends guild invitation to specified player with optional message. Validates
+        invitation limits and player eligibility.
+
+        **Performance:** <30ms P95 including notification dispatch
+
+        **Features:** Invitation expiry, bulk invitations, role assignment
+
+        '
+      operationId: inviteToGuild
+      tags:
+      - Member Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToGuildRequest'
+      responses:
+        '201':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildInvitationResponse'
+        '400':
+          description: Invalid invitation parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to send invitations
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild or player not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Player already in guild or invitation limit reached
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

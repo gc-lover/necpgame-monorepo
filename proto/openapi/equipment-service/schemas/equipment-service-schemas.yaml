@@ -1,0 +1,319 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    Equipment:
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/components/schemas/ItemEntity
+      - type: object
+        properties:
+          equipment_type:
+            type: string
+            enum:
+            - weapon
+            - armor
+            - implant
+            - cyberware
+            - clothing
+            - accessory
+            description: Specific equipment category
+            example: weapon
+          level_requirement:
+            type: integer
+            minimum: 1
+            maximum: 50
+            description: Required character level
+            example: 15
+          stats:
+            type: object
+            properties:
+              attack:
+                type: integer
+                minimum: 0
+                description: Attack stat bonus
+                example: 45
+              defense:
+                type: integer
+                minimum: 0
+                description: Defense stat bonus
+                example: 30
+              health:
+                type: integer
+                minimum: 0
+                description: Health stat bonus
+                example: 100
+              stamina:
+                type: integer
+                minimum: 0
+                description: Stamina stat bonus
+                example: 25
+            description: Equipment stat bonuses
+          durability:
+            type: object
+            properties:
+              current:
+                type: integer
+                minimum: 0
+                description: Current durability
+                example: 85
+              maximum:
+                type: integer
+                minimum: 1
+                description: Maximum durability
+                example: 100
+            description: Equipment durability status
+          equipped_by:
+            type: array
+            items:
+              $ref: ../common/schemas/common.yaml#/components/schemas/UUID
+            description: Character IDs currently equipping this item
+            example:
+            - 123e4567-e89b-12d3-a456-426614174000
+    CatalogItem:
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/BaseEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            description: Equipment display name
+          category:
+            type: string
+            enum:
+            - weapon
+            - armor
+            - accessory
+            description: Equipment category
+          rarity:
+            type: string
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            description: Equipment rarity
+          level_requirement:
+            type: integer
+            minimum: 1
+            description: Required character level
+          stats:
+            type: object
+            properties:
+              attack:
+                type: integer
+                minimum: 0
+              defense:
+                type: integer
+                minimum: 0
+      description: 'BACKEND NOTE: Equipment catalog item. Struct-aligned for performance.'
+    IconicItem:
+      allOf:
+      - $ref: '#/components/schemas/CatalogItem'
+      - type: object
+        properties:
+          timeline_year:
+            type: integer
+            minimum: 2000
+            maximum: 2100
+            description: Year this iconic item was introduced
+          lore_description:
+            type: string
+            description: Historical significance in Night City lore
+      description: 'BACKEND NOTE: Iconic equipment with historical significance.'
+    EquipmentAnalytics:
+      type: object
+      properties:
+        total_items:
+          type: integer
+          minimum: 0
+        popular_rarities:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        category_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+      description: 'BACKEND NOTE: Equipment usage analytics.'
+    GenerateEquipmentRequest:
+      type: object
+      required:
+      - category
+      - rarity
+      - level
+      properties:
+        category:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - accessory
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+        seed:
+          type: integer
+          description: Random seed for reproducible generation
+      description: 'BACKEND NOTE: Request for procedural equipment generation.'
+    GeneratedItem:
+      allOf:
+      - $ref: '#/components/schemas/CatalogItem'
+      - type: object
+      description: 'BACKEND NOTE: Procedurally generated equipment item.'
+    EquipmentMatrix:
+      type: object
+      properties:
+        brand_id:
+          type: string
+          format: uuid
+        matrix_data:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Equipment compatibility matrix.'
+    BrandsListResponse:
+      type: object
+      properties:
+        brands:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              description:
+                type: string
+      description: 'BACKEND NOTE: List of equipment brands.'
+    RaritiesListResponse:
+      type: object
+      properties:
+        rarities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              color:
+                type: string
+              drop_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+      description: 'BACKEND NOTE: List of equipment rarities.'
+    StatPoolsListResponse:
+      type: object
+      properties:
+        stat_pools:
+          type: array
+          items:
+            type: object
+            properties:
+              item_type:
+                type: string
+                enum:
+                - weapon
+                - armor
+                - accessory
+              available_stats:
+                type: array
+                items:
+                  type: string
+      description: 'BACKEND NOTE: Available stat pools by item type.'
+    BalanceValidationResult:
+      type: object
+      required:
+      - is_valid
+      - issues
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the equipment balance is valid
+        issues:
+          type: array
+          items:
+            type: string
+          description: List of balance issues found
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggestions for fixing balance issues
+      description: Equipment rarity levels
+    EquipmentItemType:
+      type: string
+      enum:
+      - weapon
+      - armor
+      - implant
+      - cyberware
+      - clothing
+      - accessory
+      description: Equipment item types
+    EquipmentRarity:
+      type: string
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      - unique
+    ValidateBalanceRequest:
+      type: object
+      required:
+      - character_id
+      - equipment_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        equipment_id:
+          type: string
+          format: uuid
+          description: Equipment item identifier
+        current_equipment:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Currently equipped items IDs
+      description: Request to validate equipment balance

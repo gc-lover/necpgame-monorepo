@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /stats:
+    get:
+      summary: Get feedback statistics
+      description: 'Retrieve statistics about feedback submissions. Only available
+        to admins.
+
+
+        **Access Control:** Requires admin authentication.
+
+
+        **BACKEND NOTE:** Response optimized for analytics. Fields ordered for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: getFeedbackStats
+      tags:
+      - Statistics
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Start date for statistics (YYYY-MM-DD)
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: End date for statistics (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackStatsResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

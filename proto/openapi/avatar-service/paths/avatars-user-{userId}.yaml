@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /avatars/user/{userId}:
+    get:
+      operationId: avatarServiceGetUserAvatars
+      summary: Get all user avatars
+      description: 'Retrieve all avatars associated with a specific user.
+
+
+        **Access Control:**
+
+        - Users can see their own avatars
+
+        - Public avatars visible to all
+
+        - Private avatars only to owner
+
+        - Includes usage statistics
+
+        '
+      tags:
+      - Avatar Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: include_private
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include private avatars (owner only)
+      responses:
+        '200':
+          description: User avatars retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AvatarSummary'
+                    statistics:
+                      $ref: '#/components/schemas/UserAvatarStatistics'

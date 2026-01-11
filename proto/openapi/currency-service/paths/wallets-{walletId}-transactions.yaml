@@ -1,0 +1,90 @@
+openapi: 3.0.3
+paths:
+  /wallets/{walletId}/transactions:
+    get:
+      operationId: currencyServiceGetWalletTransactions
+      summary: Get wallet transaction history
+      description: 'Retrieve paginated transaction history for a wallet.
+
+
+        **Transaction History:**
+
+        - Chronological transaction listing
+
+        - Advanced filtering and search capabilities
+
+        - Transaction categorization and tagging
+
+        - Export capabilities for financial records
+
+        '
+      tags:
+      - Transaction Processing
+      parameters:
+      - name: walletId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Wallet unique identifier
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for transaction history
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: End date for transaction history
+      - name: transaction_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - purchase
+          - refund
+          - fee
+        description: Filter by transaction type
+      - name: currency
+        in: query
+        schema:
+          type: string
+        description: Filter by currency
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of transactions to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Transaction history retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TransactionSummary'
+                    pagination:
+                      $ref: '#/components/schemas/TransactionPagination'

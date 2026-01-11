@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /api/v1/sla/policies:
+    get:
+      summary: Get SLA policies configuration
+      description: '**Enterprise-grade SLA policies endpoint**
+
+        Retrieves all active SLA policies and their configuration.
+
+        Used for SLA policy management and compliance monitoring.
+
+        **Performance:** <100ms response time, cached for 15 minutes
+
+        **Security:** Requires admin permissions
+
+        '
+      operationId: getSLAPolicies
+      tags:
+      - SLA Management
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: SLA policies retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=900, s-maxage=1800
+            ETag:
+              schema:
+                type: string
+                example: '"sla-policies-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPoliciesResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

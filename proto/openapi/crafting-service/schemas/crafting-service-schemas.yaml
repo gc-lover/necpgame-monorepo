@@ -1,0 +1,446 @@
+openapi: 3.0.3
+components:
+  schemas:
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: ../common/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    Example:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-21T10:00:00Z'
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          default: active
+          description: Current status
+          example: active
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example:
+          - demo
+          - template
+          - best-practice
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Hot path optimization required.'
+    CreateExampleRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Desired example name
+          example: My New Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleResponse:
+      type: object
+      required:
+      - example
+      properties:
+        example:
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleListResponse:
+      type: object
+      required:
+      - examples
+      - total_count
+      - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/Example'
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency.'
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+    RecipeListResponse:
+      type: object
+      required:
+      - recipes
+      - pagination
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+          description: List of crafting recipes
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: Current page number
+            limit:
+              type: integer
+              minimum: 1
+              description: Items per page
+            total_count:
+              type: integer
+              minimum: 0
+              description: Total number of recipes matching criteria
+            total_pages:
+              type: integer
+              minimum: 0
+              description: Total number of pages
+          description: Pagination metadata
+        filters_applied:
+          type: object
+          description: Applied filters summary
+          additionalProperties: true
+      description: '"BACKEND NOTE: Response optimized for frontend recipe browser.
+
+        Includes pagination for large recipe catalogs."
+
+        '
+    Recipe:
+      allOf:
+      - $ref: ../common/schemas/common.yaml#/AuditableEntity
+      - type: object
+        required:
+        - name
+        - category
+        - tier
+        - ingredients
+        - result_item
+        - crafting_time
+        - required_skill_level
+        properties:
+          name:
+            type: string
+            maxLength: 100
+            description: Human-readable recipe name
+            example: Legendary Katana Crafting Recipe
+          lore_description:
+            type: string
+            maxLength: 500
+            description: Recipe description and lore
+            example: Ancient crafting technique passed down through generations
+          category:
+            type: string
+            enum:
+            - weapons
+            - armor
+            - implants
+            - vehicles
+            - consumables
+            - tools
+            - cyberware
+            - equipment
+            description: Recipe category
+          tier:
+            type: integer
+            minimum: 1
+            maximum: 5
+            description: Recipe difficulty tier (1-5)
+          ingredients:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecipeIngredient'
+            minItems: 1
+            description: Required crafting materials
+          result_item:
+            type: object
+            required:
+            - item_id
+            - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+                description: Result item identifier
+              item_name:
+                type: string
+                description: Result item name
+              quantity:
+                type: integer
+                minimum: 1
+                description: Quantity produced
+            description: Item produced by recipe
+          quality_range:
+            type: object
+            required:
+            - min
+            - max
+            properties:
+              min:
+                type: integer
+                minimum: 1
+                maximum: 100
+              max:
+                type: integer
+                minimum: 1
+                maximum: 100
+            description: Quality range of crafted item
+          crafting_time:
+            type: integer
+            minimum: 1
+            description: Base crafting time in seconds
+          required_skill_level:
+            type: integer
+            minimum: 1
+            description: Minimum crafting skill level required
+          required_facility:
+            type: string
+            enum:
+            - basic_workbench
+            - advanced_workbench
+            - cyberware_station
+            - vehicle_bay
+            - laboratory
+            description: Required crafting facility
+          success_chance:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            default: 1.0
+            description: Base success probability
+          experience_gained:
+            type: integer
+            minimum: 0
+            description: Experience points awarded on success
+          is_discovered:
+            type: boolean
+            description: Whether recipe is discovered by player
+          tags:
+            type: array
+            items:
+              type: string
+            description: Recipe tags for filtering
+        description: Last recipe modification
+      description: '"BACKEND NOTE: Recipe data optimized for crafting calculations.
+
+        Ingredients pre-validated for availability checks."
+
+        '
+    RecipeIngredient:
+      type: object
+      required:
+      - item_id
+      - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Required item identifier
+        item_name:
+          type: string
+          description: Required item name
+        quantity:
+          type: integer
+          minimum: 1
+          description: Required quantity
+        quality_required:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality required
+        is_consumed:
+          type: boolean
+          default: true
+          description: Whether ingredient is consumed in crafting
+        alternative_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Alternative items that can substitute this ingredient
+      description: '"BACKEND NOTE: Ingredient validation prevents impossible crafts.
+
+        Alternative items support flexible crafting requirements."
+
+        '

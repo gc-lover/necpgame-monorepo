@@ -1,0 +1,125 @@
+openapi: 3.0.3
+paths:
+  /incentives:
+    get:
+      summary: List active incentive programs
+      description: '**Enterprise-grade incentive programs listing endpoint**
+
+        Retrieves currently active incentive programs, events, and special offers.
+
+        Optimized for promotional content and player engagement.
+
+        **Performance:** <15ms P95, cached with 1-minute TTL
+
+        '
+      operationId: listIncentivePrograms
+      tags:
+      - Incentive Programs
+      parameters:
+      - name: program_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - event
+          - promotion
+          - seasonal
+          - partnership
+          - all
+          default: all
+        description: Filter by program type
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Show only currently active programs
+      - name: player_eligible
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter programs eligible for specific player
+      responses:
+        '200':
+          description: Incentive programs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncentiveProgramListResponse'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create incentive program
+      description: '**Enterprise-grade incentive program creation endpoint**
+
+        Creates new incentive programs with complex reward structures and targeting.
+
+        Validates business rules and marketing effectiveness.
+
+        **Performance:** <80ms P95, includes program optimization
+
+        '
+      operationId: createIncentiveProgram
+      tags:
+      - Incentive Programs
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncentiveProgramRequest'
+      responses:
+        '201':
+          description: Incentive program created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncentiveProgramResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - program name or dates conflict
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/token:
+    post:
+      operationId: oauthServiceExchangeToken
+      summary: Exchange authorization code for tokens
+      description: 'Exchange OAuth authorization code for access and refresh tokens.
+
+
+        **Security Notes:**
+
+        - Validates authorization code integrity
+
+        - Generates secure JWT tokens
+
+        - Stores refresh token securely
+
+        - Enables account linking if requested
+
+        '
+      tags:
+      - OAuth Flow
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenExchangeRequest'
+      responses:
+        '200':
+          description: Tokens exchanged successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        access_token:
+                          type: string
+                          description: Platform JWT access token
+                        refresh_token:
+                          type: string
+                          description: Platform JWT refresh token
+                        token_type:
+                          type: string
+                          enum:
+                          - Bearer
+                          example: Bearer
+                        expires_in:
+                          type: integer
+                          description: Access token expiration in seconds
+                        user_linked:
+                          type: boolean
+                          description: Whether OAuth account was linked to existing
+                            user
+                        user:
+                          $ref: '#/components/schemas/UserAccountSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'

@@ -1,0 +1,106 @@
+openapi: 3.0.3
+paths:
+  /combat/abilities/validate:
+    /combat/abilities/adaptive/recommend:
+      get:
+        description: 'Get personalized ability recommendations based on player style
+          and combat patterns.
+
+          **AI Integration:** Uses trained models for tactical suggestions.'
+        operationId: getAbilityRecommendations
+        parameters:
+        - description: Character ID for personalization
+          in: query
+          name: character_id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - description: Current combat context
+          in: query
+          name: combat_context
+          schema:
+            enum:
+            - solo
+            - team
+            - boss
+            - pvp
+            type: string
+        responses:
+          '200':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AbilityRecommendations'
+            description: Ability recommendations
+          '404':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+            description: Character not found
+        security:
+        - BearerAuth: []
+        summary: Get AI-powered ability recommendations
+        tags:
+        - AI Recommendations
+    /combat/abilities/adaptive/train:
+      post:
+        description: 'Submit ability usage patterns for adaptive AI learning.
+
+          **AI Integration:** Trains models for personalized ability recommendations
+          and combat tactics.
+
+          **BACKEND NOTE:** Hot path for AI training data, batched processing.'
+        operationId: trainAbilityAI
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityTrainingData'
+          required: true
+        responses:
+          '200':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TrainingResponse'
+            description: Training data accepted
+          '400':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+            description: Invalid training data
+        security:
+        - BearerAuth: []
+        summary: Submit ability usage data for AI training
+        tags:
+        - AI Training
+    post:
+      description: 'Validate ability activation for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention. '
+      operationId: combatAbilitiesValidateAbilityActivation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateAbilityRequest'
+        required: true
+        responses:
+          '200':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ValidateAbilityResponse'
+            description: Validation result
+          '400':
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+            description: Invalid validation request
+      summary: Validate ability activation
+      tags:
+      - Anti-Cheat

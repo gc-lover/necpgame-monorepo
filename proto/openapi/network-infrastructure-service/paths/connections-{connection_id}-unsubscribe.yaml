@@ -1,0 +1,40 @@
+openapi: 3.0.3
+paths:
+  /connections/{connection_id}/unsubscribe:
+    post:
+      summary: Unsubscribe connection from topics
+      description: Remove topic subscriptions from a WebSocket connection
+      operationId: unsubscribeConnection
+      tags:
+      - Connection Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: connection_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Connection unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnsubscriptionRequest'
+      responses:
+        '200':
+          description: Unsubscription completed successfully
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

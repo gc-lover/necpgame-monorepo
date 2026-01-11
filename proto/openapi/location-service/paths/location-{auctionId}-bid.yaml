@@ -1,0 +1,77 @@
+openapi: 3.0.3
+paths:
+  /location/{auctionId}/bid:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: User login with credentials
+      description: '**Enterprise-grade authentication endpoint**
+
+        Authenticates user credentials and returns JWT access token.
+
+        Supports password-based authentication with optional MFA.
+
+        Implements rate limiting and brute-force protection.
+
+        **Performance:** <25ms P95, includes password hashing verification
+
+        **Security:** Argon2id password hashing, JWT tokens with expiration
+
+        '
+      operationId: locationLogin
+      tags:
+      - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful - returns access token
+          headers:
+            X-Rate-Limit-Remaining:
+              schema:
+                type: integer
+                example: 47
+                description: Remaining login attempts in current window
+            X-Rate-Limit-Reset:
+              schema:
+                type: integer
+                example: 3600
+                description: Seconds until rate limit resets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request - malformed credentials
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - login rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

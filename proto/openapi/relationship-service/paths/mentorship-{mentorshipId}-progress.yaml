@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /mentorship/{mentorshipId}/progress:
+    post:
+      summary: Record mentorship progress
+      description: '**Record progress in mentorship relationship**
+
+        Logs lessons, achievements, and skill development.
+
+        **Performance:** <35ms with progress tracking
+
+        '
+      operationId: recordMentorshipProgress
+      tags:
+      - Mentorship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: mentorshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordProgressRequest'
+      responses:
+        '201':
+          description: Progress recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipProgressResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

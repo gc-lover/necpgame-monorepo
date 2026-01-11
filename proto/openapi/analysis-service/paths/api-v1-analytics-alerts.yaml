@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/alerts:
+    get:
+      summary: Get analytics alerts and notifications
+      description: '**Analytics alerts and anomaly detection**
+
+        Real-time alerts for critical metrics deviations, performance issues, and
+        strategic insights requiring attention.
+
+        **Includes:** Performance alerts, business metric alerts, security alerts '
+      operationId: getAnalyticsAlerts
+      tags:
+      - Game Analytics Dashboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - critical
+          - high
+          - medium
+          - low
+          default: all
+      - name: acknowledged
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include acknowledged alerts
+      responses:
+        '200':
+          description: Analytics alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsAlerts'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /location/list:
+    get:
+      summary: Get current user information
+      description: '**Current user profile endpoint**
+
+        Returns authenticated user''s profile information.
+
+        Used for client-side user data display and session validation.
+
+        **Performance:** <5ms P95 with caching
+
+        '
+      operationId: locationGetCurrentUser
+      tags:
+      - User Management
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, max-age=300
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

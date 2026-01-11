@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /voice-quality/{channel_id}/report:
+    post:
+      summary: Report voice quality metrics
+      description: '**Real-time voice quality monitoring and optimization**
+
+
+        Collects latency, packet loss, and audio quality metrics from clients.
+
+        Enables adaptive bitrate adjustment and quality optimization.
+
+
+        **Performance:** <5ms metrics processing with batch aggregation
+
+        '
+      operationId: reportVoiceQuality
+      tags:
+      - Voice Quality
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceQualityReport'
+      responses:
+        '200':
+          description: Quality metrics recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceQualityResponse'
+        '400':
+          description: Invalid quality report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,61 @@
+openapi: 3.0.0
+paths:
+  /adaptive/learning/{segment_id}:
+    get:
+      tags:
+      - adaptive-defense
+      summary: Get adaptive learning data
+      description: Retrieve adaptive learning patterns and threat intelligence for
+        network segment
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: segment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Adaptive learning data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdaptiveLearningResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      tags:
+      - adaptive-defense
+      summary: Update adaptive learning patterns
+      description: Manually update or reinforce adaptive learning patterns based on
+        new threat intelligence
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: segment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdaptiveLearningUpdateRequest'
+      responses:
+        '200':
+          description: Adaptive learning patterns updated successfully
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

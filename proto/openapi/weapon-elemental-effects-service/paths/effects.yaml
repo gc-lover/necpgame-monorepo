@@ -1,0 +1,116 @@
+openapi: 3.0.3
+paths:
+  /effects:
+    post:
+      summary: Create elemental effect
+      operationId: weaponEffectsCreateEffect
+      description: 'Create a new elemental effect configuration.
+
+        **BACKEND NOTE:** Admin-only operation, cached for performance. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEffectRequest'
+      responses:
+        '201':
+          description: Effect created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List elemental effects
+      operationId: weaponEffectsListEffects
+      description: Get list of available elemental effects with filtering.
+      tags:
+      - Effect Management
+      parameters:
+      - name: element_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - fire
+          - ice
+          - electric
+          - poison
+          - acid
+          - radiation
+          - plasma
+          - cyber
+          - nano
+          - quantum
+        description: Filter by element type
+      - name: effect_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - damage_over_time
+          - status_effect
+          - damage_boost
+          - defense_reduction
+          - movement_impairment
+          - healing_reduction
+          - energy_drain
+          - attribute_boost
+        description: Filter by effect type
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
+        description: Filter by effect rarity
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of effects to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of effects to skip
+      responses:
+        '200':
+          description: List of elemental effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEffectsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

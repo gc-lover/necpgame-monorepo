@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /reputation/{userId}/history:
+    get:
+      summary: Get reputation history
+      description: '**Retrieve user''s reputation change history**
+
+        Shows reputation events and their impact over time.
+
+        **Performance:** <45ms with history pagination
+
+        '
+      operationId: getReputationHistory
+      tags:
+      - Reputation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - trading
+          - combat
+          - social
+          - leadership
+          - craftsmanship
+          - reliability
+          - generosity
+          - combat_skill
+        description: Filter by reputation category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of history entries to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Reputation history retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ReputationEventResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

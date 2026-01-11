@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /traces/{trace_id}:
+    get:
+      summary: Get distributed trace information
+      operationId: getDistributedTrace
+      tags:
+      - Observability
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: trace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trace unique identifier
+      - name: include_spans
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include span details in response
+      responses:
+        '200':
+          description: Trace information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

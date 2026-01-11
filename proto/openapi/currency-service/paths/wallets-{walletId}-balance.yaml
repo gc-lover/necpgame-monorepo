@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /wallets/{walletId}/balance:
+    get:
+      operationId: currencyServiceGetWalletBalance
+      summary: Get wallet balance
+      description: 'Retrieve current balance for a specific wallet with real-time
+        accuracy.
+
+
+        **Balance Retrieval:**
+
+        - Real-time balance calculation
+
+        - Pending transaction consideration
+
+        - Currency conversion options
+
+        - Balance verification and integrity checks
+
+        '
+      tags:
+      - Wallet Management
+      parameters:
+      - name: walletId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Wallet unique identifier
+      - name: currency
+        in: query
+        schema:
+          type: string
+        description: Filter by specific currency
+      - name: include_pending
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include pending transactions in balance
+      responses:
+        '200':
+          description: Wallet balance retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/WalletBalance'
+        '404':
+          $ref: '#/components/responses/NotFound'

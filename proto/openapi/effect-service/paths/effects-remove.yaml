@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /effects/remove:
+    post:
+      operationId: effectServiceRemoveEffect
+      summary: Remove effect from target
+      description: 'Remove an active effect from a character or game object.
+
+
+        **Effect Removal Process:**
+
+        - Validate effect ownership and permissions
+
+        - Calculate effect cleanup and stat restoration
+
+        - Remove effect with immediate synchronization
+
+        - Trigger removal events and notifications
+
+        - Update character stats and abilities
+
+        '
+      tags:
+      - Effect Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveEffectRequest'
+      responses:
+        '200':
+          description: Effect removed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        removed_effect_id:
+                          type: string
+                          format: uuid
+                          description: ID of removed effect
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '404':
+          $ref: '#/components/responses/NotFound'

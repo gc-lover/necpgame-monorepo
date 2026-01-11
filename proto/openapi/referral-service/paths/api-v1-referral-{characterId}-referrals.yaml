@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /api/v1/referral/{characterId}/referrals:
+    get:
+      summary: Get referrals for character
+      operationId: getCharacterReferrals
+      tags:
+      - Referral Registration
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Referrals retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralListResponse'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

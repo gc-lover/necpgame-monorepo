@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/calculate:
+    post:
+      summary: Calculate combat damage
+      operationId: combatDamageCalculateDamage
+      description: 'Calculate damage from an attack with all modifiers, resistances,
+        and critical hit calculations.
+
+        **BACKEND NOTE:** Critical hot path - optimized for 2000+ RPS, zero allocations,
+        SIMD operations for damage arrays. Struct alignment: 30-50% memory savings.
+        Context timeouts: 2ms for calculation, 1ms for validation. DB pool config:
+        read-only replica for historical damage data.'
+      tags:
+      - Damage Calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            ETag:
+              schema:
+                type: string
+                example: '"damage-calc-1234567890"'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

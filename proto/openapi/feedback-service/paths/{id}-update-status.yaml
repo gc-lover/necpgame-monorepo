@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /{id}/update-status:
+    post:
+      summary: Update feedback status
+      description: 'Update the status of a feedback submission. Only available to
+        agents and admins.
+
+
+        **Access Control:** Requires agent or admin authentication.
+
+
+        **BACKEND NOTE:** Uses optimistic locking via version field. Fields ordered
+        for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: updateFeedbackStatus
+      tags:
+      - Feedback Submissions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Feedback submission unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+        '404':
+          $ref: ../common/responses/error.yaml#/components/responses/NotFound
+        '409':
+          $ref: ../common/responses/error.yaml#/components/responses/Conflict
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

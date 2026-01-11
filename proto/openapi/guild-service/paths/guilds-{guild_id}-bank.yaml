@@ -1,0 +1,143 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/bank:
+    get:
+      summary: Get guild bank contents
+      description: '**Guild bank inventory endpoint**
+
+        Retrieves guild bank items, currency, and shared resources. Supports filtering
+        by item type and quality.
+
+        **Performance:** <20ms P95 with inventory indexing
+
+        **Security:** Role-based access to bank contents
+
+        '
+      operationId: getGuildBank
+      tags:
+      - Guild Economy
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: item_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - consumable
+          - material
+          - currency
+      - name: quality_min
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      responses:
+        '200':
+          description: Guild bank retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to access guild bank
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Deposit item to guild bank
+      description: '**Guild bank deposit endpoint**
+
+        Deposits items or currency into the guild bank for shared use. Validates item
+        ownership and deposit permissions.
+
+        **Performance:** <30ms P95 including inventory updates
+
+        **Features:** Partial deposits, bulk operations
+
+        '
+      operationId: depositToGuildBank
+      tags:
+      - Guild Economy
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildBankDepositRequest'
+      responses:
+        '200':
+          description: Deposit completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransactionResponse'
+        '400':
+          description: Invalid deposit parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions or item ownership
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild or item not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Insufficient item quantity or bank capacity
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

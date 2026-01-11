@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /submit:
+    post:
+      summary: Submit player feedback
+      description: 'Create a new feedback submission from player. Automatically creates
+        GitHub Issue
+
+        and returns submission details with Issue link.
+
+
+        **Rate Limit:** 5 submissions per hour per player
+
+
+        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered
+        for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: submitFeedback
+      tags:
+      - Feedback Submissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitFeedbackRequest'
+            examples:
+              feature_request:
+                summary: Feature request example
+                value:
+                  type: feature_request
+                  category: gameplay
+                  title: Add new weapon customization system
+                  description: I would like to see more weapon customization options...
+                  priority: high
+                  screenshots: []
+                  game_context:
+                    version: 1.2.3
+                    location: Night City, Downtown
+                    character_level: 45
+                    active_quests:
+                    - quest_123
+                    playtime_hours: 120
+      responses:
+        '201':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSubmissionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

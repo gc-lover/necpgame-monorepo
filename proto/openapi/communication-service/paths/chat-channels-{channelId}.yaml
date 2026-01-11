@@ -1,0 +1,110 @@
+openapi: 3.0.3
+paths:
+  /chat/channels/{channelId}:
+    get:
+      summary: Get chat channel details
+      description: '**Retrieve detailed information about a specific chat channel**
+
+        Includes member count, permissions, and channel settings.
+
+        **Performance:** <20ms with caching, real-time member counts
+
+        '
+      operationId: getChatChannel
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Chat channel details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannelResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update chat channel
+      description: '**Update chat channel settings and permissions**
+
+        Requires channel ownership or moderator permissions.
+
+        **Performance:** <50ms with permission validation
+
+        '
+      operationId: updateChatChannel
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateChatChannelRequest'
+      responses:
+        '200':
+          description: Chat channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannelResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete chat channel
+      description: '**Delete a chat channel**
+
+        Requires channel ownership or administrator permissions.
+
+        **Performance:** <30ms with cleanup operations
+
+        '
+      operationId: deleteChatChannel
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '204':
+          description: Chat channel deleted successfully
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,116 @@
+openapi: 3.0.3
+paths:
+  /roles/{roleId}:
+    get:
+      operationId: roleServiceGetRole
+      summary: Get role by ID
+      description: Retrieve detailed role information including permissions
+      tags:
+      - Role Management
+      parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role unique identifier
+      responses:
+        '200':
+          description: Role found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Role'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: roleServiceUpdateRole
+      summary: Update role
+      description: 'Update role properties and permissions.
+
+
+        **Security Notes:**
+
+        - Validates permission consistency
+
+        - Prevents circular dependencies in hierarchy
+
+        - Creates audit trail for changes
+
+        - Immediate cache invalidation
+
+        '
+      tags:
+      - Role Management
+      parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+      responses:
+        '200':
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Updated
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: roleServiceDeleteRole
+      summary: Delete role
+      description: 'Soft delete role (deactivate and archive).
+
+
+        **Business Rules:**
+
+        - Checks for active user assignments
+
+        - Prevents deletion of system roles
+
+        - Creates audit trail
+
+        - Offers migration to replacement role
+
+        '
+      tags:
+      - Role Management
+      parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Role unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

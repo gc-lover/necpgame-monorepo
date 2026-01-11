@@ -1,0 +1,45 @@
+openapi: 3.0.0
+paths:
+  /intrusions/active:
+    get:
+      tags:
+      - intrusion-detection
+      summary: Get active intrusions
+      description: Retrieve list of currently active intrusion attempts being countered
+        by ICE systems
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Filter by intrusion severity
+      - name: ice_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        description: Filter by responding ICE type
+      responses:
+        '200':
+          description: Active intrusions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveIntrusionsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

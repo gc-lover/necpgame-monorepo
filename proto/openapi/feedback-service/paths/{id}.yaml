@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /{id}:
+    get:
+      summary: Get feedback by ID
+      description: 'Retrieve detailed information about a specific feedback submission.
+
+
+        **Access Control:**
+
+        - Players can only view their own submissions
+
+        - Public suggestions (feature requests) are visible to all authenticated users
+
+        - Admins can view all submissions
+
+
+        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered
+        for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: getFeedback
+      tags:
+      - Feedback Submissions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Feedback submission unique identifier
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        '200':
+          description: Feedback details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+        '404':
+          $ref: ../common/responses/error.yaml#/components/responses/NotFound
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

@@ -1,1488 +1,183 @@
-# Enterprise-Grade Push Notification Service API - SOLID/DRY Domain Inheritance
-# Infrastructure domain service for push notifications
-# Issue: #openapi-refactor
-
 openapi: 3.0.3
 info:
   title: Push Notification Service API
-  description: |
-    **Enterprise-grade API for Push Notifications**
+  description: '**Enterprise-grade API for Push Notifications**
+
 
     ## Domain Purpose
+
     Comprehensive push notification service providing real-time delivery, device management,
+
     analytics, and personalization for enhanced user engagement across all platforms.
 
+
     ## Business Value
+
     - Real-time user engagement and retention
+
     - Multi-platform notification delivery (iOS, Android, Web, Desktop)
+
     - Advanced analytics and targeting
+
     - Enterprise-grade scalability and reliability
+
     - GDPR compliant notification management
 
+
     ## Performance Targets
+
     - P99 Latency: <100ms for notification dispatch
+
     - Throughput: 100,000+ notifications per second
+
     - Delivery Success Rate: >99.5% across all platforms
+
     - Queue Processing Time: <10ms average
 
+
     ## Domain Inheritance
+
     This service inherits from infrastructure-entities.yaml providing:
+
     - Notification queue entity for async processing
+
     - Audit trails for notification operations
+
     - Configuration management for provider settings
+
     - User account references for targeting
+
     - Optimistic locking for concurrent operations
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/push-notification-service
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/push-notification-service
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/push-notification-service
-    description: Local development
-
+- url: https://api.necpgame.com/v1/push-notification-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/push-notification-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/push-notification-service
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Device Management
-    description: Device registration and token management
-  - name: Notification Delivery
-    description: Sending and queuing notifications
-  - name: Campaign Management
-    description: Notification campaigns and targeting
-  - name: Analytics & Reporting
-    description: Delivery analytics and engagement metrics
-  - name: Template Management
-    description: Notification templates and personalization
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: Device Management
+  description: Device registration and token management
+- name: Notification Delivery
+  description: Sending and queuing notifications
+- name: Campaign Management
+  description: Notification campaigns and targeting
+- name: Analytics & Reporting
+  description: Delivery analytics and engagement metrics
+- name: Template Management
+  description: Notification templates and personalization
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
   /health:
-    get:
-      operationId: pushNotificationServiceHealthCheck
-      summary: Basic health check
-      description: Returns service health status
-      tags: [Health Monitoring]
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-
+    $ref: ./paths/health.yaml#/paths/~1health
   /devices:
-    post:
-      operationId: pushNotificationServiceRegisterDevice
-      summary: Register device for push notifications
-      description: |
-        Register a device with its push notification token.
-
-        **Security Notes:**
-        - Validates device authenticity
-        - Encrypts sensitive device data
-        - Creates device fingerprint
-        - Links to user account securely
-      tags: [Device Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterDeviceRequest'
-      responses:
-        '201':
-          description: Device registered successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/DeviceRegistration'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    get:
-      operationId: pushNotificationServiceListUserDevices
-      summary: List user's registered devices
-      description: |
-        Retrieve all devices registered for the authenticated user.
-
-        **Privacy Notes:**
-        - Only returns user's own devices
-        - Masks sensitive device information
-        - Includes device activity status
-      tags: [Device Management]
-      responses:
-        '200':
-          description: Devices retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/DeviceSummary'
-
+    $ref: ./paths/devices.yaml#/paths/~1devices
   /devices/{deviceId}:
-    put:
-      operationId: pushNotificationServiceUpdateDevice
-      summary: Update device information
-      description: |
-        Update device registration details and token.
-
-        **Business Rules:**
-        - Validates token authenticity
-        - Updates device fingerprint if changed
-        - Maintains device activity history
-        - Handles token rotation securely
-      tags: [Device Management]
-      parameters:
-        - name: deviceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Device unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateDeviceRequest'
-      responses:
-        '200':
-          description: Device updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/DeviceRegistration'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      operationId: pushNotificationServiceUnregisterDevice
-      summary: Unregister device
-      description: |
-        Remove device from push notification service.
-
-        **Cleanup Notes:**
-        - Immediately invalidates all pending notifications
-        - Removes device from all campaigns
-        - Cleans up device-specific data
-        - Audit trail for unregistration
-      tags: [Device Management]
-      parameters:
-        - name: deviceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Device unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/devices-{deviceId}.yaml#/paths/~1devices~1{deviceId}
   /notifications/send:
-    post:
-      operationId: pushNotificationServiceSendNotification
-      summary: Send push notification
-      description: |
-        Send push notification to specified targets.
-
-        **Delivery Notes:**
-        - Supports individual and bulk sending
-        - Respects user notification preferences
-        - Queues for asynchronous processing
-        - Tracks delivery status in real-time
-      tags: [Notification Delivery]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendNotificationRequest'
-      responses:
-        '202':
-          description: Notification queued for delivery
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Accepted'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          notification_id:
-                            type: string
-                            format: uuid
-                            description: Notification tracking ID
-                          estimated_delivery_time:
-                            type: string
-                            format: date-time
-                            description: Expected delivery time
-                          target_count:
-                            type: integer
-                            description: Number of target devices
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
+    $ref: ./paths/notifications-send.yaml#/paths/~1notifications~1send
   /notifications/{notificationId}/status:
-    get:
-      operationId: pushNotificationServiceGetNotificationStatus
-      summary: Get notification delivery status
-      description: |
-        Retrieve delivery status for a specific notification.
-
-        **Real-time Updates:**
-        - Provides current delivery statistics
-        - Includes platform-specific metrics
-        - Shows failure reasons and retry status
-        - Updates in real-time during delivery
-      tags: [Notification Delivery]
-      parameters:
-        - name: notificationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Notification unique identifier
-      responses:
-        '200':
-          description: Notification status retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/NotificationStatus'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/notifications-{notificationId}-status.yaml#/paths/~1notifications~1{notificationId}~1status
   /campaigns:
-    post:
-      operationId: pushNotificationServiceCreateCampaign
-      summary: Create notification campaign
-      description: |
-        Create a scheduled notification campaign with targeting.
-
-        **Campaign Features:**
-        - Advanced user segmentation
-        - A/B testing support
-        - Scheduled delivery
-        - Performance tracking
-        - Budget and rate limiting
-      tags: [Campaign Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCampaignRequest'
-      responses:
-        '201':
-          description: Campaign created successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/NotificationCampaign'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-    get:
-      operationId: pushNotificationServiceListCampaigns
-      summary: List notification campaigns
-      description: |
-        Retrieve paginated list of notification campaigns.
-
-        **Filtering Options:**
-        - By status, date range, target audience
-        - Performance metrics included
-        - Real-time delivery statistics
-      tags: [Campaign Management]
-      parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [draft, scheduled, active, completed, cancelled]
-          description: Filter by campaign status
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for campaigns
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of campaigns to return
-      responses:
-        '200':
-          description: Campaigns retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/CampaignSummary'
-
+    $ref: ./paths/campaigns.yaml#/paths/~1campaigns
   /campaigns/{campaignId}:
-    get:
-      operationId: pushNotificationServiceGetCampaign
-      summary: Get campaign details
-      description: Retrieve detailed campaign information and performance metrics
-      tags: [Campaign Management]
-      parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Campaign unique identifier
-      responses:
-        '200':
-          description: Campaign details retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/NotificationCampaign'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: pushNotificationServiceUpdateCampaign
-      summary: Update campaign
-      description: |
-        Update campaign settings and targeting.
-
-        **Update Constraints:**
-        - Cannot modify active campaigns
-        - Validates targeting criteria
-        - Updates scheduling if needed
-        - Maintains campaign integrity
-      tags: [Campaign Management]
-      parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Campaign unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateCampaignRequest'
-      responses:
-        '200':
-          description: Campaign updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/NotificationCampaign'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      operationId: pushNotificationServiceCancelCampaign
-      summary: Cancel campaign
-      description: |
-        Cancel a scheduled or active campaign.
-
-        **Cancellation Rules:**
-        - Stops further notification delivery
-        - Maintains delivery statistics
-        - Creates cancellation audit trail
-        - Partial refunds if applicable
-      tags: [Campaign Management]
-      parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Campaign unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/campaigns-{campaignId}.yaml#/paths/~1campaigns~1{campaignId}
   /analytics/delivery:
-    get:
-      operationId: pushNotificationServiceGetDeliveryAnalytics
-      summary: Get delivery analytics
-      description: |
-        Retrieve comprehensive delivery analytics and metrics.
-
-        **Analytics Scope:**
-        - Delivery success rates by platform
-        - Geographic performance metrics
-        - Time-based delivery patterns
-        - Failure analysis and trends
-        - User engagement statistics
-      tags: [Analytics & Reporting]
-      parameters:
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for analytics
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: End date for analytics
-        - name: platform
-          in: query
-          schema:
-            type: string
-            enum: [ios, android, web, desktop]
-          description: Filter by platform
-        - name: campaign_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific campaign
-      responses:
-        '200':
-          description: Delivery analytics retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/DeliveryAnalytics'
-
+    $ref: ./paths/analytics-delivery.yaml#/paths/~1analytics~1delivery
   /templates:
-    post:
-      operationId: pushNotificationServiceCreateTemplate
-      summary: Create notification template
-      description: |
-        Create reusable notification template.
-
-        **Template Features:**
-        - Parameterized content
-        - Multi-language support
-        - Platform-specific formatting
-        - A/B testing variants
-        - Version control and history
-      tags: [Template Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTemplateRequest'
-      responses:
-        '201':
-          description: Template created successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/NotificationTemplate'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-    get:
-      operationId: pushNotificationServiceListTemplates
-      summary: List notification templates
-      description: Retrieve paginated list of notification templates
-      tags: [Template Management]
-      parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-          description: Filter by template category
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of templates to return
-      responses:
-        '200':
-          description: Templates retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/TemplateSummary'
-
+    $ref: ./paths/templates.yaml#/paths/~1templates
 components:
-
+  schemas:
+    DeviceRegistration:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/DeviceRegistration
+    DeviceSummary:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/DeviceSummary
+    NotificationCampaign:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/NotificationCampaign
+    CampaignSummary:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CampaignSummary
+    NotificationTemplate:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/NotificationTemplate
+    TemplateSummary:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/TemplateSummary
+    DeviceNotificationPreferences:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/DeviceNotificationPreferences
+    CampaignTargetAudience:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CampaignTargetAudience
+    CampaignContent:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CampaignContent
+    CampaignScheduling:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CampaignScheduling
+    CampaignPerformanceMetrics:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CampaignPerformanceMetrics
+    DeliveryAnalytics:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/DeliveryAnalytics
+    PlatformDeliveryMetrics:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/PlatformDeliveryMetrics
+    GeographicDeliveryMetrics:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/GeographicDeliveryMetrics
+    DeliveryFailureAnalysis:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/DeliveryFailureAnalysis
+    PerformanceTrendData:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/PerformanceTrendData
+    NotificationAction:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/NotificationAction
+    TemplateContent:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/TemplateContent
+    TemplateParameter:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/TemplateParameter
+    TemplateVersion:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/TemplateVersion
+    NotificationStatus:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/NotificationStatus
+    PlatformNotificationStats:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/PlatformNotificationStats
+    NotificationFailure:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/NotificationFailure
+    RegisterDeviceRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/RegisterDeviceRequest
+    UpdateDeviceRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/UpdateDeviceRequest
+    SendNotificationRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/SendNotificationRequest
+    CreateCampaignRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CreateCampaignRequest
+    UpdateCampaignRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/UpdateCampaignRequest
+    CreateTemplateRequest:
+      $ref: ./schemas/push-notification-service-schemas.yaml#/components/schemas/CreateTemplateRequest
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/Created
     Accepted:
-      $ref: '../common/responses/success.yaml#/Accepted'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/Accepted
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/BadRequest
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-
-  schemas:
-
-    # Domain Inheritance - Push Notification Service Entities
-    DeviceRegistration:
-      description: Device registration entity with infrastructure domain inheritance
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
-        - type: object
-          properties:
-            # Add push-notification-service specific fields
-            device_token:
-              type: string
-              description: Encrypted push notification token
-            device_fingerprint:
-              type: string
-              description: Unique device fingerprint hash
-            platform:
-              type: string
-              enum: [ios, android, web, desktop]
-              description: Device platform
-            platform_version:
-              type: string
-              description: Platform/OS version
-            app_version:
-              type: string
-              description: App version on device
-            locale:
-              type: string
-              description: Device locale/language
-            timezone:
-              type: string
-              description: Device timezone
-            capabilities:
-              type: array
-              items:
-                type: string
-                enum: [rich_notifications, actions, custom_sounds, badges]
-              description: Device notification capabilities
-            last_active_at:
-              type: string
-              format: date-time
-              description: Last device activity timestamp
-            notification_preferences:
-              $ref: '#/components/schemas/DeviceNotificationPreferences'
-
-    DeviceSummary:
-      description: Device summary for listings
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Device ID
-        platform:
-          type: string
-          enum: [ios, android, web, desktop]
-          description: Device platform
-        last_active_at:
-          type: string
-          format: date-time
-          description: Last activity
-        is_active:
-          type: boolean
-          description: Device active status
-
-    NotificationCampaign:
-      description: Notification campaign entity
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
-        - type: object
-          properties:
-            name:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Campaign name
-            description:
-              type: string
-              maxLength: 500
-              description: Campaign description
-            status:
-              type: string
-              enum: [draft, scheduled, active, completed, cancelled]
-              description: Campaign status
-            campaign_type:
-              type: string
-              enum: [broadcast, targeted, transactional, promotional]
-              description: Campaign type
-            target_audience:
-              $ref: '#/components/schemas/CampaignTargetAudience'
-            content:
-              $ref: '#/components/schemas/CampaignContent'
-            scheduling:
-              $ref: '#/components/schemas/CampaignScheduling'
-            performance_metrics:
-              $ref: '#/components/schemas/CampaignPerformanceMetrics'
-
-    CampaignSummary:
-      description: Campaign summary for listings
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Campaign ID
-        name:
-          type: string
-          description: Campaign name
-        status:
-          type: string
-          enum: [draft, scheduled, active, completed, cancelled]
-          description: Campaign status
-        target_count:
-          type: integer
-          description: Number of target devices
-        sent_count:
-          type: integer
-          description: Number of notifications sent
-        delivered_count:
-          type: integer
-          description: Number of notifications delivered
-        scheduled_for:
-          type: string
-          format: date-time
-          description: Campaign scheduled time
-
-    NotificationTemplate:
-      description: Notification template entity
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
-        - type: object
-          properties:
-            name:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Template name
-            category:
-              type: string
-              minLength: 1
-              maxLength: 50
-              description: Template category
-            content:
-              $ref: '#/components/schemas/TemplateContent'
-            parameters:
-              type: array
-              items:
-                $ref: '#/components/schemas/TemplateParameter'
-              description: Template parameters
-            platforms:
-              type: array
-              items:
-                type: string
-                enum: [ios, android, web, desktop]
-              description: Supported platforms
-            versions:
-              type: array
-              items:
-                $ref: '#/components/schemas/TemplateVersion'
-              description: Template version history
-
-    TemplateSummary:
-      description: Template summary for listings
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Template ID
-        name:
-          type: string
-          description: Template name
-        category:
-          type: string
-          description: Template category
-        platforms:
-          type: array
-          items:
-            type: string
-            enum: [ios, android, web, desktop]
-          description: Supported platforms
-        last_updated:
-          type: string
-          format: date-time
-          description: Last update timestamp
-
-    # Supporting schemas
-    DeviceNotificationPreferences:
-      description: Device-specific notification preferences
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          default: true
-          description: Whether notifications are enabled for this device
-        quiet_hours_start:
-          type: string
-          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
-          description: Quiet hours start time
-        quiet_hours_end:
-          type: string
-          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
-          description: Quiet hours end time
-        allowed_categories:
-          type: array
-          items:
-            type: string
-          description: Allowed notification categories
-
-    CampaignTargetAudience:
-      description: Campaign target audience definition
-      type: object
-      properties:
-        user_segments:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: User segment IDs to target
-        platform_filters:
-          type: array
-          items:
-            type: string
-            enum: [ios, android, web, desktop]
-          description: Platform filters
-        geographic_filters:
-          type: array
-          items:
-            type: string
-          description: Geographic region filters
-        custom_filters:
-          type: object
-          description: Custom targeting filters
-          additionalProperties: true
-
-    CampaignContent:
-      description: Campaign notification content
-      type: object
-      required:
-        - title
-        - body
-      properties:
-        template_id:
-          type: string
-          format: uuid
-          description: Template to use for content
-        title:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Notification title
-        body:
-          type: string
-          minLength: 1
-          maxLength: 500
-          description: Notification body
-        data:
-          type: object
-          description: Additional notification data
-          additionalProperties: true
-        actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/NotificationAction'
-          description: Notification actions
-
-    CampaignScheduling:
-      description: Campaign scheduling configuration
-      type: object
-      properties:
-        scheduled_at:
-          type: string
-          format: date-time
-          description: Campaign scheduled time
-        timezone:
-          type: string
-          description: Scheduling timezone
-        recurrence:
-          type: object
-          properties:
-            frequency:
-              type: string
-              enum: [once, daily, weekly, monthly]
-              description: Recurrence frequency
-            interval:
-              type: integer
-              minimum: 1
-              description: Recurrence interval
-            end_date:
-              type: string
-              format: date-time
-              description: Recurrence end date
-
-    CampaignPerformanceMetrics:
-      description: Campaign performance tracking
-      type: object
-      properties:
-        target_count:
-          type: integer
-          description: Total target devices
-        sent_count:
-          type: integer
-          description: Notifications sent
-        delivered_count:
-          type: integer
-          description: Notifications delivered
-        opened_count:
-          type: integer
-          description: Notifications opened
-        clicked_count:
-          type: integer
-          description: Notification actions clicked
-        failed_count:
-          type: integer
-          description: Delivery failures
-        delivery_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Delivery success rate
-        engagement_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: User engagement rate
-
-    DeliveryAnalytics:
-      description: Comprehensive delivery analytics
-      type: object
-      properties:
-        time_range:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date-time
-            end_date:
-              type: string
-              format: date-time
-        platform_metrics:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/PlatformDeliveryMetrics'
-        geographic_metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeographicDeliveryMetrics'
-        failure_analysis:
-          $ref: '#/components/schemas/DeliveryFailureAnalysis'
-        performance_trends:
-          type: array
-          items:
-            $ref: '#/components/schemas/PerformanceTrendData'
-
-    PlatformDeliveryMetrics:
-      description: Delivery metrics for specific platform
-      type: object
-      properties:
-        total_sent:
-          type: integer
-          description: Total notifications sent
-        delivered:
-          type: integer
-          description: Successfully delivered
-        failed:
-          type: integer
-          description: Delivery failures
-        delivery_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Delivery success rate
-        average_delivery_time:
-          type: number
-          description: Average delivery time in seconds
-
-    GeographicDeliveryMetrics:
-      description: Delivery metrics by geographic region
-      type: object
-      properties:
-        region:
-          type: string
-          description: Geographic region
-        sent_count:
-          type: integer
-          description: Notifications sent to region
-        delivery_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Regional delivery rate
-        average_delivery_time:
-          type: number
-          description: Regional average delivery time
-
-    DeliveryFailureAnalysis:
-      description: Analysis of delivery failures
-      type: object
-      properties:
-        total_failures:
-          type: integer
-          description: Total delivery failures
-        failure_reasons:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Failure counts by reason
-        platform_failures:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Failures by platform
-        retry_success_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Success rate of retry attempts
-
-    PerformanceTrendData:
-      description: Performance trend data point
-      type: object
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-          description: Data point timestamp
-        delivery_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Delivery rate at this time
-        average_delivery_time:
-          type: number
-          description: Average delivery time
-        throughput:
-          type: number
-          description: Notifications per second
-
-    NotificationAction:
-      description: Notification action definition
-      type: object
-      required:
-        - action
-        - title
-      properties:
-        action:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Action identifier
-        title:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Action display title
-        icon:
-          type: string
-          description: Action icon identifier
-        destructive:
-          type: boolean
-          default: false
-          description: Whether action is destructive
-
-    TemplateContent:
-      description: Template content definition
-      type: object
-      required:
-        - title_template
-        - body_template
-      properties:
-        title_template:
-          type: string
-          minLength: 1
-          maxLength: 200
-          description: Title template with parameters
-        body_template:
-          type: string
-          minLength: 1
-          maxLength: 1000
-          description: Body template with parameters
-        data_template:
-          type: object
-          description: Data payload template
-          additionalProperties: true
-
-    TemplateParameter:
-      description: Template parameter definition
-      type: object
-      required:
-        - name
-        - type
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Parameter name
-        type:
-          type: string
-          enum: [string, number, boolean, date, object]
-          description: Parameter data type
-        required:
-          type: boolean
-          default: false
-          description: Whether parameter is required
-        default_value:
-          type: string
-          description: Default parameter value
-        validation:
-          type: object
-          description: Parameter validation rules
-          additionalProperties: true
-
-    TemplateVersion:
-      description: Template version information
-      type: object
-      required:
-        - version
-        - created_at
-      properties:
-        version:
-          type: string
-          description: Version identifier
-        created_at:
-          type: string
-          format: date-time
-          description: Version creation time
-        created_by:
-          type: string
-          format: uuid
-          description: User who created version
-        changes:
-          type: string
-          description: Description of changes
-
-    NotificationStatus:
-      description: Notification delivery status
-      type: object
-      required:
-        - notification_id
-        - status
-        - created_at
-      properties:
-        notification_id:
-          type: string
-          format: uuid
-          description: Notification unique identifier
-        status:
-          type: string
-          enum: [queued, sending, sent, delivered, failed]
-          description: Overall delivery status
-        created_at:
-          type: string
-          format: date-time
-          description: Notification creation time
-        sent_at:
-          type: string
-          format: date-time
-          description: Time notification was sent
-        platform_stats:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/PlatformNotificationStats'
-          description: Delivery statistics by platform
-        failure_details:
-          type: array
-          items:
-            $ref: '#/components/schemas/NotificationFailure'
-          description: Details of delivery failures
-
-    PlatformNotificationStats:
-      description: Notification statistics for specific platform
-      type: object
-      properties:
-        sent:
-          type: integer
-          description: Notifications sent to platform
-        delivered:
-          type: integer
-          description: Successfully delivered
-        failed:
-          type: integer
-          description: Delivery failures
-        pending:
-          type: integer
-          description: Still pending delivery
-
-    NotificationFailure:
-      description: Notification delivery failure details
-      type: object
-      required:
-        - device_id
-        - failure_reason
-      properties:
-        device_id:
-          type: string
-          format: uuid
-          description: Failed device ID
-        failure_reason:
-          type: string
-          enum: [invalid_token, device_unregistered, network_error, quota_exceeded, platform_rejected, timeout]
-          description: Reason for delivery failure
-        failure_details:
-          type: string
-          description: Detailed failure information
-        retry_count:
-          type: integer
-          minimum: 0
-          description: Number of retry attempts
-        last_attempt_at:
-          type: string
-          format: date-time
-          description: Last delivery attempt time
-
-    # Request/Response schemas
-    RegisterDeviceRequest:
-      description: Request payload for device registration
-      type: object
-      required:
-        - device_token
-        - platform
-      properties:
-        device_token:
-          type: string
-          minLength: 10
-          maxLength: 500
-          description: Device push notification token
-        platform:
-          type: string
-          enum: [ios, android, web, desktop]
-          description: Device platform
-        platform_version:
-          type: string
-          description: Platform/OS version
-        app_version:
-          type: string
-          description: App version
-        locale:
-          type: string
-          description: Device locale
-        timezone:
-          type: string
-          description: Device timezone
-        device_metadata:
-          type: object
-          description: Additional device metadata
-          additionalProperties: true
-
-    UpdateDeviceRequest:
-      description: Request payload for device update
-      type: object
-      properties:
-        device_token:
-          type: string
-          minLength: 10
-          maxLength: 500
-          description: Updated device token
-        app_version:
-          type: string
-          description: Updated app version
-        locale:
-          type: string
-          description: Updated locale
-        timezone:
-          type: string
-          description: Updated timezone
-        notification_preferences:
-          $ref: '#/components/schemas/DeviceNotificationPreferences'
-
-    SendNotificationRequest:
-      description: Request payload for sending notification
-      type: object
-      required:
-        - targets
-        - content
-      properties:
-        targets:
-          type: object
-          properties:
-            user_ids:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: Target user IDs
-            device_ids:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: Target device IDs
-            segments:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: Target user segments
-          description: Notification targets
-        content:
-          type: object
-          required:
-            - title
-            - body
-          properties:
-            title:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Notification title
-            body:
-              type: string
-              minLength: 1
-              maxLength: 500
-              description: Notification body
-            data:
-              type: object
-              description: Additional notification data
-              additionalProperties: true
-            actions:
-              type: array
-              items:
-                $ref: '#/components/schemas/NotificationAction'
-              description: Notification actions
-          description: Notification content
-        priority:
-          type: string
-          enum: [low, normal, high, critical]
-          default: "normal"
-          description: Notification priority
-        ttl:
-          type: integer
-          minimum: 0
-          maximum: 2592000
-          default: 86400
-          description: Time-to-live in seconds
-        scheduled_for:
-          type: string
-          format: date-time
-          description: Scheduled delivery time
-
-    CreateCampaignRequest:
-      description: Request payload for creating notification campaign
-      type: object
-      required:
-        - name
-        - target_audience
-        - content
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Campaign name
-        description:
-          type: string
-          maxLength: 500
-          description: Campaign description
-        target_audience:
-          $ref: '#/components/schemas/CampaignTargetAudience'
-        content:
-          $ref: '#/components/schemas/CampaignContent'
-        scheduling:
-          $ref: '#/components/schemas/CampaignScheduling'
-        budget_limit:
-          type: integer
-          minimum: 0
-          description: Campaign budget limit (notifications)
-        rate_limit:
-          type: integer
-          minimum: 1
-          maximum: 10000
-          description: Maximum notifications per minute
-
-    UpdateCampaignRequest:
-      description: Request payload for updating campaign
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Campaign name
-        description:
-          type: string
-          maxLength: 500
-          description: Campaign description
-        target_audience:
-          $ref: '#/components/schemas/CampaignTargetAudience'
-        content:
-          $ref: '#/components/schemas/CampaignContent'
-        scheduling:
-          $ref: '#/components/schemas/CampaignScheduling'
-
-    CreateTemplateRequest:
-      description: Request payload for creating notification template
-      type: object
-      required:
-        - name
-        - category
-        - content
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Template name
-        category:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Template category
-        description:
-          type: string
-          maxLength: 500
-          description: Template description
-        content:
-          $ref: '#/components/schemas/TemplateContent'
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/TemplateParameter'
-          description: Template parameters
-        platforms:
-          type: array
-          items:
-            type: string
-            enum: [ios, android, web, desktop]
-          description: Supported platforms
-
+      $ref: ./schemas/push-notification-service-responses.yaml#/components/responses/Conflict
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-
-# Performance and optimization notes
-x-performance:
-  p99-latency: "<100ms"
-  throughput-target: "100,000+ notifications/second"
-  delivery-rate-target: ">99.5%"
-  queue-processing-target: "<10ms average"
-  database-indexes: "Composite indexes on (user_id, platform), (campaign_id, status), (device_id, last_active)"
-
-# Monitoring and observability
-x-monitoring:
-  metrics:
-    - notification_send_rate
-    - delivery_success_rate
-    - platform_delivery_rates
-    - queue_depth
-    - campaign_performance
-  alerts:
-    - delivery_rate < 99%
-    - queue_depth > 10000
-    - platform_failures > 5%
-    - campaign_completion_delays > 300s
-
-# Scalability and reliability
-x-reliability:
-  message-persistence: "Redis-backed queue with disk persistence"
-  retry-mechanism: "Exponential backoff with configurable limits"
-  circuit-breakers: "Per-provider circuit breakers for fault tolerance"
-  geo-distribution: "Multi-region deployment with traffic routing"
-
-# Domain inheritance documentation
-x-domain-inheritance:
-  inherits-from: "common/schemas/infrastructure-entities.yaml"
-  inherited-entities: "NotificationQueueEntity, AuditLogEntity, ConfigurationEntity"
-  additional-schemas: "Device registration, campaign management, delivery analytics"
-  no-duplication: "All common fields inherited, notification-specific extensions added"
-
+      $ref: ../common/security/security.yaml#/ServiceAuth

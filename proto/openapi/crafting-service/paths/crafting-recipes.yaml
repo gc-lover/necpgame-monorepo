@@ -1,0 +1,114 @@
+openapi: 3.0.3
+paths:
+  /crafting/recipes:
+    get:
+      summary: Get crafting recipes by category
+      description: '**Enterprise-grade recipe retrieval endpoint**
+
+        Retrieves crafting recipes filtered by category, tier, quality, and other
+        criteria. Supports pagination and advanced filtering for crafting system optimization.
+
+        Essential for player crafting interface and recipe discovery.
+
+        **Performance:** <30ms P95 with database indexing
+
+        **Caching:** Recipes cached for 5 minutes, invalidated on updates
+
+        '
+      operationId: craftingServiceGetRecipes
+      tags:
+      - Recipe Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
+          - cyberware
+          - equipment
+          description: Recipe category filter
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier filter (1-5)
+      - name: quality
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality requirement
+      - name: required_skill_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          description: Required crafting skill level
+      - name: available_to_player
+        in: query
+        schema:
+          type: boolean
+          default: true
+          description: Filter recipes available to current player
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+          description: Number of recipes per page
+      responses:
+        '200':
+          description: Recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeListResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of recipes matching criteria
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '403':
+          description: Forbidden - insufficient permissions to view recipes
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,816 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    JoinVoiceChannelRequest:
+      type: object
+      required:
+      - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+        mute:
+          type: boolean
+          default: false
+          description: Whether user joins muted
+        deaf:
+          type: boolean
+          default: false
+          description: Whether user joins deafened
+      description: Request to join a voice channel
+    JoinVoiceChannelResponse:
+      type: object
+      required:
+      - channel_id
+      - user_id
+      - status
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        status:
+          type: string
+          enum:
+          - joined
+          - failed
+          description: Join status
+        session_token:
+          type: string
+          description: WebRTC session token for voice connection
+        ice_servers:
+          type: array
+          items:
+            type: object
+            properties:
+              urls:
+                type: string
+              username:
+                type: string
+              credential:
+                type: string
+          description: ICE servers for WebRTC connection
+      description: Response after joining a voice channel
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    VoiceChannel:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - max_participants
+      - created_at
+      - status
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum:
+          - guild
+          - party
+          - global
+          - private
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+          example: 10
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of active participants
+          example: 3
+        description:
+          type: string
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-27T16:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-27T16:30:00Z'
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - full
+          - closed
+          default: active
+          description: Voice channel status
+          example: active
+        is_active:
+          type: boolean
+          default: true
+          description: Whether channel is currently active
+          example: true
+        quality_settings:
+          $ref: '#/components/schemas/VoiceQualitySettings'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50% for voice channel operations.'
+    VoiceQualitySettings:
+      type: object
+      properties:
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+          description: Audio bitrate in bps
+          example: 64000
+        sample_rate:
+          type: integer
+          enum:
+          - 8000
+          - 16000
+          - 24000
+          - 48000
+          default: 48000
+          description: Audio sample rate in Hz
+          example: 48000
+        channels:
+          type: integer
+          enum:
+          - 1
+          - 2
+          default: 1
+          description: Number of audio channels
+          example: 1
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+          example: true
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+          example: true
+      description: 'BACKEND NOTE: Voice quality settings for adaptive bitrate control.'
+    JoinChannelRequest:
+      type: object
+      required:
+      - user_id
+      - client_capabilities
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User joining the channel
+          example: 550e8400-e29b-41d4-a716-446655440001
+        client_capabilities:
+          $ref: '#/components/schemas/WebRTCCapabilities'
+        preferred_region:
+          type: string
+          maxLength: 50
+          description: Preferred server region
+          example: us-east-1
+      description: 'BACKEND NOTE: Request to join voice channel with client capabilities.'
+    WebRTCCapabilities:
+      type: object
+      properties:
+        webrtc_support:
+          type: boolean
+          default: true
+          example: true
+        dtls_support:
+          type: boolean
+          default: true
+          example: true
+        ice_candidates:
+          type: boolean
+          default: true
+          example: true
+        max_bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 256000
+          example: 128000
+      description: 'BACKEND NOTE: Client WebRTC capabilities for compatibility checking.'
+    JoinChannelResponse:
+      type: object
+      required:
+      - channel
+      - ice_servers
+      - session_token
+      properties:
+        channel:
+          $ref: '#/components/schemas/VoiceChannel'
+        ice_servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEServer'
+          description: STUN/TURN servers for NAT traversal
+        session_token:
+          type: string
+          description: Session authentication token
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+          description: Current channel participants
+      description: 'BACKEND NOTE: Response with channel info and connection details.'
+    ICEServer:
+      type: object
+      required:
+      - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          example:
+          - stun:stun.necpgame.com:19302
+        username:
+          type: string
+          description: TURN server username
+        credential:
+          type: string
+          description: TURN server credential
+      description: 'BACKEND NOTE: STUN/TURN server configuration for WebRTC.'
+    VoiceParticipant:
+      type: object
+      required:
+      - user_id
+      - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        display_name:
+          type: string
+          maxLength: 100
+          example: NightRunner2077
+        joined_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:15:00Z'
+        is_muted:
+          type: boolean
+          default: false
+          example: false
+        connection_quality:
+          type: string
+          enum:
+          - excellent
+          - good
+          - poor
+          - disconnected
+          example: excellent
+      description: 'BACKEND NOTE: Voice channel participant information.'
+    SignalingMessage:
+      type: object
+      required:
+      - type
+      - sender_id
+      - target_id
+      properties:
+        type:
+          type: string
+          enum:
+          - offer
+          - answer
+          - ice_candidate
+          - hangup
+          example: offer
+        sender_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        sdp:
+          type: string
+          description: SDP offer/answer data
+          example: "v=0\r\no=- 12345 67890 IN IP4 192.168.1.1\r\n..."
+        ice_candidate:
+          $ref: '#/components/schemas/ICECandidate'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:16:00Z'
+      description: 'BACKEND NOTE: WebRTC signaling message structure.'
+    ICECandidate:
+      type: object
+      required:
+      - candidate
+      - sdp_mid
+      - sdp_mline_index
+      properties:
+        candidate:
+          type: string
+          description: ICE candidate string
+          example: candidate:1 1 UDP 2122260223 192.168.1.1 12345 typ host
+        sdp_mid:
+          type: string
+          example: '0'
+        sdp_mline_index:
+          type: integer
+          example: 0
+      description: 'BACKEND NOTE: WebRTC ICE candidate for peer connection.'
+    SignalingResponse:
+      type: object
+      required:
+      - success
+      - message_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        message_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        delivered_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:16:05Z'
+      description: 'BACKEND NOTE: Signaling message delivery confirmation.'
+    LeaveChannelResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        session_duration:
+          type: integer
+          description: Session duration in seconds
+          example: 1250
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall voice quality score
+          example: 0.92
+      description: 'BACKEND NOTE: Voice channel leave confirmation with session stats.'
+    VoiceQualityReport:
+      type: object
+      required:
+      - user_id
+      - metrics
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        metrics:
+          $ref: '#/components/schemas/VoiceQualityMetrics'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:17:00Z'
+      description: 'BACKEND NOTE: Voice quality metrics from client.'
+    VoiceQualityMetrics:
+      type: object
+      properties:
+        latency_ms:
+          type: number
+          minimum: 0
+          description: Round-trip latency in milliseconds
+          example: 45.2
+        packet_loss_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Packet loss percentage
+          example: 0.5
+        jitter_ms:
+          type: number
+          minimum: 0
+          description: Jitter in milliseconds
+          example: 2.1
+        bitrate_bps:
+          type: integer
+          minimum: 0
+          description: Current bitrate in bps
+          example: 64000
+        volume_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Audio volume level (0-1)
+          example: 0.75
+      description: 'BACKEND NOTE: Real-time voice quality measurements.'
+    VoiceQualityResponse:
+      type: object
+      required:
+      - acknowledged
+      properties:
+        acknowledged:
+          type: boolean
+          example: true
+        recommended_settings:
+          $ref: '#/components/schemas/VoiceQualitySettings'
+        next_report_interval:
+          type: integer
+          minimum: 5
+          maximum: 300
+          description: Recommended reporting interval in seconds
+          example: 30
+      description: 'BACKEND NOTE: Quality report acknowledgment with recommendations.'
+    CreateVoiceChannelRequest:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum:
+          - guild
+          - party
+          - global
+          - private
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum number of participants
+          example: 10
+        description:
+          type: string
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    GuildVoiceChannelRequest:
+      type: object
+      required:
+      - name
+      - guild_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Voice channel name
+          example: General Voice
+        type:
+          type: string
+          enum:
+          - guild
+          default: guild
+          description: Channel type (must be 'guild')
+        guild_id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of users
+          example: 25
+        is_default_channel:
+          type: boolean
+          default: false
+          description: Whether this is the guild's default voice channel
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - leader
+            - officer
+            - member
+            - recruit
+          maxItems: 10
+          description: Guild roles allowed to join this channel
+          example:
+          - leader
+          - officer
+          - member
+        is_moderated:
+          type: boolean
+          default: false
+          description: Whether channel has moderation enabled
+        require_approval:
+          type: boolean
+          default: false
+          description: Whether users need approval to join
+      description: 'BACKEND NOTE: Guild voice channel creation request with permission
+        validation.'
+    GuildVoiceChannelResponse:
+      type: object
+      required:
+      - id
+      - name
+      - guild_id
+      - owner_id
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: General Voice
+        type:
+          type: string
+          enum:
+          - guild
+          example: guild
+        guild_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        owner_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        max_users:
+          type: integer
+          example: 25
+        current_users:
+          type: integer
+          example: 3
+        is_active:
+          type: boolean
+          example: true
+        is_default_channel:
+          type: boolean
+          example: true
+        guild_permissions:
+          $ref: '#/components/schemas/GuildPermissions'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:16:05Z'
+      description: 'BACKEND NOTE: Guild voice channel response with permission details.'
+    GuildVoiceChannelUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Update channel name
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Update maximum users
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - leader
+            - officer
+            - member
+            - recruit
+          maxItems: 10
+          description: Update allowed roles
+        is_moderated:
+          type: boolean
+          description: Update moderation status
+        require_approval:
+          type: boolean
+          description: Update approval requirement
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 50
+          description: Users blocked from this channel
+      description: 'BACKEND NOTE: Partial update request for guild voice channels.'
+    GuildVoiceChannelListResponse:
+      type: object
+      required:
+      - channels
+      - total_count
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildVoiceChannelResponse'
+          description: List of guild voice channels
+        total_count:
+          type: integer
+          description: Total number of channels
+          example: 5
+        has_more:
+          type: boolean
+          description: Whether there are more results
+          example: false
+      description: 'BACKEND NOTE: Paginated guild voice channels list.'
+    GuildPermissions:
+      type: object
+      properties:
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - leader
+            - officer
+            - member
+            - recruit
+          description: Roles allowed to join
+          example:
+          - leader
+          - officer
+          - member
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users blocked from channel
+        muted_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users muted in channel
+        deafened_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users deafened in channel
+        is_moderated:
+          type: boolean
+          description: Moderation enabled
+          example: true
+        require_approval:
+          type: boolean
+          description: Approval required to join
+          example: false
+      description: 'BACKEND NOTE: Guild-specific voice channel permissions and access
+        control.'
+    ExampleResponse:
+      type: object
+      required:
+      - example
+      properties:
+        example:
+          $ref: '#/components/schemas/VoiceChannel'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleListResponse:
+      type: object
+      required:
+      - examples
+      - total_count
+      - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceChannel'
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency.'
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

@@ -1,0 +1,88 @@
+openapi: 3.0.3
+paths:
+  /voice/channels:
+    get:
+      summary: List voice channels
+      description: '**Retrieve available voice channels**
+
+        Returns channels user can join based on permissions.
+
+        **Performance:** <30ms with real-time occupancy data
+
+        '
+      operationId: listVoiceChannels
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - lobby
+          - guild
+          - party
+          - private
+        description: Filter by channel type
+      - name: guild_id
+        in: query
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+        description: Filter by guild ID
+      responses:
+        '200':
+          description: Voice channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceChannelResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create voice channel
+      description: '**Create a new voice channel**
+
+        Supports temporary and permanent channels with capacity limits.
+
+        **Performance:** <50ms with WebRTC setup
+
+        '
+      operationId: createVoiceChannel
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoiceChannelRequest'
+      responses:
+        '201':
+          description: Voice channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannelResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

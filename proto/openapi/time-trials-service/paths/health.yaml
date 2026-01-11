@@ -1,0 +1,55 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check endpoint
+      description: Returns service health status and basic metrics
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                - version
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+                  metrics:
+                    type: object
+                    properties:
+                      active_sessions:
+                        type: integer
+                        minimum: 0
+                        description: Number of active trial sessions
+                      total_trials:
+                        type: integer
+                        minimum: 0
+                        description: Total configured trials
+                      avg_response_time:
+                        type: number
+                        minimum: 0
+                        description: Average response time in milliseconds
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,473 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Role:
+      description: Complete role entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Human-readable role name
+          description:
+            type: string
+            maxLength: 500
+            description: Role description and purpose
+          role_type:
+            type: string
+            enum:
+            - system
+            - organization
+            - project
+            - custom
+            description: Category of role
+          organization_id:
+            type: string
+            format: uuid
+            description: Organization this role belongs to
+          parent_role_id:
+            type: string
+            format: uuid
+            description: Parent role for inheritance
+          permissions:
+            type: array
+            items:
+              type: string
+            description: Direct permissions assigned to this role
+          inherited_permissions:
+            type: array
+            items:
+              type: string
+            description: Permissions inherited from parent roles
+          is_active:
+            type: boolean
+            default: true
+            description: Whether role is active
+          metadata:
+            type: object
+            description: Additional role metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this role
+              risk_level:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                description: Security risk level of this role
+    RoleSummary:
+      description: Summary role for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Role ID
+        name:
+          type: string
+          description: Role name
+        role_type:
+          type: string
+          enum:
+          - system
+          - organization
+          - project
+          - custom
+          description: Role type
+        is_active:
+          type: boolean
+          description: Active status
+        permission_count:
+          type: integer
+          description: Number of permissions
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+    Permission:
+      description: Permission definition entity
+      type: object
+      required:
+      - id
+      - resource_type
+      - action
+      - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Permission unique identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable permission name
+        description:
+          type: string
+          maxLength: 500
+          description: Permission description
+        resource_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Type of resource (e.g., 'user', 'role', 'organization')
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action on resource (e.g., 'create', 'read', 'update', 'delete')
+        conditions:
+          type: object
+          description: Conditional requirements for permission
+          additionalProperties: true
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Security risk level
+        is_active:
+          type: boolean
+          default: true
+          description: Whether permission is active
+    PermissionSummary:
+      description: Summary permission for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Permission ID
+        name:
+          type: string
+          description: Permission name
+        resource_type:
+          type: string
+          description: Resource type
+        action:
+          type: string
+          description: Action
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Risk level
+    UserRoleAssignment:
+      description: User role assignment entity
+      type: object
+      required:
+      - id
+      - user_id
+      - role_id
+      - assigned_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Assignment unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: User assigned to role
+        role_id:
+          type: string
+          format: uuid
+          description: Role assigned to user
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+        assigned_by:
+          type: string
+          format: uuid
+          description: User who made the assignment
+        assigned_at:
+          type: string
+          format: date-time
+          description: Assignment timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        conditions:
+          type: object
+          description: Conditional assignment rules
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+          description: Whether assignment is active
+    RoleAuditEntry:
+      description: Audit entry for role operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          role_id:
+            type: string
+            format: uuid
+            description: Associated role ID
+          user_id:
+            type: string
+            format: uuid
+            description: Associated user ID
+          operation_type:
+            type: string
+            enum:
+            - role_create
+            - role_update
+            - role_delete
+            - permission_assign
+            - permission_revoke
+            - role_assign
+            - role_revoke
+            description: Type of role operation performed
+          old_values:
+            type: object
+            description: Previous state values
+          new_values:
+            type: object
+            description: New state values
+    CreateRoleRequest:
+      description: Request payload for creating a role
+      type: object
+      required:
+      - name
+      - role_type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Role name
+          example: Content Moderator
+        description:
+          type: string
+          maxLength: 500
+          description: Role description
+          example: Can moderate user-generated content and manage reports
+        role_type:
+          type: string
+          enum:
+          - system
+          - organization
+          - project
+          - custom
+          description: Role category
+          example: organization
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization ID for organization/project roles
+        parent_role_id:
+          type: string
+          format: uuid
+          description: Parent role for inheritance
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Initial permissions to assign
+          example:
+          - content.moderate
+          - user.ban
+        metadata:
+          type: object
+          description: Additional role metadata
+    UpdateRoleRequest:
+      description: Request payload for updating a role
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Role name
+        description:
+          type: string
+          maxLength: 500
+          description: Role description
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Updated permissions
+        is_active:
+          type: boolean
+          description: Active status
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+    UpdateRolePermissionsRequest:
+      description: Request payload for updating role permissions
+      type: object
+      required:
+      - permissions
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Complete list of permissions for the role
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+    CreatePermissionRequest:
+      description: Request payload for creating a permission
+      type: object
+      required:
+      - name
+      - resource_type
+      - action
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Permission name
+          example: Create User
+        description:
+          type: string
+          maxLength: 500
+          description: Permission description
+          example: Allows creating new user accounts
+        resource_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Resource type
+          example: user
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action on resource
+          example: create
+        conditions:
+          type: object
+          description: Permission conditions
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Security risk level
+          default: medium
+    AssignRoleRequest:
+      description: Request payload for assigning a role to user
+      type: object
+      required:
+      - role_id
+      properties:
+        role_id:
+          type: string
+          format: uuid
+          description: Role to assign
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        conditions:
+          type: object
+          description: Assignment conditions
+        assigned_by:
+          type: string
+          format: uuid
+          description: User making the assignment
+    PermissionCheckRequest:
+      description: Request payload for permission checking
+      type: object
+      required:
+      - user_id
+      - permissions
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to check permissions for
+        permissions:
+          type: array
+          items:
+            type: object
+            required:
+            - resource_type
+            - action
+            properties:
+              resource_type:
+                type: string
+                description: Resource type
+              action:
+                type: string
+                description: Action on resource
+              resource_id:
+                type: string
+                format: uuid
+                description: Specific resource ID
+              context:
+                type: object
+                description: Additional context for evaluation
+          description: Permissions to check
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+    PermissionCheckResult:
+      description: Result of permission check operation
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User checked
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              permission:
+                type: object
+                properties:
+                  resource_type:
+                    type: string
+                    description: Resource type
+                  action:
+                    type: string
+                    description: Action
+                  resource_id:
+                    type: string
+                    format: uuid
+                    description: Resource ID
+                description: Permission checked
+              granted:
+                type: boolean
+                description: Whether permission is granted
+              reason:
+                type: string
+                description: Reason for grant/deny
+              roles:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Roles granting this permission
+          description: Individual permission check results

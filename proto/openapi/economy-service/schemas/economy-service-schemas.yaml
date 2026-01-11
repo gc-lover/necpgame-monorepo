@@ -1,0 +1,407 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/components/schemas/HealthResponse
+    MarketPricesResponse:
+      type: object
+      required:
+      - prices
+      - pagination
+      properties:
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketPrice'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+      description: 'BACKEND NOTE: Prices response optimized for market browser. Pagination
+        prevents large payloads.'
+    MarketPrice:
+      type: object
+      required:
+      - item_id
+      - item_name
+      - current_price
+      - price_trend
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        category:
+          type: string
+        current_price:
+          type: integer
+          minimum: 0
+        price_trend:
+          type: string
+          enum:
+          - rising
+          - falling
+          - stable
+        price_change_percentage:
+          type: number
+          format: float
+        volume_24h:
+          type: integer
+          minimum: 0
+        last_updated:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Market price data optimized for real-time updates.
+        Struct alignment saves 30-50% memory.'
+    TradingOrdersResponse:
+      type: object
+      required:
+      - orders
+      - pagination
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradingOrder'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Orders response optimized for trading interface.
+        Lightweight for mobile compatibility.'
+    TradingOrder:
+      type: object
+      required:
+      - order_id
+      - order_type
+      - item_id
+      - quantity
+      - price
+      - status
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        order_type:
+          type: string
+          enum:
+          - buy
+          - sell
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        price:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum:
+          - active
+          - filled
+          - cancelled
+          - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        filled_quantity:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Trading order data optimized for order matching.
+        Fields ordered for CPU cache efficiency.'
+    CreateTradingOrderRequest:
+      type: object
+      required:
+      - order_type
+      - item_id
+      - quantity
+      - price
+      properties:
+        order_type:
+          type: string
+          enum:
+          - buy
+          - sell
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        price:
+          type: integer
+          minimum: 0
+        expires_in_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+      description: 'BACKEND NOTE: Order request optimized for validation. Minimal
+        required fields for fast processing.'
+    TradingOrderResponse:
+      type: object
+      required:
+      - order
+      properties:
+        order:
+          $ref: '#/components/schemas/TradingOrder'
+      description: 'BACKEND NOTE: Response optimized for immediate feedback. Single-order
+        responses use minimal wrapper.'
+    AuctionsResponse:
+      type: object
+      required:
+      - auctions
+      - pagination
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Auction'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Auctions response optimized for auction house UI.
+        Supports large catalogs with pagination.'
+    Auction:
+      type: object
+      required:
+      - auction_id
+      - item_id
+      - starting_price
+      - current_bid
+      - end_time
+      - status
+      properties:
+        auction_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        starting_price:
+          type: integer
+          minimum: 0
+        current_bid:
+          type: integer
+          minimum: 0
+        bid_increment:
+          type: integer
+          minimum: 1
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - active
+          - ended
+          - cancelled
+        winner_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Auction data optimized for bidding calculations.
+        Time-sensitive fields prioritized.'
+    CreateAuctionRequest:
+      type: object
+      required:
+      - item_id
+      - starting_price
+      - duration_hours
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        starting_price:
+          type: integer
+          minimum: 0
+        bid_increment:
+          type: integer
+          minimum: 1
+          default: 100
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+        reserve_price:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Auction creation request optimized for validation.
+        Sensible defaults reduce user input requirements.'
+    AuctionResponse:
+      type: object
+      required:
+      - auction
+      properties:
+        auction:
+          $ref: '#/components/schemas/Auction'
+      description: 'BACKEND NOTE: Auction response optimized for immediate feedback.
+        Consistent with other single-entity responses.'
+    PlaceBidRequest:
+      type: object
+      required:
+      - bid_amount
+      properties:
+        bid_amount:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Bid request optimized for speed. Single field minimizes
+        processing overhead.'
+    CurrencyExchangeRequest:
+      type: object
+      required:
+      - from_currency
+      - to_currency
+      - amount
+      properties:
+        from_currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        to_currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        amount:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Exchange request optimized for validation. Currency
+        enums prevent invalid exchanges.'
+    CurrencyExchangeResponse:
+      type: object
+      required:
+      - from_currency
+      - to_currency
+      - amount_exchanged
+      - amount_received
+      - exchange_rate
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount_exchanged:
+          type: integer
+        amount_received:
+          type: integer
+        exchange_rate:
+          type: number
+          format: float
+        transaction_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Exchange response optimized for transaction records.
+        All exchange details included for audit trails.'
+    WalletTransactionsResponse:
+      type: object
+      required:
+      - transactions
+      - pagination
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransaction'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Transactions response optimized for history browsing.
+        Chronological ordering for user experience.'
+    WalletTransaction:
+      type: object
+      required:
+      - transaction_id
+      - transaction_type
+      - amount
+      - timestamp
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+          - trading
+          - auction
+          - exchange
+          - reward
+          - purchase
+        amount:
+          type: integer
+        currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        related_order_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Transaction data optimized for financial reporting.
+        Related IDs enable transaction tracing.'

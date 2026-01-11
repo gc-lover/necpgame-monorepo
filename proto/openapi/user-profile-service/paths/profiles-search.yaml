@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /profiles/search:
+    get:
+      operationId: userProfileServiceSearchProfiles
+      summary: Search profiles
+      description: 'Advanced profile search with multiple filters.
+
+
+        **Search Features:**
+
+        - Full-text search on display names
+
+        - Location-based filtering
+
+        - Interest and tag matching
+
+        - Privacy-aware results
+
+        '
+      tags:
+      - Social Features
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 50
+        description: Search query
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Location filter
+      - name: interests
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Interest tags
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Results limit
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/PublicProfileSummary'
+                    total_count:
+                      type: integer
+                      description: Total matching profiles

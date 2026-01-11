@@ -1,0 +1,738 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    LeaderboardEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - category
+        - scoringType
+        - maxEntries
+        properties:
+          name:
+            type: string
+            description: null
+            maxLength: 100
+            example: Global Combat Rating
+          description:
+            type: string
+            description: null
+            maxLength: 500
+          category:
+            type: string
+            description: null
+            enum:
+            - combat
+            - achievement
+            - economic
+            - social
+            - seasonal
+            example: combat
+          scoringType:
+            type: string
+            description: null
+            enum:
+            - points
+            - wins
+            - ratio
+            - time
+            - custom
+            example: points
+          maxEntries:
+            type: integer
+            description: null
+            minimum: 10
+            maximum: 10000
+            example: 1000
+          resetPeriod:
+            type: string
+            description: null
+            enum:
+            - never
+            - daily
+            - weekly
+            - monthly
+            - seasonal
+            example: weekly
+          startDate:
+            type: string
+            description: null
+            format: date-time
+          endDate:
+            type: string
+            description: null
+            format: date-time
+          rewards:
+            type: array
+            description: null
+            items:
+              $ref: '#/components/schemas/LeaderboardRewardEntity'
+          rules:
+            type: object
+            description: null
+            properties:
+              minGames:
+                type: integer
+                description: null
+                minimum: 0
+                default: 0
+              antiCheatEnabled:
+                type: boolean
+                description: null
+                default: true
+              allowTies:
+                type: boolean
+                description: null
+                default: false
+          isActive:
+            type: boolean
+            description: null
+            default: true
+          lastReset:
+            type: string
+            description: null
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    LeaderboardRewardEntity:
+      type: object
+      description: null
+      required:
+      - position
+      - rewards
+      properties:
+        position:
+          type: integer
+          description: null
+          minimum: 1
+          example: 1
+        rewards:
+          type: array
+          description: null
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - currency
+                - item
+                - title
+                - cosmetic
+                - badge
+                example: currency
+              amount:
+                type: integer
+                minimum: 1
+                example: 10000
+              itemId:
+                type: string
+                description: ID
+                format: uuid
+    PlayerLeaderboardEntryEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - leaderboardId
+        - score
+        - rank
+        properties:
+          playerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          leaderboardId:
+            type: string
+            description: ID
+            format: uuid
+            example: 456e7890-e89b-12d3-a456-426614174001
+          score:
+            type: number
+            description: null
+            example: 15420.5
+          rank:
+            type: integer
+            description: null
+            minimum: 1
+            example: 15
+          previousRank:
+            type: integer
+            description: null
+            minimum: 1
+          bestRank:
+            type: integer
+            description: null
+            minimum: 1
+          gamesPlayed:
+            type: integer
+            description: null
+            minimum: 0
+            example: 150
+          lastUpdated:
+            type: string
+            description: null
+            format: date-time
+          rewardsClaimed:
+            type: array
+            description: null
+            items:
+              type: integer
+              description: null
+          isDisqualified:
+            type: boolean
+            description: null
+            default: false
+          disqualificationReason:
+            type: string
+            description: null
+            maxLength: 200
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateLeaderboardRequest:
+      type: object
+      required:
+      - name
+      - category
+      - scoringType
+      - maxEntries
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - achievement
+          - economic
+          - social
+          - seasonal
+        scoringType:
+          type: string
+          enum:
+          - points
+          - wins
+          - ratio
+          - time
+          - custom
+        maxEntries:
+          type: integer
+          minimum: 10
+          maximum: 10000
+        resetPeriod:
+          type: string
+          enum:
+          - never
+          - daily
+          - weekly
+          - monthly
+          - seasonal
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+        rules:
+          type: object
+          properties:
+            minGames:
+              type: integer
+              minimum: 0
+            antiCheatEnabled:
+              type: boolean
+            allowTies:
+              type: boolean
+    UpdateLeaderboardRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        category:
+          type: string
+          enum:
+          - combat
+          - achievement
+          - economic
+          - social
+          - seasonal
+        scoringType:
+          type: string
+          enum:
+          - points
+          - wins
+          - ratio
+          - time
+          - custom
+        maxEntries:
+          type: integer
+          minimum: 10
+          maximum: 10000
+        resetPeriod:
+          type: string
+          enum:
+          - never
+          - daily
+          - weekly
+          - monthly
+          - seasonal
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+        rules:
+          type: object
+          properties:
+            minGames:
+              type: integer
+              minimum: 0
+            antiCheatEnabled:
+              type: boolean
+            allowTies:
+              type: boolean
+        isActive:
+          type: boolean
+    LeaderboardResponse:
+      type: object
+      properties:
+        leaderboard:
+          $ref: '#/components/schemas/LeaderboardEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            totalEntries:
+              type: integer
+              minimum: 0
+    LeaderboardListResponse:
+      type: object
+      properties:
+        leaderboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    LeaderboardRankingResponse:
+      type: object
+      properties:
+        leaderboardId:
+          type: string
+          format: uuid
+        leaderboardName:
+          type: string
+        category:
+          type: string
+        scoringType:
+          type: string
+        totalEntries:
+          type: integer
+          minimum: 0
+        lastUpdated:
+          type: string
+          format: date-time
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              displayName:
+                type: string
+              score:
+                type: number
+              rank:
+                type: integer
+                minimum: 1
+              previousRank:
+                type: integer
+                minimum: 1
+              rankChange:
+                type: integer
+              lastUpdated:
+                type: string
+                format: date-time
+              isCurrentPlayer:
+                type: boolean
+                default: false
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    PlayerRanksResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        ranks:
+          type: array
+          items:
+            type: object
+            properties:
+              leaderboardId:
+                type: string
+                format: uuid
+              leaderboardName:
+                type: string
+              category:
+                type: string
+              rank:
+                type: integer
+                minimum: 1
+              score:
+                type: number
+              totalEntries:
+                type: integer
+                minimum: 0
+              percentile:
+                type: number
+                minimum: 0
+                maximum: 100
+              lastUpdated:
+                type: string
+                format: date-time
+    PlayerRankResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        leaderboardId:
+          type: string
+          format: uuid
+        leaderboardName:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: number
+        totalEntries:
+          type: integer
+          minimum: 0
+        percentile:
+          type: number
+          minimum: 0
+          maximum: 100
+        rankChange:
+          type: integer
+        bestRank:
+          type: integer
+          minimum: 1
+        lastUpdated:
+          type: string
+          format: date-time
+        rewardsAvailable:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+    UpdateRankRequest:
+      type: object
+      required:
+      - playerId
+      - leaderboardId
+      - score
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        leaderboardId:
+          type: string
+          format: uuid
+        score:
+          type: number
+        metadata:
+          type: object
+          description: null
+          additionalProperties: true
+    UpdateRankResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        leaderboardId:
+          type: string
+          format: uuid
+        oldRank:
+          type: integer
+          minimum: 1
+        newRank:
+          type: integer
+          minimum: 1
+        oldScore:
+          type: number
+        newScore:
+          type: number
+        rankChange:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+    BatchUpdateRanksRequest:
+      type: object
+      required:
+      - updates
+      properties:
+        updates:
+          type: array
+          description: null
+          items:
+            $ref: '#/components/schemas/UpdateRankRequest'
+          minItems: 1
+          maxItems: 100
+    BatchUpdateRanksResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateRankResponse'
+        totalProcessed:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              leaderboardId:
+                type: string
+                format: uuid
+              error:
+                type: string
+    SeasonalLeaderboardsResponse:
+      type: object
+      properties:
+        currentSeason:
+          type: object
+          properties:
+            seasonId:
+              type: string
+            name:
+              type: string
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            isActive:
+              type: boolean
+        leaderboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntity'
+    CreateSeasonalLeaderboardRequest:
+      type: object
+      required:
+      - seasonId
+      - leaderboard
+      properties:
+        seasonId:
+          type: string
+          description: ID
+        leaderboard:
+          $ref: '#/components/schemas/CreateLeaderboardRequest'
+    LeaderboardRewardsResponse:
+      type: object
+      properties:
+        leaderboardId:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+    SetRewardsRequest:
+      type: object
+      required:
+      - rewards
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+          minItems: 1
+          maxItems: 100
+    ClaimRewardsRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+    ClaimRewardsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        leaderboardId:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          minimum: 1
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardRewardEntity'
+        claimedAt:
+          type: string
+          format: date-time
+    LeaderboardAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - seasonal
+        totalLeaderboards:
+          type: integer
+          minimum: 0
+        totalEntries:
+          type: integer
+          minimum: 0
+        averageScore:
+          type: number
+        topCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+                minimum: 0
+              averageScore:
+                type: number
+        activityTrends:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+    LeaderboardStatisticsResponse:
+      type: object
+      properties:
+        leaderboardId:
+          type: string
+          format: uuid
+        leaderboardName:
+          type: string
+        period:
+          type: string
+        totalEntries:
+          type: integer
+          minimum: 0
+        averageScore:
+          type: number
+        medianScore:
+          type: number
+        topScore:
+          type: number
+        scoreDistribution:
+          type: object
+          properties:
+            excellent:
+              type: integer
+              minimum: 0
+              description: 10%
+            good:
+              type: integer
+              minimum: 0
+              description: 10-25%
+            average:
+              type: integer
+              minimum: 0
+              description: 25-75%
+            below_average:
+              type: integer
+              minimum: 0
+              description: null
+        rankStability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: (0-1)
+        lastUpdated:
+          type: string
+          format: date-time

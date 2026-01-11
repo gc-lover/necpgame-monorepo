@@ -1,0 +1,66 @@
+openapi: 3.0.3
+paths:
+  /combat/abilities:
+    get:
+      description: Get list of available combat abilities for a character.
+      operationId: combatAbilitiesListAbilities
+      parameters:
+      - description: Character ID
+        in: query
+        name: character_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: Maximum number of abilities to return
+        in: query
+        name: limit
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+      - description: Number of abilities to skip
+        in: query
+        name: offset
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAbilitiesResponse'
+          description: List of available abilities
+      summary: List available abilities
+      tags:
+      - Ability Management
+    post:
+      description: 'Activate a combat ability with validation and anti-cheat checks.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
+      operationId: combatAbilitiesActivateAbility
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAbilityRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateAbilityResponse'
+          description: Ability activated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      summary: Activate combat ability
+      tags:
+      - Ability Activation

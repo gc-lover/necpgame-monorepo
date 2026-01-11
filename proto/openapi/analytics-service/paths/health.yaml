@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: Service Health Check
+      description: '**Basic service health check with endpoint overview**
+
+        Returns service health status and available endpoints.
+
+        **Performance:** <5ms response time'
+      operationId: healthCheck
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                - service
+                - version
+                - endpoints
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-11T12:00:00Z'
+                  service:
+                    type: string
+                    example: analytics-service
+                  version:
+                    type: string
+                    example: 1.0.0
+                  endpoints:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - /api/v1/analytics/behavior/{player_id}
+                    - /api/v1/analytics/retention

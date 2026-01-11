@@ -1,0 +1,106 @@
+openapi: 3.0.3
+paths:
+  /roles:
+    post:
+      operationId: roleServiceCreateRole
+      summary: Create new role
+      description: 'Create a new role with permissions and hierarchy settings.
+
+
+        **Business Rules:**
+
+        - Role names must be unique within organization
+
+        - Validates permission consistency
+
+        - Creates audit trail for role creation
+
+        - Supports role inheritance and overrides
+
+        '
+      tags:
+      - Role Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Role created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      operationId: roleServiceListRoles
+      summary: List roles with filtering
+      description: 'Retrieve paginated list of roles with advanced filtering.
+
+
+        **Performance Notes:**
+
+        - Uses database indexes for efficient filtering
+
+        - Implements cursor-based pagination for large datasets
+
+        - Cached for 30 seconds
+
+        '
+      tags:
+      - Role Management
+      parameters:
+      - name: organization_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by organization
+      - name: role_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - organization
+          - project
+          - custom
+        description: Filter by role type
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include only active roles
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of roles to return
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RoleSummary'

@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /guilds/rankings:
+    get:
+      summary: Get guild rankings and statistics
+      description: '**Guild rankings endpoint**
+
+        Retrieves global guild rankings by level, reputation, and activity. Supports
+        different ranking categories and time periods.
+
+        **Performance:** <25ms P95 with cached rankings
+
+        **Caching:** Rankings updated hourly with real-time deltas
+
+        '
+      operationId: getGuildRankings
+      tags:
+      - Guild Competition
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - level
+          - reputation
+          - activity
+          - pvp_wins
+          - quest_completion
+          default: level
+      - name: time_period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: all_time
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Guild rankings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRankingsResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=3600, public
+        '400':
+          description: Invalid ranking parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

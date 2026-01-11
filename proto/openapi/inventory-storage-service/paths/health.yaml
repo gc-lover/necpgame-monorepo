@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: Inventory storage health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the inventory storage microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: inventoryStorageHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

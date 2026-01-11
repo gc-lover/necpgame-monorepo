@@ -1,0 +1,650 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    AuctionEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - sellerId
+        - item
+        - type
+        - startingPrice
+        - status
+        properties:
+          sellerId:
+            type: string
+            description: 'ID '
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          item:
+            $ref: '#/components/schemas/AuctionItemEntity'
+          type:
+            type: string
+            description: ' '
+            enum:
+            - english
+            - dutch
+            - sealed_bid
+            - reserve
+            example: english
+          startingPrice:
+            type: integer
+            description: ' '
+            minimum: 1
+            example: 1000
+          reservePrice:
+            type: integer
+            description: '  ( reserve )'
+            minimum: 1
+          buyoutPrice:
+            type: integer
+            description: ' '
+            minimum: 1
+          currentPrice:
+            type: integer
+            description: ' '
+            minimum: 0
+          status:
+            type: string
+            description: ' '
+            enum:
+            - pending
+            - active
+            - ended
+            - cancelled
+            - completed
+            example: active
+          startTime:
+            type: string
+            description: ' '
+            format: date-time
+          endTime:
+            type: string
+            description: ' '
+            format: date-time
+          duration:
+            type: integer
+            description: '  '
+            minimum: 5
+            maximum: 10080
+            example: 1440
+          winnerId:
+            type: string
+            description: 'ID '
+            format: uuid
+          winningBid:
+            type: integer
+            description: ' '
+            minimum: 0
+          totalBids:
+            type: integer
+            description: '  '
+            minimum: 0
+          uniqueBidders:
+            type: integer
+            description: ' '
+            minimum: 0
+          watchers:
+            type: integer
+            description: ' '
+            minimum: 0
+          category:
+            type: string
+            description: ' '
+            enum:
+            - weapons
+            - armor
+            - cyberware
+            - vehicles
+            - misc
+            example: weapons
+          rules:
+            type: object
+            description: ' '
+            properties:
+              minBidIncrement:
+                type: integer
+                description: '  '
+                minimum: 1
+                default: 1
+              maxBidsPerPlayer:
+                type: integer
+                description: '   '
+                minimum: 1
+              allowAutoBidding:
+                type: boolean
+                description: ' -'
+                default: true
+              requireVerification:
+                type: boolean
+                description: ' '
+                default: false
+          isActive:
+            type: boolean
+            description: ' '
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    AuctionItemEntity:
+      type: object
+      description: ' '
+      required:
+      - itemId
+      - quantity
+      properties:
+        itemId:
+          type: string
+          description: 'ID '
+          format: uuid
+          example: 456e7890-e89b-12d3-a456-426614174001
+        quantity:
+          type: integer
+          description: ''
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: ' '
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        itemType:
+          type: string
+          description: ' '
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - misc
+          example: weapon
+        rarity:
+          type: string
+          description: ' '
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        level:
+          type: integer
+          description: ' '
+          minimum: 1
+          example: 15
+        description:
+          type: string
+          description: ' '
+          maxLength: 500
+        attributes:
+          type: object
+          description: ' '
+          additionalProperties: true
+        images:
+          type: array
+          description: ' '
+          items:
+            type: string
+            format: uri
+    BidEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - auctionId
+        - bidderId
+        - amount
+        properties:
+          auctionId:
+            type: string
+            description: 'ID '
+            format: uuid
+          bidderId:
+            type: string
+            description: 'ID '
+            format: uuid
+          amount:
+            type: integer
+            description: ' '
+            minimum: 1
+            example: 1500
+          bidTime:
+            type: string
+            description: ' '
+            format: date-time
+          isAutoBid:
+            type: boolean
+            description: ' '
+            default: false
+          bidPosition:
+            type: integer
+            description: '   '
+            minimum: 1
+          outbid:
+            type: boolean
+            description: ' '
+            default: false
+          $ref: '#/components/schemas/OptimisticLock'
+    AutoBidEntity:
+      type: object
+      description: ' -'
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - auctionId
+        - bidderId
+        - maxAmount
+        - increment
+        properties:
+          auctionId:
+            type: string
+            description: 'ID '
+            format: uuid
+          bidderId:
+            type: string
+            description: 'ID '
+            format: uuid
+          maxAmount:
+            type: integer
+            description: ' '
+            minimum: 1
+            example: 5000
+          increment:
+            type: integer
+            description: ' '
+            minimum: 1
+            example: 100
+          isActive:
+            type: boolean
+            description: '- '
+            default: true
+          lastBidAmount:
+            type: integer
+            description: '  '
+            minimum: 0
+          bidsPlaced:
+            type: integer
+            description: '  '
+            minimum: 0
+          $ref: '#/components/schemas/OptimisticLock'
+    AuctionWatcherEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - auctionId
+        - watcherId
+        properties:
+          auctionId:
+            type: string
+            description: 'ID '
+            format: uuid
+          watcherId:
+            type: string
+            description: 'ID '
+            format: uuid
+          watchStarted:
+            type: string
+            description: '  '
+            format: date-time
+          notificationsEnabled:
+            type: boolean
+            description: ' '
+            default: true
+          lastActivity:
+            type: string
+            description: ' '
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateAuctionRequest:
+      type: object
+      required:
+      - item
+      - type
+      - startingPrice
+      - duration
+      properties:
+        item:
+          $ref: '#/components/schemas/AuctionItemEntity'
+        type:
+          type: string
+          enum:
+          - english
+          - dutch
+          - sealed_bid
+          - reserve
+        startingPrice:
+          type: integer
+          minimum: 1
+        reservePrice:
+          type: integer
+          minimum: 1
+        buyoutPrice:
+          type: integer
+          minimum: 1
+        duration:
+          type: integer
+          minimum: 5
+          maximum: 10080
+        category:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - vehicles
+          - misc
+        rules:
+          type: object
+          properties:
+            minBidIncrement:
+              type: integer
+              minimum: 1
+            maxBidsPerPlayer:
+              type: integer
+              minimum: 1
+            allowAutoBidding:
+              type: boolean
+            requireVerification:
+              type: boolean
+    UpdateAuctionRequest:
+      type: object
+      properties:
+        reservePrice:
+          type: integer
+          minimum: 1
+        buyoutPrice:
+          type: integer
+          minimum: 1
+        duration:
+          type: integer
+          minimum: 5
+          maximum: 10080
+        rules:
+          type: object
+          properties:
+            minBidIncrement:
+              type: integer
+              minimum: 1
+            maxBidsPerPlayer:
+              type: integer
+              minimum: 1
+            allowAutoBidding:
+              type: boolean
+            requireVerification:
+              type: boolean
+    AuctionResponse:
+      type: object
+      properties:
+        auction:
+          $ref: '#/components/schemas/AuctionEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: '   '
+            currentHighestBid:
+              type: integer
+            totalBids:
+              type: integer
+    AuctionListResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    PlaceBidRequest:
+      type: object
+      required:
+      - bidderId
+      - amount
+      properties:
+        bidderId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        isAutoBid:
+          type: boolean
+          default: false
+    BidResponse:
+      type: object
+      properties:
+        bid:
+          $ref: '#/components/schemas/BidEntity'
+        auction:
+          $ref: '#/components/schemas/AuctionEntity'
+        bidAccepted:
+          type: boolean
+        newHighestBid:
+          type: boolean
+        outbidPlayers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        timeRemaining:
+          type: integer
+          description: '   '
+    AuctionBidsResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        bids:
+          type: array
+          items:
+            type: object
+            properties:
+              bidderId:
+                type: string
+                format: uuid
+              amount:
+                type: integer
+              bidTime:
+                type: string
+                format: date-time
+              isAutoBid:
+                type: boolean
+        highestBid:
+          type: integer
+        totalBids:
+          type: integer
+    SetAutoBidRequest:
+      type: object
+      required:
+      - bidderId
+      - maxAmount
+      - increment
+      properties:
+        bidderId:
+          type: string
+          format: uuid
+        maxAmount:
+          type: integer
+          minimum: 1
+        increment:
+          type: integer
+          minimum: 1
+    AutoBidResponse:
+      type: object
+      properties:
+        autoBid:
+          $ref: '#/components/schemas/AutoBidEntity'
+        currentBid:
+          type: integer
+          description: '  '
+    WatchAuctionRequest:
+      type: object
+      required:
+      - watcherId
+      properties:
+        watcherId:
+          type: string
+          format: uuid
+        notificationsEnabled:
+          type: boolean
+          default: true
+    WatchResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        watcherId:
+          type: string
+          format: uuid
+        isWatching:
+          type: boolean
+        watchersCount:
+          type: integer
+    PlayerAuctionsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionEntity'
+        statistics:
+          type: object
+          properties:
+            totalAuctions:
+              type: integer
+              minimum: 0
+            activeAuctions:
+              type: integer
+              minimum: 0
+            wonAuctions:
+              type: integer
+              minimum: 0
+            lostAuctions:
+              type: integer
+              minimum: 0
+    CompleteAuctionRequest:
+      type: object
+      required:
+      - completedBy
+      properties:
+        completedBy:
+          type: string
+          format: uuid
+    AuctionCompletionResponse:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        winnerId:
+          type: string
+          format: uuid
+        winningBid:
+          type: integer
+        sellerId:
+          type: string
+          format: uuid
+        item:
+          $ref: '#/components/schemas/AuctionItemEntity'
+        completionTime:
+          type: string
+          format: date-time
+        transactionId:
+          type: string
+          format: uuid
+    AuctionAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        totalAuctions:
+          type: integer
+          minimum: 0
+        totalValue:
+          type: integer
+          minimum: 0
+        averageAuctionPrice:
+          type: number
+        auctionsByCategory:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        auctionsByType:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        completionRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        averageBidsPerAuction:
+          type: number
+    PopularAuctionsResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            type: object
+            properties:
+              auction:
+                $ref: '#/components/schemas/AuctionEntity'
+              popularityScore:
+                type: number
+              watchersCount:
+                type: integer
+              bidsCount:
+                type: integer
+              timeRemaining:
+                type: integer

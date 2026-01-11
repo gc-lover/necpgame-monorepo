@@ -1,0 +1,887 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Reward:
+      type: object
+      required:
+      - id
+      - name
+      - reward_type
+      - value
+      - created_at
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Reward unique identifier
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Reward display name
+          example: Daily Login Bonus
+        description:
+          type: string
+          maxLength: 1000
+          description: Reward description and details
+        reward_type:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - achievement
+          - title
+          - cosmetic
+          - boost
+          description: Type of reward
+          example: currency
+        value:
+          type: object
+          description: Reward value (depends on type)
+          additionalProperties: true
+          example:
+            amount: 500
+            currency_type: eddies
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardRequirement'
+          description: Requirements to claim this reward
+        claim_limit:
+          type: integer
+          minimum: 1
+          description: Maximum claims per player
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Reward creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: Reward expiration date
+        is_active:
+          type: boolean
+          description: Whether reward is currently active
+          example: true
+        total_claims:
+          type: integer
+          minimum: 0
+          description: Total number of times this reward has been claimed
+          example: 15420
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
+        Expected memory savings: 30-50%. Reward data optimized for frequent access."
+
+        '
+    RewardRequirement:
+      type: object
+      required:
+      - type
+      - condition
+      properties:
+        type:
+          type: string
+          enum:
+          - level
+          - achievement
+          - quest
+          - purchase
+          - time
+          - custom
+          description: Type of requirement
+          example: level
+        condition:
+          type: object
+          description: Specific condition details
+          additionalProperties: true
+          example:
+            minimum_level: 10
+        description:
+          type: string
+          maxLength: 200
+          description: Human-readable requirement description
+      description: '"BACKEND NOTE: Flexible requirement system supports complex logic.
+
+        Conditions validated at claim time to prevent exploitation."
+
+        '
+    CreateRewardRequest:
+      type: object
+      required:
+      - name
+      - reward_type
+      - value
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Desired reward name
+          example: Weekly Challenge Reward
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          description: Reward description
+        reward_type:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - achievement
+          - title
+          - cosmetic
+          - boost
+          description: Type of reward to create
+        value:
+          type: object
+          description: Reward value configuration
+          additionalProperties: true
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardRequirement'
+          maxItems: 10
+          description: Requirements for claiming
+        claim_limit:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1
+          description: Maximum claims per player
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        target_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific players this reward is for (empty = all eligible)
+      description: '"BACKEND NOTE: Comprehensive reward creation with targeting.
+
+        Validation ensures balanced reward economy."
+
+        '
+    UpdateRewardRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: New reward name
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          description: New description
+        value:
+          type: object
+          description: Updated reward value
+          additionalProperties: true
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardRequirement'
+          maxItems: 10
+          description: Replace requirements
+        claim_limit:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          description: New claim limit
+        expires_at:
+          type: string
+          format: date-time
+          description: New expiration date
+        is_active:
+          type: boolean
+          description: Activate/deactivate reward
+      description: '"BACKEND NOTE: Partial updates supported. Critical for live events.
+
+        Impact assessment required for active rewards."
+
+        '
+    RewardResponse:
+      type: object
+      required:
+      - reward
+      properties:
+        reward:
+          $ref: '#/components/schemas/Reward'
+        claim_status:
+          type: object
+          description: Claim status for current player (if authenticated)
+          properties:
+            can_claim:
+              type: boolean
+              example: true
+            times_claimed:
+              type: integer
+              minimum: 0
+              example: 0
+            next_claim_available:
+              type: string
+              format: date-time
+              description: When player can claim again
+      description: '"BACKEND NOTE: Includes player-specific claim status.
+
+        Critical for UI reward availability indicators."
+
+        '
+    RewardListResponse:
+      type: object
+      required:
+      - rewards
+      - total_count
+      - has_more
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: List of rewards
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of rewards matching criteria
+          example: 47
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+          example: 20
+      description: '"BACKEND NOTE: Paginated reward list with metadata.
+
+        Optimized for reward catalog browsing."
+
+        '
+    ClaimRewardRequest:
+      type: object
+      properties:
+        claim_reason:
+          type: string
+          maxLength: 200
+          description: Optional reason for claiming
+          example: Completed daily quest
+        metadata:
+          type: object
+          description: Additional claim metadata
+          additionalProperties: true
+      description: '"BACKEND NOTE: Optional metadata for analytics.
+
+        Reason helps with reward attribution."
+
+        '
+    ClaimRewardResponse:
+      type: object
+      required:
+      - reward_id
+      - claimed_at
+      - reward_value
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: Claimed reward identifier
+        claimed_at:
+          type: string
+          format: date-time
+          description: Claim timestamp
+        reward_value:
+          type: object
+          description: Actual reward value granted
+          additionalProperties: true
+        total_claims:
+          type: integer
+          minimum: 0
+          description: Updated total claims for this reward
+        next_claim_available:
+          type: string
+          format: date-time
+          description: When player can claim this reward again (if limited)
+      description: '"BACKEND NOTE: Immediate feedback on successful claims.
+
+        Includes timing for UI cooldown displays."
+
+        '
+    Achievement:
+      type: object
+      required:
+      - id
+      - name
+      - category
+      - difficulty
+      - points_value
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Achievement unique identifier
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Achievement display name
+          example: Cyberpunk Explorer
+        description:
+          type: string
+          maxLength: 1000
+          description: Achievement description and unlock conditions
+        category:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+          - progression
+          - special
+          description: Achievement category
+          example: exploration
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+          description: Achievement difficulty level
+          example: medium
+        points_value:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Achievement point value
+          example: 50
+        unlock_conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementCondition'
+          description: Conditions required to unlock
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Rewards granted upon completion
+        is_active:
+          type: boolean
+          description: Whether achievement is currently active
+          example: true
+        total_completions:
+          type: integer
+          minimum: 0
+          description: Total number of players who completed this achievement
+          example: 15420
+      description: '"BACKEND NOTE: Achievement data includes unlock logic and rewards.
+
+        Optimized for progress tracking and completion checking."
+
+        '
+    AchievementCondition:
+      type: object
+      required:
+      - type
+      - target_value
+      properties:
+        type:
+          type: string
+          enum:
+          - stat_reached
+          - item_collected
+          - quest_completed
+          - enemy_defeated
+          - location_visited
+          - social_action
+          - time_played
+          - custom
+          description: Type of condition
+          example: stat_reached
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to reach
+          example: 100
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+          example: 75
+        description:
+          type: string
+          maxLength: 200
+          description: Human-readable condition description
+      description: '"BACKEND NOTE: Progress tracking with current vs target values.
+
+        Flexible condition system supports various achievement types."
+
+        '
+    AchievementResponse:
+      type: object
+      required:
+      - achievement
+      properties:
+        achievement:
+          $ref: '#/components/schemas/Achievement'
+      description: '"BACKEND NOTE: Single achievement response wrapper.
+
+        Includes full achievement data and metadata."
+
+        '
+    AchievementListResponse:
+      type: object
+      required:
+      - achievements
+      - total_count
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+          description: List of achievements
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of achievements
+          example: 150
+        player_progress:
+          type: object
+          description: Player's progress summary (if player_id provided)
+          properties:
+            total_completed:
+              type: integer
+              minimum: 0
+              example: 45
+            total_points:
+              type: integer
+              minimum: 0
+              example: 2150
+            completion_percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+              example: 30.0
+      description: '"BACKEND NOTE: Achievement list with optional player progress.
+
+        Critical for achievement UI and progress tracking."
+
+        '
+    AchievementProgressResponse:
+      type: object
+      required:
+      - achievement_id
+      - player_id
+      - conditions
+      - overall_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementCondition'
+          description: Detailed condition progress
+        overall_progress:
+          type: object
+          required:
+          - percentage
+          - is_completed
+          - completed_at
+          properties:
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Overall completion percentage
+              example: 75.5
+            is_completed:
+              type: boolean
+              description: Whether achievement is completed
+              example: false
+            completed_at:
+              type: string
+              format: date-time
+              description: Completion timestamp (if completed)
+        next_milestone:
+          type: string
+          description: Description of next progress milestone
+          example: Reach 100 enemies defeated
+      description: '"BACKEND NOTE: Detailed progress information for UI display.
+
+        Overall progress calculated from condition completion."
+
+        '
+    UpdateAchievementProgressRequest:
+      type: object
+      required:
+      - event_type
+      - event_data
+      properties:
+        event_type:
+          type: string
+          enum:
+          - stat_update
+          - item_acquired
+          - quest_completed
+          - enemy_defeated
+          - location_visited
+          - social_interaction
+          - time_accumulated
+          description: Type of game event
+          example: enemy_defeated
+        event_data:
+          type: object
+          description: Event-specific data for progress calculation
+          additionalProperties: true
+          example:
+            enemy_type: ganger
+            count: 5
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier (required for service-to-service calls)
+      description: '"BACKEND NOTE: Event-driven progress updates from game systems.
+
+        Flexible event data supports various achievement types."
+
+        '
+    UpdateAchievementProgressResponse:
+      type: object
+      required:
+      - achievements_updated
+      - achievements_unlocked
+      properties:
+        achievements_updated:
+          type: integer
+          minimum: 0
+          description: Number of achievements with updated progress
+          example: 3
+        achievements_unlocked:
+          type: integer
+          minimum: 0
+          description: Number of achievements newly unlocked
+          example: 1
+        unlocked_achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+          description: Details of newly unlocked achievements
+        progress_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+              old_percentage:
+                type: number
+                minimum: 0
+                maximum: 100
+              new_percentage:
+                type: number
+                minimum: 0
+                maximum: 100
+          description: Progress changes for updated achievements
+      description: '"BACKEND NOTE: Immediate feedback on achievement updates.
+
+        Critical for real-time achievement notifications."
+
+        '
+    IncentiveProgram:
+      type: object
+      required:
+      - id
+      - name
+      - program_type
+      - start_date
+      - end_date
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Program unique identifier
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Program display name
+          example: Summer Login Event
+        description:
+          type: string
+          maxLength: 2000
+          description: Program description and rules
+        program_type:
+          type: string
+          enum:
+          - event
+          - promotion
+          - seasonal
+          - partnership
+          - challenge
+          description: Type of incentive program
+          example: seasonal
+        start_date:
+          type: string
+          format: date-time
+          description: Program start date
+        end_date:
+          type: string
+          format: date-time
+          description: Program end date
+        target_audience:
+          type: object
+          description: Eligibility criteria for participants
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+            max_level:
+              type: integer
+            regions:
+              type: array
+              items:
+                type: string
+            player_segments:
+              type: array
+              items:
+                type: string
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Available rewards in this program
+        objectives:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+                maxLength: 500
+              reward:
+                $ref: '#/components/schemas/Reward'
+              progress_max:
+                type: integer
+                minimum: 1
+          description: Program objectives and associated rewards
+        is_active:
+          type: boolean
+          description: Whether program is currently active
+          example: true
+        total_participants:
+          type: integer
+          minimum: 0
+          description: Current number of participants
+          example: 50000
+      description: '"BACKEND NOTE: Complex incentive programs with objectives and
+        targeting.
+
+        Optimized for event management and player engagement."
+
+        '
+    CreateIncentiveProgramRequest:
+      type: object
+      required:
+      - name
+      - program_type
+      - start_date
+      - end_date
+      - rewards
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Program name
+        description:
+          type: string
+          maxLength: 2000
+          description: Program description and rules
+        program_type:
+          type: string
+          enum:
+          - event
+          - promotion
+          - seasonal
+          - partnership
+          - challenge
+          description: Type of program
+        start_date:
+          type: string
+          format: date-time
+          description: Start date
+        end_date:
+          type: string
+          format: date-time
+          description: End date
+        target_audience:
+          type: object
+          description: Eligibility criteria
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+            max_level:
+              type: integer
+            regions:
+              type: array
+              items:
+                type: string
+            player_segments:
+              type: array
+              items:
+                type: string
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          minItems: 1
+          description: Program rewards
+        objectives:
+          type: array
+          items:
+            type: object
+            required:
+            - description
+            - reward
+            properties:
+              description:
+                type: string
+                maxLength: 500
+              reward:
+                $ref: '#/components/schemas/Reward'
+              progress_max:
+                type: integer
+                minimum: 1
+          description: Program objectives
+        notification_settings:
+          type: object
+          description: Settings for program notifications
+          properties:
+            announce_start:
+              type: boolean
+              default: true
+            progress_updates:
+              type: boolean
+              default: true
+            completion_celebration:
+              type: boolean
+              default: true
+      description: '"BACKEND NOTE: Comprehensive program creation with complex targeting.
+
+        Validation ensures balanced incentive economy."
+
+        '
+    IncentiveProgramResponse:
+      type: object
+      required:
+      - program
+      properties:
+        program:
+          $ref: '#/components/schemas/IncentiveProgram'
+        player_eligibility:
+          type: object
+          description: Eligibility status for current player (if authenticated)
+          properties:
+            is_eligible:
+              type: boolean
+              example: true
+            ineligibility_reasons:
+              type: array
+              items:
+                type: string
+            progress:
+              type: object
+              description: Current player progress in program
+      description: '"BACKEND NOTE: Includes player-specific eligibility and progress.
+
+        Critical for personalized incentive program display."
+
+        '
+    IncentiveProgramListResponse:
+      type: object
+      required:
+      - programs
+      - total_count
+      properties:
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncentiveProgram'
+          description: List of incentive programs
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of programs
+          example: 12
+        active_count:
+          type: integer
+          minimum: 0
+          description: Number of currently active programs
+          example: 5
+      description: '"BACKEND NOTE: Program list with activity summary.
+
+        Optimized for promotional content browsing."
+
+        '
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: ../common/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    PaginationMeta:
+      $ref: ../common/schemas/pagination.yaml#/PaginationMeta

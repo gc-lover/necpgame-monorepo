@@ -1,0 +1,48 @@
+openapi: 3.0.3
+paths:
+  /emails/batch/send:
+    post:
+      operationId: emailNotificationServiceSendBatchEmails
+      summary: Send batch email notifications
+      description: 'Send multiple email notifications in a single operation.
+
+
+        **Batch Processing:**
+
+        - Atomic batch queue placement
+
+        - Duplicate recipient detection
+
+        - Priority-based processing
+
+        - Progress tracking and reporting
+
+        '
+      tags:
+      - Email Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBatchEmailsRequest'
+      responses:
+        '202':
+          description: Emails queued for batch delivery
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Accepted
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/BatchEmailResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Batch too large
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/PayloadTooLarge

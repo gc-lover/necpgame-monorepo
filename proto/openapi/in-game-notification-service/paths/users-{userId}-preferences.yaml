@@ -1,0 +1,95 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/preferences:
+    get:
+      operationId: inGameNotificationServiceGetUserPreferences
+      summary: Get user notification preferences
+      description: 'Retrieve user''s notification preferences and filtering rules.
+
+
+        **Preference Categories:**
+
+        - Notification types and priorities
+
+        - Quiet hours and frequency limits
+
+        - Channel preferences (WebSocket, push, email)
+
+        - Category-specific settings
+
+        - Platform-specific preferences
+
+        '
+      tags:
+      - User Preferences
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      responses:
+        '200':
+          description: User preferences retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserNotificationPreferences'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: inGameNotificationServiceUpdateUserPreferences
+      summary: Update user notification preferences
+      description: 'Update user''s notification preferences and filtering rules.
+
+
+        **Preference Validation:**
+
+        - Business rule validation
+
+        - Cross-preference consistency
+
+        - Platform capability checking
+
+        - Rate limit enforcement
+
+        '
+      tags:
+      - User Preferences
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationPreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserNotificationPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

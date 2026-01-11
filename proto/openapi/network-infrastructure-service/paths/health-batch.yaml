@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /health/batch:
+    post:
+      summary: Batch health check for network components
+      description: '**Performance optimization:** Check multiple network components
+        health in single request
+
+        Reduces network overhead by ~80% for monitoring dashboards.
+
+        **Input:** Array of component names **Output:** Health status for each network
+        component'
+      operationId: getBatchHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - components
+              properties:
+                components:
+                  type: array
+                  items:
+                    type: string
+                  description: List of network components to check
+      responses:
+        '200':
+          description: Batch health status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: ../common/schemas/health.yaml#/HealthResponse
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

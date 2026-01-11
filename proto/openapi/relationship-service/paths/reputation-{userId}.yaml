@@ -1,0 +1,38 @@
+openapi: 3.0.3
+paths:
+  /reputation/{userId}:
+    get:
+      summary: Get user reputation
+      description: '**Retrieve user''s reputation profile**
+
+        Includes overall reputation and category breakdowns.
+
+        **Performance:** <25ms with reputation caching
+
+        '
+      operationId: getUserReputation
+      tags:
+      - Reputation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: User reputation retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReputationResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

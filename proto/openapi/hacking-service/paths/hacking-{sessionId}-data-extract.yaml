@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /hacking/{sessionId}/data/extract:
+    post:
+      operationId: hackingServiceExtractData
+      summary: Extract data from network node
+      description: 'Extract data from a compromised network node.
+
+
+        **Data Extraction:**
+
+        - Validate node access and permissions
+
+        - Calculate extraction time and difficulty
+
+        - Execute data mining operation
+
+        - Handle encryption and data integrity
+
+        '
+      tags:
+      - Data Operations
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractDataRequest'
+      responses:
+        '200':
+          description: Data extraction successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DataExtractionResult'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

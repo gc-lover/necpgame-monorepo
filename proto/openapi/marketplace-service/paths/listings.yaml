@@ -1,0 +1,127 @@
+openapi: 3.0.3
+paths:
+  /listings:
+    post:
+      summary: null
+      operationId: createListing
+      tags:
+      - Listing Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListingRequest'
+      responses:
+        '201':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    get:
+      summary: null
+      operationId: getListings
+      tags:
+      - Listing Management
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - sold
+          - expired
+          - cancelled
+          default: active
+      - name: sellerId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      - name: minPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: maxPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          enum:
+          - price_asc
+          - price_desc
+          - newest
+          - oldest
+          - popularity
+          default: newest
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

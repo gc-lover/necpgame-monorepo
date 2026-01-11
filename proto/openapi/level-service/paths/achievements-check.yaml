@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /achievements/check:
+    post:
+      operationId: levelServiceCheckAchievements
+      summary: Check and award achievements
+      description: 'Check character against achievement conditions and award completed
+        ones.
+
+
+        **Achievement Processing:**
+
+        - Evaluate achievement conditions
+
+        - Award completed achievements
+
+        - Trigger reward distribution
+
+        - Update achievement progress
+
+        '
+      tags:
+      - Achievements & Milestones
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAchievementsRequest'
+      responses:
+        '200':
+          description: Achievement check completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        achievements_awarded:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/AchievementAward'
+                          description: Achievements newly awarded
+                        progress_updates:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/AchievementProgress'
+                          description: Achievement progress updates
+                        total_rewards:
+                          $ref: '#/components/schemas/AchievementRewards'
+                          description: Total rewards earned
+        '400':
+          $ref: '#/components/responses/BadRequest'

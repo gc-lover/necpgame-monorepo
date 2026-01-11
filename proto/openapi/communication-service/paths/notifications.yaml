@@ -1,0 +1,108 @@
+openapi: 3.0.3
+paths:
+  /notifications:
+    get:
+      summary: Get user notifications
+      description: '**Retrieve user''s notifications with pagination**
+
+        Supports filtering by type, read status, and time range.
+
+        **Performance:** <50ms with Redis caching, supports 100k+ notifications per
+        user
+
+        '
+      operationId: getUserNotifications
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - social
+          - achievement
+          - commerce
+          - combat
+          - guild
+        description: Filter by notification type
+      - name: read
+        in: query
+        schema:
+          type: boolean
+        description: Filter by read status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of notifications to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/NotificationResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Send notification
+      description: '**Send notification to user or group**
+
+        Supports scheduled delivery and priority levels.
+
+        **Performance:** <25ms with queue-based processing
+
+        '
+      operationId: sendNotification
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '202':
+          description: Notification queued for delivery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationQueuedResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

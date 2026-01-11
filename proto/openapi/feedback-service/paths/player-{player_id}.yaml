@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /player/{player_id}:
+    get:
+      summary: Get player feedback history
+      description: 'Retrieve paginated list of feedback submissions for a specific
+        player.
+
+
+        **Access Control:** Players can only view their own feedback history.
+
+
+        **BACKEND NOTE:** Response optimized for pagination. Fields ordered for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: getPlayerFeedback
+      tags:
+      - Feedback Submissions
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+        example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackStatus'
+        description: Filter by feedback status
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/FeedbackType'
+        description: Filter by feedback type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+      responses:
+        '200':
+          description: Player feedback history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerFeedbackListResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

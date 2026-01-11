@@ -1,0 +1,287 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    WorldBoss:
+      type: object
+      description: World boss definition and configuration
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique boss identifier
+        name:
+          type: string
+          description: Boss display name
+        description:
+          type: string
+          description: Boss lore and encounter description
+        level:
+          type: integer
+          minimum: 1
+          description: Boss level requirement
+        league:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - mythic
+          description: Difficulty league
+        health:
+          type: integer
+          description: Base health points
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/BossPhase'
+          description: Boss encounter phases
+        location:
+          type: object
+          properties:
+            zoneId:
+              type: string
+              format: uuid
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+          description: Boss spawn location
+        schedule:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - timed
+              - event
+              - random
+            interval:
+              type: integer
+              description: Spawn interval in minutes
+            duration:
+              type: integer
+              description: Active duration in minutes
+          description: Boss spawn schedule
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BossReward'
+          description: Available rewards
+        isActive:
+          type: boolean
+          description: Whether boss is currently active
+        lastSpawn:
+          type: string
+          format: date-time
+          description: Last spawn timestamp
+        defeatedBy:
+          type: string
+          format: uuid
+          description: Character ID of final blow
+      required:
+      - id
+      - name
+      - level
+      - league
+      - health
+      - phases
+      - location
+      - schedule
+    BossPhase:
+      type: object
+      description: Individual boss encounter phase
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        healthThreshold:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Health percentage to trigger phase
+        mechanics:
+          type: array
+          items:
+            type: string
+          description: Special mechanics for this phase
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BossReward'
+          description: Phase-specific rewards
+      required:
+      - id
+      - name
+      - healthThreshold
+    BossReward:
+      type: object
+      description: Boss encounter reward
+      properties:
+        type:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - achievement
+          - title
+          - cosmetic
+        value:
+          oneOf:
+          - type: integer
+          - type: string
+          description: Reward value or identifier
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
+        dropRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Drop probability
+      required:
+      - type
+      - value
+      - rarity
+    EliteChampion:
+      type: object
+      description: Elite champion boss variant
+      properties:
+        id:
+          type: string
+          format: uuid
+        baseBossId:
+          type: string
+          format: uuid
+          description: Reference to base boss
+        name:
+          type: string
+        description:
+          type: string
+        modifiers:
+          type: object
+          properties:
+            healthMultiplier:
+              type: number
+              format: float
+              default: 2.0
+            damageMultiplier:
+              type: number
+              format: float
+              default: 1.5
+            speedMultiplier:
+              type: number
+              format: float
+              default: 1.2
+          description: Stat modifiers vs base boss
+        uniqueMechanics:
+          type: array
+          items:
+            type: string
+          description: Special mechanics unique to elite variant
+        spawnCondition:
+          type: string
+          description: Condition for elite variant to spawn
+        exclusiveRewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BossReward'
+          description: Elite-exclusive rewards
+      required:
+      - id
+      - baseBossId
+      - name
+      - modifiers
+    BossEncounter:
+      type: object
+      description: Active boss encounter state
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+        bossId:
+          type: string
+          format: uuid
+        isElite:
+          type: boolean
+          default: false
+        startTime:
+          type: string
+          format: date-time
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              characterId:
+                type: string
+                format: uuid
+              joinTime:
+                type: string
+                format: date-time
+              damageDealt:
+                type: integer
+                default: 0
+              healingDone:
+                type: integer
+                default: 0
+              isActive:
+                type: boolean
+                default: true
+          description: Active participants
+        currentPhase:
+          type: integer
+          minimum: 1
+        bossHealth:
+          type: object
+          properties:
+            current:
+              type: integer
+            maximum:
+              type: integer
+            percentage:
+              type: number
+              format: float
+          description: Current boss health state
+        status:
+          type: string
+          enum:
+          - spawning
+          - active
+          - defeated
+          - escaped
+          - terminated
+        endTime:
+          type: string
+          format: date-time
+          description: Encounter end timestamp (if completed)
+      required:
+      - encounterId
+      - bossId
+      - startTime
+      - participants
+      - currentPhase
+      - bossHealth
+      - status

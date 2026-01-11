@@ -1,0 +1,36 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions/{session_id}/state:
+    get:
+      summary: Get combat session state
+      description: Retrieve current state of a combat session
+      operationId: getCombatSessionState
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      responses:
+        '200':
+          description: Session state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionState'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

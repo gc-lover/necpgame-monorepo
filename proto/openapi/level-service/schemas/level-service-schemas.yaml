@@ -1,0 +1,861 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterLevel:
+      description: Character level and progression entity with game domain inheritance
+      type: object
+      required:
+      - id
+      - character_id
+      - current_level
+      - current_experience
+      - total_experience_earned
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Level record unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character this level belongs to
+        current_level:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Current character level
+        current_experience:
+          type: integer
+          minimum: 0
+          description: Experience points in current level
+        total_experience_earned:
+          type: integer
+          minimum: 0
+          description: Total lifetime experience earned
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+          description: Experience needed for next level
+        available_stat_points:
+          type: integer
+          minimum: 0
+          description: Unallocated stat points
+        prestige_level:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Character prestige level
+        last_level_up_at:
+          type: string
+          format: date-time
+          description: When character last leveled up
+        experience_multipliers:
+          type: object
+          description: Active experience multipliers
+          additionalProperties:
+            type: number
+          example:
+            vip_bonus: 1.5
+            event_bonus: 2.0
+            guild_bonus: 1.25
+        stat_allocation:
+          $ref: '#/components/schemas/StatAllocation'
+        progression_milestones:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Completed progression milestones
+        created_at:
+          type: string
+          format: date-time
+          description: When level record was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When level record was last updated
+    ExperienceEvent:
+      description: Experience gain event entity
+      type: object
+      required:
+      - id
+      - character_id
+      - experience_amount
+      - source_type
+      - gained_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Experience event unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character receiving experience
+        experience_amount:
+          type: integer
+          minimum: 1
+          description: Amount of experience gained
+        base_experience:
+          type: integer
+          minimum: 1
+          description: Base experience before multipliers
+        source_type:
+          type: string
+          enum:
+          - combat
+          - quest
+          - exploration
+          - crafting
+          - social
+          - event
+          - achievement
+          description: Source of experience gain
+        source_id:
+          type: string
+          format: uuid
+          description: Specific source identifier (quest ID, enemy ID, etc.)
+        multipliers_applied:
+          type: object
+          description: Multipliers applied to base experience
+          additionalProperties:
+            type: number
+          example:
+            difficulty_multiplier: 1.2
+            group_bonus: 1.5
+            vip_status: 1.25
+        gained_at:
+          type: string
+          format: date-time
+          description: When experience was gained
+        level_at_gain:
+          type: integer
+          minimum: 1
+          description: Character level when experience was gained
+        contributed_to_level_up:
+          type: boolean
+          description: Whether this experience contributed to a level up
+    Achievement:
+      description: Achievement definition entity
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Achievement name
+          description:
+            type: string
+            maxLength: 500
+            description: Achievement description
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Achievement category
+          difficulty:
+            type: string
+            enum:
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            default: bronze
+            description: Achievement difficulty tier
+          points_value:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            description: Achievement point value
+          rewards:
+            $ref: '#/components/schemas/AchievementRewards'
+          conditions:
+            type: array
+            items:
+              $ref: '#/components/schemas/AchievementCondition'
+            description: Conditions to unlock achievement
+          is_repeatable:
+            type: boolean
+            default: false
+            description: Whether achievement can be earned multiple times
+          max_progress:
+            type: integer
+            minimum: 1
+            description: Maximum progress value for progress-based achievements
+    StatAllocation:
+      description: Character stat point allocation
+      type: object
+      properties:
+        strength:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to strength
+        agility:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to agility
+        intelligence:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to intelligence
+        vitality:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to vitality
+        perception:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to perception
+        charisma:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to charisma
+        total_allocated:
+          type: integer
+          minimum: 0
+          description: Total points allocated
+    PrestigeBonuses:
+      description: Bonuses granted by prestige level
+      type: object
+      properties:
+        experience_multiplier:
+          type: number
+          minimum: 1
+          description: Experience gain multiplier
+        stat_point_bonus:
+          type: integer
+          minimum: 0
+          description: Bonus stat points per level
+        unlocked_features:
+          type: array
+          items:
+            type: string
+          description: Features unlocked by prestige
+        cosmetic_rewards:
+          type: array
+          items:
+            type: string
+          description: Cosmetic items granted
+        title_unlocked:
+          type: string
+          description: Prestige title unlocked
+    LevelScaling:
+      description: Scaling values for a specific level
+      type: object
+      required:
+      - level
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Level these scalings apply to
+        enemy_health_multiplier:
+          type: number
+          minimum: 0.1
+          description: Enemy health scaling multiplier
+        enemy_damage_multiplier:
+          type: number
+          minimum: 0.1
+          description: Enemy damage scaling multiplier
+        experience_reward_multiplier:
+          type: number
+          minimum: 0.1
+          description: Experience reward scaling multiplier
+        item_drop_rate_multiplier:
+          type: number
+          minimum: 0.1
+          description: Item drop rate scaling multiplier
+        quest_rewards_multiplier:
+          type: number
+          minimum: 0.1
+          description: Quest reward scaling multiplier
+        recommended_zone_level:
+          type: integer
+          minimum: 1
+          description: Recommended zone level
+        difficulty_rating:
+          type: string
+          enum:
+          - very_easy
+          - easy
+          - normal
+          - hard
+          - very_hard
+          - nightmare
+          description: Difficulty rating for this level
+    AchievementCondition:
+      description: Condition for achieving an achievement
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - level_reached
+          - experience_gained
+          - enemies_killed
+          - quests_completed
+          - items_collected
+          - time_played
+          - social_interactions
+          - combat_stats
+          description: Type of achievement condition
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to achieve
+        comparison_operator:
+          type: string
+          enum:
+          - equals
+          - greater_than
+          - less_than
+          - greater_equal
+          - less_equal
+          default: greater_equal
+          description: Comparison operator
+        additional_filters:
+          type: object
+          description: Additional filters for the condition
+          additionalProperties: true
+    AchievementRewards:
+      description: Rewards granted by achievement
+      type: object
+      properties:
+        experience_points:
+          type: integer
+          minimum: 0
+          description: Experience points rewarded
+        currency_amount:
+          type: integer
+          minimum: 0
+          description: In-game currency rewarded
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+                description: Item template ID
+              quantity:
+                type: integer
+                minimum: 1
+                description: Item quantity
+          description: Items rewarded
+        titles:
+          type: array
+          items:
+            type: string
+          description: Titles unlocked
+        cosmetic_unlocks:
+          type: array
+          items:
+            type: string
+          description: Cosmetic items unlocked
+    LeaderboardEntry:
+      description: Leaderboard ranking entry
+      type: object
+      required:
+      - rank
+      - character_id
+      - character_name
+      - level
+      - total_experience
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Current ranking position
+        character_id:
+          type: string
+          format: uuid
+          description: Character unique identifier
+        character_name:
+          type: string
+          description: Character display name
+        level:
+          type: integer
+          minimum: 1
+          description: Character level
+        total_experience:
+          type: integer
+          minimum: 0
+          description: Total experience earned
+        prestige_level:
+          type: integer
+          minimum: 0
+          description: Prestige level
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        region:
+          type: string
+          description: Player region
+        guild_name:
+          type: string
+          description: Guild name (if applicable)
+    LeaderboardMetadata:
+      description: Leaderboard metadata
+      type: object
+      properties:
+        total_entries:
+          type: integer
+          description: Total entries in leaderboard
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+        timeframe:
+          type: string
+          enum:
+          - current
+          - weekly
+          - monthly
+          - all_time
+          description: Timeframe for rankings
+        region_filter:
+          type: string
+          description: Regional filter applied
+    CharacterLevelInfo:
+      description: Comprehensive character level information
+      type: object
+      required:
+      - character_id
+      - current_level
+      - current_experience
+      - experience_to_next_level
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character unique identifier
+        current_level:
+          type: integer
+          minimum: 1
+          description: Current character level
+        current_experience:
+          type: integer
+          minimum: 0
+          description: Experience in current level
+        total_experience_earned:
+          type: integer
+          minimum: 0
+          description: Total lifetime experience
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+          description: Experience needed for next level
+        experience_progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Progress to next level (0-1)
+        available_stat_points:
+          type: integer
+          minimum: 0
+          description: Unallocated stat points
+        prestige_level:
+          type: integer
+          minimum: 0
+          description: Current prestige level
+        stat_allocation:
+          $ref: '#/components/schemas/StatAllocation'
+        recent_level_ups:
+          type: array
+          items:
+            type: object
+            properties:
+              level_reached:
+                type: integer
+                description: Level reached
+              reached_at:
+                type: string
+                format: date-time
+                description: When level was reached
+              experience_at_level_up:
+                type: integer
+                description: Experience when leveled up
+          description: Recent level up history
+        milestones_achieved:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Progression milestones achieved
+    StatChanges:
+      description: Summary of stat changes from level operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        vitality:
+          type: number
+          description: Vitality change
+        perception:
+          type: number
+          description: Perception change
+        charisma:
+          type: number
+          description: Charisma change
+    LevelUpEvent:
+      description: Event triggered when character levels up
+      type: object
+      required:
+      - character_id
+      - new_level
+      - leveled_up_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character that leveled up
+        new_level:
+          type: integer
+          minimum: 2
+          description: New level reached
+        leveled_up_at:
+          type: string
+          format: date-time
+          description: When level up occurred
+        stat_points_granted:
+          type: integer
+          minimum: 0
+          description: Stat points granted
+        experience_overflow:
+          type: integer
+          minimum: 0
+          description: Experience carried over to new level
+        rewards_granted:
+          $ref: '#/components/schemas/AchievementRewards'
+        triggered_events:
+          type: array
+          items:
+            type: string
+          description: Game events triggered by level up
+    AchievementAward:
+      description: Achievement award information
+      type: object
+      required:
+      - achievement_id
+      - achievement_name
+      - awarded_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement unique identifier
+        achievement_name:
+          type: string
+          description: Achievement display name
+        awarded_at:
+          type: string
+          format: date-time
+          description: When achievement was awarded
+        points_earned:
+          type: integer
+          description: Achievement points earned
+        rewards:
+          $ref: '#/components/schemas/AchievementRewards'
+        tier:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          description: Achievement tier
+    AchievementProgress:
+      description: Achievement progress update
+      type: object
+      required:
+      - achievement_id
+      - current_progress
+      - target_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement unique identifier
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Target progress value
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Progress percentage (0-1)
+        last_updated:
+          type: string
+          format: date-time
+          description: When progress was last updated
+    ProgressionAnalytics:
+      description: Comprehensive character progression analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_characters:
+          type: integer
+          description: Total characters analyzed
+        average_level:
+          type: number
+          description: Average character level
+        level_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Character count by level
+        experience_gain_patterns:
+          type: object
+          properties:
+            average_daily_xp:
+              type: number
+              description: Average daily experience gain
+            xp_sources_distribution:
+              type: object
+              additionalProperties:
+                type: number
+              description: Experience by source type
+            leveling_speed_trends:
+              type: array
+              items:
+                type: object
+                properties:
+                  level_range:
+                    type: string
+                    description: Level range (e.g., "1-10")
+                  average_days_to_complete:
+                    type: number
+                    description: Average days to complete range
+              description: Leveling speed by level ranges
+        stat_allocation_preferences:
+          type: object
+          additionalProperties:
+            type: number
+          description: Average stat point allocation preferences
+        retention_correlation:
+          type: object
+          properties:
+            level_retention_rates:
+              type: object
+              additionalProperties:
+                type: number
+              description: Retention rates by level milestones
+            progression_bottlenecks:
+              type: array
+              items:
+                type: object
+                properties:
+                  level:
+                    type: integer
+                    description: Level where bottleneck occurs
+                  completion_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Rate of players completing this level
+                  average_time_stuck:
+                    type: number
+                    description: Average days players are stuck at this level
+              description: Identified progression bottlenecks
+    GainExperienceRequest:
+      description: Request payload for gaining experience
+      type: object
+      required:
+      - character_id
+      - experience_amount
+      - source_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character gaining experience
+        experience_amount:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Amount of experience to gain
+        source_type:
+          type: string
+          enum:
+          - combat
+          - quest
+          - exploration
+          - crafting
+          - social
+          - event
+          - achievement
+          description: Source of experience gain
+        source_id:
+          type: string
+          format: uuid
+          description: Specific source identifier
+        multipliers:
+          type: object
+          description: Additional multipliers to apply
+          additionalProperties:
+            type: number
+          example:
+            difficulty_bonus: 1.5
+            vip_multiplier: 2.0
+        metadata:
+          type: object
+          description: Additional experience event metadata
+          additionalProperties: true
+    BatchGainExperienceRequest:
+      description: Request payload for batch experience gain
+      type: object
+      required:
+      - experience_events
+      properties:
+        experience_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GainExperienceRequest'
+          minItems: 1
+          maxItems: 1000
+          description: Individual experience gain requests
+        batch_metadata:
+          type: object
+          description: Metadata for the entire batch
+          properties:
+            event_type:
+              type: string
+              description: Type of batch event (e.g., "daily_quest_completion")
+            campaign_id:
+              type: string
+              format: uuid
+              description: Associated campaign or event ID
+    ExperienceResult:
+      description: Result of experience gain operation
+      type: object
+      required:
+      - experience_gained
+      - new_total_experience
+      - level_before
+      - level_after
+      properties:
+        experience_gained:
+          type: integer
+          description: Experience points gained
+        new_total_experience:
+          type: integer
+          description: New total experience
+        level_before:
+          type: integer
+          description: Level before experience gain
+        level_after:
+          type: integer
+          description: Level after experience gain
+        leveled_up:
+          type: boolean
+          description: Whether character leveled up
+        stat_points_granted:
+          type: integer
+          description: Stat points granted from level up
+        level_up_rewards:
+          $ref: '#/components/schemas/AchievementRewards'
+        experience_overflow:
+          type: integer
+          description: Experience carried over to next level
+    AllocateStatPointsRequest:
+      description: Request payload for stat point allocation
+      type: object
+      required:
+      - stat_allocations
+      properties:
+        stat_allocations:
+          type: object
+          description: Stat points to allocate by stat type
+          properties:
+            strength:
+              type: integer
+              minimum: 0
+              description: Points to allocate to strength
+            agility:
+              type: integer
+              minimum: 0
+              description: Points to allocate to agility
+            intelligence:
+              type: integer
+              minimum: 0
+              description: Points to allocate to intelligence
+            vitality:
+              type: integer
+              minimum: 0
+              description: Points to allocate to vitality
+            perception:
+              type: integer
+              minimum: 0
+              description: Points to allocate to perception
+            charisma:
+              type: integer
+              minimum: 0
+              description: Points to allocate to charisma
+          required: []
+        validation_mode:
+          type: string
+          enum:
+          - strict
+          - lenient
+          - preview
+          default: strict
+          description: How strictly to validate allocations
+    CheckAchievementsRequest:
+      description: Request payload for achievement checking
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to check achievements for
+        specific_achievements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific achievements to check (empty = all)
+        force_recheck:
+          type: boolean
+          default: false
+          description: Force recheck of already completed achievements
+        update_progress_only:
+          type: boolean
+          default: false
+          description: Only update progress, don't award achievements

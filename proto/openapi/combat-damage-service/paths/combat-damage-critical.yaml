@@ -1,0 +1,37 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/critical:
+    post:
+      summary: Calculate critical hit chance and damage
+      operationId: combatDamageCalculateCritical
+      description: 'Calculate critical hit probability and damage multiplier based
+        on weapon, skills, and target.
+
+        **BACKEND NOTE:** High-frequency operation - optimized with lookup tables
+        for crit calculations. Memory: precomputed crit tables reduce calculation
+        overhead by 70%.'
+      tags:
+      - Critical Hits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriticalHitRequest'
+      responses:
+        '200':
+          description: Critical hit calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriticalHitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

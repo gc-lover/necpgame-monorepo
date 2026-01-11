@@ -1,0 +1,38 @@
+openapi: 3.0.3
+paths:
+  /events/{eventId}/leave:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    post:
+      summary: Leave event
+      description: '**Enterprise-grade event leaving with cleanup**
+
+        Removes player participation from world event.
+
+        **Performance:** <10ms P99, atomic operations **Data Integrity:** Guaranteed
+        cleanup of participation records
+
+        '
+      operationId: leaveEvent
+      tags:
+      - Event Participation
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                description: Success confirmation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

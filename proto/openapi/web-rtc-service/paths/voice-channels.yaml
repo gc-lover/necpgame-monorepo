@@ -1,0 +1,148 @@
+openapi: 3.0.3
+paths:
+  /voice-channels:
+    get:
+      summary: List voice channels with filtering and pagination
+      description: '**Enterprise-grade voice channel listing endpoint**
+
+
+        Supports filtering by type (guild/party/global), status, and participant count.
+
+        Optimized for real-time voice channel discovery and management.
+
+
+        **Performance:** <25ms P95, supports 5000+ concurrent voice sessions
+
+        '
+      operationId: listVoiceChannels
+      tags:
+      - Voice Channels
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - priority
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: filter_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+        description: Filter by status
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create new voice channel
+      description: '**Enterprise-grade voice channel creation endpoint**
+
+
+        Creates guild parties, private rooms, or global voice channels with permission
+        validation.
+
+        Supports automatic STUN/TURN server allocation and quality monitoring setup.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        '
+      operationId: createVoiceChannel
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Voice channel creation request
+      responses:
+        '201':
+          $ref: '#/components/responses/ExampleCreated'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - example with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

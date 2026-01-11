@@ -1,0 +1,72 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}/abilities/{abilityId}/use:
+    post:
+      summary: Use companion ability
+      description: '**Activate a companion ability**
+
+
+        Triggers the specified ability for the companion.
+
+        Validates ability availability, cooldowns, and resource costs.
+
+
+        **Performance:** <100ms P95, includes ability validation and execution
+
+        '
+      operationId: useCompanionAbility
+      tags:
+      - Companion Abilities
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      - name: abilityId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Ability ID
+      responses:
+        '200':
+          description: Ability used successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseAbilityResponse'
+        '400':
+          description: Ability on cooldown or insufficient resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Companion or ability not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

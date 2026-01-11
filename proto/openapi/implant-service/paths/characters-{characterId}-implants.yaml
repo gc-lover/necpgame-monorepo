@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/implants:
+    get:
+      operationId: implantServiceGetCharacterImplants
+      summary: Get character implants
+      description: 'Retrieve all implants installed on a character with current status.
+
+
+        **Implant Status:**
+
+        - Installed implants with current tier and condition
+
+        - Active effects and stat bonuses
+
+        - Maintenance status and degradation level
+
+        - Cyberpsychosis risk contribution
+
+        '
+      tags:
+      - Implant Management
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: include_inactive
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include inactive/degraded implants
+      responses:
+        '200':
+          description: Character implants retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/InstalledImplant'
+                    summary:
+                      $ref: '#/components/schemas/CharacterImplantSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'

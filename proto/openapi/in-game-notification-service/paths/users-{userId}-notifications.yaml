@@ -1,0 +1,143 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/notifications:
+    get:
+      operationId: inGameNotificationServiceGetUserNotifications
+      summary: Get user notifications
+      description: 'Retrieve user''s recent notifications with filtering and pagination.
+
+
+        **Notification History:**
+
+        - Recent notification history
+
+        - Read/unread status tracking
+
+        - Category-based filtering
+
+        - Time-based pagination
+
+        - Bulk operations support
+
+        '
+      tags:
+      - User Preferences
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - unread
+          - read
+          - all
+          default: all
+          description: Filter by read status
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - commerce
+          - security
+          description: Filter by notification category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of notifications to return
+      - name: before
+        in: query
+        schema:
+          type: string
+          format: date-time
+          description: Get notifications before this timestamp
+      responses:
+        '200':
+          description: User notifications retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/UserNotification'
+                    pagination:
+                      $ref: '#/components/schemas/NotificationPagination'
+    patch:
+      operationId: inGameNotificationServiceBulkUpdateNotifications
+      summary: Bulk update user notifications
+      description: 'Perform bulk operations on user notifications (mark as read, delete,
+        etc.).
+
+
+        **Bulk Operations:**
+
+        - Mark multiple notifications as read
+
+        - Delete multiple notifications
+
+        - Archive notifications
+
+        - Category-based operations
+
+        - Time-based operations
+
+        '
+      tags:
+      - User Preferences
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUpdateNotificationsRequest'
+      responses:
+        '200':
+          description: Notifications updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        updated_count:
+                          type: integer
+                          description: Number of notifications updated
+                        operation:
+                          type: string
+                          enum:
+                          - mark_read
+                          - mark_unread
+                          - delete
+                          - archive
+                          description: Operation performed

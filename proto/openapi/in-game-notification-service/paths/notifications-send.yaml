@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /notifications/send:
+    post:
+      operationId: inGameNotificationServiceSendNotification
+      summary: Send in-game notification
+      description: 'Send real-time notification to specified users with immediate
+        delivery.
+
+
+        **Delivery Methods:**
+
+        - WebSocket streaming for online users
+
+        - Push notification fallback for offline users
+
+        - Queue-based delivery with priority handling
+
+        - Real-time delivery tracking
+
+        '
+      tags:
+      - Notification Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '202':
+          description: Notification queued for delivery
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Accepted
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        notification_id:
+                          type: string
+                          format: uuid
+                          description: Notification tracking ID
+                        estimated_delivery_time:
+                          type: string
+                          format: date-time
+                          description: Expected delivery time
+                        target_count:
+                          type: integer
+                          description: Number of target users
+                        delivery_methods:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                            - websocket
+                            - push
+                            - email_fallback
+                          description: Delivery methods used
+        '400':
+          $ref: '#/components/responses/BadRequest'

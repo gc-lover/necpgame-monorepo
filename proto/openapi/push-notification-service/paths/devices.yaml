@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /devices:
+    post:
+      operationId: pushNotificationServiceRegisterDevice
+      summary: Register device for push notifications
+      description: 'Register a device with its push notification token.
+
+
+        **Security Notes:**
+
+        - Validates device authenticity
+
+        - Encrypts sensitive device data
+
+        - Creates device fingerprint
+
+        - Links to user account securely
+
+        '
+      tags:
+      - Device Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '201':
+          description: Device registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DeviceRegistration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      operationId: pushNotificationServiceListUserDevices
+      summary: List user's registered devices
+      description: 'Retrieve all devices registered for the authenticated user.
+
+
+        **Privacy Notes:**
+
+        - Only returns user''s own devices
+
+        - Masks sensitive device information
+
+        - Includes device activity status
+
+        '
+      tags:
+      - Device Management
+      responses:
+        '200':
+          description: Devices retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/DeviceSummary'

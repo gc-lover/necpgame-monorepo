@@ -1,0 +1,53 @@
+openapi: 3.0.3
+paths:
+  /hacking/{sessionId}/ice/break:
+    post:
+      operationId: hackingServiceBreakICE
+      summary: Attempt to break ICE system
+      description: 'Attempt to break through an ICE (Intrusion Countermeasures Electronics)
+        system.
+
+
+        **ICE Breaking Process:**
+
+        - Initialize ICE minigame or automated breaking
+
+        - Calculate success probability based on hacker skills
+
+        - Execute breaking attempt with real-time feedback
+
+        - Handle success/failure outcomes and consequences
+
+        '
+      tags:
+      - ICE Systems
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BreakICERequest'
+      responses:
+        '200':
+          description: ICE breaking attempt completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ICEBreakResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'

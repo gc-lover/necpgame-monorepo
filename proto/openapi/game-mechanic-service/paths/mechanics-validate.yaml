@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /mechanics/validate:
+    post:
+      operationId: gameMechanicServiceValidateMechanic
+      summary: Validate game mechanic
+      description: 'Validate a game mechanic action or state change with comprehensive
+        rule checking.
+
+
+        **Validation Process:**
+
+        - Rule engine evaluation of proposed action
+
+        - State consistency validation
+
+        - Permission and capability checking
+
+        - Performance impact assessment
+
+        - Real-time conflict detection
+
+        '
+      tags:
+      - Core Mechanics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateMechanicRequest'
+      responses:
+        '200':
+          description: Mechanic validation completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MechanicValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Mechanic validation failed due to conflicts
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

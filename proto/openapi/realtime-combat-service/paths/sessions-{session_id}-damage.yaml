@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/damage:
+    post:
+      summary: Apply damage to target
+      description: '**Apply combat damage**
+
+        Applies damage from attacker to target with validation and real-time effects.
+
+        **BACKEND NOTE:** High-frequency endpoint (500+ RPS) critical for combat balance
+        and anti-cheat validation.
+
+        '
+      operationId: applyDamage
+      tags:
+      - Combat Events
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageRequest'
+      responses:
+        '200':
+          description: Damage applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageResponse'
+        '429':
+          description: Damage application rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

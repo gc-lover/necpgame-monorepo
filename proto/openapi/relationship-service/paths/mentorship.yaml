@@ -1,0 +1,103 @@
+openapi: 3.0.3
+paths:
+  /mentorship:
+    get:
+      summary: Get mentorship relationships
+      description: '**Retrieve user''s mentorship relationships**
+
+        Shows both mentor and mentee relationships.
+
+        **Performance:** <45ms with mentorship filtering
+
+        '
+      operationId: getMentorshipRelationships
+      tags:
+      - Mentorship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - mentor
+          - mentee
+          - both
+          default: both
+        description: Filter by mentorship role
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - completed
+          - terminated
+          default: active
+        description: Filter by mentorship status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Number of relationships to return
+      responses:
+        '200':
+          description: Mentorship relationships retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MentorshipResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Initiate mentorship
+      description: '**Initiate a mentorship relationship**
+
+        Creates mentorship proposal with terms and conditions.
+
+        **Performance:** <55ms with mentorship validation
+
+        '
+      operationId: initiateMentorship
+      tags:
+      - Mentorship
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateMentorshipRequest'
+      responses:
+        '201':
+          description: Mentorship initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

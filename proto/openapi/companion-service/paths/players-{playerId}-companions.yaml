@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions:
+    get:
+      summary: Get player companions
+      description: '**Retrieve player''s companion collection**
+
+
+        Returns list of all companions owned by a player.
+
+        Includes companion stats, levels, and current status.
+
+
+        **Performance:** <50ms P95, database query with pagination
+
+        '
+      operationId: getPlayerCompanions
+      tags:
+      - Companion Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of companions to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of companions to skip
+      responses:
+        '200':
+          description: Player companions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerCompanion'
+                  totalCount:
+                    type: integer
+                    example: 5
+                  hasMore:
+                    type: boolean
+                    example: false
+                required:
+                - companions
+                - totalCount
+                - hasMore
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,62 @@
+openapi: 3.0.3
+paths:
+  /clan-wars/{warId}/statistics:
+    get:
+      summary: Get war statistics
+      description: '**Enterprise-grade war statistics endpoint**
+
+        Provides comprehensive war analytics including casualty rates, territory gains,
+        resource expenditures, and performance metrics for all participants.
+
+        Essential for strategic assessment and post-war analysis.
+
+        **Performance:** <25ms P95, cached with real-time updates
+
+        '
+      operationId: getWarStatistics
+      tags:
+      - War Statistics
+      parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - total
+          default: total
+        description: Statistics timeframe
+      - name: clan_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Focus statistics on specific clan
+      responses:
+        '200':
+          description: War statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarStatisticsResponse'
+        '404':
+          description: Clan war not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,603 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Alliance:
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
+        Expected memory savings: 30-50%. Alliance data optimized for frequent diplomatic
+        operations."
+
+        '
+      properties:
+        alliance_type:
+          description: Type of alliance
+          enum:
+          - military
+          - trade
+          - political
+          - research
+          - criminal
+          example: military
+          type: string
+        description:
+          description: Alliance description and charter
+          maxLength: 2000
+          type: string
+        founded_date:
+          description: Alliance founding date
+          format: date-time
+          type: string
+        id:
+          description: Alliance unique identifier
+          format: uuid
+          type: string
+        influence_level:
+          description: Current influence level
+          enum:
+          - dominant
+          - major
+          - minor
+          - emerging
+          example: major
+          type: string
+        is_active:
+          description: Whether alliance is currently active
+          example: true
+          type: boolean
+        leader_faction_id:
+          description: Leading faction in the alliance
+          format: uuid
+          type: string
+        member_count:
+          description: Number of member factions/guilds
+          example: 8
+          minimum: 2
+          type: integer
+        member_factions:
+          description: List of member faction IDs
+          items:
+            format: uuid
+            type: string
+          type: array
+        name:
+          description: Alliance display name
+          example: Pacific Rim Alliance
+          maxLength: 100
+          minLength: 3
+          type: string
+        reputation_score:
+          description: Alliance reputation score
+          example: 650
+          maximum: 1000
+          minimum: -1000
+          type: integer
+        total_influence:
+          description: Combined influence of all members
+          example: 25000
+          minimum: 0
+          type: integer
+      required:
+      - id
+      - name
+      - alliance_type
+      - member_count
+      - founded_date
+      - is_active
+      type: object
+    AllianceListResponse:
+      description: '"BACKEND NOTE: Paginated alliance list with metadata.
+
+        Optimized for large alliance directories."
+
+        '
+      properties:
+        alliances:
+          description: List of alliances
+          items:
+            $ref: '#/components/schemas/Alliance'
+          type: array
+        has_more:
+          description: Whether there are more results available
+          example: true
+          type: boolean
+        limit:
+          description: Items per page
+          example: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+        page:
+          description: Current page number
+          example: 1
+          minimum: 1
+          type: integer
+        total_count:
+          description: Total number of alliances matching criteria
+          example: 23
+          minimum: 0
+          type: integer
+      required:
+      - alliances
+      - total_count
+      - has_more
+      type: object
+    AllianceResponse:
+      description: '"BACKEND NOTE: Single alliance response wrapper.
+
+        Includes full alliance data with optional related information."
+
+        '
+      properties:
+        alliance:
+          $ref: '#/components/schemas/Alliance'
+      required:
+      - alliance
+      type: object
+    CreateAllianceRequest:
+      description: '"BACKEND NOTE: Validation includes name uniqueness and political
+        constraints.
+
+        Founding members must have compatible diplomatic relations."
+
+        '
+      properties:
+        alliance_type:
+          description: Type of alliance to create
+          enum:
+          - military
+          - trade
+          - political
+          - research
+          - criminal
+          type: string
+        description:
+          description: Alliance charter and objectives
+          maxLength: 2000
+          minLength: 10
+          type: string
+        founding_members:
+          description: Initial founding member faction/guild IDs
+          items:
+            format: uuid
+            type: string
+          maxItems: 10
+          minItems: 2
+          type: array
+        initial_treaty_terms:
+          additionalProperties: true
+          description: Initial treaty terms for the alliance
+          type: object
+        name:
+          description: Desired alliance name
+          example: United Corporate Front
+          maxLength: 100
+          minLength: 3
+          type: string
+      required:
+      - name
+      - alliance_type
+      - description
+      type: object
+    DiplomacyResponse:
+      description: '"BACKEND NOTE: Complete diplomatic overview for strategic decision
+        making.
+
+        Relationship counts help assess alliance political position."
+
+        '
+      properties:
+        alliance_id:
+          description: Source alliance identifier
+          format: uuid
+          type: string
+        ally_count:
+          description: Number of allied relationships
+          example: 5
+          minimum: 0
+          type: integer
+        diplomatic_relations:
+          description: All diplomatic relationships
+          items:
+            $ref: '#/components/schemas/DiplomaticRelation'
+          type: array
+        overall_standing:
+          description: Overall diplomatic position
+          enum:
+          - dominant
+          - influential
+          - balanced
+          - struggling
+          - isolated
+          example: influential
+          type: string
+        rival_count:
+          description: Number of rival relationships
+          example: 2
+          minimum: 0
+          type: integer
+        war_count:
+          description: Number of active wars
+          example: 1
+          minimum: 0
+          type: integer
+      required:
+      - alliance_id
+      - diplomatic_relations
+      - overall_standing
+      type: object
+    DiplomaticRelation:
+      description: '"BACKEND NOTE: Relation strength affects gameplay mechanics and
+        NPC interactions.
+
+        Dynamic relationships change based on alliance actions and treaty compliance."
+
+        '
+      properties:
+        active_conflicts:
+          description: Currently active diplomatic conflicts
+          items:
+            type: string
+          type: array
+        established_date:
+          description: When relationship was established
+          format: date-time
+          type: string
+        last_incident:
+          description: Last diplomatic incident or interaction
+          format: date-time
+          type: string
+        relation_strength:
+          description: Strength of relationship (-100 to +100)
+          example: 75
+          maximum: 100
+          minimum: -100
+          type: integer
+        relation_type:
+          description: Type of diplomatic relationship
+          enum:
+          - allied
+          - friendly
+          - neutral
+          - strained
+          - hostile
+          - at_war
+          example: allied
+          type: string
+        shared_treaties:
+          description: Treaties shared between parties
+          items:
+            format: uuid
+            type: string
+          type: array
+        target_party_id:
+          description: Related alliance/faction identifier
+          format: uuid
+          type: string
+      required:
+      - target_party_id
+      - relation_type
+      - relation_strength
+      - established_date
+      type: object
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    JoinAllianceRequest:
+      description: '"BACKEND NOTE: Optional sponsor required for some alliance types.
+
+        Terms validation ensures diplomatic compatibility."
+
+        '
+      properties:
+        faction_id:
+          description: Faction requesting membership
+          format: uuid
+          type: string
+        membership_terms:
+          additionalProperties: true
+          description: Specific membership terms and conditions
+          type: object
+        sponsor_member_id:
+          description: Existing alliance member sponsoring the request
+          format: uuid
+          type: string
+      type: object
+    LeaveAllianceRequest:
+      description: '"BACKEND NOTE: Some reasons may incur diplomatic penalties or
+        treaty breaches.
+
+        Leadership positions require special withdrawal procedures."
+
+        '
+      properties:
+        exit_statement:
+          description: Optional formal statement about departure
+          maxLength: 500
+          type: string
+        reason:
+          description: Reason for leaving
+          enum:
+          - strategic_realignment
+          - internal_conflict
+          - treaty_violation
+          - voluntary_withdrawal
+          example: strategic_realignment
+          type: string
+      type: object
+    LeaveAllianceResponse:
+      description: '"BACKEND NOTE: Diplomatic impact varies by reason and alliance
+        type.
+
+        Some departures trigger automatic treaty reviews."
+
+        '
+      properties:
+        alliance_id:
+          description: Alliance identifier
+          format: uuid
+          type: string
+        cooldown_period:
+          description: Cooldown before rejoining alliances
+          format: duration
+          type: string
+        diplomatic_impact:
+          description: Diplomatic reputation change
+          example: -25
+          type: integer
+        left_at:
+          description: Departure timestamp
+          format: date-time
+          type: string
+        member_id:
+          description: Former member identifier
+          format: uuid
+          type: string
+        treaty_obligations:
+          description: Remaining treaty obligations
+          items:
+            type: string
+          type: array
+      required:
+      - alliance_id
+      - member_id
+      - left_at
+      - diplomatic_impact
+      type: object
+    MembershipResponse:
+      description: '"BACKEND NOTE: Membership status affects diplomatic relations
+        and treaty obligations.
+
+        Probation period may apply for new members."
+
+        '
+      properties:
+        alliance_id:
+          description: Alliance identifier
+          format: uuid
+          type: string
+        joined_at:
+          description: Membership start timestamp
+          format: date-time
+          type: string
+        member_id:
+          description: New member identifier
+          format: uuid
+          type: string
+        membership_status:
+          description: Initial membership status
+          enum:
+          - active
+          - probation
+          - pending_approval
+          example: probation
+          type: string
+        membership_terms:
+          additionalProperties: true
+          description: Agreed membership terms and obligations
+          type: object
+      required:
+      - alliance_id
+      - member_id
+      - membership_status
+      - joined_at
+      type: object
+    PaginationMeta:
+      $ref: ../common/schemas/pagination.yaml#/PaginationMeta
+    Treaty:
+      description: '"BACKEND NOTE: Treaty data affects diplomatic relations and gameplay
+        mechanics.
+
+        Status changes trigger diplomatic event notifications."
+
+        '
+      properties:
+        created_at:
+          description: Treaty creation timestamp
+          format: date-time
+          type: string
+        expires_at:
+          description: Treaty expiration date
+          format: date-time
+          type: string
+        id:
+          description: Treaty unique identifier
+          format: uuid
+          type: string
+        last_updated:
+          description: Last treaty modification
+          format: date-time
+          type: string
+        parties:
+          description: Participating alliance/faction IDs
+          items:
+            format: uuid
+            type: string
+          minItems: 2
+          type: array
+        status:
+          description: Current treaty status
+          enum:
+          - active
+          - pending
+          - expired
+          - breached
+          - terminated
+          example: active
+          type: string
+        terms:
+          additionalProperties: true
+          description: Specific treaty terms and conditions
+          type: object
+        type:
+          description: Type of treaty
+          enum:
+          - trade
+          - military
+          - research
+          - territorial
+          - non_aggression
+          example: trade
+          type: string
+      required:
+      - id
+      - type
+      - parties
+      - terms
+      - status
+      - created_at
+      type: object
+    TreatyProposalRequest:
+      description: '"BACKEND NOTE: Terms validation includes diplomatic compatibility
+        checks.
+
+        Duration affects treaty negotiation complexity."
+
+        '
+      properties:
+        duration_days:
+          description: Proposed treaty duration in days
+          maximum: 3650
+          minimum: 1
+          type: integer
+        justification:
+          description: Diplomatic justification for the treaty
+          maxLength: 1000
+          type: string
+        proposed_terms:
+          additionalProperties: true
+          description: Proposed treaty terms and conditions
+          type: object
+        target_party_id:
+          description: Target alliance/faction for treaty
+          format: uuid
+          type: string
+        treaty_type:
+          description: Type of treaty to propose
+          enum:
+          - trade
+          - military
+          - research
+          - territorial
+          - non_aggression
+          example: trade
+          type: string
+      required:
+      - treaty_type
+      - target_party_id
+      - proposed_terms
+      type: object
+    TreatyProposalResponse:
+      description: '"BACKEND NOTE: Proposal status tracks treaty negotiation lifecycle.
+
+        Response deadlines vary by treaty type and diplomatic relations."
+
+        '
+      properties:
+        diplomatic_impact:
+          additionalProperties: true
+          description: Expected diplomatic consequences
+          type: object
+        proposal_id:
+          description: Unique treaty proposal identifier
+          format: uuid
+          type: string
+        status:
+          description: Current proposal status
+          enum:
+          - submitted
+          - under_review
+          - accepted
+          - rejected
+          - counter_proposed
+          example: submitted
+          type: string
+        submitted_at:
+          description: Proposal submission timestamp
+          format: date-time
+          type: string
+        target_response_deadline:
+          description: Deadline for target party response
+          format: date-time
+          type: string
+        treaty_type:
+          description: Type of proposed treaty
+          type: string
+      required:
+      - proposal_id
+      - treaty_type
+      - status
+      - submitted_at
+      type: object
+    TreatyResponse:
+      description: '"BACKEND NOTE: Treaty summary for alliance diplomatic overview.
+
+        Active count affects alliance diplomatic strength."
+
+        '
+      properties:
+        active_count:
+          description: Number of active treaties
+          example: 8
+          minimum: 0
+          type: integer
+        total_count:
+          description: Total number of treaties
+          example: 12
+          minimum: 0
+          type: integer
+        treaties:
+          description: List of treaties
+          items:
+            $ref: '#/components/schemas/Treaty'
+          type: array
+      required:
+      - treaties
+      - total_count
+      type: object
+    UpdateAllianceRequest:
+      description: '"BACKEND NOTE: Partial updates supported. Leadership changes require
+        diplomatic consensus.
+
+        Deactivation may affect ongoing treaties and relations."
+
+        '
+      properties:
+        description:
+          description: Updated alliance charter
+          maxLength: 2000
+          minLength: 10
+          type: string
+        is_active:
+          description: Activate/deactivate alliance
+          type: boolean
+        leader_faction_id:
+          description: New alliance leader
+          format: uuid
+          type: string
+        name:
+          description: New alliance name
+          maxLength: 100
+          minLength: 3
+          type: string
+      type: object

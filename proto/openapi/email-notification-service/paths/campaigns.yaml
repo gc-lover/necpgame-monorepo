@@ -1,0 +1,97 @@
+openapi: 3.0.3
+paths:
+  /campaigns:
+    post:
+      operationId: emailNotificationServiceCreateCampaign
+      summary: Create email campaign
+      description: 'Create email campaign for targeted bulk sending.
+
+
+        **Campaign Features:**
+
+        - Advanced recipient segmentation
+
+        - A/B testing configuration
+
+        - Scheduled delivery
+
+        - Performance tracking
+
+        - Budget and rate controls
+
+        '
+      tags:
+      - Campaign Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+      responses:
+        '201':
+          description: Campaign created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailCampaign'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: emailNotificationServiceListCampaigns
+      summary: List email campaigns
+      description: Retrieve paginated list of email campaigns with performance metrics
+      tags:
+      - Campaign Management
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - scheduled
+          - active
+          - completed
+          - cancelled
+          - paused
+        description: Filter by campaign status
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for campaigns
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: End date for campaigns
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of campaigns to return
+      responses:
+        '200':
+          description: Campaigns retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CampaignSummary'

@@ -1,0 +1,53 @@
+openapi: 3.0.3
+paths:
+  /transactions/transfer:
+    post:
+      operationId: currencyServiceTransferFunds
+      summary: Transfer funds between wallets
+      description: 'Transfer funds between two wallets with comprehensive validation
+        and security.
+
+
+        **Fund Transfer:**
+
+        - Validate sender and receiver permissions
+
+        - Check sufficient balance and limits
+
+        - Apply fraud detection algorithms
+
+        - Execute atomic transfer operation
+
+        - Generate transaction records and notifications
+
+        '
+      tags:
+      - Transaction Processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferFundsRequest'
+      responses:
+        '200':
+          description: Funds transferred successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TransactionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
+          description: Insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/PaymentRequired
+        '429':
+          $ref: '#/components/responses/TooManyRequests'

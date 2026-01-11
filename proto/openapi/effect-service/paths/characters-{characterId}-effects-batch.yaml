@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/effects/batch:
+    post:
+      operationId: effectServiceBatchApplyEffects
+      summary: Batch apply effects to character
+      description: 'Apply multiple effects to a character in a single operation.
+
+
+        **Batch Processing:**
+
+        - Atomic application of multiple effects
+
+        - Stacking rule validation across effects
+
+        - Performance optimization for multiple effects
+
+        - Rollback on partial failures
+
+        '
+      tags:
+      - Character Effects
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchApplyEffectsRequest'
+      responses:
+        '200':
+          description: Effects batch applied successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        applied_effects:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/AppliedEffect'
+                        failed_effects:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              effect_template_id:
+                                type: string
+                                format: uuid
+                              error_message:
+                                type: string
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '400':
+          $ref: '#/components/responses/BadRequest'

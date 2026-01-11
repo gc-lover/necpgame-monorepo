@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /events/process:
+    post:
+      operationId: gameMechanicServiceProcessEvents
+      summary: Process game events
+      description: 'Process batch of game events through the event processing pipeline.
+
+
+        **Event Processing:**
+
+        - Event prioritization and queuing
+
+        - Parallel processing optimization
+
+        - Cross-system event propagation
+
+        - Performance monitoring and metrics
+
+        - Error handling and retry logic
+
+        '
+      tags:
+      - Event Processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessEventsRequest'
+      responses:
+        '200':
+          description: Events processed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EventProcessingResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Some events failed processing
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/UnprocessableEntity

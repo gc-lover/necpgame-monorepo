@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /effects/adaptive/recommend:
+    get:
+      summary: Get AI-powered effect recommendations
+      operationId: getWeaponEffectRecommendations
+      description: 'Get personalized elemental effect recommendations based on playstyle.
+
+        **AI Integration:** Uses trained models for tactical effect suggestions.'
+      tags:
+      - AI Recommendations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for personalization
+      - name: weapon_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - pistol
+          - rifle
+          - shotgun
+          - sniper
+          - smg
+          - melee
+          - heavy
+        description: Weapon type for recommendations
+      - name: combat_style
+        in: query
+        schema:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - stealth
+          - support
+          - control
+        description: Combat style preference
+      responses:
+        '200':
+          description: Effect recommendations
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/EffectRecommendations'
+        '404':
+          description: Character not found
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/Error'

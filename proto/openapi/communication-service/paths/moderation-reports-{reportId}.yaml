@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /moderation/reports/{reportId}:
+    get:
+      summary: Get moderation report details
+      description: '**Retrieve detailed information about a moderation report**
+
+        Includes evidence, comments, and resolution history.
+
+        **Performance:** <25ms with full context loading
+
+        '
+      operationId: getModerationReport
+      tags:
+      - Moderation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Moderation report details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update moderation report
+      description: '**Update report status and add moderator notes**
+
+        Requires moderator permissions.
+
+        **Performance:** <35ms with audit logging
+
+        '
+      operationId: updateModerationReport
+      tags:
+      - Moderation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModerationReportRequest'
+      responses:
+        '200':
+          description: Moderation report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

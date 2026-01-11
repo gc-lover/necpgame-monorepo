@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /emails/{emailId}/status:
+    get:
+      operationId: emailNotificationServiceGetEmailStatus
+      summary: Get email delivery status
+      description: 'Retrieve delivery status and tracking information for specific
+        email.
+
+
+        **Tracking Information:**
+
+        - Delivery status across all providers
+
+        - Open and click tracking data
+
+        - Bounce and complaint information
+
+        - Geographic delivery data
+
+        '
+      tags:
+      - Email Delivery
+      parameters:
+      - name: emailId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Email unique identifier
+      responses:
+        '200':
+          description: Email status retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailDeliveryStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'

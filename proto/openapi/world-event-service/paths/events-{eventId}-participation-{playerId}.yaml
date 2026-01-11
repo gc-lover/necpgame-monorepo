@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /events/{eventId}/participation/{playerId}:
+    parameters:
+    - name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique event identifier
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player participation details
+      description: '**Enterprise-grade participation retrieval with caching**
+
+        Retrieves detailed participation information for specific player.
+
+        **Performance:** <5ms P99 with Redis caching **Privacy:** Player-specific
+        data isolation
+
+        '
+      operationId: getPlayerParticipation
+      tags:
+      - Event Participation
+      responses:
+        '200':
+          description: Participation details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventParticipationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update player participation
+      description: '**Enterprise-grade participation updates with validation**
+
+        Updates player participation status and progress data.
+
+        **Performance:** <15ms P99, includes validation **Audit:** Full participation
+        history tracking
+
+        '
+      operationId: updatePlayerParticipation
+      tags:
+      - Event Participation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParticipationRequest'
+      responses:
+        '200':
+          description: Participation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

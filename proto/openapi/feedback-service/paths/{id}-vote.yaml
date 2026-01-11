@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /{id}/vote:
+    delete:
+      summary: Remove vote from feedback
+      description: 'Remove a vote from a public feedback submission.
+
+
+        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered
+        for struct
+
+        alignment (large → small). Expected memory savings: 30-50%.
+
+        '
+      operationId: removeVote
+      tags:
+      - Voting
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Feedback submission unique identifier
+      responses:
+        '200':
+          description: Vote removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ../common/responses/error.yaml#/components/responses/NotFound
+        '409':
+          description: No vote found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '500':
+          $ref: ../common/responses/error.yaml#/components/responses/InternalServerError

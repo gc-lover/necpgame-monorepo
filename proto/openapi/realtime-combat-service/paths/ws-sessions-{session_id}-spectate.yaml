@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /ws/sessions/{session_id}/spectate:
+    get:
+      summary: WebSocket connection for spectator updates
+      description: '**Spectator WebSocket connection**
+
+        Establishes WebSocket connection for spectator real-time updates with camera
+        controls.
+
+        **BACKEND NOTE:** Read-only connection with lower priority than player connections.
+
+        '
+      operationId: spectatorWebSocket
+      tags:
+      - Real-time Updates
+      - Spectator
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+        description: JWT authentication token
+      - name: camera_mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - free
+          - follow_player
+          - overview
+          - cinematic
+          default: free
+        description: Initial spectator camera mode
+      - name: follow_target
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Player ID to follow (if camera_mode is follow_player)
+      responses:
+        '101':
+          description: Spectator WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation

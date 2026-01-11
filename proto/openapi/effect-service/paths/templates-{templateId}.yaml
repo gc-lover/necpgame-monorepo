@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /templates/{templateId}:
+    get:
+      operationId: effectServiceGetTemplate
+      summary: Get effect template
+      description: Retrieve detailed effect template information
+      tags:
+      - Effect Templates
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template unique identifier
+      responses:
+        '200':
+          description: Effect template retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EffectTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: effectServiceUpdateTemplate
+      summary: Update effect template
+      description: 'Update template configuration with versioning.
+
+
+        **Template Updates:**
+
+        - Create new template version
+
+        - Validate effect calculations
+
+        - Update active effects if safe
+
+        - Maintain version history
+
+        '
+      tags:
+      - Effect Templates
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEffectTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EffectTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

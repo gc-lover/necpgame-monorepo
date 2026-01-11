@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}/join:
+    post:
+      description: '**Enterprise-grade alliance membership endpoint**
+
+        Handles faction/guild alliance joining with treaty acceptance and integration.
+        Validates membership criteria and updates alliance statistics.
+
+        **Performance:** <50ms P95, includes treaty validation
+
+        '
+      operationId: joinAlliance
+      parameters:
+      - description: Alliance unique identifier
+        in: path
+        name: allianceId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinAllianceRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipResponse'
+          description: Successfully joined alliance
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid request - membership criteria not met
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden - insufficient diplomatic authority
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Alliance not found
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Conflict - already member of rival alliance
+      security:
+      - BearerAuth: []
+      summary: Join alliance
+      tags:
+      - Alliance Management

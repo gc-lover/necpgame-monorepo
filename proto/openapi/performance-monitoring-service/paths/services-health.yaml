@@ -1,0 +1,39 @@
+openapi: 3.0.3
+paths:
+  /services/health:
+    get:
+      summary: Get health status of all services
+      operationId: getAllServicesHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: service_filter
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - critical
+          - game-services
+          - infrastructure
+          default: all
+        description: Filter services by category
+      responses:
+        '200':
+          description: Services health status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesHealthResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /abilities/cancel:
+    post:
+      operationId: abilityServiceCancelAbility
+      summary: Cancel active ability
+      description: 'Cancel an active ability if possible.
+
+
+        **Cancellation Rules:**
+
+        - Only cancellable abilities can be cancelled
+
+        - Refund partial resource costs
+
+        - Remove active effects if applicable
+
+        - Maintain cooldown integrity
+
+        '
+      tags:
+      - Ability Activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - character_id
+              - ability_instance_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                  description: Character ID
+                ability_instance_id:
+                  type: string
+                  format: uuid
+                  description: Active ability instance ID
+      responses:
+        '200':
+          description: Ability cancelled successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        resource_refund:
+                          $ref: '#/components/schemas/ResourceAmount'
+                        cooldown_reduction_seconds:
+                          type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

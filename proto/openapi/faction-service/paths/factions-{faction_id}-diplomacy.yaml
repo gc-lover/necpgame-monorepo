@@ -1,0 +1,115 @@
+openapi: 3.0.3
+paths:
+  /factions/{faction_id}/diplomacy:
+    get:
+      summary: Get faction diplomatic relations
+      description: '**Diplomatic relations endpoint**
+
+        Retrieves all diplomatic relationships for a faction including alliances,
+        wars, and treaties with other factions.
+
+        **Performance:** <15ms P95 with relationship indexing
+
+        '
+      operationId: getFactionDiplomacy
+      tags:
+      - Diplomacy Management
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Diplomatic relations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionDiplomacyResponse'
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Initiate diplomatic action
+      description: '**Diplomatic action endpoint**
+
+        Initiates diplomatic actions like declaring war, proposing alliances, or offering
+        peace treaties between factions.
+
+        **Performance:** <30ms P95 including notification dispatch
+
+        **Validation:** Diplomatic rules and faction permissions
+
+        '
+      operationId: initiateDiplomaticAction
+      tags:
+      - Diplomacy Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiplomaticActionRequest'
+      responses:
+        '201':
+          description: Diplomatic action initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiplomaticActionResponse'
+        '400':
+          description: Invalid diplomatic action parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to initiate diplomatic action
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Diplomatic action violates current relations or rules
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

@@ -1,992 +1,154 @@
-# Enterprise-Grade User Preference Service API - SOLID/DRY Domain Inheritance
-# Infrastructure domain service for user settings and personalization
-# Issue: #openapi-refactor
-
 openapi: 3.0.3
 info:
   title: User Preference Service API
-  description: |
-    **Enterprise-grade API for User Settings & Personalization**
+  description: '**Enterprise-grade API for User Settings & Personalization**
+
 
     ## Domain Purpose
+
     Comprehensive user preference management service providing customizable settings,
-    personalization options, and cross-platform synchronization for enhanced user experience.
+
+    personalization options, and cross-platform synchronization for enhanced user
+    experience.
+
 
     ## Business Value
+
     - Personalized user experience across all platforms
+
     - Granular preference controls for all features
+
     - Real-time preference synchronization
+
     - Privacy-aware preference management
+
     - Enterprise-grade scalability and performance
 
+
     ## Performance Targets
+
     - P99 Latency: <20ms for preference access
+
     - Memory per Instance: <25KB baseline
+
     - Concurrent Preference Operations: 50,000+ per second
+
     - Cache Hit Rate: >99% for active preferences
 
+
     ## Domain Inheritance
+
     This service inherits from infrastructure-entities.yaml providing:
+
     - Configuration management for user preferences
+
     - Audit trails for preference changes
+
     - User account references
+
     - Optimistic locking for concurrent updates
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/user-preference-service
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/user-preference-service
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/user-preference-service
-    description: Local development
-
+- url: https://api.necpgame.com/v1/user-preference-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/user-preference-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/user-preference-service
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Preference Management
-    description: Core preference operations and lifecycle
-  - name: Category Management
-    description: Preference categories and schemas
-  - name: Synchronization
-    description: Cross-platform preference sync
-  - name: Privacy Controls
-    description: Privacy-aware preference handling
-  - name: Defaults Management
-    description: Default preference templates
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: Preference Management
+  description: Core preference operations and lifecycle
+- name: Category Management
+  description: Preference categories and schemas
+- name: Synchronization
+  description: Cross-platform preference sync
+- name: Privacy Controls
+  description: Privacy-aware preference handling
+- name: Defaults Management
+  description: Default preference templates
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
   /health:
-    get:
-      operationId: userPreferenceServiceHealthCheck
-      summary: Basic health check
-      description: Returns service health status
-      tags: [Health Monitoring]
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-
+    $ref: ./paths/health.yaml#/paths/~1health
   /users/{userId}/preferences:
-    get:
-      operationId: userPreferenceServiceGetUserPreferences
-      summary: Get user preferences
-      description: |
-        Retrieve complete user preference set.
-
-        **Performance Notes:**
-        - Cached for fast access
-        - Supports partial loading by categories
-        - Privacy-aware field filtering
-        - Real-time synchronization across devices
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: categories
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          description: Specific preference categories to retrieve
-        - name: include_defaults
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include default values for unset preferences
-      responses:
-        '200':
-          description: Preferences retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserPreferences'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: userPreferenceServiceUpdateUserPreferences
-      summary: Update user preferences
-      description: |
-        Update complete user preference set.
-
-        **Business Rules:**
-        - Validates preference constraints
-        - Creates audit trail for changes
-        - Immediate cache invalidation
-        - Cross-platform synchronization trigger
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePreferencesRequest'
-      responses:
-        '200':
-          description: Preferences updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserPreferences'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      operationId: userPreferenceServicePatchUserPreferences
-      summary: Partially update user preferences
-      description: |
-        Update specific preference categories.
-
-        **Performance Notes:**
-        - Partial updates minimize data transfer
-        - Selective cache invalidation
-        - Optimistic locking for concurrent updates
-        - Incremental synchronization
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchPreferencesRequest'
-      responses:
-        '200':
-          description: Preferences updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserPreferences'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/users-{userId}-preferences.yaml#/paths/~1users~1{userId}~1preferences
   /users/{userId}/preferences/reset:
-    post:
-      operationId: userPreferenceServiceResetUserPreferences
-      summary: Reset user preferences to defaults
-      description: |
-        Reset user preferences to system defaults.
-
-        **Business Rules:**
-        - Preserves critical user data
-        - Creates backup before reset
-        - Audit trail for reset operation
-        - Optional selective reset by categories
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResetPreferencesRequest'
-      responses:
-        '200':
-          description: Preferences reset successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserPreferences'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/users-{userId}-preferences-reset.yaml#/paths/~1users~1{userId}~1preferences~1reset
   /users/{userId}/preferences/{category}:
-    get:
-      operationId: userPreferenceServiceGetPreferenceCategory
-      summary: Get specific preference category
-      description: |
-        Retrieve preferences for a specific category.
-
-        **Performance Notes:**
-        - Category-specific caching
-        - Optimized for frequent category access
-        - Privacy filtering by category
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: category
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Preference category
-      responses:
-        '200':
-          description: Category preferences retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/PreferenceCategory'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: userPreferenceServiceUpdatePreferenceCategory
-      summary: Update specific preference category
-      description: |
-        Update preferences for a specific category.
-
-        **Validation Notes:**
-        - Category-specific validation rules
-        - Cross-category consistency checks
-        - Category-level audit logging
-      tags: [Preference Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: category
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Preference category
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateCategoryRequest'
-      responses:
-        '200':
-          description: Category preferences updated
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/PreferenceCategory'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/users-{userId}-preferences-{category}.yaml#/paths/~1users~1{userId}~1preferences~1{category}
   /preferences/categories:
-    get:
-      operationId: userPreferenceServiceListCategories
-      summary: List preference categories
-      description: Retrieve all available preference categories with metadata
-      tags: [Category Management]
-      responses:
-        '200':
-          description: Categories retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/PreferenceCategoryInfo'
-
+    $ref: ./paths/preferences-categories.yaml#/paths/~1preferences~1categories
   /preferences/categories/{category}/schema:
-    get:
-      operationId: userPreferenceServiceGetCategorySchema
-      summary: Get preference category schema
-      description: |
-        Retrieve JSON schema for preference category validation.
-
-        **Validation Notes:**
-        - JSON Schema format for client validation
-        - Dynamic schema updates support
-        - Versioned schemas for compatibility
-      tags: [Category Management]
-      parameters:
-        - name: category
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Preference category
-      responses:
-        '200':
-          description: Category schema retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/PreferenceCategorySchema'
-
+    $ref: ./paths/preferences-categories-{category}-schema.yaml#/paths/~1preferences~1categories~1{category}~1schema
   /users/{userId}/preferences/sync:
-    post:
-      operationId: userPreferenceServiceSyncPreferences
-      summary: Sync preferences across devices
-      description: |
-        Trigger preference synchronization across all user devices.
-
-        **Synchronization Notes:**
-        - Real-time sync via WebSocket
-        - Conflict resolution strategies
-        - Device-specific preference handling
-        - Offline sync queue support
-      tags: [Synchronization]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SyncPreferencesRequest'
-      responses:
-        '200':
-          description: Sync initiated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/OK'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
+    $ref: ./paths/users-{userId}-preferences-sync.yaml#/paths/~1users~1{userId}~1preferences~1sync
   /preferences/defaults:
-    get:
-      operationId: userPreferenceServiceGetDefaults
-      summary: Get default preferences
-      description: Retrieve system default preferences for all categories
-      tags: [Defaults Management]
-      responses:
-        '200':
-          description: Default preferences retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserPreferences'
-
+    $ref: ./paths/preferences-defaults.yaml#/paths/~1preferences~1defaults
   /audit/preferences:
-    get:
-      operationId: userPreferenceServiceGetPreferenceAuditLog
-      summary: Get preference audit log
-      description: |
-        Retrieve audit log for preference-related operations.
-
-        **Privacy Notes:**
-        - GDPR compliant audit trails
-        - Sensitive preference data masking
-        - User consent for audit access
-        - Configurable retention policies
-      tags: [Privacy Controls]
-      parameters:
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by user ID
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Filter by preference category
-        - name: action
-          in: query
-          schema:
-            type: string
-            enum: [create, update, reset, sync]
-          description: Filter by action type
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for audit log
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Number of audit records to return
-      responses:
-        '200':
-          description: Audit log retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/PreferenceAuditEntry'
-
+    $ref: ./paths/audit-preferences.yaml#/paths/~1audit~1preferences
 components:
-
+  schemas:
+    UserPreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/UserPreferences
+    PreferenceCategory:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PreferenceCategory
+    PreferenceCategoryInfo:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PreferenceCategoryInfo
+    PreferenceCategorySchema:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PreferenceCategorySchema
+    PreferenceAuditEntry:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PreferenceAuditEntry
+    AppearancePreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/AppearancePreferences
+    NotificationPreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/NotificationPreferences
+    GameplayPreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/GameplayPreferences
+    PrivacyPreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PrivacyPreferences
+    AccessibilityPreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/AccessibilityPreferences
+    PerformancePreferences:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PerformancePreferences
+    UpdatePreferencesRequest:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/UpdatePreferencesRequest
+    PatchPreferencesRequest:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/PatchPreferencesRequest
+    UpdateCategoryRequest:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/UpdateCategoryRequest
+    ResetPreferencesRequest:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/ResetPreferencesRequest
+    SyncPreferencesRequest:
+      $ref: ./schemas/user-preference-service-schemas.yaml#/components/schemas/SyncPreferencesRequest
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/BadRequest
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-
-  schemas:
-
-    # Domain Inheritance - User Preference Service Entities
-    UserPreferences:
-      description: Complete user preferences entity with infrastructure domain inheritance
-      type: object
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: Associated user ID
-        categories:
-          type: object
-          description: Preference categories
-          properties:
-            appearance:
-              $ref: '#/components/schemas/AppearancePreferences'
-            notifications:
-              $ref: '#/components/schemas/NotificationPreferences'
-            gameplay:
-              $ref: '#/components/schemas/GameplayPreferences'
-            privacy:
-              $ref: '#/components/schemas/PrivacyPreferences'
-            accessibility:
-              $ref: '#/components/schemas/AccessibilityPreferences'
-            performance:
-              $ref: '#/components/schemas/PerformancePreferences'
-        metadata:
-          type: object
-          description: Preference metadata
-          properties:
-            version:
-              type: integer
-              minimum: 1
-              description: Preferences version for optimistic locking
-            last_updated:
-              type: string
-              format: date-time
-              description: Last update timestamp
-            last_updated_by:
-              type: string
-              format: uuid
-              description: User/system that last updated preferences
-
-    PreferenceCategory:
-      description: Individual preference category
-      type: object
-      properties:
-        category:
-          type: string
-          enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Category identifier
-        preferences:
-          type: object
-          description: Category-specific preferences
-          additionalProperties: true
-        metadata:
-          type: object
-          properties:
-            version:
-              type: integer
-              minimum: 1
-              description: Category version
-            last_updated:
-              type: string
-              format: date-time
-              description: Category last update timestamp
-
-    PreferenceCategoryInfo:
-      description: Preference category metadata
-      type: object
-      required:
-        - category
-        - name
-        - description
-      properties:
-        category:
-          type: string
-          enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Category identifier
-        name:
-          type: string
-          description: Human-readable category name
-        description:
-          type: string
-          description: Category description
-        icon:
-          type: string
-          description: Category icon identifier
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Display priority (higher = more important)
-
-    PreferenceCategorySchema:
-      description: JSON schema for preference category validation
-      type: object
-      properties:
-        $schema:
-          type: string
-          description: JSON Schema version
-        type:
-          type: string
-          enum: [object]
-        properties:
-          type: object
-          description: Schema properties
-          additionalProperties: true
-        required:
-          type: array
-          items:
-            type: string
-          description: Required properties
-
-    PreferenceAuditEntry:
-      description: Audit entry for preference operations
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/AuditLogEntity'
-        - type: object
-          properties:
-            user_id:
-              type: string
-              format: uuid
-              description: Associated user ID
-            category:
-              type: string
-              enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-              description: Affected preference category
-            operation_type:
-              type: string
-              enum: [create, update, reset, sync, category_update]
-              description: Type of preference operation
-            old_values:
-              type: object
-              description: Previous preference values
-            new_values:
-              type: object
-              description: New preference values
-
-    # Preference Category Schemas
-    AppearancePreferences:
-      description: User interface appearance preferences
-      type: object
-      properties:
-        theme:
-          type: string
-          enum: [light, dark, auto, cyberpunk, neon]
-          default: "auto"
-          description: UI theme preference
-        accent_color:
-          type: string
-          pattern: '^#[0-9A-Fa-f]{6}$'
-          default: "#00FF88"
-          description: Accent color in hex format
-        font_size:
-          type: string
-          enum: [small, medium, large, extra_large]
-          default: "medium"
-          description: Interface font size
-        language:
-          type: string
-          enum: [en, es, zh, ja, ru, de, fr, pl, ko, pt]
-          default: "en"
-          description: Interface language
-
-    NotificationPreferences:
-      description: Notification and communication preferences
-      type: object
-      properties:
-        email_notifications:
-          type: boolean
-          default: true
-          description: Enable email notifications
-        push_notifications:
-          type: boolean
-          default: true
-          description: Enable push notifications
-        in_game_notifications:
-          type: boolean
-          default: true
-          description: Enable in-game notifications
-        quiet_hours_start:
-          type: string
-          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
-          default: "22:00"
-          description: Quiet hours start time (HH:MM)
-        quiet_hours_end:
-          type: string
-          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
-          default: "08:00"
-          description: Quiet hours end time (HH:MM)
-        notification_frequency:
-          type: string
-          enum: [immediate, hourly, daily, weekly, never]
-          default: "immediate"
-          description: Default notification frequency
-
-    GameplayPreferences:
-      description: Game-specific preferences
-      type: object
-      properties:
-        difficulty_preference:
-          type: string
-          enum: [easy, normal, hard, expert]
-          default: "normal"
-          description: Preferred game difficulty
-        auto_save:
-          type: boolean
-          default: true
-          description: Enable auto-save
-        control_scheme:
-          type: string
-          enum: [classic, modern, custom]
-          default: "modern"
-          description: Control scheme preference
-        music_volume:
-          type: integer
-          minimum: 0
-          maximum: 100
-          default: 70
-          description: Music volume percentage
-        sfx_volume:
-          type: integer
-          minimum: 0
-          maximum: 100
-          default: 80
-          description: Sound effects volume percentage
-
-    PrivacyPreferences:
-      description: Privacy and data sharing preferences
-      type: object
-      properties:
-        profile_visibility:
-          type: string
-          enum: [public, friends_only, private]
-          default: "friends_only"
-          description: Profile visibility setting
-        show_online_status:
-          type: boolean
-          default: true
-          description: Show online status to others
-        allow_friend_requests:
-          type: boolean
-          default: true
-          description: Allow others to send friend requests
-        data_collection_consent:
-          type: boolean
-          default: false
-          description: Consent for analytics data collection
-        marketing_emails:
-          type: boolean
-          default: false
-          description: Allow marketing email communications
-
-    AccessibilityPreferences:
-      description: Accessibility and usability preferences
-      type: object
-      properties:
-        high_contrast:
-          type: boolean
-          default: false
-          description: Enable high contrast mode
-        large_text:
-          type: boolean
-          default: false
-          description: Enable large text mode
-        reduce_motion:
-          type: boolean
-          default: false
-          description: Reduce animations and motion
-        screen_reader_support:
-          type: boolean
-          default: false
-          description: Enable screen reader optimizations
-        color_blind_mode:
-          type: string
-          enum: [none, deuteranopia, protanopia, tritanopia]
-          default: "none"
-          description: Color blindness accommodation
-
-    PerformancePreferences:
-      description: Performance and quality preferences
-      type: object
-      properties:
-        graphics_quality:
-          type: string
-          enum: [low, medium, high, ultra]
-          default: "high"
-          description: Graphics quality setting
-        frame_rate_limit:
-          type: integer
-          enum: [30, 60, 120, 144, unlimited]
-          default: 60
-          description: Frame rate limit
-        vsync:
-          type: boolean
-          default: true
-          description: Enable vertical sync
-        texture_quality:
-          type: string
-          enum: [low, medium, high]
-          default: "high"
-          description: Texture quality setting
-        shadow_quality:
-          type: string
-          enum: [off, low, medium, high]
-          default: "medium"
-          description: Shadow quality setting
-
-    # Request/Response schemas
-    UpdatePreferencesRequest:
-      description: Request payload for updating user preferences
-      type: object
-      required:
-        - categories
-      properties:
-        categories:
-          type: object
-          description: Updated preference categories
-          properties:
-            appearance:
-              $ref: '#/components/schemas/AppearancePreferences'
-            notifications:
-              $ref: '#/components/schemas/NotificationPreferences'
-            gameplay:
-              $ref: '#/components/schemas/GameplayPreferences'
-            privacy:
-              $ref: '#/components/schemas/PrivacyPreferences'
-            accessibility:
-              $ref: '#/components/schemas/AccessibilityPreferences'
-            performance:
-              $ref: '#/components/schemas/PerformancePreferences'
-        version:
-          type: integer
-          minimum: 1
-          description: Current preferences version for optimistic locking
-
-    PatchPreferencesRequest:
-      description: Request payload for partial preference updates
-      type: object
-      required:
-        - categories
-      properties:
-        categories:
-          type: object
-          description: Categories to update (partial)
-          properties:
-            appearance:
-              $ref: '#/components/schemas/AppearancePreferences'
-            notifications:
-              $ref: '#/components/schemas/NotificationPreferences'
-            gameplay:
-              $ref: '#/components/schemas/GameplayPreferences'
-            privacy:
-              $ref: '#/components/schemas/PrivacyPreferences'
-            accessibility:
-              $ref: '#/components/schemas/AccessibilityPreferences'
-            performance:
-              $ref: '#/components/schemas/PerformancePreferences'
-
-    UpdateCategoryRequest:
-      description: Request payload for updating specific category
-      type: object
-      required:
-        - preferences
-      properties:
-        preferences:
-          type: object
-          description: Category-specific preferences
-          additionalProperties: true
-        version:
-          type: integer
-          minimum: 1
-          description: Category version for optimistic locking
-
-    ResetPreferencesRequest:
-      description: Request payload for resetting preferences
-      type: object
-      properties:
-        categories:
-          type: array
-          items:
-            type: string
-            enum: [appearance, notifications, gameplay, privacy, accessibility, performance]
-          description: Specific categories to reset (empty = all categories)
-        preserve_custom:
-          type: boolean
-          default: false
-          description: Preserve user-customized preferences
-
-    SyncPreferencesRequest:
-      description: Request payload for preference synchronization
-      type: object
-      properties:
-        device_id:
-          type: string
-          format: uuid
-          description: Specific device to sync to
-        force_full_sync:
-          type: boolean
-          default: false
-          description: Force complete synchronization
-        conflict_resolution:
-          type: string
-          enum: [server_wins, client_wins, manual]
-          default: "server_wins"
-          description: How to resolve sync conflicts
-
+      $ref: ./schemas/user-preference-service-responses.yaml#/components/responses/Conflict
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-
-# Performance and optimization notes
-x-performance:
-  p99-latency: "<20ms"
-  memory-target: "<25KB per instance"
-  preference-ops-target: "50,000+ per second"
-  cache-hit-rate: ">99%"
-  database-indexes: "Composite indexes on (user_id, category), (user_id, last_updated)"
-
-# Monitoring and observability
-x-monitoring:
-  metrics:
-    - preference_read_rate
-    - preference_update_rate
-    - category_access_rate
-    - sync_operation_rate
-    - cache_hit_rate
-  alerts:
-    - preference_update_latency > 50ms
-    - cache_hit_rate < 95%
-    - sync_conflict_rate > 1%
-
-# Privacy and compliance
-x-privacy:
-  data-classification: "GDPR compliant with user consent management"
-  retention-policy: "User-controlled preference retention"
-  data-minimization: "Only store necessary preference data"
-  audit-trail: "All preference changes logged with user consent"
-
-# Domain inheritance documentation
-x-domain-inheritance:
-  inherits-from: "common/schemas/infrastructure-entities.yaml"
-  inherited-entities: "ConfigurationEntity, AuditLogEntity"
-  additional-schemas: "Preference categorization, validation schemas, sync mechanisms"
-  no-duplication: "All common fields inherited, preference-specific extensions added"
-
+      $ref: ../common/security/security.yaml#/ServiceAuth

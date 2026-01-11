@@ -1,0 +1,55 @@
+openapi: 3.0.3
+paths:
+  /telemetry/encounters/{encounter_id}/stream:
+    get:
+      summary: Stream boss encounter telemetry
+      description: '**Real-time boss encounter telemetry stream**
+
+        WebSocket endpoint for real-time encounter updates, participant stats, and
+        boss health monitoring.
+
+        **Performance:** Real-time streaming with <5ms latency '
+      operationId: streamEncounterTelemetry
+      tags:
+      - Boss Telemetry
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+        '400':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '404':
+          description: Encounter not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the alliance service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: allianceServiceHealthCheck
+      parameters:
+      - in: header
+        name: Accept-Encoding
+        schema:
+          enum:
+          - gzip
+          - deflate
+          - br
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, s-maxage=60
+                type: string
+            Content-Encoding:
+              schema:
+                enum:
+                - gzip
+                - deflate
+                - br
+                type: string
+            ETag:
+              schema:
+                example: '"health-v1.0"'
+                type: string
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Service is unhealthy
+      summary: Alliance service health check
+      tags:
+      - Health Monitoring

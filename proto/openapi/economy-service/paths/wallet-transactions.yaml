@@ -1,0 +1,76 @@
+openapi: 3.0.3
+paths:
+  /wallet/transactions:
+    get:
+      summary: Get wallet transaction history
+      description: '**Transaction history endpoint**
+
+        Retrieves user''s wallet transaction history with filtering and pagination.
+        Supports trading, auction, and exchange transaction types.
+
+        **Performance:** <25ms P95 with pagination optimization
+
+        **Privacy:** Only user''s own transactions visible
+
+        '
+      operationId: getWalletTransactions
+      tags:
+      - Currency
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: transaction_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - trading
+          - auction
+          - exchange
+          - reward
+          - purchase
+      - name: date_from
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: date_to
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: Transaction history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletTransactionsResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of transactions
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

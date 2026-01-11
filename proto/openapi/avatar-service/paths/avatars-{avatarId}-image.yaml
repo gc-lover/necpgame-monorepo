@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /avatars/{avatarId}/image:
+    get:
+      operationId: avatarServiceGetAvatarImage
+      summary: Get avatar image file
+      description: 'Retrieve the actual avatar image file from CDN.
+
+
+        **CDN Optimization:**
+
+        - Direct CDN URL redirection for performance
+
+        - Automatic format conversion (WebP when supported)
+
+        - Size-specific URL generation
+
+        - Cache headers for optimal caching
+
+        '
+      tags:
+      - Storage Management
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Avatar unique identifier
+      - name: size
+        in: query
+        schema:
+          type: string
+          enum:
+          - original
+          - large
+          - medium
+          - small
+          - thumbnail
+          default: medium
+        description: Requested image size
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - auto
+          - jpeg
+          - png
+          - webp
+          default: auto
+        description: Requested image format
+      responses:
+        '302':
+          description: Redirect to CDN URL
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: CDN image URL
+            Cache-Control:
+              schema:
+                type: string
+              description: Cache control headers
+            ETag:
+              schema:
+                type: string
+              description: Image ETag for caching
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

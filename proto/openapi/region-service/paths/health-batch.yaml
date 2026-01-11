@@ -1,0 +1,62 @@
+openapi: 3.0.3
+paths:
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: '**Enterprise-grade batch health monitoring**
+
+
+        Performs health checks across multiple world regions components simultaneously.
+
+        Used for orchestration and service mesh health monitoring.
+
+
+        **Performance:** <10ms total for all components
+
+        '
+      operationId: worldRegionsBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - database
+                    - cache
+                    - external-apis
+              required:
+              - services
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/HealthResponse'
+                required:
+                - results
+        '400':
+          description: Invalid service list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,114 @@
+openapi: 3.0.3
+paths:
+  /templates/{templateId}:
+    get:
+      operationId: emailNotificationServiceGetTemplate
+      summary: Get email template
+      description: Retrieve detailed email template information
+      tags:
+      - Template Management
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template unique identifier
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailTemplate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: emailNotificationServiceUpdateTemplate
+      summary: Update email template
+      description: 'Update template content, variables, or metadata.
+
+
+        **Update Process:**
+
+        - Create new template version
+
+        - Validate template syntax
+
+        - Test rendering with sample data
+
+        - Maintain version history
+
+        '
+      tags:
+      - Template Management
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: emailNotificationServiceDeleteTemplate
+      summary: Delete email template
+      description: 'Soft delete template (deactivate and archive).
+
+
+        **Deletion Rules:**
+
+        - Prevent deletion of templates in active campaigns
+
+        - Archive template history
+
+        - Update dependent campaigns
+
+        - Maintain audit trail
+
+        '
+      tags:
+      - Template Management
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /notifications/send:
+    post:
+      operationId: pushNotificationServiceSendNotification
+      summary: Send push notification
+      description: 'Send push notification to specified targets.
+
+
+        **Delivery Notes:**
+
+        - Supports individual and bulk sending
+
+        - Respects user notification preferences
+
+        - Queues for asynchronous processing
+
+        - Tracks delivery status in real-time
+
+        '
+      tags:
+      - Notification Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '202':
+          description: Notification queued for delivery
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Accepted
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        notification_id:
+                          type: string
+                          format: uuid
+                          description: Notification tracking ID
+                        estimated_delivery_time:
+                          type: string
+                          format: date-time
+                          description: Expected delivery time
+                        target_count:
+                          type: integer
+                          description: Number of target devices
+        '400':
+          $ref: '#/components/responses/BadRequest'

@@ -1,0 +1,49 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/analytics/{session_id}:
+    get:
+      summary: Get damage analytics for session
+      operationId: combatDamageGetAnalytics
+      description: 'Retrieve detailed damage statistics and analytics for a combat
+        session.
+
+        **BACKEND NOTE:** Read-heavy operation with analytics aggregation. Optimized
+        for large datasets with streaming responses.'
+      tags:
+      - Damage Analytics
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - last_5m
+          - last_15m
+          - last_1h
+          - session
+          default: session
+        description: Time range for analytics
+      responses:
+        '200':
+          description: Damage analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageAnalyticsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

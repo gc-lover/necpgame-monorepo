@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /audit/roles:
+    get:
+      operationId: roleServiceGetRoleAuditLog
+      summary: Get role audit log
+      description: 'Retrieve audit log for role-related operations.
+
+
+        **Compliance Notes:**
+
+        - GDPR compliant audit trails
+
+        - Configurable retention periods
+
+        - Immutable audit records
+
+        - Privacy-aware logging
+
+        '
+      tags:
+      - Security Auditing
+      parameters:
+      - name: role_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by role ID
+      - name: user_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by user ID
+      - name: action
+        in: query
+        schema:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+          - assign
+          - revoke
+          - check
+        description: Filter by action type
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for audit log
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of audit records to return
+      responses:
+        '200':
+          description: Audit log retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RoleAuditEntry'

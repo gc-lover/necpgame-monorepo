@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /realtime/sessions:
+    get:
+      summary: Get active realtime sessions
+      description: '**Get active realtime sessions for monitoring**
+
+        Returns list of active realtime gameplay sessions with performance metrics.
+
+        **Performance:** <5ms response time for cached data '
+      operationId: getRealtimeSessions
+      tags:
+      - Realtime Protocol
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - connecting
+          - connected
+          - disconnected
+          - error
+        description: Filter by connection status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum sessions to return
+      responses:
+        '200':
+          description: Realtime sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RealtimeSession'
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

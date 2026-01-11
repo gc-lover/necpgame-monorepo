@@ -1,0 +1,71 @@
+openapi: 3.0.3
+paths:
+  /location/{auctionId}/bids:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: Refresh access token
+      description: '**Token refresh endpoint**
+
+        Exchanges refresh token for new access token.
+
+        Maintains user session without re-authentication.
+
+        **Performance:** <15ms P95
+
+        **Security:** Refresh token rotation, short-lived access tokens
+
+        '
+      operationId: locationRefresh
+      tags:
+      - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          description: Refresh token expired or revoked
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - token refresh rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

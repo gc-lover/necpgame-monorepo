@@ -1,0 +1,120 @@
+openapi: 3.0.3
+paths:
+  /inventory/{userId}/items:
+    post:
+      summary: Add items to inventory
+      description: '**Enterprise-grade item addition endpoint**
+
+        Adds one or multiple items to user inventory with validation and capacity
+        checks.
+
+        Supports bulk operations and automatic organization.
+
+        **Performance:** <30ms P95, includes validation and capacity management
+
+        '
+      operationId: addItemsToInventory
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemsRequest'
+      responses:
+        '200':
+          description: Items added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemsResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '413':
+          description: Payload too large - too many items
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '507':
+          description: Insufficient storage - inventory full
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Remove items from inventory
+      description: '**Enterprise-grade item removal endpoint**
+
+        Removes items from user inventory with proper cleanup and validation.
+
+        Supports bulk operations and maintains inventory integrity.
+
+        **Performance:** <20ms P95, includes validation and cleanup
+
+        '
+      operationId: removeItemsFromInventory
+      tags:
+      - Inventory Storage
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemsRequest'
+      responses:
+        '200':
+          description: Items removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveItemsResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Item not found in inventory
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

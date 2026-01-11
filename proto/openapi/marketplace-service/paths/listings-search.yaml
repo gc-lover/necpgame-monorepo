@@ -1,0 +1,81 @@
+openapi: 3.0.3
+paths:
+  /listings/search:
+    get:
+      summary: null
+      operationId: searchListings
+      tags:
+      - Search & Discovery
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+          description: null
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - cyberware
+          - consumables
+          - misc
+      - name: minPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: maxPrice
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      - name: sellerRating
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          enum:
+          - relevance
+          - price_asc
+          - price_desc
+          - newest
+          - rating
+          default: relevance
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResultsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

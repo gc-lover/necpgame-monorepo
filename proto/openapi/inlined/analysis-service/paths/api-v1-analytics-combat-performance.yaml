@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/combat/performance:
+    get:
+      description: '**Detailed combat performance analytics**
+
+        Comprehensive analysis of combat statistics including win rates, kill/death
+        ratios, weapon effectiveness, and combat balance metrics.
+
+        **Includes:** PvP/PvE statistics, weapon analytics, class balance, regional
+        performance '
+      operationId: getCombatAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 24h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      - in: query
+        name: game_mode
+        schema:
+          default: all
+          enum:
+          - all
+          - ranked
+          - casual
+          - tournament
+          type: string
+      - description: Geographic region filter
+        in: query
+        name: region
+        schema:
+          example: north_america
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalytics'
+          description: Combat analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get combat performance analytics
+      tags:
+      - Combat Analytics

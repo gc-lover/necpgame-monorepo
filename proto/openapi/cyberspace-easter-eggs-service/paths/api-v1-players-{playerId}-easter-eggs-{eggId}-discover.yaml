@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /api/v1/players/{playerId}/easter-eggs/{eggId}/discover:
+    post:
+      summary: Discover easter egg
+      description: 'Mark easter egg as discovered for player and unlock associated
+        achievements.
+
+
+        **Performance Notes:**
+
+        - Calls external achievement service with 5s timeout
+
+        - Updates player statistics atomically
+
+        - Triggers event-driven achievement processing
+
+        '
+      operationId: discoverEasterEgg
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: eggId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discovery_method:
+                  type: string
+                  enum:
+                  - scan
+                  - command
+                  - puzzle
+                  - event
+                location_found:
+                  type: string
+                attempt_data:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Easter egg discovered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Easter egg discovered successfully
+                  progress:
+                    $ref: '#/components/schemas/PlayerEasterEggProgress'
+                  achievement_unlocked:
+                    type: boolean
+                    description: Whether achievement was unlocked
+        '400':
+          description: Invalid request
+        '404':
+          description: Easter egg not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

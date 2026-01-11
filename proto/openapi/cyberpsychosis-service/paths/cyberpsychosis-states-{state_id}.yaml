@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /cyberpsychosis/states/{state_id}:
+    put:
+      summary: Update Cyberpsychosis State
+      description: '**Update existing cyberpsychosis state parameters**
+
+        Allows modification of severity level and active status.
+
+        **Performance:** <25ms average response time'
+      operationId: updateCyberpsychosisState
+      tags:
+      - Cyberpsychosis States
+      parameters:
+      - name: state_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: State UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                severity_level:
+                  type: integer
+                  format: int32
+                  minimum: 1
+                  maximum: 10
+                  description: New severity level
+                  example: 3
+                is_active:
+                  type: boolean
+                  description: State active status
+                  example: true
+      responses:
+        '200':
+          description: Cyberpsychosis state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

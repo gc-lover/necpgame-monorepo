@@ -1,0 +1,108 @@
+openapi: 3.0.3
+paths:
+  /sessions/{sessionId}:
+    get:
+      operationId: sessionServiceGetSession
+      summary: Get session by ID
+      description: Retrieve detailed session information
+      tags:
+      - Session Management
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      responses:
+        '200':
+          description: Session found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: sessionServiceUpdateSession
+      summary: Update session
+      description: 'Update session properties with optimistic locking.
+
+
+        **Security Notes:**
+
+        - Validates session ownership
+
+        - Updates activity timestamps
+
+        - Maintains audit trail
+
+        '
+      tags:
+      - Session Management
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Updated
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: sessionServiceDeleteSession
+      summary: Delete session
+      description: 'Permanently delete a session (admin operation).
+
+
+        **Security Notes:**
+
+        - Requires admin privileges
+
+        - Immediately invalidates all tokens
+
+        - Creates security audit log
+
+        '
+      tags:
+      - Security Monitoring
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

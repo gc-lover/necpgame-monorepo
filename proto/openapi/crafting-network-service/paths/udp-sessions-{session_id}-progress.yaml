@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /udp/sessions/{session_id}/progress:
+    post:
+      summary: UDP endpoint for crafting progress synchronization
+      description: '**Real-time crafting progress updates**
+
+        Receives compressed crafting progress data via UDP for high-frequency state
+        synchronization.
+
+        **Optimization:** Delta-encoded progress updates
+
+        **Reliability:** Best-effort delivery with periodic full state sync
+
+        '
+      operationId: udpCraftingProgressSync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/UdpProgressUpdate'
+      responses:
+        '200':
+          description: Progress update accepted
+        '400':
+          description: Invalid progress data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found

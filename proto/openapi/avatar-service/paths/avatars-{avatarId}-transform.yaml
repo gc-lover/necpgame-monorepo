@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /avatars/{avatarId}/transform:
+    post:
+      operationId: avatarServiceTransformAvatar
+      summary: Apply transformations to avatar
+      description: 'Apply image transformations and effects to existing avatar.
+
+
+        **Transformation Types:**
+
+        - Resize, crop, rotate operations
+
+        - Filter and effect applications
+
+        - Format conversions
+
+        - Quality adjustments
+
+        '
+      tags:
+      - Image Processing
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Avatar unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransformAvatarRequest'
+      responses:
+        '200':
+          description: Transformation applied successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Avatar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

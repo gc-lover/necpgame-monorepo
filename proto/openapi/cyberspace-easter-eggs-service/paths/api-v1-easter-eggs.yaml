@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /api/v1/easter-eggs:
+    get:
+      summary: Get all easter eggs
+      description: Retrieve paginated list of all easter eggs with filtering options
+      operationId: getEasterEggs
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - technology
+          - cultural
+          - historical
+          - humorous
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: List of easter eggs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  easter_eggs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EasterEgg'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

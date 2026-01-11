@@ -1,0 +1,60 @@
+openapi: 3.0.3
+paths:
+  /romance:
+    get:
+      summary: Get romantic relationships
+      description: '**Retrieve user''s romantic relationships**
+
+        Private endpoint for romantic connection management.
+
+        **Performance:** <40ms with privacy controls
+
+        '
+      operationId: getRomanticRelationships
+      tags:
+      - Romance
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - dating
+          - engaged
+          - married
+          - separated
+          - divorced
+          default: dating
+        description: Filter by romantic status
+      - name: privacy_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - private
+          - friends
+          - public
+          default: private
+        description: Privacy level of relationships to show
+      responses:
+        '200':
+          description: Romantic relationships retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RomanticRelationshipResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

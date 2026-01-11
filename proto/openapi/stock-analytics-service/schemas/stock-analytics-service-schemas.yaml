@@ -1,0 +1,392 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    HealthCheckResponse:
+      type: object
+      required:
+      - status
+      - service
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/Error'
+    ReadinessCheckResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ready
+          - not_ready
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/Error'
+    StockChartData:
+      type: object
+      required:
+      - symbol
+      - timeframe
+      - data
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        timeframe:
+          type: string
+          description: Chart timeframe interval
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartPoint'
+          description: Array of chart data points
+        metadata:
+          $ref: '#/components/schemas/ChartMetadata'
+    ChartPoint:
+      type: object
+      required:
+      - timestamp
+      - open
+      - high
+      - low
+      - close
+      - volume
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Data point timestamp
+        open:
+          type: number
+          format: float
+          description: Opening price
+        high:
+          type: number
+          format: float
+          description: Highest price
+        low:
+          type: number
+          format: float
+          description: Lowest price
+        close:
+          type: number
+          format: float
+          description: Closing price
+        volume:
+          type: integer
+          format: int64
+          description: Trading volume
+    ChartMetadata:
+      type: object
+      required:
+      - totalPoints
+      - dataQuality
+      - lastUpdated
+      properties:
+        totalPoints:
+          type: integer
+          description: Total number of data points
+        dataQuality:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+          description: Quality rating of the data
+        lastUpdated:
+          type: string
+          format: date-time
+          description: When the data was last updated
+    StockIndicators:
+      type: object
+      required:
+      - symbol
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        rsi:
+          $ref: '#/components/schemas/RSIIndicator'
+        macd:
+          $ref: '#/components/schemas/MACDIndicator'
+        bollinger:
+          $ref: '#/components/schemas/BollingerBands'
+    RSIIndicator:
+      type: object
+      required:
+      - period
+      - values
+      properties:
+        period:
+          type: integer
+          description: RSI calculation period
+        values:
+          type: array
+          items:
+            type: number
+            format: float
+          description: RSI values array
+    MACDIndicator:
+      type: object
+      required:
+      - fastPeriod
+      - slowPeriod
+      - signalPeriod
+      - values
+      properties:
+        fastPeriod:
+          type: integer
+          description: Fast EMA period
+        slowPeriod:
+          type: integer
+          description: Slow EMA period
+        signalPeriod:
+          type: integer
+          description: Signal line period
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/MACDValue'
+          description: MACD values array
+    MACDValue:
+      type: object
+      required:
+      - macd
+      - signal
+      - histogram
+      properties:
+        macd:
+          type: number
+          format: float
+          description: MACD line value
+        signal:
+          type: number
+          format: float
+          description: Signal line value
+        histogram:
+          type: number
+          format: float
+          description: MACD histogram value
+    BollingerBands:
+      type: object
+      required:
+      - period
+      - multiplier
+      - upper
+      - middle
+      - lower
+      properties:
+        period:
+          type: integer
+          description: Bollinger Bands calculation period
+        multiplier:
+          type: number
+          format: float
+          description: Standard deviation multiplier
+        upper:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Upper band values
+        middle:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Middle band (SMA) values
+        lower:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Lower band values
+    MarketOverview:
+      type: object
+      required:
+      - marketStatus
+      properties:
+        marketStatus:
+          type: string
+          enum:
+          - open
+          - closed
+          - pre_market
+          - after_hours
+          description: Current market status
+        majorIndices:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexData'
+          description: Major market indices
+        sectorPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectorData'
+          description: Sector performance data
+        volumeLeaders:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockVolumeData'
+          description: Top volume leaders
+    IndexData:
+      type: object
+      required:
+      - symbol
+      - name
+      - value
+      - change
+      - changePercent
+      properties:
+        symbol:
+          type: string
+          description: Index symbol
+        name:
+          type: string
+          description: Index name
+        value:
+          type: number
+          format: float
+          description: Current index value
+        change:
+          type: number
+          format: float
+          description: Change from previous close
+        changePercent:
+          type: number
+          format: float
+          description: Percentage change
+    SectorData:
+      type: object
+      required:
+      - sector
+      - performance
+      - volume
+      properties:
+        sector:
+          type: string
+          description: Sector name
+        performance:
+          type: number
+          format: float
+          description: Sector performance percentage
+        volume:
+          type: integer
+          format: int64
+          description: Sector trading volume
+    StockVolumeData:
+      type: object
+      required:
+      - symbol
+      - volume
+      - price
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        volume:
+          type: integer
+          format: int64
+          description: Trading volume
+        price:
+          type: number
+          format: float
+          description: Current price
+    CustomChartRequest:
+      type: object
+      required:
+      - symbol
+      - chartType
+      - timeframe
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 10
+          description: Stock symbol
+        chartType:
+          type: string
+          enum:
+          - line
+          - candlestick
+          - bar
+          - area
+          description: Chart visualization type
+        timeframe:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+          description: Chart timeframe
+        indicators:
+          type: array
+          items:
+            type: string
+            enum:
+            - rsi
+            - macd
+            - bollinger
+            - sma
+            - ema
+            - stochastic
+          description: Technical indicators to include
+        style:
+          type: object
+          description: Custom styling options
+          properties:
+            colors:
+              type: object
+              properties:
+                bullish:
+                  type: string
+                  description: Color for bullish candles
+                bearish:
+                  type: string
+                  description: Color for bearish candles
+                background:
+                  type: string
+                  description: Chart background color
+    CustomChartResponse:
+      type: object
+      required:
+      - chartID
+      - config
+      - createdAt
+      properties:
+        chartID:
+          type: string
+          description: Unique chart identifier
+        config:
+          $ref: '#/components/schemas/CustomChartRequest'
+        createdAt:
+          type: string
+          format: date-time
+          description: Chart creation timestamp
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

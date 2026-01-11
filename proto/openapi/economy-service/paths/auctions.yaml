@@ -1,0 +1,142 @@
+openapi: 3.0.3
+paths:
+  /auctions:
+    get:
+      summary: List active auctions
+      description: '**Auction listing endpoint**
+
+        Retrieves active auctions with filtering by category, price range, and time
+        remaining. Supports pagination for large auction catalogs.
+
+        **Performance:** <20ms P95 with database optimization
+
+        '
+      operationId: listAuctions
+      tags:
+      - Auctions
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - vehicles
+          - rare_items
+      - name: min_bid
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: max_bid
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: time_remaining_hours
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 168
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 25
+      responses:
+        '200':
+          description: Auctions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionsResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of auctions
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Create auction
+      description: '**Auction creation endpoint**
+
+        Creates new auctions with starting price, duration, and item details. Validates
+        item ownership and auction parameters.
+
+        **Performance:** <30ms P95 including validation
+
+        '
+      operationId: createAuction
+      tags:
+      - Auctions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/economy/auctions/550e8400-e29b-41d4-a716-446655440000
+        '400':
+          description: Invalid auction parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Forbidden - item not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Item already in auction or insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

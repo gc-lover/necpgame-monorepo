@@ -1,0 +1,123 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}:
+    get:
+      summary: Get alliance details
+      description: '**Enterprise-grade alliance retrieval endpoint**
+
+        Retrieves complete alliance information including members, treaties, diplomatic
+        relations, and political standing.
+
+        Optimized with caching and conditional requests.
+
+        **Performance:** <10ms P95 with Redis caching
+
+        '
+      operationId: getAlliance
+      tags:
+      - Alliance Management
+      parameters:
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      - name: include_members
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include alliance member details
+      - name: include_treaties
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include active treaties
+      - name: include_relations
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include diplomatic relationships
+      responses:
+        '200':
+          description: Alliance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '404':
+          description: Alliance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update alliance
+      description: '**Enterprise-grade alliance update endpoint**
+
+        Supports partial updates with political impact assessment and validation.
+        Ensures alliance integrity and political balance maintenance.
+
+        **Performance:** <40ms P95, includes political impact calculation
+
+        '
+      operationId: updateAlliance
+      tags:
+      - Alliance Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAllianceRequest'
+      responses:
+        '200':
+          description: Alliance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Alliance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - political constraints violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

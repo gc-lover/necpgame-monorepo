@@ -1,0 +1,71 @@
+openapi: 3.0.0
+paths:
+  /progress/{playerId}/xp:
+    post:
+      tags:
+      - Progress
+      summary: Grant XP to player
+      description: Awards experience points to a player for gameplay activities
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - reason
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+                  description: XP amount to grant
+                reason:
+                  type: string
+                  enum:
+                  - mission_complete
+                  - match_win
+                  - daily_login
+                  - achievement
+                  - purchase
+                  description: Reason for XP grant
+                metadata:
+                  type: object
+                  description: Additional context data
+      responses:
+        '200':
+          description: XP granted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newLevel:
+                    type: integer
+                    description: New player level after XP grant
+                  xpGained:
+                    type: integer
+                    description: Actual XP amount granted
+                  rewardsUnlocked:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reward'
+                    description: Any rewards unlocked by this XP grant
+        '400':
+          description: Invalid request parameters
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

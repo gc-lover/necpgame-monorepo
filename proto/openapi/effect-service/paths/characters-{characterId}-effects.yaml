@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/effects:
+    get:
+      operationId: effectServiceGetCharacterEffects
+      summary: Get character active effects
+      description: 'Retrieve all active effects on a character with real-time status.
+
+
+        **Effect Retrieval:**
+
+        - Active effects with current status
+
+        - Effect stacking information
+
+        - Remaining duration and strength
+
+        - Source information and timestamps
+
+        '
+      tags:
+      - Character Effects
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: include_expired
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include recently expired effects
+      - name: effect_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - crowd_control
+          - healing
+          - damage_over_time
+        description: Filter by effect type
+      responses:
+        '200':
+          description: Character effects retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AppliedEffect'
+                    summary:
+                      $ref: '#/components/schemas/CharacterEffectSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'

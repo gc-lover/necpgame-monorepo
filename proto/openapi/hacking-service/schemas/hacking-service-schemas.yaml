@@ -1,0 +1,836 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HackingSession:
+      description: Active hacking session with game domain inheritance
+      type: object
+      required:
+      - id
+      - hacker_id
+      - target_network_id
+      - started_at
+      - current_node_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Hacking session unique identifier
+        hacker_id:
+          type: string
+          format: uuid
+          description: Hacker character ID
+        target_network_id:
+          type: string
+          format: uuid
+          description: Target network being hacked
+        started_at:
+          type: string
+          format: date-time
+          description: Session start time
+        current_node_id:
+          type: string
+          format: uuid
+          description: Current network node position
+        session_status:
+          type: string
+          enum:
+          - active
+          - disconnected
+          - traced
+          - crashed
+          default: active
+          description: Current session status
+        trace_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: Current trace detection level (0-1)
+        ice_alert_level:
+          type: string
+          enum:
+          - none
+          - passive
+          - active
+          - lethal
+          default: none
+          description: Current ICE alert status
+        data_extracted_bytes:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Total data extracted in session
+        nodes_visited:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Network nodes visited
+        ice_encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEEncounter'
+          description: ICE systems encountered
+        active_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Active hacking effects
+        neural_load:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Current neural interface load percentage
+    NetworkNode:
+      description: Network node in hacking topology with game domain inheritance
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          network_id:
+            type: string
+            format: uuid
+            description: Parent network ID
+          node_type:
+            type: string
+            enum:
+            - entry_point
+            - data_node
+            - control_node
+            - security_node
+            - exit_point
+            description: Type of network node
+          security_level:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: Node security level
+          ice_systems:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICESystem'
+            description: ICE systems protecting this node
+          data_value:
+            type: integer
+            minimum: 0
+            description: Data value available at this node
+          connections:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Connected node IDs
+          discovery_status:
+            type: string
+            enum:
+            - undiscovered
+            - discovered
+            - compromised
+            - locked
+            default: undiscovered
+            description: Node discovery status
+          corruption_level:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: Node corruption level from hacking
+    ICESystem:
+      description: Intrusion Countermeasures Electronics system
+      type: object
+      required:
+      - id
+      - ice_type
+      - difficulty_level
+      - integrity
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ICE system unique identifier
+        ice_type:
+          type: string
+          enum:
+          - barrier
+          - sentry
+          - wisp
+          - black_ice
+          - white_ice
+          description: Type of ICE system
+        difficulty_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: ICE difficulty level
+        integrity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: ICE system integrity (1 = fully intact)
+        alert_status:
+          type: string
+          enum:
+          - passive
+          - active
+          - lethal
+          default: passive
+          description: ICE alert status
+        breach_attempts:
+          type: integer
+          minimum: 0
+          description: Number of breach attempts made
+        breach_successes:
+          type: integer
+          minimum: 0
+          description: Number of successful breaches
+        last_breach_attempt:
+          type: string
+          format: date-time
+          description: Timestamp of last breach attempt
+    ICEEncounter:
+      description: Record of ICE system encounter in hacking session
+      type: object
+      required:
+      - ice_id
+      - encounter_time
+      - outcome
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+          description: ICE system encountered
+        encounter_time:
+          type: string
+          format: date-time
+          description: When encounter occurred
+        outcome:
+          type: string
+          enum:
+          - avoided
+          - breached
+          - failed
+          - crashed
+          description: Encounter outcome
+        breach_method:
+          type: string
+          enum:
+          - minigame
+          - quickhack
+          - brute_force
+          - social_engineering
+          description: Method used to breach (if successful)
+        damage_taken:
+          type: integer
+          minimum: 0
+          description: Neural damage taken from encounter
+        time_spent_seconds:
+          type: integer
+          minimum: 0
+          description: Time spent on encounter
+    TraceDetection:
+      description: Trace detection system status
+      type: object
+      required:
+      - current_level
+      - detection_probability
+      - time_to_trace
+      properties:
+        current_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current trace level (0-1)
+        detection_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of detection per minute
+        time_to_trace:
+          type: integer
+          minimum: 0
+          description: Estimated seconds until full trace
+        active_countermeasures:
+          type: array
+          items:
+            type: string
+          description: Active trace countermeasures
+        evasion_efficiency:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Effectiveness of evasion measures
+    MinigameSession:
+      description: Active hacking minigame session
+      type: object
+      required:
+      - id
+      - minigame_type
+      - difficulty
+      - started_at
+      - time_limit_seconds
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Minigame session unique identifier
+        minigame_type:
+          type: string
+          enum:
+          - ice_breaking
+          - data_decryption
+          - firewall_navigation
+          - system_override
+          description: Type of minigame
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Minigame difficulty level
+        started_at:
+          type: string
+          format: date-time
+          description: Session start time
+        time_limit_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          description: Time limit for completion
+        current_score:
+          type: integer
+          minimum: 0
+          description: Current minigame score
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Completion progress (0-1)
+        lives_remaining:
+          type: integer
+          minimum: 0
+          description: Lives remaining in minigame
+        special_modifiers:
+          type: object
+          description: Active minigame modifiers
+          additionalProperties: true
+    InitiateHackingRequest:
+      description: Request payload for initiating hacking session
+      type: object
+      required:
+      - hacker_id
+      - target_network_type
+      properties:
+        hacker_id:
+          type: string
+          format: uuid
+          description: Hacker character ID
+        target_network_type:
+          type: string
+          enum:
+          - corporate
+          - government
+          - criminal
+          - personal
+          - public
+          description: Type of network being targeted
+        entry_method:
+          type: string
+          enum:
+          - direct_access
+          - wireless
+          - social_engineering
+          - physical_breach
+          default: wireless
+          description: Method of network entry
+        hacking_kit_quality:
+          type: string
+          enum:
+          - basic
+          - standard
+          - premium
+          - prototype
+          default: standard
+          description: Quality of hacking tools being used
+        neural_interface_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Hacker's neural interface level
+    NavigateNetworkRequest:
+      description: Request payload for network navigation
+      type: object
+      required:
+      - target_node_id
+      properties:
+        target_node_id:
+          type: string
+          format: uuid
+          description: Target network node to navigate to
+        navigation_method:
+          type: string
+          enum:
+          - stealth
+          - speed
+          - brute_force
+          default: stealth
+          description: Navigation approach
+        bypass_ice:
+          type: boolean
+          default: false
+          description: Attempt to bypass ICE systems
+        use_proxy:
+          type: boolean
+          default: true
+          description: Use proxy nodes for navigation
+    BreakICERequest:
+      description: Request payload for ICE breaking attempt
+      type: object
+      required:
+      - ice_system_id
+      properties:
+        ice_system_id:
+          type: string
+          format: uuid
+          description: ICE system to break
+        breaking_method:
+          type: string
+          enum:
+          - minigame
+          - quickhack
+          - brute_force
+          - social_engineering
+          default: minigame
+          description: Method to use for breaking
+        allocated_time_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          default: 60
+          description: Time allocated for breaking attempt
+        risk_tolerance:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - maximum
+          default: medium
+          description: Risk tolerance for breaking attempt
+    ExtractDataRequest:
+      description: Request payload for data extraction
+      type: object
+      required:
+      - node_id
+      - data_type
+      properties:
+        node_id:
+          type: string
+          format: uuid
+          description: Network node to extract from
+        data_type:
+          type: string
+          enum:
+          - financial
+          - personal
+          - corporate
+          - government
+          - technical
+          description: Type of data to extract
+        extraction_method:
+          type: string
+          enum:
+          - quick_scan
+          - deep_dive
+          - targeted_search
+          default: quick_scan
+          description: Data extraction approach
+        priority_level:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+          description: Extraction priority
+        encryption_handling:
+          type: string
+          enum:
+          - skip_encrypted
+          - attempt_decrypt
+          - force_decrypt
+          default: attempt_decrypt
+          description: How to handle encrypted data
+    StartMinigameRequest:
+      description: Request payload for starting minigame
+      type: object
+      required:
+      - session_id
+      - difficulty_modifier
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Associated hacking session ID
+        difficulty_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 5
+          default: 1
+          description: Difficulty multiplier
+        time_limit_modifier:
+          type: number
+          minimum: 0.5
+          maximum: 2
+          default: 1
+          description: Time limit modifier
+        lives_count:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Number of lives for minigame
+    SubmitMinigameInputRequest:
+      description: Request payload for minigame input submission
+      type: object
+      required:
+      - input_type
+      - input_data
+      properties:
+        input_type:
+          type: string
+          enum:
+          - sequence
+          - coordinate
+          - timing
+          - choice
+          description: Type of input being submitted
+        input_data:
+          type: object
+          description: Input data specific to minigame type
+          additionalProperties: true
+        timestamp_ms:
+          type: integer
+          description: Client timestamp for input timing
+    NavigationResult:
+      description: Result of network navigation attempt
+      type: object
+      required:
+      - success
+      - new_node_id
+      - navigation_time_seconds
+      properties:
+        success:
+          type: boolean
+          description: Whether navigation was successful
+        new_node_id:
+          type: string
+          format: uuid
+          description: New current node ID
+        navigation_time_seconds:
+          type: number
+          description: Time taken for navigation
+        ice_encountered:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ICE systems encountered during navigation
+        trace_level_increase:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trace level increase from navigation
+        discovered_nodes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: New nodes discovered during navigation
+    ICEBreakResult:
+      description: Result of ICE breaking attempt
+      type: object
+      required:
+      - success
+      - ice_system_id
+      - time_taken_seconds
+      properties:
+        success:
+          type: boolean
+          description: Whether ICE breaking was successful
+        ice_system_id:
+          type: string
+          format: uuid
+          description: ICE system that was targeted
+        time_taken_seconds:
+          type: number
+          description: Time taken for breaking attempt
+        method_used:
+          type: string
+          enum:
+          - minigame
+          - quickhack
+          - brute_force
+          - social_engineering
+          description: Method used for breaking
+        damage_taken:
+          type: integer
+          minimum: 0
+          description: Neural damage taken during attempt
+        trace_level_increase:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trace level increase from attempt
+        ice_integrity_remaining:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Remaining ICE integrity after attempt
+        alert_level_change:
+          type: string
+          enum:
+          - none
+          - passive
+          - active
+          - lethal
+          description: New ICE alert level
+    DataExtractionResult:
+      description: Result of data extraction operation
+      type: object
+      required:
+      - success
+      - data_amount_bytes
+      - extraction_time_seconds
+      properties:
+        success:
+          type: boolean
+          description: Whether extraction was successful
+        data_amount_bytes:
+          type: integer
+          minimum: 0
+          description: Amount of data extracted
+        extraction_time_seconds:
+          type: number
+          description: Time taken for extraction
+        data_quality:
+          type: string
+          enum:
+          - corrupted
+          - partial
+          - complete
+          - enhanced
+          description: Quality of extracted data
+        encryption_status:
+          type: string
+          enum:
+          - plaintext
+          - decrypted
+          - encrypted
+          description: Encryption status of data
+        trace_level_increase:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Trace level increase from extraction
+        data_types_found:
+          type: array
+          items:
+            type: string
+          description: Types of data found during extraction
+    TraceDetectionResult:
+      description: Result of trace detection scan
+      type: object
+      required:
+      - trace_detected
+      - current_level
+      - detection_probability
+      properties:
+        trace_detected:
+          type: boolean
+          description: Whether active trace was detected
+        current_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current trace level
+        detection_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of detection per minute
+        time_to_full_trace_seconds:
+          type: integer
+          minimum: 0
+          description: Estimated time until full trace
+        active_security_systems:
+          type: array
+          items:
+            type: object
+            properties:
+              system_type:
+                type: string
+                description: Type of security system
+              detection_strength:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: How strongly this system is detecting
+          description: Active security systems scanning
+        evasion_recommendations:
+          type: array
+          items:
+            type: string
+          description: Recommended evasion actions
+    MinigameInputResult:
+      description: Result of minigame input processing
+      type: object
+      required:
+      - accepted
+      - score_change
+      - progress_change
+      properties:
+        accepted:
+          type: boolean
+          description: Whether input was accepted
+        score_change:
+          type: integer
+          description: Score change from input
+        progress_change:
+          type: number
+          minimum: -1
+          maximum: 1
+          description: Progress change (can be negative)
+        lives_change:
+          type: integer
+          description: Lives change from input
+        time_bonus_seconds:
+          type: integer
+          description: Time bonus granted
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special effects triggered
+        completion_status:
+          type: string
+          enum:
+          - incomplete
+          - failed
+          - completed
+          - perfect
+          description: Current minigame completion status
+    HackingSessionAnalytics:
+      description: Comprehensive hacking session analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_sessions:
+          type: integer
+          description: Total hacking sessions analyzed
+        average_session_duration_minutes:
+          type: number
+          description: Average session duration
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall session success rate
+        ice_breaking_analytics:
+          type: object
+          properties:
+            total_ice_encounters:
+              type: integer
+              description: Total ICE systems encountered
+            ice_break_success_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: ICE breaking success rate
+            average_breaking_time_seconds:
+              type: number
+              description: Average time to break ICE
+            popular_breaking_methods:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Usage count by breaking method
+        data_extraction_analytics:
+          type: object
+          properties:
+            total_data_extracted_gb:
+              type: number
+              description: Total data extracted
+            average_extraction_per_session_gb:
+              type: number
+              description: Average data per session
+            data_type_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Data extraction by type
+        trace_analytics:
+          type: object
+          properties:
+            average_max_trace_level:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Average maximum trace level reached
+            trace_detection_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of sessions with trace detection
+            sessions_ended_by_trace:
+              type: integer
+              description: Sessions terminated by trace
+        network_navigation_analytics:
+          type: object
+          properties:
+            average_nodes_visited:
+              type: number
+              description: Average nodes visited per session
+            popular_network_types:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Sessions by network type
+            navigation_efficiency:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Navigation path efficiency
+        player_skill_analytics:
+          type: object
+          properties:
+            skill_level_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Players by skill level
+            learning_curve_metrics:
+              type: array
+              items:
+                type: object
+                properties:
+                  skill_level:
+                    type: integer
+                    description: Skill level milestone
+                  average_sessions_to_reach:
+                    type: number
+                    description: Average sessions to reach level
+                  success_rate_at_level:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Success rate at this level
+              description: Learning curve progression

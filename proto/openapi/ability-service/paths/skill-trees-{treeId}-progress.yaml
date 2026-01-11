@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /skill-trees/{treeId}/progress:
+    get:
+      operationId: abilityServiceGetTreeProgress
+      summary: Get character skill tree progress
+      description: 'Retrieve character''s progress in a specific skill tree.
+
+
+        **Progress Tracking:**
+
+        - Learned abilities and their levels
+
+        - Available talent points
+
+        - Unlocked progression paths
+
+        - Remaining requirements
+
+        '
+      tags:
+      - Skill Trees
+      parameters:
+      - name: treeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Skill tree unique identifier
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      responses:
+        '200':
+          description: Tree progress retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillTreeProgress'
+        '404':
+          $ref: '#/components/responses/NotFound'

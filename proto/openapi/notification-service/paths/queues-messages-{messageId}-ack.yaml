@@ -1,0 +1,43 @@
+openapi: 3.0.3
+paths:
+  /queues/messages/{messageId}/ack:
+    put:
+      summary: Acknowledge message
+      description: Confirm message processing
+      operationId: acknowledgeMessage
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Message identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeMessageRequest'
+      responses:
+        '200':
+          description: Message acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgeMessageResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

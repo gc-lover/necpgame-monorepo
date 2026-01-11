@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/replay:
+    get:
+      summary: Get combat session replay data
+      description: '**Combat session replay**
+
+        Retrieves replay data for combat session analysis with event sourcing.
+
+        **BACKEND NOTE:** Event-sourced replay system for tournament analysis and
+        anti-cheat review.
+
+        '
+      operationId: getCombatReplay
+      tags:
+      - Combat Events
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      - name: start_time
+        in: query
+        schema:
+          type: integer
+          description: Start timestamp for replay (Unix milliseconds)
+      - name: end_time
+        in: query
+        schema:
+          type: integer
+          description: End timestamp for replay (Unix milliseconds)
+      - name: speed
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 10.0
+          default: 1.0
+          description: Replay speed multiplier
+      responses:
+        '200':
+          description: Replay data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatReplayResponse'

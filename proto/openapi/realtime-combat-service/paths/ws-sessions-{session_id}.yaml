@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /ws/sessions/{session_id}:
+    get:
+      summary: WebSocket connection for real-time combat updates
+      description: '**WebSocket real-time combat connection**
+
+        Establishes WebSocket connection for real-time combat updates with enterprise-grade
+        performance.
+
+        **BACKEND NOTE:** Long-lived connection (10k+ concurrent) with message compression,
+        heartbeat validation, and connection pooling.
+
+        '
+      operationId: combatWebSocket
+      tags:
+      - Real-time Updates
+      - WebSocket
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+        description: JWT authentication token
+      - name: client_version
+        in: query
+        schema:
+          type: string
+          default: 1.0.0
+        description: Client application version
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '429':
+          description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

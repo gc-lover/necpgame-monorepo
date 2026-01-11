@@ -1,0 +1,95 @@
+openapi: 3.0.3
+paths:
+  /trials/{trialId}:
+    get:
+      operationId: getTrial
+      summary: Get time trial details
+      description: Retrieve detailed information about a specific time trial
+      tags:
+      - Trial Management
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      responses:
+        '200':
+          description: Trial details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeTrial'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateTrial
+      summary: Update time trial
+      description: Update an existing time trial configuration (admin only)
+      tags:
+      - Trial Management
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeTrial'
+      responses:
+        '200':
+          description: Trial updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeTrial'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

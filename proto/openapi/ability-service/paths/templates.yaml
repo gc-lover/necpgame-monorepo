@@ -1,0 +1,92 @@
+openapi: 3.0.3
+paths:
+  /templates:
+    post:
+      operationId: abilityServiceCreateTemplate
+      summary: Create ability template
+      description: 'Create a new ability template with comprehensive configuration.
+
+
+        **Template Creation:**
+
+        - Define ability properties and effects
+
+        - Configure cooldown and resource costs
+
+        - Set visual and balancing parameters
+
+        - Define progression requirements
+
+        '
+      tags:
+      - Ability Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAbilityTemplateRequest'
+      responses:
+        '201':
+          description: Ability template created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AbilityTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: abilityServiceListTemplates
+      summary: List ability templates
+      description: Retrieve paginated list of ability templates
+      tags:
+      - Ability Templates
+      parameters:
+      - name: ability_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - passive
+          - ultimate
+          - trait
+        description: Filter by ability type
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by category
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include only active templates
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of templates to return
+      responses:
+        '200':
+          description: Ability templates retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AbilityTemplateSummary'

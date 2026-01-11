@@ -1,0 +1,106 @@
+openapi: 3.0.3
+paths:
+  /friendships:
+    get:
+      summary: Get user friendships
+      description: '**Retrieve user''s friendship relationships**
+
+        Optimized endpoint for friendship-specific operations.
+
+        **Performance:** <40ms with friendship-optimized queries
+
+        '
+      operationId: getUserFriendships
+      tags:
+      - Friendship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - blocked
+          default: accepted
+        description: Friendship status filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of friendships to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Friendships retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/FriendshipResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Send friend request
+      description: '**Send a friend request to another user**
+
+        Creates pending friendship relationship.
+
+        **Performance:** <50ms with duplicate request prevention
+
+        '
+      operationId: sendFriendRequest
+      tags:
+      - Friendship
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendFriendRequest'
+      responses:
+        '202':
+          description: Friend request sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '409':
+          description: Friend request already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

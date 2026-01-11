@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      summary: World cities health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the world cities microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: worldCitiesHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                version: 1.0.0
+                timestamp: '2025-12-27T12:30:00Z'
+                uptime: 3600
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

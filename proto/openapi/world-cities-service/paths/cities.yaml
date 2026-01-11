@@ -1,0 +1,185 @@
+openapi: 3.0.3
+paths:
+  /cities:
+    get:
+      summary: List cities with pagination
+      description: '**Enterprise-grade city listing with advanced filtering**
+
+
+        Retrieves paginated list of world cities with optional filtering by various
+        criteria.
+
+        Supports spatial queries, cyberpunk characteristics, and economic filters.
+
+
+        **Performance:** <100ms for filtered queries, <50ms for simple lists
+
+        **Memory:** <50KB per page response
+
+        '
+      operationId: listCities
+      tags:
+      - World Cities
+      parameters:
+      - name: page
+        in: query
+        description: Page number (1-based)
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        description: Items per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: continent
+        in: query
+        description: Filter by continent
+        schema:
+          type: string
+          enum:
+          - Africa
+          - Asia
+          - Europe
+          - North America
+          - South America
+          - Oceania
+      - name: country
+        in: query
+        description: Filter by country
+        schema:
+          type: string
+      - name: cyberpunk_level_min
+        in: query
+        description: Minimum cyberpunk level (1-10)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+      - name: cyberpunk_level_max
+        in: query
+        description: Maximum cyberpunk level (1-10)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+      - name: is_megacity
+        in: query
+        description: Filter by megacity status
+        schema:
+          type: boolean
+      - name: latitude
+        in: query
+        description: Latitude for spatial search
+        schema:
+          type: number
+          minimum: -90
+          maximum: 90
+      - name: longitude
+        in: query
+        description: Longitude for spatial search
+        schema:
+          type: number
+          minimum: -180
+          maximum: 180
+      - name: radius_km
+        in: query
+        description: Search radius in kilometers
+        schema:
+          type: number
+          minimum: 0
+          maximum: 10000
+      responses:
+        '200':
+          description: Cities list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - cities
+                - pagination
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CitySummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create new city
+      description: '**Enterprise-grade city creation**
+
+
+        Creates a new city definition in the world cities database.
+
+        Requires admin privileges and complete city data validation.
+
+
+        **Performance:** <200ms for creation with validation
+
+        '
+      operationId: createCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCreate'
+      responses:
+        '201':
+          description: City created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid city data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

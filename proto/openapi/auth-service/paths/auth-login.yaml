@@ -1,0 +1,66 @@
+openapi: 3.0.3
+paths:
+  /auth/login:
+    post:
+      operationId: authServiceLogin
+      summary: User login
+      description: 'Authenticate user with email/password or OAuth token.
+
+
+        **Security Notes:**
+
+        - Implements progressive delay on failed attempts
+
+        - Logs all authentication attempts for audit
+
+        - Supports OAuth token exchange
+
+        - Rate limited to prevent brute force attacks
+
+        '
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        access_token:
+                          type: string
+                          description: JWT access token
+                          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                        refresh_token:
+                          type: string
+                          description: JWT refresh token
+                          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                        token_type:
+                          type: string
+                          enum:
+                          - Bearer
+                          example: Bearer
+                        expires_in:
+                          type: integer
+                          description: Access token expiration in seconds
+                          example: 3600
+                        user:
+                          $ref: '#/components/schemas/UserAccountSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'

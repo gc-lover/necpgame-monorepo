@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /ws/connections:
+    get:
+      summary: List active WebSocket connections
+      description: Retrieve information about active WebSocket connections
+      operationId: listConnections
+      tags:
+      - WebSocket Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - all
+          default: active
+        description: Filter by connection status
+      - name: protocol
+        in: query
+        schema:
+          type: string
+          enum:
+          - game-events
+          - chat
+          - voice
+          - system
+        description: Filter by protocol type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum number of connections to return
+      responses:
+        '200':
+          description: Connections retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionListResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

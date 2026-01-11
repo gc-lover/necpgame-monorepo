@@ -1,0 +1,53 @@
+openapi: 3.0.3
+paths:
+  /analytics/reports:
+    post:
+      summary: Generate Analytics Report
+      description: '**Generate comprehensive analytics report**
+
+        Creates automated reports with charts, metrics, and AI-powered insights for
+        specified date ranges and report types.
+
+        **Performance:** <200ms for standard reports'
+      operationId: generateAnalyticsReport
+      tags:
+      - Analytics Reports
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - report_type
+              properties:
+                report_type:
+                  type: string
+                  enum:
+                  - retention
+                  - behavior
+                  - ab_test
+                  - performance
+                  description: Type of report to generate
+                  example: retention
+                start_date:
+                  type: string
+                  format: date
+                  description: Report start date (YYYY-MM-DD)
+                  example: '2024-01-01'
+                end_date:
+                  type: string
+                  format: date
+                  description: Report end date (YYYY-MM-DD)
+                  example: '2024-01-11'
+      responses:
+        '201':
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

@@ -1,0 +1,92 @@
+openapi: 3.0.3
+paths:
+  /achievements:
+    get:
+      summary: List achievements with filtering
+      description: '**Enterprise-grade achievement listing endpoint**
+
+        Supports filtering by category, difficulty, completion status, and progress.
+
+        Optimized for achievement tracking and progress visualization.
+
+        **Performance:** <25ms P95, cached for 5 minutes
+
+        '
+      operationId: listAchievements
+      tags:
+      - Achievement System
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+          - progression
+          - special
+          - all
+          default: all
+        description: Filter by achievement category
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+          - all
+          default: all
+        description: Filter by difficulty level
+      - name: completion_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - not_started
+          - in_progress
+          - completed
+          - all
+          default: all
+        description: Filter by completion status
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter achievements for specific player
+      responses:
+        '200':
+          description: Achievements retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementListResponse'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

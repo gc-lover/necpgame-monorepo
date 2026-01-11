@@ -1,0 +1,40 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/affixes/popularity:
+    get:
+      summary: Get affix popularity metrics
+      description: Returns popularity statistics for affixes
+      tags:
+      - Analytics
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+          - quarter
+          default: week
+        description: Time period for analysis
+      responses:
+        '200':
+          description: Popularity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PopularityMetricsResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

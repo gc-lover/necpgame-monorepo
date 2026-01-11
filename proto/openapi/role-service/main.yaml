@@ -1,1140 +1,146 @@
-# Enterprise-Grade Role Service API - SOLID/DRY Domain Inheritance
-# Infrastructure domain service for role-based access control
-# Issue: #openapi-refactor
-
 openapi: 3.0.3
 info:
   title: Role Service API
-  description: |
-    **Enterprise-grade API for Role-Based Access Control**
+  description: '**Enterprise-grade API for Role-Based Access Control**
+
 
     ## Domain Purpose
-    Comprehensive role and permission management service providing fine-grained access control,
+
+    Comprehensive role and permission management service providing fine-grained access
+    control,
+
     hierarchical role structures, and security auditing for the NECPGAME platform.
 
+
     ## Business Value
+
     - Enterprise RBAC with role hierarchies
+
     - Fine-grained permission management
+
     - Dynamic permission evaluation
+
     - Security compliance and auditing
+
     - Scalable access control for millions of users
 
+
     ## Performance Targets
+
     - P99 Latency: <25ms for permission checks
+
     - Memory per Instance: <30KB baseline
+
     - Concurrent Permission Checks: 100,000+ per second
+
     - Redis Cache Hit Rate: >95% for permission queries
 
+
     ## Domain Inheritance
+
     This service inherits from infrastructure-entities.yaml providing:
+
     - Audit trails for security events
+
     - Configuration management for policies
+
     - User account references
+
     - Optimistic locking for concurrent operations
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/role-service
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/role-service
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/role-service
-    description: Local development
-
+- url: https://api.necpgame.com/v1/role-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/role-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/role-service
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Role Management
-    description: Core role operations and lifecycle
-  - name: Permission Management
-    description: Permission definition and validation
-  - name: Access Control
-    description: User role assignments and access checks
-  - name: Security Auditing
-    description: Role and permission audit trails
-  - name: Policy Management
-    description: Security policies and compliance
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: Role Management
+  description: Core role operations and lifecycle
+- name: Permission Management
+  description: Permission definition and validation
+- name: Access Control
+  description: User role assignments and access checks
+- name: Security Auditing
+  description: Role and permission audit trails
+- name: Policy Management
+  description: Security policies and compliance
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
   /health:
-    get:
-      operationId: roleServiceHealthCheck
-      summary: Basic health check
-      description: Returns service health status
-      tags: [Health Monitoring]
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-
+    $ref: ./paths/health.yaml#/paths/~1health
   /roles:
-    post:
-      operationId: roleServiceCreateRole
-      summary: Create new role
-      description: |
-        Create a new role with permissions and hierarchy settings.
-
-        **Business Rules:**
-        - Role names must be unique within organization
-        - Validates permission consistency
-        - Creates audit trail for role creation
-        - Supports role inheritance and overrides
-      tags: [Role Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRoleRequest'
-      responses:
-        '201':
-          description: Role created successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Role'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    get:
-      operationId: roleServiceListRoles
-      summary: List roles with filtering
-      description: |
-        Retrieve paginated list of roles with advanced filtering.
-
-        **Performance Notes:**
-        - Uses database indexes for efficient filtering
-        - Implements cursor-based pagination for large datasets
-        - Cached for 30 seconds
-      tags: [Role Management]
-      parameters:
-        - name: organization_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by organization
-        - name: role_type
-          in: query
-          schema:
-            type: string
-            enum: [system, organization, project, custom]
-          description: Filter by role type
-        - name: active_only
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include only active roles
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of roles to return
-      responses:
-        '200':
-          description: Roles retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/RoleSummary'
-
+    $ref: ./paths/roles.yaml#/paths/~1roles
   /roles/{roleId}:
-    get:
-      operationId: roleServiceGetRole
-      summary: Get role by ID
-      description: Retrieve detailed role information including permissions
-      tags: [Role Management]
-      parameters:
-        - name: roleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role unique identifier
-      responses:
-        '200':
-          description: Role found
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Role'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: roleServiceUpdateRole
-      summary: Update role
-      description: |
-        Update role properties and permissions.
-
-        **Security Notes:**
-        - Validates permission consistency
-        - Prevents circular dependencies in hierarchy
-        - Creates audit trail for changes
-        - Immediate cache invalidation
-      tags: [Role Management]
-      parameters:
-        - name: roleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRoleRequest'
-      responses:
-        '200':
-          description: Role updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Updated'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Role'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    delete:
-      operationId: roleServiceDeleteRole
-      summary: Delete role
-      description: |
-        Soft delete role (deactivate and archive).
-
-        **Business Rules:**
-        - Checks for active user assignments
-        - Prevents deletion of system roles
-        - Creates audit trail
-        - Offers migration to replacement role
-      tags: [Role Management]
-      parameters:
-        - name: roleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/roles-{roleId}.yaml#/paths/~1roles~1{roleId}
   /roles/{roleId}/permissions:
-    get:
-      operationId: roleServiceGetRolePermissions
-      summary: Get role permissions
-      description: Retrieve all permissions assigned to a role
-      tags: [Permission Management]
-      parameters:
-        - name: roleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role unique identifier
-        - name: effective
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include inherited permissions
-      responses:
-        '200':
-          description: Role permissions retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Permission'
-
-    put:
-      operationId: roleServiceUpdateRolePermissions
-      summary: Update role permissions
-      description: |
-        Update permissions assigned to a role.
-
-        **Security Notes:**
-        - Validates permission consistency
-        - Prevents privilege escalation
-        - Creates detailed audit trail
-        - Immediate cache invalidation
-      tags: [Permission Management]
-      parameters:
-        - name: roleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRolePermissionsRequest'
-      responses:
-        '200':
-          description: Role permissions updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/responses/OK'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/roles-{roleId}-permissions.yaml#/paths/~1roles~1{roleId}~1permissions
   /permissions:
-    post:
-      operationId: roleServiceCreatePermission
-      summary: Create new permission
-      description: |
-        Create a new permission definition.
-
-        **Business Rules:**
-        - Permission names must be unique
-        - Validates resource and action format
-        - Creates audit trail
-        - Supports conditional permissions
-      tags: [Permission Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePermissionRequest'
-      responses:
-        '201':
-          description: Permission created successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Permission'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    get:
-      operationId: roleServiceListPermissions
-      summary: List permissions
-      description: Retrieve paginated list of permissions
-      tags: [Permission Management]
-      parameters:
-        - name: resource_type
-          in: query
-          schema:
-            type: string
-          description: Filter by resource type
-        - name: action
-          in: query
-          schema:
-            type: string
-          description: Filter by action
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of permissions to return
-      responses:
-        '200':
-          description: Permissions retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/PermissionSummary'
-
+    $ref: ./paths/permissions.yaml#/paths/~1permissions
   /users/{userId}/roles:
-    get:
-      operationId: roleServiceGetUserRoles
-      summary: Get user roles
-      description: Retrieve all roles assigned to a user
-      tags: [Access Control]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: organization_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by organization
-      responses:
-        '200':
-          description: User roles retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/UserRoleAssignment'
-
-    post:
-      operationId: roleServiceAssignUserRole
-      summary: Assign role to user
-      description: |
-        Assign a role to a user with optional constraints.
-
-        **Business Rules:**
-        - Validates role compatibility
-        - Checks for conflicting roles
-        - Creates audit trail
-        - Supports conditional assignments
-      tags: [Access Control]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AssignRoleRequest'
-      responses:
-        '200':
-          description: Role assigned successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/UserRoleAssignment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    delete:
-      operationId: roleServiceRevokeUserRole
-      summary: Revoke user role
-      description: |
-        Revoke a role assignment from a user.
-
-        **Security Notes:**
-        - Validates revocation permissions
-        - Creates audit trail
-        - Handles role dependencies
-        - Immediate permission cache invalidation
-      tags: [Access Control]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: role_assignment_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Role assignment unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/users-{userId}-roles.yaml#/paths/~1users~1{userId}~1roles
   /permissions/check:
-    post:
-      operationId: roleServiceCheckPermissions
-      summary: Check user permissions
-      description: |
-        Check if user has specific permissions for resources.
-
-        **Performance Notes:**
-        - Redis-based permission caching
-        - Batch permission checking support
-        - Sub-millisecond response times
-        - Context-aware evaluation
-      tags: [Access Control]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionCheckRequest'
-      responses:
-        '200':
-          description: Permission check completed
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/PermissionCheckResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
+    $ref: ./paths/permissions-check.yaml#/paths/~1permissions~1check
   /audit/roles:
-    get:
-      operationId: roleServiceGetRoleAuditLog
-      summary: Get role audit log
-      description: |
-        Retrieve audit log for role-related operations.
-
-        **Compliance Notes:**
-        - GDPR compliant audit trails
-        - Configurable retention periods
-        - Immutable audit records
-        - Privacy-aware logging
-      tags: [Security Auditing]
-      parameters:
-        - name: role_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by role ID
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by user ID
-        - name: action
-          in: query
-          schema:
-            type: string
-            enum: [create, update, delete, assign, revoke, check]
-          description: Filter by action type
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for audit log
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Number of audit records to return
-      responses:
-        '200':
-          description: Audit log retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/RoleAuditEntry'
-
+    $ref: ./paths/audit-roles.yaml#/paths/~1audit~1roles
 components:
-
+  schemas:
+    Role:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/Role
+    RoleSummary:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/RoleSummary
+    Permission:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/Permission
+    PermissionSummary:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/PermissionSummary
+    UserRoleAssignment:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/UserRoleAssignment
+    RoleAuditEntry:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/RoleAuditEntry
+    CreateRoleRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/CreateRoleRequest
+    UpdateRoleRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/UpdateRoleRequest
+    UpdateRolePermissionsRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/UpdateRolePermissionsRequest
+    CreatePermissionRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/CreatePermissionRequest
+    AssignRoleRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/AssignRoleRequest
+    PermissionCheckRequest:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/PermissionCheckRequest
+    PermissionCheckResult:
+      $ref: ./schemas/role-service-schemas.yaml#/components/schemas/PermissionCheckResult
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/BadRequest
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-
-  schemas:
-
-    # Domain Inheritance - Role Service Entities
-    Role:
-      description: Complete role entity with infrastructure domain inheritance
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
-        - type: object
-          properties:
-            # Add role-service specific fields
-            name:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Human-readable role name
-            description:
-              type: string
-              maxLength: 500
-              description: Role description and purpose
-            role_type:
-              type: string
-              enum: [system, organization, project, custom]
-              description: Category of role
-            organization_id:
-              type: string
-              format: uuid
-              description: Organization this role belongs to
-            parent_role_id:
-              type: string
-              format: uuid
-              description: Parent role for inheritance
-            permissions:
-              type: array
-              items:
-                type: string
-              description: Direct permissions assigned to this role
-            inherited_permissions:
-              type: array
-              items:
-                type: string
-              description: Permissions inherited from parent roles
-            is_active:
-              type: boolean
-              default: true
-              description: Whether role is active
-            metadata:
-              type: object
-              description: Additional role metadata
-              properties:
-                created_by:
-                  type: string
-                  format: uuid
-                  description: User who created this role
-                risk_level:
-                  type: string
-                  enum: [low, medium, high, critical]
-                  description: Security risk level of this role
-
-    RoleSummary:
-      description: Summary role for list operations
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Role ID
-        name:
-          type: string
-          description: Role name
-        role_type:
-          type: string
-          enum: [system, organization, project, custom]
-          description: Role type
-        is_active:
-          type: boolean
-          description: Active status
-        permission_count:
-          type: integer
-          description: Number of permissions
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-
-    Permission:
-      description: Permission definition entity
-      type: object
-      required:
-        - id
-        - resource_type
-        - action
-        - name
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Permission unique identifier
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Human-readable permission name
-        description:
-          type: string
-          maxLength: 500
-          description: Permission description
-        resource_type:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Type of resource (e.g., 'user', 'role', 'organization')
-        action:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Action on resource (e.g., 'create', 'read', 'update', 'delete')
-        conditions:
-          type: object
-          description: Conditional requirements for permission
-          additionalProperties: true
-        risk_level:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Security risk level
-        is_active:
-          type: boolean
-          default: true
-          description: Whether permission is active
-
-    PermissionSummary:
-      description: Summary permission for list operations
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Permission ID
-        name:
-          type: string
-          description: Permission name
-        resource_type:
-          type: string
-          description: Resource type
-        action:
-          type: string
-          description: Action
-        risk_level:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Risk level
-
-    UserRoleAssignment:
-      description: User role assignment entity
-      type: object
-      required:
-        - id
-        - user_id
-        - role_id
-        - assigned_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Assignment unique identifier
-        user_id:
-          type: string
-          format: uuid
-          description: User assigned to role
-        role_id:
-          type: string
-          format: uuid
-          description: Role assigned to user
-        organization_id:
-          type: string
-          format: uuid
-          description: Organization context
-        assigned_by:
-          type: string
-          format: uuid
-          description: User who made the assignment
-        assigned_at:
-          type: string
-          format: date-time
-          description: Assignment timestamp
-        expires_at:
-          type: string
-          format: date-time
-          description: Optional expiration date
-        conditions:
-          type: object
-          description: Conditional assignment rules
-          additionalProperties: true
-        is_active:
-          type: boolean
-          default: true
-          description: Whether assignment is active
-
-    RoleAuditEntry:
-      description: Audit entry for role operations
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/AuditLogEntity'
-        - type: object
-          properties:
-            role_id:
-              type: string
-              format: uuid
-              description: Associated role ID
-            user_id:
-              type: string
-              format: uuid
-              description: Associated user ID
-            operation_type:
-              type: string
-              enum: [role_create, role_update, role_delete, permission_assign, permission_revoke, role_assign, role_revoke]
-              description: Type of role operation performed
-            old_values:
-              type: object
-              description: Previous state values
-            new_values:
-              type: object
-              description: New state values
-
-    # Request/Response schemas
-    CreateRoleRequest:
-      description: Request payload for creating a role
-      type: object
-      required:
-        - name
-        - role_type
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Role name
-          example: "Content Moderator"
-        description:
-          type: string
-          maxLength: 500
-          description: Role description
-          example: "Can moderate user-generated content and manage reports"
-        role_type:
-          type: string
-          enum: [system, organization, project, custom]
-          description: Role category
-          example: "organization"
-        organization_id:
-          type: string
-          format: uuid
-          description: Organization ID for organization/project roles
-        parent_role_id:
-          type: string
-          format: uuid
-          description: Parent role for inheritance
-        permissions:
-          type: array
-          items:
-            type: string
-          description: Initial permissions to assign
-          example: ["content.moderate", "user.ban"]
-        metadata:
-          type: object
-          description: Additional role metadata
-
-    UpdateRoleRequest:
-      description: Request payload for updating a role
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Role name
-        description:
-          type: string
-          maxLength: 500
-          description: Role description
-        permissions:
-          type: array
-          items:
-            type: string
-          description: Updated permissions
-        is_active:
-          type: boolean
-          description: Active status
-        version:
-          type: integer
-          minimum: 1
-          description: Current version for optimistic locking
-
-    UpdateRolePermissionsRequest:
-      description: Request payload for updating role permissions
-      type: object
-      required:
-        - permissions
-      properties:
-        permissions:
-          type: array
-          items:
-            type: string
-          description: Complete list of permissions for the role
-        version:
-          type: integer
-          minimum: 1
-          description: Current version for optimistic locking
-
-    CreatePermissionRequest:
-      description: Request payload for creating a permission
-      type: object
-      required:
-        - name
-        - resource_type
-        - action
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Permission name
-          example: "Create User"
-        description:
-          type: string
-          maxLength: 500
-          description: Permission description
-          example: "Allows creating new user accounts"
-        resource_type:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Resource type
-          example: "user"
-        action:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Action on resource
-          example: "create"
-        conditions:
-          type: object
-          description: Permission conditions
-        risk_level:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Security risk level
-          default: "medium"
-
-    AssignRoleRequest:
-      description: Request payload for assigning a role to user
-      type: object
-      required:
-        - role_id
-      properties:
-        role_id:
-          type: string
-          format: uuid
-          description: Role to assign
-        organization_id:
-          type: string
-          format: uuid
-          description: Organization context
-        expires_at:
-          type: string
-          format: date-time
-          description: Optional expiration date
-        conditions:
-          type: object
-          description: Assignment conditions
-        assigned_by:
-          type: string
-          format: uuid
-          description: User making the assignment
-
-    PermissionCheckRequest:
-      description: Request payload for permission checking
-      type: object
-      required:
-        - user_id
-        - permissions
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: User to check permissions for
-        permissions:
-          type: array
-          items:
-            type: object
-            required:
-              - resource_type
-              - action
-            properties:
-              resource_type:
-                type: string
-                description: Resource type
-              action:
-                type: string
-                description: Action on resource
-              resource_id:
-                type: string
-                format: uuid
-                description: Specific resource ID
-              context:
-                type: object
-                description: Additional context for evaluation
-          description: Permissions to check
-        organization_id:
-          type: string
-          format: uuid
-          description: Organization context
-
-    PermissionCheckResult:
-      description: Result of permission check operation
-      type: object
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: User checked
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              permission:
-                type: object
-                properties:
-                  resource_type:
-                    type: string
-                    description: Resource type
-                  action:
-                    type: string
-                    description: Action
-                  resource_id:
-                    type: string
-                    format: uuid
-                    description: Resource ID
-                description: Permission checked
-              granted:
-                type: boolean
-                description: Whether permission is granted
-              reason:
-                type: string
-                description: Reason for grant/deny
-              roles:
-                type: array
-                items:
-                  type: string
-                  format: uuid
-                description: Roles granting this permission
-          description: Individual permission check results
-
+      $ref: ./schemas/role-service-responses.yaml#/components/responses/Conflict
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-
-# Performance and optimization notes
-x-performance:
-  p99-latency: "<25ms"
-  memory-target: "<30KB per instance"
-  permission-checks-target: "100,000+ per second"
-  cache-strategy: "Redis with 95% hit rate for permission queries"
-  database-indexes: "Composite indexes on (user_id, role_id), (role_id, permission)"
-
-# Monitoring and observability
-x-monitoring:
-  metrics:
-    - role_creation_rate
-    - permission_check_rate
-    - role_assignment_rate
-    - audit_log_entries
-    - cache_hit_rate
-  alerts:
-    - permission_check_latency > 50ms
-    - role_assignment_conflicts > 1%
-    - audit_log_failures > 0
-
-# Security configuration
-x-security:
-  audit-trail: "All role/permission operations logged with GDPR compliance"
-  permission-caching: "Redis-based with automatic invalidation"
-  role-conflict-detection: "Automatic detection of conflicting role assignments"
-  rate-limiting: "100 permission checks/minute per user"
-
-# Domain inheritance documentation
-x-domain-inheritance:
-  inherits-from: "common/schemas/infrastructure-entities.yaml"
-  inherited-entities: "ConfigurationEntity, AuditLogEntity"
-  additional-schemas: "Role hierarchy, permission matrix, RBAC logic"
-  no-duplication: "All common fields inherited, RBAC extensions added"
-
+      $ref: ../common/security/security.yaml#/ServiceAuth

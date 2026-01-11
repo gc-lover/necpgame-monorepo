@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /challenges/cooperative/active:
+    get:
+      summary: Get active cooperative challenges
+      description: '**Get available cooperative multiplayer challenges**
+
+        Returns challenges requiring team coordination and participation.
+
+        **Performance:** <25ms response time, cached for 2 minutes '
+      operationId: getActiveCooperativeChallenges
+      tags:
+      - Cooperative Challenges
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: participant_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - small
+          - medium
+          - large
+          description: Filter by team size (2-4, 5-10, 11+)
+      responses:
+        '200':
+          description: Cooperative challenges retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CooperativeChallenge'
+                  available:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                    description: Challenge IDs the character can join
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

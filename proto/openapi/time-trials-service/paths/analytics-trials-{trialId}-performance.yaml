@@ -1,0 +1,110 @@
+openapi: 3.0.3
+paths:
+  /analytics/trials/{trialId}/performance:
+    get:
+      operationId: getTrialPerformanceAnalytics
+      summary: Get trial performance analytics
+      description: Retrieve performance metrics and statistics for a time trial
+      tags:
+      - Analytics
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - seasonal
+          default: weekly
+        description: Analytics timeframe
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - trial_id
+                - timeframe
+                - metrics
+                properties:
+                  trial_id:
+                    type: string
+                    format: uuid
+                  timeframe:
+                    type: string
+                  metrics:
+                    type: object
+                    properties:
+                      total_completions:
+                        type: integer
+                        minimum: 0
+                      average_completion_time:
+                        type: number
+                        minimum: 0
+                      fastest_time:
+                        type: integer
+                        minimum: 0
+                      slowest_time:
+                        type: integer
+                        minimum: 0
+                      completion_rate:
+                        type: number
+                        minimum: 0
+                        maximum: 1
+                        description: Percentage of started trials that were completed
+                      difficulty_distribution:
+                        type: object
+                        properties:
+                          normal:
+                            type: integer
+                            minimum: 0
+                          heroic:
+                            type: integer
+                            minimum: 0
+                          mythic:
+                            type: integer
+                            minimum: 0
+                          legendary:
+                            type: integer
+                            minimum: 0
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - analytics access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

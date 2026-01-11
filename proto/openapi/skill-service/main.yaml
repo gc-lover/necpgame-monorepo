@@ -7,63 +7,62 @@ info:
     ## 🎯 **Skill Service Overview**
 
 
-    Skill Service        
-    NECPGAME  enterprise-grade   .
+    Skill Service NECPGAME  enterprise-grade   .
 
 
     ### ** **
 
-    - **Skill Tree Management**:   
+    - **Skill Tree Management**:
 
-    - **Skill Progression**:    
+    - **Skill Progression**:
 
-    - **Specialization System**:  
+    - **Specialization System**:
 
-    - **Skill Balancing**:  
-
-
-    ### ** **
-
-    - **Combat Skills**:  
-
-    - **Crafting Skills**:  
-
-    - **Social Skills**:  
-
-    - **Exploration Skills**:  
+    - **Skill Balancing**:
 
 
     ### ** **
 
-    - **Skill Combinations**:  
+    - **Combat Skills**:
 
-    - **Mastery System**:  
+    - **Crafting Skills**:
 
-    - **Skill Prerequisites**:  
+    - **Social Skills**:
 
-    - **Dynamic Scaling**:  
+    - **Exploration Skills**:
+
+
+    ### ** **
+
+    - **Skill Combinations**:
+
+    - **Mastery System**:
+
+    - **Skill Prerequisites**:
+
+    - **Dynamic Scaling**:
 
 
     ## 📊 **Performance Targets**
 
-    - **P99 Latency**: <25ms    
+    - **P99 Latency**: <25ms
 
     - **Throughput**: 30,000+ skill operations/second
 
-    - **Concurrent Players**: 500,000+  
+    - **Concurrent Players**: 500,000+
 
-    - **Memory per Player**: <2KB  
+    - **Memory per Player**: <2KB
 
 
     ## 🔐 **Security**
 
-    - JWT RS256 
+    - JWT RS256
 
-    - Rate limiting   
+    - Rate limiting
 
     - Input validation  sanitization
 
-    - Audit logging  
+    - Audit logging
 
     '
   version: 1.0.0
@@ -84,1433 +83,105 @@ security:
 - BearerAuth: []
 tags:
 - name: Skill Management
-  description:  
+  description: null
 - name: Skill Trees
-  description:  
+  description: null
 - name: Progression
-  description:  
+  description: null
 - name: Specialization
-  description: 
+  description: null
 - name: Health
-  description:   
+  description: null
 paths:
   /health:
-    get:
-      summary:   
-      operationId: healthCheck
-      tags:
-      - Health
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    post:
-      summary:   
-      operationId: healthBatchCheck
-      tags:
-      - Health
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HealthBatchRequest'
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthBatchResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: WebSocket  
-      operationId: healthWebSocketCheck
-      tags:
-      - Health
-      responses:
-        '101':
-          description: WebSocket  
-        '503':
-          description: WebSocket 
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /skills:
-    post:
-      summary:   
-      operationId: createSkill
-      tags:
-      - Skill Management
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSkillRequest'
-      responses:
-        '201':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    get:
-      summary:   
-      operationId: getSkills
-      tags:
-      - Skill Management
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: treeId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skills.yaml#/paths/~1skills
   /skills/{skillId}:
-    get:
-      summary:    ID
-      operationId: getSkill
-      tags:
-      - Skill Management
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '404':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    put:
-      summary:  
-      operationId: updateSkill
-      tags:
-      - Skill Management
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSkillRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '403':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skills-{skillId}.yaml#/paths/~1skills~1{skillId}
   /skill-trees:
-    post:
-      summary:   
-      operationId: createSkillTree
-      tags:
-      - Skill Trees
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSkillTreeRequest'
-      responses:
-        '201':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    get:
-      summary:    
-      operationId: getSkillTrees
-      tags:
-      - Skill Trees
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skill-trees.yaml#/paths/~1skill-trees
   /skill-trees/{treeId}:
-    get:
-      summary:     ID
-      operationId: getSkillTree
-      tags:
-      - Skill Trees
-      parameters:
-      - name: treeId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '404':
-          description:    
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    put:
-      summary:   
-      operationId: updateSkillTree
-      tags:
-      - Skill Trees
-      parameters:
-      - name: treeId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSkillTreeRequest'
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '403':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description:    
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skill-trees-{treeId}.yaml#/paths/~1skill-trees~1{treeId}
   /players/{playerId}/skills:
-    get:
-      summary:   
-      operationId: getPlayerSkills
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: learnedOnly
-        in: query
-        schema:
-          type: boolean
-          default: true
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerSkillListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/players-{playerId}-skills.yaml#/paths/~1players~1{playerId}~1skills
   /players/{playerId}/skills/learn:
-    post:
-      summary:  
-      operationId: learnSkill
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LearnSkillRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LearnSkillResponse'
-        '400':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/players-{playerId}-skills-learn.yaml#/paths/~1players~1{playerId}~1skills~1learn
   /players/{playerId}/skills/{skillId}/upgrade:
-    post:
-      summary:  
-      operationId: upgradeSkill
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpgradeSkillRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpgradeSkillResponse'
-        '400':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/players-{playerId}-skills-{skillId}-upgrade.yaml#/paths/~1players~1{playerId}~1skills~1{skillId}~1upgrade
   /players/{playerId}/specializations:
-    get:
-      summary:   
-      operationId: getPlayerSpecializations
-      tags:
-      - Specialization
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerSpecializationResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    post:
-      summary:  
-      operationId: chooseSpecialization
-      tags:
-      - Specialization
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChooseSpecializationRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChooseSpecializationResponse'
-        '400':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/players-{playerId}-specializations.yaml#/paths/~1players~1{playerId}~1specializations
   /skills/mastery/{skillId}:
-    get:
-      summary:   
-      operationId: getSkillMastery
-      tags:
-      - Progression
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillMasteryResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skills-mastery-{skillId}.yaml#/paths/~1skills~1mastery~1{skillId}
   /skills/analytics/popular:
-    get:
-      summary:  
-      operationId: getPopularSkills
-      tags:
-      - Skill Management
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          default: weekly
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PopularSkillsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/skills-analytics-popular.yaml#/paths/~1skills~1analytics~1popular
 components:
+  schemas:
+    CharacterEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/HealthBatchResponse
+    SkillEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillEntity
+    SkillTreeEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillTreeEntity
+    PlayerSkillEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/PlayerSkillEntity
+    PlayerSpecializationEntity:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/PlayerSpecializationEntity
+    CreateSkillRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/CreateSkillRequest
+    UpdateSkillRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/UpdateSkillRequest
+    SkillResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillResponse
+    SkillListResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillListResponse
+    CreateSkillTreeRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/CreateSkillTreeRequest
+    UpdateSkillTreeRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/UpdateSkillTreeRequest
+    SkillTreeResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillTreeResponse
+    SkillTreeListResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillTreeListResponse
+    PlayerSkillListResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/PlayerSkillListResponse
+    LearnSkillRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/LearnSkillRequest
+    LearnSkillResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/LearnSkillResponse
+    UpgradeSkillRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/UpgradeSkillRequest
+    UpgradeSkillResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/UpgradeSkillResponse
+    PlayerSpecializationResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/PlayerSpecializationResponse
+    ChooseSpecializationRequest:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/ChooseSpecializationRequest
+    ChooseSpecializationResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/ChooseSpecializationResponse
+    SkillMasteryResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/SkillMasteryResponse
+    PopularSkillsResponse:
+      $ref: ./schemas/skill-service-schemas.yaml#/components/schemas/PopularSkillsResponse
+  responses: {}
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  schemas:
-    CharacterEntity:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
-    BaseEntity:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
-    OptimisticLock:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
-    ErrorResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
-    HealthResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
-    HealthBatchRequest:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
-    HealthBatchResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
-    SkillEntity:
-      type: object
-      description:  
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - name
-        - description
-        - category
-        - maxLevel
-        properties:
-          name:
-            type: string
-            description:  
-            maxLength: 100
-            example:  
-          description:
-            type: string
-            description:  
-            maxLength: 500
-            example:      
-          category:
-            type: string
-            description:  
-            enum:
-            - combat
-            - crafting
-            - social
-            - exploration
-            example: combat
-          treeId:
-            type: string
-            description: ID  
-            format: uuid
-          iconUrl:
-            type: string
-            description: URL  
-            format: uri
-            example: https://cdn.necpgame.com/skills/sword-mastery.png
-          maxLevel:
-            type: integer
-            description:   
-            minimum: 1
-            maximum: 100
-            example: 50
-          prerequisites:
-            type: array
-            description:   
-            items:
-              type: object
-              properties:
-                skillId:
-                  type: string
-                  format: uuid
-                requiredLevel:
-                  type: integer
-                  minimum: 1
-                type:
-                  type: string
-                  enum:
-                  - skill
-                  - level
-                  - item
-          effects:
-            type: array
-            description:    
-            items:
-              type: object
-              properties:
-                level:
-                  type: integer
-                  minimum: 1
-                effectType:
-                  type: string
-                  enum:
-                  - damage_bonus
-                  - accuracy_bonus
-                  - craft_quality
-                  - social_bonus
-                value:
-                  type: number
-                description:
-                  type: string
-                  maxLength: 200
-          costFormula:
-            type: string
-            description:   
-            example: level * 100 + level^2 * 10
-          isActive:
-            type: boolean
-            description: Is skill active
-            default: true
-          $ref: '#/components/schemas/OptimisticLock'
-    SkillTreeEntity:
-      type: object
-      description:   
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - name
-        - category
-        - rootSkillId
-        properties:
-          name:
-            type: string
-            description:   
-            maxLength: 100
-            example:  
-          description:
-            type: string
-            description:   
-            maxLength: 500
-          category:
-            type: string
-            description:  
-            enum:
-            - combat
-            - crafting
-            - social
-            - exploration
-            example: combat
-          rootSkillId:
-            type: string
-            description: ID  
-            format: uuid
-          specializations:
-            type: array
-            description:  
-            items:
-              type: object
-              properties:
-                name:
-                  type: string
-                  maxLength: 50
-                description:
-                  type: string
-                  maxLength: 200
-                requiredSkills:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                bonuses:
-                  type: object
-                  additionalProperties:
-                    type: number
-          isActive:
-            type: boolean
-            description:   
-            default: true
-          $ref: '#/components/schemas/OptimisticLock'
-    PlayerSkillEntity:
-      type: object
-      description:  
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - playerId
-        - skillId
-        - level
-        - experience
-        properties:
-          playerId:
-            type: string
-            description: ID 
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-          skillId:
-            type: string
-            description: ID 
-            format: uuid
-            example: 456e7890-e89b-12d3-a456-426614174001
-          level:
-            type: integer
-            description:   
-            minimum: 0
-            example: 15
-          experience:
-            type: integer
-            description:   
-            minimum: 0
-            example: 2500
-          experienceToNext:
-            type: integer
-            description:    
-            minimum: 0
-            example: 500
-          learnedAt:
-            type: string
-            description:  
-            format: date-time
-          lastUsedAt:
-            type: string
-            description:  
-            format: date-time
-          specializationBonus:
-            type: number
-            description:   
-            default: 1.0
-          $ref: '#/components/schemas/OptimisticLock'
-    PlayerSpecializationEntity:
-      type: object
-      description:  
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - playerId
-        - treeId
-        - specializationName
-        properties:
-          playerId:
-            type: string
-            description: ID 
-            format: uuid
-          treeId:
-            type: string
-            description: ID  
-            format: uuid
-          specializationName:
-            type: string
-            description:  
-            maxLength: 50
-            example:  
-          chosenAt:
-            type: string
-            description:   
-            format: date-time
-          bonuses:
-            type: object
-            description:  
-            additionalProperties:
-              type: number
-          $ref: '#/components/schemas/OptimisticLock'
-    CreateSkillRequest:
-      type: object
-      required:
-      - name
-      - description
-      - category
-      - maxLevel
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-        treeId:
-          type: string
-          format: uuid
-        iconUrl:
-          type: string
-          format: uri
-        maxLevel:
-          type: integer
-          minimum: 1
-          maximum: 100
-        prerequisites:
-          type: array
-          items:
-            type: object
-            properties:
-              skillId:
-                type: string
-                format: uuid
-              requiredLevel:
-                type: integer
-                minimum: 1
-              type:
-                type: string
-                enum:
-                - skill
-                - level
-                - item
-        effects:
-          type: array
-          items:
-            type: object
-            properties:
-              level:
-                type: integer
-                minimum: 1
-              effectType:
-                type: string
-                enum:
-                - damage_bonus
-                - accuracy_bonus
-                - craft_quality
-                - social_bonus
-              value:
-                type: number
-              description:
-                type: string
-                maxLength: 200
-        costFormula:
-          type: string
-    UpdateSkillRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-        treeId:
-          type: string
-          format: uuid
-        iconUrl:
-          type: string
-          format: uri
-        maxLevel:
-          type: integer
-          minimum: 1
-          maximum: 100
-        prerequisites:
-          type: array
-          items:
-            type: object
-            properties:
-              skillId:
-                type: string
-                format: uuid
-              requiredLevel:
-                type: integer
-                minimum: 1
-              type:
-                type: string
-                enum:
-                - skill
-                - level
-                - item
-        effects:
-          type: array
-          items:
-            type: object
-            properties:
-              level:
-                type: integer
-                minimum: 1
-              effectType:
-                type: string
-                enum:
-                - damage_bonus
-                - accuracy_bonus
-                - craft_quality
-                - social_bonus
-              value:
-                type: number
-              description:
-                type: string
-                maxLength: 200
-        costFormula:
-          type: string
-        isActive:
-          type: boolean
-    SkillResponse:
-      type: object
-      properties:
-        skill:
-          $ref: '#/components/schemas/SkillEntity'
-        metadata:
-          type: object
-          properties:
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    SkillListResponse:
-      type: object
-      properties:
-        skills:
-          type: array
-          items:
-            $ref: '#/components/schemas/SkillEntity'
-        pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              minimum: 0
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 100
-            offset:
-              type: integer
-              minimum: 0
-            hasNext:
-              type: boolean
-    CreateSkillTreeRequest:
-      type: object
-      required:
-      - name
-      - category
-      - rootSkillId
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-        rootSkillId:
-          type: string
-          format: uuid
-        specializations:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                maxLength: 50
-              description:
-                type: string
-                maxLength: 200
-              requiredSkills:
-                type: array
-                items:
-                  type: string
-                  format: uuid
-              bonuses:
-                type: object
-                additionalProperties:
-                  type: number
-    UpdateSkillTreeRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-        specializations:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                maxLength: 50
-              description:
-                type: string
-                maxLength: 200
-              requiredSkills:
-                type: array
-                items:
-                  type: string
-                  format: uuid
-              bonuses:
-                type: object
-                additionalProperties:
-                  type: number
-        isActive:
-          type: boolean
-    SkillTreeResponse:
-      type: object
-      properties:
-        skillTree:
-          $ref: '#/components/schemas/SkillTreeEntity'
-        skills:
-          type: array
-          items:
-            $ref: '#/components/schemas/SkillEntity'
-        metadata:
-          type: object
-          properties:
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    SkillTreeListResponse:
-      type: object
-      properties:
-        skillTrees:
-          type: array
-          items:
-            $ref: '#/components/schemas/SkillTreeEntity'
-        pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              minimum: 0
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 50
-            offset:
-              type: integer
-              minimum: 0
-            hasNext:
-              type: boolean
-    PlayerSkillListResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        skills:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlayerSkillEntity'
-        totalLearned:
-          type: integer
-          minimum: 0
-        totalPointsSpent:
-          type: integer
-          minimum: 0
-        pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              minimum: 0
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 100
-            offset:
-              type: integer
-              minimum: 0
-            hasNext:
-              type: boolean
-    LearnSkillRequest:
-      type: object
-      required:
-      - skillId
-      properties:
-        skillId:
-          type: string
-          format: uuid
-    LearnSkillResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        skill:
-          $ref: '#/components/schemas/PlayerSkillEntity'
-        learnedAt:
-          type: string
-          format: date-time
-        costPaid:
-          type: integer
-          minimum: 0
-    UpgradeSkillRequest:
-      type: object
-      required:
-      - levels
-      properties:
-        levels:
-          type: integer
-          description:    
-          minimum: 1
-          maximum: 10
-          default: 1
-    UpgradeSkillResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        skill:
-          $ref: '#/components/schemas/PlayerSkillEntity'
-        levelsGained:
-          type: integer
-          minimum: 1
-        experienceGained:
-          type: integer
-          minimum: 0
-        costPaid:
-          type: integer
-          minimum: 0
-        upgradedAt:
-          type: string
-          format: date-time
-    PlayerSpecializationResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        specializations:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlayerSpecializationEntity'
-        availableSpecializations:
-          type: array
-          items:
-            type: object
-            properties:
-              treeId:
-                type: string
-                format: uuid
-              treeName:
-                type: string
-              specializations:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    description:
-                      type: string
-                    canChoose:
-                      type: boolean
-                    requirements:
-                      type: array
-                      items:
-                        type: string
-    ChooseSpecializationRequest:
-      type: object
-      required:
-      - treeId
-      - specializationName
-      properties:
-        treeId:
-          type: string
-          format: uuid
-        specializationName:
-          type: string
-          maxLength: 50
-    ChooseSpecializationResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        specialization:
-          $ref: '#/components/schemas/PlayerSpecializationEntity'
-        bonusesApplied:
-          type: object
-          description:  
-          additionalProperties:
-            type: number
-        chosenAt:
-          type: string
-          format: date-time
-    SkillMasteryResponse:
-      type: object
-      properties:
-        skillId:
-          type: string
-          format: uuid
-        skillName:
-          type: string
-        totalPlayersLearned:
-          type: integer
-          minimum: 0
-        averageLevel:
-          type: number
-          minimum: 0
-        maxLevelAchieved:
-          type: integer
-          minimum: 0
-        masteryDistribution:
-          type: object
-          properties:
-            novice:
-              type: integer
-              minimum: 0
-              description:  1-10
-            intermediate:
-              type: integer
-              minimum: 0
-              description:  11-25
-            advanced:
-              type: integer
-              minimum: 0
-              description:  26-40
-            expert:
-              type: integer
-              minimum: 0
-              description:  41-50
-            master:
-              type: integer
-              minimum: 0
-              description:  50+
-    PopularSkillsResponse:
-      type: object
-      properties:
-        period:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-        skills:
-          type: array
-          items:
-            type: object
-            properties:
-              skillId:
-                type: string
-                format: uuid
-              name:
-                type: string
-              category:
-                type: string
-              learnedCount:
-                type: integer
-                minimum: 0
-              levelIncreaseCount:
-                type: integer
-                minimum: 0
-              popularityRank:
-                type: integer
-                minimum: 1
-

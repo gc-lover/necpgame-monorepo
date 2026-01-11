@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /audio/streams:
+    post:
+      summary: Create audio stream
+      description: Create a new audio streaming session for voice chat or game audio
+      operationId: createAudioStream
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAudioStreamRequest'
+      responses:
+        '201':
+          description: Audio stream created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioStream'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: List audio streams
+      description: Retrieve list of active audio streams
+      operationId: listAudioStreams
+      tags:
+      - Audio Streaming
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - voice
+          - game
+          - music
+          - all
+          default: all
+        description: Filter by stream type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - all
+          default: active
+        description: Filter by stream status
+      responses:
+        '200':
+          description: Audio streams retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioStreamListResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

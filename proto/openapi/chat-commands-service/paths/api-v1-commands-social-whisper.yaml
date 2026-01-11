@@ -1,0 +1,72 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/social/whisper:
+    post:
+      summary: Execute whisper command
+      description: '**Enterprise-grade social whisper command**
+
+        Sends private message to another player.
+
+        Available to all authenticated players.
+
+        **Performance:** <100ms response time
+
+        **Security:** Requires valid JWT token
+
+        '
+      operationId: executeWhisperCommand
+      tags:
+      - Social Commands
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialCommandRequest'
+      responses:
+        '200':
+          description: Whisper sent successfully
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialCommandResponse'
+        '404':
+          description: Target player not found or offline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,900 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    CyberspaceNodeEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - name
+        - type
+        - coordinates
+        properties:
+          name:
+            type: string
+            description: null
+            maxLength: 100
+            example: Arasaka Mainframe
+          description:
+            type: string
+            description: null
+            maxLength: 500
+            example: Arasaka
+          type:
+            type: string
+            description: null
+            enum:
+            - data
+            - security
+            - corporate
+            - black_market
+            - public
+            example: corporate
+          coordinates:
+            type: object
+            description: null
+            required:
+            - x
+            - y
+            - z
+            properties:
+              x:
+                type: number
+                description: X
+                example: 150.5
+              y:
+                type: number
+                description: Y
+                example: -25.3
+              z:
+                type: number
+                description: Z
+                example: 75.0
+          corporationId:
+            type: string
+            description: ID -
+            format: uuid
+          securityLevel:
+            type: integer
+            description: null
+            minimum: 1
+            maximum: 10
+            example: 8
+          iceSystems:
+            type: array
+            description: ICE
+            items:
+              $ref: '#/components/schemas/ICESystemEntity'
+          dataVaults:
+            type: array
+            description: null
+            items:
+              $ref: '#/components/schemas/DataVaultEntity'
+          connectedNodes:
+            type: array
+            description: null
+            items:
+              type: string
+              format: uuid
+          isActive:
+            type: boolean
+            description: null
+            default: true
+          lastScanned:
+            type: string
+            description: Last scan
+            format: date-time
+          $ref: '#/components/schemas/OptimisticLock'
+    ICESystemEntity:
+      type: object
+      description: ICE
+      required:
+      - type
+      - strength
+      - integrity
+      properties:
+        type:
+          type: string
+          description: ICE
+          enum:
+          - black_ice
+          - white_ice
+          - killer_ice
+          - spider_ice
+          example: black_ice
+        strength:
+          type: integer
+          description: ICE
+          minimum: 1
+          maximum: 100
+          example: 75
+        integrity:
+          type: integer
+          description: ICE
+          minimum: 0
+          maximum: 100
+          example: 100
+        behavior:
+          type: string
+          description: ICE
+          enum:
+          - aggressive
+          - defensive
+          - stealth
+          - adaptive
+          example: adaptive
+        effects:
+          type: array
+          description: null
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - damage
+                - trace
+                - shutdown
+                - alert
+              severity:
+                type: integer
+                minimum: 1
+                maximum: 10
+    DataVaultEntity:
+      type: object
+      description: null
+      required:
+      - type
+      - size
+      - securityLevel
+      properties:
+        type:
+          type: string
+          description: null
+          enum:
+          - financial
+          - intel
+          - personal
+          - corporate
+          - black_market
+          example: intel
+        size:
+          type: integer
+          description: null
+          minimum: 1
+          example: 1048576
+        securityLevel:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 10
+          example: 7
+        value:
+          type: integer
+          description: null
+          minimum: 0
+          example: 50000
+        encryptionLevel:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 10
+          example: 8
+        accessLogs:
+          type: array
+          description: null
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              accessTime:
+                type: string
+                format: date-time
+              action:
+                type: string
+                enum:
+                - read
+                - extract
+                - modify
+    PlayerCyberspaceSessionEntity:
+      type: object
+      description: null
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - playerId
+        - currentNodeId
+        - connectionTime
+        properties:
+          playerId:
+            type: string
+            description: ID
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          currentNodeId:
+            type: string
+            description: null
+            format: uuid
+            example: 456e7890-e89b-12d3-a456-426614174001
+          connectionTime:
+            type: string
+            description: null
+            format: date-time
+          neuralLinkQuality:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.95
+          traceLevel:
+            type: number
+            description: null
+            minimum: 0
+            maximum: 1
+            example: 0.15
+          bandwidthUsed:
+            type: integer
+            description: null
+            minimum: 0
+            example: 500
+          dataExtracted:
+            type: integer
+            description: null
+            minimum: 0
+            example: 1024
+          iceEncounters:
+            type: integer
+            description: ICE
+            minimum: 0
+            example: 3
+          isActive:
+            type: boolean
+            description: null
+            default: true
+          $ref: '#/components/schemas/OptimisticLock'
+    ConnectRequest:
+      type: object
+      required:
+      - playerId
+      - neuralLinkId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        neuralLinkId:
+          type: string
+          format: uuid
+        entryNodeId:
+          type: string
+          format: uuid
+          description: ()
+    ConnectResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        currentNode:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        neuralLinkQuality:
+          type: number
+          minimum: 0
+          maximum: 1
+        connectionTime:
+          type: string
+          format: date-time
+    DisconnectRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+    DisconnectResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        sessionDuration:
+          type: integer
+          description: null
+        dataExtracted:
+          type: integer
+        experienceGained:
+          type: integer
+        disconnectTime:
+          type: string
+          format: date-time
+    NavigateRequest:
+      type: object
+      required:
+      - playerId
+      - targetNodeId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        targetNodeId:
+          type: string
+          format: uuid
+        useQuickhack:
+          type: boolean
+          description: null
+          default: false
+    NavigateResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        fromNodeId:
+          type: string
+          format: uuid
+        toNodeId:
+          type: string
+          format: uuid
+        navigationTime:
+          type: integer
+          description: null
+        bandwidthCost:
+          type: integer
+        success:
+          type: boolean
+        detected:
+          type: boolean
+          description: null
+    CyberspaceMapResponse:
+      type: object
+      properties:
+        centerNode:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        visibleNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberspaceNodeEntity'
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              fromNodeId:
+                type: string
+                format: uuid
+              toNodeId:
+                type: string
+                format: uuid
+              connectionType:
+                type: string
+                enum:
+                - public
+                - private
+                - secure
+                - hidden
+              securityLevel:
+                type: integer
+                minimum: 1
+                maximum: 10
+        playerPosition:
+          type: object
+          properties:
+            nodeId:
+              type: string
+              format: uuid
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+    CreateNodeRequest:
+      type: object
+      required:
+      - name
+      - type
+      - coordinates
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+          - public
+        coordinates:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        corporationId:
+          type: string
+          format: uuid
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICESystemEntity'
+        dataVaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataVaultEntity'
+    UpdateNodeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum:
+          - data
+          - security
+          - corporate
+          - black_market
+          - public
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        iceSystems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICESystemEntity'
+        dataVaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataVaultEntity'
+        isActive:
+          type: boolean
+    NodeResponse:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/CyberspaceNodeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    NodeListResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberspaceNodeEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    NodeDataResponse:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          format: uuid
+        data:
+          type: object
+          additionalProperties: true
+          description: null
+        accessLevel:
+          type: string
+          enum:
+          - public
+          - restricted
+          - classified
+          - black_ice
+        lastAccessed:
+          type: string
+          format: date-time
+    ExtractDataRequest:
+      type: object
+      required:
+      - playerId
+      - dataType
+      - extractionMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        dataType:
+          type: string
+          enum:
+          - files
+          - logs
+          - credentials
+          - financial
+          - intel
+        extractionMethod:
+          type: string
+          enum:
+          - quick
+          - stealth
+          - brute_force
+          - social_engineering
+        targetSize:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 10485760
+    ExtractDataResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        extractedData:
+          type: object
+          additionalProperties: true
+        dataSize:
+          type: integer
+          minimum: 0
+        extractionTime:
+          type: integer
+          description: null
+        detectionRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+        success:
+          type: boolean
+    BreakICERequest:
+      type: object
+      required:
+      - playerId
+      - nodeId
+      - iceType
+      - hackingMethod
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        iceType:
+          type: string
+          enum:
+          - black_ice
+          - white_ice
+          - killer_ice
+          - spider_ice
+        hackingMethod:
+          type: string
+          enum:
+          - bypass
+          - overload
+          - exploit
+          - brute_force
+        tools:
+          type: array
+          description: null
+          items:
+            type: string
+    BreakICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        damageDealt:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        timeElapsed:
+          type: integer
+          description: null
+    CombatICERequest:
+      type: object
+      required:
+      - playerId
+      - iceId
+      - action
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum:
+          - attack
+          - defend
+          - evade
+          - counter
+        power:
+          type: integer
+          description: null
+          minimum: 1
+          maximum: 100
+    CombatICEResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        iceId:
+          type: string
+          format: uuid
+        playerHealth:
+          type: integer
+          minimum: 0
+          maximum: 100
+        iceIntegrity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        actionResult:
+          type: string
+          enum:
+          - hit
+          - miss
+          - critical
+          - evaded
+        damage:
+          type: integer
+          minimum: 0
+        traceIncrease:
+          type: number
+          minimum: 0
+          maximum: 1
+        combatEnded:
+          type: boolean
+    TraceDetectionResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        traceLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+        detectionRisk:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        estimatedTime:
+          type: integer
+          description: null
+        countermeasures:
+          type: array
+          items:
+            type: string
+            enum:
+            - disconnect
+            - use_proxy
+            - clean_logs
+            - deploy_decoys
+    NeuralLinkStatusResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        quality:
+          type: number
+          minimum: 0
+          maximum: 1
+        stability:
+          type: number
+          minimum: 0
+          maximum: 1
+        bandwidth:
+          type: integer
+          minimum: 0
+        latency:
+          type: integer
+          description: null
+        lastCalibration:
+          type: string
+          format: date-time
+        warnings:
+          type: array
+          items:
+            type: string
+            enum:
+            - low_quality
+            - instability
+            - overheating
+            - interference
+    CalibrateNeuralLinkRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        calibrationType:
+          type: string
+          enum:
+          - quick
+          - full
+          - emergency
+          default: quick
+    CalibrateNeuralLinkResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        qualityBefore:
+          type: number
+          minimum: 0
+          maximum: 1
+        qualityAfter:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrationTime:
+          type: integer
+          description: null
+        recommendations:
+          type: array
+          items:
+            type: string
+    PlayerCyberspaceSessionResponse:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/PlayerCyberspaceSessionEntity'
+        statistics:
+          type: object
+          properties:
+            totalSessions:
+              type: integer
+              minimum: 0
+            averageSessionTime:
+              type: integer
+              description: null
+            totalDataExtracted:
+              type: integer
+              minimum: 0
+            successRate:
+              type: number
+              minimum: 0
+              maximum: 1
+            favoriteNodeType:
+              type: string
+              enum:
+              - data
+              - security
+              - corporate
+              - black_market
+              - public
+    CyberspaceAnalyticsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        totalSessions:
+          type: integer
+          minimum: 0
+        activePlayers:
+          type: integer
+          minimum: 0
+        dataExtracted:
+          type: integer
+          minimum: 0
+        iceEncounters:
+          type: integer
+          minimum: 0
+        nodeTypeDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        peakHours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+                minimum: 0
+                maximum: 23
+              sessionCount:
+                type: integer
+                minimum: 0
+        securityIncidents:
+          type: integer
+          minimum: 0

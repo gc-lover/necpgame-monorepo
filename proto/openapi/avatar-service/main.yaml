@@ -1,1178 +1,149 @@
-# Enterprise-Grade Avatar Service API - SOLID/DRY Domain Inheritance
-# Infrastructure domain service for avatar and image management
-# Issue: #openapi-refactor
-
 openapi: 3.0.3
 info:
   title: Avatar Service API
-  description: |
-    **Enterprise-grade API for Avatar and Image Management**
+  description: '**Enterprise-grade API for Avatar and Image Management**
+
 
     ## Domain Purpose
+
     Comprehensive avatar management service providing image upload, processing, storage,
+
     and CDN delivery for enhanced user experience across the NECPGAME platform.
 
+
     ## Business Value
+
     - High-performance image processing and delivery
+
     - Scalable cloud storage with global CDN distribution
+
     - Advanced avatar customization and effects
+
     - Enterprise-grade security and access control
+
     - GDPR compliant image management with user consent
 
+
     ## Performance Targets
+
     - P99 Latency: <200ms for upload operations
+
     - Processing Time: <5 seconds for image processing
+
     - CDN Hit Rate: >95% for popular avatars
+
     - Storage Efficiency: <500KB per avatar average
 
+
     ## Domain Inheritance
+
     This service inherits from infrastructure-entities.yaml providing:
+
     - Configuration management for storage and CDN settings
+
     - Audit trails for image operations and access
+
     - User account references for ownership and permissions
+
     - Optimistic locking for concurrent image operations
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/avatar-service
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/avatar-service
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/avatar-service
-    description: Local development
-
+- url: https://api.necpgame.com/v1/avatar-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/avatar-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/avatar-service
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Avatar Management
-    description: Core avatar operations and lifecycle
-  - name: Image Processing
-    description: Image transformation and effects
-  - name: Storage Management
-    description: Storage and CDN operations
-  - name: Access Control
-    description: Avatar access permissions
-  - name: Analytics & Reporting
-    description: Usage analytics and reporting
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: Avatar Management
+  description: Core avatar operations and lifecycle
+- name: Image Processing
+  description: Image transformation and effects
+- name: Storage Management
+  description: Storage and CDN operations
+- name: Access Control
+  description: Avatar access permissions
+- name: Analytics & Reporting
+  description: Usage analytics and reporting
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
   /health:
-    get:
-      operationId: avatarServiceHealthCheck
-      summary: Basic health check
-      description: Returns service health status
-      tags: [Health Monitoring]
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-
+    $ref: ./paths/health.yaml#/paths/~1health
   /avatars:
-    post:
-      operationId: avatarServiceUploadAvatar
-      summary: Upload new avatar
-      description: |
-        Upload and process a new avatar image with automatic optimization.
-
-        **Processing Pipeline:**
-        - Format validation and security scanning
-        - Automatic resizing and compression
-        - CDN upload with global distribution
-        - Metadata extraction and storage
-        - Thumbnail generation for different sizes
-      tags: [Avatar Management]
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - image
-              properties:
-                image:
-                  type: string
-                  format: binary
-                  description: Avatar image file (JPEG, PNG, WebP, GIF)
-                avatar_type:
-                  type: string
-                  enum: [profile, character, guild, custom]
-                  default: "profile"
-                  description: Type of avatar
-                title:
-                  type: string
-                  maxLength: 100
-                  description: Avatar title/name
-                description:
-                  type: string
-                  maxLength: 500
-                  description: Avatar description
-                is_private:
-                  type: boolean
-                  default: false
-                  description: Whether avatar is private
-                tags:
-                  type: array
-                  items:
-                    type: string
-                    maxLength: 50
-                  description: Avatar tags for organization
-      responses:
-        '201':
-          description: Avatar uploaded and processed successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Avatar'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '413':
-          description: Image file too large
-          content:
-            application/json:
-              schema:
-                $ref: '../common/responses/error.yaml#/PayloadTooLarge'
-        '415':
-          description: Unsupported image format
-          content:
-            application/json:
-              schema:
-                $ref: '../common/responses/error.yaml#/UnsupportedMediaType'
-
-    get:
-      operationId: avatarServiceListAvatars
-      summary: List user avatars
-      description: |
-        Retrieve paginated list of user's avatars with filtering.
-
-        **Privacy Considerations:**
-        - Only returns user's own avatars
-        - Respects privacy settings
-        - Includes usage statistics
-        - Supports advanced filtering
-      tags: [Avatar Management]
-      parameters:
-        - name: avatar_type
-          in: query
-          schema:
-            type: string
-            enum: [profile, character, guild, custom]
-          description: Filter by avatar type
-        - name: is_active
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include only active avatars
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of avatars to return
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [created_at, updated_at, usage_count]
-            default: "created_at"
-          description: Sort field
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: "desc"
-          description: Sort direction
-      responses:
-        '200':
-          description: Avatars retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/AvatarSummary'
-
+    $ref: ./paths/avatars.yaml#/paths/~1avatars
   /avatars/{avatarId}:
-    get:
-      operationId: avatarServiceGetAvatar
-      summary: Get avatar details
-      description: |
-        Retrieve detailed avatar information and metadata.
-
-        **Access Control:**
-        - Public avatars accessible to all
-        - Private avatars only to owner
-        - Guild avatars to guild members
-        - Includes CDN URLs for different sizes
-      tags: [Avatar Management]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Avatar unique identifier
-        - name: size
-          in: query
-          schema:
-            type: string
-            enum: [original, large, medium, small, thumbnail]
-            default: "medium"
-          description: Requested image size
-      responses:
-        '200':
-          description: Avatar details retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Avatar'
-        '403':
-          description: Access denied to private avatar
-          content:
-            application/json:
-              schema:
-                $ref: '../common/responses/error.yaml#/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: avatarServiceUpdateAvatar
-      summary: Update avatar metadata
-      description: |
-        Update avatar metadata without changing the image.
-
-        **Update Restrictions:**
-        - Cannot change image file itself
-        - Can update metadata, privacy, tags
-        - Maintains version history
-        - Triggers CDN cache invalidation if needed
-      tags: [Avatar Management]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Avatar unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateAvatarRequest'
-      responses:
-        '200':
-          description: Avatar metadata updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Updated'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Avatar'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      operationId: avatarServiceDeleteAvatar
-      summary: Delete avatar
-      description: |
-        Soft delete avatar (mark as deleted, retain for recovery).
-
-        **Deletion Process:**
-        - Mark as deleted in database
-        - Queue CDN cache invalidation
-        - Schedule physical file deletion
-        - Update user statistics
-        - Maintain audit trail
-      tags: [Avatar Management]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Avatar unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/avatars-{avatarId}.yaml#/paths/~1avatars~1{avatarId}
   /avatars/{avatarId}/image:
-    get:
-      operationId: avatarServiceGetAvatarImage
-      summary: Get avatar image file
-      description: |
-        Retrieve the actual avatar image file from CDN.
-
-        **CDN Optimization:**
-        - Direct CDN URL redirection for performance
-        - Automatic format conversion (WebP when supported)
-        - Size-specific URL generation
-        - Cache headers for optimal caching
-      tags: [Storage Management]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Avatar unique identifier
-        - name: size
-          in: query
-          schema:
-            type: string
-            enum: [original, large, medium, small, thumbnail]
-            default: "medium"
-          description: Requested image size
-        - name: format
-          in: query
-          schema:
-            type: string
-            enum: [auto, jpeg, png, webp]
-            default: "auto"
-          description: Requested image format
-      responses:
-        '302':
-          description: Redirect to CDN URL
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-              description: CDN image URL
-            Cache-Control:
-              schema:
-                type: string
-              description: Cache control headers
-            ETag:
-              schema:
-                type: string
-              description: Image ETag for caching
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/avatars-{avatarId}-image.yaml#/paths/~1avatars~1{avatarId}~1image
   /avatars/{avatarId}/transform:
-    post:
-      operationId: avatarServiceTransformAvatar
-      summary: Apply transformations to avatar
-      description: |
-        Apply image transformations and effects to existing avatar.
-
-        **Transformation Types:**
-        - Resize, crop, rotate operations
-        - Filter and effect applications
-        - Format conversions
-        - Quality adjustments
-      tags: [Image Processing]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Avatar unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TransformAvatarRequest'
-      responses:
-        '200':
-          description: Transformation applied successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Avatar'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/avatars-{avatarId}-transform.yaml#/paths/~1avatars~1{avatarId}~1transform
   /avatars/{avatarId}/duplicate:
-    post:
-      operationId: avatarServiceDuplicateAvatar
-      summary: Create avatar duplicate
-      description: |
-        Create a copy of existing avatar for modifications.
-
-        **Duplication Process:**
-        - Copy original image file
-        - Create new avatar record
-        - Preserve metadata with modifications
-        - Generate new CDN URLs
-      tags: [Avatar Management]
-      parameters:
-        - name: avatarId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Source avatar unique identifier
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DuplicateAvatarRequest'
-      responses:
-        '201':
-          description: Avatar duplicated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/Created'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/Avatar'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/avatars-{avatarId}-duplicate.yaml#/paths/~1avatars~1{avatarId}~1duplicate
   /avatars/user/{userId}:
-    get:
-      operationId: avatarServiceGetUserAvatars
-      summary: Get all user avatars
-      description: |
-        Retrieve all avatars associated with a specific user.
-
-        **Access Control:**
-        - Users can see their own avatars
-        - Public avatars visible to all
-        - Private avatars only to owner
-        - Includes usage statistics
-      tags: [Avatar Management]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: include_private
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include private avatars (owner only)
-      responses:
-        '200':
-          description: User avatars retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/AvatarSummary'
-                      statistics:
-                        $ref: '#/components/schemas/UserAvatarStatistics'
-
+    $ref: ./paths/avatars-user-{userId}.yaml#/paths/~1avatars~1user~1{userId}
   /avatars/batch/delete:
-    post:
-      operationId: avatarServiceBatchDeleteAvatars
-      summary: Batch delete avatars
-      description: |
-        Delete multiple avatars in a single operation.
-
-        **Batch Operations:**
-        - Atomic batch processing
-        - Rollback on partial failures
-        - Progress tracking
-        - CDN cache batch invalidation
-      tags: [Avatar Management]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchDeleteAvatarsRequest'
-      responses:
-        '200':
-          description: Batch deletion completed
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/BatchOperationResult'
-
+    $ref: ./paths/avatars-batch-delete.yaml#/paths/~1avatars~1batch~1delete
   /avatars/analytics/usage:
-    get:
-      operationId: avatarServiceGetUsageAnalytics
-      summary: Get avatar usage analytics
-      description: |
-        Retrieve comprehensive analytics about avatar usage.
-
-        **Analytics Coverage:**
-        - Upload frequency and patterns
-        - Popular avatar types and sizes
-        - Geographic usage distribution
-        - Performance metrics and bottlenecks
-        - User engagement with avatars
-      tags: [Analytics & Reporting]
-      parameters:
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for analytics
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: End date for analytics
-        - name: avatar_type
-          in: query
-          schema:
-            type: string
-            enum: [profile, character, guild, custom]
-          description: Filter by avatar type
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific user
-      responses:
-        '200':
-          description: Usage analytics retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/AvatarUsageAnalytics'
-
+    $ref: ./paths/avatars-analytics-usage.yaml#/paths/~1avatars~1analytics~1usage
   /avatars/storage/cleanup:
-    post:
-      operationId: avatarServiceCleanupStorage
-      summary: Clean up unused avatar files
-      description: |
-        Remove orphaned and unused avatar files from storage.
-
-        **Cleanup Process:**
-        - Identify files not referenced in database
-        - Remove from CDN and storage
-        - Update cleanup statistics
-        - Maintain audit trail
-      tags: [Storage Management]
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StorageCleanupRequest'
-      responses:
-        '200':
-          description: Storage cleanup completed
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/StorageCleanupResult'
-
+    $ref: ./paths/avatars-storage-cleanup.yaml#/paths/~1avatars~1storage~1cleanup
 components:
-
+  schemas:
+    Avatar:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/Avatar
+    AvatarSummary:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/AvatarSummary
+    UserAvatarStatistics:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/UserAvatarStatistics
+    AvatarUsageAnalytics:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/AvatarUsageAnalytics
+    StorageCleanupResult:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/StorageCleanupResult
+    BatchOperationResult:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/BatchOperationResult
+    UpdateAvatarRequest:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/UpdateAvatarRequest
+    TransformAvatarRequest:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/TransformAvatarRequest
+    DuplicateAvatarRequest:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/DuplicateAvatarRequest
+    BatchDeleteAvatarsRequest:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/BatchDeleteAvatarsRequest
+    StorageCleanupRequest:
+      $ref: ./schemas/avatar-service-schemas.yaml#/components/schemas/StorageCleanupRequest
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/BadRequest
     Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/Forbidden
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/NotFound
     PayloadTooLarge:
-      description: Request payload too large
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '../common/responses/error.yaml#/Error'
-              - type: object
-                properties:
-                  max_size_bytes:
-                    type: integer
-                    description: Maximum allowed size in bytes
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/PayloadTooLarge
     UnsupportedMediaType:
-      description: Unsupported media type
-      content:
-        application/json:
-          schema:
-            allOf:
-              - $ref: '../common/responses/error.yaml#/Error'
-              - type: object
-                properties:
-                  supported_types:
-                    type: array
-                    items:
-                      type: string
-                    description: List of supported media types
-
-  schemas:
-
-    # Domain Inheritance - Avatar Service Entities
-    Avatar:
-      description: Complete avatar entity with infrastructure domain inheritance
-      type: object
-      required:
-        - id
-        - user_id
-        - avatar_type
-        - original_filename
-        - file_size_bytes
-        - content_type
-        - storage_path
-        - cdn_urls
-        - created_at
-        - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Avatar unique identifier
-        user_id:
-          type: string
-          format: uuid
-          description: Owner user ID
-        avatar_type:
-          type: string
-          enum: [profile, character, guild, custom]
-          description: Type of avatar
-        title:
-          type: string
-          maxLength: 100
-          description: Avatar title
-        description:
-          type: string
-          maxLength: 500
-          description: Avatar description
-        original_filename:
-          type: string
-          maxLength: 255
-          description: Original uploaded filename
-        file_size_bytes:
-          type: integer
-          minimum: 0
-          description: File size in bytes
-        content_type:
-          type: string
-          pattern: '^image/(jpeg|png|gif|webp)$'
-          description: MIME content type
-        dimensions:
-          type: object
-          required:
-            - width
-            - height
-          properties:
-            width:
-              type: integer
-              minimum: 1
-              description: Image width in pixels
-            height:
-              type: integer
-              minimum: 1
-              description: Image height in pixels
-        storage_path:
-          type: string
-          description: Internal storage path
-        cdn_urls:
-          type: object
-          description: CDN URLs for different sizes
-          properties:
-            original:
-              type: string
-              format: uri
-              description: Original size URL
-            large:
-              type: string
-              format: uri
-              description: Large size URL (512x512)
-            medium:
-              type: string
-              format: uri
-              description: Medium size URL (256x256)
-            small:
-              type: string
-              format: uri
-              description: Small size URL (128x128)
-            thumbnail:
-              type: string
-              format: uri
-              description: Thumbnail URL (64x64)
-        processing_status:
-          type: string
-          enum: [pending, processing, completed, failed]
-          default: "pending"
-          description: Image processing status
-        processing_metadata:
-          type: object
-          description: Processing results and metadata
-          properties:
-            processing_time_ms:
-              type: integer
-              description: Time taken to process image
-            compression_ratio:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Compression achieved
-            dominant_colors:
-              type: array
-              items:
-                type: string
-                pattern: '^#[0-9A-Fa-f]{6}$'
-              description: Dominant colors in image
-            face_detection:
-              type: object
-              properties:
-                faces_detected:
-                  type: integer
-                  minimum: 0
-                  description: Number of faces detected
-                face_coordinates:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      x:
-                        type: integer
-                      y:
-                        type: integer
-                      width:
-                        type: integer
-                      height:
-                        type: integer
-        is_private:
-          type: boolean
-          default: false
-          description: Whether avatar is private
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          description: Avatar tags for organization
-        usage_count:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Number of times avatar was accessed
-        last_accessed_at:
-          type: string
-          format: date-time
-          description: Last access timestamp
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-        version:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Optimistic locking version
-
-    AvatarSummary:
-      description: Avatar summary for list operations
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Avatar ID
-        avatar_type:
-          type: string
-          enum: [profile, character, guild, custom]
-          description: Avatar type
-        title:
-          type: string
-          description: Avatar title
-        thumbnail_url:
-          type: string
-          format: uri
-          description: Thumbnail URL
-        file_size_bytes:
-          type: integer
-          description: File size
-        is_private:
-          type: boolean
-          description: Privacy status
-        usage_count:
-          type: integer
-          description: Usage count
-        created_at:
-          type: string
-          format: date-time
-          description: Creation date
-
-    UserAvatarStatistics:
-      description: User avatar usage statistics
-      type: object
-      properties:
-        total_avatars:
-          type: integer
-          description: Total number of avatars
-        active_avatars:
-          type: integer
-          description: Number of active avatars
-        total_storage_bytes:
-          type: integer
-          description: Total storage used
-        total_usage_count:
-          type: integer
-          description: Total usage across all avatars
-        avatar_types_breakdown:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Count by avatar type
-        last_upload_at:
-          type: string
-          format: date-time
-          description: Last avatar upload timestamp
-
-    AvatarUsageAnalytics:
-      description: Comprehensive avatar usage analytics
-      type: object
-      properties:
-        time_range:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date-time
-            end_date:
-              type: string
-              format: date-time
-        total_uploads:
-          type: integer
-          description: Total avatar uploads
-        total_storage_bytes:
-          type: integer
-          description: Total storage used
-        average_file_size_bytes:
-          type: integer
-          description: Average file size
-        popular_formats:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Usage count by image format
-        avatar_types_distribution:
-          type: object
-          additionalProperties:
-            type: integer
-          description: Distribution by avatar type
-        geographic_usage:
-          type: array
-          items:
-            type: object
-            properties:
-              country:
-                type: string
-              upload_count:
-                type: integer
-              storage_bytes:
-                type: integer
-        performance_metrics:
-          type: object
-          properties:
-            average_upload_time_ms:
-              type: number
-              description: Average upload processing time
-            average_processing_time_ms:
-              type: number
-              description: Average image processing time
-            cdn_hit_rate:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: CDN cache hit rate
-
-    StorageCleanupResult:
-      description: Result of storage cleanup operation
-      type: object
-      properties:
-        files_processed:
-          type: integer
-          description: Total files processed
-        files_deleted:
-          type: integer
-          description: Files successfully deleted
-        storage_freed_bytes:
-          type: integer
-          description: Storage space freed
-        errors_encountered:
-          type: integer
-          description: Number of errors during cleanup
-        duration_ms:
-          type: integer
-          description: Operation duration in milliseconds
-
-    BatchOperationResult:
-      description: Result of batch operations
-      type: object
-      properties:
-        total_requested:
-          type: integer
-          description: Total items requested for operation
-        successful:
-          type: integer
-          description: Successfully processed items
-        failed:
-          type: integer
-          description: Failed items
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              item_id:
-                type: string
-                format: uuid
-              error_message:
-                type: string
-          description: Details of failed operations
-
-    # Request/Response schemas
-    UpdateAvatarRequest:
-      description: Request payload for updating avatar metadata
-      type: object
-      properties:
-        title:
-          type: string
-          maxLength: 100
-          description: New avatar title
-        description:
-          type: string
-          maxLength: 500
-          description: New avatar description
-        is_private:
-          type: boolean
-          description: New privacy setting
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          description: New tags
-        version:
-          type: integer
-          minimum: 1
-          description: Current version for optimistic locking
-
-    TransformAvatarRequest:
-      description: Request payload for avatar transformation
-      type: object
-      required:
-        - transformations
-      properties:
-        transformations:
-          type: array
-          items:
-            type: object
-            required:
-              - type
-            properties:
-              type:
-                type: string
-                enum: [resize, crop, rotate, filter, format_convert, quality_adjust]
-                description: Transformation type
-              parameters:
-                type: object
-                description: Transformation-specific parameters
-                additionalProperties: true
-          description: List of transformations to apply
-        create_new_version:
-          type: boolean
-          default: true
-          description: Whether to create new avatar version
-
-    DuplicateAvatarRequest:
-      description: Request payload for avatar duplication
-      type: object
-      properties:
-        new_title:
-          type: string
-          maxLength: 100
-          description: Title for duplicated avatar
-        new_description:
-          type: string
-          maxLength: 500
-          description: Description for duplicated avatar
-        avatar_type:
-          type: string
-          enum: [profile, character, guild, custom]
-          description: Type for duplicated avatar
-        is_private:
-          type: boolean
-          description: Privacy setting for duplicate
-
-    BatchDeleteAvatarsRequest:
-      description: Request payload for batch avatar deletion
-      type: object
-      required:
-        - avatar_ids
-      properties:
-        avatar_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          minItems: 1
-          maxItems: 100
-          description: Avatar IDs to delete
-        permanent_delete:
-          type: boolean
-          default: false
-          description: Whether to permanently delete (no recovery)
-
-    StorageCleanupRequest:
-      description: Request payload for storage cleanup
-      type: object
-      properties:
-        dry_run:
-          type: boolean
-          default: true
-          description: Whether to perform dry run (no actual deletion)
-        older_than_days:
-          type: integer
-          minimum: 1
-          default: 30
-          description: Delete files older than this many days
-        max_files_to_process:
-          type: integer
-          minimum: 1
-          maximum: 10000
-          default: 1000
-          description: Maximum files to process in one operation
-
+      $ref: ./schemas/avatar-service-responses.yaml#/components/responses/UnsupportedMediaType
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-
-# Performance and optimization notes
-x-performance:
-  p99-latency: "<200ms"
-  processing-time-target: "<5s"
-  cdn-hit-rate-target: ">95%"
-  storage-efficiency-target: "<500KB per avatar"
-  database-indexes: "Composite indexes on (user_id, avatar_type), (user_id, created_at), (processing_status, updated_at)"
-
-# Monitoring and observability
-x-monitoring:
-  metrics:
-    - avatar_upload_rate
-    - image_processing_time
-    - cdn_cache_hit_rate
-    - storage_usage_bytes
-    - transformation_operations
-  alerts:
-    - image_processing_queue_depth > 100
-    - cdn_cache_hit_rate < 90%
-    - storage_usage_growth > 10% daily
-    - upload_failure_rate > 5%
-
-# Image processing and quality
-x-image-processing:
-  supported-formats: "JPEG, PNG, WebP, GIF with automatic format optimization"
-  max-file-size: "10MB with automatic compression to target quality"
-  thumbnail-sizes: "64x64, 128x128, 256x256, 512x512 pixels"
-  quality-targets: "WebP 80% quality, JPEG 85% quality, PNG lossless"
-
-# Domain inheritance documentation
-x-domain-inheritance:
-  inherits-from: "common/schemas/infrastructure-entities.yaml"
-  inherited-entities: "ConfigurationEntity, AuditLogEntity"
-  additional-schemas: "Image processing metadata, CDN URLs, storage paths, transformation history"
-  no-duplication: "All common fields inherited, avatar-specific image and CDN extensions added"
-
+      $ref: ../common/security/security.yaml#/ServiceAuth

@@ -1,0 +1,104 @@
+openapi: 3.0.3
+paths:
+  /notifications/{notificationId}:
+    get:
+      summary: Get notification details
+      description: '**Retrieve detailed information about a specific notification**
+
+        Includes full content and metadata.
+
+        **Performance:** <15ms with caching
+
+        '
+      operationId: getNotification
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Notification details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Mark notification as read
+      description: '**Mark a notification as read**
+
+        Updates read timestamp and triggers related actions.
+
+        **Performance:** <10ms with immediate consistency
+
+        '
+      operationId: markNotificationRead
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete notification
+      description: '**Delete a notification**
+
+        Soft delete with recovery option within 30 days.
+
+        **Performance:** <15ms with archival
+
+        '
+      operationId: deleteNotification
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '204':
+          description: Notification deleted successfully
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

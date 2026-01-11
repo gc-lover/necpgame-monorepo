@@ -1,0 +1,115 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/preferences/{category}:
+    get:
+      operationId: userPreferenceServiceGetPreferenceCategory
+      summary: Get specific preference category
+      description: 'Retrieve preferences for a specific category.
+
+
+        **Performance Notes:**
+
+        - Category-specific caching
+
+        - Optimized for frequent category access
+
+        - Privacy filtering by category
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: category
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+        description: Preference category
+      responses:
+        '200':
+          description: Category preferences retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PreferenceCategory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: userPreferenceServiceUpdatePreferenceCategory
+      summary: Update specific preference category
+      description: 'Update preferences for a specific category.
+
+
+        **Validation Notes:**
+
+        - Category-specific validation rules
+
+        - Cross-category consistency checks
+
+        - Category-level audit logging
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: category
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+        description: Preference category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category preferences updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PreferenceCategory'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

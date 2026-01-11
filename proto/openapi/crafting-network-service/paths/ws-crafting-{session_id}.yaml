@@ -1,0 +1,86 @@
+openapi: 3.0.3
+paths:
+  /ws/crafting/{session_id}:
+    get:
+      summary: WebSocket connection for real-time crafting session
+      description: '**Real-time crafting progress monitoring**
+
+        Establishes WebSocket connection for monitoring crafting session progress,
+        material availability, and queue status updates.
+
+        **Performance:** <5ms message latency, compressed payloads
+
+        **Protocol:** WebSocket with binary message framing
+
+        **Compression:** LZ4 for message payloads
+
+        **Reconnection:** Automatic with state recovery
+
+        '
+      operationId: craftingSessionWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier for authorization
+      responses:
+        '101':
+          description: WebSocket connection established for crafting session
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketCraftingMessage'
+        '400':
+          description: Invalid session or player parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '403':
+          description: Forbidden - player not authorized for this session
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Crafting session not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          description: Too many connections - WebSocket limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

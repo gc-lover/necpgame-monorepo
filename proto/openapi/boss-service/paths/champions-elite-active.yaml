@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /champions/elite/active:
+    get:
+      summary: Get active elite champions
+      description: '**Get currently active elite champion encounters**
+
+        Returns list of elite boss variants currently available for epic encounters.
+
+        **Performance:** <30ms response time, cached for 15 seconds '
+      operationId: getActiveEliteChampions
+      tags:
+      - Elite Champions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - normal
+          - hard
+          - nightmare
+          - apocalyptic
+        description: Filter by elite difficulty
+      responses:
+        '200':
+          description: Active elite champions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/WorldBoss'
+                      - type: object
+                        properties:
+                          eliteModifiers:
+                            $ref: '#/components/schemas/EliteChampion'
+                  total:
+                    type: integer
+        '400':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

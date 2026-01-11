@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /minigames/{minigameId}/start:
+    post:
+      operationId: hackingServiceStartMinigame
+      summary: Start hacking minigame
+      description: 'Start a specific hacking minigame for ICE breaking or data extraction.
+
+
+        **Minigame Types:**
+
+        - ICE Breaking: Pattern matching, sequence solving
+
+        - Data Decryption: Code breaking, password cracking
+
+        - Firewall Navigation: Path finding, timing challenges
+
+        - System Override: Logic puzzles, resource management
+
+        '
+      tags:
+      - Minigames
+      parameters:
+      - name: minigameId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Minigame template ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartMinigameRequest'
+      responses:
+        '201':
+          description: Minigame started
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MinigameSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'

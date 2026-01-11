@@ -1,0 +1,81 @@
+openapi: 3.0.3
+paths:
+  /tickets:
+    get:
+      summary: List support tickets
+      description: Retrieve paginated list of support tickets with filtering options
+      operationId: listTickets
+      tags:
+      - Support Tickets
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/TicketStatus'
+        description: Filter by ticket status
+      - name: priority
+        in: query
+        schema:
+          $ref: '#/components/schemas/TicketPriority'
+        description: Filter by ticket priority
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by ticket category
+      - name: agent_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by assigned agent
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Items per page
+      responses:
+        '200':
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create support ticket
+      description: Create a new support ticket with automatic categorization and priority
+        assignment
+      operationId: createTicket
+      tags:
+      - Support Tickets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketRequest'
+      responses:
+        '201':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'

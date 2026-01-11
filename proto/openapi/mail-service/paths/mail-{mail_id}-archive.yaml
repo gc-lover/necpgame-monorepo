@@ -1,0 +1,42 @@
+openapi: 3.0.3
+paths:
+  /mail/{mail_id}/archive:
+    post:
+      summary: Archive mail
+      operationId: mailArchiveMail
+      description: Move mail to archive folder.
+      tags:
+      - Mail Management
+      parameters:
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchiveMailRequest'
+      responses:
+        '200':
+          description: Mail archived successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveMailResponse'
+        '404':
+          description: Mail not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

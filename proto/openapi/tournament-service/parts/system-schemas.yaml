@@ -1,0 +1,299 @@
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+
+    WebSocketHealthMessage:
+      description: WebSocket health status message
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum: [health_update, health_alert, service_down]
+          description: Message type
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+          example: "2077-12-25T18:00:00Z"
+        health:
+          $ref: '#/components/schemas/HealthCheckResult'
+        service_name:
+          type: string
+          description: Service identifier
+          example: tournament-service
+          maxLength: 100
+
+    Error:
+      description: Standard error response
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: TOURNAMENT_NOT_FOUND
+          maxLength: 100
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Tournament with specified ID was not found"
+          maxLength: 500
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2077-12-25T18:00:00Z"
+        request_id:
+          type: string
+          description: Request correlation ID
+          example: req-550e8400-e29b-41d4-a716-446655440000
+
+    TournamentBracket:
+      description: Tournament bracket structure
+      type: object
+      required:
+      - rounds
+      properties:
+        rounds:
+          type: array
+          items:
+            type: object
+            required:
+            - round_number
+            - matches
+            properties:
+              round_number:
+                type: integer
+                minimum: 1
+                description: Round number in tournament
+                example: 1
+              matches:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+                description: Matches in this round
+          description: Tournament rounds with matches
+
+    SpectatorInfo:
+      description: Spectator information
+      type: object
+      required:
+      - user_id
+      - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Spectator user identifier
+          example: 550e8400-e29b-41d4-a716-446655440006
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Spectator display name
+          example: "Spectator_2077"
+        joined_at:
+          type: string
+          format: date-time
+          description: When spectator joined
+          example: "2077-12-25T19:00:00Z"
+        current_view:
+          type: string
+          enum: [overview, match_focus, leaderboard]
+          description: Current spectator view mode
+          example: match_focus
+
+    HealthCheckResult:
+      description: Health check result details
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Service health status
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+          example: "2077-12-25T18:00:00Z"
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        uptime_seconds:
+          type: integer
+          minimum: 0
+          description: Service uptime in seconds
+          example: 3600
+        memory_usage_mb:
+          type: number
+          minimum: 0
+          description: Memory usage in MB
+          example: 245.5
+        active_connections:
+          type: integer
+          minimum: 0
+          description: Number of active connections
+          example: 1250
+        response_time_ms:
+          type: number
+          minimum: 0
+          description: Average response time in milliseconds
+          example: 12.5
+
+    TournamentSpectatorMessage:
+      description: WebSocket message for tournament spectators
+      type: object
+      required:
+      - type
+      - tournament_id
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum: [match_update, leaderboard_update, tournament_status_change, spectator_count_update]
+          description: Message type
+          example: match_update
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+          example: "2077-12-25T19:30:00Z"
+        match_update:
+          $ref: '#/components/schemas/Match'
+        leaderboard_update:
+          type: object
+          properties:
+            top_entries:
+              type: array
+              items:
+                $ref: '#/components/schemas/LeaderboardEntry'
+              maxItems: 10
+        spectator_count:
+          type: integer
+          minimum: 0
+          description: Current spectator count
+          example: 15420
+
+    Match:
+      description: Tournament match information
+      type: object
+      required:
+      - id
+      - tournament_id
+      - participants
+      - status
+      - start_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Match identifier
+          example: 550e8400-e29b-41d4-a716-446655440005
+        tournament_id:
+          type: string
+          format: uuid
+          description: Parent tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        participants:
+          type: array
+          items:
+            type: object
+            required:
+            - user_id
+            - username
+            properties:
+              user_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440003
+              username:
+                type: string
+                example: "V_Judy"
+              team:
+                type: string
+                example: "Team Alpha"
+          minItems: 2
+          maxItems: 100
+          description: Match participants
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+          description: Match status
+          example: in_progress
+        start_time:
+          type: string
+          format: date-time
+          description: Match start timestamp
+          example: "2077-12-25T19:00:00Z"
+        end_time:
+          type: string
+          format: date-time
+          description: Match end timestamp
+          example: "2077-12-25T19:30:00Z"
+        winner:
+          type: string
+          format: uuid
+          description: Winner participant ID
+          example: 550e8400-e29b-41d4-a716-446655440003
+        scores:
+          type: array
+          items:
+            type: object
+            properties:
+              participant_id:
+                type: string
+                format: uuid
+              score:
+                type: integer
+                minimum: 0
+              objectives:
+                type: object
+                additionalProperties:
+                  type: integer
+          description: Final match scores
+        spectators:
+          type: integer
+          minimum: 0
+          description: Number of spectators watching this match
+          example: 1250
+
+    BearerAuth:
+      description: Bearer token authentication
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    ApiKeyAuth:
+      description: API key authentication
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+    ServiceAuth:
+      description: Service-to-service authentication
+      type: apiKey
+      in: header
+      name: X-Service-Token

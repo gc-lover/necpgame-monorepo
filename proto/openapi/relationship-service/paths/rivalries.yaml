@@ -1,0 +1,90 @@
+openapi: 3.0.3
+paths:
+  /rivalries:
+    get:
+      summary: Get user rivalries
+      description: '**Retrieve user''s rivalry relationships**
+
+        Shows competitive and antagonistic relationships.
+
+        **Performance:** <40ms with rivalry filtering
+
+        '
+      operationId: getUserRivalries
+      tags:
+      - Rivalry
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: intensity
+        in: query
+        schema:
+          type: string
+          enum:
+          - minor
+          - moderate
+          - major
+          - deadly
+          default: moderate
+        description: Filter by rivalry intensity
+      - name: active
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Only active rivalries
+      responses:
+        '200':
+          description: Rivalries retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rivalries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RivalryResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Declare rivalry
+      description: '**Declare rivalry with another character**
+
+        Creates antagonistic relationship with intensity tracking.
+
+        **Performance:** <45ms with rivalry validation
+
+        '
+      operationId: declareRivalry
+      tags:
+      - Rivalry
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareRivalryRequest'
+      responses:
+        '201':
+          description: Rivalry declared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RivalryResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

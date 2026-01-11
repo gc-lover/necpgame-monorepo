@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: '**Execute combat action**
+
+        Executes a combat action with cooldown validation and real-time synchronization.
+
+        **BACKEND NOTE:** High-frequency endpoint (300+ RPS) supporting combo systems
+        and ability synergies.
+
+        '
+      operationId: executeCombatAction
+      tags:
+      - Combat Events
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResponse'
+        '429':
+          description: Action execution rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

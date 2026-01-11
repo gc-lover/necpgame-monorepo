@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /api/v1/gameplay/combat/abilities/metrics:
+    get:
+      operationId: getAbilityMetrics
+      summary: Get ability metrics
+      description: Returns usage metrics and statistics for combat abilities
+      tags:
+      - Combat Abilities
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          default: day
+        description: Time period for metrics
+      - name: ability_ids
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Specific ability IDs to get metrics for
+      responses:
+        '200':
+          description: Ability metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityMetricsResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

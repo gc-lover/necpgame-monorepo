@@ -1,0 +1,1085 @@
+openapi: 3.0.3
+components:
+  schemas:
+    InstalledImplant:
+      description: Character's installed implant instance with game domain inheritance
+      type: object
+      required:
+      - id
+      - character_id
+      - template_id
+      - installed_at
+      - current_tier
+      - condition
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Implant instance unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character this implant is installed in
+        template_id:
+          type: string
+          format: uuid
+          description: Implant template used
+        current_tier:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Current implant tier/quality level
+        installed_at:
+          type: string
+          format: date-time
+          description: When implant was installed
+        condition:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Implant condition (0 = broken, 1 = perfect)
+        degradation_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Daily degradation rate
+        last_maintenance_at:
+          type: string
+          format: date-time
+          description: Last maintenance date
+        next_maintenance_due:
+          type: string
+          format: date-time
+          description: Next maintenance due date
+        stat_modifiers:
+          type: object
+          description: Active stat modifications
+          additionalProperties:
+            type: number
+          example:
+            strength: 15
+            reaction_time: -20
+            cyberpsychosis_risk: 0.05
+        active_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of active implant effects
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Current compatibility with other implants
+        cyberpsychosis_contribution:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberpsychosis risk contribution
+        upgrade_slots_used:
+          type: integer
+          minimum: 0
+          description: Number of upgrade slots consumed
+        custom_modifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantModification'
+          description: Applied custom modifications
+    ImplantTemplate:
+      description: Implant template configuration with game domain inheritance
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Implant template name
+          description:
+            type: string
+            maxLength: 500
+            description: Implant description
+          implant_type:
+            type: string
+            enum:
+            - combat
+            - utility
+            - medical
+            - neural
+            description: Primary implant type
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Implant category for organization
+          rarity:
+            type: string
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            default: common
+            description: Implant rarity level
+          base_installation_cost:
+            type: integer
+            minimum: 0
+            description: Base eddies cost for installation
+          slot_requirements:
+            $ref: '#/components/schemas/SlotRequirements'
+          stat_modifiers:
+            type: object
+            description: Base stat modifications
+            additionalProperties:
+              type: number
+            example:
+              strength: '+10'
+              agility: '+5'
+              cyberpsychosis_risk: '+0.02'
+          effect_ids:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Associated effect IDs
+          compatibility_rules:
+            $ref: '#/components/schemas/CompatibilityRules'
+          upgrade_path:
+            type: array
+            items:
+              $ref: '#/components/schemas/UpgradeTier'
+            description: Available upgrade tiers
+          maintenance_requirements:
+            $ref: '#/components/schemas/MaintenanceRequirements'
+          risk_factors:
+            $ref: '#/components/schemas/RiskFactors'
+          visual_config:
+            type: object
+            properties:
+              model_id:
+                type: string
+                description: 3D model identifier
+              icon_id:
+                type: string
+                description: UI icon identifier
+              glow_color:
+                type: string
+                pattern: ^#[0-9A-Fa-f]{6}$
+                description: Implant glow color
+            description: Visual configuration
+          is_active:
+            type: boolean
+            default: true
+            description: Whether template is active
+    SlotRequirements:
+      description: Implant slot requirements
+      type: object
+      properties:
+        required_slots:
+          type: integer
+          minimum: 1
+          description: Number of implant slots required
+        allowed_body_parts:
+          type: array
+          items:
+            type: string
+            enum:
+            - head
+            - eyes
+            - arms
+            - hands
+            - torso
+            - legs
+            - spine
+            - brain
+          description: Body parts where implant can be installed
+        exclusive_slots:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Implant templates that cannot be installed simultaneously
+    CompatibilityRules:
+      description: Implant compatibility rules
+      type: object
+      properties:
+        synergy_bonuses:
+          type: array
+          items:
+            type: object
+            required:
+            - partner_implant_type
+            - bonus_type
+            - bonus_value
+            properties:
+              partner_implant_type:
+                type: string
+                enum:
+                - combat
+                - utility
+                - medical
+                - neural
+                description: Compatible implant type
+              bonus_type:
+                type: string
+                enum:
+                - stat_multiplier
+                - effect_amplifier
+                - risk_reducer
+                description: Type of synergy bonus
+              bonus_value:
+                type: number
+                description: Bonus magnitude
+          description: Synergy bonuses with other implants
+        conflict_penalties:
+          type: array
+          items:
+            type: object
+            required:
+            - conflicting_type
+            - penalty_type
+            - penalty_value
+            properties:
+              conflicting_type:
+                type: string
+                enum:
+                - combat
+                - utility
+                - medical
+                - neural
+                description: Conflicting implant type
+              penalty_type:
+                type: string
+                enum:
+                - stat_reducer
+                - effect_weakener
+                - risk_increaser
+                description: Type of conflict penalty
+              penalty_value:
+                type: number
+                description: Penalty magnitude
+          description: Conflict penalties with other implants
+    UpgradeTier:
+      description: Implant upgrade tier configuration
+      type: object
+      required:
+      - tier
+      - upgrade_cost
+      properties:
+        tier:
+          type: integer
+          minimum: 2
+          maximum: 10
+          description: Upgrade tier level
+        upgrade_cost:
+          type: integer
+          minimum: 0
+          description: Eddies cost for upgrade
+        required_materials:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required materials for upgrade
+        stat_improvements:
+          type: object
+          additionalProperties:
+            type: number
+          description: Additional stat improvements
+        new_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: New effect IDs unlocked
+        risk_reduction:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Cyberpsychosis risk reduction
+    MaintenanceRequirements:
+      description: Implant maintenance requirements
+      type: object
+      properties:
+        maintenance_interval_days:
+          type: integer
+          minimum: 1
+          description: Days between maintenance
+        maintenance_cost:
+          type: integer
+          minimum: 0
+          description: Eddies cost per maintenance
+        required_parts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required replacement parts
+        degradation_prevention:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Degradation prevented by maintenance
+    RiskFactors:
+      description: Implant risk factors
+      type: object
+      properties:
+        base_cyberpsychosis_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Base cyberpsychosis risk contribution
+        stability_rating:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Implant stability (higher = more stable)
+        failure_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of catastrophic failure
+        side_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SideEffect'
+          description: Possible side effects
+    SideEffect:
+      description: Implant side effect
+      type: object
+      required:
+      - effect_type
+      - severity
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - stat_penalty
+          - hallucination
+          - pain
+          - system_overload
+          - mental_instability
+          description: Type of side effect
+        severity:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Effect severity (0-1)
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Effect duration (0 = permanent)
+        trigger_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of effect triggering
+        description:
+          type: string
+          maxLength: 200
+          description: Human-readable effect description
+    ImplantModification:
+      description: Custom implant modification
+      type: object
+      required:
+      - modification_type
+      - applied_at
+      properties:
+        modification_type:
+          type: string
+          enum:
+          - performance_tune
+          - risk_reduction
+          - effect_enhancement
+          - cosmetic_change
+          description: Type of modification
+        applied_at:
+          type: string
+          format: date-time
+          description: When modification was applied
+        cost_paid:
+          type: integer
+          minimum: 0
+          description: Eddies paid for modification
+        stat_changes:
+          type: object
+          additionalProperties:
+            type: number
+          description: Stat changes from modification
+        risk_changes:
+          type: object
+          additionalProperties:
+            type: number
+          description: Risk changes from modification
+    CharacterImplantSummary:
+      description: Summary of character implants
+      type: object
+      properties:
+        total_implants:
+          type: integer
+          description: Total installed implants
+        active_implants:
+          type: integer
+          description: Implants in good condition
+        degraded_implants:
+          type: integer
+          description: Implants needing maintenance
+        cyberpsychosis_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Total cyberpsychosis risk
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall implant compatibility
+        implants_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by implant type
+    CompatibilityResult:
+      description: Result of implant compatibility check
+      type: object
+      required:
+      - compatible
+      - compatibility_score
+      properties:
+        compatible:
+          type: boolean
+          description: Whether implants are compatible
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Compatibility score (0 = incompatible, 1 = perfect)
+        synergy_bonuses:
+          type: array
+          items:
+            type: object
+            properties:
+              bonus_type:
+                type: string
+                description: Type of synergy bonus
+              bonus_value:
+                type: number
+                description: Bonus magnitude
+              description:
+                type: string
+                description: Human-readable bonus description
+          description: Available synergy bonuses
+        conflict_warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              conflict_type:
+                type: string
+                description: Type of conflict
+              severity:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Conflict severity
+              description:
+                type: string
+                description: Human-readable conflict description
+          description: Compatibility warnings
+        recommended_actions:
+          type: array
+          items:
+            type: string
+          description: Recommended actions to improve compatibility
+    RiskAssessment:
+      description: Cyberpsychosis risk assessment
+      type: object
+      required:
+      - total_risk
+      - risk_level
+      properties:
+        total_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Total cyberpsychosis risk (0-1)
+        risk_level:
+          type: string
+          enum:
+          - low
+          - moderate
+          - high
+          - critical
+          - imminent
+          description: Risk level category
+        risk_contributors:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_id:
+                type: string
+                format: uuid
+                description: Contributing implant ID
+              risk_contribution:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Risk contribution from this implant
+              risk_factors:
+                type: array
+                items:
+                  type: string
+                description: Specific risk factors
+          description: Breakdown of risk contributors
+        mitigation_recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+                enum:
+                - remove_implant
+                - upgrade_implant
+                - maintenance
+                - therapy
+                description: Recommended action type
+              priority:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - urgent
+                description: Action priority
+              description:
+                type: string
+                description: Action description
+              expected_risk_reduction:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Expected risk reduction
+          description: Recommended risk mitigation actions
+        predicted_risk_timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              time_point:
+                type: string
+                format: date-time
+                description: Future time point
+              predicted_risk:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Predicted risk at this time
+          description: Risk prediction over time
+    MaintenanceSchedule:
+      description: Scheduled implant maintenance
+      type: object
+      required:
+      - implant_id
+      - scheduled_for
+      - maintenance_type
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: Implant requiring maintenance
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Scheduled maintenance time
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Type of maintenance
+        estimated_cost:
+          type: integer
+          minimum: 0
+          description: Estimated eddies cost
+        estimated_duration_minutes:
+          type: integer
+          minimum: 1
+          description: Estimated duration in minutes
+        required_parts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Required parts and quantities
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          description: Maintenance priority
+    MaintenanceResult:
+      description: Result of maintenance operation
+      type: object
+      required:
+      - implant_id
+      - maintenance_type
+      - success
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: Maintained implant ID
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Type of maintenance performed
+        success:
+          type: boolean
+          description: Whether maintenance was successful
+        condition_improvement:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Condition improvement achieved
+        degradation_reduction:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Degradation rate reduction
+        cost_incurred:
+          type: integer
+          minimum: 0
+          description: Actual cost incurred
+        parts_used:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Parts actually used
+        next_maintenance_due:
+          type: string
+          format: date-time
+          description: Next maintenance due date
+    StatChanges:
+      description: Summary of stat changes from implant operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        reaction_time:
+          type: number
+          description: Reaction time change
+        cyberpsychosis_risk:
+          type: number
+          description: Cyberpsychosis risk change
+    ImplantUsageAnalytics:
+      description: Comprehensive implant usage analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_installations:
+          type: integer
+          description: Total implant installations
+        unique_characters:
+          type: integer
+          description: Number of unique characters with implants
+        average_implants_per_character:
+          type: number
+          description: Average implants per character
+        implant_type_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Distribution by implant type
+        popular_templates:
+          type: array
+          items:
+            type: object
+            properties:
+              template_id:
+                type: string
+                format: uuid
+              installation_count:
+                type: integer
+              average_tier:
+                type: number
+              failure_rate:
+                type: number
+                minimum: 0
+                maximum: 1
+          description: Most installed implant templates
+        risk_analytics:
+          type: object
+          properties:
+            average_cyberpsychosis_risk:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Average cyberpsychosis risk
+            risk_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Characters by risk level
+            cyberpsychosis_incidents:
+              type: integer
+              description: Number of cyberpsychosis incidents
+            risk_mitigation_effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Effectiveness of risk mitigation
+        maintenance_analytics:
+          type: object
+          properties:
+            average_maintenance_cost:
+              type: integer
+              description: Average cost per maintenance
+            maintenance_frequency_days:
+              type: number
+              description: Average days between maintenance
+            maintenance_compliance_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of timely maintenance
+            failure_prevention_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of failures prevented by maintenance
+    ImplantTemplateSummary:
+      description: Implant template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        implant_type:
+          type: string
+          enum:
+          - combat
+          - utility
+          - medical
+          - neural
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        base_installation_cost:
+          type: integer
+        is_active:
+          type: boolean
+        last_updated:
+          type: string
+          format: date-time
+    InstallImplantRequest:
+      description: Request payload for implant installation
+      type: object
+      required:
+      - character_id
+      - template_id
+      - target_body_part
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to install implant on
+        template_id:
+          type: string
+          format: uuid
+          description: Implant template to install
+        target_body_part:
+          type: string
+          enum:
+          - head
+          - eyes
+          - arms
+          - hands
+          - torso
+          - legs
+          - spine
+          - brain
+          description: Body part for installation
+        installation_quality:
+          type: string
+          enum:
+          - standard
+          - premium
+          - black_market
+          default: standard
+          description: Installation quality affecting risk
+        override_compatibility:
+          type: boolean
+          default: false
+          description: Override compatibility warnings
+        custom_modifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantModification'
+          description: Custom modifications to apply
+    RemoveImplantRequest:
+      description: Request payload for implant removal
+      type: object
+      required:
+      - implant_instance_id
+      properties:
+        implant_instance_id:
+          type: string
+          format: uuid
+          description: Implant instance to remove
+        removal_method:
+          type: string
+          enum:
+          - surgical
+          - emergency
+          - self_removal
+          default: surgical
+          description: Removal method affecting side effects
+        preserve_upgrades:
+          type: boolean
+          default: false
+          description: Attempt to preserve upgrade investments
+    UpgradeImplantRequest:
+      description: Request payload for implant upgrade
+      type: object
+      required:
+      - implant_instance_id
+      - target_tier
+      properties:
+        implant_instance_id:
+          type: string
+          format: uuid
+          description: Implant instance to upgrade
+        target_tier:
+          type: integer
+          minimum: 2
+          maximum: 10
+          description: Desired tier level
+        upgrade_quality:
+          type: string
+          enum:
+          - standard
+          - premium
+          - experimental
+          default: standard
+          description: Upgrade quality affecting success rate
+    CompatibilityCheckRequest:
+      description: Request payload for compatibility check
+      type: object
+      required:
+      - character_id
+      - implant_template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to check compatibility for
+        implant_template_id:
+          type: string
+          format: uuid
+          description: Implant template to check
+        target_body_part:
+          type: string
+          enum:
+          - head
+          - eyes
+          - arms
+          - hands
+          - torso
+          - legs
+          - spine
+          - brain
+          description: Target installation location
+        include_synergy_analysis:
+          type: boolean
+          default: true
+          description: Include synergy bonus analysis
+    RiskAssessmentRequest:
+      description: Request payload for risk assessment
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character to assess risk for
+        include_future_predictions:
+          type: boolean
+          default: true
+          description: Include risk predictions over time
+        assessment_scope:
+          type: string
+          enum:
+          - current
+          - with_planned_implants
+          - hypothetical
+          default: current
+          description: Scope of risk assessment
+        hypothetical_implants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Hypothetical implants to include in assessment
+    MaintenanceScheduleRequest:
+      description: Request payload for maintenance scheduling
+      type: object
+      required:
+      - implant_instance_id
+      - maintenance_type
+      properties:
+        implant_instance_id:
+          type: string
+          format: uuid
+          description: Implant requiring maintenance
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Type of maintenance needed
+        preferred_schedule:
+          type: string
+          format: date-time
+          description: Preferred maintenance time
+        priority_override:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          description: Override default priority
+    PerformMaintenanceRequest:
+      description: Request payload for performing maintenance
+      type: object
+      required:
+      - implant_instance_id
+      - maintenance_type
+      properties:
+        implant_instance_id:
+          type: string
+          format: uuid
+          description: Implant to maintain
+        maintenance_type:
+          type: string
+          enum:
+          - preventive
+          - repair
+          - calibration
+          - upgrade_prep
+          description: Maintenance to perform
+        use_premium_parts:
+          type: boolean
+          default: false
+          description: Use premium parts for better results
+        rush_service:
+          type: boolean
+          default: false
+          description: Rush service for faster completion
+    CreateImplantTemplateRequest:
+      description: Request payload for creating implant template
+      type: object
+      required:
+      - name
+      - implant_type
+      - category
+      - slot_requirements
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        implant_type:
+          type: string
+          enum:
+          - combat
+          - utility
+          - medical
+          - neural
+          description: Implant type
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Implant category
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          default: common
+          description: Implant rarity
+        base_installation_cost:
+          type: integer
+          minimum: 0
+          description: Base installation cost
+        slot_requirements:
+          $ref: '#/components/schemas/SlotRequirements'
+        stat_modifiers:
+          type: object
+          description: Stat modifications
+          additionalProperties:
+            type: number
+        effect_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Associated effect IDs
+        compatibility_rules:
+          $ref: '#/components/schemas/CompatibilityRules'
+        upgrade_path:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpgradeTier'
+          description: Upgrade tiers
+        maintenance_requirements:
+          $ref: '#/components/schemas/MaintenanceRequirements'
+        risk_factors:
+          $ref: '#/components/schemas/RiskFactors'

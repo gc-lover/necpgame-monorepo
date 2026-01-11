@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /implants/remove:
+    post:
+      operationId: implantServiceRemoveImplant
+      summary: Remove implant from character
+      description: 'Remove an installed implant from a character.
+
+
+        **Removal Process:**
+
+        - Validate removal requirements and risks
+
+        - Calculate cyberpsychosis risk decrease
+
+        - Remove implant effects and bonuses
+
+        - Update character stats and abilities
+
+        - Handle removal side effects
+
+        '
+      tags:
+      - Implant Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveImplantRequest'
+      responses:
+        '200':
+          description: Implant removed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        removed_implant_id:
+                          type: string
+                          format: uuid
+                          description: ID of removed implant
+                        side_effects:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/SideEffect'
+                          description: Removal side effects
+                        stat_changes:
+                          $ref: '#/components/schemas/StatChanges'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

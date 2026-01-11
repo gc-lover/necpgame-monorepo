@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}/leave:
+    post:
+      summary: Leave alliance
+      description: '**Enterprise-grade alliance departure endpoint**
+
+        Handles clean alliance departure with treaty termination and impact assessment.
+        Updates alliance statistics and applies departure penalties.
+
+        **Performance:** <30ms P95, includes treaty recalculation
+
+        '
+      operationId: leaveAlliance
+      tags:
+      - Alliance Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveAllianceRequest'
+      responses:
+        '200':
+          description: Successfully left alliance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveAllianceResponse'
+        '400':
+          description: Invalid request - cannot leave during critical period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - leadership position or treaty obligations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Alliance not found or not a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

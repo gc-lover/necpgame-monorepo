@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/rewards:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player event rewards
+      description: '**Enterprise-grade reward tracking with claim validation**
+
+        Retrieves paginated list of unclaimed and claimed event rewards.
+
+        **Performance:** <20ms P99, reward-specific queries **Security:** Claim validation
+        and anti-cheat measures
+
+        '
+      operationId: getPlayerRewards
+      tags:
+      - Event Participation
+      parameters:
+      - name: claimed
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Filter by claimed status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of rewards per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Player rewards retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRewardsList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

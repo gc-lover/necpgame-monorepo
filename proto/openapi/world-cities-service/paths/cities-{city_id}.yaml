@@ -1,0 +1,181 @@
+openapi: 3.0.3
+paths:
+  /cities/{city_id}:
+    get:
+      summary: Get city details
+      description: '**Enterprise-grade city details retrieval**
+
+
+        Retrieves complete information about a specific city including all characteristics,
+        timeline data, and cyberpunk attributes.
+
+
+        **Performance:** <50ms for cached cities, <100ms for complex queries
+
+        **Memory:** <200KB per detailed city response
+
+        '
+      operationId: getCity
+      tags:
+      - World Cities
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: City details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update city
+      description: '**Enterprise-grade city update**
+
+
+        Updates an existing city definition with new data.
+
+        Supports partial updates and maintains data integrity.
+
+
+        **Performance:** <150ms for updates with validation
+
+        '
+      operationId: updateCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityUpdate'
+      responses:
+        '200':
+          description: City updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid city data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete city
+      description: '**Enterprise-grade city deletion**
+
+
+        Removes a city definition from the system.
+
+        Requires admin privileges and cascade handling.
+
+
+        **Performance:** <100ms for deletion
+
+        '
+      operationId: deleteCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      responses:
+        '204':
+          description: City deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

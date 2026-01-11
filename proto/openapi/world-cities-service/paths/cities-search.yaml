@@ -1,0 +1,83 @@
+openapi: 3.0.3
+paths:
+  /cities/search:
+    get:
+      summary: Advanced city search
+      description: '**Enterprise-grade advanced city search**
+
+
+        Performs complex searches across multiple city attributes including spatial
+        queries, text search, and multi-criteria filtering.
+
+
+        **Performance:** <200ms for complex queries, optimized with indexes
+
+        '
+      operationId: searchCities
+      tags:
+      - City Search
+      parameters:
+      - name: q
+        in: query
+        description: Free text search across city names and descriptions
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: corporation
+        in: query
+        description: Filter by corporation presence
+        schema:
+          type: string
+      - name: faction
+        in: query
+        description: Filter by faction influence
+        schema:
+          type: string
+      - name: min_population
+        in: query
+        description: Minimum population filter
+        schema:
+          type: integer
+          minimum: 0
+      - name: max_population
+        in: query
+        description: Maximum population filter
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                - pagination
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CitySummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

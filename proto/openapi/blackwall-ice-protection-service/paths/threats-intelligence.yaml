@@ -1,0 +1,43 @@
+openapi: 3.0.0
+paths:
+  /threats/intelligence:
+    get:
+      tags:
+      - threat-intelligence
+      summary: Get threat intelligence
+      description: Retrieve aggregated threat intelligence and attack patterns
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+        description: Timeframe for threat analysis
+      - name: threat_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - hacking
+          - social_engineering
+          - insider_threat
+          - ddos
+      responses:
+        '200':
+          description: Threat intelligence retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreatIntelligenceResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

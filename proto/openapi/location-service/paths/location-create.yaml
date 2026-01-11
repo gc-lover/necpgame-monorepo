@@ -1,0 +1,62 @@
+openapi: 3.0.3
+paths:
+  /location/create:
+    post:
+      summary: User registration
+      description: '**Enterprise-grade user registration endpoint**
+
+        Creates new user account with email/password authentication.
+
+        Includes email verification, password strength validation, and duplicate checking.
+
+        **Performance:** <100ms P95, includes password hashing and email sending
+
+        **Security:** Argon2id password hashing, email verification required
+
+        '
+      operationId: locationRegister
+      tags:
+      - Registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully - email verification required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request - malformed data or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - user with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - registration rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

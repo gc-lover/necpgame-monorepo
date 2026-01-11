@@ -1,0 +1,102 @@
+openapi: 3.0.3
+paths:
+  /leaderboards/{trialId}:
+    get:
+      operationId: getTrialLeaderboard
+      summary: Get trial leaderboard
+      description: Retrieve leaderboard rankings for a specific time trial
+      tags:
+      - Leaderboard System
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          - seasonal
+          default: all_time
+        description: Time period for rankings
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of top results to return
+      - name: player_id
+        in: query
+        schema:
+          type: string
+        description: Filter for specific player's ranking context
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - trial_id
+                - timeframe
+                - entries
+                - total_entries
+                properties:
+                  trial_id:
+                    type: string
+                    format: uuid
+                  timeframe:
+                    type: string
+                    enum:
+                    - daily
+                    - weekly
+                    - monthly
+                    - all_time
+                    - seasonal
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  total_entries:
+                    type: integer
+                    minimum: 0
+                    description: Total number of valid completions
+                  last_updated:
+                    type: string
+                    format: date-time
+                    description: Last leaderboard update timestamp
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

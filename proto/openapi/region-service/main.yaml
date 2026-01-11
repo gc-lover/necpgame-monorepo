@@ -65,615 +65,62 @@ tags:
   description: System health and performance monitoring
 paths:
   /health:
-    get:
-      summary: World regions health check
-      description: '**Enterprise-grade health check endpoint**
-
-
-        Provides real-time health status of the world regions microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: worldRegionsHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    post:
-      summary: Batch health check for multiple services
-      description: '**Enterprise-grade batch health monitoring**
-
-
-        Performs health checks across multiple world regions components simultaneously.
-
-        Used for orchestration and service mesh health monitoring.
-
-
-        **Performance:** <10ms total for all components
-
-        '
-      operationId: worldRegionsBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - database
-                    - cache
-                    - external-apis
-              required:
-              - services
-      responses:
-        '200':
-          description: Batch health results
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  results:
-                    type: object
-                    additionalProperties:
-                      $ref: '#/components/schemas/HealthResponse'
-                required:
-                - results
-        '400':
-          description: Invalid service list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: WebSocket health monitoring
-      description: '**Real-time health monitoring via WebSocket**
-
-
-        Establishes persistent connection for real-time health status updates.
-
-        Used by monitoring dashboards and service mesh orchestrators.
-
-
-        **Performance:** Persistent connection with <1KB/minute overhead
-
-        '
-      operationId: worldRegionsWebSocketHealth
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: token
-        in: query
-        required: true
-        schema:
-          type: string
-        description: JWT token for authentication
-      responses:
-        '101':
-          description: WebSocket connection established
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /regions:
-    get:
-      summary: Get all world regions
-      description: '**Enterprise-grade world regions listing**
-
-
-        Returns comprehensive list of all game world regions with timeline data.
-
-        Supports filtering by status, continent, and development level.
-
-
-        **Performance:** <50ms P95, supports 1000+ regions
-
-        **Memory:** <50KB per region instance
-
-        '
-      operationId: getWorldRegions
-      tags:
-      - World Regions
-      parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - draft
-          - ready_for_backend
-          - approved
-          - published
-        description: Filter by region status
-      - name: continent
-        in: query
-        schema:
-          type: string
-          enum:
-          - africa
-          - america
-          - asia
-          - europe
-          - oceania
-          - antarctica
-          - arctic
-          - cis
-          - middle-east
-        description: Filter by continent
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Number of regions to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Number of regions to skip
-      responses:
-        '200':
-          description: List of world regions
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  regions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/WorldRegion'
-                  total:
-                    type: integer
-                    format: int64
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-                required:
-                - regions
-                - total
-        '400':
-          description: Invalid parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/regions.yaml#/paths/~1regions
   /regions/{region_id}:
-    get:
-      summary: Get specific world region
-      description: '**Enterprise-grade world region details**
-
-
-        Returns detailed information about a specific world region including timeline
-        events.
-
-        Used by narrative systems and world building tools.
-
-
-        **Performance:** <25ms P95, cached for 5 minutes
-
-        '
-      operationId: getWorldRegion
-      tags:
-      - World Regions
-      parameters:
-      - name: region_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Region identifier
-      responses:
-        '200':
-          description: World region details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WorldRegionDetail'
-        '404':
-          description: Region not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/regions-{region_id}.yaml#/paths/~1regions~1{region_id}
   /regions/{region_id}/timeline:
-    get:
-      summary: Get region timeline events
-      description: '**Enterprise-grade timeline events for region**
-
-
-        Returns chronological events for a specific world region.
-
-        Used by narrative generation and quest systems.
-
-
-        **Performance:** <30ms P95, supports 100+ events per region
-
-        '
-      operationId: getRegionTimeline
-      tags:
-      - World Regions
-      parameters:
-      - name: region_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Region identifier
-      - name: period_start
-        in: query
-        schema:
-          type: integer
-          minimum: 2020
-          maximum: 2093
-        description: Start year for timeline filter
-      - name: period_end
-        in: query
-        schema:
-          type: integer
-          minimum: 2020
-          maximum: 2093
-        description: End year for timeline filter
-      responses:
-        '200':
-          description: Region timeline events
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  region_id:
-                    type: string
-                  events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TimelineEvent'
-                required:
-                - region_id
-                - events
-        '404':
-          description: Region not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/regions-{region_id}-timeline.yaml#/paths/~1regions~1{region_id}~1timeline
   /regions/import:
-    post:
-      summary: Import regions from YAML files
-      description: '**Enterprise-grade data import operation**
-
-
-        Imports world region data from YAML knowledge base files.
-
-        Used for initial data population and updates from lore system.
-
-
-        **Performance:** <500ms per region, batch processing supported
-
-        '
-      operationId: importWorldRegions
-      tags:
-      - World Regions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                source_paths:
-                  type: array
-                  items:
-                    type: string
-                  description: Paths to YAML files to import
-                overwrite_existing:
-                  type: boolean
-                  default: false
-                  description: Whether to overwrite existing regions
-              required:
-              - source_paths
-      responses:
-        '200':
-          description: Import completed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  imported_count:
-                    type: integer
-                  updated_count:
-                    type: integer
-                  errors:
-                    type: array
-                    items:
-                      type: string
-                required:
-                - imported_count
-                - updated_count
-        '400':
-          description: Import failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/regions-import.yaml#/paths/~1regions~1import
 components:
   schemas:
     Error:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/HealthResponse
     WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - service_alert
-        timestamp:
-          type: string
-          format: date-time
-        service:
-          type: string
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-        details:
-          type: object
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/WebSocketHealthMessage
     WorldRegion:
-      type: object
-      description: '**PERFORMANCE:** Struct alignment optimized for 64-byte cache
-        lines'
-      required:
-      - id
-      - name
-      - continent
-      - status
-      - cities_count
-      properties:
-        id:
-          type: string
-          minLength: 1
-          maxLength: 100
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        continent:
-          type: string
-          enum:
-          - africa
-          - america
-          - asia
-          - europe
-          - oceania
-          - antarctica
-          - arctic
-          - cis
-          - middle-east
-        status:
-          type: string
-          enum:
-          - draft
-          - ready_for_backend
-          - approved
-          - published
-        cities_count:
-          type: integer
-          format: int32
-          minimum: 0
-        description:
-          type: string
-          maxLength: 500
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/WorldRegion
     WorldRegionDetail:
-      allOf:
-      - $ref: '#/components/schemas/WorldRegion'
-      - type: object
-        properties:
-          timeline_periods:
-            type: array
-            items:
-              $ref: '#/components/schemas/TimelinePeriod'
-          key_locations:
-            type: array
-            items:
-              $ref: '#/components/schemas/KeyLocation'
-          related_systems:
-            type: array
-            items:
-              type: string
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/WorldRegionDetail
     TimelineEvent:
-      type: object
-      required:
-      - period
-      - title
-      - description
-      properties:
-        period:
-          type: string
-          minLength: 1
-          maxLength: 20
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 2000
-        mechanics_links:
-          type: array
-          items:
-            type: string
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/TimelineEvent
     TimelinePeriod:
-      type: object
-      required:
-      - id
-      - title
-      - body
-      properties:
-        id:
-          type: string
-          minLength: 1
-          maxLength: 50
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        body:
-          type: string
-          maxLength: 5000
-        mechanics_links:
-          type: array
-          items:
-            type: string
-        assets:
-          type: array
-          items:
-            type: string
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/TimelinePeriod
     KeyLocation:
-      type: object
-      required:
-      - name
-      - type
-      - significance
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        type:
-          type: string
-          enum:
-          - corporate
-          - residential
-          - commercial
-          - military
-          - research
-          - cultural
-        significance:
-          type: string
-          maxLength: 500
-        coordinates:
-          type: string
-          maxLength: 50
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/KeyLocation
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ./schemas/region-service-schemas.yaml#/components/schemas/PaginatedResponse
   responses:
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/HealthOK
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ./schemas/region-service-responses.yaml#/components/responses/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
       $ref: ../common/security/security.yaml#/BearerAuth
@@ -681,4 +128,3 @@ components:
       $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
       $ref: ../common/security/security.yaml#/ServiceAuth
-

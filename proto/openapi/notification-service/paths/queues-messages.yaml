@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /queues/messages:
+    post:
+      summary: Enqueue message
+      description: Add a message to a queue
+      operationId: enqueueMessage
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnqueueMessageRequest'
+      responses:
+        '200':
+          description: Message enqueued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnqueueMessageResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    get:
+      summary: Dequeue messages
+      description: Retrieve messages from a queue
+      operationId: dequeueMessages
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: queue
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Queue name
+      - name: consumer_id
+        in: query
+        schema:
+          type: string
+        description: Consumer identifier
+      - name: max_messages
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        description: Maximum messages to retrieve
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DequeueMessageResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

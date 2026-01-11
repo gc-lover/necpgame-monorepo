@@ -1,0 +1,626 @@
+openapi: 3.0.3
+components:
+  schemas:
+    RelationshipResponse:
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/RelationshipEntity
+      - type: object
+        properties:
+          character_profile:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+          target_profile:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+          is_mutual:
+            type: boolean
+            description: Whether relationship is mutual
+            example: true
+          last_interaction_at:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+    RelationshipDetailResponse:
+      allOf:
+      - $ref: '#/components/schemas/RelationshipResponse'
+      - type: object
+        properties:
+          history:
+            type: array
+            items:
+              type: object
+              properties:
+                event_type:
+                  type: string
+                  enum:
+                  - created
+                  - level_changed
+                  - interaction
+                  - terminated
+                timestamp:
+                  $ref: ../common/schemas/common.yaml#/Timestamp
+                description:
+                  type: string
+                  maxLength: 200
+                level_change:
+                  type: integer
+                  description: Change in relationship level
+          statistics:
+            type: object
+            properties:
+              total_interactions:
+                type: integer
+                example: 45
+              average_level:
+                type: number
+                example: 6.2
+              relationship_duration_days:
+                type: integer
+                example: 127
+    CreateRelationshipRequest:
+      type: object
+      required:
+      - target_id
+      - type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        type:
+          type: string
+          enum:
+          - friendship
+          - romance
+          - rivalry
+          - mentorship
+          - business
+          - enmity
+          description: Type of relationship to create
+        initial_level:
+          type: integer
+          minimum: -10
+          maximum: 10
+          default: 1
+          description: Initial relationship level
+        description:
+          type: string
+          maxLength: 200
+          description: Relationship description
+        is_public:
+          type: boolean
+          default: false
+          description: Whether relationship is visible to others
+    UpdateRelationshipRequest:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: -10
+          maximum: 10
+          description: New relationship level
+        description:
+          type: string
+          maxLength: 200
+          description: Updated relationship description
+        flags:
+          type: array
+          items:
+            type: string
+            enum:
+            - exclusive
+            - public
+            - secret
+            - temporary
+          description: Relationship flags
+    FriendshipResponse:
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/FriendshipEntity
+      - type: object
+        properties:
+          friend_profile:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+          friendship_level:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: Friendship intimacy level
+            example: 7
+    SendFriendRequest:
+      type: object
+      required:
+      - friend_id
+      properties:
+        friend_id: null
+        message:
+          type: string
+          maxLength: 200
+          description: Optional message with the request
+    FriendRequestResponse:
+      type: object
+      properties:
+        friendship_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - declined
+          example: pending
+        requested_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        message:
+          type: string
+    UserReputationResponse:
+      type: object
+      properties:
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        overall_score:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Overall reputation score
+          example: 450
+        categories:
+          type: object
+          properties:
+            trading:
+              $ref: '#/components/schemas/ReputationCategory'
+            combat:
+              $ref: '#/components/schemas/ReputationCategory'
+            social:
+              $ref: '#/components/schemas/ReputationCategory'
+            leadership:
+              $ref: '#/components/schemas/ReputationCategory'
+            craftsmanship:
+              $ref: '#/components/schemas/ReputationCategory'
+            reliability:
+              $ref: '#/components/schemas/ReputationCategory'
+            generosity:
+              $ref: '#/components/schemas/ReputationCategory'
+            combat_skill:
+              $ref: '#/components/schemas/ReputationCategory'
+        evidence_count:
+          type: integer
+          description: Total number of reputation events
+          example: 127
+        last_updated:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+    ReputationCategory:
+      type: object
+      properties:
+        score:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Category-specific reputation score
+          example: 35
+        evidence_count:
+          type: integer
+          description: Number of events in this category
+          example: 23
+        trend:
+          type: string
+          enum:
+          - improving
+          - stable
+          - declining
+          description: Reputation trend in this category
+          example: improving
+    ReputationEventResponse:
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/ReputationEntity
+      - type: object
+        properties:
+          subject_profile:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+          target_profile:
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+    RecordReputationEventRequest:
+      required:
+      - subject_id
+      - target_id
+      - category
+      - points
+      - description
+      $ref: null
+    SocialNetworkResponse:
+      type: object
+      properties:
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              character:
+                $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
+              relationship:
+                $ref: '#/components/schemas/RelationshipResponse'
+              connection_path:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    character_id:
+                      $ref: ../common/schemas/common.yaml#/UUID
+                    relationship_type:
+                      type: string
+                    relationship_level:
+                      type: integer
+                description: Path of connections to reach this character
+        network_stats:
+          type: object
+          properties:
+            total_connections:
+              type: integer
+              example: 156
+            average_relationship_level:
+              type: number
+              example: 4.2
+            network_density:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Network connectivity density (0-1)
+              example: 0.23
+    SocialInfluenceResponse:
+      type: object
+      properties:
+        user_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        influence_score:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Overall social influence score
+          example: 387
+        influence_factors:
+          type: object
+          properties:
+            reputation_weight:
+              type: number
+              description: Influence from reputation
+              example: 0.4
+            network_size_weight:
+              type: number
+              description: Influence from network size
+              example: 0.3
+            relationship_quality_weight:
+              type: number
+              description: Influence from relationship quality
+              example: 0.3
+        influence_rank:
+          type: integer
+          description: Rank among all players
+          example: 1247
+        percentile:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Percentile ranking
+          example: 78.5
+    MentorshipResponse:
+      type: object
+      allOf:
+      - $ref: ../common/schemas/social-entities.yaml#/RelationshipEntity
+      - type: object
+        required:
+        - mentor_id
+        - mentee_id
+        - contract_terms
+        properties:
+          mentor_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          mentee_id:
+            $ref: ../common/schemas/common.yaml#/UUID
+          contract_terms:
+            type: object
+            properties:
+              duration_days:
+                type: integer
+                minimum: 30
+                description: Contract duration in days
+                example: 90
+              skills_to_teach:
+                type: array
+                items:
+                  type: string
+                  maxLength: 50
+                description: Skills the mentor will teach
+              payment_terms:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    default: credits
+                  amount:
+                    type: integer
+                    minimum: 0
+                  schedule:
+                    type: string
+                    enum:
+                    - weekly
+                    - monthly
+                    - completion
+          progress:
+            type: object
+            properties:
+              lessons_completed:
+                type: integer
+                example: 12
+              skills_improved:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    skill_name:
+                      type: string
+                    improvement_percent:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+              satisfaction_rating:
+                type: integer
+                minimum: 1
+                maximum: 5
+          status:
+            type: string
+            enum:
+            - active
+            - completed
+            - terminated
+            - paused
+            example: active
+    InitiateMentorshipRequest:
+      type: object
+      required:
+      - target_id
+      - skills_to_teach
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        skills_to_teach:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          minItems: 1
+          maxItems: 10
+          description: Skills the mentor will teach
+        contract_terms:
+          type: object
+          properties:
+            duration_days:
+              type: integer
+              minimum: 30
+              maximum: 365
+              default: 90
+            payment_amount:
+              type: integer
+              minimum: 0
+              default: 0
+            payment_schedule:
+              type: string
+              enum:
+              - weekly
+              - monthly
+              - completion
+              default: completion
+    UpdateMentorshipRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - completed
+          - terminated
+          - paused
+        contract_terms:
+          $ref: '#/components/schemas/InitiateMentorshipRequest/properties/contract_terms'
+        progress_notes:
+          type: string
+          maxLength: 500
+          description: Notes about mentorship progress
+    RecordProgressRequest:
+      type: object
+      required:
+      - progress_type
+      - description
+      properties:
+        progress_type:
+          type: string
+          enum:
+          - lesson_completed
+          - skill_improved
+          - milestone_achieved
+          - issue_resolved
+        description:
+          type: string
+          minLength: 10
+          maxLength: 300
+          description: Description of the progress made
+        skill_improvements:
+          type: array
+          items:
+            type: object
+            required:
+            - skill_name
+            - improvement_percent
+            properties:
+              skill_name:
+                type: string
+                maxLength: 50
+              improvement_percent:
+                type: integer
+                minimum: 1
+                maximum: 100
+        lesson_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Rating of the lesson/mentoring session
+    MentorshipProgressResponse:
+      type: object
+      properties:
+        progress_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        mentorship_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        recorded_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        progress_type:
+          type: string
+          enum:
+          - lesson_completed
+          - skill_improved
+          - milestone_achieved
+          - issue_resolved
+        description:
+          type: string
+        skill_improvements:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_name:
+                type: string
+              improvement_percent:
+                type: integer
+    RomanticRelationshipResponse:
+      allOf:
+      - $ref: '#/components/schemas/RelationshipResponse'
+      - type: object
+        properties:
+          romantic_status:
+            type: string
+            enum:
+            - dating
+            - engaged
+            - married
+            - separated
+            - divorced
+            example: dating
+          privacy_level:
+            type: string
+            enum:
+            - private
+            - friends
+            - public
+            example: private
+          anniversary:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+          engagement_details:
+            type: object
+            properties:
+              ring_item_id:
+                $ref: ../common/schemas/common.yaml#/UUID
+              proposal_date:
+                $ref: ../common/schemas/common.yaml#/Timestamp
+              proposal_message:
+                type: string
+                maxLength: 500
+    RomanticProposalRequest:
+      type: object
+      required:
+      - target_id
+      - proposal_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        proposal_type:
+          type: string
+          enum:
+          - date
+          - relationship
+          - engagement
+          - marriage
+          description: Type of romantic proposal
+        message:
+          type: string
+          minLength: 10
+          maxLength: 300
+          description: Personal message with the proposal
+        privacy_level:
+          type: string
+          enum:
+          - private
+          - friends
+          - public
+          default: private
+    RomanticProposalResponse:
+      type: object
+      properties:
+        proposal_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - declined
+          example: pending
+        expires_at:
+          $ref: ../common/schemas/common.yaml#/Timestamp
+        proposal_type:
+          type: string
+          enum:
+          - date
+          - relationship
+          - engagement
+          - marriage
+    RivalryResponse:
+      allOf:
+      - $ref: '#/components/schemas/RelationshipResponse'
+      - type: object
+        properties:
+          rivalry_intensity:
+            type: string
+            enum:
+            - minor
+            - moderate
+            - major
+            - deadly
+            example: moderate
+          rivalry_reason:
+            type: string
+            maxLength: 300
+            description: Reason for the rivalry
+            example: Competed for the same bounty
+          active_conflicts:
+            type: integer
+            description: Number of active conflicts
+            example: 2
+          last_conflict_at:
+            $ref: ../common/schemas/common.yaml#/Timestamp
+    DeclareRivalryRequest:
+      type: object
+      required:
+      - target_id
+      - reason
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 300
+          description: Reason for declaring rivalry
+        initial_intensity:
+          type: string
+          enum:
+          - minor
+          - moderate
+          - major
+          - deadly
+          default: moderate
+        is_public:
+          type: boolean
+          default: true
+          description: Whether rivalry declaration is public

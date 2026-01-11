@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /analytics/sessions:
+    get:
+      summary: Get session analytics
+      description: Retrieve analytics and metrics for sessions
+      operationId: getSessionAnalytics
+      tags:
+      - Session Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Analytics timeframe
+      - name: session_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - all
+          default: all
+        description: Type of sessions to analyze
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - count
+          - duration
+          - performance
+          - errors
+          - all
+          default: all
+        description: Specific metric to analyze
+      responses:
+        '200':
+          description: Session analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionAnalytics'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

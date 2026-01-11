@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /experience/batch/gain:
+    post:
+      operationId: levelServiceBatchGainExperience
+      summary: Award experience to multiple characters
+      description: 'Award experience to multiple characters in a single operation.
+
+
+        **Batch Processing:**
+
+        - Atomic experience distribution
+
+        - Bulk level advancement checking
+
+        - Performance optimization for mass rewards
+
+        - Rollback on partial failures
+
+        '
+      tags:
+      - Experience Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGainExperienceRequest'
+      responses:
+        '200':
+          description: Batch experience awarded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        total_experience_awarded:
+                          type: integer
+                          description: Total XP awarded
+                        characters_leveled_up:
+                          type: integer
+                          description: Characters that leveled up
+                        level_up_events:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/LevelUpEvent'
+                          description: Level up events triggered
+        '400':
+          $ref: '#/components/responses/BadRequest'

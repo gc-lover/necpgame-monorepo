@@ -1,0 +1,67 @@
+openapi: 3.0.3
+paths:
+  /cities/analytics:
+    get:
+      summary: City analytics and statistics
+      description: '**Enterprise-grade city analytics**
+
+
+        Provides aggregated statistics and analytics about world cities including
+        population trends, cyberpunk levels, and economic data.
+
+
+        **Performance:** <500ms for analytics queries
+
+        '
+      operationId: getCityAnalytics
+      tags:
+      - City Analytics
+      parameters:
+      - name: metric
+        in: query
+        description: Analytics metric to retrieve
+        schema:
+          type: string
+          enum:
+          - population_trends
+          - cyberpunk_distribution
+          - economic_indicators
+          - faction_influence
+          - corporation_presence
+      - name: continent
+        in: query
+        description: Filter analytics by continent
+        schema:
+          type: string
+      - name: year
+        in: query
+        description: Year for time-based analytics
+        schema:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+      responses:
+        '200':
+          description: Analytics data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityAnalytics'
+        '400':
+          description: Invalid analytics parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

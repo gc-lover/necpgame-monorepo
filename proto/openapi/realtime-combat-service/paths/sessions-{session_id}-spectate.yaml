@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/spectate:
+    post:
+      summary: Spectate combat session
+      description: '**Spectate active combat session**
+
+        Allows a player to spectate an active combat session with advanced viewing
+        options.
+
+        **BACKEND NOTE:** Grants read-only access to session events with multiple
+        camera modes and spectator analytics.
+
+        '
+      operationId: spectateCombatSession
+      tags:
+      - Combat Sessions
+      - Spectator
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpectateRequest'
+      responses:
+        '200':
+          description: Successfully joined as spectator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpectateResponse'
+        '429':
+          description: Too many spectators for session
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

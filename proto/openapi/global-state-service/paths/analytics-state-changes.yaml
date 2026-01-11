@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /analytics/state-changes:
+    get:
+      summary: Get state change analytics
+      description: Retrieve analytics about state changes and patterns
+      operationId: getStateChangeAnalytics
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: aggregateType
+        in: query
+        schema:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+      - name: timeRange
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+      - name: groupBy
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - aggregate
+          default: hour
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateAnalyticsResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

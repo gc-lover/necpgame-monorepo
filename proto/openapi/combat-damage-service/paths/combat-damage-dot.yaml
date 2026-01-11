@@ -1,0 +1,36 @@
+openapi: 3.0.3
+paths:
+  /combat/damage/dot:
+    post:
+      summary: Apply damage over time effect
+      operationId: combatDamageApplyDot
+      description: 'Apply or refresh a damage-over-time effect with stacking rules
+        and duration calculations.
+
+        **BACKEND NOTE:** Optimized for DOT stacking logic. Efficient linked list
+        implementation for active DOTs. Memory: pooled DOT objects reduce GC pressure.'
+      tags:
+      - Damage Over Time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DotApplicationRequest'
+      responses:
+        '200':
+          description: DOT application result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DotApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

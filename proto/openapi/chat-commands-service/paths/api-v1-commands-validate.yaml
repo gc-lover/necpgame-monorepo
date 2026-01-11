@@ -1,0 +1,76 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/validate:
+    post:
+      summary: Validate chat command syntax
+      description: '**Enterprise-grade command validation endpoint**
+
+        Validates chat command syntax and permissions without execution.
+
+        Useful for client-side validation and command preview.
+
+        **Performance:** <25ms response time, no database operations
+
+        **Security:** Requires valid JWT token
+
+        '
+      operationId: validateChatCommand
+      tags:
+      - Command Processing
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandValidationRequest'
+      responses:
+        '200':
+          description: Command validation completed
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache, no-store, must-revalidate
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandValidationResponse'
+        '400':
+          description: Invalid command syntax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

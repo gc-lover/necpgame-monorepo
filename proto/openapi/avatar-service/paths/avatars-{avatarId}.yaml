@@ -1,0 +1,147 @@
+openapi: 3.0.3
+paths:
+  /avatars/{avatarId}:
+    get:
+      operationId: avatarServiceGetAvatar
+      summary: Get avatar details
+      description: 'Retrieve detailed avatar information and metadata.
+
+
+        **Access Control:**
+
+        - Public avatars accessible to all
+
+        - Private avatars only to owner
+
+        - Guild avatars to guild members
+
+        - Includes CDN URLs for different sizes
+
+        '
+      tags:
+      - Avatar Management
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Avatar unique identifier
+      - name: size
+        in: query
+        schema:
+          type: string
+          enum:
+          - original
+          - large
+          - medium
+          - small
+          - thumbnail
+          default: medium
+        description: Requested image size
+      responses:
+        '200':
+          description: Avatar details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Avatar'
+        '403':
+          description: Access denied to private avatar
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Forbidden
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: avatarServiceUpdateAvatar
+      summary: Update avatar metadata
+      description: 'Update avatar metadata without changing the image.
+
+
+        **Update Restrictions:**
+
+        - Cannot change image file itself
+
+        - Can update metadata, privacy, tags
+
+        - Maintains version history
+
+        - Triggers CDN cache invalidation if needed
+
+        '
+      tags:
+      - Avatar Management
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Avatar unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAvatarRequest'
+      responses:
+        '200':
+          description: Avatar metadata updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Updated
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Avatar'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: avatarServiceDeleteAvatar
+      summary: Delete avatar
+      description: 'Soft delete avatar (mark as deleted, retain for recovery).
+
+
+        **Deletion Process:**
+
+        - Mark as deleted in database
+
+        - Queue CDN cache invalidation
+
+        - Schedule physical file deletion
+
+        - Update user statistics
+
+        - Maintain audit trail
+
+        '
+      tags:
+      - Avatar Management
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Avatar unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -1,0 +1,72 @@
+openapi: 3.0.3
+paths:
+  /bosses/{boss_id}/encounter:
+    post:
+      summary: Start boss encounter
+      description: '**Initiate boss encounter**
+
+        Creates new boss encounter session and registers initial participants. Handles
+        both regular bosses and elite champions.
+
+        **Performance:** <100ms response time for encounter creation '
+      operationId: startBossEncounter
+      tags:
+      - World Bosses
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: boss_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Boss identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: string
+                  format: uuid
+                  description: Character initiating encounter
+                participants:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Additional participant character IDs
+                isElite:
+                  type: boolean
+                  default: false
+                  description: Request elite champion variant
+              required:
+              - characterId
+      responses:
+        '201':
+          description: Boss encounter started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/BossEncounter'
+        '400':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '409':
+          $ref: ../common/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,77 @@
+openapi: 3.0.3
+paths:
+  /audit/transactions:
+    get:
+      operationId: currencyServiceGetTransactionAudit
+      summary: Get transaction audit trail
+      description: 'Retrieve comprehensive audit trail for regulatory compliance.
+
+
+        **Audit Trail:**
+
+        - Complete transaction history with metadata
+
+        - User action tracking and verification
+
+        - System event logging and monitoring
+
+        - Regulatory reporting capabilities
+
+        - Data retention and archival management
+
+        '
+      tags:
+      - Audit & Compliance
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for audit trail
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: End date for audit trail
+      - name: wallet_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by wallet ID
+      - name: transaction_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - purchase
+          - refund
+          - fee
+        description: Filter by transaction type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of audit records to return
+      responses:
+        '200':
+          description: Audit trail retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AuditRecord'

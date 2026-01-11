@@ -1,0 +1,71 @@
+openapi: 3.0.3
+paths:
+  /api/v1/stock/chart:
+    get:
+      summary: Get stock chart data
+      description: Retrieve historical chart data for a specific stock symbol with
+        customizable timeframe and limit
+      operationId: getStockChart
+      parameters:
+      - name: symbol
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 10
+        description: Stock symbol (e.g., AAPL, GOOGL)
+      - name: timeframe
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+        description: Chart timeframe
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum number of data points to return
+      responses:
+        '200':
+          description: Stock chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockChartData'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stock symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

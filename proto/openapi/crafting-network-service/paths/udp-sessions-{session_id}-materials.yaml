@@ -1,0 +1,41 @@
+openapi: 3.0.3
+paths:
+  /udp/sessions/{session_id}/materials:
+    post:
+      summary: UDP endpoint for material availability synchronization
+      description: '**Real-time material availability notifications**
+
+        Synchronizes material availability changes with minimal latency. Critical
+        for crafting queue management and resource planning.
+
+        **Performance:** Instant availability updates
+
+        **Compression:** Bit-packed material state changes
+
+        '
+      operationId: udpMaterialAvailabilitySync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/UdpMaterialUpdate'
+      responses:
+        '200':
+          description: Material update processed
+        '400':
+          description: Invalid material data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found

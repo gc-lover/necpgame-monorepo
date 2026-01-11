@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /leaderboards/level:
+    get:
+      operationId: levelServiceGetLevelLeaderboard
+      summary: Get level-based leaderboard
+      description: 'Retrieve leaderboard rankings based on character levels.
+
+
+        **Leaderboard Features:**
+
+        - Global level rankings
+
+        - Regional leaderboards
+
+        - Prestige tier rankings
+
+        - Historical snapshots
+
+        - Anti-cheat validation
+
+        '
+      tags:
+      - Leaderboards
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of rankings to return
+      - name: region
+        in: query
+        schema:
+          type: string
+        description: Regional filter
+      - name: prestige_tier
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        description: Prestige tier filter
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - current
+          - weekly
+          - monthly
+          - all_time
+          default: current
+        description: Time period for rankings
+      responses:
+        '200':
+          description: Level leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/LeaderboardEntry'
+                      description: Leaderboard rankings
+                    metadata:
+                      $ref: '#/components/schemas/LeaderboardMetadata'
+        '400':
+          $ref: '#/components/responses/BadRequest'

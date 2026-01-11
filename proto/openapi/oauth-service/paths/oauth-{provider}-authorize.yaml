@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/authorize:
+    get:
+      operationId: oauthServiceInitiateAuthorization
+      summary: Initiate OAuth authorization
+      description: 'Generate authorization URL and state for OAuth provider.
+
+
+        **Security Notes:**
+
+        - Generates cryptographically secure state parameter
+
+        - PKCE challenge for enhanced security
+
+        - Configurable scope based on requirements
+
+        - CSRF protection via state validation
+
+        '
+      tags:
+      - OAuth Flow
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider
+      - name: redirect_uri
+        in: query
+        schema:
+          type: string
+          format: uri
+        description: Redirect URI after authorization
+      - name: scope
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Requested OAuth scopes
+      - name: state
+        in: query
+        schema:
+          type: string
+        description: Custom state parameter (optional)
+      responses:
+        '200':
+          description: Authorization URL generated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        authorization_url:
+                          type: string
+                          format: uri
+                          description: Complete authorization URL
+                        state:
+                          type: string
+                          description: State parameter for validation
+                        code_verifier:
+                          type: string
+                          description: PKCE code verifier (store securely)
+                        expires_in:
+                          type: integer
+                          description: State expiration in seconds
+                          example: 600

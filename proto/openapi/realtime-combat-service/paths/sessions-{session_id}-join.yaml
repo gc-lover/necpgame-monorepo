@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/join:
+    post:
+      summary: Join combat session
+      description: '**Join active combat session**
+
+        Allows a player to join an active combat session with real-time synchronization.
+
+        **BACKEND NOTE:** Validates player eligibility, assigns to team, establishes
+        WebSocket connection with lag compensation.
+
+        '
+      operationId: joinCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinSessionRequest'
+      responses:
+        '200':
+          description: Successfully joined session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinSessionResponse'
+        '400':
+          description: Invalid join request or session full
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+        '429':
+          description: Session join rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

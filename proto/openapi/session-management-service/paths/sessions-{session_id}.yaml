@@ -1,0 +1,133 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}:
+    get:
+      summary: Get session details
+      description: Retrieve detailed information about a specific session
+      operationId: getSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      - name: include_logs
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include session activity logs
+      - name: include_stats
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include session statistics
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetails'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update session
+      description: Update session properties and state
+      operationId: updateSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '409':
+          $ref: ../common/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Terminate session
+      description: Terminate an active session
+      operationId: terminateSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for termination
+                force:
+                  type: boolean
+                  default: false
+                  description: Force termination without cleanup
+      responses:
+        '200':
+          description: Session terminated successfully
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

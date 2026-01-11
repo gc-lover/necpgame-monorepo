@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/reports/{report_type}:
+    get:
+      description: '**Custom analytics report generation**
+
+        Generate detailed reports for specific analytics categories with customizable
+        parameters and export options.
+
+        **Supported Reports:** player-retention, economic-health, combat-balance,
+        revenue-analysis '
+      operationId: generateAnalyticsReport
+      parameters:
+      - in: path
+        name: report_type
+        required: true
+        schema:
+          enum:
+          - player-retention
+          - economic-health
+          - combat-balance
+          - revenue-analysis
+          - social-network
+          - performance-summary
+          type: string
+      - in: query
+        name: start_date
+        schema:
+          example: '2024-01-01'
+          format: date
+          type: string
+      - in: query
+        name: end_date
+        schema:
+          example: '2024-01-31'
+          format: date
+          type: string
+      - in: query
+        name: format
+        schema:
+          default: json
+          enum:
+          - json
+          - csv
+          - pdf
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+            application/pdf:
+              schema:
+                format: binary
+                type: string
+            text/csv:
+              schema:
+                type: string
+          description: Analytics report generated successfully
+      security:
+      - BearerAuth: []
+      summary: Generate custom analytics report
+      tags:
+      - Game Analytics Dashboard

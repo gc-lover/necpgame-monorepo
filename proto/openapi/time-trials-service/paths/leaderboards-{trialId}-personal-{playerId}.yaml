@@ -1,0 +1,98 @@
+openapi: 3.0.3
+paths:
+  /leaderboards/{trialId}/personal/{playerId}:
+    get:
+      operationId: getPlayerPersonalRecord
+      summary: Get player's personal record
+      description: Retrieve a specific player's best time and ranking for a trial
+      tags:
+      - Leaderboard System
+      parameters:
+      - name: trialId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Time trial identifier
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player identifier
+      responses:
+        '200':
+          description: Personal record retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - player_id
+                - trial_id
+                - personal_best
+                - current_rank
+                - rank_history
+                properties:
+                  player_id:
+                    type: string
+                  trial_id:
+                    type: string
+                    format: uuid
+                  personal_best:
+                    type: object
+                    properties:
+                      completion_time:
+                        type: integer
+                        minimum: 0
+                      achieved_at:
+                        type: string
+                        format: date-time
+                      difficulty:
+                        type: string
+                        enum:
+                        - normal
+                        - heroic
+                        - mythic
+                        - legendary
+                  current_rank:
+                    type: integer
+                    minimum: 0
+                    description: Current global rank (0 = unranked)
+                  rank_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        rank:
+                          type: integer
+                          minimum: 0
+                    description: Rank history for the last 30 days
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trial or player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

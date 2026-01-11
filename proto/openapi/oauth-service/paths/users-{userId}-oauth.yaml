@@ -1,0 +1,125 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/oauth:
+    get:
+      operationId: oauthServiceGetUserOAuthAccounts
+      summary: Get user's linked OAuth accounts
+      description: Retrieve all OAuth accounts linked to a user
+      tags:
+      - Account Linking
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      responses:
+        '200':
+          description: OAuth accounts retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/OAuthAccountLink'
+    post:
+      operationId: oauthServiceLinkOAuthAccount
+      summary: Link OAuth account to user
+      description: 'Link an external OAuth account to existing user account.
+
+
+        **Business Rules:**
+
+        - Validates OAuth account ownership
+
+        - Prevents duplicate linking
+
+        - Updates user profile with OAuth data
+
+        - Creates audit trail for linking operation
+
+        '
+      tags:
+      - Account Linking
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkOAuthAccountRequest'
+      responses:
+        '200':
+          description: OAuth account linked successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/OAuthAccountLink'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: oauthServiceUnlinkOAuthAccount
+      summary: Unlink OAuth account from user
+      description: 'Remove OAuth account link from user profile.
+
+
+        **Business Rules:**
+
+        - Requires at least one authentication method remaining
+
+        - Invalidates associated OAuth tokens
+
+        - Updates user profile
+
+        - Creates audit trail for unlinking
+
+        '
+      tags:
+      - Account Linking
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: provider
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider to unlink
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /auctions/{auction_id}/bid:
+    post:
+      summary: Place bid on auction
+      description: '**Auction bidding endpoint**
+
+        Places bids on active auctions with automatic outbidding protection. Validates
+        bid amount and user funds availability.
+
+        **Performance:** <20ms P95 with optimistic locking
+
+        **Real-time:** Bid updates broadcast via WebSocket
+
+        '
+      operationId: placeAuctionBid
+      tags:
+      - Auctions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: auction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '400':
+          description: Invalid bid amount or auction parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Forbidden - cannot bid on own auction
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Bid too low or auction ended
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

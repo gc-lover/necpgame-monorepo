@@ -1,0 +1,69 @@
+openapi: 3.0.3
+paths:
+  /profiles/{profileId}/privacy:
+    get:
+      operationId: userProfileServiceGetPrivacySettings
+      summary: Get privacy settings
+      description: Retrieve profile privacy and visibility settings
+      tags:
+      - Privacy & Security
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      responses:
+        '200':
+          description: Privacy settings retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PrivacySettings'
+    put:
+      operationId: userProfileServiceUpdatePrivacySettings
+      summary: Update privacy settings
+      description: 'Update profile privacy and visibility controls.
+
+
+        **Privacy Impact:**
+
+        - Affects profile visibility globally
+
+        - Updates friend/follower permissions
+
+        - May affect search discoverability
+
+        '
+      tags:
+      - Privacy & Security
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrivacyRequest'
+      responses:
+        '200':
+          description: Privacy settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/OK'
+        '400':
+          $ref: '#/components/responses/BadRequest'

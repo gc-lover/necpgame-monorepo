@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /ws/queue/{player_id}:
+    get:
+      summary: WebSocket connection for crafting queue monitoring
+      description: '**Real-time crafting queue management**
+
+        Monitors player''s crafting queue status, priority changes, and available
+        crafting stations.
+
+        **Performance:** Real-time queue position updates
+
+        **Features:** Queue jumping notifications, station availability alerts
+
+        '
+      operationId: craftingQueueWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
+      responses:
+        '101':
+          description: WebSocket connection established for queue monitoring
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketQueueMessage'
+        '403':
+          description: Forbidden - invalid player authorization
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          description: Connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

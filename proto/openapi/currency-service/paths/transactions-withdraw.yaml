@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /transactions/withdraw:
+    post:
+      operationId: currencyServiceWithdrawFunds
+      summary: Withdraw funds from wallet
+      description: 'Withdraw funds from a wallet to external destinations.
+
+
+        **Fund Withdrawal:**
+
+        - Validate withdrawal destination and amount
+
+        - Check withdrawal limits and availability
+
+        - Process withdrawal with verification
+
+        - Apply withdrawal fees if applicable
+
+        - Generate withdrawal confirmation
+
+        '
+      tags:
+      - Transaction Processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawFundsRequest'
+      responses:
+        '200':
+          description: Funds withdrawn successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TransactionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'

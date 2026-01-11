@@ -1,0 +1,153 @@
+openapi: 3.0.3
+paths:
+  /factions:
+    get:
+      summary: List factions with filtering and pagination
+      description: '**Enterprise-grade faction listing endpoint**
+
+        Retrieves factions with advanced filtering by reputation, influence, and diplomatic
+        status. Supports comprehensive search and discovery.
+
+        **Performance:** <12ms P95 with database indexing
+
+        **Features:** Full-text search, influence-based filtering, diplomacy status
+
+        '
+      operationId: listFactions
+      tags:
+      - Faction Management
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+      - name: reputation_min
+        in: query
+        schema:
+          type: integer
+          minimum: -1000
+      - name: reputation_max
+        in: query
+        schema:
+          type: integer
+          maximum: 1000
+      - name: influence_min
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: diplomatic_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - neutral
+          - allied
+          - hostile
+          - at_war
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: Factions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionListResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of factions matching criteria
+            X-Page-Count:
+              schema:
+                type: integer
+              description: Total number of pages
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=60, private
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Create new faction
+      description: '**Faction creation endpoint**
+
+        Creates a new faction with initial diplomatic status and influence. Validates
+        faction name uniqueness and founder eligibility.
+
+        **Performance:** <40ms P95 including validation and initial setup
+
+        **Validation:** Name uniqueness, founder permissions, creation limits
+
+        '
+      operationId: createFaction
+      tags:
+      - Faction Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFactionRequest'
+      responses:
+        '201':
+          description: Faction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/faction/factions/550e8400-e29b-41d4-a716-446655440000
+        '400':
+          description: Invalid faction configuration
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '409':
+          description: Faction name already exists or creation limit reached
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

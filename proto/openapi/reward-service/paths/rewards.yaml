@@ -1,0 +1,155 @@
+openapi: 3.0.3
+paths:
+  /rewards:
+    get:
+      summary: List rewards with filtering and pagination
+      description: '**Enterprise-grade reward listing endpoint**
+
+        Supports complex filtering by type, value, availability, and player progress.
+
+        Optimized for high-throughput scenarios with proper indexing.
+
+
+        **Performance:** <20ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listRewards
+      tags:
+      - Reward Management
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: reward_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - currency
+          - item
+          - experience
+          - achievement
+          - title
+          - cosmetic
+          - all
+          default: all
+        description: Filter by reward type
+      - name: availability
+        in: query
+        schema:
+          type: string
+          enum:
+          - available
+          - claimed
+          - expired
+          - locked
+          - all
+          default: all
+        description: Filter by availability status
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter rewards for specific player
+      responses:
+        '200':
+          description: Rewards retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardListResponse'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create new reward
+      description: '**Enterprise-grade reward creation endpoint**
+
+        Validates reward configuration, business rules, and anti-exploitation measures.
+
+        Supports complex reward structures with conditions and requirements.
+
+        **Performance:** <100ms P95, includes validation and reward optimization
+
+        '
+      operationId: createReward
+      tags:
+      - Reward Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRewardRequest'
+      responses:
+        '201':
+          description: Reward created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '403':
+          description: Forbidden - insufficient permissions to create rewards
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - reward with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '422':
+          description: Unprocessable entity - business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

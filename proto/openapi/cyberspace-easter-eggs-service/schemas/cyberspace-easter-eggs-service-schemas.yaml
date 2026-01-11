@@ -1,0 +1,270 @@
+openapi: 3.0.3
+components:
+  schemas:
+    EasterEgg:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique easter egg identifier
+        name:
+          type: string
+          description: Display name
+        category:
+          type: string
+          enum:
+          - technology
+          - cultural
+          - historical
+          - humorous
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+        description:
+          type: string
+        content:
+          type: string
+          description: Full content/story
+        location:
+          $ref: '#/components/schemas/EasterEggLocation'
+        discovery_method:
+          $ref: '#/components/schemas/DiscoveryMethod'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/EasterEggReward'
+        lore_connections:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - maintenance
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    EasterEggLocation:
+      type: object
+      properties:
+        network_type:
+          type: string
+          description: Type of network (corporate, public, underground, educational)
+        specific_areas:
+          type: array
+          items:
+            type: string
+          description: Specific areas where egg can be found
+        access_level:
+          type: string
+          enum:
+          - public
+          - restricted
+          - secure
+          - fort_knox
+    DiscoveryMethod:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - scanning
+          - pattern_following
+          - deep_scan
+          - puzzle
+        description:
+          type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        time_limit:
+          type: integer
+          description: Time limit in seconds
+    EasterEggReward:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - experience
+          - item
+          - achievement
+          - currency
+          - cosmetic
+        value:
+          type: integer
+          description: Numeric value for rewards
+        item_name:
+          type: string
+          description: Display name for items
+        rarity:
+          type: string
+          enum:
+          - common
+          - rare
+          - epic
+          - legendary
+    PlayerEasterEggProgress:
+      type: object
+      properties:
+        player_id:
+          type: string
+        easter_egg_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - undiscovered
+          - discovered
+          - completed
+          - revisited
+        discovered_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        rewards_claimed:
+          type: array
+          items:
+            type: string
+        hint_level:
+          type: integer
+          minimum: 0
+          maximum: 3
+        visit_count:
+          type: integer
+        last_visited:
+          type: string
+          format: date-time
+    PlayerEasterEggProfile:
+      type: object
+      properties:
+        player_id:
+          type: string
+        total_discovered:
+          type: integer
+        total_completed:
+          type: integer
+        favorite_category:
+          type: string
+        average_difficulty:
+          type: number
+        total_hints_used:
+          type: integer
+        collection_progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        achievement_level:
+          type: string
+          enum:
+          - explorer
+          - hunter
+          - master
+          - legend
+        last_activity:
+          type: string
+          format: date-time
+    DiscoveryHint:
+      type: object
+      properties:
+        id:
+          type: string
+        easter_egg_id:
+          type: string
+        hint_level:
+          type: integer
+          minimum: 1
+          maximum: 3
+        hint_text:
+          type: string
+        hint_type:
+          type: string
+          enum:
+          - direct
+          - indirect
+          - misleading
+        cost:
+          type: integer
+          minimum: 0
+        is_enabled:
+          type: boolean
+    EasterEggStatistics:
+      type: object
+      properties:
+        easter_egg_id:
+          type: string
+        total_discoveries:
+          type: integer
+        unique_players:
+          type: integer
+        average_discovery_time:
+          type: integer
+          description: Average time in seconds
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        popular_discovery_method:
+          type: string
+    EasterEggCategoryStats:
+      type: object
+      properties:
+        category:
+          type: string
+        total_easter_eggs:
+          type: integer
+        discovered_count:
+          type: integer
+        discovery_rate:
+          type: number
+        average_difficulty:
+          type: number
+        most_popular_egg:
+          type: string
+        least_popular_egg:
+          type: string
+    EasterEggChallenge:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        easter_eggs:
+          type: array
+          items:
+            type: string
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/EasterEggReward'
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

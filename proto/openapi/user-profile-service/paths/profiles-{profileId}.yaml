@@ -1,0 +1,123 @@
+openapi: 3.0.3
+paths:
+  /profiles/{profileId}:
+    get:
+      operationId: userProfileServiceGetProfile
+      summary: Get profile by ID
+      description: 'Retrieve detailed profile information.
+
+
+        **Privacy Notes:**
+
+        - Respects profile visibility settings
+
+        - Returns limited data for non-friends
+
+        - Includes relationship status for authenticated users
+
+        '
+      tags:
+      - Profile Management
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      responses:
+        '200':
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: userProfileServiceUpdateProfile
+      summary: Update profile
+      description: 'Update profile information with privacy controls.
+
+
+        **Business Rules:**
+
+        - Validates display name uniqueness
+
+        - Respects profile ownership
+
+        - Updates profile modification timestamp
+
+        - Maintains change history
+
+        '
+      tags:
+      - Profile Management
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Updated
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: userProfileServiceDeleteProfile
+      summary: Delete profile
+      description: 'Soft delete profile (anonymize data).
+
+
+        **Legal Notes:**
+
+        - Maintains data for legal compliance
+
+        - Anonymizes personal information
+
+        - Preserves game history
+
+        - Notifies connected services
+
+        '
+      tags:
+      - Profile Management
+      parameters:
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Profile unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

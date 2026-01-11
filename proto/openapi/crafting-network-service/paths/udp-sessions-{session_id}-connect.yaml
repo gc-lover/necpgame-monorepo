@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /udp/sessions/{session_id}/connect:
+    post:
+      summary: Establish UDP connection for crafting session
+      description: '**High-frequency crafting state synchronization**
+
+        Initiates UDP connection for real-time crafting progress updates. Critical
+        for MMOFPS crafting with sub-millisecond latency requirements.
+
+        **Performance:** <1ms state sync latency
+
+        **Protocol:** UDP with reliability layer
+
+        **Compression:** Custom binary protocol with delta encoding
+
+        '
+      operationId: udpCraftingSessionConnect
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UdpConnectRequest'
+      responses:
+        '200':
+          description: UDP connection parameters established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UdpConnectResponse'
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '403':
+          description: Forbidden - session access denied
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Crafting session not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

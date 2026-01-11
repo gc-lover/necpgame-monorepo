@@ -1,0 +1,53 @@
+openapi: 3.0.3
+paths:
+  /abilities/activate:
+    post:
+      operationId: abilityServiceActivateAbility
+      summary: Activate character ability
+      description: 'Activate an ability for a character with real-time validation
+        and execution.
+
+
+        **Activation Process:**
+
+        - Validate ability ownership and requirements
+
+        - Check cooldown and resource availability
+
+        - Calculate ability effects and modifiers
+
+        - Execute ability with immediate synchronization
+
+        - Update cooldowns and resource consumption
+
+        '
+      tags:
+      - Ability Activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAbilityRequest'
+      responses:
+        '200':
+          description: Ability activated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AbilityActivationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Ability not available or requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Forbidden
+        '429':
+          $ref: '#/components/responses/TooManyRequests'

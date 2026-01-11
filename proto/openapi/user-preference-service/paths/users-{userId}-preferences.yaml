@@ -1,0 +1,155 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/preferences:
+    get:
+      operationId: userPreferenceServiceGetUserPreferences
+      summary: Get user preferences
+      description: 'Retrieve complete user preference set.
+
+
+        **Performance Notes:**
+
+        - Cached for fast access
+
+        - Supports partial loading by categories
+
+        - Privacy-aware field filtering
+
+        - Real-time synchronization across devices
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      - name: categories
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Specific preference categories to retrieve
+      - name: include_defaults
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include default values for unset preferences
+      responses:
+        '200':
+          description: Preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserPreferences'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: userPreferenceServiceUpdateUserPreferences
+      summary: Update user preferences
+      description: 'Update complete user preference set.
+
+
+        **Business Rules:**
+
+        - Validates preference constraints
+
+        - Creates audit trail for changes
+
+        - Immediate cache invalidation
+
+        - Cross-platform synchronization trigger
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: userPreferenceServicePatchUserPreferences
+      summary: Partially update user preferences
+      description: 'Update specific preference categories.
+
+
+        **Performance Notes:**
+
+        - Partial updates minimize data transfer
+
+        - Selective cache invalidation
+
+        - Optimistic locking for concurrent updates
+
+        - Incremental synchronization
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchPreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

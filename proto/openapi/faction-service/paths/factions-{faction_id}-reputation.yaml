@@ -1,0 +1,109 @@
+openapi: 3.0.3
+paths:
+  /factions/{faction_id}/reputation:
+    get:
+      summary: Get faction reputation and standing
+      description: '**Reputation tracking endpoint**
+
+        Retrieves faction reputation scores, standing with other factions, and influence
+        metrics across the game world.
+
+        **Performance:** <12ms P95 with reputation caching
+
+        '
+      operationId: getFactionReputation
+      tags:
+      - Reputation System
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Reputation information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionReputationResponse'
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Adjust faction reputation
+      description: '**Reputation adjustment endpoint**
+
+        Modifies faction reputation through events, achievements, or administrative
+        actions.
+
+        **Performance:** <20ms P95 with reputation recalculation
+
+        **Security:** Admin permissions required for manual adjustments
+
+        '
+      operationId: adjustFactionReputation
+      tags:
+      - Reputation System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReputationAdjustmentRequest'
+      responses:
+        '200':
+          description: Reputation adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionReputationResponse'
+        '400':
+          description: Invalid reputation adjustment parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to adjust reputation
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

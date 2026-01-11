@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}:
+    get:
+      summary: Get companion details
+      description: '**Retrieve detailed information about a player''s companion**
+
+
+        Returns comprehensive companion information including stats,
+
+        abilities, experience, and current status.
+
+
+        **Performance:** <50ms P95, database query
+
+        '
+      operationId: getCompanionDetails
+      tags:
+      - Companion Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      responses:
+        '200':
+          description: Companion details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanionDetailed'
+        '404':
+          description: Companion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

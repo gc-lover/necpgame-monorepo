@@ -1,0 +1,40 @@
+openapi: 3.0.3
+paths:
+  /sessions/security/validate:
+    post:
+      operationId: sessionServiceValidateSession
+      summary: Validate session token
+      description: 'Validate session token and return session information.
+
+
+        **Performance Notes:**
+
+        - Redis-based validation for speed
+
+        - No database hits for active sessions
+
+        - Updates last activity timestamp
+
+        '
+      tags:
+      - Security Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateSessionRequest'
+      responses:
+        '200':
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SessionValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'

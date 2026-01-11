@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /encounters/{encounter_id}/join:
+    post:
+      summary: Join active boss encounter
+      description: '**Join ongoing boss encounter**
+
+        Adds character to active encounter as participant.
+
+        **Performance:** <50ms response time for participant registration '
+      operationId: joinBossEncounter
+      tags:
+      - World Bosses
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: string
+                  format: uuid
+                  description: Character joining encounter
+              required:
+              - characterId
+      responses:
+        '200':
+          description: Successfully joined encounter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      encounterId:
+                        type: string
+                        format: uuid
+                      participantId:
+                        type: string
+                        format: uuid
+                      joinTime:
+                        type: string
+                        format: date-time
+        '400':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '404':
+          description: Encounter not found or not joinable
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/NotFound
+        '409':
+          description: Character already participating or encounter full
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,112 @@
+openapi: 3.0.3
+paths:
+  /campaigns/{campaignId}:
+    get:
+      operationId: pushNotificationServiceGetCampaign
+      summary: Get campaign details
+      description: Retrieve detailed campaign information and performance metrics
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      responses:
+        '200':
+          description: Campaign details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NotificationCampaign'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: pushNotificationServiceUpdateCampaign
+      summary: Update campaign
+      description: 'Update campaign settings and targeting.
+
+
+        **Update Constraints:**
+
+        - Cannot modify active campaigns
+
+        - Validates targeting criteria
+
+        - Updates scheduling if needed
+
+        - Maintains campaign integrity
+
+        '
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCampaignRequest'
+      responses:
+        '200':
+          description: Campaign updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NotificationCampaign'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: pushNotificationServiceCancelCampaign
+      summary: Cancel campaign
+      description: 'Cancel a scheduled or active campaign.
+
+
+        **Cancellation Rules:**
+
+        - Stops further notification delivery
+
+        - Maintains delivery statistics
+
+        - Creates cancellation audit trail
+
+        - Partial refunds if applicable
+
+        '
+      tags:
+      - Campaign Management
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Campaign unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

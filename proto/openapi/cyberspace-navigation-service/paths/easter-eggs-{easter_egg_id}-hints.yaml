@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /easter-eggs/{easter_egg_id}/hints:
+    get:
+      summary: Get hints for easter egg discovery
+      description: 'Retrieve available hints for discovering a specific easter egg.
+
+        Hints are provided progressively based on player progress.
+
+        '
+      operationId: getEasterEggHints
+      parameters:
+      - name: easter_egg_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique identifier of the easter egg
+      responses:
+        '200':
+          description: Successful response with available hints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HintsResponse'
+              example:
+                easter_egg_id: easter-egg-turing-ghost
+                hints:
+                - id: hint-1
+                  text: null
+                  type: direct
+                  cost: 0
+                  enabled: true
+                - id: hint-2
+                  text: null
+                  type: cryptic
+                  cost: 100
+                  enabled: false
+                total_hints: 3
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,37 @@
+openapi: 3.0.3
+paths:
+  /api/v1/players/{playerId}/progress:
+    get:
+      summary: Get player easter egg progress
+      description: Retrieve player's progress for all discovered easter eggs
+      operationId: getPlayerProgress
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Player progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  player_id:
+                    type: string
+                  discovered_count:
+                    type: integer
+                  total_easter_eggs:
+                    type: integer
+                  progress:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerEasterEggProgress'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

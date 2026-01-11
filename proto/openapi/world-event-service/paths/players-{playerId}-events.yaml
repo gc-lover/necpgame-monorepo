@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/events:
+    parameters:
+    - name: playerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique player identifier
+    get:
+      summary: Get player events
+      description: '**Enterprise-grade player event history with performance**
+
+        Retrieves paginated list of events player has participated in.
+
+        **Performance:** <25ms P99, player-specific indexes **Privacy:** Player data
+        isolation and access control
+
+        '
+      operationId: getPlayerEvents
+      tags:
+      - Event Participation
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/ParticipationStatus'
+        description: Filter by participation status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of events per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Player events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerEventSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

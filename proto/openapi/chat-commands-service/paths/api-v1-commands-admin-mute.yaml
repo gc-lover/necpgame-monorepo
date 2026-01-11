@@ -1,0 +1,78 @@
+openapi: 3.0.3
+paths:
+  /api/v1/commands/admin/mute:
+    post:
+      summary: Execute mute command (admin only)
+      description: '**Enterprise-grade administrative mute command**
+
+        Mutes a player in chat/channel for specified duration.
+
+        Requires moderator permissions.
+
+        **Performance:** <150ms response time with database updates
+
+        **Security:** Requires moderator JWT token
+
+        '
+      operationId: executeMuteCommand
+      tags:
+      - Administrative Commands
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCommandRequest'
+      responses:
+        '200':
+          description: Player muted successfully
+          headers:
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCommandResponse'
+        '403':
+          description: Insufficient moderator permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

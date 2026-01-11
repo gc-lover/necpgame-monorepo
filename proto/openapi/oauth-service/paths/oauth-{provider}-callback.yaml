@@ -1,0 +1,98 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/callback:
+    get:
+      operationId: oauthServiceAuthorizationCallback
+      summary: Handle OAuth callback (GET)
+      description: Process OAuth provider callback with authorization code
+      tags:
+      - OAuth Flow
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider
+      - name: code
+        in: query
+        schema:
+          type: string
+        description: Authorization code from provider
+      - name: state
+        in: query
+        schema:
+          type: string
+        description: State parameter for validation
+      - name: error
+        in: query
+        schema:
+          type: string
+        description: Error code if authorization failed
+      responses:
+        '302':
+          description: Redirect to frontend with result
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: Frontend redirect URL with success/error parameters
+    post:
+      operationId: oauthServiceProcessCallback
+      summary: Process OAuth callback (POST)
+      description: 'Process OAuth authorization callback and exchange code for tokens.
+
+
+        **Security Notes:**
+
+        - Validates state parameter to prevent CSRF
+
+        - Verifies PKCE code challenge
+
+        - Exchanges authorization code for tokens
+
+        - Creates audit trail for OAuth operations
+
+        '
+      tags:
+      - OAuth Flow
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: OAuth provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthCallbackRequest'
+      responses:
+        '200':
+          description: OAuth authentication successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/OAuthResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'

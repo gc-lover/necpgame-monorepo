@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /validation/sessions/{sessionId}/report:
+    post:
+      operationId: reportSuspiciousSession
+      summary: Report suspicious trial session
+      description: Allow players to report potentially cheated trial sessions
+      tags:
+      - Validation System
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trial session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - reason
+              properties:
+                reason:
+                  type: string
+                  enum:
+                  - speed_hack
+                  - route_exploit
+                  - invalid_completion
+                  - other
+                  description: Reason for reporting
+                details:
+                  type: string
+                  maxLength: 500
+                  description: Additional details about the suspicion
+                evidence:
+                  type: array
+                  items:
+                    type: string
+                  description: Links to evidence (screenshots, videos)
+      responses:
+        '202':
+          description: Report submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid report data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - session already reported or under review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many reports - rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

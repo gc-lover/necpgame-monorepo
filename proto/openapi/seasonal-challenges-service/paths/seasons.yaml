@@ -1,0 +1,134 @@
+openapi: 3.0.3
+paths:
+  /seasons:
+    get:
+      operationId: listSeasons
+      summary: List seasons with filtering and pagination
+      description: 'Retrieve a paginated list of seasons with advanced filtering options.
+
+
+        **Performance Notes:**
+
+        - Uses database indexes for efficient filtering
+
+        - Implements cursor-based pagination for large datasets
+
+        - Response cached for 30 seconds
+
+        '
+      tags:
+      - Seasonal Challenges
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items to return
+      - name: cursor
+        in: query
+        schema:
+          type: string
+        description: Pagination cursor
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - active
+          - completed
+          default: active
+        description: Filter by season status
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - start_date
+          - end_date
+          - created_at
+          default: start_date
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort direction
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SeasonSummary'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 150
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createSeason
+      summary: Create a new season
+      description: 'Create a new season with validation and business rules.
+
+
+        **Business Rules:**
+
+        - Validates season dates don''t overlap
+
+        - Applies seasonal currency limits
+
+        - Generates audit trail
+
+        '
+      tags:
+      - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeasonRequest'
+      responses:
+        '201':
+          description: Season created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/components/responses/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Season'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'

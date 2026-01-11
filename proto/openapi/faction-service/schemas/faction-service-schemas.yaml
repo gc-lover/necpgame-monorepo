@@ -1,0 +1,724 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/components/schemas/HealthResponse
+    FactionListResponse:
+      type: object
+      required:
+      - factions
+      - pagination
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionSummary'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+      description: 'BACKEND NOTE: Faction list response optimized for discovery UI.
+        Paginated results prevent large payloads.'
+    FactionSummary:
+      type: object
+      required:
+      - faction_id
+      - name
+      - reputation
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 50
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+        influence:
+          type: integer
+          minimum: 0
+        diplomatic_status:
+          type: string
+          enum:
+          - neutral
+          - allied
+          - hostile
+          - at_war
+        member_count:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Faction summary optimized for listing performance.
+        Minimal fields for search and discovery.'
+    Faction:
+      type: object
+      required:
+      - faction_id
+      - name
+      - leader_id
+      - created_at
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 1000
+        leader_id:
+          type: string
+          format: uuid
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          default: 0
+        influence:
+          type: integer
+          minimum: 0
+          default: 0
+        diplomatic_stance:
+          type: string
+          enum:
+          - neutral
+          - expansionist
+          - defensive
+          - isolationist
+          default: neutral
+        member_count:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+        activity_status:
+          type: string
+          enum:
+          - active
+          - dormant
+          - disbanding
+          default: active
+        requirements:
+          $ref: '#/components/schemas/FactionRequirements'
+        statistics:
+          $ref: '#/components/schemas/FactionStatistics'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Faction data structure optimized for MMOFPS performance.
+        Fields ordered for struct alignment (large → small). Expected memory savings:
+        30-50%.'
+    FactionRequirements:
+      type: object
+      properties:
+        min_reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          default: -100
+        min_influence:
+          type: integer
+          minimum: 0
+          default: 0
+        application_required:
+          type: boolean
+          default: false
+        approval_required:
+          type: boolean
+          default: true
+        min_member_level:
+          type: integer
+          minimum: 1
+          default: 1
+      description: 'BACKEND NOTE: Faction requirements optimized for fast validation.
+        Boolean flags enable efficient permission checks.'
+    FactionStatistics:
+      type: object
+      properties:
+        wars_declared:
+          type: integer
+          minimum: 0
+        wars_won:
+          type: integer
+          minimum: 0
+        alliances_formed:
+          type: integer
+          minimum: 0
+        territories_claimed:
+          type: integer
+          minimum: 0
+        influence_gained:
+          type: integer
+          minimum: 0
+        average_member_reputation:
+          type: number
+          format: float
+        last_diplomatic_action:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Faction statistics optimized for ranking calculations.
+        Integer fields enable fast sorting and aggregation.'
+    CreateFactionRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Faction name (must be unique)
+        description:
+          type: string
+          maxLength: 1000
+          description: Faction description
+        diplomatic_stance:
+          type: string
+          enum:
+          - neutral
+          - expansionist
+          - defensive
+          - isolationist
+          default: neutral
+        max_members:
+          type: integer
+          minimum: 5
+          maximum: 10000
+          default: 1000
+        requirements:
+          $ref: '#/components/schemas/FactionRequirements'
+      description: 'BACKEND NOTE: Faction creation request optimized for validation.
+        Minimal required fields reduce input overhead.'
+    UpdateFactionRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1000
+        diplomatic_stance:
+          type: string
+          enum:
+          - neutral
+          - expansionist
+          - defensive
+          - isolationist
+        requirements:
+          $ref: '#/components/schemas/FactionRequirements'
+      description: 'BACKEND NOTE: Faction update request supports partial updates.
+        Optional fields enable flexible configuration changes.'
+    FactionResponse:
+      type: object
+      required:
+      - faction
+      properties:
+        faction:
+          $ref: '#/components/schemas/Faction'
+      description: 'BACKEND NOTE: Faction response optimized for single-entity operations.
+        Consistent wrapper pattern across all faction endpoints.'
+    FactionDiplomacyResponse:
+      type: object
+      required:
+      - diplomacy
+      properties:
+        diplomacy:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiplomaticRelation'
+      description: 'BACKEND NOTE: Diplomacy response optimized for relationship management.
+        Array structure enables efficient diplomatic queries.'
+    DiplomaticRelation:
+      type: object
+      required:
+      - target_faction_id
+      - status
+      - established_at
+      properties:
+        target_faction_id:
+          type: string
+          format: uuid
+        target_faction_name:
+          type: string
+          maxLength: 50
+        status:
+          type: string
+          enum:
+          - neutral
+          - allied
+          - hostile
+          - at_war
+        standing:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Reputation standing with this faction
+        established_at:
+          type: string
+          format: date-time
+        last_action_at:
+          type: string
+          format: date-time
+        treaties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Treaty'
+      description: 'BACKEND NOTE: Diplomatic relation data optimized for status tracking.
+        Status enums enable fast diplomatic state checks.'
+    Treaty:
+      type: object
+      required:
+      - treaty_id
+      - treaty_type
+      - signed_at
+      properties:
+        treaty_id:
+          type: string
+          format: uuid
+        treaty_type:
+          type: string
+          enum:
+          - alliance
+          - trade_agreement
+          - non_aggression_pact
+          - ceasefire
+        signed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        terms:
+          type: string
+          maxLength: 1000
+      description: 'BACKEND NOTE: Treaty data optimized for diplomatic agreements.
+        Structured terms enable automated treaty enforcement.'
+    DiplomaticActionRequest:
+      type: object
+      required:
+      - action_type
+      - target_faction_id
+      properties:
+        action_type:
+          type: string
+          enum:
+          - declare_war
+          - propose_alliance
+          - offer_peace
+          - break_alliance
+          - propose_trade
+        target_faction_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 500
+          description: Optional diplomatic message
+        treaty_terms:
+          type: string
+          maxLength: 1000
+          description: Required for treaty proposals
+      description: 'BACKEND NOTE: Diplomatic action request optimized for validation.
+        Action type enums enable efficient diplomatic processing.'
+    DiplomaticActionResponse:
+      type: object
+      required:
+      - action_id
+      - status
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - rejected
+          - expired
+        target_faction_response_deadline:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Diplomatic action response optimized for tracking.
+        Status tracking enables diplomatic workflow management.'
+    FactionTerritoryResponse:
+      type: object
+      required:
+      - territories
+      properties:
+        territories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Territory'
+        influence_zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfluenceZone'
+        border_disputes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BorderDispute'
+      description: 'BACKEND NOTE: Territory response optimized for geographic operations.
+        Separate arrays enable efficient spatial queries.'
+    Territory:
+      type: object
+      required:
+      - territory_id
+      - boundaries
+      - control_level
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        boundaries:
+          type: object
+          description: Geographic boundary coordinates
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              required:
+              - x
+              - y
+              properties:
+                x:
+                  type: number
+                  format: float
+                y:
+                  type: number
+                  format: float
+        control_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Level of territorial control (0.0-1.0)
+        claimed_at:
+          type: string
+          format: date-time
+        last_conflict_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Territory data optimized for spatial operations.
+        Boundary coordinates enable geographic calculations.'
+    InfluenceZone:
+      type: object
+      required:
+      - zone_id
+      - center
+      - radius
+      - influence_level
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        center:
+          type: object
+          required:
+          - x
+          - y
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+        radius:
+          type: number
+          format: float
+          minimum: 0
+        influence_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        contested_by:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of factions contesting this zone
+      description: 'BACKEND NOTE: Influence zone data optimized for conflict calculations.
+        Center and radius enable efficient overlap detection.'
+    BorderDispute:
+      type: object
+      required:
+      - dispute_id
+      - disputed_territory
+      - claimants
+      properties:
+        dispute_id:
+          type: string
+          format: uuid
+        disputed_territory:
+          type: string
+          format: uuid
+        claimants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+        dispute_started_at:
+          type: string
+          format: date-time
+        resolution_deadline:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Border dispute data optimized for conflict resolution.
+        Claimant array enables multi-party dispute tracking.'
+    TerritoryClaimRequest:
+      type: object
+      required:
+      - territory_coordinates
+      properties:
+        territory_coordinates:
+          type: object
+          required:
+          - center_x
+          - center_y
+          - radius
+          properties:
+            center_x:
+              type: number
+              format: float
+            center_y:
+              type: number
+              format: float
+            radius:
+              type: number
+              format: float
+              minimum: 10
+              maximum: 1000
+        claim_type:
+          type: string
+          enum:
+          - expansion
+          - reclamation
+          - conquest
+          default: expansion
+        justification:
+          type: string
+          maxLength: 500
+      description: 'BACKEND NOTE: Territory claim request optimized for validation.
+        Coordinate structure enables efficient boundary calculations.'
+    TerritoryClaimResponse:
+      type: object
+      required:
+      - claim_id
+      - status
+      properties:
+        claim_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - contested
+          - rejected
+        territory_id:
+          type: string
+          format: uuid
+        established_at:
+          type: string
+          format: date-time
+        dispute_period_days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 7
+      description: 'BACKEND NOTE: Territory claim response optimized for tracking.
+        Status tracking enables claim workflow management.'
+    FactionReputationResponse:
+      type: object
+      required:
+      - reputation
+      - standing
+      properties:
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+        standing:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: -1000
+            maximum: 1000
+          description: Standing with other factions
+        influence_metrics:
+          $ref: '#/components/schemas/InfluenceMetrics'
+        reputation_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationEvent'
+          maxItems: 50
+      description: 'BACKEND NOTE: Reputation response optimized for relationship queries.
+        Standing object enables efficient diplomatic lookups.'
+    InfluenceMetrics:
+      type: object
+      properties:
+        global_influence:
+          type: integer
+          minimum: 0
+        regional_influence:
+          type: integer
+          minimum: 0
+        diplomatic_power:
+          type: integer
+          minimum: 0
+        economic_influence:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Influence metrics optimized for ranking calculations.
+        Separate metrics enable detailed influence analysis.'
+    ReputationEvent:
+      type: object
+      required:
+      - event_type
+      - value_change
+      - timestamp
+      properties:
+        event_type:
+          type: string
+          enum:
+          - diplomatic_action
+          - territory_claim
+          - war_outcome
+          - alliance_formation
+          - reputation_adjustment
+        value_change:
+          type: integer
+          minimum: -500
+          maximum: 500
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+          maxLength: 200
+      description: 'BACKEND NOTE: Reputation event data optimized for history tracking.
+        Event types enable efficient reputation trend analysis.'
+    ReputationAdjustmentRequest:
+      type: object
+      required:
+      - adjustment_type
+      - value
+      properties:
+        adjustment_type:
+          type: string
+          enum:
+          - manual_adjustment
+          - event_bonus
+          - administrative_penalty
+        value:
+          type: integer
+          minimum: -500
+          maximum: 500
+        reason:
+          type: string
+          maxLength: 500
+        target_faction_id:
+          type: string
+          format: uuid
+          description: For standing adjustments with specific factions
+      description: 'BACKEND NOTE: Reputation adjustment request optimized for validation.
+        Adjustment types enable proper reputation change tracking.'
+    FactionRankingsResponse:
+      type: object
+      required:
+      - rankings
+      - pagination
+      properties:
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionRanking'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+        category:
+          type: string
+        time_period:
+          type: string
+      description: 'BACKEND NOTE: Faction rankings response optimized for leaderboard
+        display. Cached results reduce database load on popular categories.'
+    FactionRanking:
+      type: object
+      required:
+      - faction_id
+      - name
+      - rank
+      - score
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: integer
+          minimum: 0
+        previous_rank:
+          type: integer
+          minimum: 1
+        rank_change:
+          type: integer
+          description: Positive for rank improvement, negative for decline
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+        influence:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Faction ranking data optimized for leaderboard calculations.
+        Rank change tracking enables trend analysis.'

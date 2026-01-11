@@ -1,0 +1,146 @@
+openapi: 3.0.3
+paths:
+  /recipes:
+    get:
+      summary: List examples with filtering and pagination
+      description: '**Enterprise-grade listing endpoint**
+
+
+        Supports complex filtering, sorting, and pagination patterns.
+
+        Optimized for high-throughput scenarios with proper indexing.
+
+
+        **Performance:** <10ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listRecipes
+      tags:
+      - Example Domain
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - priority
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: filter_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+        description: Filter by status
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '422':
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create new example
+      description: '**Enterprise-grade creation endpoint**
+
+
+        Validates business rules, applies security checks, and ensures data consistency.
+
+        Supports optimistic locking for concurrent operations.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        '
+      operationId: startCrafting
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExampleRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ExampleCreated'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '409':
+          description: Conflict - example with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

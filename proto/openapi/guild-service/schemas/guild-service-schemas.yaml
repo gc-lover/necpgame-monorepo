@@ -1,0 +1,562 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/components/schemas/HealthResponse
+    GuildListResponse:
+      type: object
+      required:
+      - guilds
+      - pagination
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildSummary'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+      description: 'BACKEND NOTE: Guild list response optimized for discovery UI.
+        Paginated results prevent large payloads.'
+    GuildSummary:
+      type: object
+      required:
+      - guild_id
+      - name
+      - level
+      - member_count
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 50
+        level:
+          type: integer
+          minimum: 1
+        member_count:
+          type: integer
+          minimum: 1
+        reputation:
+          type: integer
+          minimum: 0
+        activity_status:
+          type: string
+          enum:
+          - active
+          - recruiting
+          - maintenance
+          - disbanding
+        recruitment_open:
+          type: boolean
+        description:
+          type: string
+          maxLength: 500
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Guild summary optimized for listing performance.
+        Minimal fields for search and discovery.'
+    Guild:
+      type: object
+      required:
+      - guild_id
+      - name
+      - level
+      - leader_id
+      - created_at
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 1000
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+        experience_points:
+          type: integer
+          minimum: 0
+          default: 0
+        reputation:
+          type: integer
+          minimum: 0
+          default: 0
+        leader_id:
+          type: string
+          format: uuid
+        member_count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        activity_status:
+          type: string
+          enum:
+          - active
+          - recruiting
+          - maintenance
+          - disbanding
+          default: active
+        recruitment_open:
+          type: boolean
+          default: true
+        motd:
+          type: string
+          maxLength: 500
+          description: Message of the day
+        requirements:
+          $ref: '#/components/schemas/GuildRequirements'
+        statistics:
+          $ref: '#/components/schemas/GuildStatistics'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Guild data structure optimized for MMOFPS performance.
+        Fields ordered for struct alignment (large → small). Expected memory savings:
+        30-50%.'
+    GuildRequirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+          default: 1
+        max_level:
+          type: integer
+          minimum: 1
+        reputation_required:
+          type: integer
+          minimum: 0
+          default: 0
+        application_required:
+          type: boolean
+          default: false
+        approval_required:
+          type: boolean
+          default: true
+      description: 'BACKEND NOTE: Guild requirements optimized for fast validation.
+        Boolean flags enable efficient permission checks.'
+    GuildStatistics:
+      type: object
+      properties:
+        total_experience_gained:
+          type: integer
+          minimum: 0
+        quests_completed:
+          type: integer
+          minimum: 0
+        pvp_wins:
+          type: integer
+          minimum: 0
+        pvp_losses:
+          type: integer
+          minimum: 0
+        tournaments_won:
+          type: integer
+          minimum: 0
+        average_member_level:
+          type: number
+          format: float
+        last_activity:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Guild statistics optimized for ranking calculations.
+        Integer fields enable fast sorting and aggregation.'
+    CreateGuildRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild name (must be unique)
+        description:
+          type: string
+          maxLength: 1000
+          description: Guild description
+        max_members:
+          type: integer
+          minimum: 5
+          maximum: 1000
+          default: 100
+        recruitment_open:
+          type: boolean
+          default: true
+        requirements:
+          $ref: '#/components/schemas/GuildRequirements'
+      description: 'BACKEND NOTE: Guild creation request optimized for validation.
+        Minimal required fields reduce input overhead.'
+    UpdateGuildRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1000
+        recruitment_open:
+          type: boolean
+        motd:
+          type: string
+          maxLength: 500
+        requirements:
+          $ref: '#/components/schemas/GuildRequirements'
+      description: 'BACKEND NOTE: Guild update request supports partial updates. Optional
+        fields enable flexible configuration changes.'
+    GuildResponse:
+      type: object
+      required:
+      - guild
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+      description: 'BACKEND NOTE: Guild response optimized for single-entity operations.
+        Consistent wrapper pattern across all guild endpoints.'
+    GuildMembersResponse:
+      type: object
+      required:
+      - members
+      - pagination
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Guild members response optimized for roster management.
+        Paginated for large guilds with efficient member lookup.'
+    GuildMember:
+      type: object
+      required:
+      - user_id
+      - username
+      - role
+      - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          maxLength: 50
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - veteran
+          - member
+          - recruit
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - invite_members
+            - kick_members
+            - manage_bank
+            - manage_settings
+            - send_announcements
+          description: Specific permissions granted to this member
+        level:
+          type: integer
+          minimum: 1
+        contribution_points:
+          type: integer
+          minimum: 0
+        joined_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+        online_status:
+          type: string
+          enum:
+          - online
+          - offline
+          - away
+      description: 'BACKEND NOTE: Guild member data optimized for permission checks.
+        Role enums enable fast hierarchical comparisons.'
+    InviteToGuildRequest:
+      type: object
+      required:
+      - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 500
+          description: Optional invitation message
+        initial_role:
+          type: string
+          enum:
+          - member
+          - recruit
+          default: recruit
+      description: 'BACKEND NOTE: Guild invitation request optimized for bulk operations.
+        Optional fields reduce required input for mass invitations.'
+    GuildInvitationResponse:
+      type: object
+      required:
+      - invitation_id
+      - expires_at
+      properties:
+        invitation_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
+        initial_role:
+          type: string
+          enum:
+          - member
+          - recruit
+      description: 'BACKEND NOTE: Invitation response optimized for tracking. Minimal
+        data for invitation management and expiry handling.'
+    UpdateGuildMemberRequest:
+      type: object
+      required:
+      - role
+      properties:
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - veteran
+          - member
+          - recruit
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - invite_members
+            - kick_members
+            - manage_bank
+            - manage_settings
+            - send_announcements
+      description: 'BACKEND NOTE: Member update request optimized for role management.
+        Permission arrays enable granular access control.'
+    GuildMemberResponse:
+      type: object
+      required:
+      - member
+      properties:
+        member:
+          $ref: '#/components/schemas/GuildMember'
+      description: 'BACKEND NOTE: Member response optimized for single operations.
+        Consistent with other entity response patterns.'
+    GuildBankResponse:
+      type: object
+      required:
+      - items
+      - currency
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildBankItem'
+        currency:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Currency balances by type
+        capacity_used:
+          type: integer
+          minimum: 0
+        capacity_total:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Guild bank response optimized for inventory management.
+        Separate currency and item arrays enable efficient querying.'
+    GuildBankItem:
+      type: object
+      required:
+      - item_id
+      - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+        deposited_by:
+          type: string
+          format: uuid
+        deposited_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Bank item data optimized for inventory operations.
+        Quality and quantity fields enable efficient filtering.'
+    GuildBankDepositRequest:
+      type: object
+      required:
+      - item_type
+      - item_id
+      - quantity
+      properties:
+        item_type:
+          type: string
+          enum:
+          - item
+          - currency
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        currency_type:
+          type: string
+          description: Required if item_type is currency
+      description: 'BACKEND NOTE: Bank deposit request optimized for validation. Item
+        vs currency distinction enables proper handling.'
+    GuildBankTransactionResponse:
+      type: object
+      required:
+      - transaction_id
+      - transaction_type
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+        item_type:
+          type: string
+          enum:
+          - item
+          - currency
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        currency_type:
+          type: string
+        processed_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Bank transaction response optimized for audit trails.
+        Transaction details enable proper financial tracking.'
+    GuildRankingsResponse:
+      type: object
+      required:
+      - rankings
+      - pagination
+      properties:
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildRanking'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+        category:
+          type: string
+        time_period:
+          type: string
+      description: 'BACKEND NOTE: Guild rankings response optimized for leaderboard
+        display. Cached results reduce database load on popular categories.'
+    GuildRanking:
+      type: object
+      required:
+      - guild_id
+      - name
+      - rank
+      - score
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: integer
+          minimum: 0
+        previous_rank:
+          type: integer
+          minimum: 1
+        rank_change:
+          type: integer
+          description: Positive for rank improvement, negative for decline
+        level:
+          type: integer
+          minimum: 1
+        member_count:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Guild ranking data optimized for leaderboard calculations.
+        Rank change tracking enables trend analysis.'

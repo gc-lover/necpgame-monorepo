@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/affixes/combinations:
+    get:
+      summary: Get combination analysis
+      description: Returns analysis of affix combinations and their success rates
+      tags:
+      - Analytics
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: min_combinations
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 4
+          default: 2
+        description: Minimum number of affixes in combination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Number of combinations to return
+      responses:
+        '200':
+          description: Combination analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombinationAnalysisResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

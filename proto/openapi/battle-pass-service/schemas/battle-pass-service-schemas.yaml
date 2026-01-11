@@ -1,0 +1,256 @@
+openapi: 3.0.0
+components:
+  schemas:
+    Season:
+      type: object
+      required:
+      - id
+      - name
+      - startDate
+      - endDate
+      - maxLevel
+      - status
+      properties:
+        id:
+          type: string
+          description: Unique season identifier
+        name:
+          type: string
+          description: Human-readable season name
+        description:
+          type: string
+          description: Season description and theme
+        startDate:
+          type: string
+          format: date-time
+          description: Season start timestamp
+        endDate:
+          type: string
+          format: date-time
+          description: Season end timestamp
+        maxLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum level in this season
+        xpPerLevel:
+          type: integer
+          default: 1000
+          description: XP required per level
+        status:
+          type: string
+          enum:
+          - upcoming
+          - active
+          - ended
+          description: Current season status
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonReward'
+          description: All rewards for this season
+    SeasonReward:
+      type: object
+      required:
+      - level
+      - freeReward
+      properties:
+        level:
+          type: integer
+          description: Battle Pass level
+        freeReward:
+          $ref: '#/components/schemas/Reward'
+        premiumReward:
+          $ref: '#/components/schemas/Reward'
+          description: Premium tier reward (null if not available)
+    Reward:
+      type: object
+      required:
+      - id
+      - type
+      - name
+      properties:
+        id:
+          type: string
+          description: Unique reward identifier
+        type:
+          type: string
+          enum:
+          - cosmetic
+          - weapon
+          - currency
+          - boost
+          - title
+          - emote
+          description: Reward category
+        name:
+          type: string
+          description: Human-readable reward name
+        description:
+          type: string
+          description: Reward description
+        rarity:
+          type: string
+          enum:
+          - common
+          - rare
+          - epic
+          - legendary
+          description: Reward rarity tier
+        metadata:
+          type: object
+          description: Type-specific reward data
+    PlayerProgress:
+      type: object
+      required:
+      - playerId
+      - seasonId
+      - currentLevel
+      - currentXp
+      - totalXp
+      - hasPremium
+      properties:
+        playerId:
+          type: string
+          description: Player unique identifier
+        seasonId:
+          type: string
+          description: Current season ID
+        currentLevel:
+          type: integer
+          minimum: 0
+          description: Current Battle Pass level
+        currentXp:
+          type: integer
+          minimum: 0
+          description: XP in current level
+        totalXp:
+          type: integer
+          minimum: 0
+          description: Total XP earned this season
+        xpToNextLevel:
+          type: integer
+          minimum: 0
+          description: XP needed for next level
+        hasPremium:
+          type: boolean
+          description: Whether player has premium pass
+        claimedRewards:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+              tier:
+                type: string
+                enum:
+                - free
+                - premium
+              claimedAt:
+                type: string
+                format: date-time
+          description: List of claimed rewards
+    AvailableReward:
+      type: object
+      required:
+      - level
+      - tier
+      - reward
+      properties:
+        level:
+          type: integer
+          description: Battle Pass level
+        tier:
+          type: string
+          enum:
+          - free
+          - premium
+          description: Reward tier
+        reward:
+          $ref: '#/components/schemas/Reward'
+        canClaim:
+          type: boolean
+          description: Whether player can claim this reward
+        reason:
+          type: string
+          description: Reason why reward cannot be claimed (if applicable)
+    ClaimResult:
+      type: object
+      required:
+      - success
+      - reward
+      properties:
+        success:
+          type: boolean
+          description: Whether claim was successful
+        reward:
+          $ref: '#/components/schemas/Reward'
+          description: The claimed reward details
+        claimedAt:
+          type: string
+          format: date-time
+          description: When the reward was claimed
+        inventoryId:
+          type: string
+          description: Player inventory item ID for the reward
+    PlayerStatistics:
+      type: object
+      required:
+      - playerId
+      - seasonsPlayed
+      - totalXpEarned
+      - highestLevelReached
+      - rewardsClaimed
+      properties:
+        playerId:
+          type: string
+          description: Player unique identifier
+        seasonsPlayed:
+          type: integer
+          minimum: 0
+          description: Total seasons participated
+        totalXpEarned:
+          type: integer
+          minimum: 0
+          description: Total XP earned across all seasons
+        highestLevelReached:
+          type: integer
+          minimum: 0
+          description: Highest level achieved
+        rewardsClaimed:
+          type: integer
+          minimum: 0
+          description: Total rewards claimed
+        premiumPassesPurchased:
+          type: integer
+          minimum: 0
+          description: Number of premium passes bought
+        favoriteRewardType:
+          type: string
+          enum:
+          - cosmetic
+          - weapon
+          - currency
+          - boost
+          - title
+          - emote
+          description: Most claimed reward category
+        seasonsData:
+          type: array
+          items:
+            type: object
+            properties:
+              seasonId:
+                type: string
+              seasonName:
+                type: string
+              finalLevel:
+                type: integer
+              xpEarned:
+                type: integer
+              rewardsClaimed:
+                type: integer
+              hadPremium:
+                type: boolean
+          description: Per-season breakdown

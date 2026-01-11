@@ -1,0 +1,47 @@
+openapi: 3.0.3
+paths:
+  /tournaments/{tournament_id}/spectate:
+    post:
+      summary: Join tournament as spectator
+      description: '**Tournament spectator mode**
+
+        Join a tournament match as a spectator with advanced viewing options and real-time
+        updates.
+
+        **BACKEND NOTE:** Creates spectator session with tournament-specific features
+        and camera controls.
+
+        '
+      operationId: joinTournamentSpectator
+      tags:
+      - Tournament
+      - Spectator
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Tournament identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TournamentSpectateRequest'
+      responses:
+        '200':
+          description: Spectator session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSpectateResponse'
+        '429':
+          description: Tournament spectator limit reached
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

@@ -1,0 +1,43 @@
+openapi: 3.0.3
+paths:
+  /voice/channels/{channelId}/participants:
+    get:
+      summary: Get voice channel participants
+      description: '**Retrieve list of participants in a voice channel**
+
+        Real-time participant information with speaking status.
+
+        **Performance:** <15ms with WebSocket broadcasting
+
+        '
+      operationId: getVoiceChannelParticipants
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Voice channel participants retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceParticipantResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

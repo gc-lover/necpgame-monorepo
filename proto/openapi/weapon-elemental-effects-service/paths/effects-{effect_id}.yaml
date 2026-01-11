@@ -1,0 +1,120 @@
+openapi: 3.0.3
+paths:
+  /effects/{effect_id}:
+    get:
+      summary: Get effect details
+      operationId: weaponEffectsGetEffect
+      description: Get detailed information about a specific elemental effect.
+      tags:
+      - Effect Management
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      responses:
+        '200':
+          description: Effect details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update elemental effect
+      operationId: weaponEffectsUpdateEffect
+      description: 'Update effect configuration and properties.
+
+        **BACKEND NOTE:** Admin-only, cache invalidation required. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEffectRequest'
+      responses:
+        '200':
+          description: Effect updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete elemental effect
+      operationId: weaponEffectsDeleteEffect
+      description: 'Delete an elemental effect configuration.
+
+        **BACKEND NOTE:** Admin-only, cascade cleanup required. '
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: effect_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect ID
+      responses:
+        '204':
+          description: Effect deleted successfully
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

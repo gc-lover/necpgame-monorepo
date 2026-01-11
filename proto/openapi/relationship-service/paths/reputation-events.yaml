@@ -1,0 +1,38 @@
+openapi: 3.0.3
+paths:
+  /reputation/events:
+    post:
+      summary: Record reputation event
+      description: '**Record a reputation-affecting event**
+
+        Updates user reputation based on event type and impact.
+
+        **Performance:** <35ms with reputation calculation
+
+        '
+      operationId: recordReputationEvent
+      tags:
+      - Reputation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordReputationEventRequest'
+      responses:
+        '201':
+          description: Reputation event recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationEventResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

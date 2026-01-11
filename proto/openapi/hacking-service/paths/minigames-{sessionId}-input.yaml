@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /minigames/{sessionId}/input:
+    post:
+      operationId: hackingServiceSubmitMinigameInput
+      summary: Submit minigame input
+      description: 'Submit player input for an active minigame session.
+
+
+        **Input Processing:**
+
+        - Validate input format and timing
+
+        - Calculate success probability
+
+        - Update minigame progress
+
+        - Provide real-time feedback
+
+        '
+      tags:
+      - Minigames
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Minigame session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMinigameInputRequest'
+      responses:
+        '200':
+          description: Input processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MinigameInputResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

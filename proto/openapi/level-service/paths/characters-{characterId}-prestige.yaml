@@ -1,0 +1,78 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/prestige:
+    post:
+      operationId: levelServicePrestigeCharacter
+      summary: Prestige character progression
+      description: 'Perform prestige reset for character advancement.
+
+
+        **Prestige Process:**
+
+        - Validate prestige requirements
+
+        - Reset level and experience
+
+        - Award prestige bonuses
+
+        - Unlock advanced content
+
+        - Maintain prestige progression
+
+        '
+      tags:
+      - Character Progression
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prestige_tier:
+                  type: integer
+                  minimum: 1
+                  description: Desired prestige tier
+                keep_unlocks:
+                  type: boolean
+                  default: true
+                  description: Keep permanent unlocks
+      responses:
+        '200':
+          description: Character prestiged successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        new_prestige_level:
+                          type: integer
+                          description: New prestige level
+                        prestige_bonuses:
+                          $ref: '#/components/schemas/PrestigeBonuses'
+                        unlocked_features:
+                          type: array
+                          items:
+                            type: string
+                          description: Newly unlocked features
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Prestige requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error.yaml#/Forbidden'

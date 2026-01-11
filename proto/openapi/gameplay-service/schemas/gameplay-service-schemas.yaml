@@ -1,0 +1,1198 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              example: INTERNAL_ERROR
+            message:
+              type: string
+              example: An internal server error occurred
+            details:
+              type: object
+              additionalProperties: true
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          description: Uptime in seconds
+          example: 3600
+    Affix:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - category
+      - reward_modifier
+      - difficulty_modifier
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          maxLength: 100
+          example: Volatile
+        description:
+          type: string
+          example: Enemies explode on death dealing area damage
+        category:
+          type: string
+          enum:
+          - combat
+          - environmental
+          - debuff
+          - defensive
+          example: combat
+        reward_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          example: 1.25
+        difficulty_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          example: 1.15
+        mechanics:
+          type: object
+          description: Flexible mechanics configuration
+          additionalProperties: true
+          example:
+            trigger: enemy_death
+            effect_type: area_damage
+            radius: 5.0
+        visual_effects:
+          type: object
+          description: Visual effects configuration
+          additionalProperties: true
+          example:
+            explosion_particle: volatile_explosion
+            screen_shake: true
+    ActiveAffixesResponse:
+      type: object
+      required:
+      - affixes
+      - rotation
+      properties:
+        affixes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Affix'
+        rotation:
+          type: object
+          required:
+          - week_start
+          - week_end
+          properties:
+            week_start:
+              type: string
+              format: date-time
+            week_end:
+              type: string
+              format: date-time
+            seasonal_affix:
+              $ref: '#/components/schemas/Affix'
+    AffixDetailsResponse:
+      type: object
+      required:
+      - affix
+      properties:
+        affix:
+          $ref: '#/components/schemas/Affix'
+    InstanceAffixesResponse:
+      type: object
+      required:
+      - instance_id
+      - affixes
+      - modifiers
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        affixes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Affix'
+        modifiers:
+          type: object
+          required:
+          - reward_modifier
+          - difficulty_modifier
+          properties:
+            reward_modifier:
+              type: number
+              format: float
+            difficulty_modifier:
+              type: number
+              format: float
+    CurrentRotationResponse:
+      type: object
+      required:
+      - rotation
+      - affixes
+      properties:
+        rotation:
+          type: object
+          required:
+          - id
+          - week_start
+          - week_end
+          properties:
+            id:
+              type: string
+              format: uuid
+            week_start:
+              type: string
+              format: date-time
+            week_end:
+              type: string
+              format: date-time
+            seasonal_affix:
+              $ref: '#/components/schemas/Affix'
+        affixes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Affix'
+    RotationHistoryResponse:
+      type: object
+      required:
+      - rotations
+      - pagination
+      properties:
+        rotations:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - week_start
+            - week_end
+            - affixes
+            properties:
+              id:
+                type: string
+                format: uuid
+              week_start:
+                type: string
+                format: date-time
+              week_end:
+                type: string
+                format: date-time
+              seasonal_affix:
+                $ref: '#/components/schemas/Affix'
+              affixes:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Affix'
+        pagination:
+          type: object
+          required:
+          - total
+          - limit
+          - offset
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+    RotationTriggerResponse:
+      type: object
+      required:
+      - success
+      - new_rotation
+      properties:
+        success:
+          type: boolean
+          example: true
+        new_rotation:
+          type: object
+          required:
+          - id
+          - week_start
+          - week_end
+          properties:
+            id:
+              type: string
+              format: uuid
+            week_start:
+              type: string
+              format: date-time
+            week_end:
+              type: string
+              format: date-time
+    CreateAffixRequest:
+      type: object
+      required:
+      - name
+      - description
+      - category
+      - reward_modifier
+      - difficulty_modifier
+      - mechanics
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: New Affix
+        description:
+          type: string
+          example: Description of the new affix
+        category:
+          type: string
+          enum:
+          - combat
+          - environmental
+          - debuff
+          - defensive
+        reward_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          example: 1.25
+        difficulty_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          example: 1.15
+        mechanics:
+          type: object
+          additionalProperties: true
+        visual_effects:
+          type: object
+          additionalProperties: true
+    UpdateAffixRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          type: string
+          enum:
+          - combat
+          - environmental
+          - debuff
+          - defensive
+        reward_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+        difficulty_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+        mechanics:
+          type: object
+          additionalProperties: true
+        visual_effects:
+          type: object
+          additionalProperties: true
+    ListAffixesResponse:
+      type: object
+      required:
+      - affixes
+      - pagination
+      properties:
+        affixes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Affix'
+        pagination:
+          type: object
+          required:
+          - total
+          - limit
+          - offset
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+    PopularityMetricsResponse:
+      type: object
+      required:
+      - period
+      - metrics
+      properties:
+        period:
+          type: string
+          example: week
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+            - affix_id
+            - name
+            - usage_count
+            - popularity_rank
+            properties:
+              affix_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              usage_count:
+                type: integer
+              popularity_rank:
+                type: integer
+              win_rate:
+                type: number
+                format: float
+    DifficultyMetricsResponse:
+      type: object
+      required:
+      - period
+      - metrics
+      properties:
+        period:
+          type: string
+          example: week
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+            - affix_id
+            - name
+            - avg_completion_time
+            - difficulty_score
+            properties:
+              affix_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              avg_completion_time:
+                type: integer
+                description: Average completion time in seconds
+              difficulty_score:
+                type: number
+                format: float
+              failure_rate:
+                type: number
+                format: float
+    CombinationAnalysisResponse:
+      type: object
+      required:
+      - combinations
+      properties:
+        combinations:
+          type: array
+          items:
+            type: object
+            required:
+            - affix_ids
+            - affix_names
+            - usage_count
+            - success_rate
+            - avg_completion_time
+            properties:
+              affix_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              affix_names:
+                type: array
+                items:
+                  type: string
+              usage_count:
+                type: integer
+              success_rate:
+                type: number
+                format: float
+              avg_completion_time:
+                type: integer
+                description: Average completion time in seconds
+    PlayerSkillRatingResponse:
+      type: object
+      required:
+      - player_id
+      - skill_rating
+      - confidence_level
+      - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player UUID
+        skill_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Player skill rating (0-100)
+        confidence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in the rating calculation
+        completion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Average content completion rate
+        average_time:
+          type: integer
+          description: Average completion time in seconds
+        average_deaths:
+          type: number
+          format: float
+          description: Average deaths per content
+        last_updated:
+          type: string
+          format: date-time
+          description: When the rating was last updated
+    Ability:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - category
+      - source
+      - level_requirement
+      - cooldown_seconds
+      - energy_cost
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          maxLength: 100
+          example: Quick Hack
+        description:
+          type: string
+          maxLength: 500
+          example: Instantly hack an enemy device
+        category:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - cyberware
+          - weapon
+          - support
+          example: hacking
+        source:
+          type: string
+          enum:
+          - equipment
+          - implants
+          - progression
+          - cyberdeck
+          - purchased
+          example: cyberdeck
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 15
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          example: 30
+        energy_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          example: 50
+        is_active:
+          type: boolean
+          example: true
+        icon_url:
+          type: string
+          format: uri
+          example: https://cdn.necpgame.com/abilities/quick-hack.png
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+          maxItems: 10
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+          maxItems: 5
+    AbilityEffect:
+      type: object
+      required:
+      - type
+      - target
+      - duration_seconds
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - damage
+          - heal
+          - buff
+          - debuff
+          - stun
+          - slow
+          - stealth
+          - hack
+          example: damage
+        target:
+          type: string
+          enum:
+          - self
+          - enemy
+          - ally
+          - area
+          example: enemy
+        duration_seconds:
+          type: integer
+          minimum: 0
+          maximum: 300
+          example: 10
+        value:
+          type: number
+          format: float
+          example: 150.5
+        conditions:
+          type: object
+          additionalProperties: true
+    Synergy:
+      type: object
+      required:
+      - ability_ids
+      - effect_type
+      - multiplier
+      - is_active
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 5
+          example:
+          - 550e8400-e29b-41d4-a716-446655440001
+          - 550e8400-e29b-41d4-a716-446655440002
+        effect_type:
+          type: string
+          enum:
+          - damage_boost
+          - cooldown_reduction
+          - energy_efficiency
+          - critical_chance
+          example: damage_boost
+        multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          example: 1.25
+        is_active:
+          type: boolean
+          example: true
+    Loadout:
+      type: object
+      required:
+      - id
+      - name
+      - player_id
+      - slots
+      - created_at
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        name:
+          type: string
+          maxLength: 50
+          example: Stealth Assassin
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            e_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            r_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_2:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_2:
+              $ref: '#/components/schemas/AbilitySlot'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T12:00:00Z'
+        is_active:
+          type: boolean
+          example: true
+    AbilitySlot:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        equipped_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CooldownState:
+      type: object
+      required:
+      - ability_id
+      - remaining_seconds
+      - total_cooldown
+      - is_ready
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          example: 15
+        total_cooldown:
+          type: integer
+          minimum: 0
+          example: 30
+        is_ready:
+          type: boolean
+          example: false
+        last_used_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CyberpsychosisState:
+      type: object
+      required:
+      - player_id
+      - current_level
+      - max_level
+      - effects
+      - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        current_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 25.5
+        max_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 80.0
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberpsychosisEffect'
+          maxItems: 10
+        last_updated:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CyberpsychosisEffect:
+      type: object
+      required:
+      - type
+      - severity
+      - description
+      - is_active
+      properties:
+        type:
+          type: string
+          enum:
+          - hallucinations
+          - reduced_accuracy
+          - increased_damage
+          - random_effects
+          - system_crash
+          example: hallucinations
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.3
+        description:
+          type: string
+          maxLength: 200
+          example: Visual hallucinations affecting target identification
+        is_active:
+          type: boolean
+          example: true
+    AbilityCatalogResponse:
+      type: object
+      required:
+      - abilities
+      - pagination
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ability'
+        pagination:
+          type: object
+          required:
+          - total
+          - limit
+          - offset
+          - page
+          properties:
+            total:
+              type: integer
+              minimum: 0
+              example: 150
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+            offset:
+              type: integer
+              minimum: 0
+              example: 0
+            page:
+              type: integer
+              minimum: 1
+              example: 1
+    AbilityDetailsResponse:
+      type: object
+      required:
+      - ability
+      properties:
+        ability:
+          $ref: '#/components/schemas/Ability'
+    PlayerLoadoutsResponse:
+      type: object
+      required:
+      - loadouts
+      properties:
+        loadouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Loadout'
+          maxItems: 10
+    LoadoutResponse:
+      type: object
+      required:
+      - loadout
+      properties:
+        loadout:
+          $ref: '#/components/schemas/Loadout'
+    CreateLoadoutRequest:
+      type: object
+      required:
+      - name
+      - slots
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: Stealth Assassin
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            e_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            r_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_2:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_2:
+              $ref: '#/components/schemas/AbilitySlot'
+    ActivateAbilityRequest:
+      type: object
+      required:
+      - ability_id
+      - target_info
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_info:
+          type: object
+          properties:
+            target_type:
+              type: string
+              enum:
+              - self
+              - enemy
+              - ally
+              - position
+              example: enemy
+            target_id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440005
+            position:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                  example: 100.5
+                y:
+                  type: number
+                  format: float
+                  example: 200.3
+                z:
+                  type: number
+                  format: float
+                  example: 50.0
+    ActivationResponse:
+      type: object
+      required:
+      - success
+      - ability_id
+      - activation_id
+      - effects_applied
+      properties:
+        success:
+          type: boolean
+          example: true
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        activation_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440006
+        effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+        cooldown_started:
+          type: integer
+          description: Cooldown in seconds
+          example: 30
+    CheckCooldownsRequest:
+      type: object
+      required:
+      - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 20
+          example:
+          - 550e8400-e29b-41d4-a716-446655440001
+          - 550e8400-e29b-41d4-a716-446655440002
+    CooldownsResponse:
+      type: object
+      required:
+      - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownState'
+    SynergiesResponse:
+      type: object
+      required:
+      - synergies
+      - active_synergies
+      properties:
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+        active_synergies:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example:
+          - 550e8400-e29b-41d4-a716-446655440007
+    ApplySynergyRequest:
+      type: object
+      required:
+      - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440007
+    SynergyResponse:
+      type: object
+      required:
+      - synergy
+      - applied_effects
+      properties:
+        synergy:
+          $ref: '#/components/schemas/Synergy'
+        applied_effects:
+          type: array
+          items:
+            type: string
+          example:
+          - damage_boost
+          - cooldown_reduction
+    CyberpsychosisResponse:
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/CyberpsychosisState'
+    UpdateCyberpsychosisRequest:
+      type: object
+      required:
+      - change_amount
+      - reason
+      properties:
+        change_amount:
+          type: number
+          format: float
+          minimum: -50
+          maximum: 50
+          example: 5.5
+        reason:
+          type: string
+          enum:
+          - ability_activation
+          - time_decay
+          - medical_treatment
+          - implant_removal
+          example: ability_activation
+        ability_id:
+          type: string
+          format: uuid
+          description: Required when reason is ability_activation
+          example: 550e8400-e29b-41d4-a716-446655440001
+    AbilityMetricsResponse:
+      type: object
+      required:
+      - period
+      - metrics
+      properties:
+        period:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          example: day
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+            - ability_id
+            - name
+            - usage_count
+            - success_rate
+            - avg_cooldown_efficiency
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440001
+              name:
+                type: string
+                example: Quick Hack
+              usage_count:
+                type: integer
+                minimum: 0
+                example: 1250
+              success_rate:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.87
+              avg_cooldown_efficiency:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.92
+              avg_damage_dealt:
+                type: number
+                format: float
+                example: 185.5
+    ContentDifficultyRatingResponse:
+      type: object
+      required:
+      - content_id
+      - difficulty_score
+      - player_ratings
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        difficulty_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.5
+        player_ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSkillRatingResponse'
+          maxItems: 100
+    DifficultyRecommendationsResponse:
+      type: object
+      required:
+      - player_id
+      - recommendations
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        recommendations:
+          type: array
+          items:
+            type: object
+            required:
+            - content_id
+            - recommended_difficulty
+            - reason
+            properties:
+              content_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440001
+              recommended_difficulty:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                example: 85.0
+              reason:
+                type: string
+                example: Based on player's skill rating and recent performance
+          maxItems: 20
+    DifficultyAdjustmentRequest:
+      type: object
+      required:
+      - content_id
+      - adjustment_type
+      - adjustment_value
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        adjustment_type:
+          type: string
+          enum:
+          - absolute
+          - relative
+          - percentage
+          example: relative
+        adjustment_value:
+          type: number
+          format: float
+          example: 10.5
+        reason:
+          type: string
+          maxLength: 200
+          example: Player requested difficulty increase
+    DifficultyAdjustmentResponse:
+      type: object
+      required:
+      - content_id
+      - old_difficulty
+      - new_difficulty
+      - adjustment_applied
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        old_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.0
+        new_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        adjustment_applied:
+          type: boolean
+          example: true

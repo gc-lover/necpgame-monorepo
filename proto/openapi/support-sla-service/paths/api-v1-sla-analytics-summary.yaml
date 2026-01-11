@@ -1,0 +1,94 @@
+openapi: 3.0.3
+paths:
+  /api/v1/sla/analytics/summary:
+    get:
+      summary: Get SLA analytics summary
+      description: '**Enterprise-grade SLA analytics endpoint**
+
+        Provides comprehensive SLA performance analytics and metrics.
+
+        Includes breach rates, response time distributions, and trend analysis.
+
+        **Performance:** <200ms response time, results cached for 30 minutes
+
+        **Security:** Requires analytics permissions
+
+        '
+      operationId: getSLAAnalyticsSummary
+      tags:
+      - SLA Analytics
+      parameters:
+      - name: startDate
+        in: query
+        description: Start date for analytics period (ISO 8601 format)
+        schema:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      - name: endDate
+        in: query
+        description: End date for analytics period (ISO 8601 format)
+        schema:
+          type: string
+          format: date-time
+          example: '2024-01-31T23:59:59Z'
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: SLA analytics retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=1800, s-maxage=3600
+            ETag:
+              schema:
+                type: string
+                example: '"sla-analytics-2024-01"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAAnalyticsSummary'
+        '400':
+          description: Invalid date parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema: null
+              $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

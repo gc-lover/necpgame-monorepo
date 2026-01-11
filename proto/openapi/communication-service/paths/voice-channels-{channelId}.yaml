@@ -1,0 +1,110 @@
+openapi: 3.0.3
+paths:
+  /voice/channels/{channelId}:
+    get:
+      summary: Get voice channel details
+      description: '**Retrieve detailed information about a voice channel**
+
+        Includes participants, settings, and connection info.
+
+        **Performance:** <20ms with real-time participant data
+
+        '
+      operationId: getVoiceChannel
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '200':
+          description: Voice channel details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannelResponse'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    put:
+      summary: Update voice channel
+      description: '**Update voice channel settings**
+
+        Requires channel ownership or moderator permissions.
+
+        **Performance:** <30ms with participant notifications
+
+        '
+      operationId: updateVoiceChannel
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVoiceChannelRequest'
+      responses:
+        '200':
+          description: Voice channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannelResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete voice channel
+      description: '**Delete a voice channel**
+
+        Disconnects all participants and cleans up resources.
+
+        **Performance:** <40ms with graceful disconnections
+
+        '
+      operationId: deleteVoiceChannel
+      tags:
+      - Voice Channels
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '204':
+          description: Voice channel deleted successfully
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

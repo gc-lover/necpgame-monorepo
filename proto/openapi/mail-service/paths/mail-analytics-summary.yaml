@@ -1,0 +1,40 @@
+openapi: 3.0.3
+paths:
+  /mail/analytics/summary:
+    get:
+      summary: Get mail analytics
+      operationId: mailGetAnalyticsSummary
+      description: Get mail usage statistics and analytics.
+      tags:
+      - Mail Analytics
+      parameters:
+      - name: character_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for personal analytics (optional)
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - all
+          default: week
+        description: Time period for analytics
+      responses:
+        '200':
+          description: Mail analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailAnalyticsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /api/v1/easter-eggs/{id}/attempt:
+    post:
+      summary: Record discovery attempt
+      description: Record player's attempt to discover easter egg for analytics
+      operationId: recordDiscoveryAttempt
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player_id:
+                  type: string
+                attempt_type:
+                  type: string
+                  enum:
+                  - scan
+                  - command
+                  - puzzle
+                  - event
+                success:
+                  type: boolean
+                response_time:
+                  type: integer
+                  description: Response time in milliseconds
+      responses:
+        '201':
+          description: Attempt recorded
+        '400':
+          description: Invalid request
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

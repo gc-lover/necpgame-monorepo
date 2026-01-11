@@ -1,0 +1,65 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}/summon:
+    post:
+      summary: Summon companion
+      description: '**Summon a companion for active use**
+
+
+        Activates a companion for the player session.
+
+        Companion becomes available for abilities and interactions.
+
+
+        **Performance:** <50ms P95, database update
+
+        '
+      operationId: summonCompanion
+      tags:
+      - Companion Abilities
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      responses:
+        '200':
+          description: Companion summoned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummonCompanionResponse'
+        '404':
+          description: Companion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Companion already summoned or another companion is active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,37 @@
+openapi: 3.0.3
+paths:
+  /api/v1/referral/rewards/{characterId}:
+    get:
+      summary: Get available rewards for character
+      operationId: getCharacterRewards
+      tags:
+      - Referral Rewards
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - distributed
+          - claimed
+          - expired
+      responses:
+        '200':
+          description: Rewards retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

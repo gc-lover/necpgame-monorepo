@@ -1,0 +1,88 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}/experience:
+    post:
+      summary: Add experience to companion
+      description: '**Grant experience points to a companion**
+
+
+        Increases companion''s experience, potentially triggering level ups.
+
+        Validates experience amount and companion ownership.
+
+
+        **Performance:** <75ms P95, includes level calculation
+
+        '
+      operationId: addCompanionExperience
+      tags:
+      - Companion Training
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                experienceAmount:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+                  description: Amount of experience to add
+                reason:
+                  type: string
+                  enum:
+                  - quest_completion
+                  - battle_victory
+                  - training
+                  - special_event
+                  description: Reason for experience gain
+              required:
+              - experienceAmount
+              - reason
+      responses:
+        '200':
+          description: Experience added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddExperienceResponse'
+        '400':
+          description: Invalid experience amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Companion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

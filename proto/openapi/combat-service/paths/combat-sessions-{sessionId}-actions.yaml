@@ -1,0 +1,49 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions/{sessionId}/actions:
+    post:
+      summary: Execute combat action
+      description: '**Combat action execution endpoint**
+
+        Processes player combat actions like attacks, abilities, movement.
+
+        **Performance:** <15ms P95, real-time processing required
+
+        '
+      operationId: combatServiceExecuteAction
+      tags:
+      - Combat Actions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '429':
+          $ref: ../common/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

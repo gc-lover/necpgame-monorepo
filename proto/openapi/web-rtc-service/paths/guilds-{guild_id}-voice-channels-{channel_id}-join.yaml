@@ -1,0 +1,69 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/voice-channels/{channel_id}/join:
+    post:
+      summary: Join guild voice channel
+      description: '**Guild System Integration: Join guild voice channel**
+
+        Connects user to guild voice channel with permission validation. Handles channel
+        capacity limits and access control.
+
+        **Integration Features:** - Guild membership verification - Role-based access
+        control - Channel capacity management - Anti-cheat validation
+
+        **Performance:** <25ms join with permission checks '
+      operationId: joinGuildVoiceChannel
+      tags:
+      - Guild Voice Channels
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinVoiceChannelRequest'
+      responses:
+        '200':
+          description: Successfully joined guild voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinVoiceChannelResponse'
+        '400':
+          description: Invalid join request or channel full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to guild channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild or channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

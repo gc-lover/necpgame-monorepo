@@ -1,0 +1,117 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}/treaties:
+    get:
+      description: '**Enterprise-grade treaty management endpoint**
+
+        Retrieves all active treaties for the alliance including trade agreements,
+        military pacts, and diplomatic arrangements.
+
+        Critical for alliance strategy and obligations tracking.
+
+        **Performance:** <20ms P95, cached with 5-minute TTL
+
+        '
+      operationId: getAllianceTreaties
+      parameters:
+      - description: Alliance unique identifier
+        in: path
+        name: allianceId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: Filter by treaty type
+        in: query
+        name: treaty_type
+        schema:
+          default: all
+          enum:
+          - trade
+          - military
+          - research
+          - territorial
+          - all
+          type: string
+      - description: Filter by treaty status
+        in: query
+        name: status
+        schema:
+          default: active
+          enum:
+          - active
+          - pending
+          - expired
+          - breached
+          - all
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreatyResponse'
+          description: Treaties retrieved successfully
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Alliance not found
+      summary: Get alliance treaties
+      tags:
+      - Treaty Management
+    post:
+      description: '**Enterprise-grade treaty proposal endpoint**
+
+        Initiates treaty negotiations with other alliances or factions. Validates
+        proposal legitimacy and diplomatic standing.
+
+        **Performance:** <60ms P95, includes diplomatic validation
+
+        '
+      operationId: proposeTreaty
+      parameters:
+      - description: Alliance unique identifier
+        in: path
+        name: allianceId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreatyProposalRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreatyProposalResponse'
+          description: Treaty proposal submitted successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid proposal - validation failed
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden - insufficient diplomatic authority
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Conflict - existing treaty negotiation in progress
+      security:
+      - BearerAuth: []
+      summary: Propose new treaty
+      tags:
+      - Treaty Management

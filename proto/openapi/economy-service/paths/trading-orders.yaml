@@ -1,0 +1,134 @@
+openapi: 3.0.3
+paths:
+  /trading/orders:
+    get:
+      summary: List trading orders
+      description: '**Trading order management endpoint**
+
+        Retrieves user''s active trading orders with filtering and pagination. Supports
+        buy/sell order types and various order states.
+
+        **Performance:** <15ms P95 with database indexing
+
+        **Real-time:** Orders updated via WebSocket notifications
+
+        '
+      operationId: listTradingOrders
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: order_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - buy
+          - sell
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - filled
+          - cancelled
+          - expired
+      - name: item_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      responses:
+        '200':
+          description: Trading orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingOrdersResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of orders
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    post:
+      summary: Create trading order
+      description: '**Order creation endpoint**
+
+        Creates buy or sell orders with price limits and quantity specifications.
+        Validates market conditions and user balance/ownership.
+
+        **Performance:** <25ms P95 including validation
+
+        **Validation:** Price limits, quantity availability, user permissions
+
+        '
+      operationId: createTradingOrder
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradingOrderRequest'
+      responses:
+        '201':
+          description: Trading order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingOrderResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/economy/trading/orders/550e8400-e29b-41d4-a716-446655440000
+        '400':
+          description: Invalid order parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '409':
+          description: Insufficient funds or items
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /levels/{level}/scaling:
+    get:
+      operationId: levelServiceGetLevelScaling
+      summary: Get level-based scaling values
+      description: 'Retrieve scaling values and multipliers for a specific level.
+
+
+        **Level Scaling:**
+
+        - Enemy stats at level
+
+        - Experience rewards
+
+        - Item drop rates
+
+        - Difficulty multipliers
+
+        - Zone recommendations
+
+        '
+      tags:
+      - Level Scaling
+      parameters:
+      - name: level
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        description: Character level
+      - name: scaling_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - rewards
+          - items
+          - zones
+          description: Type of scaling to retrieve
+      responses:
+        '200':
+          description: Level scaling retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/LevelScaling'
+        '400':
+          $ref: '#/components/responses/BadRequest'

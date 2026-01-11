@@ -41,817 +41,88 @@ servers:
   description: Production server
 - url: http://localhost:8080
   description: Local development
+security: []
+tags: []
 paths:
   /health:
-    get:
-      summary: Health check endpoint
-      description: Returns service health status for monitoring
-      operationId: healthCheck
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: healthy
-                  timestamp:
-                    type: string
-                    format: date-time
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/health.yaml#/paths/~1health
   /api/v1/easter-eggs:
-    get:
-      summary: Get all easter eggs
-      description: Retrieve paginated list of all easter eggs with filtering options
-      operationId: getEasterEggs
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - technology
-          - cultural
-          - historical
-          - humorous
-      - name: difficulty
-        in: query
-        schema:
-          type: string
-          enum:
-          - easy
-          - medium
-          - hard
-          - legendary
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: List of easter eggs
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  easter_eggs:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EasterEgg'
-                  total:
-                    type: integer
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs.yaml#/paths/~1api~1v1~1easter-eggs
   /api/v1/easter-eggs/{id}:
-    get:
-      summary: Get easter egg by ID
-      description: Retrieve detailed information about a specific easter egg
-      operationId: getEasterEgg
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Easter egg details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasterEgg'
-        '404':
-          description: Easter egg not found
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-{id}.yaml#/paths/~1api~1v1~1easter-eggs~1{id}
   /api/v1/easter-eggs/category/{category}:
-    get:
-      summary: Get easter eggs by category
-      description: Retrieve easter eggs filtered by category
-      operationId: getEasterEggsByCategory
-      parameters:
-      - name: category
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - technology
-          - cultural
-          - historical
-          - humorous
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Easter eggs in category
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  easter_eggs:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EasterEgg'
-                  total:
-                    type: integer
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-category-{category}.yaml#/paths/~1api~1v1~1easter-eggs~1category~1{category}
   /api/v1/easter-eggs/difficulty/{difficulty}:
-    get:
-      summary: Get easter eggs by difficulty
-      description: Retrieve easter eggs filtered by difficulty level
-      operationId: getEasterEggsByDifficulty
-      parameters:
-      - name: difficulty
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - easy
-          - medium
-          - hard
-          - legendary
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Easter eggs by difficulty
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  easter_eggs:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EasterEgg'
-                  total:
-                    type: integer
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-difficulty-{difficulty}.yaml#/paths/~1api~1v1~1easter-eggs~1difficulty~1{difficulty}
   /api/v1/players/{playerId}/progress:
-    get:
-      summary: Get player easter egg progress
-      description: Retrieve player's progress for all discovered easter eggs
-      operationId: getPlayerProgress
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Player progress
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  player_id:
-                    type: string
-                  discovered_count:
-                    type: integer
-                  total_easter_eggs:
-                    type: integer
-                  progress:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PlayerEasterEggProgress'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-players-{playerId}-progress.yaml#/paths/~1api~1v1~1players~1{playerId}~1progress
   /api/v1/players/{playerId}/easter-eggs/{eggId}/discover:
-    post:
-      summary: Discover easter egg
-      description: 'Mark easter egg as discovered for player and unlock associated
-        achievements.
-
-
-        **Performance Notes:**
-
-        - Calls external achievement service with 5s timeout
-
-        - Updates player statistics atomically
-
-        - Triggers event-driven achievement processing
-
-        '
-      operationId: discoverEasterEgg
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: eggId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                discovery_method:
-                  type: string
-                  enum:
-                  - scan
-                  - command
-                  - puzzle
-                  - event
-                location_found:
-                  type: string
-                attempt_data:
-                  type: object
-                  additionalProperties: true
-      responses:
-        '200':
-          description: Easter egg discovered successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Easter egg discovered successfully
-                  progress:
-                    $ref: '#/components/schemas/PlayerEasterEggProgress'
-                  achievement_unlocked:
-                    type: boolean
-                    description: Whether achievement was unlocked
-        '400':
-          description: Invalid request
-        '404':
-          description: Easter egg not found
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-players-{playerId}-easter-eggs-{eggId}-discover.yaml#/paths/~1api~1v1~1players~1{playerId}~1easter-eggs~1{eggId}~1discover
   /api/v1/players/{playerId}/profile:
-    get:
-      summary: Get player easter egg profile
-      description: Retrieve comprehensive player profile with easter egg statistics
-      operationId: getPlayerProfile
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Player profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerEasterEggProfile'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-players-{playerId}-profile.yaml#/paths/~1api~1v1~1players~1{playerId}~1profile
   /api/v1/easter-eggs/{id}/hints:
-    get:
-      summary: Get hints for easter egg
-      description: Retrieve available hints for easter egg discovery
-      operationId: getHintsForEasterEgg
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: max_level
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 3
-          default: 3
-      responses:
-        '200':
-          description: Easter egg hints
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DiscoveryHint'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-{id}-hints.yaml#/paths/~1api~1v1~1easter-eggs~1{id}~1hints
   /api/v1/easter-eggs/{id}/attempt:
-    post:
-      summary: Record discovery attempt
-      description: Record player's attempt to discover easter egg for analytics
-      operationId: recordDiscoveryAttempt
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                player_id:
-                  type: string
-                attempt_type:
-                  type: string
-                  enum:
-                  - scan
-                  - command
-                  - puzzle
-                  - event
-                success:
-                  type: boolean
-                response_time:
-                  type: integer
-                  description: Response time in milliseconds
-      responses:
-        '201':
-          description: Attempt recorded
-        '400':
-          description: Invalid request
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-{id}-attempt.yaml#/paths/~1api~1v1~1easter-eggs~1{id}~1attempt
   /api/v1/easter-eggs/{id}/stats:
-    get:
-      summary: Get easter egg statistics
-      description: Retrieve discovery statistics for specific easter egg
-      operationId: getEasterEggStatistics
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Easter egg statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasterEggStatistics'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-easter-eggs-{id}-stats.yaml#/paths/~1api~1v1~1easter-eggs~1{id}~1stats
   /api/v1/stats/categories:
-    get:
-      summary: Get category statistics
-      description: Retrieve statistics for all easter egg categories
-      operationId: getCategoryStatistics
-      responses:
-        '200':
-          description: Category statistics
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EasterEggCategoryStats'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-stats-categories.yaml#/paths/~1api~1v1~1stats~1categories
   /api/v1/challenges/active:
-    get:
-      summary: Get active challenges
-      description: Retrieve currently active easter egg challenges
-      operationId: getActiveChallenges
-      responses:
-        '200':
-          description: Active challenges
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EasterEggChallenge'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-challenges-active.yaml#/paths/~1api~1v1~1challenges~1active
   /api/v1/players/{playerId}/challenges/{challengeId}/progress:
-    get:
-      summary: Get player challenge progress
-      description: Retrieve player's progress in specific challenge
-      operationId: getPlayerChallengeProgress
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: challengeId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Challenge progress
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  challenge_id:
-                    type: string
-                  progress:
-                    type: integer
-                  max_progress:
-                    type: integer
-                  completed:
-                    type: boolean
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/api-v1-players-{playerId}-challenges-{challengeId}-progress.yaml#/paths/~1api~1v1~1players~1{playerId}~1challenges~1{challengeId}~1progress
 components:
   schemas:
     EasterEgg:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique easter egg identifier
-        name:
-          type: string
-          description: Display name
-        category:
-          type: string
-          enum:
-          - technology
-          - cultural
-          - historical
-          - humorous
-        difficulty:
-          type: string
-          enum:
-          - easy
-          - medium
-          - hard
-          - legendary
-        description:
-          type: string
-        content:
-          type: string
-          description: Full content/story
-        location:
-          $ref: '#/components/schemas/EasterEggLocation'
-        discovery_method:
-          $ref: '#/components/schemas/DiscoveryMethod'
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/EasterEggReward'
-        lore_connections:
-          type: array
-          items:
-            type: string
-        status:
-          type: string
-          enum:
-          - active
-          - disabled
-          - maintenance
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEgg
     EasterEggLocation:
-      type: object
-      properties:
-        network_type:
-          type: string
-          description: Type of network (corporate, public, underground, educational)
-        specific_areas:
-          type: array
-          items:
-            type: string
-          description: Specific areas where egg can be found
-        access_level:
-          type: string
-          enum:
-          - public
-          - restricted
-          - secure
-          - fort_knox
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEggLocation
     DiscoveryMethod:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - scanning
-          - pattern_following
-          - deep_scan
-          - puzzle
-        description:
-          type: string
-        requirements:
-          type: array
-          items:
-            type: string
-        time_limit:
-          type: integer
-          description: Time limit in seconds
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/DiscoveryMethod
     EasterEggReward:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - experience
-          - item
-          - achievement
-          - currency
-          - cosmetic
-        value:
-          type: integer
-          description: Numeric value for rewards
-        item_name:
-          type: string
-          description: Display name for items
-        rarity:
-          type: string
-          enum:
-          - common
-          - rare
-          - epic
-          - legendary
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEggReward
     PlayerEasterEggProgress:
-      type: object
-      properties:
-        player_id:
-          type: string
-        easter_egg_id:
-          type: string
-        status:
-          type: string
-          enum:
-          - undiscovered
-          - discovered
-          - completed
-          - revisited
-        discovered_at:
-          type: string
-          format: date-time
-        completed_at:
-          type: string
-          format: date-time
-        rewards_claimed:
-          type: array
-          items:
-            type: string
-        hint_level:
-          type: integer
-          minimum: 0
-          maximum: 3
-        visit_count:
-          type: integer
-        last_visited:
-          type: string
-          format: date-time
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/PlayerEasterEggProgress
     PlayerEasterEggProfile:
-      type: object
-      properties:
-        player_id:
-          type: string
-        total_discovered:
-          type: integer
-        total_completed:
-          type: integer
-        favorite_category:
-          type: string
-        average_difficulty:
-          type: number
-        total_hints_used:
-          type: integer
-        collection_progress:
-          type: number
-          minimum: 0
-          maximum: 100
-        achievement_level:
-          type: string
-          enum:
-          - explorer
-          - hunter
-          - master
-          - legend
-        last_activity:
-          type: string
-          format: date-time
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/PlayerEasterEggProfile
     DiscoveryHint:
-      type: object
-      properties:
-        id:
-          type: string
-        easter_egg_id:
-          type: string
-        hint_level:
-          type: integer
-          minimum: 1
-          maximum: 3
-        hint_text:
-          type: string
-        hint_type:
-          type: string
-          enum:
-          - direct
-          - indirect
-          - misleading
-        cost:
-          type: integer
-          minimum: 0
-        is_enabled:
-          type: boolean
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/DiscoveryHint
     EasterEggStatistics:
-      type: object
-      properties:
-        easter_egg_id:
-          type: string
-        total_discoveries:
-          type: integer
-        unique_players:
-          type: integer
-        average_discovery_time:
-          type: integer
-          description: Average time in seconds
-        success_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-        popular_discovery_method:
-          type: string
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEggStatistics
     EasterEggCategoryStats:
-      type: object
-      properties:
-        category:
-          type: string
-        total_easter_eggs:
-          type: integer
-        discovered_count:
-          type: integer
-        discovery_rate:
-          type: number
-        average_difficulty:
-          type: number
-        most_popular_egg:
-          type: string
-        least_popular_egg:
-          type: string
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEggCategoryStats
     EasterEggChallenge:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        easter_eggs:
-          type: array
-          items:
-            type: string
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/EasterEggReward'
-        start_time:
-          type: string
-          format: date-time
-        end_time:
-          type: string
-          format: date-time
-        is_active:
-          type: boolean
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/EasterEggChallenge
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/HealthResponse
     Error:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/Error
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ./schemas/cyberspace-easter-eggs-service-schemas.yaml#/components/schemas/PaginatedResponse
   responses:
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/HealthOK
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ./schemas/cyberspace-easter-eggs-service-responses.yaml#/components/responses/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
       $ref: ../common/security/security.yaml#/BearerAuth
@@ -859,4 +130,3 @@ components:
       $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
       $ref: ../common/security/security.yaml#/ServiceAuth
-

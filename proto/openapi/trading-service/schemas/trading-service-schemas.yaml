@@ -1,0 +1,729 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    TradeEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - initiatorId
+        - type
+        - status
+        properties:
+          initiatorId:
+            type: string
+            description: 'ID  '
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          participantId:
+            type: string
+            description: 'ID  '
+            format: uuid
+          type:
+            type: string
+            description: ' '
+            enum:
+            - item_trade
+            - currency_exchange
+            - bulk_trade
+            - secure_trade
+            example: item_trade
+          status:
+            type: string
+            description: ' '
+            enum:
+            - pending
+            - negotiating
+            - accepted
+            - executed
+            - completed
+            - cancelled
+            - disputed
+            example: pending
+          offeredItems:
+            type: array
+            description: ' '
+            items:
+              $ref: '#/components/schemas/TradeItemEntity'
+          requestedItems:
+            type: array
+            description: ' '
+            items:
+              $ref: '#/components/schemas/TradeItemEntity'
+          offeredCurrency:
+            type: object
+            description: ' '
+            properties:
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+              amount:
+                type: integer
+                minimum: 0
+                example: 5000
+          requestedCurrency:
+            type: object
+            description: ' '
+            properties:
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+              amount:
+                type: integer
+                minimum: 0
+                example: 3000
+          expiresAt:
+            type: string
+            description: '  '
+            format: date-time
+          acceptedAt:
+            type: string
+            description: ' '
+            format: date-time
+          executedAt:
+            type: string
+            description: ' '
+            format: date-time
+          completedAt:
+            type: string
+            description: ' '
+            format: date-time
+          escrowEnabled:
+            type: boolean
+            description: ' '
+            default: false
+          escrowReleased:
+            type: boolean
+            description: ' '
+            default: false
+          negotiationHistory:
+            type: array
+            description: ' '
+            items:
+              type: object
+              properties:
+                playerId:
+                  type: string
+                  format: uuid
+                timestamp:
+                  type: string
+                  format: date-time
+                action:
+                  type: string
+                  enum:
+                  - counter_offer
+                  - accept
+                  - modify
+                  - cancel
+                details:
+                  type: object
+                  additionalProperties: true
+          $ref: '#/components/schemas/OptimisticLock'
+    TradeItemEntity:
+      type: object
+      description: '  '
+      required:
+      - itemId
+      - quantity
+      properties:
+        itemId:
+          type: string
+          description: 'ID '
+          format: uuid
+          example: 456e7890-e89b-12d3-a456-426614174001
+        quantity:
+          type: integer
+          description: ''
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: ' '
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        itemType:
+          type: string
+          description: ' '
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - misc
+          example: weapon
+        rarity:
+          type: string
+          description: ' '
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        estimatedValue:
+          type: integer
+          description: ' '
+          minimum: 0
+          example: 25000
+    TradeDisputeEntity:
+      type: object
+      description: '   '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - tradeId
+        - initiatorId
+        - reason
+        properties:
+          tradeId:
+            type: string
+            description: 'ID '
+            format: uuid
+          initiatorId:
+            type: string
+            description: 'ID  '
+            format: uuid
+          reason:
+            type: string
+            description: ' '
+            enum:
+            - item_not_delivered
+            - wrong_item
+            - payment_not_received
+            - item_damaged
+            - other
+            example: item_not_delivered
+          description:
+            type: string
+            description: ' '
+            maxLength: 1000
+          evidence:
+            type: array
+            description: ''
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - screenshot
+                  - log
+                  - witness_statement
+                url:
+                  type: string
+                  format: uri
+                description:
+                  type: string
+                  maxLength: 200
+          status:
+            type: string
+            description: ' '
+            enum:
+            - open
+            - investigating
+            - resolved
+            - escalated
+            example: open
+          resolution:
+            type: string
+            description: ' '
+            enum:
+            - initiator_wins
+            - participant_wins
+            - refund
+            - compensation
+            - dismissed
+          resolvedAt:
+            type: string
+            description: ' '
+            format: date-time
+          assignedModerator:
+            type: string
+            description: ' '
+            format: uuid
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateTradeRequest:
+      type: object
+      required:
+      - type
+      - offeredItems
+      - requestedItems
+      properties:
+        type:
+          type: string
+          enum:
+          - item_trade
+          - currency_exchange
+          - bulk_trade
+          - secure_trade
+        offeredItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        requestedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        offeredCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        requestedCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        expiresIn:
+          type: integer
+          description: '    '
+          minimum: 5
+          maximum: 1440
+          default: 60
+        escrowEnabled:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          description: '  '
+          maxLength: 500
+    UpdateTradeRequest:
+      type: object
+      properties:
+        offeredItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        requestedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        offeredCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        requestedCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        expiresIn:
+          type: integer
+          description: '    '
+          minimum: 5
+          maximum: 1440
+        notes:
+          type: string
+          maxLength: 500
+    TradeResponse:
+      type: object
+      properties:
+        trade:
+          $ref: '#/components/schemas/TradeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: '   '
+    TradeListResponse:
+      type: object
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    NegotiateTradeRequest:
+      type: object
+      required:
+      - action
+      properties:
+        action:
+          type: string
+          enum:
+          - counter_offer
+          - accept
+          - modify
+          - cancel
+        modifiedOffer:
+          type: object
+          description: ' '
+          properties:
+            offeredItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/TradeItemEntity'
+            requestedItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/TradeItemEntity'
+            offeredCurrency:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  enum:
+                  - eddies
+                  - eurobucks
+                  - credits
+                amount:
+                  type: integer
+                  minimum: 0
+            requestedCurrency:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  enum:
+                  - eddies
+                  - eurobucks
+                  - credits
+                amount:
+                  type: integer
+                  minimum: 0
+        message:
+          type: string
+          description: '   '
+          maxLength: 500
+    AcceptTradeRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+    ExecuteTradeRequest:
+      type: object
+      required:
+      - executorId
+      properties:
+        executorId:
+          type: string
+          format: uuid
+        confirmationCode:
+          type: string
+          description: '    '
+          pattern: ^[A-Z0-9]{6}$
+    TradeExecutionResponse:
+      type: object
+      properties:
+        tradeId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - executed
+          - pending_escrow
+          - completed
+        executedAt:
+          type: string
+          format: date-time
+        itemsTransferred:
+          type: array
+          items:
+            type: object
+            properties:
+              fromPlayer:
+                type: string
+                format: uuid
+              toPlayer:
+                type: string
+                format: uuid
+              item:
+                $ref: '#/components/schemas/TradeItemEntity'
+        currencyTransferred:
+          type: array
+          items:
+            type: object
+            properties:
+              fromPlayer:
+                type: string
+                format: uuid
+              toPlayer:
+                type: string
+                format: uuid
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+              amount:
+                type: integer
+                minimum: 0
+        escrowHeld:
+          type: boolean
+          description: '   '
+    TradeHistoryResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeEntity'
+        statistics:
+          type: object
+          properties:
+            totalTrades:
+              type: integer
+              minimum: 0
+            successfulTrades:
+              type: integer
+              minimum: 0
+            cancelledTrades:
+              type: integer
+              minimum: 0
+            disputedTrades:
+              type: integer
+              minimum: 0
+            totalValueTraded:
+              type: integer
+              minimum: 0
+            successRate:
+              type: number
+              minimum: 0
+              maximum: 1
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    MatchingTradesResponse:
+      type: object
+      properties:
+        offeredItems:
+          type: array
+          items:
+            type: string
+            format: uuid
+        requestedItems:
+          type: array
+          items:
+            type: string
+            format: uuid
+        matches:
+          type: array
+          items:
+            type: object
+            properties:
+              trade:
+                $ref: '#/components/schemas/TradeEntity'
+              matchScore:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: '  (0-1)'
+              priceDifference:
+                type: integer
+                description: '   ( = )'
+        totalMatches:
+          type: integer
+          minimum: 0
+    MarketAnalyticsResponse:
+      type: object
+      properties:
+        itemType:
+          type: string
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        region:
+          type: string
+        priceTrends:
+          type: object
+          properties:
+            averagePrice:
+              type: number
+            minPrice:
+              type: number
+            maxPrice:
+              type: number
+            priceChange:
+              type: number
+              description: '   '
+        tradeVolume:
+          type: integer
+          minimum: 0
+        activeListings:
+          type: integer
+          minimum: 0
+        mostTradedItems:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              itemName:
+                type: string
+              tradeCount:
+                type: integer
+                minimum: 0
+              averagePrice:
+                type: number
+    CreateDisputeRequest:
+      type: object
+      required:
+      - reason
+      - description
+      properties:
+        reason:
+          type: string
+          enum:
+          - item_not_delivered
+          - wrong_item
+          - payment_not_received
+          - item_damaged
+          - other
+        description:
+          type: string
+          maxLength: 1000
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - screenshot
+                - log
+                - witness_statement
+              url:
+                type: string
+                format: uri
+              description:
+                type: string
+                maxLength: 200
+    UpdateDisputeRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - investigating
+          - resolved
+          - escalated
+        resolution:
+          type: string
+          enum:
+          - initiator_wins
+          - participant_wins
+          - refund
+          - compensation
+          - dismissed
+        moderatorNotes:
+          type: string
+          maxLength: 1000
+    DisputeResponse:
+      type: object
+      properties:
+        dispute:
+          $ref: '#/components/schemas/TradeDisputeEntity'
+        trade:
+          $ref: '#/components/schemas/TradeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time

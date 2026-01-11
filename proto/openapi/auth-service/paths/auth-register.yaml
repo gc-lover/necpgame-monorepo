@@ -1,0 +1,57 @@
+openapi: 3.0.3
+paths:
+  /auth/register:
+    post:
+      operationId: authServiceRegister
+      summary: User registration
+      description: 'Register new user account with email verification.
+
+
+        **Business Rules:**
+
+        - Email must be unique across platform
+
+        - Password complexity requirements enforced
+
+        - Email verification required before activation
+
+        - Account created in pending_verification status
+
+        '
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful, verification email sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          format: uuid
+                          description: Created user account ID
+                        verification_required:
+                          type: boolean
+                          description: Email verification required
+                          example: true
+                        verification_token_expires:
+                          type: string
+                          format: date-time
+                          description: When verification token expires
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'

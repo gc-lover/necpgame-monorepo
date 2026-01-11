@@ -1,0 +1,58 @@
+openapi: 3.0.3
+paths:
+  /location/{auctionId}:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: User logout
+      description: '**Secure logout endpoint**
+
+        Invalidates current session and refresh tokens.
+
+        Supports global logout from all devices.
+
+        **Performance:** <10ms P95
+
+        '
+      operationId: locationLogout
+      tags:
+      - Authentication
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logged out successfully
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '429':
+          description: Too many requests - logout rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /tickets/{ticketId}:
+    get:
+      summary: Get ticket details
+      description: Retrieve detailed information about a specific support ticket
+      operationId: getTicket
+      tags:
+      - Support Tickets
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ticket unique identifier
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      summary: Update ticket
+      description: Update ticket information (title, description, category, priority)
+      operationId: updateTicket
+      tags:
+      - Support Tickets
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ticket unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTicketRequest'
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete ticket
+      description: Delete a support ticket (admin operation)
+      operationId: deleteTicket
+      tags:
+      - Support Tickets
+      parameters:
+      - name: ticketId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ticket unique identifier
+      responses:
+        '204':
+          description: Ticket deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'

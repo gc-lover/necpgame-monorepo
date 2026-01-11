@@ -1,0 +1,63 @@
+openapi: 3.0.3
+paths:
+  /network/analysis/traffic:
+    get:
+      summary: Get network traffic analysis
+      description: Retrieve network traffic statistics and analysis
+      operationId: getNetworkTraffic
+      tags:
+      - Network Analysis
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 24h
+          default: 1h
+        description: Analysis timeframe
+      - name: granularity
+        in: query
+        schema:
+          type: string
+          enum:
+          - second
+          - minute
+          - hour
+          default: minute
+        description: Data granularity
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - bandwidth
+          - latency
+          - packet_loss
+          - connections
+          - all
+          default: all
+        description: Specific metric to analyze
+      responses:
+        '200':
+          description: Network traffic analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkTrafficAnalysis'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

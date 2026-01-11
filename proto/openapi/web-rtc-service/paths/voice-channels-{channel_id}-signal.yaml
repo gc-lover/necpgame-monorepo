@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /voice-channels/{channel_id}/signal:
+    post:
+      summary: WebRTC signaling message exchange
+      description: '**Core WebRTC signaling endpoint for offer/answer/ICE exchange**
+
+
+        Handles SDP offers, answers, and ICE candidates between peers.
+
+        Validates signaling messages and enforces anti-cheat measures.
+
+
+        **Performance:** <10ms P99 signaling message processing
+
+        '
+      operationId: exchangeSignalingMessage
+      tags:
+      - Voice Signaling
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalingMessage'
+      responses:
+        '200':
+          description: Signaling message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalingResponse'
+        '400':
+          description: Invalid signaling message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

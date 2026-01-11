@@ -1,0 +1,70 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/dashboard/overview:
+    get:
+      summary: Get comprehensive game analytics overview dashboard
+      description: '**Real-time game analytics overview dashboard**
+
+        Provides comprehensive overview of all critical game metrics including player
+        activity, economic health, combat statistics, and system performance.
+
+        **Performance:** <50ms P95, optimized for dashboard rendering **Refresh Rate:**
+        Real-time updates every 30 seconds '
+      operationId: getGameAnalyticsOverview
+      tags:
+      - Game Analytics Dashboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Time period for analytics data
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if dashboard hasn't changed
+      responses:
+        '200':
+          description: Analytics overview dashboard data retrieved successfully
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"dashboard-overview-2024-01-15-14-30"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+            X-Data-Freshness:
+              schema:
+                type: integer
+                example: 5
+                description: Data freshness in seconds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameAnalyticsOverview'
+        '304':
+          description: Dashboard data has not changed
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '429':
+          description: Too many requests - rate limit exceeded
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

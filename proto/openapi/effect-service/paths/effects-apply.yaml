@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /effects/apply:
+    post:
+      operationId: effectServiceApplyEffect
+      summary: Apply effect to target
+      description: 'Apply an effect to a character or game object with real-time calculation.
+
+
+        **Effect Application Process:**
+
+        - Validate effect template and target compatibility
+
+        - Calculate effect modifiers and stacking rules
+
+        - Apply effect with immediate synchronization
+
+        - Update character stats and abilities
+
+        - Trigger effect-specific events and notifications
+
+        '
+      tags:
+      - Effect Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectRequest'
+      responses:
+        '200':
+          description: Effect applied successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AppliedEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Effect cannot be applied due to stacking rules
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

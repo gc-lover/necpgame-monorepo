@@ -1,932 +1,145 @@
-# Enterprise-Grade OAuth Service API - SOLID/DRY Domain Inheritance
-# Infrastructure domain service for OAuth provider integrations
-# Issue: #openapi-refactor
-
 openapi: 3.0.3
 info:
   title: OAuth Service API
-  description: |
-    **Enterprise-grade API for OAuth Provider Integration**
+  description: '**Enterprise-grade API for OAuth Provider Integration**
+
 
     ## Domain Purpose
+
     Comprehensive OAuth integration service providing secure authentication flows,
+
     token management, and account linking for external identity providers.
 
+
     ## Business Value
+
     - Secure OAuth 2.0/OpenID Connect implementation
+
     - Multi-provider support (Google, Discord, Steam, GitHub)
+
     - Account linking and profile synchronization
+
     - Enterprise-grade token security and rotation
+
     - GDPR compliant data handling
 
+
     ## Performance Targets
+
     - P99 Latency: <35ms for OAuth flows
+
     - Memory per Instance: <45KB baseline
+
     - Concurrent OAuth Flows: 10,000+ per second
+
     - Token Cache Hit Rate: >98% for active tokens
 
+
     ## Domain Inheritance
+
     This service inherits from infrastructure-entities.yaml providing:
+
     - User account references and linking
+
     - Audit trails for OAuth operations
+
     - Configuration management for providers
+
     - Session management integration
+
     - Optimistic locking for concurrent operations
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/oauth-service
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/oauth-service
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/oauth-service
-    description: Local development
-
+- url: https://api.necpgame.com/v1/oauth-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/oauth-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/oauth-service
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: OAuth Flow
-    description: OAuth authorization and token exchange
-  - name: Account Linking
-    description: OAuth account linking and management
-  - name: Token Management
-    description: OAuth token operations and refresh
-  - name: Provider Management
-    description: OAuth provider configuration
-  - name: Security Auditing
-    description: OAuth security and audit operations
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: OAuth Flow
+  description: OAuth authorization and token exchange
+- name: Account Linking
+  description: OAuth account linking and management
+- name: Token Management
+  description: OAuth token operations and refresh
+- name: Provider Management
+  description: OAuth provider configuration
+- name: Security Auditing
+  description: OAuth security and audit operations
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
   /health:
-    get:
-      operationId: oauthServiceHealthCheck
-      summary: Basic health check
-      description: Returns service health status
-      tags: [Health Monitoring]
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-
+    $ref: ./paths/health.yaml#/paths/~1health
   /oauth/{provider}/authorize:
-    get:
-      operationId: oauthServiceInitiateAuthorization
-      summary: Initiate OAuth authorization
-      description: |
-        Generate authorization URL and state for OAuth provider.
-
-        **Security Notes:**
-        - Generates cryptographically secure state parameter
-        - PKCE challenge for enhanced security
-        - Configurable scope based on requirements
-        - CSRF protection via state validation
-      tags: [OAuth Flow]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-        - name: redirect_uri
-          in: query
-          schema:
-            type: string
-            format: uri
-          description: Redirect URI after authorization
-        - name: scope
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          description: Requested OAuth scopes
-        - name: state
-          in: query
-          schema:
-            type: string
-          description: Custom state parameter (optional)
-      responses:
-        '200':
-          description: Authorization URL generated
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          authorization_url:
-                            type: string
-                            format: uri
-                            description: Complete authorization URL
-                          state:
-                            type: string
-                            description: State parameter for validation
-                          code_verifier:
-                            type: string
-                            description: PKCE code verifier (store securely)
-                          expires_in:
-                            type: integer
-                            description: State expiration in seconds
-                            example: 600
-
+    $ref: ./paths/oauth-{provider}-authorize.yaml#/paths/~1oauth~1{provider}~1authorize
   /oauth/{provider}/callback:
-    get:
-      operationId: oauthServiceAuthorizationCallback
-      summary: Handle OAuth callback (GET)
-      description: Process OAuth provider callback with authorization code
-      tags: [OAuth Flow]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-        - name: code
-          in: query
-          schema:
-            type: string
-          description: Authorization code from provider
-        - name: state
-          in: query
-          schema:
-            type: string
-          description: State parameter for validation
-        - name: error
-          in: query
-          schema:
-            type: string
-          description: Error code if authorization failed
-      responses:
-        '302':
-          description: Redirect to frontend with result
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-              description: Frontend redirect URL with success/error parameters
-
-    post:
-      operationId: oauthServiceProcessCallback
-      summary: Process OAuth callback (POST)
-      description: |
-        Process OAuth authorization callback and exchange code for tokens.
-
-        **Security Notes:**
-        - Validates state parameter to prevent CSRF
-        - Verifies PKCE code challenge
-        - Exchanges authorization code for tokens
-        - Creates audit trail for OAuth operations
-      tags: [OAuth Flow]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OAuthCallbackRequest'
-      responses:
-        '200':
-          description: OAuth authentication successful
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/OAuthResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+    $ref: ./paths/oauth-{provider}-callback.yaml#/paths/~1oauth~1{provider}~1callback
   /oauth/{provider}/token:
-    post:
-      operationId: oauthServiceExchangeToken
-      summary: Exchange authorization code for tokens
-      description: |
-        Exchange OAuth authorization code for access and refresh tokens.
-
-        **Security Notes:**
-        - Validates authorization code integrity
-        - Generates secure JWT tokens
-        - Stores refresh token securely
-        - Enables account linking if requested
-      tags: [OAuth Flow]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenExchangeRequest'
-      responses:
-        '200':
-          description: Tokens exchanged successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          access_token:
-                            type: string
-                            description: Platform JWT access token
-                          refresh_token:
-                            type: string
-                            description: Platform JWT refresh token
-                          token_type:
-                            type: string
-                            enum: [Bearer]
-                            example: "Bearer"
-                          expires_in:
-                            type: integer
-                            description: Access token expiration in seconds
-                          user_linked:
-                            type: boolean
-                            description: Whether OAuth account was linked to existing user
-                          user:
-                            $ref: '#/components/schemas/UserAccountSummary'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
+    $ref: ./paths/oauth-{provider}-token.yaml#/paths/~1oauth~1{provider}~1token
   /oauth/{provider}/refresh:
-    post:
-      operationId: oauthServiceRefreshToken
-      summary: Refresh OAuth tokens
-      description: |
-        Refresh expired OAuth access tokens using refresh token.
-
-        **Security Notes:**
-        - Validates refresh token integrity
-        - Issues new token pair with updated expiration
-        - Single-use refresh tokens (optional)
-        - Automatic cleanup of expired tokens
-      tags: [Token Management]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
-      responses:
-        '200':
-          description: Tokens refreshed successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          access_token:
-                            type: string
-                            description: New access token
-                          refresh_token:
-                            type: string
-                            description: New refresh token (if rotated)
-                          expires_in:
-                            type: integer
-                            description: Expiration time in seconds
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+    $ref: ./paths/oauth-{provider}-refresh.yaml#/paths/~1oauth~1{provider}~1refresh
   /users/{userId}/oauth:
-    get:
-      operationId: oauthServiceGetUserOAuthAccounts
-      summary: Get user's linked OAuth accounts
-      description: Retrieve all OAuth accounts linked to a user
-      tags: [Account Linking]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      responses:
-        '200':
-          description: OAuth accounts retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/OAuthAccountLink'
-
-    post:
-      operationId: oauthServiceLinkOAuthAccount
-      summary: Link OAuth account to user
-      description: |
-        Link an external OAuth account to existing user account.
-
-        **Business Rules:**
-        - Validates OAuth account ownership
-        - Prevents duplicate linking
-        - Updates user profile with OAuth data
-        - Creates audit trail for linking operation
-      tags: [Account Linking]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LinkOAuthAccountRequest'
-      responses:
-        '200':
-          description: OAuth account linked successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/OAuthAccountLink'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-    delete:
-      operationId: oauthServiceUnlinkOAuthAccount
-      summary: Unlink OAuth account from user
-      description: |
-        Remove OAuth account link from user profile.
-
-        **Business Rules:**
-        - Requires at least one authentication method remaining
-        - Invalidates associated OAuth tokens
-        - Updates user profile
-        - Creates audit trail for unlinking
-      tags: [Account Linking]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User unique identifier
-        - name: provider
-          in: query
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider to unlink
-      responses:
-        '204':
-          $ref: '#/components/responses/Deleted'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+    $ref: ./paths/users-{userId}-oauth.yaml#/paths/~1users~1{userId}~1oauth
   /oauth/providers:
-    get:
-      operationId: oauthServiceListProviders
-      summary: List available OAuth providers
-      description: Retrieve list of configured OAuth providers
-      tags: [Provider Management]
-      responses:
-        '200':
-          description: Providers retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/OAuthProvider'
-
+    $ref: ./paths/oauth-providers.yaml#/paths/~1oauth~1providers
   /oauth/providers/{provider}/config:
-    get:
-      operationId: oauthServiceGetProviderConfig
-      summary: Get OAuth provider configuration
-      description: Retrieve configuration for specific OAuth provider
-      tags: [Provider Management]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: OAuth provider
-      responses:
-        '200':
-          description: Provider configuration retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/OAuthProviderConfig'
-
+    $ref: ./paths/oauth-providers-{provider}-config.yaml#/paths/~1oauth~1providers~1{provider}~1config
   /audit/oauth:
-    get:
-      operationId: oauthServiceGetOAuthAuditLog
-      summary: Get OAuth audit log
-      description: |
-        Retrieve audit log for OAuth-related operations.
-
-        **Compliance Notes:**
-        - GDPR compliant audit trails
-        - Sensitive data anonymization
-        - Configurable retention periods
-        - Provider-specific filtering
-      tags: [Security Auditing]
-      parameters:
-        - name: provider
-          in: query
-          schema:
-            type: string
-            enum: [google, discord, steam, github]
-          description: Filter by OAuth provider
-        - name: user_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by user ID
-        - name: operation
-          in: query
-          schema:
-            type: string
-            enum: [authorize, token_exchange, refresh, link, unlink]
-          description: Filter by operation type
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start date for audit log
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Number of audit records to return
-      responses:
-        '200':
-          description: Audit log retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/OK'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/OAuthAuditEntry'
-
+    $ref: ./paths/audit-oauth.yaml#/paths/~1audit~1oauth
 components:
-
+  schemas:
+    OAuthAccountLink:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthAccountLink
+    OAuthProvider:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthProvider
+    OAuthProviderConfig:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthProviderConfig
+    OAuthAuditEntry:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthAuditEntry
+    UserAccountSummary:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/UserAccountSummary
+    OAuthCallbackRequest:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthCallbackRequest
+    OAuthResult:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/OAuthResult
+    TokenExchangeRequest:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/TokenExchangeRequest
+    TokenRefreshRequest:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/TokenRefreshRequest
+    LinkOAuthAccountRequest:
+      $ref: ./schemas/oauth-service-schemas.yaml#/components/schemas/LinkOAuthAccountRequest
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/NotFound
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-
-  schemas:
-
-    # Domain Inheritance - OAuth Service Entities
-    OAuthAccountLink:
-      description: OAuth account link entity
-      type: object
-      required:
-        - id
-        - user_id
-        - provider
-        - provider_user_id
-        - linked_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Link unique identifier
-        user_id:
-          type: string
-          format: uuid
-          description: Linked NECPGAME user ID
-        provider:
-          type: string
-          enum: [google, discord, steam, github]
-          description: OAuth provider
-        provider_user_id:
-          type: string
-          description: User ID from OAuth provider
-        provider_username:
-          type: string
-          description: Username from OAuth provider
-        provider_email:
-          type: string
-          format: email
-          description: Email from OAuth provider
-        access_token_hash:
-          type: string
-          description: Hashed OAuth access token
-        refresh_token_hash:
-          type: string
-          description: Hashed OAuth refresh token
-        token_expires_at:
-          type: string
-          format: date-time
-          description: When OAuth tokens expire
-        linked_at:
-          type: string
-          format: date-time
-          description: When accounts were linked
-        last_sync_at:
-          type: string
-          format: date-time
-          description: Last profile synchronization
-        scopes:
-          type: array
-          items:
-            type: string
-          description: Granted OAuth scopes
-        metadata:
-          type: object
-          description: Provider-specific metadata
-          properties:
-            avatar_url:
-              type: string
-              format: uri
-              description: Avatar URL from provider
-            profile_url:
-              type: string
-              format: uri
-              description: Profile URL from provider
-
-    OAuthProvider:
-      description: OAuth provider information
-      type: object
-      required:
-        - provider
-        - name
-        - is_active
-      properties:
-        provider:
-          type: string
-          enum: [google, discord, steam, github]
-          description: Provider identifier
-        name:
-          type: string
-          description: Human-readable provider name
-        description:
-          type: string
-          description: Provider description
-        icon_url:
-          type: string
-          format: uri
-          description: Provider icon URL
-        is_active:
-          type: boolean
-          description: Whether provider is enabled
-        scopes:
-          type: array
-          items:
-            type: string
-          description: Default scopes requested
-        website_url:
-          type: string
-          format: uri
-          description: Provider website
-
-    OAuthProviderConfig:
-      description: OAuth provider configuration
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity'
-        - type: object
-          properties:
-            provider:
-              type: string
-              enum: [google, discord, steam, github]
-              description: Provider identifier
-            client_id:
-              type: string
-              description: OAuth client ID
-            client_secret_hash:
-              type: string
-              description: Hashed OAuth client secret
-            authorization_url:
-              type: string
-              format: uri
-              description: Provider authorization endpoint
-            token_url:
-              type: string
-              format: uri
-              description: Provider token endpoint
-            user_info_url:
-              type: string
-              format: uri
-              description: Provider user info endpoint
-            scopes_supported:
-              type: array
-              items:
-                type: string
-              description: Supported OAuth scopes
-            pkce_required:
-              type: boolean
-              description: Whether PKCE is required
-            token_rotation_enabled:
-              type: boolean
-              description: Whether token rotation is enabled
-
-    OAuthAuditEntry:
-      description: Audit entry for OAuth operations
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/AuditLogEntity'
-        - type: object
-          properties:
-            provider:
-              type: string
-              enum: [google, discord, steam, github]
-              description: OAuth provider involved
-            operation_type:
-              type: string
-              enum: [authorize, callback, token_exchange, refresh, link, unlink, sync]
-              description: Type of OAuth operation
-            user_id:
-              type: string
-              format: uuid
-              description: Associated user ID
-            provider_user_id:
-              type: string
-              description: User ID from OAuth provider
-            ip_address:
-              type: string
-              description: Client IP address
-            success:
-              type: boolean
-              description: Whether operation succeeded
-
-    UserAccountSummary:
-      description: Summary user account for OAuth responses
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: User account ID
-        username:
-          type: string
-          description: Username
-        email:
-          type: string
-          format: email
-          description: Email address
-        account_status:
-          type: string
-          enum: [active, suspended, banned, pending_verification]
-          description: Account status
-        created_at:
-          type: string
-          format: date-time
-          description: Account creation timestamp
-
-    # Request/Response schemas
-    OAuthCallbackRequest:
-      description: Request payload for OAuth callback processing
-      type: object
-      required:
-        - code
-        - state
-      properties:
-        code:
-          type: string
-          description: Authorization code from provider
-        state:
-          type: string
-          description: State parameter for validation
-        code_verifier:
-          type: string
-          description: PKCE code verifier
-        redirect_uri:
-          type: string
-          format: uri
-          description: Redirect URI used in authorization
-
-    OAuthResult:
-      description: Result of OAuth authentication flow
-      type: object
-      properties:
-        access_token:
-          type: string
-          description: Platform JWT access token
-        refresh_token:
-          type: string
-          description: Platform JWT refresh token
-        token_type:
-          type: string
-          enum: [Bearer]
-          example: "Bearer"
-        expires_in:
-          type: integer
-          description: Access token expiration in seconds
-        user_linked:
-          type: boolean
-          description: Whether OAuth account was linked to existing user
-        user_created:
-          type: boolean
-          description: Whether new user account was created
-        account_link:
-          $ref: '#/components/schemas/OAuthAccountLink'
-        user:
-          $ref: '#/components/schemas/UserAccountSummary'
-
-    TokenExchangeRequest:
-      description: Request payload for token exchange
-      type: object
-      required:
-        - code
-        - redirect_uri
-      properties:
-        code:
-          type: string
-          description: Authorization code to exchange
-        redirect_uri:
-          type: string
-          format: uri
-          description: Redirect URI used in authorization
-        code_verifier:
-          type: string
-          description: PKCE code verifier
-        link_to_user:
-          type: string
-          format: uuid
-          description: Existing user ID to link OAuth account to
-
-    TokenRefreshRequest:
-      description: Request payload for token refresh
-      type: object
-      required:
-        - refresh_token
-      properties:
-        refresh_token:
-          type: string
-          description: OAuth refresh token
-        scopes:
-          type: array
-          items:
-            type: string
-          description: Requested scopes for new token
-
-    LinkOAuthAccountRequest:
-      description: Request payload for linking OAuth account
-      type: object
-      required:
-        - provider
-        - authorization_code
-      properties:
-        provider:
-          type: string
-          enum: [google, discord, steam, github]
-          description: OAuth provider
-        authorization_code:
-          type: string
-          description: OAuth authorization code
-        redirect_uri:
-          type: string
-          format: uri
-          description: Redirect URI used
-        code_verifier:
-          type: string
-          description: PKCE code verifier (if used)
-
+      $ref: ./schemas/oauth-service-responses.yaml#/components/responses/Conflict
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-
-# Performance and optimization notes
-x-performance:
-  p99-latency: "<35ms"
-  memory-target: "<45KB per instance"
-  oauth-flows-target: "10,000+ per second"
-  token-cache-hit-rate: ">98%"
-  database-indexes: "Composite indexes on (user_id, provider), (provider_user_id, provider)"
-
-# Monitoring and observability
-x-monitoring:
-  metrics:
-    - oauth_authorization_rate
-    - oauth_token_exchange_rate
-    - oauth_callback_success_rate
-    - account_linking_rate
-    - token_refresh_rate
-  alerts:
-    - oauth_flow_errors > 5%
-    - token_exchange_failures > 1%
-    - account_linking_conflicts > 0.1%
-
-# Security configuration
-x-security:
-  oauth-flow-security: "PKCE, state validation, CSRF protection"
-  token-security: "JWT RS256, secure token storage, automatic rotation"
-  audit-trail: "GDPR compliant OAuth operation logging"
-  rate-limiting: "100 OAuth operations/minute per user"
-
-# Domain inheritance documentation
-x-domain-inheritance:
-  inherits-from: "common/schemas/infrastructure-entities.yaml"
-  inherited-entities: "ConfigurationEntity, AuditLogEntity"
-  additional-schemas: "OAuth provider configs, token management, account linking"
-  no-duplication: "All common fields inherited, OAuth-specific extensions added"
-
+      $ref: ../common/security/security.yaml#/ServiceAuth

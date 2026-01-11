@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /users/{userId}/preferences/reset:
+    post:
+      operationId: userPreferenceServiceResetUserPreferences
+      summary: Reset user preferences to defaults
+      description: 'Reset user preferences to system defaults.
+
+
+        **Business Rules:**
+
+        - Preserves critical user data
+
+        - Creates backup before reset
+
+        - Audit trail for reset operation
+
+        - Optional selective reset by categories
+
+        '
+      tags:
+      - Preference Management
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPreferencesRequest'
+      responses:
+        '200':
+          description: Preferences reset successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/UserPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

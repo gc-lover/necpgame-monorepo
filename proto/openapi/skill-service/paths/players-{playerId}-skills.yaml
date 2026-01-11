@@ -1,0 +1,55 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/skills:
+    get:
+      summary: null
+      operationId: getPlayerSkills
+      tags:
+      - Progression
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - crafting
+          - social
+          - exploration
+      - name: learnedOnly
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

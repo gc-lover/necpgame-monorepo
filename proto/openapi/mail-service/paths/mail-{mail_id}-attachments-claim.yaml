@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /mail/{mail_id}/attachments/claim:
+    post:
+      summary: Claim mail attachments
+      operationId: mailClaimAttachments
+      description: 'Claim items and currency from mail attachments.
+
+        **BACKEND NOTE:** Transactional operation with inventory integration. '
+      tags:
+      - Mail Attachments
+      parameters:
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimAttachmentsRequest'
+      responses:
+        '200':
+          description: Attachments claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimAttachmentsResponse'
+        '400':
+          description: Mail has no attachments or already claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Mail not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Attachment claiming conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

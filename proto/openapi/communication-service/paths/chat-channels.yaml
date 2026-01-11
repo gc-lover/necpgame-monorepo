@@ -1,0 +1,111 @@
+openapi: 3.0.3
+paths:
+  /chat/channels:
+    get:
+      summary: List chat channels
+      description: '**Retrieve paginated list of accessible chat channels**
+
+        Returns channels user can join based on permissions and guild membership.
+
+        **Performance:** <50ms with pagination, supports 1000+ channels per user
+
+        '
+      operationId: listChatChannels
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - guild
+          - party
+          - private
+          - trade
+          - help
+        description: Filter by channel type
+      - name: guild_id
+        in: query
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+        description: Filter by guild ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of channels to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Chat channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ChatChannelResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create chat channel
+      description: '**Create a new chat channel**
+
+        Supports guild, party, and private channel creation with permission checks.
+
+        **Performance:** <100ms with validation and permission checks
+
+        '
+      operationId: createChatChannel
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChatChannelRequest'
+      responses:
+        '201':
+          description: Chat channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannelResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

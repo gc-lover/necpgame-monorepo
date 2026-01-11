@@ -1,0 +1,104 @@
+openapi: 3.0.3
+paths:
+  /wallets:
+    post:
+      summary: null
+      operationId: createWallet
+      tags:
+      - Wallet Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '201':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: null
+    get:
+      summary: null
+      operationId: getWallets
+      tags:
+      - Wallet Management
+      parameters:
+      - name: ownerId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - primary
+          - currency
+          - bonus
+          - savings
+          - investment
+      - name: currency
+        in: query
+        schema:
+          type: string
+          enum:
+          - eddies
+          - eurobucks
+          - credits
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - frozen
+          - closed
+          default: active
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: null

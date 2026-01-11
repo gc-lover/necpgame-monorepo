@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /sessions/{session_id}/positions:
+    post:
+      summary: Update player position
+      description: '**Update player position**
+
+        Updates player position for anti-cheat validation and real-time synchronization.
+
+        **BACKEND NOTE:** High-frequency endpoint (1000+ RPS) with physics validation
+        and lag compensation.
+
+        '
+      operationId: updatePlayerPosition
+      tags:
+      - Position Sync
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdateRequest'
+      responses:
+        '200':
+          description: Position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionUpdateResponse'
+        '429':
+          description: Position update rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests

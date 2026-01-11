@@ -1,0 +1,464 @@
+openapi: 3.0.3
+components:
+  schemas:
+    DifficultyMode:
+      type: object
+      description: null
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: null
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: (Master, Grandmaster, Legendary)
+        level:
+          type: string
+          enum:
+          - master
+          - grandmaster
+          - legendary
+          description: null
+        description:
+          type: string
+          maxLength: 500
+          description: null
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+          description: (1.0 = 100% HP)
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+          description: (1.0 = 100% damage)
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          description: (1.0 =  )
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: null
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: null
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          description: (1.0 =  )
+        permadeath:
+          type: boolean
+          description: (true  Legendary)
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+            - time_dilation
+            - enhanced_ai
+            - environmental_hazards
+            - resource_scarcity
+            - adaptive_difficulty
+          description: null
+        createdAt:
+          type: string
+          format: date-time
+          description: null
+        updatedAt:
+          type: string
+          format: date-time
+          description: null
+      required:
+      - id
+      - name
+      - level
+      - hpModifier
+      - damageModifier
+      - timeLimitMultiplier
+      - respawnLimit
+      - checkpointLimit
+      - rewardModifier
+      - permadeath
+    ContentDifficultyMode:
+      type: object
+      description: null
+      properties:
+        contentId:
+          type: string
+          format: uuid
+          description: ID
+        modeId:
+          type: string
+          format: uuid
+          description: ID
+        requirements:
+          $ref: '#/components/schemas/DifficultyRequirements'
+        isEnabled:
+          type: boolean
+          description: null
+        unlockDate:
+          type: string
+          format: date-time
+          description: (nullable)
+      required:
+      - contentId
+      - modeId
+      - requirements
+      - isEnabled
+    DifficultyRequirements:
+      type: object
+      description: null
+      properties:
+        minLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: null
+        minSkillRating:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: skill rating
+        completedMissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: null
+        reputationLevel:
+          type: string
+          enum:
+          - rookie
+          - skilled
+          - veteran
+          - elite
+          - legend
+          description: null
+        prerequisiteModes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: null
+      required:
+      - minLevel
+      - minSkillRating
+    DifficultySession:
+      type: object
+      description: null
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID
+        instanceId:
+          type: string
+          format: uuid
+          description: ID
+        modeId:
+          type: string
+          format: uuid
+          description: ID
+        playerId:
+          type: string
+          format: uuid
+          description: ID
+        timeRemaining:
+          type: integer
+          minimum: 0
+          description: null
+        respawnsRemaining:
+          type: integer
+          minimum: 0
+          description: null
+        checkpointsUsed:
+          type: integer
+          minimum: 0
+          description: null
+        status:
+          type: string
+          enum:
+          - active
+          - completed
+          - failed
+          - paused
+          description: null
+        startedAt:
+          type: string
+          format: date-time
+          description: null
+        completedAt:
+          type: string
+          format: date-time
+          description: (nullable)
+        score:
+          type: integer
+          minimum: 0
+          description: null
+        restrictions:
+          type: object
+          properties:
+            timeLimit:
+              type: integer
+              minimum: 0
+              description: null
+            respawnLimit:
+              type: integer
+              minimum: 0
+              description: null
+            checkpointLimit:
+              type: integer
+              minimum: 0
+              description: null
+      required:
+      - id
+      - instanceId
+      - modeId
+      - playerId
+      - status
+      - startedAt
+    DifficultyStats:
+      type: object
+      description: null
+      properties:
+        totalSessions:
+          type: integer
+          minimum: 0
+          description: null
+        completionRate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: null
+        averageScore:
+          type: number
+          format: float
+          minimum: 0.0
+          description: null
+        popularModes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModeStats'
+        modeStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/DifficultyModeStats'
+      required:
+      - totalSessions
+      - completionRate
+      - averageScore
+    DifficultyModeStats:
+      type: object
+      description: null
+      properties:
+        modeId:
+          type: string
+          format: uuid
+          description: ID
+        modeName:
+          type: string
+          description: null
+        totalSessions:
+          type: integer
+          minimum: 0
+          description: null
+        completedSessions:
+          type: integer
+          minimum: 0
+          description: null
+        failedSessions:
+          type: integer
+          minimum: 0
+          description: null
+        completionRate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: null
+        averageCompletionTime:
+          type: integer
+          minimum: 0
+          description: null
+        bestScore:
+          type: integer
+          minimum: 0
+          description: null
+        averageScore:
+          type: number
+          format: float
+          minimum: 0.0
+          description: null
+        topPlayers:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/PlayerStats'
+      required:
+      - modeId
+      - modeName
+      - totalSessions
+      - completedSessions
+      - failedSessions
+      - completionRate
+    CreateDifficultyModeRequest:
+      type: object
+      description: null
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        level:
+          type: string
+          enum:
+          - master
+          - grandmaster
+          - legendary
+        description:
+          type: string
+          maxLength: 500
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+        permadeath:
+          type: boolean
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+            - time_dilation
+            - enhanced_ai
+            - environmental_hazards
+            - resource_scarcity
+            - adaptive_difficulty
+      required:
+      - name
+      - level
+      - hpModifier
+      - damageModifier
+      - timeLimitMultiplier
+      - respawnLimit
+      - checkpointLimit
+      - rewardModifier
+      - permadeath
+    UpdateDifficultyModeRequest:
+      type: object
+      description: null
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+        permadeath:
+          type: boolean
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+            - time_dilation
+            - enhanced_ai
+            - environmental_hazards
+            - resource_scarcity
+            - adaptive_difficulty
+      required:
+      - id
+    Error:
+      type: object
+      description: API
+      properties:
+        code:
+          type: string
+          description: null
+        message:
+          type: string
+          description: ''
+        details:
+          type: object
+          description: null
+        timestamp:
+          type: string
+          format: date-time
+          description: null
+        requestId:
+          type: string
+          description: ID
+      required:
+      - code
+      - message
+      - timestamp

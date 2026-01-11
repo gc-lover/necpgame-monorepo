@@ -1,0 +1,74 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/abilities/reset:
+    post:
+      operationId: abilityServiceResetAbilities
+      summary: Reset character abilities
+      description: 'Reset character''s ability progression and talent points.
+
+
+        **Reset Process:**
+
+        - Remove all learned abilities
+
+        - Refund talent points and resources
+
+        - Reset skill tree to initial state
+
+        - Clear all ability modifiers
+
+        '
+      tags:
+      - Character Abilities
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset_type:
+                  type: string
+                  enum:
+                  - full_reset
+                  - partial_reset
+                  - respec
+                  default: respec
+                  description: Type of reset operation
+                refund_percentage:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  default: 0.5
+                  description: Percentage of costs to refund
+      responses:
+        '200':
+          description: Abilities reset successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        refunded_talent_points:
+                          type: integer
+                          description: Talent points refunded
+                        refunded_resources:
+                          $ref: '#/components/schemas/ResourceAmount'
+                        reset_abilities_count:
+                          type: integer
+                          description: Number of abilities reset
+        '404':
+          $ref: '#/components/responses/NotFound'

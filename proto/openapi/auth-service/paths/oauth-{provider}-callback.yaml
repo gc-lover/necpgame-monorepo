@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/callback:
+    get:
+      operationId: authServiceOAuthCallback
+    post:
+      operationId: authServiceOAuthCallbackPost
+      summary: OAuth provider callback
+      description: 'Handle OAuth provider callback and complete authentication.
+
+
+        **Process:**
+
+        - Validate OAuth code/state
+
+        - Exchange code for access token
+
+        - Create/link user account
+
+        - Issue platform JWT tokens
+
+        '
+      tags:
+      - OAuth
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+        description: OAuth provider
+      responses:
+        '200':
+          description: OAuth authentication successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        access_token:
+                          type: string
+                          description: Platform JWT access token
+                        refresh_token:
+                          type: string
+                          description: Platform JWT refresh token
+                        user_created:
+                          type: boolean
+                          description: Whether new user account was created
+                        user:
+                          $ref: '#/components/schemas/UserAccountSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'

@@ -1,0 +1,50 @@
+openapi: 3.0.3
+paths:
+  /implants/install:
+    post:
+      operationId: implantServiceInstallImplant
+      summary: Install implant on character
+      description: 'Install a cybernetic implant on a character with risk assessment.
+
+
+        **Installation Process:**
+
+        - Validate implant compatibility and requirements
+
+        - Calculate cyberpsychosis risk increase
+
+        - Check available installation slots
+
+        - Perform installation with effect application
+
+        - Update character stats and abilities
+
+        '
+      tags:
+      - Implant Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallImplantRequest'
+      responses:
+        '201':
+          description: Implant installed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/InstalledImplant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Implant incompatible or slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict

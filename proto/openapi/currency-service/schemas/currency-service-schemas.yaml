@@ -1,0 +1,850 @@
+openapi: 3.0.3
+components:
+  schemas:
+    Wallet:
+      description: User wallet entity with infrastructure domain inheritance
+      type: object
+      required:
+      - id
+      - user_id
+      - balances
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Wallet unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: Owner user ID
+        balances:
+          type: object
+          description: Current balances by currency
+          additionalProperties:
+            type: number
+            minimum: 0
+          example:
+            USD: 150.5
+            EUR: 25.0
+            GOLD: 500
+        status:
+          type: string
+          enum:
+          - active
+          - frozen
+          - suspended
+          - closed
+          default: active
+          description: Wallet operational status
+        limits:
+          $ref: '#/components/schemas/WalletLimits'
+        security_settings:
+          $ref: '#/components/schemas/WalletSecurity'
+        created_at:
+          type: string
+          format: date-time
+          description: Wallet creation timestamp
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last wallet activity timestamp
+        metadata:
+          type: object
+          description: Additional wallet metadata
+          additionalProperties: true
+    Transaction:
+      description: Financial transaction entity with infrastructure domain inheritance
+      type: object
+      required:
+      - id
+      - type
+      - amount
+      - currency
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Transaction unique identifier
+        type:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - purchase
+          - refund
+          - fee
+          - exchange
+          description: Transaction type
+        amount:
+          type: number
+          minimum: 0.01
+          description: Transaction amount
+        currency:
+          type: string
+          description: Transaction currency
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          - cancelled
+          - reversed
+          description: Transaction processing status
+        sender_wallet_id:
+          type: string
+          format: uuid
+          description: Sending wallet ID
+        receiver_wallet_id:
+          type: string
+          format: uuid
+          description: Receiving wallet ID
+        external_reference:
+          type: string
+          description: External system reference
+        fee_amount:
+          type: number
+          minimum: 0
+          description: Transaction fee amount
+        fee_currency:
+          type: string
+          description: Fee currency
+        exchange_rate:
+          type: number
+          description: Exchange rate used (for currency exchanges)
+        description:
+          type: string
+          maxLength: 500
+          description: Transaction description
+        metadata:
+          type: object
+          description: Additional transaction metadata
+          additionalProperties: true
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Fraud risk score
+        created_at:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+        processed_at:
+          type: string
+          format: date-time
+          description: Transaction processing timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Transaction completion timestamp
+    WalletLimits:
+      description: Wallet operational limits
+      type: object
+      properties:
+        daily_transaction_limit:
+          type: number
+          minimum: 0
+          description: Maximum daily transaction volume
+        daily_transaction_count:
+          type: integer
+          minimum: 0
+          description: Maximum daily transaction count
+        max_balance:
+          type: number
+          minimum: 0
+          description: Maximum wallet balance
+        max_transaction_amount:
+          type: number
+          minimum: 0
+          description: Maximum single transaction amount
+        restricted_currencies:
+          type: array
+          items:
+            type: string
+          description: Currencies restricted for this wallet
+    WalletSecurity:
+      description: Wallet security settings
+      type: object
+      properties:
+        require_2fa:
+          type: boolean
+          default: false
+          description: Require two-factor authentication
+        ip_whitelist:
+          type: array
+          items:
+            type: string
+          description: Allowed IP addresses
+        transaction_approval_required:
+          type: boolean
+          default: false
+          description: Require manual approval for transactions
+        fraud_detection_enabled:
+          type: boolean
+          default: true
+          description: Enable fraud detection
+        suspicious_activity_alerts:
+          type: boolean
+          default: true
+          description: Send alerts for suspicious activity
+    WalletBalance:
+      description: Wallet balance information
+      type: object
+      required:
+      - wallet_id
+      - balances
+      - last_updated
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+          description: Wallet ID
+        balances:
+          type: object
+          description: Current balances by currency
+          additionalProperties:
+            $ref: '#/components/schemas/CurrencyBalance'
+        total_value_usd:
+          type: number
+          description: Total wallet value in USD
+        pending_transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              transaction_id:
+                type: string
+                format: uuid
+                description: Pending transaction ID
+              amount:
+                type: number
+                description: Pending amount
+              currency:
+                type: string
+                description: Pending currency
+              type:
+                type: string
+                enum:
+                - debit
+                - credit
+                description: Transaction type
+          description: Pending transactions affecting balance
+        last_updated:
+          type: string
+          format: date-time
+          description: Last balance update timestamp
+    CurrencyBalance:
+      description: Balance for specific currency
+      type: object
+      required:
+      - currency
+      - available
+      - reserved
+      properties:
+        currency:
+          type: string
+          description: Currency code
+        available:
+          type: number
+          minimum: 0
+          description: Available balance for transactions
+        reserved:
+          type: number
+          minimum: 0
+          description: Reserved balance (pending transactions)
+        total:
+          type: number
+          minimum: 0
+          description: Total balance (available + reserved)
+    TransactionResult:
+      description: Result of transaction operation
+      type: object
+      required:
+      - transaction_id
+      - status
+      - timestamp
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+          description: Created transaction ID
+        status:
+          type: string
+          enum:
+          - pending
+          - completed
+          - failed
+          description: Transaction status
+        timestamp:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+        amount:
+          type: number
+          description: Transaction amount
+        currency:
+          type: string
+          description: Transaction currency
+        fee_amount:
+          type: number
+          description: Fee charged
+        new_balance:
+          type: number
+          description: New wallet balance after transaction
+        confirmation_code:
+          type: string
+          description: Transaction confirmation code
+    ExchangeRates:
+      description: Currency exchange rates
+      type: object
+      required:
+      - base_currency
+      - rates
+      - timestamp
+      properties:
+        base_currency:
+          type: string
+          description: Base currency for rates
+        rates:
+          type: object
+          description: Exchange rates to other currencies
+          additionalProperties:
+            type: number
+          example:
+            EUR: 0.85
+            GBP: 0.73
+            JPY: 110.5
+        timestamp:
+          type: string
+          format: date-time
+          description: Rate timestamp
+        source:
+          type: string
+          description: Rate source provider
+    TransactionSummary:
+      description: Transaction summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Transaction ID
+        type:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - purchase
+          - refund
+          - fee
+          description: Transaction type
+        amount:
+          type: number
+          description: Transaction amount
+        currency:
+          type: string
+          description: Transaction currency
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          - cancelled
+          - reversed
+          description: Transaction status
+        timestamp:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+        counterparty:
+          type: string
+          description: Other party in transaction
+        description:
+          type: string
+          description: Transaction description
+    TransactionPagination:
+      description: Pagination information for transactions
+      type: object
+      properties:
+        total_count:
+          type: integer
+          description: Total number of transactions
+        current_page:
+          type: integer
+          minimum: 1
+          description: Current page number
+        total_pages:
+          type: integer
+          minimum: 1
+          description: Total number of pages
+        has_next:
+          type: boolean
+          description: Whether there are more pages
+        has_previous:
+          type: boolean
+          description: Whether there are previous pages
+    FraudCheckResult:
+      description: Result of fraud detection check
+      type: object
+      required:
+      - risk_score
+      - risk_level
+      - approved
+      properties:
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Fraud risk score (0-1)
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Risk level category
+        approved:
+          type: boolean
+          description: Whether transaction is approved
+        flags:
+          type: array
+          items:
+            type: object
+            properties:
+              flag_type:
+                type: string
+                description: Type of fraud flag
+              severity:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                description: Flag severity
+              description:
+                type: string
+                description: Flag description
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Detection confidence
+          description: Specific fraud flags raised
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: Recommended actions
+        monitoring_required:
+          type: boolean
+          description: Whether transaction requires monitoring
+    AuditRecord:
+      description: Audit trail record for compliance
+      type: object
+      required:
+      - id
+      - event_type
+      - timestamp
+      - actor
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Audit record ID
+        event_type:
+          type: string
+          enum:
+          - transaction_created
+          - transaction_processed
+          - wallet_created
+          - balance_changed
+          - security_event
+          description: Type of audited event
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        actor:
+          type: string
+          description: User/system that performed action
+        resource_type:
+          type: string
+          enum:
+          - wallet
+          - transaction
+          - user
+          - system
+          description: Type of resource affected
+        resource_id:
+          type: string
+          format: uuid
+          description: ID of affected resource
+        action:
+          type: string
+          description: Action performed
+        details:
+          type: object
+          description: Detailed event information
+          additionalProperties: true
+        ip_address:
+          type: string
+          description: IP address of actor
+        user_agent:
+          type: string
+          description: User agent of actor
+        compliance_flags:
+          type: array
+          items:
+            type: string
+          description: Compliance-related flags
+    EconomicAnalytics:
+      description: Comprehensive economic analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        transaction_volume:
+          type: object
+          properties:
+            total_transactions:
+              type: integer
+              description: Total number of transactions
+            total_volume:
+              type: number
+              description: Total transaction volume
+            average_transaction_size:
+              type: number
+              description: Average transaction amount
+            transaction_velocity:
+              type: number
+              description: Transactions per hour
+          description: Transaction volume metrics
+        currency_circulation:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total_supply:
+                type: integer
+                description: Total currency in circulation
+              active_wallets:
+                type: integer
+                description: Wallets with this currency
+              average_balance:
+                type: number
+                description: Average wallet balance
+              distribution_gini:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: Currency distribution inequality (Gini coefficient)
+          description: Currency circulation metrics
+        player_economics:
+          type: object
+          properties:
+            average_daily_spending:
+              type: number
+              description: Average daily player spending
+            spending_by_category:
+              type: object
+              additionalProperties:
+                type: number
+              description: Spending breakdown by category
+            player_segments:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment:
+                    type: string
+                    description: Player segment
+                  count:
+                    type: integer
+                    description: Players in segment
+                  average_balance:
+                    type: number
+                    description: Average balance in segment
+                  spending_rate:
+                    type: number
+                    description: Spending rate for segment
+              description: Economic analysis by player segments
+        market_health:
+          type: object
+          properties:
+            liquidity_ratio:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Market liquidity indicator
+            price_stability:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Currency price stability
+            inflation_rate:
+              type: number
+              description: Monthly inflation rate
+            market_confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Market confidence indicator
+    CreateWalletRequest:
+      description: Request payload for wallet creation
+      type: object
+      required:
+      - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to create wallet for
+        initial_balances:
+          type: object
+          description: Initial balances for wallet
+          additionalProperties:
+            type: number
+            minimum: 0
+          example:
+            USD: 100.0
+            GOLD: 50
+        wallet_type:
+          type: string
+          enum:
+          - personal
+          - business
+          - system
+          default: personal
+          description: Type of wallet
+        custom_limits:
+          $ref: '#/components/schemas/WalletLimits'
+    TransferFundsRequest:
+      description: Request payload for fund transfer
+      type: object
+      required:
+      - from_wallet_id
+      - to_wallet_id
+      - amount
+      - currency
+      properties:
+        from_wallet_id:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        to_wallet_id:
+          type: string
+          format: uuid
+          description: Destination wallet ID
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to transfer
+        currency:
+          type: string
+          description: Currency to transfer
+        description:
+          type: string
+          maxLength: 200
+          description: Transfer description
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - instant
+          default: normal
+          description: Transfer priority
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Schedule transfer for future time
+    DepositFundsRequest:
+      description: Request payload for fund deposit
+      type: object
+      required:
+      - wallet_id
+      - amount
+      - currency
+      - deposit_method
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+          description: Wallet to deposit to
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to deposit
+        currency:
+          type: string
+          description: Currency to deposit
+        deposit_method:
+          type: string
+          enum:
+          - credit_card
+          - bank_transfer
+          - cryptocurrency
+          - game_reward
+          - admin_deposit
+          description: Deposit method
+        external_reference:
+          type: string
+          description: External payment reference
+        metadata:
+          type: object
+          description: Additional deposit metadata
+          additionalProperties: true
+    WithdrawFundsRequest:
+      description: Request payload for fund withdrawal
+      type: object
+      required:
+      - wallet_id
+      - amount
+      - currency
+      - withdrawal_method
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+          description: Wallet to withdraw from
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to withdraw
+        currency:
+          type: string
+          description: Currency to withdraw
+        withdrawal_method:
+          type: string
+          enum:
+          - bank_transfer
+          - cryptocurrency
+          - gift_card
+          - cash_out
+          description: Withdrawal method
+        destination_details:
+          type: object
+          description: Destination account details
+          additionalProperties: true
+        priority:
+          type: string
+          enum:
+          - standard
+          - express
+          - instant
+          default: standard
+          description: Withdrawal priority
+    ExchangeCurrencyRequest:
+      description: Request payload for currency exchange
+      type: object
+      required:
+      - wallet_id
+      - from_currency
+      - to_currency
+      - amount
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+          description: Wallet to perform exchange in
+        from_currency:
+          type: string
+          description: Source currency
+        to_currency:
+          type: string
+          description: Target currency
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to exchange
+        exchange_type:
+          type: string
+          enum:
+          - market_rate
+          - fixed_rate
+          - premium_rate
+          default: market_rate
+          description: Type of exchange rate to use
+    FraudCheckRequest:
+      description: Request payload for fraud check
+      type: object
+      required:
+      - transaction_details
+      properties:
+        transaction_details:
+          type: object
+          required:
+          - type
+          - amount
+          - currency
+          properties:
+            type:
+              type: string
+              enum:
+              - deposit
+              - withdrawal
+              - transfer
+              - purchase
+              description: Transaction type
+            amount:
+              type: number
+              description: Transaction amount
+            currency:
+              type: string
+              description: Transaction currency
+            sender_wallet_id:
+              type: string
+              format: uuid
+              description: Sender wallet ID
+            receiver_wallet_id:
+              type: string
+              format: uuid
+              description: Receiver wallet ID
+          description: Transaction details to check
+        context:
+          type: object
+          properties:
+            user_id:
+              type: string
+              format: uuid
+              description: User performing transaction
+            ip_address:
+              type: string
+              description: Client IP address
+            user_agent:
+              type: string
+              description: Client user agent
+            device_fingerprint:
+              type: string
+              description: Device fingerprint
+            location:
+              type: object
+              properties:
+                country:
+                  type: string
+                  description: Country code
+                region:
+                  type: string
+                  description: Region/state
+                city:
+                  type: string
+                  description: City
+              description: Geographic location
+          description: Additional context for fraud detection

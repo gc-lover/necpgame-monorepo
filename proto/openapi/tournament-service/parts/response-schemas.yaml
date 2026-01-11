@@ -1,0 +1,240 @@
+components:
+  schemas:
+    TournamentResponse:
+      description: Tournament data response
+      type: object
+      required:
+      - tournament
+      properties:
+        tournament:
+          $ref: '#/components/schemas/Tournament'
+
+    TournamentListResponse:
+      description: Paginated list of tournaments
+      type: object
+      required:
+      - tournaments
+      - pagination
+      properties:
+        tournaments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tournament'
+          description: Array of tournament objects
+        pagination:
+          $ref: '#/components/schemas/PaginatedResponse'
+
+    TournamentParticipantResponse:
+      description: Tournament participant data response
+      type: object
+      required:
+      - participant
+      properties:
+        participant:
+          $ref: '#/components/schemas/TournamentParticipant'
+
+    TournamentScoreResponse:
+      description: Tournament score data response
+      type: object
+      required:
+      - score
+      properties:
+        score:
+          $ref: '#/components/schemas/TournamentScore'
+
+    TournamentLeaderboardResponse:
+      description: Tournament leaderboard data response
+      type: object
+      required:
+      - tournament_id
+      - entries
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Leaderboard entries sorted by rank
+        last_updated:
+          type: string
+          format: date-time
+          description: Last leaderboard update timestamp
+          example: "2077-12-25T20:00:00Z"
+
+    TournamentBracketResponse:
+      description: Tournament bracket data response
+      type: object
+      required:
+      - tournament_id
+      - bracket
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        bracket:
+          $ref: '#/components/schemas/TournamentBracket'
+        current_round:
+          type: integer
+          minimum: 1
+          description: Current active round number
+          example: 3
+        total_rounds:
+          type: integer
+          minimum: 1
+          description: Total number of rounds in tournament
+          example: 7
+
+    TournamentSpectatorsResponse:
+      description: Tournament spectator information response
+      type: object
+      required:
+      - tournament_id
+      - spectator_count
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        spectator_count:
+          type: integer
+          minimum: 0
+          description: Current number of spectators
+          example: 15420
+        max_spectators:
+          type: integer
+          minimum: 0
+          description: Maximum spectator capacity
+          example: 50000
+        spectator_info:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpectatorInfo'
+          maxItems: 100
+          description: Sample of current spectators (limited for performance)
+
+    LeaderboardEntry:
+      description: Individual leaderboard entry
+      type: object
+      required:
+      - rank
+      - participant_id
+      - username
+      - total_score
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Current ranking position
+          example: 1
+        participant_id:
+          type: string
+          format: uuid
+          description: Participant identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Participant display name
+          example: "V_Judy"
+        total_score:
+          type: integer
+          minimum: 0
+          description: Cumulative tournament score
+          example: 15420
+        matches_played:
+          type: integer
+          minimum: 0
+          description: Number of matches completed
+          example: 12
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Win rate as decimal (0.0 to 1.0)
+          example: 0.75
+        average_score_per_match:
+          type: number
+          minimum: 0
+          description: Average points per match
+          example: 1285.0
+        last_match_time:
+          type: string
+          format: date-time
+          description: Timestamp of last completed match
+          example: "2077-12-25T19:30:00Z"
+
+    PaginationParams:
+      description: Standard pagination parameters
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Items per page
+          example: 20
+        sort_by:
+          type: string
+          enum: [created_at, start_time, participant_count, status]
+          default: created_at
+          description: Sort field
+          example: start_time
+        sort_order:
+          type: string
+          enum: [asc, desc]
+          default: desc
+          description: Sort direction
+          example: desc
+
+    PaginatedResponse:
+      description: Standard pagination metadata
+      type: object
+      required:
+      - page
+      - limit
+      - total_items
+      - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          description: Items per page
+          example: 20
+        total_items:
+          type: integer
+          minimum: 0
+          description: Total number of items
+          example: 150
+        total_pages:
+          type: integer
+          minimum: 1
+          description: Total number of pages
+          example: 8
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_prev:
+          type: boolean
+          description: Whether there is a previous page
+          example: false

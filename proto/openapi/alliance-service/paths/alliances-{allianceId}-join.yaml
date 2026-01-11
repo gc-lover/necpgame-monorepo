@@ -1,0 +1,69 @@
+openapi: 3.0.3
+paths:
+  /alliances/{allianceId}/join:
+    post:
+      summary: Join alliance
+      description: '**Enterprise-grade alliance membership endpoint**
+
+        Handles faction/guild alliance joining with treaty acceptance and integration.
+        Validates membership criteria and updates alliance statistics.
+
+        **Performance:** <50ms P95, includes treaty validation
+
+        '
+      operationId: joinAlliance
+      tags:
+      - Alliance Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinAllianceRequest'
+      responses:
+        '200':
+          description: Successfully joined alliance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipResponse'
+        '400':
+          description: Invalid request - membership criteria not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient diplomatic authority
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Alliance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - already member of rival alliance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

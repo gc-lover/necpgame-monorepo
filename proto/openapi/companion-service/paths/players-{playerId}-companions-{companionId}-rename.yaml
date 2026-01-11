@@ -1,0 +1,79 @@
+openapi: 3.0.3
+paths:
+  /players/{playerId}/companions/{companionId}/rename:
+    put:
+      summary: Rename companion
+      description: '**Rename a companion**
+
+
+        Changes the display name of a companion.
+
+        Validates name length and content.
+
+
+        **Performance:** <50ms P95, database update
+
+        '
+      operationId: renameCompanion
+      tags:
+      - Companion Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: companionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Companion ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newName:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: New companion name
+              required:
+              - newName
+      responses:
+        '200':
+          description: Companion renamed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenameCompanionResponse'
+        '400':
+          description: Invalid name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Companion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

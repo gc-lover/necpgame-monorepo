@@ -1,918 +1,147 @@
-# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
-# Player Feedback System API Specification
-# Issue: #1335
-
 openapi: 3.0.3
 info:
   title: Player Feedback Service API
-  description: |
-    **Enterprise-grade API for Player Feedback System**
+  description: '**Enterprise-grade API for Player Feedback System**
 
-    Complete player feedback management system for NECPGAME MMOFPS RPG. Handles player submissions,
+
+    Complete player feedback management system for NECPGAME MMOFPS RPG. Handles player
+    submissions,
+
     GitHub integration, voting system, moderation, and public ideas board with enterprise-grade
+
     performance optimizations.
+
 
     ## Key Features
 
+
     - **Player Submissions**: In-game feedback form with automatic GitHub Issue creation
+
     - **Voting System**: Real-time voting for public suggestions
+
     - **Moderation**: Automated and manual content moderation
+
     - **GitHub Integration**: Automatic Issue creation and status synchronization
+
     - **Ideas Board**: Public board for community-driven feature requests
+
     - **Performance Optimized**: MMOFPS-grade performance with <20ms P99 latency
+
 
     ## Domain Purpose
 
-    Manages all player feedback, suggestions, bug reports, and feature requests with seamless
-    GitHub integration for agent-based processing and community engagement through voting.
+
+    Manages all player feedback, suggestions, bug reports, and feature requests with
+    seamless
+
+    GitHub integration for agent-based processing and community engagement through
+    voting.
+
 
     ## Performance Targets
 
+
     - P99 Latency: <20ms for all endpoints
+
     - Memory per Instance: <30KB baseline
+
     - Concurrent Users: 10,000+ supported
+
     - Rate Limiting: 5 submissions/hour per player, 10 votes/minute
+
     - Uptime: 99.9% SLA
+
 
     ## Domain Inheritance
 
-    This service inherits from infrastructure-entities.yaml and social-entities.yaml providing:
+
+    This service inherits from infrastructure-entities.yaml and social-entities.yaml
+    providing:
+
     - Consistent base entity structure (id, timestamps, version)
+
     - Domain-specific business entities
+
     - Optimistic locking for concurrent operations
+
     - Strict typing with validation rules
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/feedback
-    description: Production environment
-  - url: https://staging-api.necpgame.com/v1/feedback
-    description: Staging environment
-  - url: http://localhost:8080/api/v1/feedback
-    description: Local development
-
+- url: https://api.necpgame.com/v1/feedback
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/feedback
+  description: Staging environment
+- url: http://localhost:8080/api/v1/feedback
+  description: Local development
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Feedback Submissions
-    description: Core feedback submission and management
-  - name: Voting
-    description: Voting system for public suggestions
-  - name: Ideas Board
-    description: Public ideas board and community features
-  - name: Statistics
-    description: Feedback statistics and analytics
-  - name: Health Monitoring
-    description: Service health and performance monitoring
-
+- name: Feedback Submissions
+  description: Core feedback submission and management
+- name: Voting
+  description: Voting system for public suggestions
+- name: Ideas Board
+  description: Public ideas board and community features
+- name: Statistics
+  description: Feedback statistics and analytics
+- name: Health Monitoring
+  description: Service health and performance monitoring
 paths:
-
-  # Health Check Endpoints - Required for all services
   /health:
-    get:
-      summary: Health check endpoint
-      description: Returns service health status
-      operationId: healthCheck
-      tags:
-        - Health Monitoring
-      security: []
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse'
-
-  # 1. POST /api/v1/feedback/submit - Create new feedback submission
+    $ref: ./paths/health.yaml#/paths/~1health
   /submit:
-    post:
-      summary: Submit player feedback
-      description: |
-        Create a new feedback submission from player. Automatically creates GitHub Issue
-        and returns submission details with Issue link.
-
-        **Rate Limit:** 5 submissions per hour per player
-
-        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: submitFeedback
-      tags:
-        - Feedback Submissions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubmitFeedbackRequest'
-            examples:
-              feature_request:
-                summary: Feature request example
-                value:
-                  type: feature_request
-                  category: gameplay
-                  title: "Add new weapon customization system"
-                  description: "I would like to see more weapon customization options..."
-                  priority: high
-                  screenshots: []
-                  game_context:
-                    version: "1.2.3"
-                    location: "Night City, Downtown"
-                    character_level: 45
-                    active_quests: ["quest_123"]
-                    playtime_hours: 120
-      responses:
-        '201':
-          description: Feedback submitted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackSubmissionResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '429':
-          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 2. GET /api/v1/feedback/{id} - Get feedback by ID
+    $ref: ./paths/submit.yaml#/paths/~1submit
   /{id}:
-    get:
-      summary: Get feedback by ID
-      description: |
-        Retrieve detailed information about a specific feedback submission.
-
-        **Access Control:**
-        - Players can only view their own submissions
-        - Public suggestions (feature requests) are visible to all authenticated users
-        - Admins can view all submissions
-
-        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: getFeedback
-      tags:
-        - Feedback Submissions
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Feedback submission unique identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-      responses:
-        '200':
-          description: Feedback details retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackResponse'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: '../common/responses/error.yaml#/components/responses/NotFound'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 3. GET /api/v1/feedback/player/{player_id} - Get player's feedback history
+    $ref: ./paths/{id}.yaml#/paths/~1{id}
   /player/{player_id}:
-    get:
-      summary: Get player feedback history
-      description: |
-        Retrieve paginated list of feedback submissions for a specific player.
-
-        **Access Control:** Players can only view their own feedback history.
-
-        **BACKEND NOTE:** Response optimized for pagination. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: getPlayerFeedback
-      tags:
-        - Feedback Submissions
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player unique identifier
-          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/FeedbackStatus'
-          description: Filter by feedback status
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/FeedbackType'
-          description: Filter by feedback type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Number of items to skip
-      responses:
-        '200':
-          description: Player feedback history retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerFeedbackListResponse'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 4. POST /api/v1/feedback/{id}/update-status - Update feedback status (agents/admins only)
+    $ref: ./paths/player-{player_id}.yaml#/paths/~1player~1{player_id}
   /{id}/update-status:
-    post:
-      summary: Update feedback status
-      description: |
-        Update the status of a feedback submission. Only available to agents and admins.
-
-        **Access Control:** Requires agent or admin authentication.
-
-        **BACKEND NOTE:** Uses optimistic locking via version field. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: updateFeedbackStatus
-      tags:
-        - Feedback Submissions
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Feedback submission unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateStatusRequest'
-      responses:
-        '200':
-          description: Status updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: '../common/responses/error.yaml#/components/responses/NotFound'
-        '409':
-          $ref: '../common/responses/error.yaml#/components/responses/Conflict'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 5. GET /api/v1/feedback/board - Public ideas board
+    $ref: ./paths/{id}-update-status.yaml#/paths/~1{id}~1update-status
   /board:
-    get:
-      summary: Get public ideas board
-      description: |
-        Retrieve paginated list of public feature suggestions (ideas board).
-
-        **Access Control:** Public endpoint, no authentication required.
-
-        **BACKEND NOTE:** Response optimized for public access. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: getIdeasBoard
-      tags:
-        - Ideas Board
-      security: []
-      parameters:
-        - name: category
-          in: query
-          schema:
-            $ref: '#/components/schemas/FeedbackCategory'
-          description: Filter by feedback category
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/FeedbackStatus'
-          description: Filter by feedback status
-        - name: sort
-          in: query
-          schema:
-            type: string
-            enum: [votes_desc, votes_asc, created_desc, created_asc]
-            default: votes_desc
-          description: Sort order
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Number of items to skip
-        - name: search
-          in: query
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 100
-          description: Search query for title and description
-      responses:
-        '200':
-          description: Ideas board retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdeasBoardResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 6. POST /api/v1/feedback/{id}/vote - Vote for feedback
+    $ref: ./paths/board.yaml#/paths/~1board
   /{id}/vote:
-    post:
-      summary: Vote for feedback
-      description: |
-        Add a vote to a public feedback submission (feature request).
-
-        **Rate Limit:** 10 votes per minute per player
-
-        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: voteFeedback
-      tags:
-        - Voting
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Feedback submission unique identifier
-      responses:
-        '200':
-          description: Vote added successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VoteResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: '../common/responses/error.yaml#/components/responses/NotFound'
-        '409':
-          description: Already voted
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 7. DELETE /api/v1/feedback/{id}/vote - Remove vote
-  /{id}/vote:
-    delete:
-      summary: Remove vote from feedback
-      description: |
-        Remove a vote from a public feedback submission.
-
-        **BACKEND NOTE:** Response optimized for immediate feedback. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: removeVote
-      tags:
-        - Voting
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Feedback submission unique identifier
-      responses:
-        '200':
-          description: Vote removed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VoteResponse'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: '../common/responses/error.yaml#/components/responses/NotFound'
-        '409':
-          description: No vote found
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
-  # 8. GET /api/v1/feedback/stats - Get feedback statistics (admins only)
+    $ref: ./paths/{id}-vote.yaml#/paths/~1{id}~1vote
   /stats:
-    get:
-      summary: Get feedback statistics
-      description: |
-        Retrieve statistics about feedback submissions. Only available to admins.
-
-        **Access Control:** Requires admin authentication.
-
-        **BACKEND NOTE:** Response optimized for analytics. Fields ordered for struct
-        alignment (large → small). Expected memory savings: 30-50%.
-      operationId: getFeedbackStats
-      tags:
-        - Statistics
-      parameters:
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: Start date for statistics (YYYY-MM-DD)
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: End date for statistics (YYYY-MM-DD)
-      responses:
-        '200':
-          description: Statistics retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackStatsResponse'
-        '401':
-          $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
-
+    $ref: ./paths/stats.yaml#/paths/~1stats
 components:
   schemas:
-
-    # Feedback Type Enum
     FeedbackType:
-      type: string
-      enum:
-        - feature_request
-        - bug_report
-        - wishlist
-        - feedback
-      description: Type of feedback submission
-      example: feature_request
-
-    # Feedback Category Enum
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackType
     FeedbackCategory:
-      type: string
-      enum:
-        - gameplay
-        - balance
-        - content
-        - technical
-        - lore
-        - ui
-        - other
-      description: Category of feedback submission
-      example: gameplay
-
-    # Feedback Status Enum
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackCategory
     FeedbackStatus:
-      type: string
-      enum:
-        - pending_moderation
-        - pending
-        - in_review
-        - assigned
-        - in_progress
-        - resolved
-        - rejected
-        - duplicate
-        - merged
-      description: Status of feedback submission
-      example: pending
-
-    # Feedback Priority Enum
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackStatus
     FeedbackPriority:
-      type: string
-      enum:
-        - low
-        - medium
-        - high
-        - critical
-      description: Priority level of feedback submission
-      example: medium
-
-    # Game Context - JSONB structure for game state
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackPriority
     GameContext:
-      type: object
-      description: Game context information captured at submission time
-      properties:
-        version:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Game version
-          example: "1.2.3"
-        location:
-          type: string
-          maxLength: 200
-          description: Player location in game
-          example: "Night City, Downtown"
-        character_level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Character level
-          example: 45
-        active_quests:
-          type: array
-          items:
-            type: string
-            format: uuid
-          maxItems: 10
-          description: List of active quest IDs
-          example: ["quest_123", "quest_456"]
-        playtime_hours:
-          type: integer
-          minimum: 0
-          description: Total playtime in hours
-          example: 120
-
-    # Submit Feedback Request
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/GameContext
     SubmitFeedbackRequest:
-      type: object
-      required:
-        - type
-        - category
-        - title
-        - description
-      properties:
-        type:
-          $ref: '#/components/schemas/FeedbackType'
-        category:
-          $ref: '#/components/schemas/FeedbackCategory'
-        title:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Feedback title
-          example: "Add new weapon customization system"
-        description:
-          type: string
-          minLength: 1
-          maxLength: 2000
-          description: Detailed feedback description
-          example: "I would like to see more weapon customization options..."
-        priority:
-          $ref: '#/components/schemas/FeedbackPriority'
-        screenshots:
-          type: array
-          items:
-            type: string
-            format: uri
-          maxItems: 3
-          description: Array of screenshot URLs
-          example: []
-        game_context:
-          $ref: '#/components/schemas/GameContext'
-
-    # Feedback Entity - Main feedback model
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/SubmitFeedbackRequest
     Feedback:
-      allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/InfrastructureEntity'
-        - type: object
-          required:
-            - player_id
-            - type
-            - category
-            - title
-            - description
-            - status
-            - votes_count
-          properties:
-            # Large fields first (struct alignment optimization)
-            player_id:
-              type: string
-              format: uuid
-              description: Player who submitted feedback
-              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-            title:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Feedback title
-              example: "Add new weapon customization system"
-            description:
-              type: string
-              minLength: 1
-              maxLength: 2000
-              description: Detailed feedback description
-              example: "I would like to see more weapon customization options..."
-            github_issue_url:
-              type: string
-              format: uri
-              description: GitHub Issue URL
-              example: "https://github.com/gc-lover/necpgame-monorepo/issues/1335"
-            screenshots:
-              type: array
-              items:
-                type: string
-                format: uri
-              maxItems: 3
-              description: Array of screenshot URLs
-              example: []
-            game_context:
-              $ref: '#/components/schemas/GameContext'
-            merged_into:
-              type: string
-              format: uuid
-              description: ID of feedback this was merged into
-              example: null
-            moderation_reason:
-              type: string
-              maxLength: 500
-              description: Reason for moderation action
-              example: null
-            # Medium fields (8 bytes)
-            github_issue_number:
-              type: integer
-              format: int64
-              minimum: 1
-              description: GitHub Issue number
-              example: 1335
-            # Small fields (4 bytes)
-            type:
-              $ref: '#/components/schemas/FeedbackType'
-            category:
-              $ref: '#/components/schemas/FeedbackCategory'
-            status:
-              $ref: '#/components/schemas/FeedbackStatus'
-            priority:
-              $ref: '#/components/schemas/FeedbackPriority'
-            moderation_status:
-              type: string
-              enum: [pending, approved, rejected]
-              description: Moderation status
-              example: approved
-            votes_count:
-              type: integer
-              format: int32
-              minimum: 0
-              description: Number of votes
-              example: 42
-
-    # Feedback Submission Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/Feedback
     FeedbackSubmissionResponse:
-      type: object
-      required:
-        - success
-        - message
-        - id
-        - github_issue_number
-        - github_issue_url
-        - status
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "Feedback submitted successfully"
-        id:
-          type: string
-          format: uuid
-          description: Feedback submission ID
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        github_issue_number:
-          type: integer
-          format: int64
-          description: Created GitHub Issue number
-          example: 1335
-        github_issue_url:
-          type: string
-          format: uri
-          description: GitHub Issue URL
-          example: "https://github.com/gc-lover/necpgame-monorepo/issues/1335"
-        status:
-          $ref: '#/components/schemas/FeedbackStatus'
-
-    # Feedback Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackSubmissionResponse
     FeedbackResponse:
-      type: object
-      required:
-        - success
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          $ref: '#/components/schemas/Feedback'
-
-    # Player Feedback List Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackResponse
     PlayerFeedbackListResponse:
-      type: object
-      required:
-        - success
-        - data
-        - pagination
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Feedback'
-        pagination:
-          $ref: '../common/schemas/pagination.yaml#/components/schemas/PaginationResponse'
-
-    # Update Status Request
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/PlayerFeedbackListResponse
     UpdateStatusRequest:
-      type: object
-      required:
-        - status
-        - version
-      properties:
-        status:
-          $ref: '#/components/schemas/FeedbackStatus'
-        comment:
-          type: string
-          maxLength: 500
-          description: Optional comment about status change
-          example: "Assigned to backend team for implementation"
-        version:
-          type: integer
-          minimum: 1
-          description: Current version for optimistic locking
-          example: 1
-
-    # Ideas Board Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/UpdateStatusRequest
     IdeasBoardResponse:
-      type: object
-      required:
-        - success
-        - data
-        - pagination
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Feedback'
-        pagination:
-          $ref: '../common/schemas/pagination.yaml#/components/schemas/PaginationResponse'
-
-    # Vote Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/IdeasBoardResponse
     VoteResponse:
-      type: object
-      required:
-        - success
-        - votes_count
-      properties:
-        success:
-          type: boolean
-          example: true
-        votes_count:
-          type: integer
-          format: int32
-          minimum: 0
-          description: Updated vote count
-          example: 43
-        message:
-          type: string
-          example: "Vote added successfully"
-
-    # Feedback Stats Response
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/VoteResponse
     FeedbackStatsResponse:
-      type: object
-      required:
-        - success
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          required:
-            - total_submissions
-            - by_type
-            - by_category
-            - by_status
-            - top_voted
-          properties:
-            total_submissions:
-              type: integer
-              format: int64
-              minimum: 0
-              description: Total number of submissions
-              example: 1250
-            by_type:
-              type: object
-              additionalProperties:
-                type: integer
-                format: int64
-              description: Count by feedback type
-              example:
-                feature_request: 800
-                bug_report: 300
-                wishlist: 100
-                feedback: 50
-            by_category:
-              type: object
-              additionalProperties:
-                type: integer
-                format: int64
-              description: Count by category
-              example:
-                gameplay: 500
-                balance: 300
-                content: 250
-                technical: 100
-                lore: 50
-                ui: 30
-                other: 20
-            by_status:
-              type: object
-              additionalProperties:
-                type: integer
-                format: int64
-              description: Count by status
-              example:
-                pending: 200
-                in_review: 150
-                in_progress: 100
-                resolved: 700
-                rejected: 50
-                duplicate: 50
-            top_voted:
-              type: array
-              items:
-                type: object
-                required:
-                  - id
-                  - title
-                  - votes_count
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  title:
-                    type: string
-                  votes_count:
-                    type: integer
-                    format: int32
-              maxItems: 10
-              description: Top 10 most voted submissions
-              example: []
-
+      $ref: ./schemas/feedback-service-schemas.yaml#/components/schemas/FeedbackStatsResponse
+  responses: {}
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/components/securitySchemes/BearerAuth'
+      $ref: ../common/security/security.yaml#/components/securitySchemes/BearerAuth

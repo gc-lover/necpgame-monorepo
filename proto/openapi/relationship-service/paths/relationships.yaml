@@ -1,0 +1,131 @@
+openapi: 3.0.3
+paths:
+  /relationships:
+    get:
+      summary: Get user relationships
+      description: '**Retrieve paginated list of user''s relationships**
+
+        Returns all relationships for the authenticated user with filtering options.
+
+        **Performance:** <60ms with graph traversal optimization
+
+        '
+      operationId: getUserRelationships
+      tags:
+      - Relationships
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - friendship
+          - romance
+          - rivalry
+          - mentorship
+          - business
+          - enmity
+        description: Filter by relationship type
+      - name: level_min
+        in: query
+        schema:
+          type: integer
+          minimum: -10
+          maximum: 10
+        description: Minimum relationship level
+      - name: level_max
+        in: query
+        schema:
+          type: integer
+          minimum: -10
+          maximum: 10
+        description: Maximum relationship level
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - terminated
+        description: Filter by relationship status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of relationships to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Relationships retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RelationshipResponse'
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create relationship
+      description: '**Create a new relationship between characters**
+
+        Initiates relationship of specified type with initial parameters.
+
+        **Performance:** <80ms with validation and mutual consent checks
+
+        '
+      operationId: createRelationship
+      tags:
+      - Relationships
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationshipRequest'
+      responses:
+        '201':
+          description: Relationship created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '409':
+          description: Relationship already exists
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

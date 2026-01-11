@@ -1,0 +1,99 @@
+openapi: 3.0.3
+paths:
+  /templates:
+    get:
+      summary: List event templates
+      description: '**Enterprise-grade template management with versioning**
+
+        Retrieves paginated list of reusable event templates.
+
+        **Performance:** <15ms P99, template caching **Reusability:** Standardized
+        event configurations
+
+        '
+      operationId: listEventTemplates
+      tags:
+      - Event Templates
+      parameters:
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/WorldEventType'
+        description: Filter by template type
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Filter by active status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of templates per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventTemplateSummary'
+                  total:
+                    type: integer
+                    minimum: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create event template
+      description: '**Enterprise-grade template creation with validation**
+
+        Creates reusable event template with comprehensive validation.
+
+        **Performance:** <30ms P99, includes template validation **Reusability:**
+        Standardized event configurations
+
+        '
+      operationId: createEventTemplate
+      tags:
+      - Event Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of created template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

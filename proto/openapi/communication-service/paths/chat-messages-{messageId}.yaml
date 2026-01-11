@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /chat/messages/{messageId}:
+    put:
+      summary: Edit chat message
+      description: '**Edit an existing chat message**
+
+        Only message author can edit, within time limits.
+
+        **Performance:** <30ms with permission and content validation
+
+        '
+      operationId: editChatMessage
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditChatMessageRequest'
+      responses:
+        '200':
+          description: Chat message edited successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Delete chat message
+      description: '**Delete a chat message**
+
+        Author can delete own messages, moderators can delete any message.
+
+        **Performance:** <20ms with soft delete implementation
+
+        '
+      operationId: deleteChatMessage
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '204':
+          description: Chat message deleted successfully
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

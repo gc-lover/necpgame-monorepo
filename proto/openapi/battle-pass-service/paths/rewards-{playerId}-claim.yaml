@@ -1,0 +1,54 @@
+openapi: 3.0.0
+paths:
+  /rewards/{playerId}/claim:
+    post:
+      tags:
+      - Rewards
+      summary: Claim reward
+      description: Claims a reward for the player at specified level
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - level
+              - tier
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                  description: Battle Pass level
+                tier:
+                  type: string
+                  enum:
+                  - free
+                  - premium
+                  description: Reward tier
+      responses:
+        '200':
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResult'
+        '400':
+          description: Reward not available or already claimed
+        '403':
+          description: Insufficient level or premium pass required
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,44 @@
+openapi: 3.0.3
+paths:
+  /notifications/{notificationId}/status:
+    get:
+      operationId: pushNotificationServiceGetNotificationStatus
+      summary: Get notification delivery status
+      description: 'Retrieve delivery status for a specific notification.
+
+
+        **Real-time Updates:**
+
+        - Provides current delivery statistics
+
+        - Includes platform-specific metrics
+
+        - Shows failure reasons and retry status
+
+        - Updates in real-time during delivery
+
+        '
+      tags:
+      - Notification Delivery
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Notification unique identifier
+      responses:
+        '200':
+          description: Notification status retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NotificationStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'

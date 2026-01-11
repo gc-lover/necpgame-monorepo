@@ -1,0 +1,78 @@
+openapi: 3.0.3
+paths:
+  /audit/oauth:
+    get:
+      operationId: oauthServiceGetOAuthAuditLog
+      summary: Get OAuth audit log
+      description: 'Retrieve audit log for OAuth-related operations.
+
+
+        **Compliance Notes:**
+
+        - GDPR compliant audit trails
+
+        - Sensitive data anonymization
+
+        - Configurable retention periods
+
+        - Provider-specific filtering
+
+        '
+      tags:
+      - Security Auditing
+      parameters:
+      - name: provider
+        in: query
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - github
+        description: Filter by OAuth provider
+      - name: user_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by user ID
+      - name: operation
+        in: query
+        schema:
+          type: string
+          enum:
+          - authorize
+          - token_exchange
+          - refresh
+          - link
+          - unlink
+        description: Filter by operation type
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start date for audit log
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of audit records to return
+      responses:
+        '200':
+          description: Audit log retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/OAuthAuditEntry'

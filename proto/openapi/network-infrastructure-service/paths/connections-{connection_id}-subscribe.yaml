@@ -1,0 +1,45 @@
+openapi: 3.0.3
+paths:
+  /connections/{connection_id}/subscribe:
+    post:
+      summary: Subscribe connection to topics
+      description: Subscribe a WebSocket connection to specific topics for targeted
+        messaging
+      operationId: subscribeConnection
+      tags:
+      - Connection Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: connection_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Connection unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

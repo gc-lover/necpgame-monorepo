@@ -1,0 +1,86 @@
+openapi: 3.0.3
+paths:
+  /leaderboards:
+    post:
+      summary: null
+      operationId: createLeaderboard
+      tags:
+      - Leaderboard Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeaderboardRequest'
+      responses:
+        '201':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    get:
+      summary: null
+      operationId: getLeaderboards
+      tags:
+      - Leaderboard Management
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - achievement
+          - economic
+          - social
+          - seasonal
+      - name: active
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

@@ -1,0 +1,258 @@
+openapi: 3.0.3
+components:
+  schemas:
+    CyberpsychosisState:
+      type: object
+      required:
+      - state_id
+      - player_id
+      - state_type
+      - severity_level
+      - is_active
+      - is_controllable
+      - can_be_cured
+      properties:
+        state_id:
+          type: string
+          format: uuid
+          description: Unique state identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        combat_session:
+          $ref: '#/components/schemas/CombatSession'
+        state_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateTransition'
+          description: History of state transitions
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Damage multiplier
+          example: 2.5
+        speed_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Movement speed multiplier
+          example: 1.8
+        accuracy_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          description: Accuracy multiplier
+          example: 1.2
+        health_drain_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 50.0
+          description: Health drain rate (HP per second)
+          example: 15.0
+        neural_overload_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Neural overload level (0.0-1.0)
+          example: 0.3
+        system_instability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: System instability level (0.0-1.0)
+          example: 0.2
+        state_type:
+          type: integer
+          format: int32
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          description: '0=Normal, 1=Berserk, 2=Adrenal Overload, 3=Neural Overload,
+            4=System Shock, 5=Cyberpsychosis
+
+            '
+          example: 1
+        severity_level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          description: State severity level
+          example: 2
+        is_active:
+          type: boolean
+          description: Whether the state is currently active
+          example: true
+        is_controllable:
+          type: boolean
+          description: Whether the player can control actions in this state
+          example: true
+        can_be_cured:
+          type: boolean
+          description: Whether the state can be cured
+          example: true
+    CombatSession:
+      type: object
+      required:
+      - session_id
+      - player_id
+      - start_time
+      - is_active
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        start_time:
+          type: string
+          format: date-time
+          description: Session start time
+        end_time:
+          type: string
+          format: date-time
+          description: Session end time (null if active)
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of kills in session
+          example: 5
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of deaths in session
+          example: 2
+        damage_dealt:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total damage dealt
+          example: 1250.5
+        damage_taken:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total damage taken
+          example: 850.2
+        is_active:
+          type: boolean
+          description: Whether the session is currently active
+    StateTransition:
+      type: object
+      required:
+      - transition_id
+      - from_state
+      - to_state
+      - transition_time
+      - trigger_reason
+      - severity_change
+      properties:
+        transition_id:
+          type: string
+          format: uuid
+          description: Transition identifier
+        from_state:
+          type: integer
+          format: int32
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          description: Previous state type
+        to_state:
+          type: integer
+          format: int32
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          description: New state type
+        transition_time:
+          type: string
+          format: date-time
+          description: Transition timestamp
+        trigger_reason:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Reason for the transition
+        severity_change:
+          type: integer
+          format: int32
+          description: Change in severity level
+          example: 1
+    SystemHealth:
+      type: object
+      required:
+      - total_states
+      - active_states
+      - inactive_states
+      - average_severity
+      - last_health_check
+      properties:
+        total_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of cyberpsychosis states
+          example: 150
+        active_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of active states
+          example: 45
+        inactive_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of inactive states
+          example: 105
+        average_severity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 10.0
+          description: Average severity across all states
+          example: 2.5
+        last_health_check:
+          type: string
+          format: date-time
+          description: Timestamp of last health check
+        response_time:
+          type: integer
+          format: int64
+          description: Health check response time in milliseconds
+          example: 10
+        error_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Error rate (0.0-1.0)
+          example: 0.001

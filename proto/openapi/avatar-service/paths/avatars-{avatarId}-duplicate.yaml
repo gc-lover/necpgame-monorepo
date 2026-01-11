@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /avatars/{avatarId}/duplicate:
+    post:
+      operationId: avatarServiceDuplicateAvatar
+      summary: Create avatar duplicate
+      description: 'Create a copy of existing avatar for modifications.
+
+
+        **Duplication Process:**
+
+        - Copy original image file
+
+        - Create new avatar record
+
+        - Preserve metadata with modifications
+
+        - Generate new CDN URLs
+
+        '
+      tags:
+      - Avatar Management
+      parameters:
+      - name: avatarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Source avatar unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuplicateAvatarRequest'
+      responses:
+        '201':
+          description: Avatar duplicated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Avatar'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

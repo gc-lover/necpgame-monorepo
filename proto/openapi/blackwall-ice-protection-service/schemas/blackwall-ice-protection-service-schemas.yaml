@@ -1,0 +1,537 @@
+openapi: 3.0.0
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+    ICEDploymentListResponse:
+      type: object
+      properties:
+        deployments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEDploymentSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+    ICEDploymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        segment_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        status:
+          type: string
+          enum:
+          - active
+          - standby
+          - breached
+          - adapting
+        threat_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        last_adaptation:
+          type: string
+          format: date-time
+    ICEDeployRequest:
+      type: object
+      required:
+      - segment_id
+      - ice_type
+      - configuration
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        configuration:
+          $ref: '#/components/schemas/ICEConfiguration'
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+    ICEConfiguration:
+      type: object
+      properties:
+        aggression_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: How aggressively ICE responds to threats
+        adaptation_rate:
+          type: number
+          minimum: 0.1
+          maximum: 2.0
+          description: How quickly ICE adapts to new threats
+        psychological_intensity:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Intensity of psychological effects (0 = disabled)
+        lethal_force:
+          type: boolean
+          default: false
+          description: Whether to enable lethal countermeasures
+    ICEDeploymentResponse:
+      type: object
+      properties:
+        deployment:
+          $ref: '#/components/schemas/ICEDploymentDetails'
+        deployment_time:
+          type: string
+          format: date-time
+        estimated_activation:
+          type: string
+          format: date-time
+    ICEDploymentDetails:
+      allOf:
+      - $ref: '#/components/schemas/ICEDploymentSummary'
+      - type: object
+        properties:
+          configuration:
+            $ref: '#/components/schemas/ICEConfiguration'
+          statistics:
+            $ref: '#/components/schemas/ICEDploymentStatistics'
+          active_intrusions:
+            type: array
+            items:
+              $ref: '#/components/schemas/IntrusionSummary'
+    ICEDploymentStatistics:
+      type: object
+      properties:
+        intrusions_blocked:
+          type: integer
+        successful_breaches:
+          type: integer
+        average_response_time:
+          type: number
+          description: Average response time in milliseconds
+        adaptation_cycles:
+          type: integer
+    ICEUpdateRequest:
+      type: object
+      properties:
+        configuration:
+          $ref: '#/components/schemas/ICEConfiguration'
+        status:
+          type: string
+          enum:
+          - active
+          - standby
+          - maintenance
+    ActiveIntrusionsResponse:
+      type: object
+      properties:
+        intrusions:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntrusionDetails'
+        total_count:
+          type: integer
+    IntrusionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        intruder_id:
+          type: string
+          format: uuid
+        segment_id:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        status:
+          type: string
+          enum:
+          - detected
+          - responding
+          - contained
+          - breached
+        detected_at:
+          type: string
+          format: date-time
+    IntrusionDetails:
+      allOf:
+      - $ref: '#/components/schemas/IntrusionSummary'
+      - type: object
+        properties:
+          attack_vector:
+            type: string
+            enum:
+            - direct_hack
+            - social_engineering
+            - insider_access
+            - ddos
+          methods_used:
+            type: array
+            items:
+              type: string
+          responding_ice:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICEDploymentSummary'
+          psychological_effects_applied:
+            type: array
+            items:
+              type: string
+    IntrusionResponseRequest:
+      type: object
+      required:
+      - response_type
+      properties:
+        response_type:
+          type: string
+          enum:
+          - automated
+          - manual_override
+          - escalate
+        manual_instructions:
+          type: string
+          description: Manual response instructions (required for manual_override)
+        ice_reinforcements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Additional ICE deployments to activate
+    IntrusionResponseResponse:
+      type: object
+      properties:
+        response_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - initiated
+          - executing
+          - completed
+          - failed
+        estimated_completion:
+          type: string
+          format: date-time
+    AdaptiveLearningResponse:
+      type: object
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        learning_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/LearningPattern'
+        threat_intelligence:
+          $ref: '#/components/schemas/ThreatIntelligence'
+        adaptation_effectiveness:
+          type: number
+          minimum: 0
+          maximum: 1
+    LearningPattern:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+        attack_vector:
+          type: string
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        last_observed:
+          type: string
+          format: date-time
+        adaptation_applied:
+          type: string
+    AdaptiveLearningUpdateRequest:
+      type: object
+      required:
+      - pattern_updates
+      properties:
+        pattern_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatternUpdate'
+        threat_intelligence_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreatUpdate'
+    PatternUpdate:
+      type: object
+      required:
+      - pattern_id
+      - update_type
+      properties:
+        pattern_id:
+          type: string
+        update_type:
+          type: string
+          enum:
+          - reinforce
+          - weaken
+          - remove
+        new_success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+    PsychologicalEffectRequest:
+      type: object
+      required:
+      - effect_type
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - fear_induction
+          - hallucination
+          - neural_disruption
+          - memory_manipulation
+        intensity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        duration_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+        custom_parameters:
+          type: object
+          description: Effect-specific parameters
+    PsychologicalEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - applied
+          - resisted
+          - failed
+        applied_intensity:
+          type: integer
+        estimated_duration:
+          type: integer
+          description: Duration in seconds
+    ActivePsychologicalEffectsResponse:
+      type: object
+      properties:
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/PsychologicalEffectStatus'
+    PsychologicalEffectStatus:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        intensity:
+          type: integer
+        remaining_duration:
+          type: integer
+        applied_at:
+          type: string
+          format: date-time
+    ThreatIntelligenceResponse:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        threats_detected:
+          type: integer
+        threats_mitigated:
+          type: integer
+        attack_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPattern'
+        emerging_threats:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmergingThreat'
+    AttackPattern:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+        description:
+          type: string
+        frequency:
+          type: integer
+        success_rate:
+          type: number
+        typical_ice_response:
+          type: string
+    EmergingThreat:
+      type: object
+      properties:
+        threat_id:
+          type: string
+        description:
+          type: string
+        confidence_level:
+          type: number
+          minimum: 0
+          maximum: 1
+        first_observed:
+          type: string
+          format: date-time
+    ThreatUpdate:
+      type: object
+      required:
+      - threat_id
+      properties:
+        threat_id:
+          type: string
+        severity_update:
+          type: string
+          enum:
+          - increase
+          - decrease
+        new_intelligence:
+          type: string
+    ThreatIntelligence:
+      type: object
+      properties:
+        known_attack_vectors:
+          type: array
+          items:
+            type: string
+        emerging_patterns:
+          type: array
+          items:
+            type: string
+        recommended_defenses:
+          type: array
+          items:
+            type: string
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - critical
+        uptime_seconds:
+          type: integer
+        active_ice_deployments:
+          type: integer
+        active_intrusions:
+          type: integer
+        system_load:
+          type: number
+          description: System load percentage (0-1)
+    DetailedHealthResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - critical
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentHealth'
+        system_metrics:
+          $ref: '#/components/schemas/SystemMetrics'
+    SegmentHealth:
+      type: object
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - healthy
+          - warning
+          - critical
+        active_ice_count:
+          type: integer
+        recent_intrusions:
+          type: integer
+        adaptation_health:
+          type: number
+          description: Adaptation system health (0-1)
+    SystemMetrics:
+      type: object
+      properties:
+        average_response_time_ms:
+          type: number
+        memory_usage_percent:
+          type: number
+        cpu_usage_percent:
+          type: number
+        network_throughput_mbps:
+          type: number
+        active_connections:
+          type: integer
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_count:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean

@@ -1,0 +1,61 @@
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/players/behavior:
+    get:
+      summary: Get detailed player behavior analytics
+      description: '**Advanced player behavior analytics**
+
+        Comprehensive analysis of player engagement patterns, session durations, progression
+        rates, and behavioral segmentation.
+
+        **Includes:** Session analytics, progression tracking, behavioral clusters
+        **Performance:** <100ms P95 with cached aggregations '
+      operationId: getPlayerBehaviorAnalytics
+      tags:
+      - Player Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          default: 7d
+      - name: segment
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - new_players
+          - returning
+          - high_value
+          - at_risk
+          default: all
+      - name: cohort
+        in: query
+        schema:
+          type: string
+          format: date
+          example: '2024-01-01'
+        description: Specific cohort date for analysis
+      responses:
+        '200':
+          description: Player behavior analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

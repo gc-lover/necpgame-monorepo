@@ -1,0 +1,225 @@
+openapi: 3.0.3
+paths:
+  /factions/{faction_id}:
+    get:
+      summary: Get faction details
+      description: '**Faction details retrieval endpoint**
+
+        Retrieves comprehensive faction information including members, diplomatic
+        relations, and influence zones.
+
+        **Performance:** <8ms P95 with Redis caching
+
+        **Features:** Conditional requests, partial member loading
+
+        '
+      operationId: getFaction
+      tags:
+      - Faction Management
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: include_members
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: include_diplomacy
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Faction details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"faction-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '304':
+          description: Not modified - faction has not changed
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    put:
+      summary: Update faction configuration
+      description: '**Faction update endpoint**
+
+        Updates faction settings, diplomatic stance, and configuration. Supports partial
+        updates with optimistic locking.
+
+        **Performance:** <20ms P95 with conflict resolution
+
+        **Security:** Leadership permissions required
+
+        '
+      operationId: updateFaction
+      tags:
+      - Faction Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: Optimistic locking version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFactionRequest'
+      responses:
+        '200':
+          description: Faction updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to update faction
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Version conflict - faction was modified concurrently
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    delete:
+      summary: Disband faction
+      description: '**Faction disband endpoint**
+
+        Permanently disbands a faction, handling member reassignment and diplomatic
+        cleanup. Requires leadership consensus.
+
+        **Performance:** <80ms P95 including diplomatic dissolution
+
+        **Security:** Strict permission checks and confirmation required
+
+        '
+      operationId: disbandFaction
+      tags:
+      - Faction Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: faction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - confirmation_code
+              properties:
+                confirmation_code:
+                  type: string
+                  description: Faction disband confirmation code
+                member_reassignment:
+                  type: string
+                  enum:
+                  - neutral_faction
+                  - disband_members
+                  - merge_to_faction
+                  default: neutral_faction
+                merge_target_faction_id:
+                  type: string
+                  format: uuid
+                  description: Required if member_reassignment is merge_to_faction
+      responses:
+        '204':
+          description: Faction disbanded successfully
+        '400':
+          description: Invalid confirmation or parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to disband faction
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Faction not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

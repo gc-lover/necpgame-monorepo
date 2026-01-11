@@ -42,563 +42,71 @@ servers:
   description: Local development server
 security:
 - BearerAuth: []
+tags: []
 paths:
   /easter-eggs:
-    get:
-      summary: Get available easter eggs for player
-      description: 'Retrieve easter eggs available for discovery by the authenticated
-        player.
-
-        Filters out already discovered eggs and applies level/location restrictions.
-
-        '
-      operationId: getAvailableEasterEggs
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - technology
-          - cultural
-          - historical
-          - humorous
-        description: Filter by easter egg category
-      - name: difficulty
-        in: query
-        schema:
-          type: string
-          enum:
-          - easy
-          - medium
-          - hard
-          - legendary
-        description: Filter by discovery difficulty
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Maximum number of easter eggs to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Pagination offset
-      responses:
-        '200':
-          description: Successful response with available easter eggs
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EasterEggListResponse'
-              example:
-                easter_eggs:
-                - id: easter-egg-turing-ghost
-                  name:   
-                  category: technology
-                  difficulty: medium
-                  description:    
-                  hints_available: 1
-                total_count: 25
-                has_more: false
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/easter-eggs.yaml#/paths/~1easter-eggs
   /easter-eggs/{easter_egg_id}/discover:
-    post:
-      summary: Validate and process easter egg discovery
-      description: 'Validate that a player has legitimately discovered an easter egg
-
-        and process the discovery, granting rewards and updating achievements.
-
-        '
-      operationId: discoverEasterEgg
-      parameters:
-      - name: easter_egg_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Unique identifier of the easter egg
-        example: easter-egg-turing-ghost
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DiscoveryRequest'
-            example:
-              discovery_context:
-                network_location: university_networks
-                discovery_method: pattern_recognition
-                player_level: 15
-                timestamp: '2025-12-27T16:00:00Z'
-      responses:
-        '201':
-          description: Easter egg successfully discovered and rewards granted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DiscoveryResponse'
-              example:
-                easter_egg_id: easter-egg-turing-ghost
-                discovery_id: 550e8400-e29b-41d4-a716-446655440000
-                rewards_granted:
-                - type: experience
-                  amount: 500
-                  description: +500 XP
-                - type: achievement
-                  name:  
-                  description: Achievement unlocked
-                lore_revealed:
-                - connection_id: computer_science_origins
-                  title:   
-                  content:     
-        '400':
-          description: Invalid discovery request or easter egg already discovered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: EASTER_EGG_ALREADY_DISCOVERED
-                  message: This easter egg has already been discovered by the player
-                  details:
-                    easter_egg_id: easter-egg-turing-ghost
-                    discovered_at: '2025-12-27T15:30:00Z'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: Discovery validation failed (anti-cheat)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: DISCOVERY_VALIDATION_FAILED
-                  message: Discovery validation failed - possible cheating detected
-        '404':
-          description: Easter egg not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: EASTER_EGG_NOT_FOUND
-                  message: Easter egg with specified ID does not exist
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/easter-eggs-{easter_egg_id}-discover.yaml#/paths/~1easter-eggs~1{easter_egg_id}~1discover
   /easter-eggs/{easter_egg_id}/hints:
-    get:
-      summary: Get hints for easter egg discovery
-      description: 'Retrieve available hints for discovering a specific easter egg.
-
-        Hints are provided progressively based on player progress.
-
-        '
-      operationId: getEasterEggHints
-      parameters:
-      - name: easter_egg_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Unique identifier of the easter egg
-      responses:
-        '200':
-          description: Successful response with available hints
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HintsResponse'
-              example:
-                easter_egg_id: easter-egg-turing-ghost
-                hints:
-                - id: hint-1
-                  text:    
-                  type: direct
-                  cost: 0
-                  enabled: true
-                - id: hint-2
-                  text:      
-                  type: cryptic
-                  cost: 100
-                  enabled: false
-                total_hints: 3
-        '404':
-          $ref: '#/components/responses/NotFound'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/easter-eggs-{easter_egg_id}-hints.yaml#/paths/~1easter-eggs~1{easter_egg_id}~1hints
   /players/{player_id}/discoveries:
-    get:
-      summary: Get player's easter egg discoveries
-      description: Retrieve all easter eggs discovered by a specific player
-      operationId: getPlayerDiscoveries
-      parameters:
-      - name: player_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Player unique identifier
-      - name: include_rewards
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include reward details in response
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Maximum number of discoveries to return
-      responses:
-        '200':
-          description: Successful response with player discoveries
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerDiscoveriesResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    $ref: ./paths/players-{player_id}-discoveries.yaml#/paths/~1players~1{player_id}~1discoveries
 components:
   schemas:
     EasterEggListResponse:
-      type: object
-      required:
-      - easter_eggs
-      - total_count
-      - has_more
-      properties:
-        easter_eggs:
-          type: array
-          items:
-            $ref: '#/components/schemas/EasterEggSummary'
-        total_count:
-          type: integer
-          minimum: 0
-        has_more:
-          type: boolean
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/EasterEggListResponse
     EasterEggSummary:
-      type: object
-      required:
-      - id
-      - name
-      - category
-      - difficulty
-      - description
-      - hints_available
-      properties:
-        id:
-          type: string
-          description: Unique easter egg identifier
-        name:
-          type: string
-          description: Display name of the easter egg
-        category:
-          type: string
-          enum:
-          - technology
-          - cultural
-          - historical
-          - humorous
-          description: Easter egg category
-        difficulty:
-          type: string
-          enum:
-          - easy
-          - medium
-          - hard
-          - legendary
-          description: Discovery difficulty level
-        description:
-          type: string
-          description: Brief description of the easter egg
-        hints_available:
-          type: integer
-          minimum: 0
-          description: Number of hints available for this easter egg
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/EasterEggSummary
     DiscoveryRequest:
-      type: object
-      required:
-      - discovery_context
-      properties:
-        discovery_context:
-          type: object
-          required:
-          - network_location
-          - discovery_method
-          - player_level
-          - timestamp
-          properties:
-            network_location:
-              type: string
-              description: Network where discovery occurred
-            discovery_method:
-              type: string
-              description: Method used for discovery
-            player_level:
-              type: integer
-              minimum: 1
-              maximum: 100
-              description: Player level at time of discovery
-            timestamp:
-              type: string
-              format: date-time
-              description: Discovery timestamp
-            additional_data:
-              type: object
-              description: Additional discovery context data
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/DiscoveryRequest
     DiscoveryResponse:
-      type: object
-      required:
-      - easter_egg_id
-      - discovery_id
-      - rewards_granted
-      properties:
-        easter_egg_id:
-          type: string
-          description: ID of the discovered easter egg
-        discovery_id:
-          type: string
-          format: uuid
-          description: Unique discovery record identifier
-        rewards_granted:
-          type: array
-          items:
-            $ref: '#/components/schemas/Reward'
-          description: List of rewards granted for the discovery
-        lore_revealed:
-          type: array
-          items:
-            $ref: '#/components/schemas/LoreReveal'
-          description: Lore connections revealed by this discovery
-        achievements_unlocked:
-          type: array
-          items:
-            type: string
-          description: Achievement IDs unlocked by this discovery
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/DiscoveryResponse
     Reward:
-      type: object
-      required:
-      - type
-      - description
-      properties:
-        type:
-          type: string
-          enum:
-          - experience
-          - currency
-          - item
-          - achievement
-          - buff
-          - cosmetic
-          description: Type of reward granted
-        amount:
-          type: number
-          description: Amount of reward (for experience/currency)
-        name:
-          type: string
-          description: Name of the reward item/achievement
-        description:
-          type: string
-          description: Human-readable description of the reward
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/Reward
     LoreReveal:
-      type: object
-      required:
-      - connection_id
-      - title
-      - content
-      properties:
-        connection_id:
-          type: string
-          description: Unique identifier of the lore connection
-        title:
-          type: string
-          description: Title of the revealed lore
-        content:
-          type: string
-          description: Content of the revealed lore
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/LoreReveal
     HintsResponse:
-      type: object
-      required:
-      - easter_egg_id
-      - hints
-      - total_hints
-      properties:
-        easter_egg_id:
-          type: string
-          description: Easter egg identifier
-        hints:
-          type: array
-          items:
-            $ref: '#/components/schemas/Hint'
-        total_hints:
-          type: integer
-          minimum: 0
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/HintsResponse
     Hint:
-      type: object
-      required:
-      - id
-      - text
-      - type
-      - cost
-      - enabled
-      properties:
-        id:
-          type: string
-          description: Unique hint identifier
-        text:
-          type: string
-          description: Hint text content
-        type:
-          type: string
-          enum:
-          - direct
-          - cryptic
-          - visual
-          description: Type of hint
-        cost:
-          type: integer
-          minimum: 0
-          description: Cost to unlock this hint (in game currency)
-        enabled:
-          type: boolean
-          description: Whether this hint is currently available
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/Hint
     PlayerDiscoveriesResponse:
-      type: object
-      required:
-      - player_id
-      - discoveries
-      - total_count
-      properties:
-        player_id:
-          type: string
-          format: uuid
-          description: Player identifier
-        discoveries:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlayerDiscovery'
-        total_count:
-          type: integer
-          minimum: 0
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/PlayerDiscoveriesResponse
     PlayerDiscovery:
-      type: object
-      required:
-      - easter_egg_id
-      - discovered_at
-      - rewards_claimed
-      properties:
-        easter_egg_id:
-          type: string
-          description: Easter egg that was discovered
-        discovered_at:
-          type: string
-          format: date-time
-          description: When the discovery occurred
-        rewards_claimed:
-          type: boolean
-          description: Whether rewards have been claimed
-        rewards_details:
-          type: array
-          items:
-            $ref: '#/components/schemas/Reward'
-          description: Details of rewards granted (if include_rewards=true)
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/PlayerDiscovery
     ErrorResponse:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: Error code identifier
-            message:
-              type: string
-              description: Human-readable error message
-            details:
-              type: object
-              description: Additional error context
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/ErrorResponse
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/HealthResponse
     Error:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/Error
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ./schemas/cyberspace-navigation-service-schemas.yaml#/components/schemas/PaginatedResponse
   responses:
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/Unauthorized
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/NotFound
     TooManyRequests:
-      description: Rate limit exceeded
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: RATE_LIMIT_EXCEEDED
-              message: Too many requests, please try again later
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/TooManyRequests
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/BadRequest
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/Forbidden
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/HealthOK
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ./schemas/cyberspace-navigation-service-responses.yaml#/components/responses/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
       $ref: ../common/security/security.yaml#/BearerAuth
@@ -606,4 +114,3 @@ components:
       $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
       $ref: ../common/security/security.yaml#/ServiceAuth
-

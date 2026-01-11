@@ -1,0 +1,64 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/abilities:
+    get:
+      operationId: abilityServiceGetCharacterAbilities
+      summary: Get character abilities
+      description: 'Retrieve all abilities available to a character with current status.
+
+
+        **Ability Status:**
+
+        - Learned abilities with current levels
+
+        - Active cooldowns and resource status
+
+        - Ability modifiers and enhancements
+
+        - Progression requirements
+
+        '
+      tags:
+      - Character Abilities
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: ability_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - passive
+          - ultimate
+          - trait
+        description: Filter by ability type
+      - name: include_cooldowns
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include current cooldown status
+      responses:
+        '200':
+          description: Character abilities retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CharacterAbility'
+                    summary:
+                      $ref: '#/components/schemas/CharacterAbilitySummary'
+        '404':
+          $ref: '#/components/responses/NotFound'

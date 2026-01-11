@@ -1,0 +1,95 @@
+openapi: 3.0.3
+paths:
+  /easter-eggs/{easter_egg_id}/discover:
+    post:
+      summary: Validate and process easter egg discovery
+      description: 'Validate that a player has legitimately discovered an easter egg
+
+        and process the discovery, granting rewards and updating achievements.
+
+        '
+      operationId: discoverEasterEgg
+      parameters:
+      - name: easter_egg_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique identifier of the easter egg
+        example: easter-egg-turing-ghost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryRequest'
+            example:
+              discovery_context:
+                network_location: university_networks
+                discovery_method: pattern_recognition
+                player_level: 15
+                timestamp: '2025-12-27T16:00:00Z'
+      responses:
+        '201':
+          description: Easter egg successfully discovered and rewards granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryResponse'
+              example:
+                easter_egg_id: easter-egg-turing-ghost
+                discovery_id: 550e8400-e29b-41d4-a716-446655440000
+                rewards_granted:
+                - type: experience
+                  amount: 500
+                  description: +500 XP
+                - type: achievement
+                  name: null
+                  description: Achievement unlocked
+                lore_revealed:
+                - connection_id: computer_science_origins
+                  title: null
+                  content: null
+        '400':
+          description: Invalid discovery request or easter egg already discovered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: EASTER_EGG_ALREADY_DISCOVERED
+                  message: This easter egg has already been discovered by the player
+                  details:
+                    easter_egg_id: easter-egg-turing-ghost
+                    discovered_at: '2025-12-27T15:30:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Discovery validation failed (anti-cheat)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: DISCOVERY_VALIDATION_FAILED
+                  message: Discovery validation failed - possible cheating detected
+        '404':
+          description: Easter egg not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: EASTER_EGG_NOT_FOUND
+                  message: Easter egg with specified ID does not exist
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

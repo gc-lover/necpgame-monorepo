@@ -1,0 +1,70 @@
+openapi: 3.0.3
+paths:
+  /affixes/active:
+    get:
+      summary: Get active gameplay affixes
+      description: '**Get currently active gameplay modifiers**
+
+        Returns dynamic affixes that modify gameplay mechanics.
+
+        **Performance:** <15ms response time, real-time data '
+      operationId: getActiveAffixes
+      tags:
+      - Gameplay Affixes
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: context_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Context ID (encounter, area, character)
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - damage
+          - defense
+          - speed
+          - healing
+          - resource
+          - special
+        description: Filter by affix type
+      - name: target
+        in: query
+        schema:
+          type: string
+          enum:
+          - player
+          - enemy
+          - environment
+          - global
+        description: Filter by target type
+      responses:
+        '200':
+          description: Active affixes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameplayAffix'
+                  context:
+                    type: object
+                    description: Context information for applied affixes
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /notifications/broadcast:
+    post:
+      operationId: inGameNotificationServiceBroadcastNotification
+      summary: Broadcast notification to all users
+      description: 'Send notification to all active users in the system.
+
+
+        **Broadcast Features:**
+
+        - Global system announcements
+
+        - Emergency notifications
+
+        - Rate-limited delivery
+
+        - Geographic targeting options
+
+        - Priority override capabilities
+
+        '
+      tags:
+      - Notification Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastNotificationRequest'
+      responses:
+        '202':
+          description: Broadcast notification queued
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Accepted
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        broadcast_id:
+                          type: string
+                          format: uuid
+                          description: Broadcast tracking ID
+                        estimated_reach:
+                          type: integer
+                          description: Estimated number of users reached
+                        delivery_start_time:
+                          type: string
+                          format: date-time
+                          description: When delivery begins

@@ -1,0 +1,94 @@
+openapi: 3.0.0
+paths:
+  /ice/deployments:
+    get:
+      tags:
+      - ice-management
+      summary: Get active ICE deployments
+      description: Retrieve list of currently active ICE deployments across all network
+        segments
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: segment_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by network segment ID
+      - name: ice_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - black
+          - white
+          - adaptive
+          - psychological
+        description: Filter by ICE type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - standby
+          - breached
+          - adapting
+        description: Filter by deployment status
+      responses:
+        '200':
+          description: Successful retrieval of ICE deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDploymentListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      tags:
+      - ice-management
+      summary: Deploy new ICE system
+      description: Deploy a new ICE system to specified network segment with given
+        configuration
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEDeployRequest'
+      responses:
+        '201':
+          description: ICE system successfully deployed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: ICE deployment conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

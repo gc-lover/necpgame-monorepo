@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /network/analysis/connections:
+    get:
+      summary: Get connection analysis
+      description: Analyze WebSocket connection patterns and performance
+      operationId: getConnectionAnalysis
+      tags:
+      - Network Analysis
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: region
+        in: query
+        schema:
+          type: string
+        description: Filter by geographic region
+      - name: protocol
+        in: query
+        schema:
+          type: string
+          enum:
+          - websocket
+          - tcp
+          - udp
+          - all
+          default: all
+        description: Protocol type filter
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          default: 24h
+        description: Analysis timeframe
+      responses:
+        '200':
+          description: Connection analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionAnalysis'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

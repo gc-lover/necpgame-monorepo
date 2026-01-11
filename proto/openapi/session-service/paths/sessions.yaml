@@ -1,0 +1,99 @@
+openapi: 3.0.3
+paths:
+  /sessions:
+    post:
+      operationId: sessionServiceCreateSession
+      summary: Create new session
+      description: 'Create a new user session with JWT tokens and device tracking.
+
+
+        **Security Notes:**
+
+        - Validates user credentials through auth service
+
+        - Generates unique session tokens
+
+        - Records device fingerprint and location
+
+        - Sets appropriate security levels
+
+        '
+      tags:
+      - Session Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      operationId: sessionServiceListSessions
+      summary: List sessions with filtering
+      description: 'Retrieve paginated list of sessions with advanced filtering.
+
+
+        **Performance Notes:**
+
+        - Uses Redis for fast session lookups
+
+        - Supports cursor-based pagination
+
+        - Cached for 30 seconds
+
+        '
+      tags:
+      - Session Management
+      parameters:
+      - name: user_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by user ID
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - expired
+          - revoked
+        description: Filter by session status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of sessions to return
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SessionSummary'

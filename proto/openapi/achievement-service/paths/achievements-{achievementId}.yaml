@@ -1,0 +1,87 @@
+openapi: 3.0.3
+paths:
+  /achievements/{achievementId}:
+    get:
+      operationId: getAchievement
+      summary: Get achievement details
+      description: Retrieve detailed information about a specific achievement
+      tags:
+      - Achievements
+      parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      responses:
+        '200':
+          description: Achievement details
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Achievement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      operationId: updateAchievement
+      summary: Update achievement
+      description: Update achievement details with optimistic locking
+      tags:
+      - Achievements
+      parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Achievement updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Achievement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

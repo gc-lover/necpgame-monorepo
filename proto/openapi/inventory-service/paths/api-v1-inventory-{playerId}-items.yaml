@@ -1,0 +1,144 @@
+openapi: 3.0.3
+paths:
+  /api/v1/inventory/{playerId}/items:
+    get:
+      operationId: GetPlayerInventory
+      summary: Get player inventory
+      description: '**Get Player Inventory**
+
+
+        Retrieves complete player inventory with items, equipment, and metadata.
+
+        Supports filtering and pagination for large inventories.
+
+
+        **BACKEND NOTE:** Use memory-pooled response structures for high-throughput
+        operations.
+
+        **Performance:** P99 <75ms for full inventory retrieval
+
+        **Caching:** Redis cache with 95%+ hit rate
+
+        '
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      - name: filter
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - equipped
+          - unequipped
+          - consumable
+          - weapon
+          - armor
+          default: all
+        description: Inventory filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Inventory retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      operationId: AddItem
+      summary: Add item to inventory
+      description: '**Add Item to Inventory**
+
+
+        Adds a new item to player''s inventory with stack count validation.
+
+        Handles stack merging, capacity checks, and inventory overflow.
+
+
+        **BACKEND NOTE:** Use optimistic locking for concurrent inventory operations.
+
+        **Performance:** P99 <25ms for single item operations
+
+        **Validation:** Anti-cheat validation for item legitimacy
+
+        '
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemResponse'
+        '400':
+          description: Invalid item data or inventory full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

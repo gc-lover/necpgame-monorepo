@@ -1,0 +1,89 @@
+openapi: 3.0.3
+paths:
+  /templates:
+    post:
+      operationId: emailNotificationServiceCreateTemplate
+      summary: Create email template
+      description: 'Create reusable email template with variables and localization.
+
+
+        **Template Features:**
+
+        - Handlebars-style variable substitution
+
+        - Multi-language support
+
+        - Responsive HTML design
+
+        - A/B testing variants
+
+        - Version control and rollback
+
+        '
+      tags:
+      - Template Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/EmailTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: emailNotificationServiceListTemplates
+      summary: List email templates
+      description: Retrieve paginated list of email templates with filtering
+      tags:
+      - Template Management
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by template category
+      - name: language
+        in: query
+        schema:
+          type: string
+        description: Filter by template language
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include only active templates
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of templates to return
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TemplateSummary'

@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /devices/{deviceId}:
+    put:
+      operationId: pushNotificationServiceUpdateDevice
+      summary: Update device information
+      description: 'Update device registration details and token.
+
+
+        **Business Rules:**
+
+        - Validates token authenticity
+
+        - Updates device fingerprint if changed
+
+        - Maintains device activity history
+
+        - Handles token rotation securely
+
+        '
+      tags:
+      - Device Management
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Device unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeviceRequest'
+      responses:
+        '200':
+          description: Device updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DeviceRegistration'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: pushNotificationServiceUnregisterDevice
+      summary: Unregister device
+      description: 'Remove device from push notification service.
+
+
+        **Cleanup Notes:**
+
+        - Immediately invalidates all pending notifications
+
+        - Removes device from all campaigns
+
+        - Cleans up device-specific data
+
+        - Audit trail for unregistration
+
+        '
+      tags:
+      - Device Management
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Device unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/Deleted'
+        '404':
+          $ref: '#/components/responses/NotFound'

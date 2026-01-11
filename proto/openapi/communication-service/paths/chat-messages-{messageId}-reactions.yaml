@@ -1,0 +1,82 @@
+openapi: 3.0.3
+paths:
+  /chat/messages/{messageId}/reactions:
+    post:
+      summary: Add reaction to message
+      description: '**Add emoji reaction to a chat message**
+
+        Supports multiple reactions per message and user.
+
+        **Performance:** <15ms with real-time broadcast
+
+        '
+      operationId: addMessageReaction
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddReactionRequest'
+      responses:
+        '201':
+          description: Reaction added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageReactionResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Remove reaction from message
+      description: '**Remove user''s reaction from a chat message**
+
+        User can only remove their own reactions.
+
+        **Performance:** <10ms with real-time update
+
+        '
+      operationId: removeMessageReaction
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      - name: emoji
+        in: query
+        required: true
+        schema:
+          type: string
+          maxLength: 10
+        description: Emoji to remove
+      responses:
+        '204':
+          description: Reaction removed successfully
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /combat/sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: Execute a combat action within a session
+      operationId: executeCombatAction
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '409':
+          $ref: ../common/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,102 @@
+openapi: 3.0.3
+paths:
+  /modes/challenge:
+    get:
+      summary: Get available challenge modes
+      description: '**Get special challenge modes and restricted content**
+
+        Returns Mythic+, restricted modes, and other special gameplay variants.
+
+        **Performance:** <20ms response time, cached for 10 minutes '
+      operationId: getChallengeModes
+      tags:
+      - Challenge Modes
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: mode_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - mythic_plus
+          - restricted
+          - master_challenge
+          - special
+        description: Filter by mode type
+      - name: unlocked_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Only return modes the character can access
+      responses:
+        '200':
+          description: Challenge modes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        modeId:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - mythic_plus
+                          - restricted
+                          - master_challenge
+                          - special
+                        requirements:
+                          type: object
+                          description: Access requirements
+                        rewards:
+                          type: object
+                          description: Mode-specific rewards
+                        unlocked:
+                          type: boolean
+                        recommendedLevel:
+                          type: integer
+                        difficulty:
+                          type: string
+                          enum:
+                          - easy
+                          - medium
+                          - hard
+                          - expert
+                          - nightmare
+                      required:
+                      - modeId
+                      - name
+                      - type
+                      - unlocked
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,66 @@
+openapi: 3.0.3
+paths:
+  /skill-trees/{treeId}/abilities/{abilityId}/unlock:
+    post:
+      operationId: abilityServiceUnlockAbilityInTree
+      summary: Unlock ability in skill tree
+      description: 'Unlock an ability in the skill tree for a character.
+
+
+        **Unlock Process:**
+
+        - Validate prerequisites
+
+        - Check talent point availability
+
+        - Deduct costs and unlock ability
+
+        - Update tree progression
+
+        '
+      tags:
+      - Skill Trees
+      parameters:
+      - name: treeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Skill tree unique identifier
+      - name: abilityId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - character_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                  description: Character ID
+      responses:
+        '200':
+          description: Ability unlocked successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'

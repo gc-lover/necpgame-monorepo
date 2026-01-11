@@ -1,0 +1,101 @@
+openapi: 3.0.3
+paths:
+  /health/ws:
+    get:
+      summary: Real-time signaling health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: webrtcSignalingHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/example-domain/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

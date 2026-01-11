@@ -1,0 +1,78 @@
+openapi: 3.0.3
+paths:
+  /factions/rankings:
+    get:
+      summary: Get faction rankings and statistics
+      description: '**Faction rankings endpoint**
+
+        Retrieves global faction rankings by reputation, influence, and diplomatic
+        power. Supports different ranking categories.
+
+        **Performance:** <20ms P95 with cached rankings
+
+        **Caching:** Rankings updated hourly with real-time deltas
+
+        '
+      operationId: getFactionRankings
+      tags:
+      - Faction Competition
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - reputation
+          - influence
+          - territory_control
+          - diplomatic_power
+          default: reputation
+      - name: time_period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: all_time
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Faction rankings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionRankingsResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=3600, public
+        '400':
+          description: Invalid ranking parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

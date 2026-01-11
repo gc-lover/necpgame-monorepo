@@ -1,0 +1,59 @@
+openapi: 3.0.3
+paths:
+  /events/{aggregateType}/{aggregateId}:
+    get:
+      summary: Get events for aggregate
+      description: Retrieve event history for specific aggregate
+      operationId: getAggregateEvents
+      tags:
+      - Event Sourcing
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: aggregateType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+      - name: aggregateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: fromVersion
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: toVersion
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      responses:
+        '200':
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventHistoryResponse'
+        '404':
+          description: Aggregate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

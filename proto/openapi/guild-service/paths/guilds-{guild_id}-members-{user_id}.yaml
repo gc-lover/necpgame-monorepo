@@ -1,0 +1,146 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}/members/{user_id}:
+    put:
+      summary: Update member role and permissions
+      description: '**Member role update endpoint**
+
+        Updates guild member''s role, permissions, and responsibilities. Supports
+        promotion, demotion, and permission changes.
+
+        **Performance:** <15ms P95 with permission validation
+
+        **Security:** Hierarchical permission checks
+
+        '
+      operationId: updateGuildMember
+      tags:
+      - Member Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildMemberRequest'
+      responses:
+        '200':
+          description: Member updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMemberResponse'
+        '400':
+          description: Invalid role or permission parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to modify member
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    delete:
+      summary: Remove member from guild
+      description: '**Member removal endpoint**
+
+        Removes a member from the guild with optional reason and notification. Handles
+        asset redistribution and role reassignments.
+
+        **Performance:** <25ms P95 including cleanup operations
+
+        **Features:** Voluntary leave vs forced removal, asset handling
+
+        '
+      operationId: removeGuildMember
+      tags:
+      - Member Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Reason for removal (optional)
+                asset_distribution:
+                  type: string
+                  enum:
+                  - keep_with_guild
+                  - distribute_to_member
+                  - return_to_guild_bank
+                  default: keep_with_guild
+      responses:
+        '204':
+          description: Member removed successfully
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to remove member
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

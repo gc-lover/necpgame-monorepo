@@ -1,0 +1,98 @@
+openapi: 3.0.3
+paths:
+  /templates:
+    post:
+      operationId: implantServiceCreateTemplate
+      summary: Create implant template
+      description: 'Create a new implant template with comprehensive configuration.
+
+
+        **Template Creation:**
+
+        - Define implant properties and effects
+
+        - Configure compatibility rules and requirements
+
+        - Set risk factors and maintenance needs
+
+        - Define upgrade paths and synergies
+
+        '
+      tags:
+      - Implant Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateImplantTemplateRequest'
+      responses:
+        '201':
+          description: Implant template created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/Created
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ImplantTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      operationId: implantServiceListTemplates
+      summary: List implant templates
+      description: Retrieve paginated list of implant templates
+      tags:
+      - Implant Management
+      parameters:
+      - name: implant_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - utility
+          - medical
+          - neural
+        description: Filter by implant type
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        description: Filter by rarity
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include only active templates
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of templates to return
+      responses:
+        '200':
+          description: Implant templates retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ImplantTemplateSummary'

@@ -1,0 +1,112 @@
+openapi: 3.0.3
+paths:
+  /chat/channels/{channelId}/messages:
+    get:
+      summary: Get chat messages
+      description: '**Retrieve paginated chat messages from a channel**
+
+        Supports message history with filtering and search capabilities.
+
+        **Performance:** <100ms with pagination, supports 10k+ messages per channel
+
+        '
+      operationId: getChatMessages
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      - name: before
+        in: query
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+        description: Get messages before this message ID
+      - name: after
+        in: query
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+        description: Get messages after this message ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of messages to return
+      - name: search
+        in: query
+        schema:
+          type: string
+          maxLength: 100
+        description: Search messages by content
+      responses:
+        '200':
+          description: Chat messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/schemas/common.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ChatMessageResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Send chat message
+      description: '**Send a message to a chat channel**
+
+        Supports rich text, mentions, attachments, and real-time delivery.
+
+        **Performance:** <20ms with spam filtering and moderation checks
+
+        '
+      operationId: sendChatMessage
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendChatMessageRequest'
+      responses:
+        '201':
+          description: Chat message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

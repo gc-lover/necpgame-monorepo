@@ -1,0 +1,37 @@
+openapi: 3.0.0
+paths:
+  /intrusions/{intrusion_id}/response:
+    post:
+      tags:
+      - intrusion-detection
+      summary: Initiate ICE response to intrusion
+      description: Trigger automated or manual ICE response to specific intrusion
+        attempt
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: intrusion_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntrusionResponseRequest'
+      responses:
+        '200':
+          description: ICE response initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntrusionResponseResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

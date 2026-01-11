@@ -1,0 +1,80 @@
+openapi: 3.0.3
+paths:
+  /combat/weapons/{weaponId}/analytics:
+    get:
+      summary: Get weapon performance analytics
+      description: '**Enterprise-grade weapon analytics endpoint**
+
+        Provides comprehensive statistics on weapon usage patterns, effectiveness
+        metrics, balance analysis, and player behavior insights.
+
+        Essential for game balancing, content updates, and player experience optimization.
+
+        **Performance:** <50ms P95 with cached aggregations
+
+        **Data Sources:** Combat logs, player statistics, matchmaking data
+
+        '
+      operationId: combatServiceGetWeaponAnalytics
+      tags:
+      - Weapon Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: weaponId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Weapon unique identifier
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: weekly
+          description: Analysis time period
+      - name: include_player_breakdown
+        in: query
+        schema:
+          type: boolean
+          default: false
+          description: Include per-player usage statistics
+      - name: time_range
+        in: query
+        schema:
+          $ref: '#/components/schemas/TimeRange'
+        description: Custom time range for analysis
+      responses:
+        '200':
+          description: Weapon analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponAnalyticsResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '404':
+          description: Weapon not found or no usage data available
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

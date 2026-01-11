@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /friendships/{friendshipId}:
+    put:
+      summary: Respond to friend request
+      description: '**Accept or decline a friend request**
+
+        Updates friendship status and creates relationship.
+
+        **Performance:** <40ms with status validation
+
+        '
+      operationId: respondToFriendRequest
+      tags:
+      - Friendship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: friendshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequestResponse'
+      responses:
+        '200':
+          description: Friend request responded to
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendshipResponse'
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    delete:
+      summary: Remove friendship
+      description: '**Remove/unfriend another user**
+
+        Terminates friendship relationship.
+
+        **Performance:** <35ms with relationship cleanup
+
+        '
+      operationId: removeFriendship
+      tags:
+      - Friendship
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: friendshipId
+        in: path
+        required: true
+        schema:
+          $ref: ../common/schemas/common.yaml#/UUID
+      responses:
+        '204':
+          description: Friendship removed successfully
+        '403':
+          $ref: ../common/responses/error.yaml#/Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,145 @@
+openapi: 3.0.3
+paths:
+  /alliances:
+    get:
+      summary: List alliances with filtering and pagination
+      description: '**Enterprise-grade alliance listing endpoint**
+
+        Supports complex filtering by type, member count, influence, and relationships.
+        Optimized for high-throughput scenarios with proper indexing.
+
+        **Performance:** <15ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listAlliances
+      tags:
+      - Alliance Management
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: alliance_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - military
+          - trade
+          - political
+          - research
+          - criminal
+          - all
+          default: all
+        description: Filter by alliance type
+      - name: influence_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - dominant
+          - major
+          - minor
+          - emerging
+          - all
+          default: all
+        description: Filter by influence level
+      - name: member_count_min
+        in: query
+        schema:
+          type: integer
+          minimum: 2
+        description: Minimum member count filter
+      responses:
+        '200':
+          description: Alliances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceListResponse'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    post:
+      summary: Create new alliance
+      description: '**Enterprise-grade alliance creation endpoint**
+
+        Validates alliance uniqueness, political landscape impact, and business rules.
+        Supports alliance-specific initialization and member invitations.
+
+        **Performance:** <75ms P95, includes validation and political impact calculation
+
+        '
+      operationId: createAlliance
+      tags:
+      - Alliance Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAllianceRequest'
+      responses:
+        '201':
+          description: Alliance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
+          description: Invalid request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - alliance name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - political landscape constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

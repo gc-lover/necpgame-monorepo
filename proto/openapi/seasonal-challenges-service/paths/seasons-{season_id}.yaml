@@ -1,0 +1,78 @@
+openapi: 3.0.3
+paths:
+  /seasons/{season_id}:
+    get:
+      operationId: getSeason
+      summary: Get season by ID
+      description: Retrieve a specific season with full details and challenges
+      tags:
+      - Seasonal Challenges
+      parameters:
+      - name: season_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Season unique identifier
+      responses:
+        '200':
+          description: Season found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/components/responses/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/Season'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateSeason
+      summary: Update season
+      description: 'Update an existing season with optimistic locking.
+
+
+        **Concurrency Control:**
+
+        - Uses version field for optimistic locking
+
+        - Prevents concurrent modification conflicts
+
+        - Returns 409 Conflict on version mismatch
+
+        '
+      tags:
+      - Administration
+      parameters:
+      - name: season_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Season unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSeasonRequest'
+      responses:
+        '200':
+          description: Season updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Season'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'

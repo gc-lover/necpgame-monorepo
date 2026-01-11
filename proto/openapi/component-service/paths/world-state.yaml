@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /world/state:
+    get:
+      summary: Get current world state
+      description: '**Get global world state and active flags**
+
+        Returns current world state including global flags, regional status, and active
+        events affecting gameplay.
+
+        **Performance:** <10ms response time, cached for 30 seconds '
+      operationId: getWorldState
+      tags:
+      - World State
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: include_regions
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include regional state data
+      - name: include_events
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include active global events
+      - name: region_filter
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter to specific region
+      responses:
+        '200':
+          description: World state retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/WorldState'
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

@@ -1,0 +1,54 @@
+openapi: 3.0.3
+paths:
+  /rewards/claim:
+    post:
+      operationId: claimRewards
+      summary: Claim achievement rewards
+      description: 'Claim rewards for completed achievements.
+
+        Rewards are distributed automatically to player''s inventory/wallet.
+
+        '
+      tags:
+      - Rewards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardsRequest'
+      responses:
+        '200':
+          description: Rewards claimed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        claimed_rewards:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/RewardClaim'
+                        distribution_results:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/DistributionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

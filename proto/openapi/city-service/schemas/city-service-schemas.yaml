@@ -1,0 +1,574 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    CitySummary:
+      type: object
+      required:
+      - id
+      - city_id
+      - name
+      - country
+      - continent
+      - latitude
+      - longitude
+      - cyberpunk_level
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        city_id:
+          type: string
+          example: night-city
+        name:
+          type: string
+          example: Night City
+        name_local:
+          type: string
+          nullable: true
+          example: Night City
+        country:
+          type: string
+          example: United States
+        continent:
+          type: string
+          example: North America
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 33.7175
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: -117.8311
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 10
+        population_2020:
+          type: integer
+          nullable: true
+          example: 8000000
+        is_megacity:
+          type: boolean
+          example: true
+        is_capital:
+          type: boolean
+          example: false
+        status:
+          type: string
+          enum:
+          - active
+          - destroyed
+          - abandoned
+          - virtual
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+    City:
+      allOf:
+      - $ref: '#/components/schemas/CitySummary'
+      - type: object
+        properties:
+          population_2050:
+            type: integer
+            nullable: true
+            example: 12000000
+          population_2093:
+            type: integer
+            nullable: true
+            example: 18000000
+          area_km2:
+            type: number
+            format: double
+            nullable: true
+            example: 2200.0
+          elevation_m:
+            type: integer
+            nullable: true
+            example: 50
+          corruption_index:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 1
+            nullable: true
+            example: 0.95
+          technology_index:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 1
+            nullable: true
+            example: 0.98
+          zones:
+            type: array
+            nullable: true
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  example: Corporate Plaza
+                type:
+                  type: string
+                  enum:
+                  - commercial
+                  - residential
+                  - industrial
+                  - corporate
+                  - entertainment
+                  - government
+                  - military
+                  - slums
+                  example: corporate
+                coordinates:
+                  type: object
+                  properties:
+                    center:
+                      type: array
+                      items:
+                        type: number
+                        format: double
+                      minItems: 2
+                      maxItems: 2
+                      example:
+                      - 33.7175
+                      - -117.8311
+                    bounds:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: number
+                          format: double
+                        minItems: 2
+                        maxItems: 2
+                      minItems: 4
+                      maxItems: 4
+          districts:
+            type: object
+            nullable: true
+            additionalProperties: true
+          landmarks:
+            type: array
+            nullable: true
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  example: Arasaka Tower
+                type:
+                  type: string
+                  enum:
+                  - skyscraper
+                  - landmark
+                  - monument
+                  - district
+                  - bar
+                  - hotel
+                  - station
+                  example: skyscraper
+                coordinates:
+                  type: array
+                  items:
+                    type: number
+                    format: double
+                  minItems: 2
+                  maxItems: 2
+                  example:
+                  - 33.7175
+                  - -117.8311
+          economy_data:
+            type: object
+            nullable: true
+            properties:
+              gdp_2020:
+                type: number
+                format: double
+                example: 1200000000000
+              currency:
+                type: string
+                example: USD
+              industries:
+                type: array
+                items:
+                  type: string
+                example:
+                - corporations
+                - tech
+                - entertainment
+          corporation_presence:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: number
+              format: double
+              minimum: 0
+              maximum: 1
+            example:
+              arasaka: 0.9
+              militech: 0.7
+              biotechnica: 0.6
+          faction_influence:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: number
+              format: double
+              minimum: 0
+              maximum: 1
+            example:
+              corporations: 0.8
+              nomads: 0.1
+              street_kids: 0.3
+          timeline_events:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: array
+              items:
+                type: string
+            example:
+              '2023':
+              - Fourth Corporate War begins
+              '2045':
+              - DataKrash
+              '2077':
+              - Nuclear attack
+          future_evolution:
+            type: object
+            nullable: true
+            additionalProperties: true
+          available_in_game:
+            type: boolean
+            example: true
+          game_regions:
+            type: array
+            nullable: true
+            items:
+              type: string
+            example:
+            - night-city-region
+            - california-region
+          source_file:
+            type: string
+            nullable: true
+            example: knowledge/canon/lore/locations/world-cities/night-city-detailed-2020-2093.yaml
+          version:
+            type: string
+            example: 1.0.0
+    CityCreate:
+      type: object
+      required:
+      - city_id
+      - name
+      - country
+      - continent
+      - latitude
+      - longitude
+      properties:
+        city_id:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+          example: night-city
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Night City
+        name_local:
+          type: string
+          maxLength: 200
+          example: Night City
+        country:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: United States
+        continent:
+          type: string
+          enum:
+          - Africa
+          - Asia
+          - Europe
+          - North America
+          - South America
+          - Oceania
+          example: North America
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 33.7175
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: -117.8311
+        population_2020:
+          type: integer
+          minimum: 0
+          example: 8000000
+        population_2050:
+          type: integer
+          minimum: 0
+          example: 12000000
+        population_2093:
+          type: integer
+          minimum: 0
+          example: 18000000
+        area_km2:
+          type: number
+          format: double
+          minimum: 0
+          example: 2200.0
+        elevation_m:
+          type: integer
+          example: 50
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          example: 10
+        corruption_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.95
+        technology_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.98
+        zones:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+                enum:
+                - commercial
+                - residential
+                - industrial
+                - corporate
+                - entertainment
+                - government
+                - military
+                - slums
+              coordinates:
+                type: object
+        districts:
+          type: object
+        landmarks:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+        economy_data:
+          type: object
+        corporation_presence:
+          type: object
+        faction_influence:
+          type: object
+        timeline_events:
+          type: object
+        future_evolution:
+          type: object
+        is_capital:
+          type: boolean
+          default: false
+        is_megacity:
+          type: boolean
+          default: false
+        available_in_game:
+          type: boolean
+          default: true
+        game_regions:
+          type: array
+          items:
+            type: string
+        source_file:
+          type: string
+        version:
+          type: string
+          default: 1.0.0
+    CityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        name_local:
+          type: string
+          maxLength: 200
+        population_2020:
+          type: integer
+          minimum: 0
+        population_2050:
+          type: integer
+          minimum: 0
+        population_2093:
+          type: integer
+          minimum: 0
+        area_km2:
+          type: number
+          format: double
+          minimum: 0
+        elevation_m:
+          type: integer
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        corruption_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        technology_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        zones:
+          type: array
+          items:
+            type: object
+        districts:
+          type: object
+        landmarks:
+          type: array
+          items:
+            type: object
+        economy_data:
+          type: object
+        corporation_presence:
+          type: object
+        faction_influence:
+          type: object
+        timeline_events:
+          type: object
+        future_evolution:
+          type: object
+        status:
+          type: string
+          enum:
+          - active
+          - destroyed
+          - abandoned
+          - virtual
+        is_capital:
+          type: boolean
+        is_megacity:
+          type: boolean
+        available_in_game:
+          type: boolean
+        game_regions:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
+    CityAnalytics:
+      type: object
+      required:
+      - metric
+      - data
+      properties:
+        metric:
+          type: string
+          enum:
+          - population_trends
+          - cyberpunk_distribution
+          - economic_indicators
+          - faction_influence
+          - corporation_presence
+        data:
+          type: object
+          additionalProperties: true
+        filters:
+          type: object
+          properties:
+            continent:
+              type: string
+            year:
+              type: integer
+        generated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+    PaginationMeta:
+      type: object
+      required:
+      - page
+      - limit
+      - total
+      - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          example: 140
+        total_pages:
+          type: integer
+          minimum: 0
+          example: 7
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse

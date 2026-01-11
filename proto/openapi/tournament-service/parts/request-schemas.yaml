@@ -1,0 +1,228 @@
+components:
+  schemas:
+    CreateTournamentRequest:
+      description: Request to create a new tournament
+      type: object
+      required:
+      - name
+      - game_mode
+      - max_participants
+      - start_time
+      - rewards
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Tournament display name
+          example: "Night City Championship 2077"
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed tournament description
+          example: "The ultimate test of skill in Night City"
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_the_flag, king_of_the_hill, battle_royale]
+          description: Game mode for the tournament
+          example: deathmatch
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          description: Maximum number of participants allowed
+          example: 128
+        start_time:
+          type: string
+          format: date-time
+          description: Tournament start timestamp
+          example: "2077-12-25T18:00:00Z"
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentReward'
+          minItems: 1
+          maxItems: 10
+          description: Tournament reward structure
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentObjective'
+          maxItems: 5
+          description: Tournament objectives and scoring rules
+        bracket_type:
+          type: string
+          enum: [single_elimination, double_elimination, round_robin, swiss_system]
+          description: Tournament bracket format
+          example: single_elimination
+          default: single_elimination
+        region:
+          type: string
+          enum: [north_america, south_america, europe, asia, africa, australia]
+          description: Geographic region for the tournament
+          example: north_america
+        skill_level:
+          type: string
+          enum: [beginner, intermediate, advanced, expert, legendary]
+          description: Required skill level for participants
+          example: advanced
+          default: intermediate
+        entry_fee:
+          type: object
+          description: Entry requirements for the tournament
+          properties:
+            currency:
+              type: string
+              enum: [eddies, prestige, faction_rep]
+              example: eddies
+            amount:
+              type: integer
+              minimum: 0
+              example: 1000
+
+    UpdateTournamentRequest:
+      description: Request to update an existing tournament
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Tournament display name
+          example: "Updated Night City Championship"
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed tournament description
+          example: "Updated tournament description"
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          description: Maximum number of participants allowed
+          example: 256
+        start_time:
+          type: string
+          format: date-time
+          description: Tournament start timestamp
+          example: "2077-12-26T18:00:00Z"
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentReward'
+          minItems: 1
+          maxItems: 10
+          description: Updated tournament reward structure
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentObjective'
+          maxItems: 5
+          description: Updated tournament objectives
+        status:
+          $ref: '#/components/schemas/TournamentStatus'
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+
+    RegisterTournamentScoreRequest:
+      description: Request to register a match score for tournament progression
+      type: object
+      required:
+      - participant_id
+      - match_id
+      - score
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+          description: Participant identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        match_id:
+          type: string
+          format: uuid
+          description: Match identifier
+          example: 550e8400-e29b-41d4-a716-446655440005
+        score:
+          type: integer
+          minimum: 0
+          description: Points earned in this match
+          example: 2500
+        objectives_completed:
+          type: array
+          items:
+            type: object
+            required:
+            - objective_type
+            - value
+            properties:
+              objective_type:
+                type: string
+                enum: [kills, score, time_survival, flags_captured, points]
+                example: kills
+              value:
+                type: integer
+                minimum: 0
+                example: 15
+          maxItems: 10
+          description: Breakdown of objective completions
+        match_duration_seconds:
+          type: integer
+          minimum: 1
+          description: Match duration in seconds
+          example: 1800
+        placement:
+          type: integer
+          minimum: 1
+          description: Final placement in the match
+          example: 3
+
+    JoinTournamentRequest:
+      description: Request to join a tournament
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament to join
+          example: 550e8400-e29b-41d4-a716-446655440000
+        team_id:
+          type: string
+          format: uuid
+          description: Team identifier for team-based tournaments
+          example: 550e8400-e29b-41d4-a716-446655440004
+
+    LeaveTournamentRequest:
+      description: Request to leave a tournament
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament to leave
+          example: 550e8400-e29b-41d4-a716-446655440000
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for leaving
+          example: "Schedule conflict"
+
+    GenerateBracketRequest:
+      description: Request to generate tournament bracket
+      type: object
+      required:
+      - tournament_id
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        seeding_method:
+          type: string
+          enum: [random, skill_based, registration_order]
+          description: Method for seeding participants
+          example: skill_based
+          default: skill_based

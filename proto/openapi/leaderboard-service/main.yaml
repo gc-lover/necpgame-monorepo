@@ -7,63 +7,62 @@ info:
     ## 🎯 **Leaderboard Service Overview**
 
 
-    Leaderboard Service       
-      NECPGAME  enterprise-grade   .
+    Leaderboard Service NECPGAME  enterprise-grade   .
 
 
     ### ** **
 
-    - **Dynamic Rankings**:   
+    - **Dynamic Rankings**:
 
-    - **Multiple Categories**:   
+    - **Multiple Categories**:
 
-    - **Time-based Leaderboards**:   
+    - **Time-based Leaderboards**:
 
-    - **Seasonal Events**:    
-
-
-    ### ** **
-
-    - **Combat Ratings**:  
-
-    - **Achievement Scores**:  
-
-    - **Economic Rankings**:  
-
-    - **Social Influence**:  
+    - **Seasonal Events**:
 
 
     ### ** **
 
-    - **Real-time Updates**:    
+    - **Combat Ratings**:
 
-    - **Historical Tracking**:  
+    - **Achievement Scores**:
 
-    - **Reward Distribution**:  
+    - **Economic Rankings**:
 
-    - **Anti-cheat Measures**:   
+    - **Social Influence**:
+
+
+    ### ** **
+
+    - **Real-time Updates**:
+
+    - **Historical Tracking**:
+
+    - **Reward Distribution**:
+
+    - **Anti-cheat Measures**:
 
 
     ## 📊 **Performance Targets**
 
-    - **P99 Latency**: <25ms    
+    - **P99 Latency**: <25ms
 
     - **Throughput**: 40,000+ ranking operations/second
 
-    - **Concurrent Players**: 500,000+  
+    - **Concurrent Players**: 500,000+
 
-    - **Memory per Leaderboard**: <5MB  -1000 
+    - **Memory per Leaderboard**: <5MB  -1000
 
 
     ## 🔐 **Security**
 
-    - JWT RS256 
+    - JWT RS256
 
-    - Rate limiting   
+    - Rate limiting
 
     - Input validation  sanitization
 
-    - Audit logging  
+    - Audit logging
 
     '
   version: 1.0.0
@@ -84,1380 +83,111 @@ security:
 - BearerAuth: []
 tags:
 - name: Leaderboard Management
-  description:   
+  description: null
 - name: Ranking Operations
-  description:   
+  description: null
 - name: Seasonal Events
-  description:  
+  description: null
 - name: Statistics
-  description:   
+  description: null
 - name: Rewards
-  description:   
+  description: null
 - name: Health
-  description:   
+  description: null
 paths:
   /health:
-    get:
-      summary:   
-      operationId: healthCheck
-      tags:
-      - Health
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    post:
-      summary:   
-      operationId: healthBatchCheck
-      tags:
-      - Health
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HealthBatchRequest'
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthBatchResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: WebSocket  
-      operationId: healthWebSocketCheck
-      tags:
-      - Health
-      responses:
-        '101':
-          description: WebSocket  
-        '503':
-          description: WebSocket 
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /leaderboards:
-    post:
-      summary:   
-      operationId: createLeaderboard
-      tags:
-      - Leaderboard Management
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateLeaderboardRequest'
-      responses:
-        '201':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    get:
-      summary:    
-      operationId: getLeaderboards
-      tags:
-      - Leaderboard Management
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - achievement
-          - economic
-          - social
-          - seasonal
-      - name: active
-        in: query
-        schema:
-          type: boolean
-          default: true
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards.yaml#/paths/~1leaderboards
   /leaderboards/{leaderboardId}:
-    get:
-      summary:     ID
-      operationId: getLeaderboard
-      tags:
-      - Leaderboard Management
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardResponse'
-        '404':
-          description:    
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    put:
-      summary:   
-      operationId: updateLeaderboard
-      tags:
-      - Leaderboard Management
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateLeaderboardRequest'
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardResponse'
-        '403':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description:    
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}.yaml#/paths/~1leaderboards~1{leaderboardId}
   /leaderboards/{leaderboardId}/ranking:
-    get:
-      summary:    
-      operationId: getLeaderboardRanking
-      tags:
-      - Ranking Operations
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: aroundPlayer
-        in: query
-        schema:
-          type: string
-          format: uuid
-          description:     
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardRankingResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}-ranking.yaml#/paths/~1leaderboards~1{leaderboardId}~1ranking
   /players/{playerId}/rank:
-    get:
-      summary:     
-      operationId: getPlayerRanks
-      tags:
-      - Ranking Operations
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - achievement
-          - economic
-          - social
-          - all
-          default: all
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerRanksResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/players-{playerId}-rank.yaml#/paths/~1players~1{playerId}~1rank
   /leaderboards/{leaderboardId}/rank/{playerId}:
-    get:
-      summary:     
-      operationId: getPlayerRank
-      tags:
-      - Ranking Operations
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerRankResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}-rank-{playerId}.yaml#/paths/~1leaderboards~1{leaderboardId}~1rank~1{playerId}
   /leaderboards/update:
-    post:
-      summary:   
-      operationId: updatePlayerRank
-      tags:
-      - Ranking Operations
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRankRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateRankResponse'
-        '400':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-update.yaml#/paths/~1leaderboards~1update
   /leaderboards/batch-update:
-    post:
-      summary:   
-      operationId: batchUpdateRanks
-      tags:
-      - Ranking Operations
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchUpdateRanksRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BatchUpdateRanksResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-batch-update.yaml#/paths/~1leaderboards~1batch-update
   /leaderboards/seasonal:
-    get:
-      summary:   
-      operationId: getSeasonalLeaderboards
-      tags:
-      - Seasonal Events
-      parameters:
-      - name: season
-        in: query
-        schema:
-          type: string
-          description: ID 
-      - name: active
-        in: query
-        schema:
-          type: boolean
-          default: true
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SeasonalLeaderboardsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    post:
-      summary:    
-      operationId: createSeasonalLeaderboard
-      tags:
-      - Seasonal Events
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSeasonalLeaderboardRequest'
-      responses:
-        '201':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-seasonal.yaml#/paths/~1leaderboards~1seasonal
   /leaderboards/{leaderboardId}/rewards:
-    get:
-      summary:     
-      operationId: getLeaderboardRewards
-      tags:
-      - Rewards
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardRewardsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
-    post:
-      summary:    
-      operationId: setLeaderboardRewards
-      tags:
-      - Rewards
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetRewardsRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardRewardsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}-rewards.yaml#/paths/~1leaderboards~1{leaderboardId}~1rewards
   /leaderboards/{leaderboardId}/rewards/claim:
-    post:
-      summary:    
-      operationId: claimLeaderboardRewards
-      tags:
-      - Rewards
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ClaimRewardsRequest'
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClaimRewardsResponse'
-        '400':
-          description:     
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}-rewards-claim.yaml#/paths/~1leaderboards~1{leaderboardId}~1rewards~1claim
   /leaderboards/analytics/summary:
-    get:
-      summary:   
-      operationId: getLeaderboardAnalytics
-      tags:
-      - Statistics
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          - seasonal
-          default: weekly
-      - name: leaderboardId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description:  
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardAnalyticsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-analytics-summary.yaml#/paths/~1leaderboards~1analytics~1summary
   /leaderboards/{leaderboardId}/statistics:
-    get:
-      summary:    
-      operationId: getLeaderboardStatistics
-      tags:
-      - Statistics
-      parameters:
-      - name: leaderboardId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          - alltime
-          default: alltime
-      responses:
-        '200':
-          description:   
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeaderboardStatisticsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common-service/schemas/error.yaml#/Error
+    $ref: ./paths/leaderboards-{leaderboardId}-statistics.yaml#/paths/~1leaderboards~1{leaderboardId}~1statistics
 components:
+  schemas:
+    CharacterEntity:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/HealthBatchResponse
+    LeaderboardEntity:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardEntity
+    LeaderboardRewardEntity:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardRewardEntity
+    PlayerLeaderboardEntryEntity:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/PlayerLeaderboardEntryEntity
+    CreateLeaderboardRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/CreateLeaderboardRequest
+    UpdateLeaderboardRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/UpdateLeaderboardRequest
+    LeaderboardResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardResponse
+    LeaderboardListResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardListResponse
+    LeaderboardRankingResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardRankingResponse
+    PlayerRanksResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/PlayerRanksResponse
+    PlayerRankResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/PlayerRankResponse
+    UpdateRankRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/UpdateRankRequest
+    UpdateRankResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/UpdateRankResponse
+    BatchUpdateRanksRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/BatchUpdateRanksRequest
+    BatchUpdateRanksResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/BatchUpdateRanksResponse
+    SeasonalLeaderboardsResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/SeasonalLeaderboardsResponse
+    CreateSeasonalLeaderboardRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/CreateSeasonalLeaderboardRequest
+    LeaderboardRewardsResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardRewardsResponse
+    SetRewardsRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/SetRewardsRequest
+    ClaimRewardsRequest:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/ClaimRewardsRequest
+    ClaimRewardsResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/ClaimRewardsResponse
+    LeaderboardAnalyticsResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardAnalyticsResponse
+    LeaderboardStatisticsResponse:
+      $ref: ./schemas/leaderboard-service-schemas.yaml#/components/schemas/LeaderboardStatisticsResponse
+  responses: {}
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  schemas:
-    CharacterEntity:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
-    BaseEntity:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
-    OptimisticLock:
-      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
-    ErrorResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
-    HealthResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
-    HealthBatchRequest:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
-    HealthBatchResponse:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
-    LeaderboardEntity:
-      type: object
-      description:   
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - name
-        - category
-        - scoringType
-        - maxEntries
-        properties:
-          name:
-            type: string
-            description:   
-            maxLength: 100
-            example: Global Combat Rating
-          description:
-            type: string
-            description:   
-            maxLength: 500
-          category:
-            type: string
-            description:  
-            enum:
-            - combat
-            - achievement
-            - economic
-            - social
-            - seasonal
-            example: combat
-          scoringType:
-            type: string
-            description:   
-            enum:
-            - points
-            - wins
-            - ratio
-            - time
-            - custom
-            example: points
-          maxEntries:
-            type: integer
-            description:   
-            minimum: 10
-            maximum: 10000
-            example: 1000
-          resetPeriod:
-            type: string
-            description:  
-            enum:
-            - never
-            - daily
-            - weekly
-            - monthly
-            - seasonal
-            example: weekly
-          startDate:
-            type: string
-            description:  
-            format: date-time
-          endDate:
-            type: string
-            description:  
-            format: date-time
-          rewards:
-            type: array
-            description:   
-            items:
-              $ref: '#/components/schemas/LeaderboardRewardEntity'
-          rules:
-            type: object
-            description:  
-            properties:
-              minGames:
-                type: integer
-                description:   
-                minimum: 0
-                default: 0
-              antiCheatEnabled:
-                type: boolean
-                description:    
-                default: true
-              allowTies:
-                type: boolean
-                description:  
-                default: false
-          isActive:
-            type: boolean
-            description:  
-            default: true
-          lastReset:
-            type: string
-            description:  
-            format: date-time
-          $ref: '#/components/schemas/OptimisticLock'
-    LeaderboardRewardEntity:
-      type: object
-      description:    
-      required:
-      - position
-      - rewards
-      properties:
-        position:
-          type: integer
-          description:   
-          minimum: 1
-          example: 1
-        rewards:
-          type: array
-          description: 
-          items:
-            type: object
-            properties:
-              type:
-                type: string
-                enum:
-                - currency
-                - item
-                - title
-                - cosmetic
-                - badge
-                example: currency
-              amount:
-                type: integer
-                minimum: 1
-                example: 10000
-              itemId:
-                type: string
-                description: ID 
-                format: uuid
-    PlayerLeaderboardEntryEntity:
-      type: object
-      description:     
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - playerId
-        - leaderboardId
-        - score
-        - rank
-        properties:
-          playerId:
-            type: string
-            description: ID 
-            format: uuid
-            example: 123e4567-e89b-12d3-a456-426614174000
-          leaderboardId:
-            type: string
-            description: ID  
-            format: uuid
-            example: 456e7890-e89b-12d3-a456-426614174001
-          score:
-            type: number
-            description:  
-            example: 15420.5
-          rank:
-            type: integer
-            description:  
-            minimum: 1
-            example: 15
-          previousRank:
-            type: integer
-            description:  
-            minimum: 1
-          bestRank:
-            type: integer
-            description:  
-            minimum: 1
-          gamesPlayed:
-            type: integer
-            description:  
-            minimum: 0
-            example: 150
-          lastUpdated:
-            type: string
-            description:  
-            format: date-time
-          rewardsClaimed:
-            type: array
-            description:  
-            items:
-              type: integer
-              description:  
-          isDisqualified:
-            type: boolean
-            description: 
-            default: false
-          disqualificationReason:
-            type: string
-            description:  
-            maxLength: 200
-          $ref: '#/components/schemas/OptimisticLock'
-    CreateLeaderboardRequest:
-      type: object
-      required:
-      - name
-      - category
-      - scoringType
-      - maxEntries
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - achievement
-          - economic
-          - social
-          - seasonal
-        scoringType:
-          type: string
-          enum:
-          - points
-          - wins
-          - ratio
-          - time
-          - custom
-        maxEntries:
-          type: integer
-          minimum: 10
-          maximum: 10000
-        resetPeriod:
-          type: string
-          enum:
-          - never
-          - daily
-          - weekly
-          - monthly
-          - seasonal
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-        rules:
-          type: object
-          properties:
-            minGames:
-              type: integer
-              minimum: 0
-            antiCheatEnabled:
-              type: boolean
-            allowTies:
-              type: boolean
-    UpdateLeaderboardRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        description:
-          type: string
-          maxLength: 500
-        category:
-          type: string
-          enum:
-          - combat
-          - achievement
-          - economic
-          - social
-          - seasonal
-        scoringType:
-          type: string
-          enum:
-          - points
-          - wins
-          - ratio
-          - time
-          - custom
-        maxEntries:
-          type: integer
-          minimum: 10
-          maximum: 10000
-        resetPeriod:
-          type: string
-          enum:
-          - never
-          - daily
-          - weekly
-          - monthly
-          - seasonal
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type: string
-          format: date-time
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-        rules:
-          type: object
-          properties:
-            minGames:
-              type: integer
-              minimum: 0
-            antiCheatEnabled:
-              type: boolean
-            allowTies:
-              type: boolean
-        isActive:
-          type: boolean
-    LeaderboardResponse:
-      type: object
-      properties:
-        leaderboard:
-          $ref: '#/components/schemas/LeaderboardEntity'
-        metadata:
-          type: object
-          properties:
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-            totalEntries:
-              type: integer
-              minimum: 0
-    LeaderboardListResponse:
-      type: object
-      properties:
-        leaderboards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardEntity'
-        pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              minimum: 0
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 100
-            offset:
-              type: integer
-              minimum: 0
-            hasNext:
-              type: boolean
-    LeaderboardRankingResponse:
-      type: object
-      properties:
-        leaderboardId:
-          type: string
-          format: uuid
-        leaderboardName:
-          type: string
-        category:
-          type: string
-        scoringType:
-          type: string
-        totalEntries:
-          type: integer
-          minimum: 0
-        lastUpdated:
-          type: string
-          format: date-time
-        entries:
-          type: array
-          items:
-            type: object
-            properties:
-              playerId:
-                type: string
-                format: uuid
-              displayName:
-                type: string
-              score:
-                type: number
-              rank:
-                type: integer
-                minimum: 1
-              previousRank:
-                type: integer
-                minimum: 1
-              rankChange:
-                type: integer
-              lastUpdated:
-                type: string
-                format: date-time
-              isCurrentPlayer:
-                type: boolean
-                default: false
-        pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              minimum: 0
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 100
-            offset:
-              type: integer
-              minimum: 0
-            hasNext:
-              type: boolean
-    PlayerRanksResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        ranks:
-          type: array
-          items:
-            type: object
-            properties:
-              leaderboardId:
-                type: string
-                format: uuid
-              leaderboardName:
-                type: string
-              category:
-                type: string
-              rank:
-                type: integer
-                minimum: 1
-              score:
-                type: number
-              totalEntries:
-                type: integer
-                minimum: 0
-              percentile:
-                type: number
-                minimum: 0
-                maximum: 100
-              lastUpdated:
-                type: string
-                format: date-time
-    PlayerRankResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        leaderboardId:
-          type: string
-          format: uuid
-        leaderboardName:
-          type: string
-        rank:
-          type: integer
-          minimum: 1
-        score:
-          type: number
-        totalEntries:
-          type: integer
-          minimum: 0
-        percentile:
-          type: number
-          minimum: 0
-          maximum: 100
-        rankChange:
-          type: integer
-        bestRank:
-          type: integer
-          minimum: 1
-        lastUpdated:
-          type: string
-          format: date-time
-        rewardsAvailable:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-    UpdateRankRequest:
-      type: object
-      required:
-      - playerId
-      - leaderboardId
-      - score
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        leaderboardId:
-          type: string
-          format: uuid
-        score:
-          type: number
-        metadata:
-          type: object
-          description:    
-          additionalProperties: true
-    UpdateRankResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        leaderboardId:
-          type: string
-          format: uuid
-        oldRank:
-          type: integer
-          minimum: 1
-        newRank:
-          type: integer
-          minimum: 1
-        oldScore:
-          type: number
-        newScore:
-          type: number
-        rankChange:
-          type: integer
-        updatedAt:
-          type: string
-          format: date-time
-    BatchUpdateRanksRequest:
-      type: object
-      required:
-      - updates
-      properties:
-        updates:
-          type: array
-          description:   
-          items:
-            $ref: '#/components/schemas/UpdateRankRequest'
-          minItems: 1
-          maxItems: 100
-    BatchUpdateRanksResponse:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/UpdateRankResponse'
-        totalProcessed:
-          type: integer
-          minimum: 0
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              playerId:
-                type: string
-                format: uuid
-              leaderboardId:
-                type: string
-                format: uuid
-              error:
-                type: string
-    SeasonalLeaderboardsResponse:
-      type: object
-      properties:
-        currentSeason:
-          type: object
-          properties:
-            seasonId:
-              type: string
-            name:
-              type: string
-            startDate:
-              type: string
-              format: date-time
-            endDate:
-              type: string
-              format: date-time
-            isActive:
-              type: boolean
-        leaderboards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardEntity'
-    CreateSeasonalLeaderboardRequest:
-      type: object
-      required:
-      - seasonId
-      - leaderboard
-      properties:
-        seasonId:
-          type: string
-          description: ID 
-        leaderboard:
-          $ref: '#/components/schemas/CreateLeaderboardRequest'
-    LeaderboardRewardsResponse:
-      type: object
-      properties:
-        leaderboardId:
-          type: string
-          format: uuid
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-    SetRewardsRequest:
-      type: object
-      required:
-      - rewards
-      properties:
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-          minItems: 1
-          maxItems: 100
-    ClaimRewardsRequest:
-      type: object
-      required:
-      - playerId
-      properties:
-        playerId:
-          type: string
-          format: uuid
-    ClaimRewardsResponse:
-      type: object
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        leaderboardId:
-          type: string
-          format: uuid
-        rank:
-          type: integer
-          minimum: 1
-        rewards:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaderboardRewardEntity'
-        claimedAt:
-          type: string
-          format: date-time
-    LeaderboardAnalyticsResponse:
-      type: object
-      properties:
-        period:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          - seasonal
-        totalLeaderboards:
-          type: integer
-          minimum: 0
-        totalEntries:
-          type: integer
-          minimum: 0
-        averageScore:
-          type: number
-        topCategories:
-          type: array
-          items:
-            type: object
-            properties:
-              category:
-                type: string
-              count:
-                type: integer
-                minimum: 0
-              averageScore:
-                type: number
-        activityTrends:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
-    LeaderboardStatisticsResponse:
-      type: object
-      properties:
-        leaderboardId:
-          type: string
-          format: uuid
-        leaderboardName:
-          type: string
-        period:
-          type: string
-        totalEntries:
-          type: integer
-          minimum: 0
-        averageScore:
-          type: number
-        medianScore:
-          type: number
-        topScore:
-          type: number
-        scoreDistribution:
-          type: object
-          properties:
-            excellent:
-              type: integer
-              minimum: 0
-              description:  10%
-            good:
-              type: integer
-              minimum: 0
-              description: 10-25%
-            average:
-              type: integer
-              minimum: 0
-              description: 25-75%
-            below_average:
-              type: integer
-              minimum: 0
-              description:  
-        rankStability:
-          type: number
-          minimum: 0
-          maximum: 1
-          description:   (0-1)
-        lastUpdated:
-          type: string
-          format: date-time
-

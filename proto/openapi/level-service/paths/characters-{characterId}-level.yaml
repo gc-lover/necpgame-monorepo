@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/level:
+    get:
+      operationId: levelServiceGetCharacterLevel
+      summary: Get character level information
+      description: 'Retrieve comprehensive character level and progression information.
+
+
+        **Level Information:**
+
+        - Current level and experience
+
+        - Experience to next level
+
+        - Stat points available
+
+        - Level milestones achieved
+
+        - Progression statistics
+
+        '
+      tags:
+      - Character Progression
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: include_milestones
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include milestone achievements
+      responses:
+        '200':
+          description: Character level information retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CharacterLevelInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'

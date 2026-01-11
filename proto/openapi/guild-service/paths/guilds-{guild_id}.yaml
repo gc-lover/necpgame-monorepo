@@ -1,0 +1,221 @@
+openapi: 3.0.3
+paths:
+  /guilds/{guild_id}:
+    get:
+      summary: Get guild details
+      description: '**Guild details retrieval endpoint**
+
+        Retrieves comprehensive guild information including members, statistics, and
+        configuration. Supports partial member loading for performance.
+
+        **Performance:** <10ms P95 with Redis caching
+
+        **Features:** Conditional requests, partial responses
+
+        '
+      operationId: getGuild
+      tags:
+      - Guild Management
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: include_members
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: include_statistics
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Guild details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"guild-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '304':
+          description: Not modified - guild has not changed
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    put:
+      summary: Update guild configuration
+      description: '**Guild update endpoint**
+
+        Updates guild settings, description, and configuration. Supports partial updates
+        with optimistic locking.
+
+        **Performance:** <25ms P95 with conflict resolution
+
+        **Security:** Leadership permissions required
+
+        '
+      operationId: updateGuild
+      tags:
+      - Guild Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: Optimistic locking version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to update guild
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '409':
+          description: Version conflict - guild was modified concurrently
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    delete:
+      summary: Disband guild
+      description: '**Guild disband endpoint**
+
+        Permanently disbands a guild, handling member removal and asset distribution.
+        Requires leadership consensus or administrative override.
+
+        **Performance:** <100ms P95 including cleanup operations
+
+        **Security:** Strict permission checks and confirmation required
+
+        '
+      operationId: disbandGuild
+      tags:
+      - Guild Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - confirmation_code
+              properties:
+                confirmation_code:
+                  type: string
+                  description: Guild disband confirmation code
+                asset_distribution:
+                  type: string
+                  enum:
+                  - distribute_evenly
+                  - return_to_members
+                  - donate_to_system
+                  default: distribute_evenly
+      responses:
+        '204':
+          description: Guild disbanded successfully
+        '400':
+          description: Invalid confirmation or parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '401':
+          $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+        '403':
+          description: Insufficient permissions to disband guild
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+        '429':
+          $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

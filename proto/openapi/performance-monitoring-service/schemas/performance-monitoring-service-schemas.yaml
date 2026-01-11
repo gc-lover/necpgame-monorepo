@@ -1,0 +1,391 @@
+openapi: 3.0.3
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
+    ServicesHealthResponse:
+      type: object
+      required:
+      - services
+      - summary
+      - timestamp
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealthStatus'
+        summary:
+          $ref: '#/components/schemas/HealthSummary'
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment.'
+    ServiceHealthStatus:
+      type: object
+      required:
+      - service_name
+      - status
+      - last_checked
+      properties:
+        service_name:
+          type: string
+          maxLength: 100
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          - unknown
+        response_time_ms:
+          type: number
+          format: float
+          minimum: 0
+        last_checked:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+          maxLength: 500
+    HealthSummary:
+      type: object
+      required:
+      - total_services
+      - healthy_count
+      - degraded_count
+      - unhealthy_count
+      properties:
+        total_services:
+          type: integer
+          minimum: 0
+        healthy_count:
+          type: integer
+          minimum: 0
+        degraded_count:
+          type: integer
+          minimum: 0
+        unhealthy_count:
+          type: integer
+          minimum: 0
+        overall_status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+    ServiceMetricsResponse:
+      type: object
+      required:
+      - service_name
+      - time_range
+      - metrics
+      properties:
+        service_name:
+          type: string
+        time_range:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricData'
+    MetricData:
+      type: object
+      required:
+      - metric_type
+      - timestamp
+      - value
+      properties:
+        metric_type:
+          type: string
+          enum:
+          - response_time
+          - throughput
+          - error_rate
+          - cpu_usage
+          - memory_usage
+          - disk_usage
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: float
+        unit:
+          type: string
+          enum:
+          - ms
+          - rps
+          - percentage
+          - bytes
+          - count
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+    AlertsResponse:
+      type: object
+      required:
+      - alerts
+      - total_count
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        total_count:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+          default: false
+    Alert:
+      type: object
+      required:
+      - id
+      - title
+      - severity
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        severity:
+          type: string
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+        status:
+          type: string
+          enum:
+          - active
+          - acknowledged
+          - resolved
+        service_name:
+          type: string
+          maxLength: 100
+        created_at:
+          type: string
+          format: date-time
+        acknowledged_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        acknowledged_by:
+          type: string
+          format: uuid
+          nullable: true
+    CreateAlertRequest:
+      type: object
+      required:
+      - title
+      - severity
+      - service_name
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        severity:
+          type: string
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+        service_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+    AlertResponse:
+      type: object
+      required:
+      - alert
+      properties:
+        alert:
+          $ref: '#/components/schemas/Alert'
+    TraceResponse:
+      type: object
+      required:
+      - trace_id
+      - service_name
+      - start_time
+      - duration_ms
+      properties:
+        trace_id:
+          type: string
+          format: uuid
+        service_name:
+          type: string
+        operation_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+          format: float
+          minimum: 0
+        status:
+          type: string
+          enum:
+          - success
+          - error
+          - unknown
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Span'
+    Span:
+      type: object
+      required:
+      - span_id
+      - operation_name
+      - start_time
+      - duration_ms
+      properties:
+        span_id:
+          type: string
+          format: uuid
+        operation_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+          format: float
+          minimum: 0
+        tags:
+          type: object
+          additionalProperties: true
+    PerformanceAnalyticsResponse:
+      type: object
+      required:
+      - time_range
+      - analytics
+      properties:
+        service_name:
+          type: string
+        time_range:
+          type: string
+        analytics:
+          type: object
+          properties:
+            latency_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            throughput_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            error_rate_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            resource_usage:
+              $ref: '#/components/schemas/ResourceUsageAnalysis'
+            bottlenecks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Bottleneck'
+    TrendAnalysis:
+      type: object
+      properties:
+        current_value:
+          type: number
+          format: float
+        previous_value:
+          type: number
+          format: float
+        change_percentage:
+          type: number
+          format: float
+        trend:
+          type: string
+          enum:
+          - improving
+          - degrading
+          - stable
+        data_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataPoint'
+    DataPoint:
+      type: object
+      required:
+      - timestamp
+      - value
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: float
+    ResourceUsageAnalysis:
+      type: object
+      properties:
+        cpu_average:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        memory_average_mb:
+          type: number
+          format: float
+          minimum: 0
+        disk_usage_gb:
+          type: number
+          format: float
+          minimum: 0
+        network_in_mb:
+          type: number
+          format: float
+          minimum: 0
+        network_out_mb:
+          type: number
+          format: float
+          minimum: 0
+    Bottleneck:
+      type: object
+      required:
+      - type
+      - severity
+      - description
+      properties:
+        type:
+          type: string
+          enum:
+          - cpu
+          - memory
+          - disk_io
+          - network
+          - database
+          - external_service
+        severity:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+        description:
+          type: string
+          maxLength: 500
+        affected_service:
+          type: string
+        recommendation:
+          type: string
+          maxLength: 500

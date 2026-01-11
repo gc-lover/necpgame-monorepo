@@ -1,0 +1,51 @@
+openapi: 3.0.3
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items with filtering and pagination
+      description: Retrieve a paginated list of items with optional filtering
+      tags:
+      - Item Management
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: List of items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse

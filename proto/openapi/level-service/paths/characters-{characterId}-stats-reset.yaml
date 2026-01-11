@@ -1,0 +1,75 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/stats/reset:
+    post:
+      operationId: levelServiceResetStatPoints
+      summary: Reset character stat allocation
+      description: 'Reset character''s stat point allocation for redistribution.
+
+
+        **Stat Reset:**
+
+        - Refund allocated stat points
+
+        - Reset stats to base values
+
+        - Charge reset cost if applicable
+
+        - Maintain level progression
+
+        '
+      tags:
+      - Character Progression
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset_type:
+                  type: string
+                  enum:
+                  - full_reset
+                  - partial_reset
+                  - respec
+                  default: respec
+                  description: Type of reset operation
+                refund_percentage:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  default: 0.8
+                  description: Percentage of points refunded
+      responses:
+        '200':
+          description: Stat points reset successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        refunded_points:
+                          type: integer
+                          description: Points refunded
+                        reset_cost:
+                          type: integer
+                          description: Cost incurred for reset
+                        available_points:
+                          type: integer
+                          description: Points now available for allocation
+        '400':
+          $ref: '#/components/responses/BadRequest'

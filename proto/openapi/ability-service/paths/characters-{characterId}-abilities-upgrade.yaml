@@ -1,0 +1,52 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/abilities/upgrade:
+    post:
+      operationId: abilityServiceUpgradeAbility
+      summary: Upgrade character ability
+      description: 'Upgrade an existing ability to higher level.
+
+
+        **Upgrade Process:**
+
+        - Validate upgrade requirements
+
+        - Check resource availability
+
+        - Apply upgrade benefits
+
+        - Update ability stats and effects
+
+        '
+      tags:
+      - Character Abilities
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeAbilityRequest'
+      responses:
+        '200':
+          description: Ability upgraded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CharacterAbility'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'

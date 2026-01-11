@@ -1,0 +1,46 @@
+openapi: 3.0.3
+paths:
+  /oauth/{provider}/authorize:
+    get:
+      operationId: authServiceOAuthAuthorize
+      summary: Initiate OAuth authorization
+      description: 'Redirect to OAuth provider for authorization.
+
+
+        **Supported Providers:**
+
+        - google: Google OAuth 2.0
+
+        - discord: Discord OAuth 2.0
+
+        - steam: Steam OpenID
+
+        '
+      tags:
+      - OAuth
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+        description: OAuth provider
+      - name: redirect_uri
+        in: query
+        schema:
+          type: string
+          format: uri
+        description: Redirect URI after authorization
+      responses:
+        '302':
+          description: Redirect to OAuth provider
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: OAuth provider authorization URL

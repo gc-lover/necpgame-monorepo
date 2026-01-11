@@ -1,0 +1,56 @@
+openapi: 3.0.3
+paths:
+  /characters/{characterId}/cyberware:
+    get:
+      operationId: cyberwareServiceGetCharacterCyberware
+      summary: Get character cyberware
+      description: 'Retrieve all cyberware installed on a character with current status.
+
+
+        **Cyberware Status:**
+
+        - Installed cyberware with current performance
+
+        - Maintenance status and degradation level
+
+        - Cyberpsychosis contribution
+
+        - Active effects and stat bonuses
+
+        - Compatibility warnings and issues
+
+        '
+      tags:
+      - Cyberware Management
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: include_inactive
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include inactive/degraded cyberware
+      responses:
+        '200':
+          description: Character cyberware retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/OK
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/InstalledCyberware'
+                    summary:
+                      $ref: '#/components/schemas/CharacterCyberwareSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'

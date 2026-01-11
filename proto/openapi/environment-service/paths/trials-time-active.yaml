@@ -1,0 +1,68 @@
+openapi: 3.0.3
+paths:
+  /trials/time/active:
+    get:
+      summary: Get active time trials
+      description: '**Get active time trials for character**
+
+        Returns list of available time trial challenges with records and rankings.
+
+        **Performance:** <15ms response time, cached for 10 minutes '
+      operationId: getActiveTimeTrials
+      tags:
+      - Time Trials
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - speed
+          - combat
+          - exploration
+          - mixed
+        description: Optional category filter
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - expert
+        description: Optional difficulty filter
+      responses:
+        '200':
+          description: Active time trials retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeTrial'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
