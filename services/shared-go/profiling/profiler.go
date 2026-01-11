@@ -104,15 +104,18 @@ func NewProfiler(config ProfilerConfig) (*Profiler, error) {
 	if config.LeakThreshold == 0 {
 		config.LeakThreshold = 10 * 1024 * 1024 // 10 MB default
 	}
-	if config.maxSnapshots == 0 {
-		config.maxSnapshots = int(config.LeakWindow / config.ProfilingInterval)
+
+	maxSnapshots := int(config.LeakWindow / config.ProfilingInterval)
+	if maxSnapshots == 0 {
+		maxSnapshots = 10 // Default to 10 snapshots
 	}
 
 	p := &Profiler{
 		config:      config,
 		logger:      config.Logger,
 		meter:       config.Meter,
-		snapshots:   make([]MemoryStats, 0, config.maxSnapshots),
+		snapshots:   make([]MemoryStats, 0, maxSnapshots),
+		maxSnapshots: maxSnapshots,
 		stopChan:    make(chan struct{}),
 	}
 
