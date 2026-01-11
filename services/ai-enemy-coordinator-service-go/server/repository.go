@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"necpgame/services/ai-enemy-coordinator-service-go/pkg/api"
 )
 
 // AiEnemyEntity represents an AI enemy in the database
@@ -31,13 +30,13 @@ type AiEnemyEntity struct {
 // Repository defines the data access interface
 type Repository interface {
 	// AI Enemy operations
-	CreateAiEnemy(ctx context.Context, enemy *api.AiEnemyEntity) error
-	GetAiEnemy(ctx context.Context, enemyID string) (*api.AiEnemyEntity, error)
+	CreateAiEnemy(ctx context.Context, enemy *AiEnemyEntity) error
+	GetAiEnemy(ctx context.Context, enemyID string) (*AiEnemyEntity, error)
 	UpdateAiEnemy(ctx context.Context, enemyID string, updates map[string]interface{}) error
 	DeleteAiEnemy(ctx context.Context, enemyID string) error
 
 	// Zone operations
-	GetZoneActiveEnemies(ctx context.Context, zoneID string) ([]*api.AiEnemyEntity, error)
+	GetZoneActiveEnemies(ctx context.Context, zoneID string) ([]*AiEnemyEntity, error)
 	GetZoneMetrics(ctx context.Context, zoneID string) (*ZoneData, error)
 
 	// Health check
@@ -66,21 +65,20 @@ func (r *PostgresRepository) CreateAiEnemy(ctx context.Context, enemy *AiEnemyEn
 	`
 
 	now := time.Now().UTC()
-	position := enemy.Position
 
 	_, err := r.db.ExecContext(ctx, query,
-		enemy.Id, enemy.EnemyType, enemy.Level, enemy.ZoneID,
-		position.X, position.Y, position.Z,
+		enemy.ID, enemy.EnemyType, enemy.Level, enemy.ZoneID,
+		enemy.PositionX, enemy.PositionY, enemy.PositionZ,
 		enemy.BehaviorState, enemy.Health, enemy.MaxHealth, enemy.Faction,
 		now, now,
 	)
 
 	if err != nil {
-		slog.Error("Failed to create AI enemy", "error", err, "enemy_id", enemy.Id)
+		slog.Error("Failed to create AI enemy", "error", err, "enemy_id", enemy.ID)
 		return fmt.Errorf("failed to create AI enemy: %w", err)
 	}
 
-	slog.Info("AI enemy created", "enemy_id", enemy.Id, "zone_id", enemy.ZoneID)
+	slog.Info("AI enemy created", "enemy_id", enemy.ID, "zone_id", enemy.ZoneID)
 	return nil
 }
 
@@ -93,13 +91,12 @@ func (r *PostgresRepository) GetAiEnemy(ctx context.Context, enemyID string) (*A
 		WHERE id = $1
 	`
 
-	var enemy api.AiEnemyEntity
-	var posX, posY, posZ float64
+	var enemy AiEnemyEntity
 
 	err := r.db.QueryRowContext(ctx, query, enemyID).Scan(
-		&enemy.Id, &enemy.EnemyType, &enemy.Level, &enemy.ZoneID,
-		&posX, &posY, &posZ, &enemy.BehaviorState,
-		&enemy.Health, &enemy.MaxHealth, &enemy.Faction,
+		&enemy.ID, &enemy.EnemyType, &enemy.Level, &enemy.ZoneID,
+		&enemy.PositionX, &enemy.PositionY, &enemy.PositionZ,
+		&enemy.BehaviorState, &enemy.Health, &enemy.MaxHealth, &enemy.Faction,
 		&enemy.CreatedAt, &enemy.UpdatedAt,
 	)
 
@@ -109,12 +106,6 @@ func (r *PostgresRepository) GetAiEnemy(ctx context.Context, enemyID string) (*A
 		}
 		slog.Error("Failed to get AI enemy", "error", err, "enemy_id", enemyID)
 		return nil, fmt.Errorf("failed to get AI enemy: %w", err)
-	}
-
-	enemy.Position = &api.Vector3{
-		X: &posX,
-		Y: &posY,
-		Z: &posZ,
 	}
 
 	return &enemy, nil
@@ -208,28 +199,21 @@ func (r *PostgresRepository) GetZoneActiveEnemies(ctx context.Context, zoneID st
 	}
 	defer rows.Close()
 
-	var enemies []*api.AiEnemyEntity
+	var enemies []*AiEnemyEntity
 
 	for rows.Next() {
-		var enemy api.AiEnemyEntity
-		var posX, posY, posZ float64
+		var enemy AiEnemyEntity
 
 		err := rows.Scan(
-			&enemy.Id, &enemy.EnemyType, &enemy.Level, &enemy.ZoneID,
-			&posX, &posY, &posZ, &enemy.BehaviorState,
-			&enemy.Health, &enemy.MaxHealth, &enemy.Faction,
+			&enemy.ID, &enemy.EnemyType, &enemy.Level, &enemy.ZoneID,
+			&enemy.PositionX, &enemy.PositionY, &enemy.PositionZ,
+			&enemy.BehaviorState, &enemy.Health, &enemy.MaxHealth, &enemy.Faction,
 			&enemy.CreatedAt, &enemy.UpdatedAt,
 		)
 
 		if err != nil {
 			slog.Error("Failed to scan enemy row", "error", err)
 			continue
-		}
-
-		enemy.Position = &api.Vector3{
-			X: &posX,
-			Y: &posY,
-			Z: &posZ,
 		}
 
 		enemies = append(enemies, &enemy)

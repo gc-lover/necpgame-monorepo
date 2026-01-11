@@ -29,10 +29,7 @@ func (m *Middleware) RealIP(next http.Handler) http.Handler {
 
 // Logger logs HTTP requests with structured logging
 func (m *Middleware) Logger(next http.Handler) http.Handler {
-	return middleware.RequestLogger(&middleware.DefaultLogFormatter{
-		Logger:  slog.Default(),
-		NoColor: true,
-	})(next)
+	return middleware.Logger(next)
 }
 
 // Recoverer recovers from panics

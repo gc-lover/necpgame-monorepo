@@ -2,9 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"necpgame/services/ai-enemy-coordinator-service-go/pkg/api"

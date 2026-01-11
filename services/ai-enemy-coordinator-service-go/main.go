@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 
+	"necpgame/services/ai-enemy-coordinator-service-go/pkg/api"
 	"necpgame/services/ai-enemy-coordinator-service-go/server"
 )
 
@@ -46,14 +47,11 @@ func main() {
 	// Initialize service
 	service := server.NewAiEnemyCoordinatorService(repo)
 
-	// Initialize middleware
-	middleware := server.NewMiddleware()
-
 	// Create API server
 	apiHandler := server.NewAiEnemyCoordinatorServer(service)
 
 	// Create HTTP server with API handler
-	srv, err := api.NewServer(apiHandler)
+	srv, err := api.NewServer(apiHandler, nil) // No security handler for now
 	if err != nil {
 		slog.Error("Failed to create API server", "error", err)
 		os.Exit(1)

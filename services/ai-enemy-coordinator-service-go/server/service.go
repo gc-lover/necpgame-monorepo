@@ -85,46 +85,36 @@ func (s *AiEnemyCoordinatorService) SpawnAiEnemy(ctx context.Context, req api.Ai
 	// Prepare spawn response
 	now := time.Now().UTC()
 
+	activeEnemies := zoneData.ActiveEnemies + 1
+	zoneMetrics := api.OptAiCoordinationResponseZoneMetrics{}
+	zoneMetrics.SetTo(api.AiCoordinationResponseZoneMetrics{
+		ActiveEnemies: api.OptInt{},
+		PerformanceMetrics: api.OptAiCoordinationResponseZoneMetricsPerformanceMetrics{},
+	})
+	zoneMetrics.Value.ActiveEnemies.SetTo(activeEnemies)
+
+	perfMetrics := api.AiCoordinationResponseZoneMetricsPerformanceMetrics{}
+	if exists {
+		perfMetrics.CPUUsagePercent.SetTo(float32(zoneData.PerformanceData.CPUUsagePercent))
+		perfMetrics.MemoryUsageMB.SetTo(zoneData.PerformanceData.MemoryUsageMB)
+	} else {
+		perfMetrics.CPUUsagePercent.SetTo(25.0)
+		perfMetrics.MemoryUsageMB.SetTo(128)
+	}
+
+	zoneMetrics.Value.PerformanceMetrics.SetTo(perfMetrics)
+
 	resp := &api.AiCoordinationResponse{
 		EnemyID:        enemyID,
 		Status:         api.AiCoordinationResponseStatusSpawned,
 		SpawnTimestamp: now,
-		ZoneMetrics: &api.AiCoordinationResponseZoneMetrics{
-			ActiveEnemies: func() *int {
-				count := zoneData.ActiveEnemies + 1
-				return &count
-			}(),
-			PerformanceMetrics: &api.ZonePerformanceMetrics{
-				CpuUsagePercent: func() *float64 {
-					if exists {
-						return &zoneData.PerformanceData.CPUUsagePercent
-					}
-					defaultCPU := 25.0
-					return &defaultCPU
-				}(),
-				MemoryUsageMb: func() *int {
-					if exists {
-						return &zoneData.PerformanceData.MemoryUsageMB
-					}
-					defaultMem := 128
-					return &defaultMem
-				}(),
-				AiDecisionLatencyMs: func() *float64 {
-					if exists {
-						ms := float64(zoneData.PerformanceData.AIDecisionLatency.Milliseconds())
-						return &ms
-					}
-					defaultLatency := 15.0
-					return &defaultLatency
-				}(),
-			},
-		},
+		ZoneMetrics:    zoneMetrics,
 	}
 
 	// Update zone data (Performance: Thread-safe updates)
 	s.mu.Lock()
 	if !exists {
-		s.zoneData[*req.ZoneID] = &ZoneData{
+		s.zoneData[zoneIDStr] = &ZoneData{
 			ActiveEnemies: 1,
 			LastActivity:  now,
 			PerformanceData: PerformanceMetrics{
